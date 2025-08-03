@@ -17,11 +17,12 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } fro
 import autoTable from "jspdf-autotable";
 import jsPDF from "jspdf";
 import { manageProfile, getStudentPerformance, getSemesters, manageSections, manageSubjects, getMarks } from "../../utils/hod_api";
+import type { Mark } from "../../utils/hod_api";
 
 interface Student {
   name: string;
   rollNo: string;
-  subject_marks: { [key: string]: string };
+  subject_marks: { [key: string]: { average: number; tests: { test_number: number; mark: number; max_mark: number }[] } };
 }
 
 interface ChartData {
@@ -90,7 +91,7 @@ const MarksView = () => {
         if (!semestersRes.success || !semestersRes.data) {
           throw new Error(semestersRes.message || "Failed to fetch semesters");
         }
-        const semestersData = semestersRes.data.map((s: any) => ({
+        const semestersData = semestersRes.data.map((s: Semester) => ({
           id: s.id,
           name: `${s.number}th Semester`,
         }));
@@ -131,23 +132,23 @@ const MarksView = () => {
 
         // Filter chart data based on semesterFilter
         const chartData = state.semesterFilter === "all"
-          ? performanceRes.data.map((c: any) => ({
+          ? performanceRes.data.map((c: ChartData) => ({
               subject: c.subject,
               subject_code: c.subject,
-              average: c.marks,
+              average: c.average,
               max: 100,
               attendance: c.attendance,
               semester: c.semester,
             }))
           : performanceRes.data
-              .filter((c: any) => {
+              .filter((c: ChartData) => {
                 const selectedSemester = state.semesters.find(s => s.id === state.semesterFilter);
                 return c.semester === selectedSemester?.name;
               })
-              .map((c: any) => ({
+              .map((c: ChartData) => ({
                 subject: c.subject,
                 subject_code: c.subject,
-                average: c.marks,
+                average: c.average,
                 max: 100,
                 attendance: c.attendance,
                 semester: c.semester,
@@ -159,7 +160,7 @@ const MarksView = () => {
         if (!sectionsRes.success || !sectionsRes.data) {
           throw new Error(sectionsRes.message || "Failed to fetch sections");
         }
-        const sectionsData = sectionsRes.data.map((s: any) => ({
+        const sectionsData = sectionsRes.data.map((s: Section) => ({
           id: s.id,
           name: s.name,
           semester_id: s.semester_id,
@@ -171,7 +172,7 @@ const MarksView = () => {
         if (!subjectsRes.success || !subjectsRes.data) {
           throw new Error(subjectsRes.message || "Failed to fetch subjects");
         }
-        const subjectsData = subjectsRes.data.map((s: any) => ({
+        const subjectsData = subjectsRes.data.map((s: Subject) => ({
           id: s.id,
           name: s.name,
           semester_id: s.semester_id,
@@ -201,7 +202,7 @@ const MarksView = () => {
         }
 
         const studentsMap = new Map<string, Student>();
-        marksRes.data.marks.forEach((mark: any) => {
+        marksRes.data.marks.forEach((mark: Mark) => {
           const studentId = mark.student_id;
           if (!studentsMap.has(studentId)) {
             studentsMap.set(studentId, {
@@ -211,7 +212,10 @@ const MarksView = () => {
             });
           }
           const student = studentsMap.get(studentId)!;
-          student.subject_marks[mark.subject] = `${mark.mark}/${mark.max_mark}`;
+          student.subject_marks[mark.subject] = {
+            average: mark.average_mark,
+            tests: mark.test_marks,
+          };
         });
         const studentsData = Array.from(studentsMap.values());
         console.log("Transformed studentsData:", studentsData);
@@ -495,7 +499,21 @@ const MarksView = () => {
                           </td>
                           {subjectKeys.map((subject) => (
                             <td key={subject} className="py-2 px-4">
-                              {student.subject_marks[subject] || "-"}
+                              {student.subject_marks[subject] ? (
+                                <>
+                                  <p className="text-sm text-gray-600">Average: {student.subject_marks[subject]?.average || "-"}</p>
+                                  <p className="text-sm text-gray-600">Tests:</p>
+                                  <ul className="list-disc list-inside text-sm text-gray-600">
+                                    {student.subject_marks[subject]?.tests.map((test) => (
+                                      <li key={test.test_number}>
+                                        Test {test.test_number}: {test.mark}/{test.max_mark}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </>
+                              ) : (
+                                "-"
+                              )}
                             </td>
                           ))}
                           <td className="py-2 px-4">
@@ -647,7 +665,17 @@ const MarksView = () => {
                       {Object.entries(state.selectedStudent.subject_marks).map(([subject, marks]) => (
                         <tr key={subject} className="border-b">
                           <td className="py-2 px-3">{subject}</td>
-                          <td className="py-2 px-3">{marks}</td>
+                          <td className="py-2 px-3">
+                            <p className="text-sm text-gray-600">Average: {marks.average || "-"}</p>
+                            <p className="text-sm text-gray-600">Tests:</p>
+                            <ul className="list-disc list-inside text-sm text-gray-600">
+                              {marks.tests.map((test) => (
+                                <li key={test.test_number}>
+                                  Test {test.test_number}: {test.mark}/{test.max_mark}
+                                </li>
+                              ))}
+                            </ul>
+                          </td>
                         </tr>
                       ))}
                     </tbody>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FileText,
   FileBarChart,
@@ -14,6 +14,7 @@ import { Card, CardContent } from "../ui/card";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils"; // Optional, used to conditionally join classes
+import { getStudentStudyMaterials } from "@/utils/student_api";
 
 const initialMaterials = [
   {
@@ -110,7 +111,17 @@ const StudentStudyMaterial = () => {
   const [subjectFilter, setSubjectFilter] = useState("All Subjects");
   const [typeFilter, setTypeFilter] = useState("All Types");
   const [viewBookmarked, setViewBookmarked] = useState(false);
-  const [materials, setMaterials] = useState(initialMaterials);
+  const [materials, setMaterials] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchMaterials = async () => {
+      const data = await getStudentStudyMaterials();
+      if (data.success && Array.isArray(data.data)) {
+        setMaterials(data.data);
+      }
+    };
+    fetchMaterials();
+  }, []);
 
   const toggleBookmark = (index: number) => {
     const updated = [...materials];

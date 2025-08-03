@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Pencil } from "lucide-react";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -16,6 +17,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { UploadCloud, X } from "lucide-react";
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
+import { getStudentsForClass, ClassStudent, uploadInternalMarks, getFacultyAssignments, FacultyAssignment, getInternalMarksForClass, InternalMarkStudent } from "../../utils/faculty_api";
 
 const MySwal = withReactContent(Swal);
 
@@ -25,47 +27,51 @@ const REQUIRED_HEADERS = ['usn', 'name', 'marks']; // Updated to match sample da
 const MAX_RECORDS = 500;
 const SAMPLE_ROW = ['CS001', 'Amit Kumar', '85/100']; // Example row for validation
 
-const fetchStudentData = (branch: string, subject: string, section: string, semester: string, testType: string) => {
-  const mockData = {
-    "CSE-DSA-A-5-IA1": [
-      { usn: "CS001", name: "Amit Kumar", marks: "", total: "100", isEditing: false },
-      { usn: "CS002", name: "Priya Sharma", marks: "", total: "100", isEditing: false },
-    ],
-    "ECE-OS-B-6-IA2": [
-      { usn: "EC001", name: "Rahul Verma", marks: "", total: "100", isEditing: false },
-      { usn: "EC002", name: "Ananya Patel", marks: "", total: "100", isEditing: false },
-    ],
-    // Add more mock data as needed
-  };
-
-  const key = `${branch}-${subject}-${section}-${semester}-${testType}`;
-  return mockData[key] || [];
-};
-
 const UploadMarks = () => {
+  const [assignments, setAssignments] = useState<FacultyAssignment[]>([]);
   const [dropdownData, setDropdownData] = useState({
-    branch: ["CSE", "ECE", "ME", "CE"],
-    subject: ["DSA", "DBMS", "OS", "CN"],
-    section: ["A", "B", "C"],
-    semester: ["1", "2", "3", "4", "5", "6", "7", "8"],
+    branch: [] as { id: number; name: string }[],
+    semester: [] as { id: number; number: number }[],
+    section: [] as { id: number; name: string }[],
+    subject: [] as { id: number; name: string }[],
     testType: ["IA1", "IA2", "IA3", "SEE"],
   });
 
   const [selected, setSelected] = useState({
     branch: "",
+    branch_id: undefined as number | undefined,
     subject: "",
+    subject_id: undefined as number | undefined,
     section: "",
+    section_id: undefined as number | undefined,
     semester: "",
+    semester_id: undefined as number | undefined,
     testType: "",
   });
 
-  const [students, setStudents] = useState([]);
+  const [students, setStudents] = useState<(ClassStudent & { marks: string; total: string; isEditing: boolean })[]>([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [savingMarks, setSavingMarks] = useState(false);
   const studentsPerPage = 10;
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [tabValue, setTabValue] = useState("manual");
   const [dragActive, setDragActive] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    // Fetch assignments on mount
+    getFacultyAssignments().then(res => {
+      if (res.success && res.data) {
+        setAssignments(res.data);
+        // Populate unique branches (id + name)
+        const branches = Array.from(
+          new Map(res.data.map(a => [a.branch_id, { id: a.branch_id, name: a.branch }])).values()
+        );
+        setDropdownData(prev => ({ ...prev, branch: branches }));
+      }
+    });
+  }, []);
 
   const handleMarksChange = (index: number, field: "marks" | "total", value: string) => {
     if (/^\d*$/.test(value)) {
@@ -96,12 +102,58 @@ const UploadMarks = () => {
     );
   };
 
-  const handleSubmit = () => {
-    MySwal.fire({
-      title: "Marks Saved!",
-      icon: "success",
-      confirmButtonText: "OK",
-    });
+  const handleSubmit = async () => {
+    setSavingMarks(true);
+    // Validate selection
+    const { branch_id, subject_id, section_id, semester_id, testType } = selected;
+    if (!branch_id || !subject_id || !section_id || !semester_id || !testType) {
+      MySwal.fire({
+        title: "Select all class and test details!",
+        icon: "warning",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
+    // Map testType to test_number (e.g., IA1=1, IA2=2, IA3=3, SEE=4)
+    const testMap: Record<string, number> = { IA1: 1, IA2: 2, IA3: 3, SEE: 4 };
+    const test_number = testMap[testType] || 1;
+    // Prepare marks array
+    const marks = students.map((s) => ({
+      student_id: s.id.toString(),
+      mark: parseInt(s.marks || "0"),
+    }));
+    try {
+      const res = await uploadInternalMarks({
+        branch_id: branch_id.toString(),
+        semester_id: semester_id.toString(),
+        section_id: section_id.toString(),
+        subject_id: subject_id.toString(),
+        test_number,
+        marks,
+      });
+      if (res.success) {
+        MySwal.fire({
+          title: "Marks uploaded!",
+          icon: "success",
+          confirmButtonText: "OK",
+        });
+      } else {
+        MySwal.fire({
+          title: "Upload failed",
+          text: res.message || "Unknown error",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+      }
+    } catch (err) {
+      MySwal.fire({
+        title: "Network error",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+    } finally {
+      setSavingMarks(false);
+    }
   };
 
   const indexOfLastStudent = currentPage * studentsPerPage;
@@ -134,7 +186,7 @@ const UploadMarks = () => {
     // 3. Parse and validate
     const reader = new FileReader();
 
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       let data;
       if (isCSV) {
         // Parse CSV
@@ -200,6 +252,46 @@ const UploadMarks = () => {
 
       // If all validations pass
       setStudents(studentsData);
+
+      // After validation, upload to backend
+      const { branch, semester, section, subject, testType } = selected;
+      if (!branch || !semester || !section || !subject || !testType) {
+        setErrorMessage("Select all class and test details before uploading.");
+        return;
+      }
+      const testMap = { IA1: 1, IA2: 2, IA3: 3, SEE: 4 };
+      const test_number = testMap[testType] || 1;
+      const assignment = assignments.find(a => a.branch === branch && a.semester.toString() === semester && a.section === section && a.subject_name === subject);
+      if (!assignment) {
+        setErrorMessage("Assignment not found for upload.");
+        return;
+      }
+      const branch_id = branch.toString();
+      const semester_id = semester.toString();
+      const section_id = section.toString();
+      const subject_id = assignment.subject_code.toString();
+      if (isNaN(parseInt(subject_id))) {
+        setErrorMessage("Subject ID must be numeric. Please check your assignments data.");
+        setLoadingStudents(false);
+        return;
+      }
+      try {
+        const res = await uploadInternalMarks({
+          branch_id: branch_id.toString(),
+          semester_id: semester_id.toString(),
+          section_id: section_id.toString(),
+          subject_id: subject_id.toString(),
+          test_number,
+          file,
+        });
+        if (res.success) {
+          MySwal.fire({ title: "Marks uploaded!", icon: "success", confirmButtonText: "OK" });
+        } else {
+          setErrorMessage(res.message || "Upload failed");
+        }
+      } catch (err) {
+        setErrorMessage("Network error during upload");
+      }
     };
 
     if (isCSV) {
@@ -301,15 +393,91 @@ const UploadMarks = () => {
     handleFileChange(event);
   };
 
-  const handleSelectChange = (field: string, value: string) => {
-    const updated = { ...selected, [field]: value };
+  const handleSelectChange = async (field: string, value: string | number) => {
+    setErrorMessage(""); // Clear previous error
+    const updated = { ...selected };
+    if (field.endsWith('_id')) {
+      updated[field] = value as number;
+      // Also update the corresponding name field
+      if (field === 'branch_id') {
+        const branchObj = dropdownData.branch.find(b => b.id === value);
+        updated.branch = branchObj ? branchObj.name : "";
+      } else if (field === 'semester_id') {
+        const semObj = dropdownData.semester.find(s => s.id === value);
+        updated.semester = semObj ? semObj.number.toString() : "";
+      } else if (field === 'section_id') {
+        const secObj = dropdownData.section.find(s => s.id === value);
+        updated.section = secObj ? secObj.name : "";
+      } else if (field === 'subject_id') {
+        const subjObj = dropdownData.subject.find(s => s.id === value);
+        updated.subject = subjObj ? subjObj.name : "";
+      }
+    } else {
+      updated[field] = value as string;
+    }
     setSelected(updated);
 
-    const { branch, subject, section, semester, testType } = updated;
-    if (branch && subject && section && semester && testType) {
-      const newStudents = fetchStudentData(branch, subject, section, semester, testType);
-      setStudents(newStudents);
-      setCurrentPage(1);
+    // Dynamically update dependent dropdowns
+    let filtered = assignments;
+    if (updated.branch_id) filtered = filtered.filter(a => a.branch_id === updated.branch_id);
+    if (updated.semester_id) filtered = filtered.filter(a => a.semester_id === updated.semester_id);
+    if (updated.section_id) filtered = filtered.filter(a => a.section_id === updated.section_id);
+
+    if (field === "branch_id") {
+      const semesters = Array.from(
+        new Map(filtered.map(a => [a.semester_id, { id: a.semester_id, number: a.semester }])).values()
+      );
+      setDropdownData(prev => ({ ...prev, semester: semesters, section: [], subject: [] }));
+      setSelected(prev => ({ ...prev, semester: "", semester_id: undefined, section: "", section_id: undefined, subject: "", subject_id: undefined }));
+    } else if (field === "semester_id") {
+      const sections = Array.from(
+        new Map(filtered.map(a => [a.section_id, { id: a.section_id, name: a.section }])).values()
+      );
+      setDropdownData(prev => ({ ...prev, section: sections, subject: [] }));
+      setSelected(prev => ({ ...prev, section: "", section_id: undefined, subject: "", subject_id: undefined }));
+    } else if (field === "section_id") {
+      const subjects = Array.from(
+        new Map(filtered.map(a => [a.subject_id, { id: a.subject_id, name: a.subject_name }])).values()
+      );
+      setDropdownData(prev => ({ ...prev, subject: subjects }));
+      setSelected(prev => ({ ...prev, subject: "", subject_id: undefined }));
+    }
+
+    // Only fetch students and marks if all required fields are selected
+    const { branch_id, semester_id, section_id, subject_id, testType } = { ...updated };
+    if (branch_id && semester_id && section_id && subject_id && testType) {
+      setLoadingStudents(true);
+      try {
+        // Find the assignment by IDs
+        const assignment = assignments.find(a => a.branch_id === branch_id && a.semester_id === semester_id && a.section_id === section_id && a.subject_id === subject_id);
+        console.log('Selected IDs:', { branch_id, semester_id, section_id, subject_id });
+        console.log('Assignment:', assignment);
+        if (!assignment) throw new Error("Assignment not found");
+        // Map testType to test_number
+        const testMap: Record<string, number> = { IA1: 1, IA2: 2, IA3: 3, SEE: 4 };
+        const test_number = testMap[testType] || 1;
+        // Fetch students and their marks for this test
+        const marksList: InternalMarkStudent[] = await getInternalMarksForClass(
+          branch_id,
+          semester_id,
+          section_id,
+          subject_id,
+          test_number
+        );
+        setStudents(marksList.map(s => ({
+          id: s.id,
+          name: s.name,
+          usn: s.usn,
+          marks: s.mark !== '' ? s.mark.toString() : '',
+          total: s.max_mark.toString(),
+          isEditing: false
+        })));
+        setCurrentPage(1);
+      } catch (err) {
+        setStudents([]);
+        setErrorMessage(err?.message || "Failed to fetch students/marks");
+      }
+      setLoadingStudents(false);
     }
   };
 
@@ -320,20 +488,71 @@ const UploadMarks = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {Object.entries(dropdownData).map(([key, values]) => (
-            <Select key={key} onValueChange={(value) => handleSelectChange(key, value)}>
-              <SelectTrigger>
-                <SelectValue placeholder={`Select ${key[0].toUpperCase() + key.slice(1)}`} />
-              </SelectTrigger>
-              <SelectContent>
-                {values.map((item) => (
-                  <SelectItem key={item} value={item}>
-                    {item}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ))}
+          {/* Branch Dropdown */}
+          <Select onValueChange={value => handleSelectChange('branch_id', Number(value))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select Branch" />
+            </SelectTrigger>
+            <SelectContent>
+              {dropdownData.branch.map((item) => (
+                <SelectItem key={item.id} value={item.id.toString()}>
+                  {item.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {/* Semester Dropdown */}
+          <Select onValueChange={value => handleSelectChange('semester_id', Number(value))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select Semester" />
+            </SelectTrigger>
+            <SelectContent>
+              {dropdownData.semester.map((item) => (
+                <SelectItem key={item.id} value={item.id.toString()}>
+                  {item.number}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {/* Section Dropdown */}
+          <Select onValueChange={value => handleSelectChange('section_id', Number(value))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select Section" />
+            </SelectTrigger>
+            <SelectContent>
+              {dropdownData.section.map((item) => (
+                <SelectItem key={item.id} value={item.id.toString()}>
+                  {item.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {/* Subject Dropdown */}
+          <Select onValueChange={value => handleSelectChange('subject_id', Number(value))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select Subject" />
+            </SelectTrigger>
+            <SelectContent>
+              {dropdownData.subject.map((item) => (
+                <SelectItem key={item.id} value={item.id.toString()}>
+                  {item.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {/* Test Type Dropdown */}
+          <Select onValueChange={value => handleSelectChange('testType', value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select TestType" />
+            </SelectTrigger>
+            <SelectContent>
+              {dropdownData.testType.map((item) => (
+                <SelectItem key={item} value={item}>
+                  {item}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <Tabs value={tabValue} onValueChange={setTabValue}>
@@ -351,54 +570,57 @@ const UploadMarks = () => {
                 <div>Marks</div>
                 <div>Action</div>
               </div>
-              {currentStudents.map((student, index) => (
-                <div key={student.usn} className="grid grid-cols-5 items-center p-2 border-b text-sm">
-                  <div>{indexOfFirstStudent + index + 1}</div>
-                  <div>{student.usn}</div>
-                  <div>{student.name}</div>
-                  <div className="flex items-center gap-1">
-                    {student.isEditing ? (
-                      <>
-                        <Input
-                          type="text"
-                          value={student.marks}
-                          onChange={(e) => handleMarksChange(index, "marks", e.target.value)}
-                          className="w-16 h-8"
-                          placeholder="Marks"
-                        />
-                        <span>/</span>
-                        <Input
-                          type="text"
-                          value={student.total}
-                          onChange={(e) => handleMarksChange(index, "total", e.target.value)}
-                          className="w-16 h-8"
-                          placeholder="Total"
-                        />
-                      </>
-                    ) : (
-                      <span>
-                        {student.marks && student.total ? `${student.marks} / ${student.total}` : "—"}
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    {student.isEditing ? (
-                      <Button size="sm" variant="outline" onClick={() => saveRow(index)}>
-                        Save
-                      </Button>
-                    ) : (
-                      <Pencil
-                        className="w-4 h-4 cursor-pointer text-gray-600 hover:text-black"
-                        onClick={() => toggleEdit(index)}
-                      />
-                    )}
-                  </div>
-                </div>
-              ))}
-              {currentStudents.length === 0 && (
+              {loadingStudents ? (
+                <div className="text-center text-gray-500 text-sm p-4">Loading students...</div>
+              ) : currentStudents.length === 0 ? (
                 <div className="text-center text-gray-500 text-sm p-4">
                   No students found for selected criteria.
                 </div>
+              ) : (
+                currentStudents.map((student, index) => (
+                  <div key={student.id} className="grid grid-cols-5 items-center p-2 border-b text-sm">
+                    <div>{indexOfFirstStudent + index + 1}</div>
+                    <div>{student.usn}</div>
+                    <div>{student.name}</div>
+                    <div className="flex items-center gap-1">
+                      {student.isEditing ? (
+                        <>
+                          <Input
+                            type="text"
+                            value={student.marks}
+                            onChange={(e) => handleMarksChange(index, "marks", e.target.value)}
+                            className="w-16 h-8"
+                            placeholder="Marks"
+                          />
+                          <span>/</span>
+                          <Input
+                            type="text"
+                            value={student.total}
+                            onChange={(e) => handleMarksChange(index, "total", e.target.value)}
+                            className="w-16 h-8"
+                            placeholder="Total"
+                          />
+                        </>
+                      ) : (
+                        <span>
+                          {student.marks && student.total ? `${student.marks} / ${student.total}` : "—"}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      {student.isEditing ? (
+                        <Button size="sm" variant="outline" onClick={() => saveRow(index)}>
+                          Save
+                        </Button>
+                      ) : (
+                        <Pencil
+                          className="w-4 h-4 cursor-pointer text-gray-600 hover:text-black"
+                          onClick={() => toggleEdit(index)}
+                        />
+                      )}
+                    </div>
+                  </div>
+                ))
               )}
             </div>
 
@@ -515,7 +737,16 @@ const UploadMarks = () => {
         </Tabs>
 
         <div className="flex justify-end mt-4">
-          <Button onClick={handleSubmit}>Save Marks</Button>
+          <Button onClick={handleSubmit} disabled={savingMarks}>
+            {savingMarks ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Marks"
+            )}
+          </Button>
         </div>
       </CardContent>
     </Card>

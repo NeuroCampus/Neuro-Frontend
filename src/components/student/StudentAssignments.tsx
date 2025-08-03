@@ -1,48 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { format, isBefore } from "date-fns";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-
-const assignments = [
-  {
-    title: "Database Schema Design",
-    dueDate: "2025-04-15",
-    status: "Pending",
-    subject: "Database",
-  },
-  {
-    title: "TCP Socket Programming",
-    dueDate: "2025-04-10",
-    status: "Submitted",
-    subject: "Networks",
-  },
-  {
-    title: "AVL Tree Implementation",
-    dueDate: "2025-04-05",
-    status: "Submitted",
-    subject: "Data Structures",
-  },
-  {
-    title: "Process Synchronization",
-    dueDate: "2025-03-28",
-    status: "Pending",
-    subject: "Operating Systems",
-  },
-  {
-    title: "Network Topology Design",
-    dueDate: "2025-04-20",
-    status: "Pending",
-    subject: "Networks",
-  },
-  {
-    title: "SQL Query Optimization",
-    dueDate: "2025-04-25",
-    status: "Pending",
-    subject: "Database",
-  },
-];
+import { getStudentAssignments } from "@/utils/student_api";
 
 const getStatusBadge = (status: string, dueDate: string) => {
   const now = new Date();
@@ -56,13 +18,24 @@ const getStatusBadge = (status: string, dueDate: string) => {
 };
 
 const StudentAssignment = () => {
+  const [assignments, setAssignments] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      const data = await getStudentAssignments();
+      if (data.success && Array.isArray(data.data)) {
+        setAssignments(data.data);
+      }
+    };
+    fetchAssignments();
+  }, []);
 
   const filtered = useMemo(() => {
     return assignments.filter((a) =>
       a.title.toLowerCase().includes(search.toLowerCase())
     );
-  }, [search]);
+  }, [search, assignments]);
 
   const summary = useMemo(() => {
     let pending = 0;
@@ -82,7 +55,7 @@ const StudentAssignment = () => {
       submitted,
       overdue,
     };
-  }, []);
+  }, [assignments]);
 
   return (
     <div className="p-6 space-y-6 text-gray-800">

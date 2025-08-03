@@ -1,198 +1,188 @@
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { CheckCircle, XCircle, Filter } from "lucide-react"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
+import { useEffect, useState } from "react";
+import { getProctorStudents, manageStudentLeave, ProctorStudent, LeaveRow } from "@/utils/faculty_api";
+import { Button } from "../ui/button";
 
-const initialRequests = [
-  {
-    id: 1,
-    student: "Sharma",
-    usn: "1MS21CS001",
-    department: "Computer Science",
-    period: "Apr 15, 2025 to Apr 17, 2025",
-    reason: "Medical emergency",
-    status: "Pending",
-  },
-  {
-    id: 2,
-    student: "Kumar",
-    usn: "1MS21CS002",
-    department: "Electronics",
-    period: "Apr 20, 2025 to Apr 22, 2025",
-    reason: "Personal work",
-    status: "Pending",
-  },
-  {
-    id: 3,
-    student: "Patel",
-    usn: "1MS21CS003",
-    department: "Computer Science",
-    period: "Apr 10, 2025 to Apr 11, 2025",
-    reason: "Conference attendance",
-    status: "Approved",
-  },
-  {
-    id: 4,
-    student: "Singh",
-    department: "Mechanical",
-    period: "Apr 5, 2025 to Apr 7, 2025",
-    reason: "Family function",
-    status: "Rejected",
-  },
-]
+const statusColors = {
+  APPROVED: "bg-green-100 text-green-700",
+  REJECTED: "bg-red-100 text-red-700",
+  PENDING: "bg-yellow-100 text-yellow-800",
+};
 
-const statusStyles = {
-  Pending: "bg-yellow-100 text-yellow-800",
-  Approved: "bg-green-100 text-green-800",
-  Rejected: "bg-red-100 text-red-800",
-}
-
-const statusOptions = ["All", "Pending", "Approved", "Rejected"]
+const statusOptions = ["All", "PENDING", "APPROVED", "REJECTED"];
 
 const ManageStudentLeave = () => {
-  const [leaveRequests, setLeaveRequests] = useState(initialRequests)
-  const [filterStatus, setFilterStatus] = useState("All")
-  const [searchQuery, setSearchQuery] = useState("")
+  const [students, setStudents] = useState<ProctorStudent[]>([]);
+  const [leaveRows, setLeaveRows] = useState<LeaveRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("All");
 
-  const handleStatusChange = (id: number, newStatus: "Approved" | "Rejected") => {
-    setLeaveRequests((prev) =>
-      prev.map((req) =>
-        req.id === id ? { ...req, status: newStatus } : req
-      )
-    )
-  }
+  const fetchLeaves = () => {
+    setLoading(true);
+    getProctorStudents()
+      .then((res) => {
+        if (res.success && res.data) {
+          setStudents(res.data);
+          const rows: LeaveRow[] = [];
+          res.data.forEach((s: ProctorStudent) => {
+            (s.leave_requests || []).forEach((leave) => {
+              rows.push({
+                ...leave,
+                status: leave.status as "PENDING" | "APPROVED" | "REJECTED",
+                student_name: s.name,
+                usn: s.usn,
+              });
+            });
+          });
+          setLeaveRows(rows);
+        } else {
+          setError(res.message || "Failed to fetch students");
+        }
+      })
+      .catch((e) => setError(e.message || "Failed to fetch students"))
+      .finally(() => setLoading(false));
+  };
 
-  const filteredRequests = leaveRequests.filter((req) => {
-    const matchesStatus = filterStatus === "All" || req.status === filterStatus;
+  useEffect(() => {
+    fetchLeaves();
+  }, []);
+
+  const handleAction = async (leaveId: string, action: "APPROVE" | "REJECT") => {
+    const confirmMsg =
+      action === "APPROVE"
+        ? "Are you sure you want to approve this leave request?"
+        : "Are you sure you want to reject this leave request?";
+    if (!window.confirm(confirmMsg)) return;
+    setActionLoading(leaveId + action);
+    try {
+      const res = await manageStudentLeave({ leave_id: leaveId, action });
+      if (res.success) {
+        fetchLeaves(); // Refetch to get backend-updated status
+      } else {
+        alert(res.message || "Action failed");
+      }
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        alert(e.message || "Action failed");
+      } else {
+        alert("Action failed");
+      }
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Filter and search
+  const filteredRows = leaveRows.filter((row: LeaveRow) => {
     const matchesSearch =
-      req.student.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      req.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (req.usn ? req.usn.toLowerCase().includes(searchQuery.toLowerCase()) : false); // Safely handle undefined usn
-    return matchesStatus && matchesSearch;
+      row.student_name.toLowerCase().includes(search.toLowerCase()) ||
+      row.usn.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus =
+      filterStatus === "All" || row.status === filterStatus;
+    return matchesSearch && matchesStatus;
   });
-  
-  
 
   return (
-    <div className="p-6 bg-white min-h-screen text-gray-900">
+    <div className="p-6 bg-gray-100 min-h-screen text-gray-900">
       <h2 className="text-2xl font-semibold mb-2">Leave Approvals</h2>
-      <p className="text-gray-600 mb-6">Review and manage Student leave requests.</p>
+      <p className="text-gray-600 mb-6">Review and manage student leave requests.</p>
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+      {/* Loading and Errors */}
+      {loading && <p className="text-gray-600 mb-4">Loading leave requests...</p>}
+      {error && <div className="text-red-600 mb-4">{error}</div>}
+
+      {/* Search and Filter */}
+      <div className="flex flex-wrap gap-4 mb-6 items-center">
         <input
-          placeholder="Search student..."
-          className="border border-gray-300 rounded-md px-4 py-2 w-full sm:w-1/2"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          type="text"
+          placeholder="Search by name or USN..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-64 border border-gray-300 rounded-md px-4 py-2 text-sm"
         />
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Filter className="w-4 h-4" />
-              <span className="hidden sm:inline">Filter</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-40 p-2">
-            <div className="flex flex-col gap-1">
-              {statusOptions.map((status) => (
-                <Button
-                  key={status}
-                  variant="ghost"
-                  className={cn(
-                    "justify-start px-3 py-1 text-sm",
-                    filterStatus === status && "bg-gray-100 font-medium"
-                  )}
-                  onClick={() => setFilterStatus(status)}
-                >
-                  {status}
-                </Button>
-              ))}
-            </div>
-          </PopoverContent>
-        </Popover>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="border border-gray-300 rounded-md px-4 py-2 text-sm"
+        >
+          {statusOptions.map((status) => (
+            <option key={status} value={status}>
+              {status === "All" ? "All Statuses" : status.charAt(0) + status.slice(1).toLowerCase()}
+            </option>
+          ))}
+        </select>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Leave Requests</CardTitle>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <table className="min-w-full text-sm text-left">
-            <thead className="bg-gray-100 border-b text-gray-700">
+      {/* Leave Requests Table */}
+      <div className="bg-white p-4 rounded-md shadow text-sm text-gray-800 border border-gray-200">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-base font-semibold text-gray-800">Leave Requests</h3>
+        </div>
+        <table className="w-full">
+          <thead>
+            <tr className="text-left border-b text-gray-600 text-xs">
+              <th className="pb-2">Student</th>
+              <th>Period</th>
+              <th>Reason</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredRows.length === 0 ? (
               <tr>
-                <th className="px-4 py-2">Student</th>
-                <th className="px-4 py-2">Period</th>
-                <th className="px-4 py-2">Reason</th>
-                <th className="px-4 py-2">Status</th>
-                <th className="px-4 py-2">Action</th>
+                <td colSpan={5} className="py-3 text-center text-gray-500">
+                  No leave requests found
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {filteredRequests.length > 0 ? (
-                filteredRequests.map((req) => (
-                  <tr key={req.id} className="border-b">
-                    <td className="px-4 py-3">
-                      <div className="font-medium">{req.student}</div>
-                      <div className="text-gray-500 text-xs">{req.usn}</div>
-                      <div className="text-gray-500 text-xs">{req.department}</div>
-                    </td>
-                    <td className="px-4 py-3">{req.period}</td>
-                    <td className="px-4 py-3">{req.reason}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`px-2 py-1 rounded-md text-xs font-medium ${statusStyles[req.status as keyof typeof statusStyles]}`}
-                      >
-                        {req.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {req.status === "Pending" ? (
-                        <div className="flex gap-3">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="flex items-center gap-1 px-3 py-1.5"
-                            onClick={() => handleStatusChange(req.id, "Approved")}
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="flex items-center gap-1 px-3 py-1.5"
-                            onClick={() => handleStatusChange(req.id, "Rejected")}
-                          >
-                            <XCircle className="w-4 h-4" />
-                            Reject
-                          </Button>
-                        </div>
-                      ) : (
-                        <span className="text-sm text-gray-500">No action needed</span>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td className="px-4 py-3 text-center text-gray-500" colSpan={5}>
-                    No results found.
+            ) : (
+              filteredRows.map((row: LeaveRow) => (
+                <tr key={row.id} className="border-b last:border-none text-sm">
+                  <td className="py-3">
+                    <div>
+                      <p className="font-medium text-gray-900">{row.student_name}</p>
+                      <p className="text-xs text-gray-500">{row.usn}</p>
+                    </div>
+                  </td>
+                  <td>{row.start_date} to {row.end_date}</td>
+                  <td>{row.reason}</td>
+                  <td>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[row.status]}`}>
+                      {row.status.charAt(0) + row.status.slice(1).toLowerCase()}
+                    </span>
+                  </td>
+                  <td>
+                    {row.status === "PENDING" ? (
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => handleAction(row.id, "APPROVE")}
+                          className="flex items-center gap-1 border border-green-500 text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-md transition"
+                          disabled={actionLoading === row.id + "APPROVE"}
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          onClick={() => handleAction(row.id, "REJECT")}
+                          className="flex items-center gap-1 border border-red-500 text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-md transition"
+                          disabled={actionLoading === row.id + "REJECT"}
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-500">No action needed</span>
+                    )}
                   </td>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default ManageStudentLeave
+export default ManageStudentLeave;

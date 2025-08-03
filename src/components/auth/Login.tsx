@@ -1,9 +1,9 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { loginUser } from "../../utils/authService";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { LockKeyhole, User } from "lucide-react";
+import { LockKeyhole, User, BookOpen, Users, GraduationCap } from "lucide-react";
 
 interface LoginProps {
   setRole: (role: string) => void;
@@ -31,7 +31,6 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
 
     try {
       const response = await loginUser({ username: trimmedUsername, password: trimmedPassword });
-      
       if (response.success) {
         if (response.message === "OTP sent") {
           localStorage.setItem("temp_user_id", response.user_id || "");
@@ -53,93 +52,178 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
   };
 
   return (
-    <div
-      className="flex min-h-screen items-center justify-center bg-cover bg-center relative"
-      style={{
-        backgroundImage:
-          "url('https://images.unsplash.com/photo-1497604401993-f2e922e5cb0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80')",
-      }}
-    >
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/70 to-indigo-900/60 backdrop-blur-[2px]"></div>
-      
-      <div className="container relative z-10 px-4 mx-auto flex flex-col items-center">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-2 text-white drop-shadow-lg">
-            NEURO CAMPUS
-          </h1>
-          <p className="text-xl text-blue-100 font-light tracking-wide">
-            AI-powered campus management system
-          </p>
-          <p className="text-sm text-blue-200 mt-1">
-            Developed under Stalight Technology
-          </p>
-        </div>
-        
-        <Card className="w-full max-w-md backdrop-blur-xl bg-white/20 border border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.37)]">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center text-white">Welcome Back</CardTitle>
-            <CardDescription className="text-center text-blue-100">Enter your credentials to login</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+    <div className="min-h-screen flex font-sans">
+      {/* Left Section - Login Form */}
+      <motion.div 
+        className="flex-1 bg-[#1c1c1e] flex items-center justify-center p-8"
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="w-full max-w-md">
+          <motion.div 
+            className="text-center mb-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <h1 className="text-2xl font-bold text-white mb-2">Login</h1>
+            <p className="text-gray-400 text-sm">Sign in to access your account</p>
+          </motion.div>
+
+          <motion.div 
+            className="space-y-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
             {error && (
-              <div className="bg-red-500/80 text-white p-3 rounded-md text-sm backdrop-blur-sm">
+              <motion.div 
+                className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg text-sm"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+              >
                 {error}
-              </div>
+              </motion.div>
             )}
-            
+
+            {/* Username */}
             <div className="space-y-2">
-              <label htmlFor="username" className="text-sm font-medium text-white">Username</label>
+              <label htmlFor="username" className="text-sm font-medium text-gray-300">Username</label>
               <div className="relative">
-                <User className="absolute left-3 top-2.5 h-5 w-5 text-blue-100" />
+                <User className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                 <Input
                   id="username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter username"
-                  className="pl-10 w-full bg-white/10 border-white/20 text-white placeholder:text-blue-200/70 focus-visible:ring-blue-400"
+                  placeholder="Enter your username"
+                  className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
+                  onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
                 />
               </div>
             </div>
-            
+
+            {/* Password */}
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-white">Password</label>
+              <label htmlFor="password" className="text-sm font-medium text-gray-300">Password</label>
               <div className="relative">
-                <LockKeyhole className="absolute left-3 top-2.5 h-5 w-5 text-blue-100" />
+                <LockKeyhole className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                 <Input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter password"
-                  className="pl-10 w-full bg-white/10 border-white/20 text-white placeholder:text-blue-200/70 focus-visible:ring-blue-400"
+                  placeholder="Enter your password"
+                  className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
+                  onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
                 />
               </div>
             </div>
-            
+
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={() => setPage("forgot-password")}
+                className="text-[#a259ff] hover:text-[#a259ff]/80 text-sm transition-colors duration-300"
+              >
+                Forgot Password?
+              </button>
+            </div>
+
             <Button
               onClick={handleLogin}
-              className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium shadow-lg shadow-blue-600/30"
               disabled={loading}
+              className="w-full bg-[#a259ff] hover:bg-[#a259ff]/90 text-white font-medium rounded-lg h-12 shadow-lg shadow-[#a259ff]/20 hover:shadow-[#a259ff]/40 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
             >
-              {loading ? "Logging in..." : "Login"}
+              {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Signing in...
+                </div>
+              ) : (
+                "Login"
+              )}
             </Button>
-            
-            <div className="text-center">
-              <span
-                className="text-blue-100 cursor-pointer hover:text-white text-sm transition-colors"
-                onClick={() => setPage("forgot-password")}
-              >
-                Forgot password?
+
+            <div className="text-center text-gray-400 text-sm">
+              {" "}
+              <span className="text-[#a259ff] hover:text-[#a259ff]/80 cursor-pointer transition-colors duration-300">
+                
               </span>
             </div>
-          </CardContent>
-        </Card>
-
-        <div className="mt-6 text-xs text-center text-blue-200/80">
-          © {new Date().getFullYear()} NEURO CAMPUS. All rights reserved.
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
+
+      {/* Right Section - Welcome & Illustration */}
+      <motion.div 
+        className="flex-1 bg-gradient-to-br from-[#a259ff] to-[#7c3aed] flex items-center justify-center p-8 relative overflow-hidden"
+        initial={{ opacity: 0, x: 50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+      >
+        {/* Decorative Blur Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-xl" />
+          <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white/10 rounded-full blur-xl" />
+          <div className="absolute top-1/2 left-1/4 w-20 h-20 bg-white/5 rounded-full blur-lg" />
+        </div>
+
+        {/* Text Content */}
+        <div className="relative z-10 text-center text-white max-w-lg">
+          <motion.h2
+            className="text-3xl md:text-4xl font-bold mb-4"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+          >
+            Welcome to <br />
+            <span className="bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+              NEURO CAMPUS
+            </span>
+          </motion.h2>
+          <motion.p
+            className="text-lg text-white/90 mb-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+          >
+            Login to access your Campus portal
+          </motion.p>
+
+          {/* Educator SVG Illustration */}
+          <motion.div
+            className="mx-auto w-80 md:w-96 max-w-lg"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, delay: 1 }}
+          >
+            <motion.img
+              src="/undraw_educator_6dgp.svg"
+              alt="Educator Illustration"
+              className="w-full h-auto drop-shadow-2xl filter brightness-110 contrast-110"
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              style={{
+                filter: 'drop-shadow(0 20px 25px rgba(0, 0, 0, 0.15)) brightness(1.1) contrast(1.1)'
+              }}
+            />
+          </motion.div>
+
+          <motion.div
+            className="mt-6 text-white/80 text-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 1.2 }}
+          >
+            AI-powered campus management system
+            <br />
+            <span className="text-xs text-white/60 mt-2 block">Developed under Stalight Technology</span>
+          </motion.div>
+        </div>
+      </motion.div>
     </div>
   );
 };

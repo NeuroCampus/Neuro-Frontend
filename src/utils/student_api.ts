@@ -430,3 +430,51 @@ export const uploadFaceEncodings = async (
     return { success: false, message: "Network error" };
   }
 };
+
+export const getFullStudentProfile = async () => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/student/full-profile/`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Full Student Profile Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const getStudentAssignments = async () => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/student/assignments/`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Student Assignments Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const getStudentStudyMaterials = async () => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/student/study-materials/`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Student Study Materials Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};

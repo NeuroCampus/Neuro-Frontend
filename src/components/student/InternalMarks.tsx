@@ -20,6 +20,7 @@ import {
 } from "chart.js";
 import { useEffect, useState } from "react";
 import { Filter } from "lucide-react";
+import { getInternalMarks } from "@/utils/student_api";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -44,30 +45,13 @@ const InternalMarks = () => {
   const [showFilter, setShowFilter] = useState(false);
 
   useEffect(() => {
-    // Simulated fetch — replace with real API call
     const fetchData = async () => {
-      const res: ApiResponse = {
-        success: true,
-        data: {
-          Math: [
-            { test_number: 1, mark: 85, max_mark: 100 },
-            { test_number: 2, mark: 88, max_mark: 100 },
-          ],
-          Physics: [
-            { test_number: 1, mark: 78, max_mark: 100 },
-            { test_number: 2, mark: 82, max_mark: 100 },
-          ],
-          Chemistry: [
-            { test_number: 1, mark: 91, max_mark: 100 },
-            { test_number: 2, mark: 89, max_mark: 100 },
-          ],
-        },
-      };
-
-      setMarksData(res.data);
+      const data = await getInternalMarks();
+      if (data.success && data.data) {
+        setMarksData(data.data);
+      }
       setLoading(false);
     };
-
     fetchData();
   }, []);
 

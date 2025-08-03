@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Badge } from "../ui/badge";
 import { Bell, CheckCircle2, Clock3, XCircle } from "lucide-react";
 import { Button } from "../ui/button";
+import { getLeaveRequests } from "@/utils/student_api";
 
 type LeaveStatusType = "PENDING" | "APPROVED" | "REJECTED";
 
@@ -42,19 +43,12 @@ const LeaveStatus = () => {
 
   useEffect(() => {
     const fetchLeaves = async () => {
-      try {
-        const res = await fetch("/student/leave-requests/");
-        const data = await res.json();
-        if (data.success) {
-          setLeaves(data.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch leave requests:", error);
-      } finally {
-        setLoading(false);
+      const data = await getLeaveRequests();
+      if (data.success && Array.isArray(data.data)) {
+        setLeaves(data.data);
       }
+      setLoading(false);
     };
-
     fetchLeaves();
   }, []);
 

@@ -143,3 +143,6 @@ const Navbar = ({ role, user, onNotificationClick }: NavbarProps) => {
 };
 
 export default Navbar;
+};
+
+export default Navbar;

@@ -8,6 +8,7 @@ import {
 } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Megaphone, Bell } from "lucide-react";
+import { getNotifications } from "@/utils/student_api";
 
 interface Notification {
   id: string;
@@ -39,14 +40,13 @@ const StudentNotifications = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate API call with sample data
     const fetchNotifications = async () => {
-      setTimeout(() => {
-        setNotifications(sampleNotifications); // Replace with real API response later
-        setLoading(false);
-      }, 1000);
+      const data = await getNotifications();
+      if (data.success && Array.isArray(data.data)) {
+        setNotifications(data.data);
+      }
+      setLoading(false);
     };
-
     fetchNotifications();
   }, []);
 

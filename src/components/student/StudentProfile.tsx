@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { getFullStudentProfile } from "@/utils/student_api";
 
 const StudentProfile = () => {
   const [form, setForm] = useState({
@@ -25,6 +26,16 @@ const StudentProfile = () => {
     advisor: "Dr. Robert Williams",
     status: "Active",
   });
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const data = await getFullStudentProfile();
+      if (data.success && data.profile) {
+        setForm((prev) => ({ ...prev, ...data.profile }));
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const handleChange = (e: any) => {
     const { name, value } = e.target;
