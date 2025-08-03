@@ -1,141 +1,192 @@
-STALIGHT TECHNOLOGY 
+<!-- PROJECT BANNER -->
+<p align="center">
+  <img src="public/placeholder.svg" alt="Neuro Campus Banner" width="400"/>
+</p>
 
-NEURO CAMPUS 
+<h1 align="center">🚀 NEURO CAMPUS: Academic Management System</h1>
+<p align="center"><b>Starlight Technology</b> | <i>Futuristic, AI-powered campus automation</i></p>
 
+---
 
-STEPS TO CLONE AND USE THE PROJECT 
+## ✨ Overview
 
-```markdown
-# Attendance System with Face Recognition
+**Neuro Campus** is a next-generation academic management system, blending AI, face recognition, and automation for seamless campus operations. Built with a modern React frontend and a robust Django backend, it empowers admins, HODs, faculty, and students with real-time notifications, analytics, and smart attendance.
 
-This project is a comprehensive attendance system that uses face recognition technology to automate student attendance tracking. It consists of a React frontend with Tailwind CSS and a Django backend.
+---
 
-## Table of Contents
+## 🌟 Features
+- 🔐 Secure authentication (multi-role: Admin, HOD, Faculty, Student)
+- 🧑‍🎓 Student enrollment with face recognition (dlib + OpenCV)
+- 📸 Automated attendance via facial recognition
+- 📊 Real-time statistics, dashboards, and analytics
+- 📨 Notifications & announcements (role-based, with email)
+- 📝 Leave management (faculty & student)
+- 📅 Timetable, marks, and study material management
+- 📈 Export to Google Sheets & PDF
+- 🤖 AI-powered PDF Q&A (Gemini integration)
+- 🦾 Modern, responsive UI (React + Tailwind)
+- 🛡️ JWT authentication, OTP support
 
-1. [Features](#features)
-2. [Project Structure](#project-structure)
-3. [Prerequisites](#prerequisites)
-4. [Setup Instructions](#setup-instructions)
-   - [Frontend Setup](#frontend-setup)
-   - [Backend Setup](#backend-setup)
-5. [Usage](#usage)
-6. [Contributing](#contributing)
-7. [License](#license)
+---
 
-## Features
+## 🖼️ Screenshots & Demo
 
-- User authentication
-- Student enrollment with face recognition
-- Automated attendance taking using facial recognition
-- Attendance statistics and reports
-- Google Sheets integration for attendance records
+> _Add your own screenshots, GIFs, or demo videos here!_
 
-## Project Structure
+<p align="center">
+  <img src="public/placeholder.svg" alt="Demo Screenshot" width="300"/>
+  <br/>
+  <i>Futuristic dashboard, real-time stats, and face recognition in action!</i>
+</p>
 
-The project is divided into two main parts:
+---
 
-1. **Frontend (React + Tailwind CSS)**
-   - User interface for all features
-   - Webcam integration for capturing photos
-   - Responsive design
+## 🛠️ Tech Stack
 
-2. **Backend (Django + REST API)**
-   - Face recognition processing
-   - Database for storing student information
-   - Google Sheets API integration
-   - PDF report generation
+| Frontend         | Backend         | AI/ML & Cloud         |
+|------------------|----------------|----------------------|
+| React (Vite)     | Django 4.2     | dlib, OpenCV         |
+| TypeScript       | Django REST    | Google Sheets API    |
+| Tailwind CSS     | JWT, OTP, CORS | Gemini (GenAI)       |
+| Recharts, jsPDF  | PostgreSQL/SQLite | FAISS, PyMuPDF   |
 
-## Prerequisites
+---
 
-- Node.js (v14.x or later) and npm (v6.x or later) for the frontend
-- Python 3.8+ for the backend
-- dlib and OpenCV for face recognition
-- Google API credentials for Sheets integration
+## ⚡ Quickstart
 
-## Setup Instructions
+### 1️⃣ Backend Setup
 
-### Frontend Setup
+```bash
+# Clone the repo
+$ git clone <your-repo-url>
+$ cd advancedsoftware/django_backend
 
-1. **Navigate to the frontend directory**:
-   ```bash
-    cd django_backend
-   ```
+# Create and activate virtual environment
+$ python3.11 -m venv venv
+$ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Start the development server**:
-   ```bash
-   npm run dev
-   ```
-
-### Backend Setup
-
-1. **Navigate to the Django backend directory**:
-   ```bash
-   cd django_backend
-   ```
-
-2. **Create a virtual environment**:
-   ```bash
-   python3.11 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Download face recognition models**:
-   - Download `shape_predictor_68_face_landmarks.dat` and `dlib_face_recognition_resnet_model_v1.dat` from the [dlib website](http://dlib.net/).
-   - Place them in the Django backend root directory.
-
-5. **Set up Google API credentials**:
-   - Create a service account in Google Cloud Console.
-   - Download the credentials JSON file and rename it to `credentials.json`.
-   - Place it in the Django backend root directory.
-
-6. **Run migrations**:
-   ```bash
-   python manage.py makemigrations
-   python manage.py migrate
-   ```
-
-7. **Start the Django server**:
-   ```bash
-   python manage.py runserver
-   ```
-
-## Usage
-
-1. **Access the frontend** at `http://localhost:5173`.
-2. **Login with default credentials**:
-   - Username: `1AM22CI`
-   - Password: `CI@2024`
-3. **Select semester, section, and subject**.
-4. **Use the options** to enroll students, take attendance, or view statistics.
-
-## Contributing
-
-We welcome contributions! Please follow these guidelines:
-
-1. **Fork the repository** and create a new branch for your feature or bug fix.
-2. **Write clean, well-documented code**.
-3. **Submit a pull request** with a clear description of your changes.
-4. **Report issues** using the GitHub issue tracker.
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
+# Install dependencies
+$ pip install -r requirements.txt
 ```
 
-### Additional Tips:
+#### Download Face Recognition Models
+- [shape_predictor_68_face_landmarks.dat](http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2)
+- [dlib_face_recognition_resnet_model_v1.dat](http://dlib.net/files/dlib_face_recognition_resnet_model_v1.dat.bz2)
+- _Extract and place both files in the `django_backend/` directory._
 
-- **Code Examples**: Provide code snippets for common tasks, such as making API requests or handling authentication.
-- **FAQ Section**: Include a FAQ section to address common questions and issues.
-- **Community and Support**: Mention any community channels (e.g., Slack, Discord) or support email for users to get help.
+#### Google Sheets Integration
+- Create a service account in [Google Cloud Console](https://console.cloud.google.com/).
+- Download the credentials JSON and rename to `credentials.json`.
+- Place it in `django_backend/`.
 
-By incorporating these suggestions, your project documentation will be more comprehensive and user-friendly, making it easier for others to set up, use, and contribute to your project.
+#### Environment Variables
+Create a `.env` file in `django_backend/` with:
+```env
+GENAI_API_KEY=your_gemini_api_key_here
+# Add any other required keys here
+```
+
+#### Migrate Database & Create Admin
+```bash
+$ python manage.py makemigrations
+$ python manage.py migrate
+$ python manage.py createsuperuser  # Follow prompts to set admin credentials
+```
+
+#### Run the Backend
+```bash
+$ python manage.py runserver
+```
+
+---
+
+### 2️⃣ Frontend Setup
+
+```bash
+# From project root
+$ npm install
+$ npm run dev
+```
+- Access the frontend at [http://localhost:5173](http://localhost:5173)
+
+---
+
+## 👤 User Roles & Login
+- **Admin**: Full access, user/branch management
+- **HOD**: Branch-level management, analytics, notifications
+- **Faculty**: Attendance, marks, proctoring, leave
+- **Student**: Dashboard, attendance, study material
+
+#### Default Login (example)
+| Role    | Username   | Password   |
+|---------|------------|------------|
+| Admin   | admin      | (set by you) |
+| HOD     | hoduser    | (set by you) |
+| Faculty | faculty1   | (set by you) |
+| Student | 1AM22CI    | CI@2024     |
+
+- _Create users via Django admin or registration._
+
+---
+
+## 🚀 Usage Guide
+1. **Login** as your role
+2. **Navigate** to your dashboard
+3. **Enroll students** with face recognition (admin/faculty)
+4. **Take attendance** (faculty)
+5. **View analytics** (HOD/admin)
+6. **Send/receive notifications**
+7. **Export reports** (PDF/Sheets)
+8. **Ask AI** about uploaded PDFs (Gemini Q&A)
+
+> _Enjoy a seamless, automated campus experience!_
+
+---
+
+## 🧩 Major Backend Dependencies
+- Django, djangorestframework, django-cors-headers
+- dlib, opencv-python, numpy, Pillow
+- google-api-python-client, google-auth, google-auth-oauthlib
+- reportlab, pandas, openpyxl
+- djangorestframework-simplejwt, python-decouple, django-otp, pyotp
+- django-email-utils, gunicorn, psycopg2-binary
+
+---
+
+## 📝 Contributing
+- Fork, branch, and PR your features/bugfixes
+- Write clean, well-documented code
+- Use issues for bugs/feature requests
+
+---
+
+## ❓ FAQ
+- **Q: I get a dlib/OpenCV error on install?**
+  - A: Ensure you have CMake and system build tools installed. See [dlib install guide](http://dlib.net/compile.html).
+- **Q: How do I get a Google API key?**
+  - A: [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials
+- **Q: Where do I put my .env and credentials.json?**
+  - A: Both go in `django_backend/`
+- **Q: How do I reset my admin password?**
+  - A: `python manage.py changepassword admin`
+
+---
+
+## 💬 Support & Contact
+- _For help, open an issue or email: **support@neurocampus.ai**_
+- _Join our Discord: [Invite Link](#)_
+
+---
+
+## 🖤 Futuristic Design
+- Modern UI, dark mode, and animated transitions
+- Add your own screenshots, GIFs, or demo videos in the demo section above!
+- Customizable with your own branding (replace `public/placeholder.svg` and `favicon.ico`)
+
+---
+
+<p align="center">
+  <img src="public/placeholder.svg" alt="Futuristic Footer" width="200"/>
+  <br/>
+  <b>Starlight Technology • Neuro Campus</b>
+</p>

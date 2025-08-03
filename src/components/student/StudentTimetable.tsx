@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -21,6 +21,7 @@ import {
 import { Button } from "../ui/button";
 import { CalendarDays, Download, Filter } from "lucide-react";
 import { ScrollArea } from "../ui/scroll-area";
+import { getTimetable } from "@/utils/student_api";
 
 // Dummy data for one semester
 const timetableData = [
@@ -50,6 +51,17 @@ const StudentTimetable = () => {
   const [subjectFilter, setSubjectFilter] = useState("all");
   const [facultyFilter, setFacultyFilter] = useState("all");
   const [roomFilter, setRoomFilter] = useState("all");
+  const [timetableData, setTimetableData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchTimetable = async () => {
+      const data = await getTimetable();
+      if (data.success && Array.isArray(data.data)) {
+        setTimetableData(data.data);
+      }
+    };
+    fetchTimetable();
+  }, []);
 
   const filterCell = (subject: string): boolean => {
     if (subject === "Break") return true;
@@ -125,32 +137,29 @@ const StudentTimetable = () => {
         <div className="border rounded-lg p-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold flex items-center gap-2">
-              <CalendarDays className="w-5 h-5" /> 1st Semester Timetable
+              <CalendarDays className="w-5 h-5" /> Timetable
             </h2>
-            <span className="text-sm text-muted-foreground">Section A</span>
           </div>
 
           <ScrollArea className="w-full overflow-auto">
             <table className="w-full border text-sm">
               <thead>
                 <tr className="bg-muted">
-                  <th className="text-left p-2">Time/Day</th>
-                  <th className="text-left p-2">Monday</th>
-                  <th className="text-left p-2">Tuesday</th>
-                  <th className="text-left p-2">Wednesday</th>
-                  <th className="text-left p-2">Thursday</th>
-                  <th className="text-left p-2">Friday</th>
+                  <th className="text-left p-2">Day</th>
+                  <th className="text-left p-2">Start Time</th>
+                  <th className="text-left p-2">End Time</th>
+                  <th className="text-left p-2">Subject</th>
+                  <th className="text-left p-2">Room</th>
                 </tr>
               </thead>
               <tbody>
-                {timetableData.map((row, rowIndex) => (
-                  <tr key={rowIndex} className="border-t">
-                    <td className="p-2 font-medium">{row[0]}</td>
-                    {row.slice(1).map((cell, colIndex) => (
-                      <td key={colIndex} className="p-2 align-top">
-                        {renderCell(cell, rowIndex * 5 + colIndex)}
-                      </td>
-                    ))}
+                {timetableData.map((entry, idx) => (
+                  <tr key={idx} className="border-t">
+                    <td className="p-2 font-medium">{entry.day}</td>
+                    <td className="p-2">{entry.start_time}</td>
+                    <td className="p-2">{entry.end_time}</td>
+                    <td className="p-2">{entry.subject}</td>
+                    <td className="p-2">{entry.room}</td>
                   </tr>
                 ))}
               </tbody>

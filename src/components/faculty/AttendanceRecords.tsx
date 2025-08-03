@@ -1,84 +1,120 @@
-import { useState, useMemo } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
-import { Input } from "../ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
-import { Button } from "../ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
-import { ScrollArea } from "../ui/scroll-area"
-import { Download, ChevronLeft, ChevronRight } from "lucide-react"
-import clsx from "clsx"
-import jsPDF from "jspdf"
-import autoTable from "jspdf-autotable"
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
+import { ScrollArea } from "../ui/scroll-area";
+import { Button } from "../ui/button";
+import { Loader2 } from "lucide-react";
+import { getAttendanceRecordsList, viewAttendanceRecords, getAttendanceRecordDetails } from "@/utils/faculty_api";
+import { API_BASE_URL } from "@/utils/config";
+import { fetchWithTokenRefresh } from "@/utils/authService";
 
-const allRecords = [
-  { usn: "CS001", name: "Amit Kumar", subject: "Database Management", attendance: 92, status: "Good" },
-  { usn: "CS002", name: "Priya Sharma", subject: "Database Management", attendance: 85, status: "Good" },
-  { usn: "CS003", name: "Rahul Verma", subject: "Database Management", attendance: 72, status: "Poor" },
-  { usn: "CS004", name: "Ananya Patel", subject: "Database Management", attendance: 95, status: "Good" },
-  { usn: "CS005", name: "Vikram Singh", subject: "Database Management", attendance: 68, status: "Poor" },
-  { usn: "CS006", name: "Neha Gupta", subject: "Data Structures", attendance: 88, status: "Good" },
-  { usn: "CS007", name: "Rajesh Khanna", subject: "Data Structures", attendance: 76, status: "Average" },
-  { usn: "CS008", name: "Kavita Jain", subject: "Data Structures", attendance: 94, status: "Good" },
-  { usn: "CS009", name: "Deepak Kumar", subject: "Data Structures", attendance: 82, status: "Average" },
-  { usn: "CS010", name: "Meera Reddy", subject: "Data Structures", attendance: 65, status: "Poor" },
-]
+interface AttendanceRecord {
+  id: number;
+  date: string;
+  subject: string;
+  section: string;
+  semester: number;
+  branch: string;
+  file_path: string | null;
+  status: string;
+  branch_id: number;
+  section_id: number;
+  subject_id: number;
+  semester_id: number;
+}
 
-const getStatusColor = (status: string) =>
-  clsx(
-    "rounded-full px-2 py-1 text-xs font-medium",
-    status === "Good" && "bg-green-100 text-green-800",
-    status === "Average" && "bg-yellow-100 text-yellow-800",
-    status === "Poor" && "bg-red-100 text-red-800"
-  )
+interface AttendanceDetail {
+  student: string;
+  usn: string;
+  present: number;
+  total_sessions: number;
+  percentage: number;
+}
 
 const AttendanceRecords = () => {
-  const [search, setSearch] = useState("")
-  const [subjectFilter, setSubjectFilter] = useState("all")
-  const [page, setPage] = useState(1)
+  const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null);
+  const [details, setDetails] = useState<AttendanceDetail[]>([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+  const [detailsError, setDetailsError] = useState("");
+  const [presentList, setPresentList] = useState<{ name: string; usn: string }[]>([]);
+  const [absentList, setAbsentList] = useState<{ name: string; usn: string }[]>([]);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
-  const filteredData = useMemo(() => {
-    return allRecords.filter((r) => {
-      const matchesSearch =
-        r.name.toLowerCase().includes(search.toLowerCase()) ||
-        r.usn.toLowerCase().includes(search.toLowerCase())
-      const matchesSubject = subjectFilter === "all" || r.subject === subjectFilter
-      return matchesSearch && matchesSubject
-    })
-  }, [search, subjectFilter])
+  useEffect(() => {
+    setLoading(true);
+    getAttendanceRecordsList()
+      .then((res) => {
+        if (res.success && res.data) setRecords(res.data);
+        else setError(res.message || "Failed to fetch records");
+      })
+      .catch((e) => setError(e.message || "Failed to fetch records"))
+      .finally(() => setLoading(false));
+  }, []);
 
-  const pageSize = 10
-  const pageCount = Math.ceil(filteredData.length / pageSize)
-  const paginatedData = filteredData.slice((page - 1) * pageSize, page * pageSize)
+  const handleViewDetails = (record: AttendanceRecord) => {
+    setSelectedRecord(record);
+    setLoadingDetails(true);
+    setDetailsError("");
+    setDetails([]);
+    setPresentList([]);
+    setAbsentList([]);
+    setPdfUrl(null);
+    if (!record.branch_id || !record.section_id || !record.subject_id) {
+      setDetailsError("Missing class or subject ID for this record.");
+      setLoadingDetails(false);
+      return;
+    }
+    getAttendanceRecordDetails(record.id)
+      .then((res) => {
+        if (res.success && res.data) {
+          setPresentList(res.data.present);
+          setAbsentList(res.data.absent);
+          console.log('Present:', res.data.present);
+          console.log('Absent:', res.data.absent);
+        } else {
+          setDetailsError(res.message || "Failed to fetch details");
+        }
+      })
+      .catch((e) => setDetailsError(e.message || "Failed to fetch details"))
+      .finally(() => setLoadingDetails(false));
+  };
 
-  const handleExport = () => {
-    const doc = new jsPDF()
-    doc.setFontSize(16)
-    doc.text("Attendance Records", 14, 20)
-  
-    const tableData = filteredData.map((r) => [
-      r.usn,
-      r.name,
-      r.subject,
-      `${r.attendance}%`,
-      r.status,
-    ])
-  
-    autoTable(doc, {
-      startY: 30,
-      head: [["USN", "Student Name", "Subject", "Attendance", "Status"]],
-      body: tableData,
-      styles: {
-        fontSize: 10,
-        cellPadding: 3,
-      },
-      headStyles: {
-        fillColor: [22, 160, 133], // teal
-      },
-    })
-  
-    doc.save("attendance_records.pdf")
-  }
-  
+  const handleExportPdf = async () => {
+    if (!selectedRecord) return;
+    setExporting(true);
+    setPdfUrl(null);
+    setDetailsError("");
+    try {
+      const res = await fetchWithTokenRefresh(
+        `${API_BASE_URL}/faculty/generate-statistics/?file_id=${selectedRecord.id}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await res.json();
+      if (data.success && data.data && data.data.pdf_url) {
+        setPdfUrl(data.data.pdf_url);
+      } else {
+        setDetailsError(data.message || "Failed to generate PDF");
+      }
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setDetailsError(e.message || "Failed to generate PDF");
+      } else {
+        setDetailsError("Failed to generate PDF");
+      }
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <div className="p-6 space-y-4 bg-white">
@@ -87,95 +123,82 @@ const AttendanceRecords = () => {
           <CardTitle>Attendance Records</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-4">
-            <Input
-              placeholder="Search by student name or USN..."
-              value={search}
-              onChange={(e) => {
-                setPage(1)
-                setSearch(e.target.value)
-              }}
-              className="w-full md:w-1/2"
-            />
-            <Select
-              value={subjectFilter}
-              onValueChange={(value) => {
-                setPage(1)
-                setSubjectFilter(value)
-              }}
-            >
-              <SelectTrigger className="w-full md:w-1/4">
-                <SelectValue placeholder="All Subjects" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Subjects</SelectItem>
-                <SelectItem value="Database Management">Database Management</SelectItem>
-                <SelectItem value="Data Structures">Data Structures</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <ScrollArea className="rounded border">
-            <div className="flex justify-between items-center p-4 text-sm font-medium">
-              <span>
-                Showing {paginatedData.length} of {filteredData.length} attendance records
-              </span>
-              <Button size="sm" variant="outline" onClick={handleExport}>
-                <Download className="w-4 h-4 mr-2" /> Export
-              </Button>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>USN</TableHead>
-                  <TableHead>Student Name</TableHead>
-                  <TableHead>Subject</TableHead>
-                  <TableHead>Attendance</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedData.map((record) => (
-                  <TableRow key={record.usn}>
-                    <TableCell>{record.usn}</TableCell>
-                    <TableCell>{record.name}</TableCell>
-                    <TableCell>{record.subject}</TableCell>
-                    <TableCell>{record.attendance}%</TableCell>
-                    <TableCell>
-                      <span className={getStatusColor(record.status)}>{record.status}</span>
-                    </TableCell>
+          {loading ? (
+            <div className="flex items-center justify-center p-8"><Loader2 className="animate-spin mr-2" /> Loading records...</div>
+          ) : error ? (
+            <div className="text-red-600 p-4">{error}</div>
+          ) : (
+            <ScrollArea className="rounded border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Subject</TableHead>
+                    <TableHead>Section</TableHead>
+                    <TableHead>Semester</TableHead>
+                    <TableHead>Branch</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Action</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </ScrollArea>
+                </TableHeader>
+                <TableBody>
+                  {records.map((record) => (
+                    <TableRow key={record.id}>
+                      <TableCell>{record.date}</TableCell>
+                      <TableCell>{record.subject}</TableCell>
+                      <TableCell>{record.section}</TableCell>
+                      <TableCell>{record.semester}</TableCell>
+                      <TableCell>{record.branch}</TableCell>
+                      <TableCell>{record.status}</TableCell>
+                      <TableCell>
+                        <Button size="sm" onClick={() => handleViewDetails(record)}>
+                          View Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          )}
 
-          {/* Pagination */}
-          <div className="flex items-center justify-end space-x-2 mt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.max(p - 1, 1))}
-              disabled={page === 1}
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <span className="text-sm font-medium">
-              Page {page} of {pageCount}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.min(p + 1, pageCount))}
-              disabled={page === pageCount}
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
+          {/* Details Modal/Section */}
+          {selectedRecord && (
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold mb-2">Attendance Details for {selectedRecord.date} - {selectedRecord.subject} ({selectedRecord.section})</h3>
+              <div className="flex gap-8">
+                <div>
+                  <h4 className="font-semibold">Present Students</h4>
+                  <ul className="list-disc ml-6">
+                    {presentList.map((s) => (
+                      <li key={s.usn}>{s.name} ({s.usn})</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold">Absent Students</h4>
+                  <ul className="list-disc ml-6">
+                    {absentList.map((s) => (
+                      <li key={s.usn}>{s.name} ({s.usn})</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              <div className="mt-4">
+                <button className="btn btn-primary" onClick={handleExportPdf} disabled={exporting}>
+                  {exporting ? "Exporting..." : "Export to PDF"}
+                </button>
+                {pdfUrl && (
+                  <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="ml-4 text-blue-600 underline">Download PDF</a>
+                )}
+              </div>
+              {detailsError && <div className="text-red-600 mt-2">{detailsError}</div>}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
-  )
-}
+  );
+};
 
-export default AttendanceRecords
+export default AttendanceRecords;

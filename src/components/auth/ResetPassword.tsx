@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { resetPassword } from "../../utils/authService";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Shield, LockKeyhole, ArrowLeft, KeyRound } from "lucide-react";
 
 interface ResetPasswordProps {
   setPage: (page: string) => void;
@@ -74,107 +75,207 @@ const ResetPassword = ({ setPage }: ResetPasswordProps) => {
   };
 
   return (
-    <div
-      className="flex min-h-screen items-center justify-center bg-cover bg-center relative"
-      style={{
-        backgroundImage:
-          "url('https://images.unsplash.com/photo-1497604401993-f2e922e5cb0a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80')",
-      }}
-    >
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/70 to-indigo-900/60 backdrop-blur-[2px]"></div>
+    <div className="min-h-screen flex">
+      {/* Left Section - Reset Form */}
+      <motion.div 
+        className="flex-1 bg-[#1c1c1e] flex items-center justify-center p-8"
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="w-full max-w-md">
+          {/* Title */}
+          <motion.div 
+            className="text-center mb-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <h1 className="text-2xl font-bold text-white mb-2">Reset Password</h1>
+            <p className="text-gray-400 text-sm">Enter the OTP and your new password</p>
+          </motion.div>
 
-      <div className="container relative z-10 px-4 mx-auto flex flex-col items-center">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-2 text-white drop-shadow-lg">
-            NEURO CAMPUS
-          </h1>
-          <p className="text-xl text-blue-100 font-light tracking-wide">
-            AI-powered campus management system
-          </p>
-          <p className="text-sm text-blue-200 mt-1">
-            Developed under Stalight Technology
-          </p>
-        </div>
-
-        <Card className="w-full max-w-md backdrop-blur-xl bg-white/20 border border-white/30 shadow-[0_8px_32px_rgba(0,0,0,0.37)]">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center text-white">Reset Password</CardTitle>
-            <CardDescription className="text-center text-blue-100">Enter the OTP and your new password</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          {/* Form */}
+          <motion.div 
+            className="space-y-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
             {error && (
-              <div className="bg-red-500/80 text-white p-3 rounded-md text-sm backdrop-blur-sm">
+              <motion.div 
+                className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg text-sm"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+              >
                 {error}
-              </div>
+              </motion.div>
             )}
+            
             {success && (
-              <div className="bg-green-500/80 text-white p-3 rounded-md text-sm backdrop-blur-sm">
+              <motion.div 
+                className="bg-green-500/10 border border-green-500/20 text-green-400 p-3 rounded-lg text-sm"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+              >
                 {success}
-              </div>
+              </motion.div>
             )}
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="otp" className="text-sm font-medium text-gray-300">
+                  Verification Code
+                </label>
+                <div className="relative">
+                  <Shield className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                  <Input
+                    id="otp"
+                    type="text"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="Enter 6-digit OTP"
+                    className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 text-center transition-all duration-300"
+                    maxLength={6}
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <label htmlFor="newPassword" className="text-sm font-medium text-gray-300">
+                  New Password
+                </label>
+                <div className="relative">
+                  <LockKeyhole className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password"
+                    className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
+                  />
+                </div>
+              </div>
 
-            <div className="space-y-2">
-              <label htmlFor="otp" className="text-sm font-medium text-white">OTP</label>
-              <Input
-                id="otp"
-                type="text"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                placeholder="Enter OTP"
-                className="pl-10 w-full bg-white/10 border-white/20 text-white placeholder:text-blue-200/70 focus-visible:ring-blue-400"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="newPassword" className="text-sm font-medium text-white">New Password</label>
-              <Input
-                id="newPassword"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password"
-                className="pl-10 w-full bg-white/10 border-white/20 text-white placeholder:text-blue-200/70 focus-visible:ring-blue-400"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="confirmPassword" className="text-sm font-medium text-white">Confirm Password</label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
-                className="pl-10 w-full bg-white/10 border-white/20 text-white placeholder:text-blue-200/70 focus-visible:ring-blue-400"
-                required
-              />
+              <div className="space-y-2">
+                <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-300">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <KeyRound className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm new password"
+                    className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
+                  />
+                </div>
+              </div>
             </div>
 
             <Button
               onClick={handleResetPassword}
-              className="w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-medium shadow-lg shadow-blue-600/30"
               disabled={loading}
+              className="w-full bg-[#a259ff] hover:bg-[#a259ff]/90 text-white font-medium rounded-lg h-12 shadow-lg shadow-[#a259ff]/20 hover:shadow-[#a259ff]/40 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
             >
-              {loading ? "Resetting..." : "Reset Password"}
+              {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Resetting...
+                </div>
+              ) : (
+                "Reset Password"
+              )}
             </Button>
 
             <div className="text-center">
-              <span
-                className="text-blue-100 cursor-pointer hover:text-white text-sm transition-colors"
+              <button
+                type="button"
                 onClick={() => setPage("login")}
+                className="text-[#a259ff] hover:text-[#a259ff]/80 text-sm transition-colors duration-300 flex items-center justify-center gap-1"
               >
+                <ArrowLeft className="h-3 w-3" />
                 Back to Login
-              </span>
+              </button>
             </div>
-          </CardContent>
-        </Card>
-
-        <div className="mt-6 text-xs text-center text-blue-200/80">
-          © {new Date().getFullYear()} NEURO CAMPUS. All rights reserved.
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
+
+      {/* Right Section - Welcome & Illustration */}
+      <motion.div 
+        className="flex-1 bg-gradient-to-br from-[#a259ff] to-[#7c3aed] flex items-center justify-center p-8 relative overflow-hidden"
+        initial={{ opacity: 0, x: 50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+      >
+        {/* Background decorative elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-xl" />
+          <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white/10 rounded-full blur-xl" />
+          <div className="absolute top-1/2 left-1/4 w-20 h-20 bg-white/5 rounded-full blur-lg" />
+        </div>
+
+        <div className="relative z-10 text-center text-white max-w-md">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Secure Your
+              <br />
+              <span className="bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+                Account
+              </span>
+            </h2>
+            <p className="text-lg text-white/90 mb-8">
+              Create a strong new password for your account
+            </p>
+          </motion.div>
+
+          {/* Animated security illustration */}
+          <motion.div 
+            className="flex justify-center mb-8"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+          >
+            <motion.div 
+              className="p-6 bg-white/10 rounded-full backdrop-blur-sm"
+              animate={{ 
+                scale: [1, 1.1, 1],
+                rotate: [0, 5, -5, 0]
+              }}
+              transition={{ 
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            >
+              <Shield className="w-12 h-12 text-white" />
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            className="text-white/80 text-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 1.2 }}
+          >
+            NEURO CAMPUS Security
+            <br />
+            <span className="text-xs text-white/60 mt-2 block">
+              Your data is protected with enterprise-grade security
+            </span>
+          </motion.div>
+        </div>
+      </motion.div>
     </div>
   );
 };

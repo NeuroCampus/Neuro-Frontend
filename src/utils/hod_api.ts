@@ -289,14 +289,20 @@ interface GetMarksParams {
   branch_id: string;
 }
 
-interface Mark {
+export interface TestMark {
+  test_number: number;
+  mark: number;
+  max_mark: number;
+}
+
+export interface Mark {
   student_id: string;
   student: string;
   usn: string;
   subject: string;
-  test_number: number;
-  mark: number;
-  max_mark: number;
+  subject_id: string;
+  average_mark: number;
+  test_marks: TestMark[];
 }
 
 interface GetMarksResponse {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import Login from "../components/auth/Login";
 import OTPPage from "../components/auth/OTPPage";
-import ForgotPassword from "../components/auth/ForgotPassword";
+import ForgotPasswordFlow from "../components/auth/ForgotPasswordFlow";
 import ResetPassword from "../components/auth/ResetPassword";
 import AdminDashboard from "../components/dashboards/AdminDashboard";
 import HODDashboard from "../components/dashboards/HODDashboard";
@@ -52,7 +52,7 @@ const Index = () => {
   // Authentication pages
   if (page === "login") return <Login setRole={setRole} setPage={setPage} setUser={setUser} />;
   if (page === "otp") return <OTPPage setRole={setRole} setPage={setPage} setUser={setUser} />;
-  if (page === "forgot-password") return <ForgotPassword setPage={setPage} />;
+  if (page === "forgot-password") return <ForgotPasswordFlow setPage={setPage} />;
   if (page === "reset-password") return <ResetPassword setPage={setPage} />;
 
   // Role-based dashboard pages

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -14,6 +14,7 @@ import {
   AlertCircle,
   Clock,
 } from "lucide-react";
+import { getCertificates } from "@/utils/student_api";
 
 // Mock data - replace with actual API data
 const mockCertificates = [
@@ -51,6 +52,17 @@ const mockRequests = [
 
 const CertificatesManagement = () => {
   const [activeTab, setActiveTab] = useState("view");
+  const [certificates, setCertificates] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchCertificates = async () => {
+      const data = await getCertificates();
+      if (data.success && Array.isArray(data.data)) {
+        setCertificates(data.data);
+      }
+    };
+    fetchCertificates();
+  }, []);
 
   return (
     <Card>

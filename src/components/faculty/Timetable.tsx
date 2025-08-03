@@ -1,79 +1,98 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { FaDownload } from 'react-icons/fa';
+import { getTimetable, TimetableEntry } from '../../utils/faculty_api';
 
 interface TimetableProps {
-  role: string; // e.g., "Dr. Alan"
+  role: string;
 }
 
-const timetableData = [
-  {
-    day: "Monday",
-    slots: [
-      { time: "9:00-10:00", subject: "Math", faculty: "Dr. Alan", room: "101" },
-      { time: "10:00-11:00", subject: "History", faculty: "Prof. Grace", room: "106" },
-      { time: "11:15-12:15", subject: "Computer Science", faculty: "Dr. Frank", room: "107" },
-      { time: "12:15-1:15", subject: "Art", faculty: "Prof. Helen", room: "108" },
-      { time: "2:00-3:00", subject: "Biology", faculty: "Dr. Eva", room: "105" },
-      { time: "3:00-4:00", subject: "Music", faculty: "Prof. Ivan", room: "109" },
-    ],
-  },
-  {
-    day: "Tuesday",
-    slots: [
-      { time: "9:00-10:00", subject: "Physics", faculty: "Dr. Brian", room: "102" },
-      { time: "10:00-11:00", subject: "Geography", faculty: "Prof. Jane", room: "110" },
-      { time: "11:15-12:15", subject: "Math", faculty: "Dr. Alan", room: "101" },
-      { time: "12:15-1:15", subject: "English", faculty: "Prof. Diana", room: "104" },
-      { time: "2:00-3:00", subject: "Chemistry", faculty: "Dr. Claire", room: "103" },
-      { time: "3:00-4:00", subject: "Physics", faculty: "Dr. Brian", room: "102" },
-    ],
-  },
-  {
-    day: "Wednesday",
-    slots: [
-      { time: "9:00-10:00", subject: "Chemistry", faculty: "Dr. Claire", room: "103" },
-      { time: "10:00-11:00", subject: "Math", faculty: "Dr. Alan", room: "101" },
-      { time: "11:15-12:15", subject: "English", faculty: "Prof. Diana", room: "104" },
-      { time: "12:15-1:15", subject: "Biology", faculty: "Dr. Eva", room: "105" },
-      { time: "2:00-3:00", subject: "Physics", faculty: "Dr. Brian", room: "102" },
-      { time: "3:00-4:00", subject: "Chemistry", faculty: "Dr. Claire", room: "103" },
-    ],
-  },
-  {
-    day: "Thursday",
-    slots: [
-      { time: "9:00-10:00", subject: "English", faculty: "Prof. Diana", room: "104" },
-      { time: "10:00-11:00", subject: "Economics", faculty: "Prof. Kevin", room: "111" },
-      { time: "11:15-12:15", subject: "Philosophy", faculty: "Dr. Laura", room: "112" },
-      { time: "12:15-1:15", subject: "Psychology", faculty: "Prof. Mike", room: "113" },
-      { time: "2:00-3:00", subject: "Chemistry", faculty: "Dr. Claire", room: "103" },
-      { time: "3:00-4:00", subject: "Sociology", faculty: "Prof. Nancy", room: "114" },
-    ],
-  },
-  {
-    day: "Friday",
-    slots: [
-      { time: "9:00-10:00", subject: "Biology", faculty: "Dr. Eva", room: "105" },
-      { time: "10:00-11:00", subject: "Physics", faculty: "Dr. Brian", room: "102" },
-      { time: "11:15-12:15", subject: "Chemistry", faculty: "Dr. Claire", room: "103" },
-      { time: "12:15-1:15", subject: "Literature", faculty: "Prof. Olivia", room: "115" },
-      { time: "2:00-3:00", subject: "Math", faculty: "Dr. Alan", room: "101" },
-      { time: "3:00-4:00", subject: "Biology", faculty: "Dr. Eva", room: "105" },
-    ],
-  },
+interface TimetableSlot {
+  time: string;
+  subject: string;
+  faculty: string;
+  room: string;
+  section: string;
+  semester: number;
+  branch: string;
+}
+
+interface TimetableDay {
+  day: string;
+  slots: TimetableSlot[];
+}
+
+const timeSlots = [
+  "09:00-10:00",
+  "10:00-11:00",
+  "11:00-12:00",
+  "11:15-12:15",
+  "12:00-13:00",
+  "12:15-13:15",
+  "14:00-15:00",
+  "15:00-16:00"
 ];
 
-const timeSlots = ["9:00-10:00", "10:00-11:00", "11:15-12:15", "12:15-1:15", "2:00-3:00", "3:00-4:00"];
-
 const Timetable = ({ role }: TimetableProps) => {
-  // Filter out only the slots for the given faculty
+  const [timetableData, setTimetableData] = useState<TimetableDay[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getTimetable()
+      .then((res) => {
+        if (res.success && res.data && res.data.length > 0) {
+          console.log('Backend timetable data:', res.data); // Debug log
+          
+          const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+          const dayMapping = {
+            'MON': 'Monday',
+            'TUE': 'Tuesday', 
+            'WED': 'Wednesday',
+            'THU': 'Thursday',
+            'FRI': 'Friday',
+            'SAT': 'Saturday'
+          };
+          
+          const backendData: TimetableDay[] = daysOfWeek.map((day) => ({
+            day,
+            slots: res.data
+              .filter((entry: TimetableEntry) => {
+                const mappedDay = dayMapping[entry.day] || entry.day;
+                return mappedDay === day;
+              })
+              .map((entry: TimetableEntry) => {
+                return {
+                  time: `${entry.start_time}-${entry.end_time}`,
+                  subject: entry.subject,
+                  faculty: `${entry.faculty_name} - ${entry.subject} (${entry.branch}, Sem ${entry.semester}, Sec ${entry.section})`,
+                  room: entry.room,
+                  section: entry.section,
+                  semester: entry.semester,
+                  branch: entry.branch
+                };
+              }),
+          }));
+          
+          console.log('Transformed timetable data:', backendData); // Debug log
+          setTimetableData(backendData);
+        } else {
+          setTimetableData([]);
+        }
+      })
+      .catch((error) => {
+        console.error('Error loading timetable:', error); // Debug log
+        setError("Failed to load timetable")
+      })
+      .finally(() => setLoading(false));
+  }, [role]);
+
   const filteredData = timetableData.map((day) => ({
     day: day.day,
-    slots: day.slots.filter((slot) => slot.faculty === role),
+    slots: day.slots,
   }));
 
   const exportPDF = useCallback(() => {
@@ -125,6 +144,11 @@ const Timetable = ({ role }: TimetableProps) => {
         </Button>
       </div>
       <CardContent>
+        {loading ? (
+          <div className="text-center text-gray-600">Loading timetable...</div>
+        ) : error ? (
+          <div className="text-center text-red-600">{error}</div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full table-auto border-collapse text-sm border">
             <thead>
@@ -141,6 +165,7 @@ const Timetable = ({ role }: TimetableProps) => {
                   <td className="border px-4 py-2 font-semibold">{time}</td>
                   {filteredData.map((day) => {
                     const slot = day.slots.find((s) => s.time === time);
+                    
                     return (
                       <td key={day.day + time} className="border px-4 py-2 text-center">
                         {slot ? (
@@ -160,6 +185,7 @@ const Timetable = ({ role }: TimetableProps) => {
             </tbody>
           </table>
         </div>
+        )}
       </CardContent>
     </Card>
   );
