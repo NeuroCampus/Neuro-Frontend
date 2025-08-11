@@ -160,13 +160,13 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-gray-100 text-gray-900 min-h-screen">
-      <Card className="md:col-span-2 bg-white border border-gray-200 shadow-sm">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-black-50 text-gray-900 min-h-screen">
+      <Card className="md:col-span-2 bg-black-50 border border-gray-500 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-xl text-gray-900">
+          <CardTitle className="text-xl text-gray-200">
             Notification History
           </CardTitle>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-400">
             List of all notifications sent to users
           </p>
         </CardHeader>
@@ -178,19 +178,19 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
               <table className="w-full text-left text-sm">
                 <thead className="border-b border-gray-300">
                   <tr>
-                    <th className="pb-2 text-gray-700">Message</th>
-                    <th className="pb-2 text-gray-700">Target</th>
+                    <th className="pb-2 text-gray-200">Message</th>
+                    <th className="pb-2 text-gray-200">Target</th>
                   </tr>
                 </thead>
                 <tbody>
                   {notifications.map((note) => (
                     <tr
                       key={note.id}
-                      className="border-b border-gray-200 hover:bg-gray-50 transition"
+                      className="border-b border-gray-200"
                     >
                       <td className="py-3">
-                        <div className="font-medium text-gray-900">{note.title}</div>
-                        <div className="text-gray-600 text-sm">{note.message}</div>
+                        <div className="font-medium text-gray-400">{note.title}</div>
+                        <div className="text-gray-400 text-sm">{note.message}</div>
                       </td>
                       <td className="py-3">
                         <span
@@ -208,14 +208,14 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
         </CardContent>
       </Card>
 
-      <Card className="bg-white border border-gray-200 shadow-sm">
+      <Card className="bg-black-50 border border-gray-500 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-xl text-gray-900">Create Notification</CardTitle>
-          <p className="text-sm text-gray-500">Send a new notification to users</p>
+          <CardTitle className="text-xl text-gray-200">Create Notification</CardTitle>
+          <p className="text-sm text-gray-400">Send a new notification to users</p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm mb-1 text-gray-700">Title</label>
+            <label className="block text-sm mb-1 text-gray-200">Title</label>
             <Input
               className="bg-white text-gray-900 border-gray-300"
               placeholder="Notification Title"
@@ -227,7 +227,7 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
             />
           </div>
           <div>
-            <label className="block text-sm mb-1 text-gray-700">Message</label>
+            <label className="block text-sm mb-1 text-gray-200">Message</label>
             <Textarea
               className="bg-white text-gray-900 border-gray-300"
               rows={4}
@@ -240,7 +240,7 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
             />
           </div>
           <div>
-            <label className="block text-sm mb-1 text-gray-700">Target Role</label>
+            <label className="block text-sm mb-1 text-gray-200">Target Role</label>
             <Select
               value={targetRole}
               onValueChange={(val) => {

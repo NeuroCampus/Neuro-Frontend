@@ -107,10 +107,10 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
 
   return (
     <div className="px-4 py-8 max-w-4xl mx-auto">
-      <Card className="bg-white shadow-md border border-gray-200">
+      <Card className="bg-text-gray-800 shadow-md border border-gray-700 text-gray-100">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Upload User Data</CardTitle>
-          <CardDescription className="text-sm text-gray-600">
+          <CardTitle className="text-lg font-semibold ">Upload User Data</CardTitle>
+          <CardDescription className="text-sm text-gray-400">
             Upload CSV or Excel files to bulk enroll users
           </CardDescription>
         </CardHeader>
@@ -128,20 +128,25 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
               "border-2 border-dashed rounded-md px-6 py-10 text-center cursor-pointer transition-all duration-200 relative",
               dragActive
                 ? "border-blue-400 bg-blue-50 ring-2 ring-blue-200"
-                : "border-gray-300"
+                : "border-gray-400"
             )}
           >
-            <Upload className="mx-auto mb-2 text-gray-500" size={28} />
-            <p className="text-gray-700">Drag & drop file here</p>
-            <p className="text-xs text-gray-500">Supports CSV, XLS, XLSX (max 5MB)</p>
+            <Upload className="mx-auto mb-2 text-gray-400" size={28} />
+            <p className="text-gray-400">Drag & drop file here</p>
+            <p className="text-xs text-gray-400">Supports CSV, XLS, XLSX (max 5MB)</p>
             <div className="mt-3">
-              <Button variant="outline" size="sm" type="button">
+              <Button
+                variant="outline"
+                size="sm"
+                type="button"
+                className="text-gray-100 bg-transparent border-gray-500"
+              >
                 Select File
               </Button>
             </div>
             {file && (
               <div className="mt-4 flex items-center justify-center gap-2">
-                <span className="text-sm text-gray-700">{file.name}</span>
+                <span className="text-sm text-gray-400">{file.name}</span>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -165,7 +170,7 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
           </div>
 
           <Button
-            className="w-full"
+            className="w-full text-gray-400"
             onClick={handleUpload}
             disabled={loading || !file}
           >
@@ -174,7 +179,7 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
 
           <div>
             <p className="font-medium mb-2">Upload Instructions</p>
-            <ul className="list-disc pl-5 text-sm text-gray-700 space-y-1">
+            <ul className="list-disc pl-5 text-sm text-gray-400 space-y-1 ">
               <li>Use the provided template for proper data formatting</li>
               <li>Required columns: name, email</li>
               <li>role not required, defaults to teacher</li>

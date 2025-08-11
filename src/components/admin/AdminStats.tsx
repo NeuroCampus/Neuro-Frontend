@@ -166,15 +166,13 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
   }
 
   return (
-    <div className="space-y-8 text-gray-800 bg-gray-50 min-h-screen p-6">
+    <div className="space-y-8 text-gray-800 bg-black-50 min-h-screen p-6">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
       >
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">
-          Admin Dashboard
-        </h1>
+        
 
         {/* Dashboard Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -214,14 +212,14 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
 
         {/* Search and Export */}
         <div className="flex justify-between items-center flex-wrap gap-4 mt-8">
-          <div className="flex items-center w-full sm:w-1/2 bg-white border border-gray-200 rounded-lg px-4 py-2 shadow-sm">
-            <FiSearch className="text-gray-500 mr-3" />
+          <div className="flex items-center w-full sm:w-1/2 bg-black-50 border border-gray-200 rounded-lg px-4 py-2 shadow-sm">
+            <FiSearch className="text-white mr-3" />
             <input
               type="text"
               placeholder="Search by branch name"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full outline-none text-sm bg-transparent"
+              className="w-full outline-none text-sm bg-transparent text-white"
             />
           </div>
           <button
@@ -240,12 +238,12 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
             variants={chartVariants}
             initial="hidden"
             animate="visible"
-            className="bg-white rounded-lg shadow border border-gray-200 p-6"
+            className="text-gray-800 rounded-lg shadow border border-gray-700 p-6"
           >
-            <h3 className="text-lg font-semibold mb-1 text-gray-800">
+            <h3 className="text-lg font-semibold mb-1 text-gray-100">
               Branch Distribution
             </h3>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-gray-400 mb-4">
               Students and faculty across branches
             </p>
             <div className="h-80">
@@ -255,11 +253,19 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
                   responsive: true,
                   maintainAspectRatio: false,
                   plugins: {
-                    legend: { position: "top" },
+                    legend: {
+                      position: "top",
+                      labels: { color: "#fff" } // Legend text white
+                    },
                     tooltip: { enabled: true },
                   },
                   scales: {
-                    y: { beginAtZero: true, title: { display: true, text: "Count" } },
+                    x: { ticks: { color: "#fff" } },
+                    y: { 
+                      beginAtZero: true, 
+                      title: { display: true, text: "Count", color: "#fff" },
+                      ticks: { color: "#fff" }
+                    },
                   },
                 }}
               />
@@ -271,12 +277,12 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
             variants={chartVariants}
             initial="hidden"
             animate="visible"
-            className="bg-white rounded-lg shadow border border-gray-200 p-6"
+            className="text-gray-800 rounded-lg shadow border border-gray-700 p-6"
           >
-            <h3 className="text-lg font-semibold mb-1 text-gray-800">
+            <h3 className="text-lg font-semibold mb-1 text-gray-100">
               Role Distribution
             </h3>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-gray-400 mb-4">
               Breakdown of users by role
             </p>
             <div className="h-80">
@@ -286,7 +292,10 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
                   responsive: true,
                   maintainAspectRatio: false,
                   plugins: {
-                    legend: { position: "right" },
+                    legend: { 
+                      position: "right", 
+                      labels: { color: "#fff" }
+                    },
                     tooltip: { enabled: true },
                   },
                 }}
@@ -295,23 +304,24 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
           </motion.div>
         </div>
 
+
         {/* Branch Statistics Table */}
         <motion.div
           variants={chartVariants}
           initial="hidden"
           animate="visible"
-          className="bg-white rounded-lg shadow border border-gray-200 p-6"
+          className="text-gray-800 rounded-lg shadow border border-gray-700 p-6 mt-5"
         >
-          <h3 className="text-lg font-semibold mb-1 text-gray-800">
+          <h3 className="text-lg font-semibold mb-1 text-gray-100">
             Branch Statistics
           </h3>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-gray-400 mb-4">
             Detailed distribution of students and faculty
           </p>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
+            <table className="w-full text-sm text-left text-gray-300">
               <thead>
-                <tr className="text-gray-600 bg-gray-50 border-b border-gray-200">
+                <tr className="text-gray-100 text-gray-200 border-b border-gray-700">
                   <th className="py-3 px-4">Branch</th>
                   <th className="py-3 px-4">Student Count</th>
                   <th className="py-3 px-4">Faculty Count</th>
@@ -322,7 +332,7 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
                   filteredBranches.map((branch: any, index: number) => (
                     <tr
                       key={index}
-                      className="border-b border-gray-100 hover:bg-gray-50 transition"
+                      className="border-b border-gray-700 hover:bg-[#2E2E40] transition"
                     >
                       <td className="py-3 px-4">{branch.name || "N/A"}</td>
                       <td className="py-3 px-4">{branch.students || 0}</td>

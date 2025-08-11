@@ -210,22 +210,22 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex justify-center items-start py-12 px-4">
-      <Card className="w-full max-w-2xl border border-gray-200 shadow-md">
+    <div className="min-h-screen bg-black-50 flex justify-center items-start py-12 px-4">
+      <Card className="w-full max-w-2xl bg-black-50 border-gray-500 shadow-md">
         <CardHeader className="flex flex-col items-start gap-2 px-6 pt-6 pb-4">
           <div className="flex w-full justify-between items-center">
             <div>
-              <CardTitle className="text-lg text-gray-900">Profile Information</CardTitle>
-              <p className="text-sm text-gray-500">View and update your personal information</p>
+              <CardTitle className="text-lg text-gray-200">Profile Information</CardTitle>
+              <p className="text-sm text-gray-400">View and update your personal information</p>
             </div>
             <Button
               size="sm"
               onClick={() => {
-                if (editing) handleSaveProfile();
-                else setEditing(true);
+              if (editing) handleSaveProfile();
+              else setEditing(true);
               }}
               variant="outline"
-              className="text-blue-600 border-blue-500 hover:bg-blue-50"
+              className="text-blue-500 border-blue-400 hover:bg-blue-900 hover:text-white"
               disabled={loading}
             >
               {editing ? (loading ? "Saving..." : "Save") : "Edit Profile"}
@@ -241,18 +241,18 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
               {profile.last_name[0]}
             </div>
             <div className="text-center mt-2">
-              <div className="text-lg font-semibold text-gray-900">
+              <div className="text-lg font-semibold text-gray-200">
                 {profile.first_name} {profile.last_name}
               </div>
-              <div className="text-sm text-gray-500">Administrator</div>
+              <div className="text-sm text-gray-400">Administrator</div>
             </div>
           </div>
 
-          <hr className="border-gray-200" />
+          <hr className="border-gray-500" />
 
           <div className="space-y-6">
             <div>
-              <Label htmlFor="first_name" className="text-xs text-gray-500 mb-1 block">
+              <Label htmlFor="first_name" className="text-xs text-gray-200 mb-1 block">
                 First Name
               </Label>
               <Input
@@ -265,7 +265,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
               />
             </div>
             <div>
-              <Label htmlFor="last_name" className="text-xs text-gray-500 mb-1 block">
+              <Label htmlFor="last_name" className="text-xs text-gray-200 mb-1 block">
                 Last Name
               </Label>
               <Input
@@ -278,7 +278,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
               />
             </div>
             <div>
-              <Label htmlFor="email" className="text-xs text-gray-500 mb-1 block">
+              <Label htmlFor="email" className="text-xs text-gray-200 mb-1 block">
                 Email Address
               </Label>
               <Input
@@ -291,7 +291,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
               />
             </div>
             <div>
-              <Label htmlFor="mobile_number" className="text-xs text-gray-500 mb-1 block">
+              <Label htmlFor="mobile_number" className="text-xs text-gray-200 mb-1 block">
                 Mobile Number
               </Label>
               <Input
@@ -304,7 +304,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
               />
             </div>
             <div>
-              <Label htmlFor="address" className="text-xs text-gray-500 mb-1 block">
+              <Label htmlFor="address" className="text-xs text-gray-200 mb-1 block">
                 Address
               </Label>
               <Input
@@ -317,7 +317,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
               />
             </div>
             <div>
-              <Label htmlFor="bio" className="text-xs text-gray-500 mb-1 block">
+              <Label htmlFor="bio" className="text-xs text-gray-200 mb-1 block">
                 Bio
               </Label>
               <textarea

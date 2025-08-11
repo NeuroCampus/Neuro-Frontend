@@ -101,19 +101,19 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 px-4 py-10">
-      <div className="max-w-2xl mx-auto">
-        <Card className="w-full bg-white border shadow-lg rounded-lg p-6">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg text-gray-900">User Enrollment Form</CardTitle>
-            <CardDescription className="text-sm text-gray-500">
+    <div className="min-h-screen bg-black-50 px-4 py-10">
+      <div className="max-w-2xl mx-auto ">
+        <Card className="w-full bg-text-gray-800 border border-gray-700 shadow-lg rounded-lg p-6">
+          <CardHeader className="pb-4 ">
+            <CardTitle className="text-lg text-gray-100">User Enrollment Form</CardTitle>
+            <CardDescription className="text-sm text-gray-400">
               Add a new user to the system
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-5">
               <div>
-                <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                <label htmlFor="email" className="text-sm font-medium text-gray-400">
                   Email
                 </label>
                 <Input
@@ -128,7 +128,7 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
               </div>
               <div className="flex gap-4">
                 <div className="w-1/2">
-                  <label htmlFor="first_name" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="first_name" className="text-sm font-medium text-gray-400">
                     First Name
                   </label>
                   <Input
@@ -141,7 +141,7 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
                   />
                 </div>
                 <div className="w-1/2">
-                  <label htmlFor="last_name" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="last_name" className="text-sm font-medium text-gray-400">
                     Last Name
                   </label>
                   <Input
@@ -155,7 +155,7 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
                 </div>
               </div>
               <div>
-                <label htmlFor="role" className="text-sm font-medium text-gray-700">
+                <label htmlFor="role" className="text-sm font-medium text-gray-400">
                   Role
                 </label>
                 <Select value={formData.role} onValueChange={handleRoleChange}>

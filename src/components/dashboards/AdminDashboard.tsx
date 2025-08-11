@@ -251,14 +251,6 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
                     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
                     .join(" ")}
             </motion.h1>
-            <motion.div 
-              className="text-sm text-gray-400 bg-gray-800/30 px-3 py-2 rounded-lg backdrop-blur-sm"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4, delay: 0.5 }}
-            >
-              Welcome, <span className="text-[#a259ff] font-medium">{user?.username || "Admin"}</span>
-            </motion.div>
           </motion.div>
           {error && (
             <motion.div 
