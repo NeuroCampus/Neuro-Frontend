@@ -224,26 +224,26 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
     options: string[];
   }) => (
     <div className="flex flex-col">
-      <label className="text-sm text-gray-600 mb-1">{label}</label>
+      <label className="text-sm text-gray-300 mb-1">{label}</label>
       <Select.Root value={value} onValueChange={onChange}>
-        <Select.Trigger className="inline-flex items-center justify-between bg-white border border-gray-300 px-3 py-2 rounded w-48 text-sm text-gray-700 shadow-sm focus:ring-1 focus:ring-blue-500 focus:outline-none">
+        <Select.Trigger className="inline-flex items-center justify-between bg-gray-800 border border-gray-700 px-3 py-2 rounded w-48 text-sm text-gray-200 shadow-sm focus:ring-1 focus:ring-blue-500 focus:outline-none">
           <Select.Value />
           <Select.Icon>
-            <ChevronDownIcon />
+            <ChevronDownIcon className="text-gray-400" />
           </Select.Icon>
         </Select.Trigger>
         <Select.Portal>
-          <Select.Content className="bg-white rounded shadow-lg z-50">
+          <Select.Content className="bg-gray-900 rounded shadow-lg z-50 border border-gray-700">
             <Select.Viewport>
               {options.map((opt) => (
                 <Select.Item
                   key={opt}
                   value={opt}
-                  className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm text-gray-800"
+                  className="px-3 py-2 cursor-pointer hover:bg-gray-800 text-sm text-gray-200 flex items-center"
                 >
                   <Select.ItemText>{opt}</Select.ItemText>
-                  <Select.ItemIndicator className="ml-auto">
-                    <CheckIcon />
+                  <Select.ItemIndicator className="ml-2">
+                    <CheckIcon className="text-blue-400" />
                   </Select.ItemIndicator>
                 </Select.Item>
               ))}
@@ -259,41 +259,47 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen text-gray-900">
-      <Card className="bg-white border border-gray-200 shadow-sm">
+    <div className="p-6 bg-black-50 min-h-screen">
+      <Card className="bg-black-50 border border-gray-500 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg text-gray-900">User Management</CardTitle>
-          <p className="text-sm text-gray-500">Manage all users in the system</p>
+          <CardTitle className="text-lg text-gray-200">User Management</CardTitle>
+          <p className="text-sm text-gray-400">Manage all users in the system</p>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
             <div className="flex flex-wrap gap-4">
-              <SelectMenu
-                label="Filter by Role"
-                value={roleFilter}
-                onChange={setRoleFilter}
-                options={roles}
-              />
-              <SelectMenu
-                label="Filter by Status"
-                value={statusFilter}
-                onChange={setStatusFilter}
-                options={statuses}
-              />
+              <div>
+                <span className="block text-sm text-gray-200 mb-1">Filter by Role</span>
+                <SelectMenu
+                  label=""
+                  value={roleFilter}
+                  onChange={setRoleFilter}
+                  options={roles}
+                />
+              </div>
+              <div>
+                <span className="block text-sm text-gray-200 mb-1">Filter by Status</span>
+                <SelectMenu
+                  label=""
+                  value={statusFilter}
+                  onChange={setStatusFilter}
+                  options={statuses}
+                />
+              </div>
             </div>
             <div className="flex flex-col">
-              <label className="text-sm text-gray-600 mb-1">Search</label>
+              <label className="text-sm text-gray-200 mb-1">Search</label>
               <Input
                 placeholder="Search name or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-64"
+                className="w-64 bg-gray-800 border border-gray-700 text-gray-200 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-900">
-              <thead className="border-b border-gray-200 text-gray-600">
+            <table className="w-full text-sm text-left text-gray-400">
+              <thead className="border-b border-gray-500 text-gray-200">
                 <tr>
                   <th className="py-2">Full Name</th>
                   <th className="py-2">Email</th>
@@ -307,7 +313,7 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
                   filteredUsers.map((user) => (
                     <tr
                       key={user.id}
-                      className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                      className="border-b  border-gray-500 transition-colors duration-200 hover:bg-gray-800"
                     >
                       <td className="py-3">
                         {editingId === user.id ? (
@@ -315,6 +321,7 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
                             name="name"
                             value={editData?.name || ""}
                             onChange={handleEditChange}
+                            className="text-gray-900 bg-white" // Make text visible
                           />
                         ) : (
                           user.name
@@ -326,6 +333,7 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
                             name="email"
                             value={editData?.email || ""}
                             onChange={handleEditChange}
+                            className="text-gray-900 bg-white" // Make text visible
                           />
                         ) : (
                           user.email
@@ -379,16 +387,28 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
       </Card>
 
       <Dialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-[#18181b] border border-gray-700 text-gray-200">
           <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogTitle className="text-gray-100">Confirm Deletion</DialogTitle>
           </DialogHeader>
-          <p>Are you sure you want to delete this user? This action cannot be undone.</p>
+          <p className="text-gray-300">
+            Are you sure you want to delete this user? This action cannot be undone.
+          </p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)} disabled={loading}>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteId(null)}
+              disabled={loading}
+              className="border-gray-600 text-gray-200 bg-gray-800 hover:bg-gray-700"
+            >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={deleteUser} disabled={loading}>
+            <Button
+              variant="destructive"
+              onClick={deleteUser}
+              disabled={loading}
+              className="bg-red-700 hover:bg-red-800 text-white"
+            >
               {loading ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>

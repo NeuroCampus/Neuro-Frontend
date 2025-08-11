@@ -172,15 +172,15 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen text-gray-900">
-      <Card className="bg-white border border-gray-200 shadow-sm">
+    <div className="p-6 bg-black-50 min-h-screen text-gray-200">
+      <Card className="bg-black-50 border border-gray-500 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg text-gray-900">Leave Requests</CardTitle>
-          <p className="text-sm text-gray-500">Review and approve leave requests from Heads of Departments</p>
+          <CardTitle className="text-lg text-gray-200">Leave Requests</CardTitle>
+          <p className="text-sm text-gray-400">Review and approve leave requests from Heads of Departments</p>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           <table className="w-full text-sm text-left text-gray-900">
-            <thead className="border-b border-gray-200 text-gray-600">
+            <thead className="border-b border-gray-200 text-gray-200">
               <tr>
                 <th className="py-2">HOD</th>
                 <th className="py-2">Period</th>
@@ -191,55 +191,55 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
             </thead>
             <tbody>
               {Array.isArray(leaveRequests) && leaveRequests.length > 0 ? (
-                leaveRequests.map((leave) => (
-                  <tr
-                    key={leave.id}
-                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="py-3">
-                      <div className="font-medium">{leave.name}</div>
-                      <div className="text-xs text-gray-500">{leave.department}</div>
-                    </td>
-                    <td className="py-3 text-sm">
-                      {leave.from} <span className="text-gray-400">to</span> {leave.to}
-                    </td>
-                    <td className="py-3 text-sm">{leave.reason}</td>
-                    <td className="py-3">{getStatusBadge(leave.status)}</td>
-                    <td className="py-3">
-                      {leave.status === "Pending" ? (
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            className="text-green-600 border-green-600 hover:bg-green-50 px-3 py-1 text-xs flex items-center gap-1"
-                            onClick={() => handleApprove(leave.id)}
-                            disabled={loading}
-                          >
-                            <CheckCircle size={16} /> Approve
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="text-red-600 border-red-600 hover:bg-red-50 px-3 py-1 text-xs flex items-center gap-1"
-                            onClick={() => {
-                              setShowModal(true);
-                              setSelectedId(leave.id);
-                            }}
-                            disabled={loading}
-                          >
-                            <XCircle size={16} /> Reject
-                          </Button>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-gray-400">No action needed</span>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5} className="text-center py-4 text-gray-500">
-                    No leave requests available.
-                  </td>
+              leaveRequests.map((leave) => (
+                <tr
+                key={leave.id}
+                className="border-b border-gray-100 transition-colors duration-200 hover:bg-gray-800"
+                >
+                <td className="py-3">
+                  <div className="font-medium text-white">{leave.name}</div>
+                  <div className="text-xs text-gray-300">{leave.department}</div>
+                </td>
+                <td className="py-3 text-sm text-white">
+                  {leave.from} <span className="text-gray-300">to</span> {leave.to}
+                </td>
+                <td className="py-3 text-sm text-white">{leave.reason}</td>
+                <td className="py-3">{getStatusBadge(leave.status)}</td>
+                <td className="py-3">
+                  {leave.status === "Pending" ? (
+                  <div className="flex gap-2">
+                    <Button
+                    variant="outline"
+                    className="text-green-700 border-green-600 hover:bg-green-900 px-3 py-1 text-xs flex items-center gap-1"
+                    onClick={() => handleApprove(leave.id)}
+                    disabled={loading}
+                    >
+                    <CheckCircle size={16} /> Approve
+                    </Button>
+                    <Button
+                    variant="outline"
+                    className="text-red-700 border-red-600 hover:bg-red-900 px-3 py-1 text-xs flex items-center gap-1"
+                    onClick={() => {
+                      setShowModal(true);
+                      setSelectedId(leave.id);
+                    }}
+                    disabled={loading}
+                    >
+                    <XCircle size={16} /> Reject
+                    </Button>
+                  </div>
+                  ) : (
+                  <span className="text-xs text-gray-400">No action needed</span>
+                  )}
+                </td>
                 </tr>
+              ))
+              ) : (
+              <tr>
+                <td colSpan={5} className="text-center py-4 text-gray-400">
+                No leave requests available.
+                </td>
+              </tr>
               )}
             </tbody>
           </table>
@@ -247,22 +247,29 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
       </Card>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent>
+        <DialogContent className="bg-[#18181b] text-gray-200 border border-gray-700">
           <DialogHeader>
-            <DialogTitle>Reject Leave Request</DialogTitle>
+            <DialogTitle className="text-gray-200">Reject Leave Request</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-gray-600">Are you sure you want to reject this leave request?</p>
+          <p className="text-sm text-gray-300">Are you sure you want to reject this leave request?</p>
           <DialogFooter className="pt-4 flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setShowModal(false)} disabled={loading}>
+            <Button
+              variant="outline"
+              className="border-gray-600 text-gray-200 bg-[#18181b]"
+              onClick={() => setShowModal(false)}
+              disabled={loading}
+              style={{ boxShadow: "none" }}
+            >
               Cancel
             </Button>
             <Button
-              className="bg-red-600 text-white hover:bg-red-700"
+              className="bg-red-800 text-gray-100 border border-red-800 hover:bg-red-900"
               onClick={handleConfirmReject}
               disabled={loading}
+              style={{ boxShadow: "none" }}
             >
-              {loading ? "Rejecting..." : "Confirm Reject"}
-            </Button>
+          {loading ? "Rejecting..." : "Confirm Reject"}
+        </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

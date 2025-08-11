@@ -239,14 +239,14 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
   if (loading && branches.length === 0) return <div className="text-center py-6">Loading...</div>;
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen text-gray-900">
-      <Card className="bg-white border border-gray-200 shadow-sm">
+    <div className="p-6 bg-black-50 min-h-screen text-gray-700">
+      <Card className="bg-text-gray-800 border border-gray-700 shadow-sm">
         <CardHeader className="pb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <CardTitle className="text-lg text-gray-900">Branch Management</CardTitle>
-            <p className="text-sm text-gray-500">Manage branches and assign department heads</p>
+            <CardTitle className="text-lg text-gray-200">Branch Management</CardTitle>
+            <p className="text-sm text-gray-400">Manage branches and assign department heads</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 ">
             <Button size="sm" className="flex items-center gap-1 bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-300 shadow-sm" onClick={() => setIsAddDialogOpen(true)} disabled={loading}>
               <PlusIcon className="w-4 h-4" /> Add Branch
             </Button>
@@ -258,45 +258,78 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <div className="pt-3 pb-2">
+        <CardContent className="overflow-x-auto ">
+          <div className="pt-3 pb-2 ">
             <Input placeholder="Search by branch name..." value={filter} onChange={(e) => setFilter(e.target.value)} className="w-64" />
           </div>
-          <table className="w-full text-sm text-left text-gray-800">
-            <thead className="border-b border-gray-200 text-gray-600">
-              <tr>
+            <table className="w-full text-sm text-left text-gray-200">
+              <thead className="border-b border-gray-200 text-gray-400">
+                <tr>
                 <th className="py-2">ID</th>
                 <th className="py-2">Branch</th>
                 <th className="py-2">Assigned HOD</th>
                 <th className="py-2 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredBranches.map((branch) => (
-                <tr key={branch.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                  <td className="py-3">{branch.id}</td>
-                  <td className="py-3">
-                    {editingId === branch.id ? <Input name="name" value={editData?.name || ""} onChange={handleEditChange} /> : branch.name}
-                  </td>
-                  <td className="py-3">
-                    {editingId === branch.id ? <Input name="hod" value={editData?.hod || ""} onChange={handleEditChange} /> : branch.hod || "--"}
-                  </td>
-                  <td className="py-3 text-right space-x-2">
-                    {editingId === branch.id ? (
-                      <Button size="sm" onClick={saveEdit} disabled={loading}>{loading ? "Saving..." : "Save"}</Button>
-                    ) : (
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(branch)} disabled={loading}>
-                        <PencilIcon className="w-4 h-4 text-blue-600" />
-                      </Button>
-                    )}
-                    <Button variant="ghost" size="icon" onClick={() => confirmDelete(branch.id)} disabled={loading}>
-                      <TrashIcon className="w-4 h-4 text-red-600" />
-                    </Button>
-                  </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredBranches.map((branch) => (
+                  <tr
+                    key={branch.id}
+                    className="border-b border-gray-100 transition-colors text-gray-200 duration-200 hover:bg-gray-800/60"
+                  >
+                    <td className="py-3">{branch.id}</td>
+                    <td className="py-3 pr-2 text-gray-200">
+                      {editingId === branch.id ? (
+                        <Input
+                          name="name"
+                          value={editData?.name || ""}
+                          onChange={handleEditChange}
+                          className="bg-gray-800 text-white border border-gray-600"
+                        />
+                      ) : (
+                        branch.name
+                      )}
+                    </td>
+                    <td className="py-3 text-gray-200">
+                      {editingId === branch.id ? (
+                        <Input
+                          name="hod"
+                          value={editData?.hod || ""}
+                          onChange={handleEditChange}
+                          className="bg-gray-800 text-white border border-gray-600"
+                        />
+                      ) : (
+                        branch.hod || "--"
+                      )}
+                    </td>
+                    <td className="py-3 text-right space-x-2">
+                      {editingId === branch.id ? (
+                        <Button size="sm" onClick={saveEdit} disabled={loading}>
+                          {loading ? "Saving..." : "Save"}
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(branch)}
+                          disabled={loading}
+                        >
+                          <PencilIcon className="w-4 h-4 text-blue-600" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => confirmDelete(branch.id)}
+                        disabled={loading}
+                      >
+                        <TrashIcon className="w-4 h-4 text-red-600" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
         </CardContent>
       </Card>
 

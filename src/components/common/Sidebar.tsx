@@ -337,18 +337,27 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     >
       {sidebarContent}
       <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-        <DialogContent className="bg-[#1c1c1e] border-gray-700">
+        <DialogContent className="bg-[#1c1c1e] border-gray-700 text-white">
           <DialogHeader>
-            <DialogTitle className="text-white">Confirm Logout</DialogTitle>
-            <DialogDescription className="text-gray-400">Are you sure you want to log out?</DialogDescription>
+        <DialogTitle className="text-white">Confirm Logout</DialogTitle>
+        <DialogDescription className="text-gray-200">
+          Are you sure you want to log out?
+        </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowLogoutDialog(false)} className="border-gray-700 text-gray-300 hover:bg-gray-800">
-              Cancel
-            </Button>
-            <Button onClick={confirmLogout} className="bg-red-600 hover:bg-red-700 text-white">
-              Logout
-            </Button>
+        <Button
+          variant="outline"
+          onClick={() => setShowLogoutDialog(false)}
+          className="border-gray-200 text-gray-900 hover:bg-gray-500"
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={confirmLogout}
+          className="bg-red-600 hover:bg-red-700 text-white"
+        >
+          Logout
+        </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

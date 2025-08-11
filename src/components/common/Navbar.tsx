@@ -31,7 +31,7 @@ const Navbar = ({ role, user, onNotificationClick }: NavbarProps) => {
 
   return (
     <motion.div 
-      className="bg-[#1c1c1e] border-b border-gray-700 flex items-center justify-between px-6 py-4 w-full backdrop-blur-sm"
+      className="bg-[#1c1c1e] border-gray-700 flex items-center justify-between px-6 py-2.5 w-full backdrop-blur-sm"
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -44,15 +44,15 @@ const Navbar = ({ role, user, onNotificationClick }: NavbarProps) => {
         transition={{ duration: 0.4, delay: 0.1 }}
       >
         <div className="flex items-center gap-3">
-          <motion.div
-            className="w-8 h-8 bg-gradient-to-r from-[#a259ff] to-[#7c3aed] rounded-lg flex items-center justify-center"
-            whileHover={{ scale: 1.1, rotate: 5 }}
-            transition={{ duration: 0.2 }}
-          >
-            <span className="text-white font-bold text-sm">N</span>
-          </motion.div>
           <div>
-            <h1 className="text-white font-semibold text-lg">NEURO CAMPUS</h1>
+            <motion.div 
+              className="text-white font-bold text-lg text-gray-400"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4, delay: 0.5 }}
+            >
+              Welcome, <span className="text-[#a259ff] font-medium">{user?.username || "Admin"}</span>
+            </motion.div>
             <p className="text-gray-400 text-xs">Academic Management System</p>
           </div>
         </div>
