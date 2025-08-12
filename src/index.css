@@ -99,3 +99,22 @@
     @apply bg-background text-foreground;
   }
 }
+/* For Chrome, Safari, and Edge */
+.thin-scrollbar::-webkit-scrollbar {
+  width: 4px; /* very thin */
+}
+
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent; /* transparent track */
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3); /* light thumb */
+  border-radius: 9999px; /* fully rounded */
+}
+
+/* For Firefox */
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}

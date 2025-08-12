@@ -174,13 +174,13 @@ const LeaveManagement = () => {
   });
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen text-gray-900">
+    <div className="p-6 bg-[#1c1c1e] min-h-screen text-gray-200">
       {/* Header */}
       <h2 className="text-2xl font-semibold mb-2">Leave Approvals</h2>
-      <p className="text-gray-600 mb-6">Review and manage faculty leave requests.</p>
+      <p className="text-gray-400 mb-6">Review and manage faculty leave requests.</p>
 
       {/* Loading and Errors */}
-      {isLoading && <p className="text-gray-600 mb-4">Loading leave requests...</p>}
+      {isLoading && <p className="text-gray-400 mb-4">Loading leave requests...</p>}
       {errors.length > 0 && (
         <ul className="text-sm text-red-500 mb-4 list-disc list-inside">
           {errors.map((err, idx) => (
@@ -195,23 +195,23 @@ const LeaveManagement = () => {
           placeholder="Search faculty..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-64 bg-white border border-gray-300 text-sm"
+          className="w-64 bg-[#1c1c1e] border border-gray-200 text-sm"
         />
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <div className="flex justify-end items-center">
               <Button
                 variant="outline"
-                className="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100"
+                className="flex items-center gap-2 bg-[#1c1c1e] border border-gray-300 text-gray-400 text-sm font-medium hover:bg-gray-100"
               >
                 <Filter className="w-4 h-4" />
                 Filter
               </Button>
             </div>
           </PopoverTrigger>
-          <PopoverContent className="w-48 p-4">
+          <PopoverContent className="w-48 p-4 bg-[#1c1c1e] border border-gray-400 text-gray-800">
             <div className="flex flex-col gap-2">
-              <h4 className="text-sm font-semibold text-gray-700 mb-2">Filter Leave Requests</h4>
+              <h4 className="text-sm font-semibold text-gray-200 mb-2">Filter Leave Requests</h4>
               <Button
                 variant={filterStatus === "All" ? "default" : "outline"}
                 size="sm"
@@ -258,13 +258,13 @@ const LeaveManagement = () => {
       </div>
 
       {/* Leave Requests Table */}
-      <div className="bg-white p-4 rounded-md shadow text-sm text-gray-800 border border-gray-200">
+      <div className="bg-[#1c1c1e] p-4 rounded-md shadow text-sm text-gray-200 border border-gray-200">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-base font-semibold text-gray-800">Leave Requests</h3>
+          <h3 className="text-base font-semibold text-gray-200">Leave Requests</h3>
         </div>
         <table className="w-full">
           <thead>
-            <tr className="text-left border-b text-gray-600 text-xs">
+            <tr className="text-left border-b text-gray-200 text-xs">
               <th className="pb-2">Faculty</th>
               <th>Period</th>
               <th>Reason</th>
@@ -275,7 +275,7 @@ const LeaveManagement = () => {
           <tbody>
             {filteredRequests.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-3 text-center text-gray-500">
+                <td colSpan={5} className="py-3 text-center text-gray-200">
                   No leave requests found
                 </td>
               </tr>
@@ -284,8 +284,8 @@ const LeaveManagement = () => {
                 <tr key={row.id} className="border-b last:border-none text-sm">
                   <td className="py-3">
                     <div>
-                      <p className="font-medium text-gray-900">{row.name}</p>
-                      <p className="text-xs text-gray-500">{row.dept}</p>
+                      <p className="font-medium text-gray-200">{row.name}</p>
+                      <p className="text-xs text-gray-400">{row.dept}</p>
                     </div>
                   </td>
                   <td>{row.period}</td>

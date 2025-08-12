@@ -586,9 +586,9 @@ const StudentManagement = () => {
   const filteredChartData = state.chartData.filter((item) => item.semester === state.selectedSemester);
 
   return (
-    <div className="p-6 space-y-6 bg-white min-h-screen text-black">
+    <div className="p-6 space-y-6 bg-[#1c1c1e] min-h-screen text-gray-200">
       <h2 className="text-2xl font-semibold">Student Management</h2>
-      {state.isLoading && <p className="text-gray-600">Loading data...</p>}
+      {state.isLoading && <p className="text-gray-400">Loading data...</p>}
       {state.uploadErrors.length > 0 && (
         <ul className="text-sm text-red-500 mb-4 list-disc list-inside">
           {state.uploadErrors.map((err, idx) => (
@@ -598,9 +598,9 @@ const StudentManagement = () => {
       )}
 
       {/* Add Student Manually Form */}
-      <Card>
+      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-700">
         <CardHeader>
-          <CardTitle className="text-lg">Add Student Manually</CardTitle>
+          <CardTitle className="text-lg text-gray-100">Add Student Manually</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex space-x-4">
@@ -608,19 +608,19 @@ const StudentManagement = () => {
               placeholder="USN"
               value={state.manualForm.usn}
               onChange={(e) => updateState({ manualForm: { ...state.manualForm, usn: e.target.value } })}
-              className="flex-1"
+              className="flex-1 bg-[#232326] text-gray-200 border border-gray-700 placeholder-gray-400 focus:border-gray-500 focus:ring-0"
             />
             <Input
               placeholder="Name"
               value={state.manualForm.name}
               onChange={(e) => updateState({ manualForm: { ...state.manualForm, name: e.target.value } })}
-              className="flex-1"
+              className="flex-1 bg-[#232326] text-gray-200 border border-gray-700 placeholder-gray-400 focus:border-gray-500 focus:ring-0"
             />
             <Input
               placeholder="Email"
               value={state.manualForm.email}
               onChange={(e) => updateState({ manualForm: { ...state.manualForm, email: e.target.value } })}
-              className="flex-1"
+              className="flex-1 bg-[#232326] text-gray-200 border border-gray-700 placeholder-gray-400 focus:border-gray-500 focus:ring-0"
             />
             <Select
               value={state.manualForm.semester}
@@ -632,12 +632,12 @@ const StudentManagement = () => {
               }
               disabled={state.isLoading || state.semesters.length === 0}
             >
-              <SelectTrigger className="flex-1">
+              <SelectTrigger className="flex-1 bg-[#232326] text-gray-200 border border-gray-700 placeholder-gray-400 focus:border-gray-500 focus:ring-0">
                 <SelectValue
                   placeholder={state.semesters.length === 0 ? "No semesters available" : "Select Semester"}
                 />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-[#232326] text-gray-200 border border-gray-700">
                 {state.semesters.map((s) => (
                   <SelectItem key={s.id} value={`${s.number}th Semester`}>
                     Semester {s.number}
@@ -650,7 +650,7 @@ const StudentManagement = () => {
               onValueChange={(value) => updateState({ manualForm: { ...state.manualForm, section: value } })}
               disabled={state.isLoading || !state.manualForm.semester || state.manualSections.length === 0}
             >
-              <SelectTrigger className="flex-1">
+              <SelectTrigger className="flex-1 bg-[#232326] text-gray-200 border border-gray-700 placeholder-gray-400 focus:border-gray-500 focus:ring-0">
                 <SelectValue
                   placeholder={
                     state.manualSections.length === 0 || !state.manualForm.semester
@@ -659,7 +659,7 @@ const StudentManagement = () => {
                   }
                 />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-[#232326] text-gray-200 border border-gray-700">
                 {state.manualSections
                   .filter((section) => section.semester_id === getSemesterId(state.manualForm.semester))
                   .map((section) => (
@@ -672,7 +672,7 @@ const StudentManagement = () => {
             <Button
               onClick={handleManualEntry}
               disabled={state.isLoading || !state.branchId || !state.manualForm.semester || !state.manualForm.section}
-              className="flex items-center gap-1 border border-gray-300 text-sm font-medium text-gray-800 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-md transition disabled:opacity-50"
+              className="flex items-center gap-1 border border-gray-700 text-sm font-medium text-gray-200 bg-[#2c2c2e] hover:bg-[#3a3a3c] px-3 py-1.5 rounded-md transition disabled:opacity-50"
             >
               + Add Student
             </Button>
@@ -680,10 +680,10 @@ const StudentManagement = () => {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-700">
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle className="text-lg">Student List</CardTitle>
+            <CardTitle className="text-lg text-gray-100">Student List</CardTitle>
             <div className="flex gap-2">
               <Select
                 value={state.semesterFilter}
@@ -697,12 +697,16 @@ const StudentManagement = () => {
                 }
                 disabled={state.isLoading || state.semesters.length === 0}
               >
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-48 bg-[#2c2c2e] text-gray-200 border border-gray-700">
                   <SelectValue
-                    placeholder={state.semesters.length === 0 ? "No semesters available" : "Select Semester"}
+                    placeholder={
+                      state.semesters.length === 0
+                        ? "No semesters available"
+                        : "Select Semester"
+                    }
                   />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[#2c2c2e] text-gray-200 border border-gray-700">
                   <SelectItem value="All">All Semesters</SelectItem>
                   {state.semesters.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
@@ -711,24 +715,34 @@ const StudentManagement = () => {
                   ))}
                 </SelectContent>
               </Select>
+
               <Select
                 value={state.sectionFilter}
-                onValueChange={(value) => updateState({ sectionFilter: value, currentPage: 1 })}
-                disabled={state.isLoading || state.semesterFilter === "All" || state.listSections.length === 0}
+                onValueChange={(value) =>
+                  updateState({ sectionFilter: value, currentPage: 1 })
+                }
+                disabled={
+                  state.isLoading ||
+                  state.semesterFilter === "All" ||
+                  state.listSections.length === 0
+                }
               >
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-48 bg-[#2c2c2e] text-gray-200 border border-gray-700">
                   <SelectValue
                     placeholder={
-                      state.listSections.length === 0 || state.semesterFilter === "All"
+                      state.listSections.length === 0 ||
+                      state.semesterFilter === "All"
                         ? "Select semester first"
                         : "Select Section"
                     }
                   />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[#2c2c2e] text-gray-200 border border-gray-700">
                   <SelectItem value="All">All Sections</SelectItem>
                   {state.listSections
-                    .filter((section) => section.semester_id === state.semesterFilter)
+                    .filter(
+                      (section) => section.semester_id === state.semesterFilter
+                    )
                     .map((section) => (
                       <SelectItem key={section.id} value={section.id}>
                         Section {section.name}
@@ -736,9 +750,10 @@ const StudentManagement = () => {
                     ))}
                 </SelectContent>
               </Select>
+
               <Button
                 onClick={() => updateState({ addStudentModal: true })}
-                className="flex items-center gap-1 border border-gray-300 text-sm font-semibold text-gray-800 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-md transition"
+                className="flex items-center gap-1 border border-gray-700 text-sm font-semibold text-gray-200 bg-[#2c2c2e] hover:bg-[#3a3a3c] px-3 py-1.5 rounded-md transition"
                 disabled={state.isLoading || !state.branchId}
               >
                 <Upload className="w-4 h-4" />
@@ -747,18 +762,22 @@ const StudentManagement = () => {
             </div>
           </div>
         </CardHeader>
+
         <CardContent>
           <div className="flex justify-start mb-4">
             <Input
               placeholder="Search students..."
-              className="w-64"
+              className="w-64 bg-[#2c2c2e] text-gray-200 border border-gray-700 placeholder-gray-500"
               value={state.search}
-              onChange={(e) => updateState({ search: e.target.value, currentPage: 1 })}
+              onChange={(e) =>
+                updateState({ search: e.target.value, currentPage: 1 })
+              }
             />
           </div>
+
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-left">
-              <thead className="bg-gray-100 text-gray-600">
+              <thead className="bg-[#2c2c2e] text-gray-400 border-b border-gray-700">
                 <tr>
                   <th className="py-2 px-4">USN</th>
                   <th className="py-2 px-4">Name</th>
@@ -768,7 +787,7 @@ const StudentManagement = () => {
                   <th className="py-2 px-4">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-700">
                 {paginatedStudents.map((student) => (
                   <tr key={student.usn}>
                     <td className="py-2 px-4">{student.usn}</td>
@@ -779,13 +798,18 @@ const StudentManagement = () => {
                     <td className="py-2 px-4 flex gap-2">
                       <button
                         onClick={() => openEdit(student)}
-                        className="text-blue-600 hover:text-blue-800"
+                        className="text-blue-400 hover:text-blue-300"
                       >
                         <Pencil size={18} />
                       </button>
                       <button
-                        onClick={() => updateState({ selectedStudent: student, confirmDelete: true })}
-                        className="text-red-600 hover:text-red-800"
+                        onClick={() =>
+                          updateState({
+                            selectedStudent: student,
+                            confirmDelete: true,
+                          })
+                        }
+                        className="text-red-400 hover:text-red-300"
                       >
                         <Trash2 size={18} />
                       </button>
@@ -794,28 +818,38 @@ const StudentManagement = () => {
                 ))}
               </tbody>
             </table>
+
             {filteredStudents.length === 0 && (
-              <p className="text-center text-gray-600 mt-4">No students found</p>
+              <p className="text-center text-gray-500 mt-4">No students found</p>
             )}
+
             <div className="text-sm text-gray-500 mt-4">
-              Showing {paginatedStudents.length} out of {filteredStudents.length} students
+              Showing {paginatedStudents.length} out of {filteredStudents.length}{" "}
+              students
             </div>
           </div>
+
           <div className="flex justify-end items-center mt-4">
             <Button
-              onClick={() => updateState({ currentPage: Math.max(state.currentPage - 1, 1) })}
+              onClick={() =>
+                updateState({ currentPage: Math.max(state.currentPage - 1, 1) })
+              }
               disabled={state.currentPage === 1}
-              className="w-24 flex items-center justify-center gap-1 border border-gray-300 text-sm font-medium text-gray-800 bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed py-1.5 rounded-md transition"
+              className="w-24 flex items-center justify-center gap-1 border border-gray-700 text-sm font-medium text-gray-200 bg-[#2c2c2e] hover:bg-[#3a3a3c] disabled:opacity-50 disabled:cursor-not-allowed py-1.5 rounded-md transition"
             >
               Previous
             </Button>
-            <div className="w-16 text-center text-sm font-medium text-gray-800 bg-white border border-gray-300 py-1.5 mx-2 rounded-md">
+            <div className="w-16 text-center text-sm font-medium text-gray-200 bg-[#2c2c2e] border border-gray-700 py-1.5 mx-2 rounded-md">
               {state.currentPage}
             </div>
             <Button
-              onClick={() => updateState({ currentPage: Math.min(state.currentPage + 1, totalPages) })}
+              onClick={() =>
+                updateState({
+                  currentPage: Math.min(state.currentPage + 1, totalPages),
+                })
+              }
               disabled={state.currentPage === totalPages}
-              className="w-24 flex items-center justify-center gap-1 border border-gray-300 text-sm font-medium text-gray-800 bg-gray-50 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed py-1.5 rounded-md transition"
+              className="w-24 flex items-center justify-center gap-1 border border-gray-700 text-sm font-medium text-gray-200 bg-[#2c2c2e] hover:bg-[#3a3a3c] disabled:opacity-50 disabled:cursor-not-allowed py-1.5 rounded-md transition"
             >
               Next
             </Button>
@@ -823,22 +857,26 @@ const StudentManagement = () => {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-[#1c1c1e] border border-gray-800 text-gray-200">
         <CardHeader className="flex justify-between items-center">
-          <CardTitle className="text-lg">Student Performance Comparison</CardTitle>
+          <CardTitle className="text-lg text-gray-100">Student Performance Comparison</CardTitle>
           <Select
             value={state.selectedSemester}
             onValueChange={(value) => updateState({ selectedSemester: value })}
             disabled={state.isLoading || state.semesters.length === 0}
           >
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-48 bg-[#2c2c2e] border border-gray-700 text-gray-200">
               <SelectValue
-                placeholder={state.semesters.length === 0 ? "No semesters available" : "Select Semester"}
+                placeholder={
+                  state.semesters.length === 0
+                    ? "No semesters available"
+                    : "Select Semester"
+                }
               />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-[#2c2c2e] text-gray-200 border border-gray-700">
               {state.semesters.map((s) => (
-                <SelectItem key={s.id} value={`${s.number}th Semester`}>
+                <SelectItem key={s.id} value={`${s.number}th Semester`} className="hover:bg-gray-700">
                   Semester {s.number}
                 </SelectItem>
               ))}
@@ -849,15 +887,21 @@ const StudentManagement = () => {
           {filteredChartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={filteredChartData}>
-                <XAxis dataKey="subject" />
-                <YAxis />
-                <Tooltip />
+                <XAxis dataKey="subject" stroke="#a1a1aa" />
+                <YAxis stroke="#a1a1aa" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#2c2c2e",
+                    border: "1px solid #3f3f46",
+                    color: "#e4e4e7",
+                  }}
+                />
                 <Bar dataKey="attendance" fill="#60a5fa" name="Attendance %" />
                 <Bar dataKey="marks" fill="#a78bfa" name="Marks %" />
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="text-center text-gray-600">
+            <div className="text-center text-gray-400">
               <p>No data available for the selected semester.</p>
               <p>Please select a different semester or upload data for this semester.</p>
             </div>
@@ -865,13 +909,18 @@ const StudentManagement = () => {
         </CardContent>
       </Card>
 
+
       <Dialog open={state.addStudentModal} onOpenChange={closeModal}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-xl bg-[#1c1c1e] text-gray-200 border border-gray-800">
           <DialogHeader>
-            <DialogTitle>Upload Student Data</DialogTitle>
+            <DialogTitle className="text-gray-100">Upload Student Data</DialogTitle>
           </DialogHeader>
+
+          {/* Semester & Section Select */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Select Semester and Section</label>
+            <label className="block text-sm font-medium text-gray-300 mb-1">
+              Select Semester and Section
+            </label>
             <div className="flex gap-4">
               <Select
                 value={state.manualForm.semester}
@@ -883,25 +932,40 @@ const StudentManagement = () => {
                 }
                 disabled={state.isLoading || state.semesters.length === 0}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full bg-[#2c2c2e] border border-gray-700 text-gray-200">
                   <SelectValue
-                    placeholder={state.semesters.length === 0 ? "No semesters available" : "Select Semester"}
+                    placeholder={
+                      state.semesters.length === 0
+                        ? "No semesters available"
+                        : "Select Semester"
+                    }
                   />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[#2c2c2e] text-gray-200 border border-gray-700">
                   {state.semesters.map((s) => (
-                    <SelectItem key={s.id} value={`${s.number}th Semester`}>
+                    <SelectItem
+                      key={s.id}
+                      value={`${s.number}th Semester`}
+                      className="hover:bg-gray-700"
+                    >
                       Semester {s.number}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+
               <Select
                 value={state.manualForm.section}
-                onValueChange={(value) => updateState({ manualForm: { ...state.manualForm, section: value } })}
-                disabled={state.isLoading || !state.manualForm.semester || state.manualSections.length === 0}
+                onValueChange={(value) =>
+                  updateState({ manualForm: { ...state.manualForm, section: value } })
+                }
+                disabled={
+                  state.isLoading ||
+                  !state.manualForm.semester ||
+                  state.manualSections.length === 0
+                }
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full bg-[#2c2c2e] border border-gray-700 text-gray-200">
                   <SelectValue
                     placeholder={
                       state.manualSections.length === 0 || !state.manualForm.semester
@@ -910,11 +974,19 @@ const StudentManagement = () => {
                     }
                   />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[#2c2c2e] text-gray-200 border border-gray-700">
                   {state.manualSections
-                    .filter((section) => section.semester_id === getSemesterId(state.manualForm.semester))
+                    .filter(
+                      (section) =>
+                        section.semester_id ===
+                        getSemesterId(state.manualForm.semester)
+                    )
                     .map((section) => (
-                      <SelectItem key={section.id} value={section.name}>
+                      <SelectItem
+                        key={section.id}
+                        value={section.name}
+                        className="hover:bg-gray-700"
+                      >
                         Section {section.name}
                       </SelectItem>
                     ))}
@@ -922,15 +994,21 @@ const StudentManagement = () => {
               </Select>
             </div>
           </div>
+
+          {/* File Upload Drop Zone */}
           <div
             onDrop={handleDrop}
             onDragOver={(e) => e.preventDefault()}
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50"
+            className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:bg-[#2c2c2e] transition-colors"
           >
             <UploadCloud size={36} className="mx-auto text-gray-400 mb-3" />
-            <p className="font-medium">Drag & drop file here or click to select</p>
-            <p className="text-sm text-gray-500">Supports CSV, XLS, XLSX (max 5MB, 500 records)</p>
+            <p className="font-medium text-gray-200">
+              Drag & drop file here or click to select
+            </p>
+            <p className="text-sm text-gray-400">
+              Supports CSV, XLS, XLSX (max 5MB, 500 records)
+            </p>
             <input
               type="file"
               accept=".csv,.xls,.xlsx"
@@ -945,85 +1023,78 @@ const StudentManagement = () => {
               style={{ display: "none" }}
             />
             {state.droppedFileName && (
-              <p className="text-sm text-gray-600 mt-2">
+              <p className="text-sm text-gray-300 mt-2">
                 Selected file: <strong>{state.droppedFileName}</strong>
               </p>
             )}
             {state.uploadErrors.length > 0 && (
-              <ul className="text-sm text-red-500 mt-2 list-disc list-inside">
+              <ul className="text-sm text-red-400 mt-2 list-disc list-inside">
                 {state.uploadErrors.map((err, idx) => (
                   <li key={idx}>{err}</li>
                 ))}
               </ul>
             )}
             {state.uploadedCount > 0 && (
-              <p className="text-sm text-green-600 mt-2">{state.uploadedCount} students successfully added.</p>
-            )}
-            {state.droppedFileName && (
-              <div className="mt-4 text-sm text-gray-600 flex items-center justify-center font-medium">
-                <p>{state.droppedFileName}</p>
-                <Button
-                  onClick={() =>
-                    updateState({
-                      droppedFileName: null,
-                      uploadErrors: [],
-                      uploadedCount: 0,
-                    })
-                  }
-                  variant="link"
-                  className="text-red-500"
-                >
-                  X
-                </Button>
-              </div>
+              <p className="text-sm text-green-400 mt-2">
+                {state.uploadedCount} students successfully added.
+              </p>
             )}
           </div>
 
-          {state.uploadedCount > 0 && (
-            <div className="bg-green-100 text-green-700 border border-green-300 rounded p-3 text-sm mt-4">
-              Successfully added {state.uploadedCount} students!
-            </div>
-          )}
-
-          <div className="mt-6 text-sm text-gray-600">
+          {/* Upload Instructions */}
+          <div className="mt-6 text-sm text-gray-300">
             <h4 className="font-medium mb-2">Upload Instructions</h4>
             <ul className="list-disc pl-6 space-y-1">
               <li>Use the provided template for proper data formatting</li>
               <li>
-                Required columns: <strong>usn</strong>, <strong>name</strong>, <strong>email</strong>
+                Required columns: <strong>usn</strong>, <strong>name</strong>,{" "}
+                <strong>email</strong>
               </li>
               <li>USN format: e.g., 1AM22CI001 (10 characters, alphanumeric)</li>
               <li>Semester and Section are selected above, not in the file</li>
               <li>Maximum 500 records per file</li>
               <li>
-                <a href="#" className="text-blue-600 underline" onClick={downloadTemplate}>
+                <a
+                  href="#"
+                  className="text-blue-400 underline"
+                  onClick={downloadTemplate}
+                >
                   Download Template
                 </a>
               </li>
             </ul>
           </div>
 
+          {/* Footer */}
           <DialogFooter className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={closeModal}>
+            <Button
+              variant="outline"
+              onClick={closeModal}
+              className="border-gray-600 text-gray-200 bg-transparent hover:bg-gray-200 hover:text-gray-900"
+            >
               Cancel
             </Button>
-            <Button onClick={closeModal}>Done</Button>
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+              Done
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+
       <Dialog open={state.confirmDelete} onOpenChange={() => updateState({ confirmDelete: false })}>
-        <DialogContent>
+        <DialogContent className="bg-[#1c1c1e] text-gray-200 border border-gray-700">
           <DialogHeader>
-            <DialogTitle>Delete Student</DialogTitle>
+            <DialogTitle className="text-gray-100">Delete Student</DialogTitle>
           </DialogHeader>
-          <div>
-            Are you sure you want to delete <strong>{state.selectedStudent?.name}</strong>?
+          <div className="text-gray-300">
+            Are you sure you want to delete <strong className="text-white">{state.selectedStudent?.name}</strong>?
           </div>
           <DialogFooter className="flex justify-end gap-2 mt-4">
             <Button
               variant="outline"
               onClick={() => updateState({ confirmDelete: false })}
+              className="border-gray-600 text-gray-200 hover:bg-gray-700"
             >
               Cancel
             </Button>
@@ -1035,17 +1106,19 @@ const StudentManagement = () => {
       </Dialog>
 
       <Dialog open={state.editDialog} onOpenChange={() => updateState({ editDialog: false, editSections: [] })}>
-        <DialogContent>
+        <DialogContent className="bg-[#1c1c1e] text-gray-100 border border-gray-700">
           <DialogHeader>
-            <DialogTitle>Edit Student</DialogTitle>
+            <DialogTitle className="text-gray-100">Edit Student</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <Input
+              className="bg-[#2c2c2e] border-gray-700 text-gray-100 placeholder-gray-400"
               placeholder="Name"
               value={state.editForm.name}
               onChange={(e) => updateState({ editForm: { ...state.editForm, name: e.target.value } })}
             />
             <Input
+              className="bg-[#2c2c2e] border-gray-700 text-gray-100 placeholder-gray-400"
               placeholder="Email"
               value={state.editForm.email}
               onChange={(e) => updateState({ editForm: { ...state.editForm, email: e.target.value } })}
@@ -1060,14 +1133,14 @@ const StudentManagement = () => {
               }
               disabled={state.isLoading || state.semesters.length === 0}
             >
-              <SelectTrigger>
+              <SelectTrigger className="bg-[#2c2c2e] border-gray-700 text-gray-100">
                 <SelectValue
                   placeholder={state.semesters.length === 0 ? "No semesters available" : "Select Semester"}
                 />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-[#2c2c2e] text-gray-100 border-gray-700">
                 {state.semesters.map((s) => (
-                  <SelectItem key={s.id} value={`${s.number}th Semester`}>
+                  <SelectItem key={s.id} value={`${s.number}th Semester`} className="hover:bg-gray-700">
                     Semester {s.number}
                   </SelectItem>
                 ))}
@@ -1076,9 +1149,11 @@ const StudentManagement = () => {
             <Select
               value={state.editForm.section}
               onValueChange={(value) => updateState({ editForm: { ...state.editForm, section: value } })}
-              disabled={state.isLoading || state.isEditSectionsLoading || !state.editForm.semester || state.editSections.length === 0}
+              disabled={
+                state.isLoading || state.isEditSectionsLoading || !state.editForm.semester || state.editSections.length === 0
+              }
             >
-              <SelectTrigger>
+              <SelectTrigger className="bg-[#2c2c2e] border-gray-700 text-gray-100">
                 <SelectValue
                   placeholder={
                     state.editSections.length === 0 || !state.editForm.semester
@@ -1089,11 +1164,11 @@ const StudentManagement = () => {
                   }
                 />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-[#2c2c2e] text-gray-100 border-gray-700">
                 {state.editSections
                   .filter((section) => section.semester_id === getSemesterId(state.editForm.semester))
                   .map((section) => (
-                    <SelectItem key={section.id} value={section.name}>
+                    <SelectItem key={section.id} value={section.name} className="hover:bg-gray-700">
                       Section {section.name}
                     </SelectItem>
                   ))}
@@ -1101,10 +1176,16 @@ const StudentManagement = () => {
             </Select>
           </div>
           <DialogFooter className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => updateState({ editDialog: false, editSections: [] })}>
+            <Button
+              variant="outline"
+              className="border-gray-700 text-gray-100 hover:bg-gray-700"
+              onClick={() => updateState({ editDialog: false, editSections: [] })}
+            >
               Cancel
             </Button>
-            <Button onClick={handleEditSave}>Save</Button>
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={handleEditSave}>
+              Save
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

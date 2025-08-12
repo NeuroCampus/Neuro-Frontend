@@ -166,9 +166,14 @@ export default function DashboardPage() {
       showCancelButton: true,
       confirmButtonText: "Yes, reject it!",
       cancelButtonText: "No, keep it",
+      background: "#23232a",
+      color: "#e5e7eb",
       customClass: {
-        confirmButton: "bg-red-600 text-white",
-        cancelButton: "bg-gray-300 text-black",
+      popup: "swal2-dark",
+      confirmButton: "bg-red-600 text-white",
+      cancelButton: "bg-gray-700 text-gray-200",
+      title: "text-gray-100",
+      content: "text-gray-200",
       },
     });
     if (result.isConfirmed) {
@@ -225,14 +230,14 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="bg-white text-gray-800 p-8 space-y-6 font-sans min-h-screen">
+    <div className="text-gray-200 p-8 space-y-6 font-sans min-h-screen bg-[#1c1c1e]">
       {/* Welcome Message */}
-      <h1 className="text-2xl font-semibold text-gray-900">
+      <h1 className="text-2xl font-semibold text-gray-200 ">
         Welcome back, {hodName}, Here's what's happening in your {branchName} department.
       </h1>
 
       {/* Loading and Errors */}
-      {isLoading && <p className="text-gray-600 mb-4 animate-pulse">Loading data...</p>}
+      {isLoading && <p className="bg-[#1c1c1e] text-gray-600 mb-4 animate-pulse">Loading data...</p>}
       {errors.length > 0 && (
         <ul className="text-sm text-red-500 mb-4 list-disc list-inside bg-red-50 p-4 rounded-lg">
           {errors.map((err, idx) => (
@@ -242,7 +247,7 @@ export default function DashboardPage() {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="bg-[#1c1c1e] grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
           {
             title: "Total Faculty",
@@ -273,31 +278,36 @@ export default function DashboardPage() {
             color: "text-gray-600",
           },
         ].map((item, i) => (
-          <div
-            key={i}
-            className="bg-gray-50 p-4 rounded-lg shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow"
-          >
-            <div className="text-3xl">{item.icon}</div>
-            <div>
-              <p className="text-sm font-medium text-gray-600">{item.title}</p>
-              <p className="text-xl font-bold text-gray-900">{item.value}</p>
-              <p className={`text-xs ${item.color}`}>{item.change}</p>
+            <div
+              key={i}
+              className="bg-[#23232a] p-4 rounded-lg shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-200">
+              {item.icon && (
+                // Make icon large and blue for visibility
+                <span className="text-blue-600 text-3xl">{item.icon}</span>
+              )}
+              </div>
+              <div>
+              <p className="text-sm font-medium text-gray-200">{item.title}</p>
+              <p className="text-xl font-bold text-gray-200">{item.value}</p>
+              <p className={`text-xs text-gray-50 ${item.color}`}>{item.change}</p>
+              </div>
             </div>
-          </div>
         ))}
       </div>
 
       {/* Charts: Attendance Trends and Member Distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 bg-[#1c1c1e]">
         {/* Attendance Chart */}
-        <div className="bg-white border border-gray-200 p-6 rounded-lg shadow-sm">
+        <div className="bg-[#1c1c1e] border border-gray-200 p-6 rounded-lg shadow-sm">
           <div className="flex justify-between items-center mb-2">
-            <h3 className="text-lg font-semibold text-gray-800">Attendance Trends</h3>
+            <h3 className="text-lg font-semibold text-gray-200">Attendance Trends</h3>
           </div>
-          <p className="text-sm text-gray-500 mb-4">Weekly attendance percentage</p>
-          <div className="min-h-[250px]">
+          <p className="text-sm text-gray-400 mb-4">Weekly attendance percentage</p>
+          <div className="min-h-[250px] text-gray-500">
             {chartData.length === 1 && chartData[0].week === "No Data" ? (
-              <p className="text-sm text-gray-500 text-center italic">No attendance data available</p>
+              <p className="text-sm text-gray-400 text-center italic">No attendance data available</p>
             ) : (
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={chartData} isAnimationActive={true} animationDuration={800}>
@@ -322,11 +332,11 @@ export default function DashboardPage() {
         </div>
 
         {/* Member Distribution Pie Chart */}
-        <div className="bg-white border border-gray-200 p-6 rounded-lg shadow-sm">
+        <div className="bg-[#1c1c1e] border border-gray-200 p-6 rounded-lg shadow-sm">
           <div className="flex justify-between items-center mb-2">
-            <h3 className="text-lg font-semibold text-gray-800">Member Distribution</h3>
+            <h3 className="text-lg font-semibold text-gray-200">Member Distribution</h3>
           </div>
-          <p className="text-sm text-gray-500 mb-4">Faculty, Students, and Total Members</p>
+          <p className="text-sm text-gray-400 mb-4">Faculty, Students, and Total Members</p>
           <div className="min-h-[250px]">
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
@@ -352,9 +362,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Leave Requests */}
-      <div className="bg-white p-6 rounded-lg shadow-sm text-sm text-gray-800 border border-gray-200">
+      <div className="bg-[#1c1c1e] p-6 rounded-lg shadow-sm text-sm text-gray-200 border border-gray-200">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-800">Leave Requests</h3>
+          <h3 className="text-lg font-semibold text-gray-200">Leave Requests</h3>
           <button
             className="flex items-center gap-1 border border-gray-300 text-sm font-medium text-gray-800 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-md transition"
             onClick={() => navigate("/leaves")}
@@ -364,7 +374,7 @@ export default function DashboardPage() {
         </div>
         <table className="w-full">
           <thead>
-            <tr className="text-left border-b text-gray-600 text-xs">
+            <tr className="text-left border-b text-gray-200 text-xs">
               <th className="pb-2">Faculty</th>
               <th>Period</th>
               <th>Reason</th>
@@ -375,15 +385,15 @@ export default function DashboardPage() {
           <tbody>
             {leaveRequests.length === 0 && !isLoading ? (
               <tr>
-                <td colSpan={5} className="py-3 text-center text-gray-500">No leave requests found</td>
+                <td colSpan={5} className="py-3 text-center text-gray-200">No leave requests found</td>
               </tr>
             ) : (
               leaveRequests.map((row, index) => (
-                <tr key={row.id} className="border-b last:border-none text-sm hover:bg-gray-50">
+                <tr key={row.id} className="border-b last:border-none text-sm hover:bg-gray-800">
                   <td className="py-3">
                     <div>
-                      <p className="font-medium text-gray-900">{row.name}</p>
-                      <p className="text-xs text-gray-500">{row.dept}</p>
+                      <p className="font-medium text-gray-200">{row.name}</p>
+                      <p className="text-xs text-gray-400">{row.dept}</p>
                     </div>
                   </td>
                   <td>{row.period}</td>
@@ -403,10 +413,10 @@ export default function DashboardPage() {
                   </td>
                   <td>
                     {row.status === "Pending" ? (
-                      <div className="flex gap-2">
+                        <div className="flex gap-2">
                         <button
                           onClick={() => handleApprove(index)}
-                          className="flex items-center gap-1 bg-green-500 text-white hover:bg-green-600 text-sm font-medium px-3 py-1.5 rounded-md transition"
+                          className="flex items-center gap-1 bg-green-700 text-gray-100 hover:bg-green-800 text-sm font-medium px-3 py-1.5 rounded-md transition"
                           disabled={isLoading}
                         >
                           <CheckCircle className="w-4 h-4" />
@@ -414,13 +424,13 @@ export default function DashboardPage() {
                         </button>
                         <button
                           onClick={() => handleReject(index)}
-                          className="flex items-center gap-1 bg-red-500 text-white hover:bg-red-600 text-sm font-medium px-3 py-1.5 rounded-md transition"
+                          className="flex items-center gap-1 bg-red-700 text-gray-100 hover:bg-red-800 text-sm font-medium px-3 py-1.5 rounded-md transition"
                           disabled={isLoading}
                         >
                           <XCircle className="w-4 h-4" />
                           Reject
                         </button>
-                      </div>
+                        </div>
                     ) : (
                       <span className="text-xs text-gray-500">No action needed</span>
                     )}

@@ -188,9 +188,9 @@ const SubjectManagement = () => {
   };
 
   return (
-    <div className="p-6 bg-white min-h-screen">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-black text-lg font-semibold">Manage Subjects</h2>
+    <div className="p-6 bg-[#1c1c1e] min-h-screen">
+      <div className="flex justify-between items-center mb-4 text-gray-200">
+        <h2 className="text-lg font-semibold ">Manage Subjects</h2>
         <Button
           onClick={() => {
             updateState({
@@ -199,7 +199,7 @@ const SubjectManagement = () => {
               currentSubject: null,
             });
           }}
-          className="bg-blue-500 hover:bg-blue-600 text-white"
+          className="bg-[#1c1c1e] hover:bg-[#2a2a2d] text-gray-200 border border-gray-700"
           disabled={state.loading || !state.branchId}
         >
           + Add Subject
@@ -210,14 +210,14 @@ const SubjectManagement = () => {
       {state.success && <div className="text-green-500 mb-4">{state.success}</div>}
       {state.loading && <div className="text-blue-500 mb-4">Loading...</div>}
 
-      <Card className="bg-white text-black shadow-lg">
+      <Card className="bg-[#1c1c1e] shadow-lg text-gray-200">
         <CardHeader>
-          <CardTitle className="text-black text-md font-semibold">Manage Subjects</CardTitle>
+          <CardTitle className="text-md font-semibold">Manage Subjects</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full table-auto text-sm">
-              <thead className="bg-[#F3F4F6] text-gray-700">
+              <thead className="bg-[#1c1c1e] text-gray-200">
                 <tr>
                   <th className="px-4 py-3 text-left">SUBJECT CODE</th>
                   <th className="px-4 py-3 text-left">SUBJECT NAME</th>
@@ -225,16 +225,16 @@ const SubjectManagement = () => {
                   <th className="px-4 py-3 text-left">ACTIONS</th>
                 </tr>
               </thead>
-              <tbody className="bg-[#F9FAFB]">
+              <tbody className="bg-[#1c1c1e]">
                 {state.subjects.map((subject, index) => (
                   <tr
                     key={subject.id}
-                    className={index % 2 === 0 ? "bg-[#F9FAFB]" : "bg-[#FFFFFF]"}
+                    className={index % 2 === 0 ? "bg-[#1c1c1e]" : "bg-[#1c1c1e]"}
                   >
                     <td className="px-4 py-3">{subject.subject_code}</td>
                     <td className="px-4 py-3">{subject.name}</td>
                     <td className="px-4 py-3">{getSemesterNumber(subject.semester_id)}</td>
-                    <td className="px-4 py-3 flex gap-3">
+                    <td className="px-4 py-3 flex gap-5">
                       <Pencil
                         className="w-4 h-4 text-blue-500 hover:text-blue-700 cursor-pointer"
                         onClick={() => handleEdit(subject)}
@@ -254,20 +254,22 @@ const SubjectManagement = () => {
 
       {/* Delete Confirmation Modal */}
       {state.deleteConfirmation && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded shadow-lg">
-            <h3 className="text-xl font-semibold mb-4">Are you sure you want to delete this subject?</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+          <div className="bg-[#1c1c1e] p-6 rounded shadow-lg border border-gray-700">
+            <h3 className="text-xl font-semibold mb-4 text-gray-200">
+              Are you sure you want to delete this subject?
+            </h3>
             <div className="flex justify-end gap-4">
               <Button
                 onClick={() => confirmDelete(false)}
-                className="bg-gray-300 hover:bg-gray-400 text-black"
+                className="bg-gray-700 hover:bg-gray-600 text-gray-200 border border-gray-600"
                 disabled={state.loading}
               >
                 Cancel
               </Button>
               <Button
                 onClick={() => confirmDelete(true)}
-                className="bg-red-500 hover:bg-red-600 text-white"
+                className="bg-red-600 hover:bg-red-700 text-white"
                 disabled={state.loading}
               >
                 Confirm
@@ -279,35 +281,57 @@ const SubjectManagement = () => {
 
       {/* Add/Edit Subject Modal */}
       {state.showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded shadow-lg w-96">
-            <h3 className="text-xl font-semibold mb-4">{state.showModal === "add" ? "Add New Subject" : "Edit Subject"}</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+          <div className="bg-[#1c1c1e] p-6 rounded-lg shadow-lg w-96 text-gray-200">
+            <h3 className="text-xl font-semibold mb-4">
+              {state.showModal === "add" ? "Add New Subject" : "Edit Subject"}
+            </h3>
+
             <div className="mb-4">
-              <label className="block mb-2">Subject Code</label>
+              <label className="block mb-2 text-gray-300">Subject Code</label>
               <Input
                 type="text"
                 value={state.newSubject.code}
-                onChange={(e) => updateState({ newSubject: { ...state.newSubject, code: e.target.value } })}
+                onChange={(e) =>
+                  updateState({
+                    newSubject: { ...state.newSubject, code: e.target.value },
+                  })
+                }
                 placeholder="e.g., MATH101"
                 disabled={state.loading}
+                className="bg-[#2c2c2e] border border-gray-600 text-gray-200 placeholder-gray-500"
               />
             </div>
+
             <div className="mb-4">
-              <label className="block mb-2">Subject Name</label>
+              <label className="block mb-2 text-gray-300">Subject Name</label>
               <Input
                 type="text"
                 value={state.newSubject.name}
-                onChange={(e) => updateState({ newSubject: { ...state.newSubject, name: e.target.value } })}
+                onChange={(e) =>
+                  updateState({
+                    newSubject: { ...state.newSubject, name: e.target.value },
+                  })
+                }
                 placeholder="e.g., Mathematics"
                 disabled={state.loading}
+                className="bg-[#2c2c2e] border border-gray-600 text-gray-200 placeholder-gray-500"
               />
             </div>
+
             <div className="mb-4">
-              <label className="block mb-2">Semester</label>
+              <label className="block mb-2 text-gray-300">Semester</label>
               <select
-                className="w-full px-4 py-2 border rounded"
+                className="w-full px-4 py-2 bg-[#2c2c2e] border border-gray-600 rounded text-gray-200 placeholder-gray-500"
                 value={state.newSubject.semester_id}
-                onChange={(e) => updateState({ newSubject: { ...state.newSubject, semester_id: e.target.value } })}
+                onChange={(e) =>
+                  updateState({
+                    newSubject: {
+                      ...state.newSubject,
+                      semester_id: e.target.value,
+                    },
+                  })
+                }
                 disabled={state.loading}
               >
                 <option value="">Select Semester</option>
@@ -318,6 +342,7 @@ const SubjectManagement = () => {
                 ))}
               </select>
             </div>
+
             <div className="flex justify-end gap-4">
               <Button
                 onClick={() => {
@@ -327,14 +352,14 @@ const SubjectManagement = () => {
                     currentSubject: null,
                   });
                 }}
-                className="bg-gray-300 hover:bg-gray-400 text-black"
+                className="bg-gray-700 hover:bg-gray-600 text-white"
                 disabled={state.loading}
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleSubmit}
-                className="bg-blue-500 hover:bg-blue-600 text-white"
+                className="bg-[#1c1c1e] hover:bg-[#2c2c2e] text-white border border-gray-600"
                 disabled={state.loading}
               >
                 {state.showModal === "add" ? "Add Subject" : "Update Subject"}

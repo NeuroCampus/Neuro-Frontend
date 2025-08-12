@@ -134,8 +134,8 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, semest
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-      <div className="bg-white p-6 rounded-md shadow-lg">
+    <div className="fixed inset-0 flex items-center justify-center z-50 bg-[#1c1c1e] bg-opacity-50 text-gray-200">
+      <div className="bg-[#1c1c1e] p-6 rounded-md shadow-lg text-gray-500 border-2 border-gray-500">
         <h2 className="text-xl font-semibold mb-4">
           {classDetails.timetable_id ? "Edit Class" : "Add Class"} for {classDetails.day}
         </h2>
@@ -176,7 +176,7 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, semest
           </Select>
         </div>
 
-        <div className="mb-4">
+        <div className="mb-4 text-gray-500">
           <label className="block">Room:</label>
           <input
             type="text"
@@ -628,24 +628,34 @@ const Timetable = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 ">
       <Card className="shadow-xl">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-2xl font-semibold text-gray-800">Timetable</CardTitle>
-          <div className="flex space-x-2">
-            <Button variant="outline" className="flex items-center gap-2" onClick={handleExportPDF}>
-              <DownloadIcon className="w-4 h-4" /> Export PDF
+        <CardHeader className="flex flex-row items-center justify-between bg-[#1c1c1e] px-4 py-3 rounded-t-md">
+          <CardTitle className="text-2xl font-semibold text-gray-200">Timetable</CardTitle>
+          <div className="flex space-x-2 ">
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 bg-gray-500 border-gray-600 hover:bg-gray-200 hover:border-gray-600"
+              onClick={handleExportPDF}
+            >
+              <DownloadIcon className="w-4 h-4 text-gray-700" /> Export PDF
             </Button>
-            <Button variant="outline" className="flex items-center gap-2" onClick={handleEdit}>
-              <EditIcon className="w-4 h-4" /> {state.isEditing ? "Cancel Edit" : "Edit"}
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 bg-gray-500 border-gray-600 hover:bg-gray-200 hover:border-gray-600"
+              onClick={handleEdit}
+            >
+              <EditIcon className="w-4 h-4 text-gray-900" /> {state.isEditing ? "Cancel Edit" : "Edit"}
             </Button>
+
           </div>
         </CardHeader>
 
-        <CardContent>
+
+        <CardContent className="bg-[#1c1c1e]">
           <div className="border rounded-lg p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex gap-4">
+            <div className="flex items-center justify-between mb-4 ">
+              <div className="flex gap-4 ">
                 <div>
                   <Select
                     value={state.semesterId}
@@ -653,7 +663,7 @@ const Timetable = () => {
                       updateState({ semesterId: value, sectionId: "", sections: [], subjects: [], timetable: [] })
                     }
                   >
-                    <SelectTrigger className="w-40">
+                    <SelectTrigger className="w-40 bg-gray-500 border-gray-600 hover:bg-gray-200 hover:border-gray-600">
                       <SelectValue placeholder="Select Semester" />
                     </SelectTrigger>
                     <SelectContent>
@@ -671,7 +681,7 @@ const Timetable = () => {
                     onValueChange={(value) => updateState({ sectionId: value, timetable: [] })}
                     disabled={!state.semesterId}
                   >
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="w-40 bg-gray-500 border-gray-600 hover:bg-gray-200 hover:border-gray-600">
                       <SelectValue placeholder="Select Section" />
                     </SelectTrigger>
                     <SelectContent>
@@ -697,7 +707,7 @@ const Timetable = () => {
 
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm text-left">
-                <thead className="bg-gray-100 text-gray-700">
+                <thead className=" text-gray-200">
                   <tr>
                     <th className="py-2 px-4 font-semibold">Time/Day</th>
                     <th className="py-2 px-4 font-semibold">Monday</th>
@@ -710,8 +720,8 @@ const Timetable = () => {
                 </thead>
                 <tbody>
                   {getTableData().map((row: any, idx: number) => (
-                    <tr key={idx} className="border-t hover:bg-gray-50 transition">
-                      <td className="py-3 px-4 font-medium text-gray-700">{row.time}</td>
+                    <tr key={idx} className="border-t hover:bg-gray-500 transition text-gray-200">
+                      <td className="py-3 px-4 font-medium text-gray-500">{row.time}</td>
                       {["mon", "tue", "wed", "thu", "fri", "sat"].map((day, i) => (
                         <td
                           key={i}

@@ -334,25 +334,30 @@ const SemesterManagement = () => {
   );
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-xl font-semibold">Manage Semesters</h1>
+    <div className="p-6 space-y-6 ">
+      <h1 className="text-xl font-semibold text-gray-200">Manage Semesters</h1>
 
-      <Card>
+      <Card className="bg-[#1c1c1e] text-gray-200">
         <CardHeader>
           <CardTitle>Semester List</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 ">
           <div className="flex justify-between items-center">
             <Input
               placeholder="Search by semester number..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="max-w-sm"
+              className="max-w-sm bg-[#232326] text-gray-200 border border-gray-700 placeholder-gray-400 focus:border-gray-500 focus:ring-0"
             />
-            <Button onClick={() => openModal()} disabled={loading || !branchId}>
+            <Button
+              onClick={() => openModal()}
+              disabled={loading || !branchId}
+              className="bg-[#232326] hover:bg-[#2c2c2e] text-gray-200 border border-gray-700"
+            >
               + Add Semester
             </Button>
           </div>
+
           {loading ? (
             <div className="text-center py-4">Loading...</div>
           ) : filteredSemesters.length === 0 ? (
@@ -436,114 +441,120 @@ const SemesterManagement = () => {
 
       {/* Add/Edit Semester Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent>
+        <DialogContent className="bg-[#1c1c1e] text-gray-200">
           <DialogHeader>
-            <h2 className="text-lg font-semibold">
-              {editingSemester ? "Edit Semester" : "Add Semester"}
-            </h2>
+        <h2 className="text-lg font-semibold">
+          {editingSemester ? "Edit Semester" : "Add Semester"}
+        </h2>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Semester Number</label>
-              <Input
-                type="number"
-                name="number"
-                value={form.number}
-                onChange={handleChange}
-                placeholder="Enter semester number (1-8)"
-                min="1"
-                max="8"
-                disabled={loading}
-              />
-            </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Semester Number</label>
+          <Input
+            type="number"
+            name="number"
+            value={form.number}
+            onChange={handleChange}
+            placeholder="Enter semester number (1-8)"
+            min="1"
+            max="8"
+            disabled={loading}
+            className="bg-[#232326] text-gray-200 border-gray-700"
+          />
+        </div>
           </div>
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={closeModal} disabled={loading}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={loading}>
-              {editingSemester ? "Save Changes" : "Add Semester"}
-            </Button>
+        <Button
+          variant="outline"
+          onClick={closeModal}
+          disabled={loading}
+          className="text-gray-200 bg-transparent"
+        >
+          Cancel
+        </Button>
+        <Button onClick={handleSave} disabled={loading}>
+          {editingSemester ? "Save Changes" : "Add Semester"}
+        </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Add Section Modal */}
       <Dialog open={isSectionModalOpen} onOpenChange={setIsSectionModalOpen}>
-        <DialogContent>
+        <DialogContent className="bg-[#1c1c1e] dark:bg-[#1c1c1e] text-gray-200">
           <DialogHeader>
-            <h2 className="text-lg font-semibold">
-              Add Section for Semester {managingSemester?.number}
-            </h2>
+        <h2 className="text-lg font-semibold">
+          Add Section for Semester {managingSemester?.number}
+        </h2>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Section Name</label>
-              <Select
-                value={sectionForm.name}
-                onValueChange={handleSectionChange}
-                disabled={loading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Section" />
-                </SelectTrigger>
-                <SelectContent>
-                  {["A", "B", "C", "D", "E", "F", "G"].map((section) => (
-                    <SelectItem key={section} value={section}>
-                      Section {section}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Section Name</label>
+          <Select
+            value={sectionForm.name}
+            onValueChange={handleSectionChange}
+            disabled={loading}
+          >
+            <SelectTrigger className="bg-[#232326] dark:bg-[#232326] text-gray-200 border-gray-700">
+          <SelectValue placeholder="Select Section" />
+            </SelectTrigger>
+            <SelectContent className="bg-[#232326] dark:bg-[#232326] text-gray-200">
+          {["A", "B", "C", "D", "E", "F", "G"].map((section) => (
+            <SelectItem key={section} value={section}>
+              Section {section}
+            </SelectItem>
+          ))}
+            </SelectContent>
+          </Select>
+        </div>
           </div>
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={closeSectionModal} disabled={loading}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveSection} disabled={loading}>
-              Add Section
-            </Button>
+        <Button variant="outline" onClick={closeSectionModal} disabled={loading} className="text-gray-200 bg-transparent">
+          Cancel
+        </Button>
+        <Button onClick={handleSaveSection} disabled={loading}>
+          Add Section
+        </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Semester Confirmation Modal */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent>
+        <DialogContent className="bg-[#1c1c1e] text-gray-200">
           <DialogHeader>
-            <h2 className="text-lg font-semibold">Delete Semester?</h2>
-            <p className="text-sm text-gray-500">
-              Are you sure you want to delete {getSemesterName(deletingSemester?.number || 0)}?
-            </p>
+        <h2 className="text-lg font-semibold">Delete Semester?</h2>
+        <p className="text-sm text-gray-500">
+          Are you sure you want to delete {getSemesterName(deletingSemester?.number || 0)}?
+        </p>
           </DialogHeader>
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={closeDeleteModal} disabled={loading}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={loading}>
-              Delete
-            </Button>
+        <Button variant="outline" onClick={closeDeleteModal} disabled={loading} className="text-gray-200 bg-transparent">
+          Cancel
+        </Button>
+        <Button variant="destructive" onClick={handleDelete} disabled={loading}>
+          Delete
+        </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Section Confirmation Modal */}
       <Dialog open={isDeleteSectionModalOpen} onOpenChange={setIsDeleteSectionModalOpen}>
-        <DialogContent>
+        <DialogContent className="bg-[#1c1c1e] text-gray-200">
           <DialogHeader>
-            <h2 className="text-lg font-semibold">Delete Section?</h2>
-            <p className="text-sm text-gray-500">
-              Are you sure you want to delete Section {deletingSection?.name} from Semester {semesters.find(s => s.id === deletingSection?.semester_id)?.number}?
-            </p>
+        <h2 className="text-lg font-semibold">Delete Section?</h2>
+        <p className="text-sm text-gray-500">
+          Are you sure you want to delete Section {deletingSection?.name} from Semester {semesters.find(s => s.id === deletingSection?.semester_id)?.number}?
+        </p>
           </DialogHeader>
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={closeDeleteSectionModal} disabled={loading}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteSection} disabled={loading}>
-              Delete
-            </Button>
+        <Button variant="outline" onClick={closeDeleteSectionModal} disabled={loading} className="text-gray-200 bg-transparent">
+          Cancel
+        </Button>
+        <Button variant="destructive" onClick={handleDeleteSection} disabled={loading}>
+          Delete
+        </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
