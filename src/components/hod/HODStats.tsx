@@ -366,7 +366,7 @@ export default function DashboardPage() {
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-gray-200">Leave Requests</h3>
           <button
-            className="flex items-center gap-1 border border-gray-300 text-sm font-medium text-gray-800 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-md transition"
+            className="flex items-center gap-1 border border-gray-300 text-sm font-medium text-gray-200 bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-md transition"
             onClick={() => navigate("/leaves")}
           >
             View All

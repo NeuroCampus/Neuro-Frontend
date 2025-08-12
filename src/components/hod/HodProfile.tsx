@@ -200,13 +200,13 @@ const HodProfile = ({ user: propUser, setError }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex justify-center items-start py-12 px-4">
-      <Card className="w-full max-w-2xl border border-gray-200 shadow-md">
+    <div className="min-h-screen flex justify-center items-start py-12 px-4">
+      <Card className="w-full max-w-2xl border border-gray-200 shadow-md bg-[#1c1c1e] text-gray-200">
         <CardHeader className="flex flex-col items-start gap-2 px-6 pt-6 pb-4">
           <div className="flex w-full justify-between items-center">
             <div>
-              <CardTitle className="text-lg text-gray-900">Profile Information</CardTitle>
-              <p className="text-sm text-gray-500">View and update your personal information</p>
+              <CardTitle className="text-lg text-gray-200">Profile Information</CardTitle>
+              <p className="text-sm text-gray-400">View and update your personal information</p>
             </div>
             <Button
               size="sm"
@@ -215,7 +215,7 @@ const HodProfile = ({ user: propUser, setError }) => {
                 else setEditing(true);
               }}
               variant="outline"
-              className="text-blue-600 border-blue-500 hover:bg-blue-50"
+              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
               disabled={loading}
             >
               {editing ? (loading ? "Saving..." : "Save") : "Edit Profile"}
@@ -231,10 +231,10 @@ const HodProfile = ({ user: propUser, setError }) => {
               {profile.last_name[0] || ""}
             </div>
             <div className="text-center mt-2">
-              <div className="text-lg font-semibold text-gray-900">
+              <div className="text-lg font-semibold text-gray-200">
                 {profile.first_name} {profile.last_name}
               </div>
-              <div className="text-sm text-gray-500">Head of Department</div>
+              <div className="text-sm text-gray-200">Head of Department</div>
             </div>
           </div>
 
@@ -242,7 +242,7 @@ const HodProfile = ({ user: propUser, setError }) => {
 
           <div className="space-y-6">
             <div>
-              <Label htmlFor="first_name" className="text-xs text-gray-500 mb-1 block">
+              <Label htmlFor="first_name" className="text-xs text-gray-400 mb-1 block">
                 First Name
               </Label>
               <Input
@@ -251,11 +251,11 @@ const HodProfile = ({ user: propUser, setError }) => {
                 value={profile.first_name}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className={cn("w-full", !editing && "bg-gray-100")}
+                className={cn("w-full bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
               />
             </div>
             <div>
-              <Label htmlFor="last_name" className="text-xs text-gray-500 mb-1 block">
+              <Label htmlFor="last_name" className="text-xs text-gray-400 mb-1 block">
                 Last Name
               </Label>
               <Input
@@ -264,11 +264,11 @@ const HodProfile = ({ user: propUser, setError }) => {
                 value={profile.last_name}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className={cn("w-full", !editing && "bg-gray-100")}
+                className={cn("w-full bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
               />
             </div>
             <div>
-              <Label htmlFor="email" className="text-xs text-gray-500 mb-1 block">
+              <Label htmlFor="email" className="text-xs text-gray-400 mb-1 block">
                 Email Address
               </Label>
               <Input
@@ -277,11 +277,11 @@ const HodProfile = ({ user: propUser, setError }) => {
                 value={profile.email}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className={cn("w-full", !editing && "bg-gray-100")}
+                className={cn("w-full bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
               />
             </div>
             <div>
-              <Label htmlFor="mobile_number" className="text-xs text-gray-500 mb-1 block">
+              <Label htmlFor="mobile_number" className="text-xs text-gray-400 mb-1 block">
                 Mobile Number
               </Label>
               <Input
@@ -290,11 +290,11 @@ const HodProfile = ({ user: propUser, setError }) => {
                 value={profile.mobile_number}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className={cn("w-full", !editing && "bg-gray-100")}
+                className={cn("w-full bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
               />
             </div>
             <div>
-              <Label htmlFor="address" className="text-xs text-gray-500 mb-1 block">
+              <Label htmlFor="address" className="text-xs text-gray-400 mb-1 block">
                 Address
               </Label>
               <Input
@@ -303,11 +303,11 @@ const HodProfile = ({ user: propUser, setError }) => {
                 value={profile.address}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className={cn("w-full", !editing && "bg-gray-100")}
+                className={cn("w-full bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
               />
             </div>
             <div>
-              <Label htmlFor="bio" className="text-xs text-gray-500 mb-1 block">
+              <Label htmlFor="bio" className="text-xs text-gray-400 mb-1 block">
                 Bio
               </Label>
               <textarea
@@ -316,7 +316,7 @@ const HodProfile = ({ user: propUser, setError }) => {
                 value={profile.bio}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className={cn("w-full p-2 border rounded-md", !editing && "bg-gray-100")}
+                className={cn("w-full p-2 border rounded-md bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
               />
             </div>
           </div>

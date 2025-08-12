@@ -326,15 +326,15 @@ const MarksView = () => {
     state.subjectFilter === "all" ? "All Subjects" : state.subjects.find((s) => s.id === state.subjectFilter)?.name || "All Subjects";
 
   return (
-    <div className="p-6 bg-white min-h-screen text-gray-900" ref={reportRef}>
+    <div className="p-6 bg-[#1c1c1e] text-gray-200 min-h-screen " ref={reportRef}>
       <div>
         <h2 className="text-2xl font-semibold">Internal Marks & Attendance</h2>
-        <p className="text-gray-500 text-sm">
+        <p className="text-gray-200 text-sm">
           View and analyze student performance and generate reports.
         </p>
       </div>
 
-      {state.loading && <p className="text-gray-500 my-4">Loading data...</p>}
+      {state.loading && <p className="text-gray-200 my-4">Loading data...</p>}
 
       <div className="flex flex-wrap gap-4 my-6">
         <Select
@@ -344,11 +344,11 @@ const MarksView = () => {
           }
           disabled={state.loading || state.semesters.length === 0}
         >
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-48 bg-[#232326] text-gray-200">
             <SelectValue placeholder={getSemesterDisplay()} />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Semesters</SelectItem>
+          <SelectContent className="bg-[#232326] text-gray-200">
+            <SelectItem value="all" className="bg-[#232326] text-gray-200">All Semesters</SelectItem>
             {state.semesters.map((semester) => (
               <SelectItem key={semester.id} value={semester.id}>
                 {semester.name}
@@ -365,10 +365,10 @@ const MarksView = () => {
             state.sections.length === 0
           }
         >
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-48 bg-[#232326] text-gray-200">
             <SelectValue placeholder={getSectionDisplay()} />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-[#232326] text-gray-200">
             <SelectItem value="all">All Sections</SelectItem>
             {state.sections
               .filter((section) => state.semesterFilter === "all" || section.semester_id === state.semesterFilter)
@@ -388,10 +388,10 @@ const MarksView = () => {
             state.subjects.length === 0
           }
         >
-          <SelectTrigger className="w-48">
+          <SelectTrigger className="w-48 bg-[#232326] text-gray-200">
             <SelectValue placeholder={getSubjectDisplay()} />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-[#232326] text-gray-200">
             <SelectItem value="all">All Subjects</SelectItem>
             {state.subjects
               .filter((subject) => state.semesterFilter === "all" || subject.semester_id === state.semesterFilter)
@@ -427,13 +427,13 @@ const MarksView = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Class Average Marks by Subject</CardTitle>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-gray-200">
                   {getSemesterDisplay()}, {getSectionDisplay()}
                 </span>
               </CardHeader>
               <CardContent className="flex flex-col gap-4">
                 {state.chartData.length === 0 ? (
-                  <p className="text-center text-gray-500">No chart data available</p>
+                  <p className="text-center text-gray-200">No chart data available</p>
                 ) : (
                   <div className="h-80 w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -460,7 +460,7 @@ const MarksView = () => {
                 disabled={state.loading}
               />
               <Button
-                className="flex items-center gap-2 bg-gray-100 text-gray-800 border border-gray-300 hover:bg-gray-200 rounded-md px-4 py-2 shadow-sm"
+                className="flex items-center gap-2 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 rounded-md px-4 py-2 shadow-sm"
                 onClick={() => handleExportPDF("marks")}
                 disabled={state.loading || filteredStudents.length === 0}
               >
@@ -486,7 +486,7 @@ const MarksView = () => {
                   <tbody>
                     {filteredStudents.length === 0 ? (
                       <tr>
-                        <td colSpan={subjectKeys.length + 2} className="py-3 text-center text-gray-500">
+                        <td colSpan={subjectKeys.length + 2} className="py-3 text-center text-gray-200">
                           No students found
                         </td>
                       </tr>
@@ -518,7 +518,7 @@ const MarksView = () => {
                           ))}
                           <td className="py-2 px-4">
                             <Button
-                              className="bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-300 rounded-md px-4 py-2 shadow-sm"
+                              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 rounded-md px-4 py-2 shadow-sm"
                               size="sm"
                               onClick={() => updateState({ selectedStudent: student })}
                             >
@@ -538,7 +538,7 @@ const MarksView = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Class Average Attendance by Subject</CardTitle>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-gray-200">
                   {getSemesterDisplay()}, {getSectionDisplay()}
                 </span>
               </CardHeader>
@@ -570,7 +570,7 @@ const MarksView = () => {
                 disabled={state.loading}
               />
               <Button
-                className="flex items-center gap-2 bg-gray-100 text-gray-800 border border-gray-300 hover:bg-gray-200 rounded-md px-4 py-2 shadow-sm"
+                className="flex items-center gap-2 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 rounded-md px-4 py-2 shadow-sm"
                 onClick={() => handleExportPDF("attendance")}
                 disabled={state.loading || filteredStudents.length === 0}
               >
@@ -616,7 +616,7 @@ const MarksView = () => {
                           ))}
                           <td className="py-2 px-4">
                             <Button
-                              className="bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-300 rounded-md px-4 py-2 shadow-sm"
+                              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 rounded-md px-4 py-2 shadow-sm"
                               size="sm"
                               onClick={() => updateState({ selectedStudent: student })}
                             >
@@ -642,17 +642,17 @@ const MarksView = () => {
           {state.selectedStudent && (
             <div className="space-y-4">
               <div>
-                <h4 className="text-sm font-medium text-gray-500">Name</h4>
+                <h4 className="text-sm font-medium text-gray-200">Name</h4>
                 <p className="text-base">{state.selectedStudent.name}</p>
               </div>
               <div>
-                <h4 className="text-sm font-medium text-gray-500">Roll Number</h4>
+                <h4 className="text-sm font-medium text-gray-200">Roll Number</h4>
                 <p className="text-base">{state.selectedStudent.rollNo}</p>
               </div>
               <div>
-                <h4 className="text-sm font-medium text-gray-500">Marks</h4>
+                <h4 className="text-sm font-medium text-gray-200">Marks</h4>
                 {Object.keys(state.selectedStudent.subject_marks).length === 0 ? (
-                  <p className="text-sm text-gray-500">No marks available</p>
+                  <p className="text-sm text-gray-200">No marks available</p>
                 ) : (
                   <table className="min-w-full text-sm border-t">
                     <thead>
@@ -687,7 +687,7 @@ const MarksView = () => {
           <DialogClose asChild>
             <Button
               variant="outline"
-              className="mt-4 bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-300 rounded-md px-4 py-2 shadow-sm"
+              className="mt-4 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 rounded-md px-4 py-2 shadow-sm"
             >
               Close
             </Button>

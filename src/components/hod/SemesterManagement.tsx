@@ -352,7 +352,7 @@ const SemesterManagement = () => {
             <Button
               onClick={() => openModal()}
               disabled={loading || !branchId}
-              className="bg-[#232326] hover:bg-[#2c2c2e] text-gray-200 border border-gray-700"
+              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
             >
               + Add Semester
             </Button>
@@ -468,11 +468,11 @@ const SemesterManagement = () => {
           variant="outline"
           onClick={closeModal}
           disabled={loading}
-          className="text-gray-200 bg-transparent"
+          className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 bg-transparent"
         >
           Cancel
         </Button>
-        <Button onClick={handleSave} disabled={loading}>
+        <Button onClick={handleSave} disabled={loading} className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500">
           {editingSemester ? "Save Changes" : "Add Semester"}
         </Button>
           </DialogFooter>

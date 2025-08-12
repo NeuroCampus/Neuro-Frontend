@@ -248,10 +248,10 @@ const AttendanceView = () => {
   }
 
   return (
-    <Card className="shadow-md border rounded-lg bg-white text-gray-800">
+    <Card className="shadow-md border rounded-lg bg-[#1c1c1e] text-gray-200">
       <CardHeader>
         <CardTitle className="text-2xl font-semibold mb-4">All Students Attendance</CardTitle>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-200">
           View and analyze attendance for all students in {state.branch.toUpperCase()}.
         </p>
       </CardHeader>
@@ -268,7 +268,7 @@ const AttendanceView = () => {
             }
             disabled={state.semesters.length === 0}
           >
-            <SelectTrigger className="bg-gray-100 text-gray-700">
+            <SelectTrigger className="bg-[#232326] text-gray-200">
               <SelectValue
                 placeholder={state.semesters.length === 0 ? "No semesters available" : "Select Semester"}
               />
@@ -286,7 +286,7 @@ const AttendanceView = () => {
             onValueChange={(value) => updateState({ filters: { ...state.filters, section_id: value } })}
             disabled={state.sections.length === 0 || !state.filters.semester_id}
           >
-            <SelectTrigger className="bg-gray-100 text-gray-700">
+            <SelectTrigger className="bg-[#232326] text-gray-200">
               <SelectValue
                 placeholder={
                   state.sections.length === 0 || !state.filters.semester_id ? "Select semester first" : "Select Section"
@@ -308,7 +308,7 @@ const AttendanceView = () => {
             onValueChange={(value) => updateState({ filters: { ...state.filters, subject_id: value } })}
             disabled={state.subjects.length === 0 || !state.filters.semester_id}
           >
-            <SelectTrigger className="bg-gray-100 text-gray-700">
+            <SelectTrigger className="bg-[#232326] text-gray-200">
               <SelectValue
                 placeholder={
                   state.subjects.length === 0 || !state.filters.semester_id ? "Select semester first" : "Select Subject"
@@ -329,13 +329,13 @@ const AttendanceView = () => {
 
         <div className="flex justify-between items-center mt-4">
           <Input
-            className="w-full max-w-md bg-gray-100 text-gray-700"
+            className="w-full max-w-md bg-[#232326] text-gray-200"
             placeholder="Search by name or USN..."
             value={state.search}
             onChange={(e) => updateState({ search: e.target.value })}
           />
           <Button
-            className="ml-4 bg-gray-100 hover:bg-gray-200 text-gray-700 border flex items-center gap-2"
+            className="ml-4 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 flex items-center gap-2"
             onClick={handleExportPDF}
           >
             <FileDown size={16} />
@@ -345,7 +345,7 @@ const AttendanceView = () => {
 
         <div className="overflow-x-auto mt-4">
           <table className="w-full table-auto border">
-            <thead className="bg-gray-100 text-gray-600 text-left">
+            <thead className="bg-[#232326] text-gray-200 text-left">
               <tr>
                 <th className="p-3 border">Student</th>
                 <th className="p-3 border">Attendance</th>
@@ -356,7 +356,7 @@ const AttendanceView = () => {
             </thead>
             <tbody>
               {currentStudents.map((student) => (
-                <tr key={student.student_id} className="hover:bg-gray-50">
+                <tr key={student.student_id} className="hover:bg-gray-600">
                   <td className="p-3 border">
                     <div>
                       <p className="font-medium">{student.name}</p>
@@ -380,7 +380,7 @@ const AttendanceView = () => {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="flex gap-2 items-center text-gray-700 hover:bg-gray-100"
+                      className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
                       onClick={() => updateState({ selectedStudent: student })}
                     >
                       <Eye size={16} /> View Details
@@ -396,17 +396,17 @@ const AttendanceView = () => {
           <Button
             onClick={handlePrev}
             disabled={state.currentPage === 1}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-700 border"
+            className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
           >
             Previous
           </Button>
-          <p className="text-gray-500">
+          <p className="text-gray-200">
             Page {state.currentPage} of {totalPages}
           </p>
           <Button
             onClick={handleNext}
             disabled={state.currentPage === totalPages}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-700 border"
+            className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
           >
             Next
           </Button>

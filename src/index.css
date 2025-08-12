@@ -118,3 +118,13 @@
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
+.bot-message * {
+  background-color: #1c1c1e !important;
+  color: #e5e7eb !important; /* Tailwind's gray-200 */
+}
+
+.bot-message pre,
+.bot-message code {
+  background-color: #1c1c1e !important; /* Tailwind's gray-800 */
+  color: #e5e7eb !important;
+}

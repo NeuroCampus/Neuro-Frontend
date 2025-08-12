@@ -170,12 +170,12 @@ const ChatWithPDF: React.FC = () => {
 
   if (!chatStarted) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col items-center justify-center p-4">
-        <div className="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8">
+      <div className="min-h-screen bg-[#1c1c1e] text-gray-200 flex flex-col items-center justify-center p-4">
+        <div className="max-w-2xl w-full bg-[#232326] text-gray-200 rounded-2xl shadow-xl p-8">
           <div className="text-center mb-6">
             <BookOpen className="mx-auto text-blue-600 w-12 h-12 mb-3" />
-            <h1 className="text-3xl font-bold text-gray-800">Revision Buddy</h1>
-            <p className="text-sm text-gray-600 mt-2">Upload a PDF to start quick revision or reference key concepts.</p>
+            <h1 className="text-3xl font-bold text-gray-200">Revision Buddy</h1>
+            <p className="text-sm text-gray-400 mt-2">Upload a PDF to start quick revision or reference key concepts.</p>
           </div>
           <div
             onDragOver={(e) => {
@@ -184,13 +184,13 @@ const ChatWithPDF: React.FC = () => {
             }}
             onDragLeave={() => setDragActive(false)}
             onDrop={handleDrop}
-            className={`border-4 border-dashed rounded-xl p-6 text-center transition-colors ${
-              dragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300 bg-gray-50'
+            className={`border-4 border-dashed rounded-xl p-6 text-center transition-colors  ${
+              dragActive ? 'border-blue-400 bg-blue-50' : 'border-gray-300 bg-[#1c1c1e]'
             }`}
           >
             <CloudUpload className="mx-auto text-gray-500 w-10 h-10 mb-3" />
-            <p className="text-sm font-medium text-gray-700 mb-2">Drag & drop your PDF here</p>
-            <p className="text-xs text-gray-500 mb-4">or click to select (PDF only, max 50MB)</p>
+            <p className="text-sm font-medium text-gray-200 mb-2">Drag & drop your PDF here</p>
+            <p className="text-xs text-gray-400 mb-4">or click to select (PDF only, max 50MB)</p>
             <input
               type="file"
               accept="application/pdf"
@@ -219,7 +219,7 @@ const ChatWithPDF: React.FC = () => {
           <Button
             onClick={handleUpload}
             disabled={!file || loading}
-            className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50"
+            className="w-full mt-6 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 font-semibold py-3 rounded-lg transition disabled:opacity-50"
           >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Start Revision'}
           </Button>
@@ -229,19 +229,19 @@ const ChatWithPDF: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
-      <header className="relative bg-white shadow-sm h-16 flex items-center justify-between px-6">
+    <div className="min-h-screen bg-[#1c1c1e] text-gray-200 flex flex-col border border-gray-700 px-4 py-4">
+      <header className="relative bg-[#1c1c1e] text-gray-200 shadow-sm h-16 flex items-center justify-between px-6">
         {/* Centered Title */}
         <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
           <BookOpen className="text-blue-600 w-6 h-6" />
-          <h1 className="text-xl font-bold text-gray-800">Revision Buddy</h1>
+          <h1 className="text-xl font-bold text-gray-200">Revision Buddy</h1>
         </div>
 
         {/* Right Buttons */}
         <div className="flex gap-2 ml-auto">
           <Button
             onClick={exportToPDF}
-            className="bg-blue-500 text-white hover:bg-blue-700 font-medium flex items-center gap-2"
+            className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 font-medium flex items-center gap-2"
           >
             <Download className="w-4 h-4" /> Export PDF
           </Button>
@@ -251,17 +251,17 @@ const ChatWithPDF: React.FC = () => {
               setMessages([]);
               setFile(null);
             }}
-            className="bg-gray-200 text-gray-800 hover:bg-gray-300 font-medium"
+            className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 font-medium"
           >
             New PDF
           </Button>
         </div>
       </header>
 
-      <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 bg-gray-100">
+      <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 bg-[#1c1c1e] text-gray-200 border border-gray-700 rounded-lg">
         <div className="max-w-7xl mx-auto space-y-5">
           {messages.length === 0 && (
-            <div className="text-center text-gray-500 mt-10">
+            <div className="text-center text-gray-200 mt-10">
               <p className="text-lg font-medium">Start your revision!</p>
               <p className="text-sm">Ask about key concepts, definitions, or specific topics from the uploaded PDF.</p>
               
@@ -279,15 +279,15 @@ const ChatWithPDF: React.FC = () => {
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} items-start gap-3`}
             >
               {msg.role === 'bot' && (
-                <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-gray-800 text-white rounded-full flex items-center justify-center">
                   <Bot className="w-6 h-6" />
                 </div>
               )}
               <div
-                className={`p-4 rounded-lg max-w-xl shadow-md ${
+                className={`p-4 rounded-lg max-w-xl shadow-md bot-message ${
                   msg.role === 'user'
-                    ? 'bg-blue-600 text-white rounded-br-none'
-                    : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none'
+                    ? 'bg-blue-600 text-gray-200  rounded-br-none'
+                    : 'bg-gray-800 text-gray-200 border border-gray-200 rounded-bl-none'
                 }`}
                 dangerouslySetInnerHTML={{ __html: msg.text }}
               />
@@ -299,9 +299,9 @@ const ChatWithPDF: React.FC = () => {
             </div>
           ))}
           {loading && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 ">
               <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center">
-                <Bot className="w-6 h-6" />
+                <Bot className="w-6 h-6 " />
               </div>
               <div className="text-sm text-gray-600 flex items-center gap-2">
                 <Loader2 className="animate-spin h-5 w-5" />
@@ -312,19 +312,19 @@ const ChatWithPDF: React.FC = () => {
           <div ref={messagesEndRef} />
         </div>
       </div>
-      <footer className="bg-white shadow-t h-20 flex items-center px-6">
+      <footer className="bg-[#1c1c1e] text-gray-200 shadow-t h-20 flex items-center px-6">
         <div className="max-w-7xl mx-auto w-full flex gap-3">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Ask about a concept, topic, or question..."
-            className="flex-1 px-4 py-3 rounded-lg bg-gray-100 text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+            className="flex-1 px-4 py-3 rounded-lg bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white text-sm"
           />
           <Button
             onClick={handleSend}
             disabled={loading || !input.trim()}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition disabled:opacity-50"
+            className="px-6 py-3 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 font-semibold rounded-lg transition disabled:opacity-50"
           >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Ask'}
           </Button>

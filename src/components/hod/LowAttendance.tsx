@@ -397,7 +397,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
           <div className="ml-auto flex gap-4">
             <Button
               onClick={exportPDF}
-              className="flex items-center gap-2 bg-[#232326] text-gray-200 border border-gray-700 hover:bg-[#2a2a2e] rounded-md px-4 py-2 shadow-sm"
+              className="flex items-center gap-2  text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 rounded-md px-4 py-2 shadow-sm"
               disabled={state.loading || filteredStudents.length === 0}
             >
               <FileDown className="w-4 h-4" />
@@ -405,7 +405,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
             </Button>
             <Button
               onClick={notifyAll}
-              className="flex items-center gap-2 bg-[#232326] text-gray-200 border border-gray-700 hover:bg-[#2a2a2e] rounded-md px-4 py-2 shadow-sm"
+              className="flex items-center gap-2 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 rounded-md px-4 py-2 shadow-sm"
               disabled={state.loading || filteredStudents.length === 0 || state.isNotifyingAll}
             >
               {state.isNotifyingAll ? (
@@ -497,7 +497,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
               variant="outline"
               disabled={state.currentPage === 1 || state.loading}
               onClick={() => updateState({ currentPage: state.currentPage - 1 })}
-              className="bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-300 rounded-md px-4 py-2 flex items-center gap-2 shadow-sm"
+              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 rounded-md px-4 py-2 flex items-center gap-2 shadow-sm"
             >
               Previous
             </Button>
@@ -509,7 +509,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
               variant="outline"
               disabled={state.currentPage === totalPages || state.loading}
               onClick={() => updateState({ currentPage: state.currentPage + 1 })}
-              className="bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-300 rounded-md px-4 py-2 flex items-center gap-2 shadow-sm"
+              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 rounded-md px-4 py-2 flex items-center gap-2 shadow-sm"
             >
               Next
             </Button>

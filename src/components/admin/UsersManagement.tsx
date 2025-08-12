@@ -226,14 +226,14 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
     <div className="flex flex-col">
       <label className="text-sm text-gray-300 mb-1">{label}</label>
       <Select.Root value={value} onValueChange={onChange}>
-        <Select.Trigger className="inline-flex items-center justify-between bg-gray-800 border border-gray-700 px-3 py-2 rounded w-48 text-sm text-gray-200 shadow-sm focus:ring-1 focus:ring-blue-500 focus:outline-none">
+        <Select.Trigger className="inline-flex items-center justify-between px-3 py-2 rounded w-48 text-sm shadow-sm rounded bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white">
           <Select.Value />
           <Select.Icon>
             <ChevronDownIcon className="text-gray-400" />
           </Select.Icon>
         </Select.Trigger>
         <Select.Portal>
-          <Select.Content className="bg-gray-900 rounded shadow-lg z-50 border border-gray-700">
+          <Select.Content className="bg-[#232326] text-gray-200 rounded shadow-lg z-50 border border-gray-700">
             <Select.Viewport>
               {options.map((opt) => (
                 <Select.Item
@@ -267,7 +267,7 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-4 ">
               <div>
                 <span className="block text-sm text-gray-200 mb-1">Filter by Role</span>
                 <SelectMenu
@@ -293,7 +293,7 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
                 placeholder="Search name or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-64 bg-gray-800 border border-gray-700 text-gray-200 placeholder-gray-400 focus:ring-blue-500 focus:border-blue-500"
+                className="w-64 rounded bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white"
               />
             </div>
           </div>
@@ -315,25 +315,25 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
                       key={user.id}
                       className="border-b  border-gray-500 transition-colors duration-200 hover:bg-gray-800"
                     >
-                      <td className="py-3">
+                      <td className="py-3 px-2">
                         {editingId === user.id ? (
                           <Input
                             name="name"
                             value={editData?.name || ""}
                             onChange={handleEditChange}
-                            className="text-gray-900 bg-white" // Make text visible
+                            className="bg-[#232326] text-gray-200" // Make text visible
                           />
                         ) : (
                           user.name
                         )}
                       </td>
-                      <td className="py-3">
+                      <td className="py-3 px-2">
                         {editingId === user.id ? (
                           <Input
                             name="email"
                             value={editData?.email || ""}
                             onChange={handleEditChange}
-                            className="text-gray-900 bg-white" // Make text visible
+                            className="bg-[#232326] text-gray-200" // Make text visible
                           />
                         ) : (
                           user.email
@@ -347,6 +347,7 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
                             size="sm"
                             onClick={saveEdit}
                             disabled={loading}
+                            className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
                           >
                             {loading ? "Saving..." : "Save"}
                           </Button>
@@ -399,7 +400,7 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
               variant="outline"
               onClick={() => setDeleteId(null)}
               disabled={loading}
-              className="border-gray-600 text-gray-200 bg-gray-800 hover:bg-gray-700"
+              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
             >
               Cancel
             </Button>

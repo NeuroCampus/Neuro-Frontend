@@ -404,7 +404,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                   variant="outline"
                   onClick={resetForm}
                   disabled={state.loading || state.isAssigning}
-                  className="bg-[#2c2c2e] border-gray-500 text-gray-200 hover:bg-transparent hover:text-gray-200"
+                  className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
                 >
                   Cancel
                 </Button>
@@ -413,7 +413,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
               <Button
                 onClick={handleAssignFaculty}
                 disabled={state.loading || state.isAssigning}
-                className="bg-[#2c2c2e] hover:bg-[#3a3a3c] text-gray-200"
+                className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
               >
                 {state.isAssigning ? (
                   <>
@@ -501,7 +501,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
             <DialogFooter className="mt-4">
               <Button
                 variant="outline"
-                className="bg-gray-700 hover:bg-gray-600 text-white border-gray-500"
+                className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
                 onClick={() => updateState({ openDeleteModal: false })}
                 disabled={state.loading || state.isAssigning}
               >

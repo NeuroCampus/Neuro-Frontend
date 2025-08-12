@@ -51,7 +51,12 @@ const Navbar = ({ role, user, onNotificationClick }: NavbarProps) => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4, delay: 0.5 }}
             >
-              Welcome, <span className="text-[#a259ff] font-medium">{user?.username || "Admin"}</span>
+              Welcome,{" "}
+              <span className="text-[#a259ff] font-medium">
+                {user?.username
+                  ? user.username.charAt(0).toUpperCase() + user.username.slice(1)+"!"
+                  : "Admin"}
+              </span>
             </motion.div>
             <p className="text-gray-400 text-xs">Academic Management System</p>
           </div>

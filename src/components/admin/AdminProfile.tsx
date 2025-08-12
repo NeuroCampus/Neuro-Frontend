@@ -225,7 +225,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
               else setEditing(true);
               }}
               variant="outline"
-              className="text-blue-500 border-blue-400 hover:bg-blue-900 hover:text-white"
+              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
               disabled={loading}
             >
               {editing ? (loading ? "Saving..." : "Save") : "Edit Profile"}
@@ -261,7 +261,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 value={profile.first_name}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className={cn("w-full", !editing && "bg-gray-100")}
+                className={cn("w-full bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
               />
             </div>
             <div>
@@ -274,7 +274,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 value={profile.last_name}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className={cn("w-full", !editing && "bg-gray-100")}
+                className={cn("w-full bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
               />
             </div>
             <div>
@@ -287,7 +287,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 value={profile.email}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className={cn("w-full", !editing && "bg-gray-100")}
+                className={cn("w-full bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
               />
             </div>
             <div>
@@ -300,7 +300,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 value={profile.mobile_number}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className={cn("w-full", !editing && "bg-gray-100")}
+                className={cn("w-full bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
               />
             </div>
             <div>
@@ -313,7 +313,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 value={profile.address}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className={cn("w-full", !editing && "bg-gray-100")}
+                className={cn("w-full bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
               />
             </div>
             <div>
@@ -326,7 +326,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 value={profile.bio}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className={cn("w-full p-2 border rounded-md", !editing && "bg-gray-100")}
+                className={cn("w-full p-2 border rounded-md bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
               />
             </div>
           </div>

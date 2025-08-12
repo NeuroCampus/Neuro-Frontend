@@ -247,23 +247,23 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
             <p className="text-sm text-gray-400">Manage branches and assign department heads</p>
           </div>
           <div className="flex gap-2 ">
-            <Button size="sm" className="flex items-center gap-1 bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-300 shadow-sm" onClick={() => setIsAddDialogOpen(true)} disabled={loading}>
+            <Button size="sm" className="flex items-center gap-1 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 shadow-sm" onClick={() => setIsAddDialogOpen(true)} disabled={loading}>
               <PlusIcon className="w-4 h-4" /> Add Branch
             </Button>
-            <Button size="sm" className="flex items-center gap-1 bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-300 shadow-sm" onClick={() => setIsAssignDialogOpen(true)} disabled={loading}>
+            <Button size="sm" className="flex items-center gap-1 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 shadow-sm" onClick={() => setIsAssignDialogOpen(true)} disabled={loading}>
               <UserPlus2Icon className="w-4 h-4" /> Assign HOD
             </Button>
-            <Button size="sm" className="flex items-center gap-1 bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-300 shadow-sm" onClick={exportToPDF} disabled={loading}>
+            <Button size="sm" className="flex items-center gap-1 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 shadow-sm" onClick={exportToPDF} disabled={loading}>
               <FileDownIcon className="w-4 h-4" /> Export PDF
             </Button>
           </div>
         </CardHeader>
         <CardContent className="overflow-x-auto ">
           <div className="pt-3 pb-2 ">
-            <Input placeholder="Search by branch name..." value={filter} onChange={(e) => setFilter(e.target.value)} className="w-64" />
+            <Input placeholder="Search by branch name..." value={filter} onChange={(e) => setFilter(e.target.value)} className="w-64 bg-[#232326] text-gray-200" />
           </div>
             <table className="w-full text-sm text-left text-gray-200">
-              <thead className="border-b border-gray-200 text-gray-400">
+              <thead className="border-b border-gray-200 bg-[#232326] text-gray-200">
                 <tr>
                 <th className="py-2">ID</th>
                 <th className="py-2">Branch</th>
@@ -302,9 +302,9 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                         branch.hod || "--"
                       )}
                     </td>
-                    <td className="py-3 text-right space-x-2">
+                    <td className="py-3 text-right space-x-2 ">
                       {editingId === branch.id ? (
-                        <Button size="sm" onClick={saveEdit} disabled={loading}>
+                        <Button size="sm" className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={saveEdit} disabled={loading}>
                           {loading ? "Saving..." : "Save"}
                         </Button>
                       ) : (
@@ -334,49 +334,49 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
       </Card>
 
       <Dialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-[#1c1c1e] text-gray-200">
           <DialogHeader><DialogTitle>Confirm Deletion</DialogTitle></DialogHeader>
           <p>Are you sure you want to delete this branch? This action cannot be undone.</p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)} disabled={loading}>Cancel</Button>
+            <Button variant="outline" className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={() => setDeleteId(null)} disabled={loading}>Cancel</Button>
             <Button variant="destructive" onClick={deleteBranch} disabled={loading}>{loading ? "Deleting..." : "Delete"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-[#1c1c1e] text-gray-200">
           <DialogHeader><DialogTitle>Add New Branch</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <Input placeholder="Branch Name" value={newBranch.name} onChange={(e) => setNewBranch({ ...newBranch, name: e.target.value })} />
+            <Input className="bg-[#232326] text-gray-200" placeholder="Branch Name" value={newBranch.name} onChange={(e) => setNewBranch({ ...newBranch, name: e.target.value })} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={loading}>Cancel</Button>
-            <Button onClick={handleAddBranch} disabled={loading}>{loading ? "Adding..." : "Add"}</Button>
+            <Button className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={loading}>Cancel</Button>
+            <Button className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={handleAddBranch} disabled={loading}>{loading ? "Adding..." : "Add"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md bg-[#1c1c1e] text-gray-200">
           <DialogHeader><DialogTitle>Assign HOD to Branch</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <select value={selectedBranchId || ""} onChange={(e) => setSelectedBranchId(Number(e.target.value))} className="w-full border border-gray-300 rounded px-3 py-2 text-sm">
-              <option value="" disabled>Select a branch</option>
+          <div className="space-y-4 ">
+            <select value={selectedBranchId || ""} onChange={(e) => setSelectedBranchId(Number(e.target.value))} className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-[#232326] text-gray-200">
+              <option className="bg-[#232326] text-gray-200" value="" disabled>Select a branch</option>
               {unassignedBranches.map((branch) => (
                 <option key={branch.id} value={branch.id}>{branch.name}</option>
               ))}
             </select>
-            <select value={newHodId} onChange={(e) => setNewHodId(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm">
-              <option value="" disabled>Select HOD</option>
+            <select value={newHodId} onChange={(e) => setNewHodId(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-[#232326] text-gray-200">
+              <option className="bg-[#232326] text-gray-200" value="" disabled>Select HOD</option>
               {unassignedHods.map((user) => (
                 <option key={user.id} value={user.id}>{user.username}</option>
               ))}
             </select>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAssignDialogOpen(false)} disabled={loading}>Cancel</Button>
-            <Button onClick={handleAssignHod} disabled={loading || !selectedBranchId || !newHodId}>{loading ? "Assigning..." : "Assign"}</Button>
+            <Button variant="outline" className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={() => setIsAssignDialogOpen(false)} disabled={loading}>Cancel</Button>
+            <Button onClick={handleAssignHod} className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" disabled={loading || !selectedBranchId || !newHodId}>{loading ? "Assigning..." : "Assign"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
