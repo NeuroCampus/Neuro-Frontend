@@ -163,19 +163,19 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
  
   const sidebarContent = (
     <motion.div 
-      className="h-full flex flex-col bg-[#1c1c1e] border-r border-gray-700"
+      className="h-full flex flex-col bg-[#1c1c1e] border-r border-gray-700 "
       initial={{ x: -100, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
       {/* Header */}
       <motion.div 
-        className="p-4 border-b border-gray-700"
+        className="p-4 border-b border-gray-700 bg-[#1c1c1e] "
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 ">
           <motion.div
             className="w-10 h-10 bg-gradient-to-r from-[#a259ff] to-[#7c3aed] rounded-lg flex items-center justify-center"
             whileHover={{ scale: 1.1, rotate: 5 }}
@@ -201,7 +201,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
  
       {/* Menu Items */}
       <motion.div 
-        className="flex-1 overflow-y-auto py-4"
+        className="flex-1 overflow-y-auto py-4 overflow-y-auto py-4 thin-scrollbar"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, delay: 0.2 }}

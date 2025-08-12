@@ -309,9 +309,9 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
 
   return (
     <ErrorBoundary>
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6 text-gray-200">
         <h1 className="text-xl font-semibold">Faculty Assignments</h1>
-        <Card>
+        <Card className="bg-[#1c1c1e] text-gray-200">
           <CardHeader>
             <CardTitle>{state.editingId ? "Edit Faculty Assignment" : "Add Faculty Assignment"}</CardTitle>
           </CardHeader>
@@ -324,10 +324,10 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                   onValueChange={(value) => updateState({ facultyId: value })}
                   disabled={state.loading || state.isAssigning || state.faculties.length === 0}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-[#2c2c2e] text-gray-200 border-gray-600">
                     <SelectValue placeholder={state.faculties.length === 0 ? "No faculties available" : "Select Faculty"} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-[#2c2c2e] text-gray-200">
                     {state.faculties.map((faculty) => (
                       <SelectItem key={faculty.id} value={faculty.id}>
                         {faculty.first_name} {faculty.last_name || ""} ({faculty.username})
@@ -343,10 +343,10 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                   onValueChange={(value) => updateState({ semesterId: value, subjectId: "", sectionId: "" })}
                   disabled={state.loading || state.isAssigning || state.semesters.length === 0}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-[#2c2c2e] text-gray-200 border-gray-600">
                     <SelectValue placeholder={state.semesters.length === 0 ? "No semesters available" : "Select Semester"} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-[#2c2c2e] text-gray-200">
                     {state.semesters.map((semester) => (
                       <SelectItem key={semester.id} value={semester.id}>
                         Semester {semester.number}
@@ -362,10 +362,10 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                   onValueChange={(value) => updateState({ subjectId: value })}
                   disabled={state.loading || state.isAssigning || !state.semesterId || state.subjects.length === 0}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-[#2c2c2e] text-gray-200 border-gray-600">
                     <SelectValue placeholder={state.subjects.length === 0 ? "No subjects available" : "Select Subject"} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-[#2c2c2e] text-gray-200">
                     {state.subjects
                       .filter((subject) => subject.semester_id === state.semesterId)
                       .map((subject) => (
@@ -383,10 +383,10 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                   onValueChange={(value) => updateState({ sectionId: value })}
                   disabled={state.loading || state.isAssigning || !state.semesterId || state.sections.length === 0}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-[#2c2c2e] text-gray-200 border-gray-600">
                     <SelectValue placeholder={state.sections.length === 0 ? "No sections available" : "Select Section"} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-[#2c2c2e] text-gray-200">
                     {state.sections
                       .filter((section) => section.semester_id === state.semesterId)
                       .map((section) => (
@@ -400,11 +400,21 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
             </div>
             <div className="flex justify-end gap-2">
               {(state.facultyId || state.subjectId || state.sectionId || state.semesterId || state.editingId) && (
-                <Button variant="outline" onClick={resetForm} disabled={state.loading || state.isAssigning}>
+                <Button
+                  variant="outline"
+                  onClick={resetForm}
+                  disabled={state.loading || state.isAssigning}
+                  className="bg-[#2c2c2e] border-gray-500 text-gray-200 hover:bg-transparent hover:text-gray-200"
+                >
                   Cancel
                 </Button>
+
               )}
-              <Button onClick={handleAssignFaculty} disabled={state.loading || state.isAssigning}>
+              <Button
+                onClick={handleAssignFaculty}
+                disabled={state.loading || state.isAssigning}
+                className="bg-[#2c2c2e] hover:bg-[#3a3a3c] text-gray-200"
+              >
                 {state.isAssigning ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
@@ -417,26 +427,28 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
             </div>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-200">
           <CardHeader>
-            <CardTitle>Faculty Assignments List</CardTitle>
+            <CardTitle className="text-gray-100">Faculty Assignments List</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <Input
+              className="bg-[#2c2c2e] text-gray-200 border-gray-700 placeholder-gray-400"
               placeholder="Search by faculty, subject, section or semester..."
               value={state.search}
               onChange={(e) => updateState({ search: e.target.value })}
               disabled={state.loading || state.isAssigning}
             />
             {state.loading ? (
-              <div className="text-center py-4">Loading...</div>
+              <div className="text-center py-4 text-gray-400">Loading...</div>
             ) : filteredAssignments.length === 0 ? (
-              <div className="text-center py-4">No assignments found.</div>
+              <div className="text-center py-4 text-gray-400">No assignments found.</div>
             ) : (
-              <div className="rounded-md border overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
+              <div className="rounded-md border border-gray-700 overflow-x-auto">
+                <table className="w-full text-sm text-gray-200">
+                  <thead className="bg-[#2c2c2e]">
+                    <tr className="border-b border-gray-700">
                       <th className="text-left p-2">Subject</th>
                       <th className="text-left p-2">Section</th>
                       <th className="text-left p-2">Semester</th>
@@ -446,22 +458,29 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                   </thead>
                   <tbody>
                     {filteredAssignments.map((assignment) => (
-                      <tr key={assignment.id} className="border-b">
+                      <tr key={assignment.id} className="border-b border-gray-700 hover:bg-[#2c2c2e]">
                         <td className="p-2">{assignment.subject}</td>
                         <td className="p-2">{assignment.section}</td>
                         <td className="p-2">{assignment.semester}</td>
                         <td className="p-2">{assignment.faculty}</td>
                         <td className="p-2 flex items-center gap-2">
-                          <Button size="icon" variant="ghost" onClick={() => handleEdit(assignment)} disabled={state.loading || state.isAssigning}>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="hover:bg-gray-700"
+                            onClick={() => handleEdit(assignment)}
+                            disabled={state.loading || state.isAssigning}
+                          >
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <Button
                             size="icon"
                             variant="ghost"
+                            className="hover:bg-gray-700"
                             onClick={() => updateState({ deleteId: assignment.id, openDeleteModal: true })}
                             disabled={state.loading || state.isAssigning}
                           >
-                            <Trash2 className="h-4 w-4 text-red-600" />
+                            <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
                         </td>
                       </tr>
@@ -472,17 +491,27 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
             )}
           </CardContent>
         </Card>
+
         <Dialog open={state.openDeleteModal} onOpenChange={(open) => updateState({ openDeleteModal: open })}>
-          <DialogContent>
+          <DialogContent className="bg-[#1c1c1e] text-white">
             <DialogHeader>
               <h2 className="text-lg font-semibold">Delete Assignment?</h2>
-              <p className="text-sm text-gray-500">Are you sure you want to delete this assignment?</p>
+              <p className="text-sm text-gray-400">Are you sure you want to delete this assignment?</p>
             </DialogHeader>
             <DialogFooter className="mt-4">
-              <Button variant="outline" onClick={() => updateState({ openDeleteModal: false })} disabled={state.loading || state.isAssigning}>
+              <Button
+                variant="outline"
+                className="bg-gray-700 hover:bg-gray-600 text-white border-gray-500"
+                onClick={() => updateState({ openDeleteModal: false })}
+                disabled={state.loading || state.isAssigning}
+              >
                 Cancel
               </Button>
-              <Button variant="destructive" onClick={handleConfirmDelete} disabled={state.loading || state.isAssigning}>
+              <Button
+                className="bg-red-600 hover:bg-red-500 text-white"
+                onClick={handleConfirmDelete}
+                disabled={state.loading || state.isAssigning}
+              >
                 Delete
               </Button>
             </DialogFooter>

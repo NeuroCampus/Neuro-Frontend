@@ -129,20 +129,21 @@ const ApplyLeave = () => {
   });
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen text-gray-900">
+    <div className="p-6 bg-[#1c1c1e] min-h-screen text-gray-200">
       <h2 className="text-3xl font-bold mb-6">Apply Leave</h2>
 
       {/* Leave Application Form */}
-      <Card className="bg-white border shadow-sm mb-6">
+      <Card className="bg-[#1c1c1e] text-gray-200 border shadow-sm mb-6">
         <CardHeader>
           <CardTitle className="text-xl font-semibold">Leave Application Form</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 ">
           <div>
             <label className="block text-sm font-medium mb-1">Title for Leave *</label>
             <Input
               value={leaveTitle}
               onChange={(e) => setLeaveTitle(e.target.value)}
+              className="bg-[#232326] text-gray-200"
               placeholder="Enter a title for your leave"
               disabled={loading}
             />
@@ -151,12 +152,12 @@ const ApplyLeave = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Start Date *</label>
-              <div className="relative">
+              <div className="relative text-gray-500">
                 <Input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="pr-10"
+                  className="pr-10  bg-[#232326] text-gray-200"
                   disabled={loading}
                 />
                 <CalendarIcon className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" />
@@ -164,12 +165,12 @@ const ApplyLeave = () => {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">End Date</label>
-              <div className="relative">
+              <div className="relative text-gray-500">
                 <Input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="pr-10"
+                  className="pr-10  bg-[#232326] text-gray-200"
                   disabled={loading}
                 />
                 <CalendarIcon className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" />
@@ -185,7 +186,7 @@ const ApplyLeave = () => {
               placeholder="Please provide a detailed reason for your leave request"
               rows={4}
               draggable={false}
-              className="resize-none"
+              className="resize-none bg-[#232326] text-gray-200"
               disabled={loading}
             />
           </div>
@@ -193,8 +194,8 @@ const ApplyLeave = () => {
           {error && <p className="text-red-600 text-sm">{error}</p>}
           {successMessage && <p className="text-green-600 text-sm">{successMessage}</p>}
 
-          <div className="text-right">
-            <Button onClick={handleSubmit} disabled={loading || !branchId}>
+          <div className="text-right ">
+            <Button onClick={handleSubmit} disabled={loading || !branchId} className="bg-gray-800">
               {loading ? "Submitting..." : "Submit Application"}
             </Button>
           </div>
@@ -202,19 +203,19 @@ const ApplyLeave = () => {
       </Card>
 
       {/* Recent Leave Applications */}
-      <Card className="bg-white border shadow-sm">
+      <Card className="bg-[#1c1c1e] text-gray-200 border shadow-sm">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl font-semibold">Recent Leave Applications</CardTitle>
             <div className="relative">
               <button
                 onClick={() => setShowFilter((prev) => !prev)}
-                className="text-gray-600 hover:text-black"
+                className="text-gray-200 hover:text-gray-400"
               >
                 <FilterIcon className="w-5 h-5" />
               </button>
               {showFilter && (
-                <div className="absolute right-0 mt-2 w-36 bg-white border rounded shadow-lg z-10">
+                <div className="absolute right-0 mt-2 w-36 bg-[#1c1c1e] text-gray-200 border rounded shadow-lg z-10">
                   {["All", "Approved", "Pending", "Rejected"].map((status) => (
                     <div
                       key={status}
@@ -223,7 +224,7 @@ const ApplyLeave = () => {
                         setShowFilter(false);
                       }}
                       className={cn(
-                        "px-4 py-2 cursor-pointer hover:bg-gray-100",
+                        "px-4 py-2 cursor-pointer hover:bg-gray-200",
                         statusFilter === status && "font-semibold"
                       )}
                     >
@@ -235,18 +236,18 @@ const ApplyLeave = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="divide-y">
+        <CardContent className="divide-y ">
           {loading ? (
-            <p className="text-sm text-gray-500 py-6 text-center">Loading...</p>
+            <p className="text-sm text-gray-200 py-6 text-center">Loading...</p>
           ) : filteredLeaves.length === 0 ? (
             <p className="text-sm text-gray-500 py-6 text-center">No applications found.</p>
           ) : (
             filteredLeaves.map((leave) => (
               <div key={leave.id} className="flex items-start justify-between py-4">
                 <div className="pr-4">
-                  <p className="font-medium text-gray-800">{leave.title}</p>
-                  <p className="text-sm text-gray-500">{leave.date}</p>
-                  <p className="text-sm text-gray-600 mt-1">{leave.reason}</p>
+                  <p className="font-medium text-gray-200">{leave.title}</p>
+                  <p className="text-sm text-gray-400">{leave.date}</p>
+                  <p className="text-sm text-gray-400 mt-1">{leave.reason}</p>
                 </div>
                 <span
                   className={`px-3 py-1 text-xs font-semibold rounded-full h-fit mt-1 ${statusColors[leave.status]}`}

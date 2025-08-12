@@ -164,7 +164,7 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
   };
  
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-[#1c1c1e] ">
       <Sidebar
         role="hod"
         setPage={handlePageChange}
@@ -174,15 +174,17 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
         toggleCollapse={toggleSidebar}
       />
       <div
-        className={`w-full max-h-screen overflow-y-auto bg-gray-100 transition-all duration-300 ${
+        className={`w-full max-h-screen overflow-y-auto bg-[#1c1c1e] transition-all duration-300 ${
           isSidebarCollapsed ? "ml-16" : "ml-64"
         }`}
       >
-        <Navbar role="hod" user={user} toggleSidebar={toggleSidebar} isSidebarCollapsed={isSidebarCollapsed} />
-        <div className="p-6 w-full">
+        <div className="sticky top-0 z-20 bg-[#1c1c1e] border-b border-gray-700">
+          <Navbar role="hod" user={user} toggleSidebar={toggleSidebar} isSidebarCollapsed={isSidebarCollapsed} />
+        </div>
+        <div className="p-6 w-full bg-[#1c1c1e]">
           {activePage === "dashboard" && (
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-800">Dashboard Overview</h1>
+              <h1 className="text-2xl font-bold text-gray-200">Dashboard Overview</h1>
               
             </div>
           )}

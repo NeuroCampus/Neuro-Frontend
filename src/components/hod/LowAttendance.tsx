@@ -321,23 +321,28 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
 
   return (
     <ErrorBoundary>
-      <div className="p-6 bg-white min-h-screen text-gray-900">
-        <h1 className="text-2xl font-semibold mb-6">Low Attendance Students</h1>
+      <div className="p-6 bg-[#1c1c1e] min-h-screen text-gray-900">
+        <h1 className="text-2xl font-semibold mb-6 text-gray-200">Low Attendance Students</h1>
         <div className="flex flex-wrap items-center gap-4 mb-6">
           <Select
             value={state.semesterFilter}
             onValueChange={(value) => updateState({ semesterFilter: value, subjectFilter: "All", sectionFilter: "All" })}
             disabled={state.loading || state.semesters.length === 0}
           >
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder={state.semesters.length === 0 ? "No semesters available" : "Select Semester"} />
+            <SelectTrigger className="w-48 bg-[#232326] border border-gray-700 text-gray-200">
+              <SelectValue
+          placeholder={state.semesters.length === 0 ? "No semesters available" : "Select Semester"}
+          className="text-gray-300"
+              />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem key="all-semesters" value="All">All</SelectItem>
+            <SelectContent className="bg-[#232326] border border-gray-700 text-gray-200">
+              <SelectItem key="all-semesters" value="All" className="text-gray-200 hover:bg-[#2a2a2e]">
+          All
+              </SelectItem>
               {state.semesters.map((semester) => (
-                <SelectItem key={semester.id} value={semester.id}>
-                  Semester {semester.number}
-                </SelectItem>
+          <SelectItem key={semester.id} value={semester.id} className="text-gray-200 hover:bg-[#2a2a2e]">
+            Semester {semester.number}
+          </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -346,18 +351,23 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
             onValueChange={(value) => updateState({ subjectFilter: value })}
             disabled={state.loading || !state.semesterFilter || state.semesterFilter === "All" || state.subjects.length === 0}
           >
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder={state.subjects.length === 0 ? "No subjects available" : "Select Subject"} />
+            <SelectTrigger className="w-48 bg-[#232326] border border-gray-700 text-gray-200">
+              <SelectValue
+          placeholder={state.subjects.length === 0 ? "No subjects available" : "Select Subject"}
+          className="text-gray-300"
+              />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem key="all-subjects" value="All">All</SelectItem>
+            <SelectContent className="bg-[#232326] border border-gray-700 text-gray-200">
+              <SelectItem key="all-subjects" value="All" className="text-gray-200 hover:bg-[#2a2a2e]">
+          All
+              </SelectItem>
               {state.subjects
-                .filter((subject) => state.semesterFilter === "All" || subject.semester_id === state.semesterFilter)
-                .map((subject) => (
-                  <SelectItem key={subject.id} value={subject.id}>
-                    {subject.name}
-                  </SelectItem>
-                ))}
+          .filter((subject) => state.semesterFilter === "All" || subject.semester_id === state.semesterFilter)
+          .map((subject) => (
+            <SelectItem key={subject.id} value={subject.id} className="text-gray-200 hover:bg-[#2a2a2e]">
+              {subject.name}
+            </SelectItem>
+          ))}
             </SelectContent>
           </Select>
           <Select
@@ -365,24 +375,29 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
             onValueChange={(value) => updateState({ sectionFilter: value })}
             disabled={state.loading || !state.semesterFilter || state.semesterFilter === "All" || state.sections.length === 0}
           >
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder={state.sections.length === 0 ? "No sections available" : "Select Section"} />
+            <SelectTrigger className="w-48 bg-[#232326] border border-gray-700 text-gray-200">
+              <SelectValue
+          placeholder={state.sections.length === 0 ? "No sections available" : "Select Section"}
+          className="text-gray-300"
+              />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem key="all-sections" value="All">All</SelectItem>
+            <SelectContent className="bg-[#232326] border border-gray-700 text-gray-200">
+              <SelectItem key="all-sections" value="All" className="text-gray-200 hover:bg-[#2a2a2e]">
+          All
+              </SelectItem>
               {state.sections
-                .filter((section) => state.semesterFilter === "All" || section.semester_id === state.semesterFilter)
-                .map((section) => (
-                  <SelectItem key={section.id} value={section.id}>
-                    {section.name}
-                  </SelectItem>
-                ))}
+          .filter((section) => state.semesterFilter === "All" || section.semester_id === state.semesterFilter)
+          .map((section) => (
+            <SelectItem key={section.id} value={section.id} className="text-gray-200 hover:bg-[#2a2a2e]">
+              {section.name}
+            </SelectItem>
+          ))}
             </SelectContent>
           </Select>
           <div className="ml-auto flex gap-4">
             <Button
               onClick={exportPDF}
-              className="flex items-center gap-2 bg-gray-100 text-gray-800 border border-gray-300 hover:bg-gray-200 rounded-md px-4 py-2 shadow-sm"
+              className="flex items-center gap-2 bg-[#232326] text-gray-200 border border-gray-700 hover:bg-[#2a2a2e] rounded-md px-4 py-2 shadow-sm"
               disabled={state.loading || filteredStudents.length === 0}
             >
               <FileDown className="w-4 h-4" />
@@ -390,16 +405,16 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
             </Button>
             <Button
               onClick={notifyAll}
-              className="flex items-center gap-2 bg-gray-100 text-gray-800 border border-gray-300 hover:bg-gray-200 rounded-md px-4 py-2 shadow-sm"
+              className="flex items-center gap-2 bg-[#232326] text-gray-200 border border-gray-700 hover:bg-[#2a2a2e] rounded-md px-4 py-2 shadow-sm"
               disabled={state.loading || filteredStudents.length === 0 || state.isNotifyingAll}
             >
               {state.isNotifyingAll ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Sending...
-                </>
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Sending...
+          </>
               ) : (
-                "Notify All"
+          "Notify All"
               )}
             </Button>
           </div>
@@ -409,14 +424,14 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
             placeholder="Search students..."
             value={state.searchTerm}
             onChange={(e) => updateState({ searchTerm: e.target.value })}
-            className="pl-10"
+            className="pl-10 bg-[#232326] text-gray-200 border border-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#232326] focus:border-gray-600"
             disabled={state.loading}
           />
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
         </div>
-        <div className="overflow-auto border rounded-lg">
-          <table className="min-w-full text-sm text-left">
-            <thead className="bg-gray-100 border-b">
+        <div className="overflow-auto border rounded-lg ">
+          <table className="min-w-full text-sm text-left ">
+            <thead className="bg-[#1c1c1e] border-b text-gray-200">
               <tr>
                 <th className="px-4 py-2">USN</th>
                 <th className="px-4 py-2">Name</th>
@@ -427,7 +442,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
                 <th className="px-4 py-2">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white">
+            <tbody className="bg-[#1c1c1e] text-gray-400">
               {state.loading ? (
                 <tr>
                   <td colSpan={7} className="text-center py-4">Loading...</td>
@@ -438,7 +453,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
                 </tr>
               ) : (
                 currentStudents.map((student) => (
-                  <tr key={student.student_id} className="border-b hover:bg-gray-50">
+                  <tr key={student.student_id} className="border-b hover:bg-gray-800">
                     <td className="px-4 py-2">{student.usn}</td>
                     <td className="px-4 py-2">{student.name}</td>
                     <td className="px-4 py-2">{student.subject}</td>
@@ -470,9 +485,9 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
             </tbody>
           </table>
         </div>
-        <div className="mt-4 flex justify-between items-center text-sm text-gray-600">
+        <div className="mt-4 flex justify-between items-center text-sm text-gray-200">
           <div className="flex items-center space-x-4">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-200">
               Showing {indexOfFirstStudent + 1} to {Math.min(indexOfLastStudent, filteredStudents.length)} of {filteredStudents.length} students
             </div>
           </div>
@@ -486,7 +501,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
             >
               Previous
             </Button>
-            <span className="text-gray-800">
+            <span className="text-gray-200">
               Page {state.currentPage} of {totalPages}
             </span>
             <Button
