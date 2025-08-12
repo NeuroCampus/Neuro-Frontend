@@ -3,33 +3,33 @@
   <img src="public/placeholder.svg" alt="Neuro Campus Banner" width="400"/>
 </p>
 
-<h1 align="center">🚀 NEURO CAMPUS: Academic Management System</h1>
+<h1 align="center"> NEURO CAMPUS: Academic Management System</h1>
 <p align="center"><b>Starlight Technology</b> | <i>Futuristic, AI-powered campus automation</i></p>
 
 ---
 
-## ✨ Overview
+## Overview
 
 **Neuro Campus** is a next-generation academic management system, blending AI, face recognition, and automation for seamless campus operations. Built with a modern React frontend and a robust Django backend, it empowers admins, HODs, faculty, and students with real-time notifications, analytics, and smart attendance.
 
 ---
 
-## 🌟 Features
-- 🔐 Secure authentication (multi-role: Admin, HOD, Faculty, Student)
-- 🧑‍🎓 Student enrollment with face recognition (dlib + OpenCV)
-- 📸 Automated attendance via facial recognition
-- 📊 Real-time statistics, dashboards, and analytics
-- 📨 Notifications & announcements (role-based, with email)
-- 📝 Leave management (faculty & student)
-- 📅 Timetable, marks, and study material management
-- 📈 Export to Google Sheets & PDF
-- 🤖 AI-powered PDF Q&A (Gemini integration)
-- 🦾 Modern, responsive UI (React + Tailwind)
-- 🛡️ JWT authentication, OTP support
+##  Features
+-  Secure authentication (multi-role: Admin, HOD, Faculty, Student)
+-  Student enrollment with face recognition (dlib + OpenCV)
+-  Automated attendance via facial recognition
+-  Real-time statistics, dashboards, and analytics
+-  Notifications & announcements (role-based, with email)
+-  Leave management (faculty & student)
+-  Timetable, marks, and study material management
+-  Export to Google Sheets & PDF
+-  AI-powered PDF Q&A (Gemini integration)
+-  Modern, responsive UI (React + Tailwind)
+-  JWT authentication, OTP support
 
 ---
 
-## 🖼️ Screenshots & Demo
+##  Screenshots & Demo
 
 > _Add your own screenshots, GIFs, or demo videos here!_
 
@@ -41,7 +41,7 @@
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Frontend         | Backend         | AI/ML & Cloud         |
 |------------------|----------------|----------------------|
@@ -52,9 +52,9 @@
 
 ---
 
-## ⚡ Quickstart
+##  Quickstart
 
-### 1️⃣ Backend Setup
+###  Backend Setup
 
 ```bash
 # Clone the repo
@@ -100,7 +100,7 @@ $ python manage.py runserver
 
 ---
 
-### 2️⃣ Frontend Setup
+### 2️ Frontend Setup
 
 ```bash
 # From project root
@@ -111,7 +111,7 @@ $ npm run dev
 
 ---
 
-## 👤 User Roles & Login
+##  User Roles & Login
 - **Admin**: Full access, user/branch management
 - **HOD**: Branch-level management, analytics, notifications
 - **Faculty**: Attendance, marks, proctoring, leave
@@ -129,7 +129,7 @@ $ npm run dev
 
 ---
 
-## 🚀 Usage Guide
+##  Usage Guide
 1. **Login** as your role
 2. **Navigate** to your dashboard
 3. **Enroll students** with face recognition (admin/faculty)
@@ -143,7 +143,7 @@ $ npm run dev
 
 ---
 
-## 🧩 Major Backend Dependencies
+##  Major Backend Dependencies
 - Django, djangorestframework, django-cors-headers
 - dlib, opencv-python, numpy, Pillow
 - google-api-python-client, google-auth, google-auth-oauthlib
@@ -153,14 +153,14 @@ $ npm run dev
 
 ---
 
-## 📝 Contributing
+##  Contributing
 - Fork, branch, and PR your features/bugfixes
 - Write clean, well-documented code
 - Use issues for bugs/feature requests
 
 ---
 
-## ❓ FAQ
+##  FAQ
 - **Q: I get a dlib/OpenCV error on install?**
   - A: Ensure you have CMake and system build tools installed. See [dlib install guide](http://dlib.net/compile.html).
 - **Q: How do I get a Google API key?**
@@ -172,13 +172,13 @@ $ npm run dev
 
 ---
 
-## 💬 Support & Contact
+##  Support & Contact
 - _For help, open an issue or email: **support@neurocampus.ai**_
 - _Join our Discord: [Invite Link](#)_
 
 ---
 
-## 🖤 Futuristic Design
+##  Futuristic Design
 - Modern UI, dark mode, and animated transitions
 - Add your own screenshots, GIFs, or demo videos in the demo section above!
 - Customizable with your own branding (replace `public/placeholder.svg` and `favicon.ico`)
