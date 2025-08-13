@@ -672,7 +672,7 @@ const StudentManagement = () => {
             <Button
               onClick={handleManualEntry}
               disabled={state.isLoading || !state.branchId || !state.manualForm.semester || !state.manualForm.section}
-              className="flex items-center gap-1 border border-gray-700 text-sm font-medium text-gray-200 bg-[#2c2c2e] hover:bg-[#3a3a3c] px-3 py-1.5 rounded-md transition disabled:opacity-50"
+              className="flex items-center gap-1  text-sm font-medium text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 px-3 py-1.5 rounded-md transition disabled:opacity-50"
             >
               + Add Student
             </Button>
@@ -753,7 +753,7 @@ const StudentManagement = () => {
 
               <Button
                 onClick={() => updateState({ addStudentModal: true })}
-                className="flex items-center gap-1 border border-gray-700 text-sm font-semibold text-gray-200 bg-[#2c2c2e] hover:bg-[#3a3a3c] px-3 py-1.5 rounded-md transition"
+                className="flex items-center gap-1  text-sm font-semibold text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 px-3 py-1.5 rounded-md transition"
                 disabled={state.isLoading || !state.branchId}
               >
                 <Upload className="w-4 h-4" />
@@ -835,11 +835,11 @@ const StudentManagement = () => {
                 updateState({ currentPage: Math.max(state.currentPage - 1, 1) })
               }
               disabled={state.currentPage === 1}
-              className="w-24 flex items-center justify-center gap-1 border border-gray-700 text-sm font-medium text-gray-200 bg-[#2c2c2e] hover:bg-[#3a3a3c] disabled:opacity-50 disabled:cursor-not-allowed py-1.5 rounded-md transition"
+              className="w-24 flex items-center justify-center gap-1 text-sm font-medium text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed py-1.5 rounded-md transition"
             >
               Previous
             </Button>
-            <div className="w-16 text-center text-sm font-medium text-gray-200 bg-[#2c2c2e] border border-gray-700 py-1.5 mx-2 rounded-md">
+            <div className="w-16 text-center text-sm font-medium text-gray-200 bg-gray-800  border border-gray-500 py-1.5 mx-2 rounded-md">
               {state.currentPage}
             </div>
             <Button
@@ -849,7 +849,7 @@ const StudentManagement = () => {
                 })
               }
               disabled={state.currentPage === totalPages}
-              className="w-24 flex items-center justify-center gap-1 border border-gray-700 text-sm font-medium text-gray-200 bg-[#2c2c2e] hover:bg-[#3a3a3c] disabled:opacity-50 disabled:cursor-not-allowed py-1.5 rounded-md transition"
+              className="w-24 flex items-center justify-center gap-1 text-sm font-medium text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed py-1.5 rounded-md transition"
             >
               Next
             </Button>
@@ -1070,11 +1070,11 @@ const StudentManagement = () => {
             <Button
               variant="outline"
               onClick={closeModal}
-              className="border-gray-600 text-gray-200 bg-transparent hover:bg-gray-200 hover:text-gray-900"
+              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
             >
               Cancel
             </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500">
               Done
             </Button>
           </DialogFooter>
@@ -1094,7 +1094,7 @@ const StudentManagement = () => {
             <Button
               variant="outline"
               onClick={() => updateState({ confirmDelete: false })}
-              className="border-gray-600 text-gray-200 hover:bg-gray-700"
+              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
             >
               Cancel
             </Button>
@@ -1178,12 +1178,12 @@ const StudentManagement = () => {
           <DialogFooter className="flex justify-end gap-2 mt-4">
             <Button
               variant="outline"
-              className="border-gray-700 text-gray-100 hover:bg-gray-700"
+              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
               onClick={() => updateState({ editDialog: false, editSections: [] })}
             >
               Cancel
             </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={handleEditSave}>
+            <Button className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={handleEditSave}>
               Save
             </Button>
           </DialogFooter>

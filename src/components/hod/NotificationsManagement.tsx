@@ -162,35 +162,35 @@ const NotificationsManagement = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-gray-100 text-gray-900 min-h-screen">
-      <Card className="md:col-span-2 bg-white border border-gray-200 shadow-sm">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-[#1c1c1e] text-gray-200 min-h-screen">
+      <Card className="md:col-span-2 bg-[#1c1c1e] text-gray-200 border border-gray-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-xl text-gray-900">Received Notifications</CardTitle>
-          <p className="text-sm text-gray-500">Notifications sent to you</p>
+          <CardTitle className="text-xl text-gray-200">Received Notifications</CardTitle>
+          <p className="text-sm text-gray-400">Notifications sent to you</p>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-gray-300">
                 <tr>
-                  <th className="pb-2 text-gray-700">Message</th>
-                  <th className="pb-2 text-gray-700">Target</th>
-                  <th className="pb-2 text-gray-700">Sender</th>
+                  <th className="pb-2 text-gray-200">Message</th>
+                  <th className="pb-2 text-gray-200">Target</th>
+                  <th className="pb-2 text-gray-200">Sender</th>
                 </tr>
               </thead>
               <tbody>
                 {notifications.map((note) => (
-                  <tr key={note.id} className="border-b border-gray-200 hover:bg-gray-50 transition">
+                  <tr key={note.id} className="border-b border-gray-200 hover:bg-gray-500 transition">
                     <td className="py-3">
-                      <div className="font-medium text-gray-900">{note.title}</div>
-                      <div className="text-gray-600 text-sm">{note.message}</div>
+                      <div className="font-medium text-gray-200">{note.title}</div>
+                      <div className="text-gray-400 text-sm">{note.message}</div>
                     </td>
                     <td className="py-3">
                       <span className={`px-3 py-1 text-xs rounded-full ${getBadgeColor(note.role)}`}>
                         {note.role.charAt(0).toUpperCase() + note.role.slice(1).replace("_", " ")}
                       </span>
                     </td>
-                    <td className="py-3 text-gray-600">
+                    <td className="py-3 text-gray-200">
                       <span className={`px-3 py-1 text-xs rounded-full ${getSenderBadgeColor(note.created_by || 'Unknown')}`}>
                         {note.created_by || 'Unknown'}
                       </span>
@@ -203,22 +203,22 @@ const NotificationsManagement = () => {
         </CardContent>
       </Card>
 
-      <Card className="bg-white border border-gray-200 shadow-sm">
+      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-xl text-gray-900">Create Notification</CardTitle>
-          <p className="text-sm text-gray-500">Send a new group notification</p>
+          <CardTitle className="text-xl text-gray-200">Create Notification</CardTitle>
+          <p className="text-sm text-gray-400">Send a new group notification</p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm mb-1 text-gray-700">Target Role</label>
+            <label className="block text-sm mb-1 text-gray-400">Target Role</label>
             <Select
               value={newNotification.target}
               onValueChange={(value) => setNewNotification({ ...newNotification, target: value })}
             >
-              <SelectTrigger className="bg-white text-gray-900 border-gray-300">
+              <SelectTrigger className="bg-[#232326] text-gray-400 border-gray-300">
                 <SelectValue placeholder="Select a target role" />
               </SelectTrigger>
-              <SelectContent className="bg-white text-gray-900 border-gray-200">
+              <SelectContent className="bg-[#232326] text-gray-400 border-gray-200">
                 <SelectItem value="All">All</SelectItem>
                 <SelectItem value="Students">Students</SelectItem>
                 <SelectItem value="Teachers">Teachers</SelectItem>
@@ -227,9 +227,9 @@ const NotificationsManagement = () => {
           </div>
 
           <div>
-            <label className="block text-sm mb-1 text-gray-700">Title</label>
+            <label className="block text-sm mb-1 text-gray-400">Title</label>
             <Input
-              className="bg-white text-gray-900 border-gray-300"
+              className="bg-[#232326] text-gray-200 border-gray-300"
               placeholder="Notification Title"
               value={newNotification.title}
               onChange={(e) => setNewNotification({ ...newNotification, title: e.target.value })}
@@ -237,9 +237,9 @@ const NotificationsManagement = () => {
           </div>
 
           <div>
-            <label className="block text-sm mb-1 text-gray-700">Message</label>
+            <label className="block text-sm mb-1 text-gray-400">Message</label>
             <Textarea
-              className="bg-white text-gray-900 border-gray-300"
+              className="bg-[#232326] text-gray-200 border-gray-300"
               rows={4}
               placeholder="Write your message here..."
               value={newNotification.message}
@@ -252,7 +252,7 @@ const NotificationsManagement = () => {
           )}
 
           <Button
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            className="w-full text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
             onClick={handleSendNotification}
             disabled={loading}
           >
@@ -261,27 +261,27 @@ const NotificationsManagement = () => {
         </CardContent>
       </Card>
 
-      <Card className="md:col-span-3 bg-white border border-gray-200 shadow-sm">
+      <Card className="md:col-span-3 bg-[#1c1c1e] text-gray-200 border border-gray-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-xl text-gray-900">Sent Notifications</CardTitle>
-          <p className="text-sm text-gray-500">Notifications you created</p>
+          <CardTitle className="text-xl text-gray-200">Sent Notifications</CardTitle>
+          <p className="text-sm text-gray-400">Notifications you created</p>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-gray-300">
                 <tr>
-                  <th className="pb-2 text-gray-700">Message</th>
-                  <th className="pb-2 text-gray-700">Target</th>
-                  <th className="pb-2 text-gray-700">Sender</th>
+                  <th className="pb-2 text-gray-200">Message</th>
+                  <th className="pb-2 text-gray-200">Target</th>
+                  <th className="pb-2 text-gray-200">Sender</th>
                 </tr>
               </thead>
               <tbody>
                 {sentNotifications.map((note) => (
-                  <tr key={note.id} className="border-b border-gray-200 hover:bg-gray-50 transition">
+                  <tr key={note.id} className="border-b border-gray-200 transition">
                     <td className="py-3">
-                      <div className="font-medium text-gray-900">{note.title}</div>
-                      <div className="text-gray-600 text-sm">{note.message}</div>
+                      <div className="font-medium text-gray-200">{note.title}</div>
+                      <div className="text-gray-400 text-sm">{note.message}</div>
                     </td>
                     <td className="py-3">
                       <span className={`px-3 py-1 text-xs rounded-full ${getBadgeColor(note.role)}`}>

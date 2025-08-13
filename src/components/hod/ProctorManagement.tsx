@@ -281,19 +281,19 @@ const ProctorStudents = () => {
   }
 
   return (
-    <div className="bg-white text-black min-h-screen p-6 space-y-6">
-      <div className="grid grid-cols-3 gap-4">
-        <Card><CardHeader><CardTitle>Total Students</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{total}</CardContent></Card>
-        <Card><CardHeader><CardTitle className="text-green-600">Assigned</CardTitle></CardHeader><CardContent className="text-2xl font-bold text-green-600">{assigned}</CardContent></Card>
-        <Card><CardHeader><CardTitle className="text-red-600">Unassigned</CardTitle></CardHeader><CardContent className="text-2xl font-bold text-red-600">{unassigned}</CardContent></Card>
+    <div className="bg-[#1c1c1e] text-gray-200 min-h-screen p-6 space-y-6">
+      <div className="grid grid-cols-3 gap-4 ">
+        <Card className="bg-[#1c1c1e] text-gray-200"><CardHeader><CardTitle>Total Students</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{total}</CardContent></Card>
+        <Card className="bg-[#1c1c1e] text-gray-200"><CardHeader><CardTitle className="text-green-600">Assigned</CardTitle></CardHeader><CardContent className="text-2xl font-bold text-green-600">{assigned}</CardContent></Card>
+        <Card className="bg-[#1c1c1e] text-gray-200"><CardHeader><CardTitle className="text-red-600">Unassigned</CardTitle></CardHeader><CardContent className="text-2xl font-bold text-red-600">{unassigned}</CardContent></Card>
       </div>
 
-      <Card>
+      <Card className="bg-[#1c1c1e] text-gray-200">
         <CardHeader><CardTitle>Student-Proctor Management</CardTitle></CardHeader>
         <CardContent className="flex items-center gap-4">
           <Input
             placeholder="Search by name or USN"
-            className="w-64 bg-gray-100 text-gray-700"
+            className="w-64 bg-[#232326] text-gray-200"
             value={state.search}
             onChange={(e) => updateState({ search: e.target.value })}
             disabled={state.loading}
@@ -301,10 +301,10 @@ const ProctorStudents = () => {
           <div className="flex-1" />
           {state.editMode && (
             <Select onValueChange={(value) => updateState({ selectedProctor: value })} disabled={state.proctors.length === 0}>
-              <SelectTrigger className="w-64 bg-gray-100 text-gray-700">
+              <SelectTrigger className="w-64 bg-[#232326] text-gray-200">
                 <SelectValue placeholder={state.proctors.length === 0 ? "No proctors available" : "Select Proctor"} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-[#232326] text-gray-200">
                 {state.proctors.map((proctor) => (
                   <SelectItem key={proctor.id} value={proctor.id}>{proctor.name}</SelectItem>
                 ))}
@@ -313,14 +313,14 @@ const ProctorStudents = () => {
           )}
           <Button
             onClick={handleEditToggle}
-            className="min-w-fit border border-gray-300 text-sm font-medium px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700"
+            className="min-w-fit text-sm font-medium px-4 py-2 rounded-md text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
             disabled={state.loading}
           >
             {state.editMode ? "Save Changes" : "Edit Proctors"}
           </Button>
           <Button
             variant="outline"
-            className="min-w-fit border border-gray-300 text-sm font-medium px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center gap-2"
+            className="min-w-fit text-sm font-medium px-4 py-2 rounded-md text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 flex items-center gap-2"
             onClick={handleExportPDF}
             disabled={state.loading || filteredStudents.length === 0}
           >
@@ -330,7 +330,7 @@ const ProctorStudents = () => {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="bg-[#1c1c1e] text-gray-200">
         <CardHeader>
           <CardTitle>Proctor Assignment - {state.branchName.toUpperCase()}</CardTitle>
         </CardHeader>
@@ -341,10 +341,10 @@ const ProctorStudents = () => {
               onValueChange={(value) => handleFilterChange("semester_id", value)}
               disabled={state.loading || state.semesters.length === 0}
             >
-              <SelectTrigger className="bg-gray-100 text-gray-700">
+              <SelectTrigger className="bg-[#232326] text-gray-200">
                 <SelectValue placeholder={state.semesters.length === 0 ? "No semesters available" : "All Semesters"} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-[#232326] text-gray-200">
                 <SelectItem value="all">All Semesters</SelectItem>
                 {state.semesters.map((semester) => (
                   <SelectItem key={semester.id} value={semester.id}>
@@ -358,10 +358,10 @@ const ProctorStudents = () => {
               onValueChange={(value) => handleFilterChange("section_id", value)}
               disabled={state.loading || state.sections.length === 0}
             >
-              <SelectTrigger className="bg-gray-100 text-gray-700">
+              <SelectTrigger className="bg-[#232326] text-gray-200">
                 <SelectValue placeholder={state.sections.length === 0 ? "No sections available" : "All Sections"} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-[#232326] text-gray-200">
                 <SelectItem value="all">All Sections</SelectItem>
                 {state.sections
                   .filter((section) => state.filters.semester_id === "all" || section.semester_id === state.filters.semester_id)
@@ -375,7 +375,7 @@ const ProctorStudents = () => {
           </div>
 
           <table className="w-full mt-4 text-left text-sm border border-gray-200">
-            <thead className="bg-gray-100 text-gray-600">
+            <thead className="bg-[#232326] text-gray-200">
               <tr>
                 {state.editMode && <th className="py-2 px-4">Select</th>}
                 <th className="py-2 px-4">USN</th>
@@ -394,7 +394,7 @@ const ProctorStudents = () => {
                 currentStudents.map((student) => (
                   <tr
                     key={student.usn}
-                    className={`border-t ${state.editMode ? "cursor-pointer hover:bg-gray-50" : ""}`}
+                    className={`border-t ${state.editMode ? "cursor-pointer hover:bg-gray-500" : ""}`}
                     onClick={() => state.editMode && handleCheckboxToggle(student.usn)}
                   >
                     {state.editMode && (
@@ -434,7 +434,7 @@ const ProctorStudents = () => {
                 variant="outline"
                 disabled={state.currentPage === 1 || state.loading}
                 onClick={() => updateState({ currentPage: Math.max(state.currentPage - 1, 1) })}
-                className="border border-gray-300 text-sm font-medium px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700"
+                className=" text-sm font-medium px-4 py-2 rounded-md text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
               >
                 Previous
               </Button>
@@ -443,7 +443,7 @@ const ProctorStudents = () => {
                 variant="outline"
                 disabled={state.currentPage === totalPages || state.loading}
                 onClick={() => updateState({ currentPage: Math.min(state.currentPage + 1, totalPages) })}
-                className="border border-gray-300 text-sm font-medium px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-700"
+                className="text-sm font-medium px-4 py-2 rounded-md text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
               >
                 Next
               </Button>

@@ -121,7 +121,7 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
                   name="email"
                   type="email"
                   placeholder="user@example.com"
-                  className="mt-1 bg-white"
+                  className="mt-1 bg-[#232326] text-gray-200"
                   value={formData.email}
                   onChange={handleInputChange}
                 />
@@ -135,7 +135,7 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
                     id="first_name"
                     name="first_name"
                     placeholder="HOD/Faculty name"
-                    className="mt-1 bg-white"
+                    className="mt-1 bg-[#232326] text-gray-200"
                     value={formData.first_name}
                     onChange={handleInputChange}
                   />
@@ -148,7 +148,7 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
                     id="last_name"
                     name="last_name"
                     placeholder="initials"
-                    className="mt-1 bg-white"
+                    className="mt-1 bg-[#232326] text-gray-200"
                     value={formData.last_name}
                     onChange={handleInputChange}
                   />
@@ -159,10 +159,10 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
                   Role
                 </label>
                 <Select value={formData.role} onValueChange={handleRoleChange}>
-                  <SelectTrigger className="w-full mt-1 bg-white text-gray-800 border-gray-300">
+                  <SelectTrigger className="w-full mt-1 bg-[#232326] text-gray-200 border-gray-300">
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-[#232326] text-gray-200">
                     <SelectItem value="hod">HOD</SelectItem>
                     <SelectItem value="teacher">Faculty/Teacher</SelectItem>
                   </SelectContent>

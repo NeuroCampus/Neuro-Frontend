@@ -202,19 +202,20 @@ const LeaveManagement = () => {
             <div className="flex justify-end items-center">
               <Button
                 variant="outline"
-                className="flex items-center gap-2 bg-[#1c1c1e] border border-gray-300 text-gray-400 text-sm font-medium hover:bg-gray-100"
+                className="flex items-center gap-2 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 text-sm font-medium"
               >
                 <Filter className="w-4 h-4" />
                 Filter
               </Button>
             </div>
           </PopoverTrigger>
-          <PopoverContent className="w-48 p-4 bg-[#1c1c1e] border border-gray-400 text-gray-800">
+          <PopoverContent className="w-48 p-4 text-gray-200 bg-gray-800  border border-gray-500">
             <div className="flex flex-col gap-2">
               <h4 className="text-sm font-semibold text-gray-200 mb-2">Filter Leave Requests</h4>
               <Button
                 variant={filterStatus === "All" ? "default" : "outline"}
                 size="sm"
+                className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
                 onClick={() => {
                   setFilterStatus("All");
                   setOpen(false);
@@ -225,6 +226,7 @@ const LeaveManagement = () => {
               <Button
                 variant={filterStatus === "Pending" ? "default" : "outline"}
                 size="sm"
+                className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
                 onClick={() => {
                   setFilterStatus("Pending");
                   setOpen(false);
@@ -235,6 +237,7 @@ const LeaveManagement = () => {
               <Button
                 variant={filterStatus === "Approved" ? "default" : "outline"}
                 size="sm"
+                className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
                 onClick={() => {
                   setFilterStatus("Approved");
                   setOpen(false);
@@ -245,6 +248,7 @@ const LeaveManagement = () => {
               <Button
                 variant={filterStatus === "Rejected" ? "default" : "outline"}
                 size="sm"
+                className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
                 onClick={() => {
                   setFilterStatus("Rejected");
                   setOpen(false);

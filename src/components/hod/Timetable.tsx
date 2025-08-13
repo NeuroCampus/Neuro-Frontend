@@ -135,7 +135,7 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, semest
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-[#1c1c1e] bg-opacity-50 text-gray-200">
-      <div className="bg-[#1c1c1e] p-6 rounded-md shadow-lg text-gray-500 border-2 border-gray-500">
+      <div className="bg-[#1c1c1e] p-6 rounded-md shadow-lg text-gray-200 border-2 border-gray-500">
         <h2 className="text-xl font-semibold mb-4">
           {classDetails.timetable_id ? "Edit Class" : "Add Class"} for {classDetails.day}
         </h2>
@@ -143,7 +143,7 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, semest
         <div className="mb-4">
           <label className="block">Subject:</label>
           <Select value={newClassDetails.subject} onValueChange={(value) => handleSelectChange("subject", value)}>
-            <SelectTrigger className="w-full p-2 border rounded">
+            <SelectTrigger className="w-full p-2 border rounded text-gray-500">
               <SelectValue placeholder="Select Subject" />
             </SelectTrigger>
             <SelectContent>
@@ -163,7 +163,7 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, semest
             onValueChange={(value) => handleSelectChange("professor", value)}
             disabled={isLoadingAssignments}
           >
-            <SelectTrigger className="w-full p-2 border rounded">
+            <SelectTrigger className="w-full p-2 border rounded text-gray-500">
               <SelectValue placeholder={isLoadingAssignments ? "Loading..." : "Select Professor"} />
             </SelectTrigger>
             <SelectContent>
@@ -176,19 +176,19 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, semest
           </Select>
         </div>
 
-        <div className="mb-4 text-gray-500">
+        <div className="mb-4">
           <label className="block">Room:</label>
           <input
             type="text"
             name="room"
             value={newClassDetails.room}
             onChange={handleChange}
-            className="w-full p-2 border rounded"
+            className="w-full p-2 border rounded text-gray-500"
             placeholder="e.g., R103"
           />
         </div>
 
-        <div className="mb-4">
+        <div className="mb-4 text-gray-500">
           <label className="block">Start Time (HH:MM):</label>
           <input
             type="text"
@@ -200,7 +200,7 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, semest
           />
         </div>
 
-        <div className="mb-4">
+        <div className="mb-4 text-gray-500">
           <label className="block">End Time (HH:MM):</label>
           <input
             type="text"
@@ -212,13 +212,14 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, semest
           />
         </div>
 
-        <div className="flex justify-end space-x-4">
-          <Button variant="outline" onClick={onCancel}>Cancel</Button>
+        <div className="flex justify-end space-x-4 ">
+          <Button variant="outline" className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={onCancel}>Cancel</Button>
           <Button
             variant="outline"
             onClick={() => {
               onSave(newClassDetails);
             }}
+            className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
           >
             Save
           </Button>
@@ -635,14 +636,14 @@ const Timetable = () => {
           <div className="flex space-x-2 ">
             <Button
               variant="outline"
-              className="flex items-center gap-2 bg-gray-500 border-gray-600 hover:bg-gray-200 hover:border-gray-600"
+              className="flex items-center gap-2 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
               onClick={handleExportPDF}
             >
               <DownloadIcon className="w-4 h-4 text-gray-700" /> Export PDF
             </Button>
             <Button
               variant="outline"
-              className="flex items-center gap-2 bg-gray-500 border-gray-600 hover:bg-gray-200 hover:border-gray-600"
+              className="flex items-center gap-2 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
               onClick={handleEdit}
             >
               <EditIcon className="w-4 h-4 text-gray-900" /> {state.isEditing ? "Cancel Edit" : "Edit"}
@@ -720,7 +721,7 @@ const Timetable = () => {
                 </thead>
                 <tbody>
                   {getTableData().map((row: any, idx: number) => (
-                    <tr key={idx} className="border-t hover:bg-gray-500 transition text-gray-200">
+                    <tr key={idx} className="border-t hover:bg-gray-700 transition text-gray-200">
                       <td className="py-3 px-4 font-medium text-gray-500">{row.time}</td>
                       {["mon", "tue", "wed", "thu", "fri", "sat"].map((day, i) => (
                         <td

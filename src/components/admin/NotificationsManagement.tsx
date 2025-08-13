@@ -217,7 +217,7 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
           <div>
             <label className="block text-sm mb-1 text-gray-200">Title</label>
             <Input
-              className="bg-white text-gray-900 border-gray-300"
+              className="bg-[#232326] text-gray-200 border-gray-300"
               placeholder="Notification Title"
               value={title}
               onChange={(e) => {
@@ -229,7 +229,7 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
           <div>
             <label className="block text-sm mb-1 text-gray-200">Message</label>
             <Textarea
-              className="bg-white text-gray-900 border-gray-300"
+              className="bg-[#232326] text-gray-200 border-gray-300"
               rows={4}
               placeholder="Write your message here..."
               value={message}
@@ -248,10 +248,10 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
                 setValidationError("");
               }}
             >
-              <SelectTrigger className="bg-white text-gray-900 border-gray-300">
+              <SelectTrigger className="bg-[#232326] text-gray-200 border-gray-300">
                 <SelectValue placeholder="Select a target role" />
               </SelectTrigger>
-              <SelectContent className="bg-white text-gray-900 border-gray-200">
+              <SelectContent className="bg-[#232326] text-gray-200 border-gray-200">
                 <SelectItem value="All Users">All Users</SelectItem>
                 <SelectItem value="Student">Student</SelectItem>
                 <SelectItem value="Teacher">Teacher</SelectItem>
@@ -263,7 +263,7 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
             <div className="text-red-600 text-sm font-medium">{validationError}</div>
           )}
           <Button
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            className="w-full text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
             onClick={handleSendNotification}
             disabled={loading}
           >

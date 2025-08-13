@@ -199,7 +199,7 @@ const SubjectManagement = () => {
               currentSubject: null,
             });
           }}
-          className="bg-[#1c1c1e] hover:bg-[#2a2a2d] text-gray-200 border border-gray-700"
+          className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
           disabled={state.loading || !state.branchId}
         >
           + Add Subject
@@ -262,7 +262,7 @@ const SubjectManagement = () => {
             <div className="flex justify-end gap-4">
               <Button
                 onClick={() => confirmDelete(false)}
-                className="bg-gray-700 hover:bg-gray-600 text-gray-200 border border-gray-600"
+                className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
                 disabled={state.loading}
               >
                 Cancel
@@ -352,7 +352,7 @@ const SubjectManagement = () => {
                     currentSubject: null,
                   });
                 }}
-                className="bg-gray-700 hover:bg-gray-600 text-white"
+                className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
                 disabled={state.loading}
               >
                 Cancel

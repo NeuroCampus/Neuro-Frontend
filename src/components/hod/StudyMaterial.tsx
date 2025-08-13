@@ -200,12 +200,12 @@ const StudyMaterials = () => {
   );
 
   return (
-    <div className="w-full p-4 text-gray-800">
+    <div className="w-full p-4 text-gray-200">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
         <h1 className="text-xl font-semibold">Study Materials</h1>
         <button
           onClick={() => setShowUploadModal(true)}
-          className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-500"
+          className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 px-2 py-1 rounded-lg text-sm font-bold"
           disabled={uploading}
         >
           + Upload
@@ -218,12 +218,12 @@ const StudyMaterials = () => {
           placeholder="Search by title, subject name, subject code, semester, or uploaded by..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1 px-3 py-2 rounded border border-gray-300 bg-white text-gray-700 outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 px-3 py-2 rounded bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white"
         />
         <select
           value={semesterFilter}
           onChange={(e) => setSemesterFilter(e.target.value)}
-          className="border border-gray-300 rounded px-3 py-2 bg-white text-gray-700"
+          className="border border-gray-300 rounded px-3 py-2 bg-[#232326] text-gray-200"
         >
           {semesters.map((semester) => (
             <option key={semester} value={semester}>
@@ -233,9 +233,9 @@ const StudyMaterials = () => {
         </select>
       </div>
 
-      <Card className="bg-white border border-gray-200 shadow rounded-lg">
+      <Card className="bg-[#1c1c1e] border border-gray-200 shadow rounded-lg">
         <CardHeader>
-          <div className="grid grid-cols-1 sm:grid-cols-7 font-semibold text-gray-500 text-sm gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-7 font-semibold text-gray-200 text-sm gap-2">
             <div>Type</div>
             <div>Title</div>
             <div>Subject Name</div>
@@ -246,11 +246,11 @@ const StudyMaterials = () => {
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-2 text-gray-200">
           {loading ? (
             <div className="text-center py-4">Loading...</div>
           ) : filteredMaterials.length === 0 ? (
-            <div className="text-center py-4 text-gray-500">No study materials found.</div>
+            <div className="text-center py-4 text-gray-400">No study materials found.</div>
           ) : (
             filteredMaterials.map((material) => (
               <StudyMaterialRow key={material.id} material={material} />
@@ -261,12 +261,12 @@ const StudyMaterials = () => {
 
       {/* Upload Modal */}
       {showUploadModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md border border-gray-200">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 ">
+          <div className="bg-[#1c1c1e] text-gray-200 rounded-lg p-6 w-full max-w-md border border-gray-300">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">Upload Study Material</h2>
+              <h2 className="text-lg font-semibold text-gray-200">Upload Study Material</h2>
               <button onClick={() => setShowUploadModal(false)} disabled={uploading}>
-                <X className="text-gray-500 hover:text-gray-700" />
+                <X className="text-gray-400 hover:text-gray-700" />
               </button>
             </div>
 
@@ -277,7 +277,7 @@ const StudyMaterials = () => {
                 placeholder="Title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white"
                 disabled={uploading}
               />
               <input
@@ -285,7 +285,7 @@ const StudyMaterials = () => {
                 placeholder="Subject Name"
                 value={subjectName}
                 onChange={(e) => setSubjectName(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white"
                 disabled={uploading}
               />
               <input
@@ -293,7 +293,7 @@ const StudyMaterials = () => {
                 placeholder="Subject Code"
                 value={subjectCode}
                 onChange={(e) => setSubjectCode(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white"
                 disabled={uploading}
               />
               <input
@@ -301,7 +301,7 @@ const StudyMaterials = () => {
                 placeholder="Semester"
                 value={semesterId}
                 onChange={(e) => setSemesterId(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white"
                 disabled={uploading}
               />
               <input
@@ -309,13 +309,13 @@ const StudyMaterials = () => {
                 placeholder="Branch"
                 value={branchId}
                 onChange={(e) => setBranchId(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3 py-2 bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white"
                 disabled={uploading}
               />
             </div>
 
             {/* File upload box */}
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mb-4 bg-gray-50">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mb-4 bg-[#1c1c1e]">
               <UploadCloud className="mx-auto text-gray-400 mb-2" size={40} />
               <p className="text-gray-600 mb-2">Drag & drop file here</p>
               <p className="text-gray-400 text-sm mb-4">Supports PDF, PNG, JPG, JPEG (max 50MB)</p>
@@ -329,7 +329,7 @@ const StudyMaterials = () => {
               />
               <label
                 htmlFor="fileInput"
-                className="inline-block px-4 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-500"
+                className="inline-block px-4 py-2 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
               >
                 {file ? file.name : "Select File"}
               </label>
@@ -337,7 +337,7 @@ const StudyMaterials = () => {
 
             <button
               onClick={handleUpload}
-              className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-600/90 transition-colors disabled:bg-gray-400"
+              className="w-full  py-2 rounded text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 transition-colors disabled:bg-gray-400"
               disabled={uploading}
             >
               {uploading ? "Uploading..." : "Upload File"}

@@ -195,7 +195,7 @@ const ApplyLeave = () => {
           {successMessage && <p className="text-green-600 text-sm">{successMessage}</p>}
 
           <div className="text-right ">
-            <Button onClick={handleSubmit} disabled={loading || !branchId} className="bg-gray-800">
+            <Button onClick={handleSubmit} disabled={loading || !branchId} className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500">
               {loading ? "Submitting..." : "Submit Application"}
             </Button>
           </div>
@@ -212,7 +212,7 @@ const ApplyLeave = () => {
                 onClick={() => setShowFilter((prev) => !prev)}
                 className="text-gray-200 hover:text-gray-400"
               >
-                <FilterIcon className="w-5 h-5" />
+                <FilterIcon className="w-6 h-6" />
               </button>
               {showFilter && (
                 <div className="absolute right-0 mt-2 w-36 bg-[#1c1c1e] text-gray-200 border rounded shadow-lg z-10">
