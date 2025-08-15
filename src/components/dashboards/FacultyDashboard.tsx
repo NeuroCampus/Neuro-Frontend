@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "../common/Sidebar";
+import Navbar from "../common/Navbar";
 import FacultyStats from "../faculty/FacultyStats";
 import TakeAttendance from "../faculty/TakeAttendance";
 import UploadMarks from "../faculty/UploadMarks";
@@ -20,21 +21,34 @@ interface FacultyDashboardProps {
 }
 
 const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
-  const [activePage, setActivePage] = useState("dashboard");
+  const [activePage, setActivePage] = useState(
+    localStorage.getItem("facultyActivePage") || "dashboard"
+  );
   const [error, setError] = useState<string | null>(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem("facultyActivePage", activePage);
+  }, [activePage]);
 
   const handlePageChange = (page: string) => {
     setActivePage(page);
+    setError(null);
   };
 
   const handleLogout = async () => {
     try {
       await logoutUser();
+      localStorage.clear();
       setPage("login");
     } catch (error) {
       console.error("Logout error:", error);
       setError("Failed to log out. Please try again.");
     }
+  };
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
   const renderContent = () => {
@@ -69,30 +83,42 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-[#1c1c1e]">
       <Sidebar
         role="faculty"
         setPage={handlePageChange}
         activePage={activePage}
         logout={handleLogout}
+        collapsed={isSidebarCollapsed}
+        toggleCollapse={toggleSidebar}
       />
-      <div className="ml-64 w-full max-h-screen overflow-y-auto bg-gray-100 p-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <h1 className="text-xl md:text-2xl font-bold">
-            Faculty Dashboard -{" "}
-            {activePage.charAt(0).toUpperCase() + activePage.slice(1).replace("-", " ")}
-          </h1>
-          <div className="text-sm text-gray-600">
-            Welcome, {user?.username || "Faculty"}
-            {user?.department && ` | ${user.department}`}
-          </div>
+      <div
+        className={`w-full max-h-screen overflow-y-auto bg-[#1c1c1e] transition-all duration-300 ${
+          isSidebarCollapsed ? "ml-16" : "ml-64"
+        }`}
+      >
+        {/* Navbar same as HOD, but role="faculty" */}
+        <div className="sticky top-0 z-20 bg-[#1c1c1e] border-b border-gray-700">
+          <Navbar
+            role="faculty"
+            user={user}
+            toggleSidebar={toggleSidebar}
+            isSidebarCollapsed={isSidebarCollapsed}
+          />
         </div>
-
-        {error && (
-          <div className="bg-red-500 text-white p-2 rounded mb-4">{error}</div>
-        )}
-
-        {renderContent()}
+        <div className="p-6 w-full bg-[#1c1c1e]">
+          {activePage === "dashboard" && (
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-gray-200">
+                Dashboard Overview
+              </h1>
+            </div>
+          )}
+          {error && (
+            <div className="bg-red-500 text-white p-2 rounded mb-4">{error}</div>
+          )}
+          {renderContent()}
+        </div>
       </div>
     </div>
   );
