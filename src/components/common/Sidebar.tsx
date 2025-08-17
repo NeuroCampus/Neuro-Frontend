@@ -2,6 +2,7 @@
  
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+// Use public directory asset via URL
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import {
@@ -176,13 +177,16 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
         transition={{ duration: 0.4, delay: 0.1 }}
       >
         <div className="flex items-center gap-3 ">
-          <motion.div
-            className="w-10 h-10 bg-gradient-to-r from-[#a259ff] to-[#7c3aed] rounded-lg flex items-center justify-center"
-            whileHover={{ scale: 1.1, rotate: 5 }}
-            transition={{ duration: 0.2 }}
+          <div
+            className="w-12 h-12 rounded-lg flex items-center justify-center shadow-lg overflow-hidden border-2 border-[#a259ff] bg-white"
           >
-            <span className="text-white font-bold">N</span>
-          </motion.div>
+            <img
+              src="/logo.jpeg"
+              alt="Logo"
+              className="w-full h-full object-contain"
+              style={{ borderRadius: '0.5rem' }}
+            />
+          </div>
           <AnimatePresence>
             {!collapsed && (
               <motion.div
