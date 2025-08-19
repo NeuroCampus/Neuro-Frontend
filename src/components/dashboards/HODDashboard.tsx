@@ -102,6 +102,13 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
   const handlePageChange = (page: string) => {
     setActivePage(page);
     setError(null);
+
+    // scroll window to top just in case
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleNotificationClick = () => {
+    setActivePage("notifications");
   };
  
   const handleLogout = async () => {
@@ -164,7 +171,7 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
   };
  
   return (
-    <div className="flex min-h-screen bg-[#1c1c1e] ">
+    <div className="flex min-h-screen bg-[#1c1c1e] pt-16">
       <Sidebar
         role="hod"
         setPage={handlePageChange}
@@ -174,12 +181,12 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
         toggleCollapse={toggleSidebar}
       />
       <div
-        className={`w-full max-h-screen overflow-y-auto bg-[#1c1c1e] transition-all duration-300 ${
+        className={`w-full max-h-screen overflow-y bg-[#1c1c1e] transition-all duration-300 ${
           isSidebarCollapsed ? "ml-16" : "ml-64"
         }`}
       >
         <div className="sticky top-0 z-20 bg-[#1c1c1e] border-b border-gray-700">
-          <Navbar role="hod" user={user} toggleSidebar={toggleSidebar} isSidebarCollapsed={isSidebarCollapsed} />
+          <Navbar role="hod" user={user} toggleSidebar={toggleSidebar} isSidebarCollapsed={isSidebarCollapsed} setPage={handlePageChange} onNotificationClick={handleNotificationClick}/>
         </div>
         <div className="p-6 w-full bg-[#1c1c1e]">
           {activePage === "dashboard" && (

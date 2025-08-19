@@ -22,6 +22,8 @@ import {
   UserCheck,
 } from "lucide-react";
 import { logoutUser } from "../../utils/authService";
+import { useRef, useEffect } from "react";
+
 
 interface AdminDashboardProps {
   user: any;
@@ -35,9 +37,13 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+
   const handlePageChange = (page: string) => {
     setActivePage(page);
     setError(null);
+
+    // scroll window to top just in case
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const toggleSidebar = () => {
@@ -203,7 +209,7 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
 
   return (
     <motion.div 
-      className="flex min-h-screen bg-[#1c1c1e]"
+      className="flex min-h-screen bg-[#1c1c1e] pt-16"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -224,6 +230,7 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
             role="admin"
             user={user}
             onNotificationClick={handleNotificationClick}
+            setPage={handlePageChange}
           />
         </div>
         <motion.main 

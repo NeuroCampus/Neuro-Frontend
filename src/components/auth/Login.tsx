@@ -4,6 +4,8 @@ import { loginUser } from "../../utils/authService";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { LockKeyhole, User, BookOpen, Users, GraduationCap } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+
 
 interface LoginProps {
   setRole: (role: string) => void;
@@ -16,6 +18,8 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
 
   const handleLogin = async () => {
     const trimmedUsername = username.trim();
@@ -36,6 +40,8 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
           localStorage.setItem("temp_user_id", response.user_id || "");
           setPage("otp");
         } else {
+          localStorage.setItem("accessToken", response.access);
+          localStorage.setItem("refreshToken", response.refresh || "");
           setRole(response.role || "");
           setUser(response.profile || {});
           setPage(response.role || "");
@@ -159,7 +165,7 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
             <div className="space-y-2">
               <label htmlFor="username" className="text-sm font-medium text-gray-300">Username</label>
               <div className="relative">
-                <User className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                <User className="absolute left-3 top-4 h-4 w-4 text-gray-500" />
                 <Input
                   id="username"
                   type="text"
@@ -174,18 +180,37 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
 
             {/* Password */}
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-gray-300">Password</label>
+              <label
+                htmlFor="password"
+                className="text-sm font-medium text-gray-300"
+              >
+                Password
+              </label>
               <div className="relative">
-                <LockKeyhole className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                <LockKeyhole className="absolute left-3 top-4 h-4 w-4 text-gray-500" />
+
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
-                  onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                  className="pl-10 pr-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
+                  onKeyPress={(e) => e.key === "Enter" && handleLogin()}
                 />
+
+                {/* Eye Icon Toggle */}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-4 text-gray-500 "
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
             </div>
 

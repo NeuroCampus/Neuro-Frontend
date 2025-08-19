@@ -29,6 +29,10 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
 
   const handlePageChange = (page: string) => {
     setActivePage(page);
+    setError(null);
+
+    // scroll window to top just in case
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleLogout = async () => {
@@ -39,6 +43,10 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
       console.error("Logout error:", error);
       setError("Failed to log out. Please try again.");
     }
+  };
+
+  const handleNotificationClick = () => {
+    setActivePage("announcements");
   };
 
   const renderContent = () => {
@@ -77,13 +85,13 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100 text-gray-900">
+    <div className="flex min-h-screen bg-gray-100 text-gray-900 pt-16">
       <Sidebar role="student" setPage={handlePageChange} activePage={activePage} logout={handleLogout} />
       <div className="ml-64 w-full">
         <div className="fixed top-0 left-64 right-0 z-10 bg-white shadow">
-          <Navbar role="student" user={user} />
+          <Navbar role="student" user={user}  onNotificationClick={handleNotificationClick} setPage={handlePageChange}/>
         </div>
-        <div className="pt-20 px-6 pb-6 overflow-y-auto max-h-screen">
+        <div className="pt-20 px-6 pb-6 overflow-y max-h-screen">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <h1 className="text-2xl font-bold text-gray-800">Student Dashboard - Overview</h1>
             <div className="text-sm text-gray-500">
