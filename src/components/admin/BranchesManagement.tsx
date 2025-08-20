@@ -42,6 +42,8 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
   const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
   const [newHodId, setNewHodId] = useState("");
   const [loading, setLoading] = useState(true);
+  const normalize = (str: string) => str.toLowerCase().trim();
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -82,10 +84,41 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
   }, [setError, toast]);
 
   const filteredBranches = Array.isArray(branches)
-    ? branches.filter((branch) => branch?.name?.toLowerCase().includes(filter.toLowerCase()))
+    ? branches
+        .filter((branch) =>
+          normalize(branch?.name || "").includes(normalize(filter))
+        )
+        .sort((a, b) => {
+          const aName = normalize(a.name || "");
+          const bName = normalize(b.name || "");
+          const s = normalize(filter);
+
+          // 1. Exact match first
+          if (aName === s && bName !== s) return -1;
+          if (bName === s && aName !== s) return 1;
+
+          // 2. StartsWith gets higher priority
+          const aStarts = aName.startsWith(s);
+          const bStarts = bName.startsWith(s);
+          if (aStarts && !bStarts) return -1;
+          if (bStarts && !aStarts) return 1;
+
+          // 3. Earlier occurrence of search string is better
+          const aIndex = aName.indexOf(s);
+          const bIndex = bName.indexOf(s);
+          if (aIndex !== bIndex) return aIndex - bIndex;
+
+          // 4. Shorter name is better
+          return aName.length - bName.length;
+        })
     : [];
-  const unassignedHods = users.filter((user) => !branches.some((b) => b.hod === user.username));
+
+  const unassignedHods = users.filter(
+    (user) => !branches.some((b) => b.hod === user.username)
+  );
+
   const unassignedBranches = branches.filter((b) => !b.hod);
+
 
   const handleEdit = (branch: Branch) => {
     setEditingId(branch.id);
@@ -268,7 +301,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                 <th className="py-2">ID</th>
                 <th className="py-2">Branch</th>
                 <th className="py-2">Assigned HOD</th>
-                <th className="py-2 text-right">Actions</th>
+                <th className="py-2 text-right px-5">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -277,36 +310,74 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                     key={branch.id}
                     className="border-b border-gray-100 transition-colors text-gray-200 duration-200 hover:bg-gray-800/60"
                   >
+                    {/* ID column */}
                     <td className="py-3">{branch.id}</td>
+
+                    {/* Branch Name column */}
                     <td className="py-3 pr-2 text-gray-200">
                       {editingId === branch.id ? (
-                        <Input
+                        <select
                           name="name"
                           value={editData?.name || ""}
                           onChange={handleEditChange}
-                          className="bg-gray-800 text-white border border-gray-600"
-                        />
+                          className="bg-[#232326] text-gray-200 px-2 py-1 rounded"
+                        >
+                          {branches.map((b) => (
+                            <option  className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" key={b.id} value={b.name}>
+                              {b.name}
+                            </option>
+                          ))}
+                        </select>
                       ) : (
                         branch.name
                       )}
                     </td>
+
+                    {/* HOD column */}
                     <td className="py-3 text-gray-200">
                       {editingId === branch.id ? (
-                        <Input
+                        <select
                           name="hod"
                           value={editData?.hod || ""}
                           onChange={handleEditChange}
-                          className="bg-gray-800 text-white border border-gray-600"
-                        />
+                          className="bg-[#232326] text-gray-200 border-gray-200 px-2 py-1 rounded"
+                        >
+                          <option value="">-- Select HOD --</option>
+                          {users.map((u) => (
+                            <option  className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" key={u.id} value={u.username}>
+                              {u.username}
+                            </option>
+                          ))}
+                        </select>
                       ) : (
                         branch.hod || "--"
                       )}
                     </td>
-                    <td className="py-3 text-right space-x-2 ">
+
+                    {/* Actions column */}
+                    <td className="py-3 text-right space-x-2">
                       {editingId === branch.id ? (
-                        <Button size="sm" className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={saveEdit} disabled={loading}>
-                          {loading ? "Saving..." : "Save"}
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                            onClick={saveEdit}
+                            disabled={loading}
+                          >
+                            {loading ? "Saving..." : "Save"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setEditingId(null);
+                              setEditData(null);
+                            }}
+                            disabled={loading}
+                          >
+                            Cancel
+                          </Button>
+                        </>
                       ) : (
                         <Button
                           variant="ghost"
@@ -317,6 +388,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                           <PencilIcon className="w-4 h-4 text-blue-600" />
                         </Button>
                       )}
+
                       <Button
                         variant="ghost"
                         size="icon"
@@ -329,6 +401,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                   </tr>
                 ))}
               </tbody>
+
             </table>
         </CardContent>
       </Card>
@@ -358,28 +431,73 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
       </Dialog>
 
       <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-[#1c1c1e] text-gray-200">
-          <DialogHeader><DialogTitle>Assign HOD to Branch</DialogTitle></DialogHeader>
-          <div className="space-y-4 ">
-            <select value={selectedBranchId || ""} onChange={(e) => setSelectedBranchId(Number(e.target.value))} className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-[#232326] text-gray-200">
-              <option className="bg-[#232326] text-gray-200" value="" disabled>Select a branch</option>
-              {unassignedBranches.map((branch) => (
-                <option key={branch.id} value={branch.id}>{branch.name}</option>
-              ))}
-            </select>
-            <select value={newHodId} onChange={(e) => setNewHodId(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-[#232326] text-gray-200">
-              <option className="bg-[#232326] text-gray-200" value="" disabled>Select HOD</option>
-              {unassignedHods.map((user) => (
-                <option key={user.id} value={user.id}>{user.username}</option>
-              ))}
-            </select>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={() => setIsAssignDialogOpen(false)} disabled={loading}>Cancel</Button>
-            <Button onClick={handleAssignHod} className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" disabled={loading || !selectedBranchId || !newHodId}>{loading ? "Assigning..." : "Assign"}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+  <DialogContent className="sm:max-w-md bg-[#1c1c1e] text-gray-200">
+    <DialogHeader>
+      <DialogTitle>Assign HOD to Branch</DialogTitle>
+    </DialogHeader>
+
+    <div className="space-y-4">
+      {/* Branch Dropdown */}
+      <select
+        value={selectedBranchId || ""}
+        onChange={(e) => setSelectedBranchId(Number(e.target.value))}
+        className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-[#232326] text-gray-200"
+      >
+        <option className="bg-[#232326] text-gray-200" value="" disabled>
+          Select a branch
+        </option>
+        {branches.map((branch) => (
+          <option
+            key={branch.id}
+            value={branch.id}
+            className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+          >
+            {branch.name}
+          </option>
+        ))}
+      </select>
+
+      {/* HOD Dropdown */}
+      <select
+        value={newHodId}
+        onChange={(e) => setNewHodId(e.target.value)}
+        className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-[#232326] text-gray-200"
+      >
+        <option className="bg-[#232326] text-gray-200" value="" disabled>
+          Select HOD
+        </option>
+        {users.map((user) => (
+          <option
+            key={user.id}
+            value={user.id}
+            className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+          >
+            {user.username}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    <DialogFooter>
+      <Button
+        variant="outline"
+        className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+        onClick={() => setIsAssignDialogOpen(false)}
+        disabled={loading}
+      >
+        Cancel
+      </Button>
+      <Button
+        onClick={handleAssignHod}
+        className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+        disabled={loading || !selectedBranchId || !newHodId}
+      >
+        {loading ? "Assigning..." : "Assign"}
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+
     </div>
   );
 };

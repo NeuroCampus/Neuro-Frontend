@@ -22,23 +22,72 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const REQUIRED_HEADERS = ["usn", "name", "email"];
+
   const validateFile = (file: File): Promise<boolean> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
+
       reader.onload = (e) => {
         const text = e.target?.result as string;
-        const headers = text.slice(0, text.indexOf("\n")).split(",");
+
+        // Split rows (remove empty lines too)
+        const rows = text.trim().split("\n").filter(r => r.trim() !== "");
+
+        if (rows.length < 2) {
+          reject("CSV must contain headers and at least one row of data");
+          return;
+        }
+
+        // Validate headers
+        const headers = rows[0].split(",").map(h => h.trim().toLowerCase());
         const missingHeaders = REQUIRED_HEADERS.filter((header) => !headers.includes(header));
         if (missingHeaders.length > 0) {
           reject(`Missing required column(s): ${missingHeaders.join(", ")}`);
-        } else {
-          resolve(true);
+          return;
         }
+
+        // Validate data rows (skip header row)
+        const dataRows = rows.slice(1);
+        for (let i = 0; i < dataRows.length; i++) {
+          const cols = dataRows[i].split(",").map(c => c.trim());
+
+          if (cols.length !== REQUIRED_HEADERS.length) {
+            reject(`Row ${i + 2} does not have the correct number of columns`);
+            return;
+          }
+
+          const [usn, name, email] = cols;
+
+          // USN format check: 1 digit + 2 letters + 2 digits + 2 letters + 3 digits
+          const usnRegex = /^[0-9][A-Z]{2}[0-9]{2}[A-Z]{2}[0-9]{3}$/;
+          if (!usnRegex.test(usn)) {
+            reject(`Invalid USN format at row ${i + 2}: ${usn}`);
+            return;
+          }
+
+          // Name validation (must be at least 2 characters)
+          if (!name || name.length < 2) {
+            reject(`Invalid name at row ${i + 2}`);
+            return;
+          }
+
+          // Email validation
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(email)) {
+            reject(`Invalid email at row ${i + 2}: ${email}`);
+            return;
+          }
+        }
+
+        resolve(true);
       };
+
       reader.onerror = () => reject("Failed to read file");
       reader.readAsText(file);
     });
   };
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -95,8 +144,9 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
     }
   };
 
-  const handleDownloadTemplate = () => {
-    const csvContent = `name,email\nJohn Doe,john@example.com\nJane Smith,jane@example.com`; // Updated template
+    const handleDownloadTemplate = () => {
+    const csvContent = `usn,name,email
+  1AM22CI064,John Doe,john@example.com`; // Updated template with USN
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -104,6 +154,7 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
     link.setAttribute("download", "faculty_template.csv");
     link.click();
   };
+
 
   return (
     <div className="px-4 py-8 max-w-4xl mx-auto">
@@ -181,7 +232,7 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
             <p className="font-medium mb-2">Upload Instructions</p>
             <ul className="list-disc pl-5 text-sm text-gray-400 space-y-1 ">
               <li>Use the provided template for proper data formatting</li>
-              <li>Required columns: name, email</li>
+              <li>Required columns: usn, name, email</li>
               <li>role not required, defaults to teacher</li>
               <li>Maximum 500 records per file</li>
               <li>

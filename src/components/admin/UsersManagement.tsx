@@ -64,6 +64,8 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
   const [editData, setEditData] = useState<User | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const normalize = (str: string) => str.toLowerCase().trim();
+
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -106,17 +108,48 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
     fetchUsers();
   }, [setError, toast]);
 
-  const filteredUsers = Array.isArray(users)
-    ? users.filter((user) => {
-        const filterRole = roleFilter === "All" ? user.role : roleMap[roleFilter];
-        const roleMatch = roleFilter === "All" || user.role.toLowerCase() === filterRole.toLowerCase();
-        const statusMatch = statusFilter === "All" || user.status === statusFilter;
+const filteredUsers = Array.isArray(users)
+  ? users
+      .filter((user) => {
+        const filterRole =
+          roleFilter === "All" ? user.role : roleMap[roleFilter];
+        const roleMatch =
+          roleFilter === "All" ||
+          user.role.toLowerCase() === filterRole.toLowerCase();
+        const statusMatch =
+          statusFilter === "All" || user.status === statusFilter;
         const searchMatch =
-          (user.name && user.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (user.email && user.email.toLowerCase().includes(searchQuery.toLowerCase()));
+          (user.name &&
+            normalize(user.name).includes(normalize(searchQuery))) ||
+          (user.email &&
+            normalize(user.email).includes(normalize(searchQuery)));
+
         return roleMatch && statusMatch && searchMatch;
       })
-    : [];
+      .sort((a, b) => {
+        const s = normalize(searchQuery);
+        const aName = normalize(a.name || "");
+        const bName = normalize(b.name || "");
+
+        // 1. Exact match
+        if (aName === s && bName !== s) return -1;
+        if (bName === s && aName !== s) return 1;
+
+        // 2. StartsWith
+        const aStarts = aName.startsWith(s);
+        const bStarts = bName.startsWith(s);
+        if (aStarts && !bStarts) return -1;
+        if (bStarts && !aStarts) return 1;
+
+        // 3. Earlier index of match
+        const aIndex = aName.indexOf(s);
+        const bIndex = bName.indexOf(s);
+        if (aIndex !== bIndex) return aIndex - bIndex;
+
+        // 4. Shorter name is better
+        return aName.length - bName.length;
+      })
+  : [];
 
   const handleEdit = (user: User) => {
     setEditingId(user.id);

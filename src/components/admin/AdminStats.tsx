@@ -30,6 +30,8 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const normalize = (str: string) => str.toLowerCase().trim();
+
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -63,14 +65,34 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
     fetchStats();
   }, [setError, toast]);
 
-  const filteredBranches = Array.isArray(stats?.branch_distribution)
-    ? stats.branch_distribution.filter(
+const filteredBranches = Array.isArray(stats?.branch_distribution)
+  ? stats.branch_distribution
+      .filter(
         (branch: any) =>
           branch?.name &&
           typeof branch.name === "string" &&
-          branch.name.toLowerCase().includes(search.toLowerCase())
+          normalize(branch.name).includes(normalize(search))
       )
-    : [];
+      .sort((a: any, b: any) => {
+        const aName = normalize(a.name);
+        const bName = normalize(b.name);
+        const s = normalize(search);
+
+        // 1. Prioritize startsWith over includes
+        const aStarts = aName.startsWith(s);
+        const bStarts = bName.startsWith(s);
+        if (aStarts && !bStarts) return -1;
+        if (bStarts && !aStarts) return 1;
+
+        // 2. Shorter distance between match position → higher rank
+        const aIndex = aName.indexOf(s);
+        const bIndex = bName.indexOf(s);
+        if (aIndex !== bIndex) return aIndex - bIndex;
+
+        // 3. Shorter name length → higher rank
+        return aName.length - bName.length;
+      })
+  : [];
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
@@ -175,8 +197,8 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
         
 
         {/* Dashboard Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <motion.div variants={cardVariants} initial="hidden" animate="visible">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 ">
+          <motion.div variants={cardVariants} initial="hidden" animate="visible" className="bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white rounded-lg">
             <DashboardCard
               title="Total Students"
               value={stats.total_students || 0}
@@ -184,7 +206,7 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
               icon={<FaUserGraduate className="text-blue-500 text-3xl" />}
             />
           </motion.div>
-          <motion.div variants={cardVariants} initial="hidden" animate="visible">
+          <motion.div variants={cardVariants} initial="hidden" animate="visible" className="bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white rounded-lg">
             <DashboardCard
               title="Total Faculty"
               value={stats.total_faculty || 0}
@@ -192,7 +214,7 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
               icon={<FaChalkboardTeacher className="text-purple-500 text-3xl" />}
             />
           </motion.div>
-          <motion.div variants={cardVariants} initial="hidden" animate="visible">
+          <motion.div variants={cardVariants} initial="hidden" animate="visible" className="bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white rounded-lg">
             <DashboardCard
               title="Total HODs"
               value={stats.total_hods || 0}
@@ -200,7 +222,7 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
               icon={<FaUserTie className="text-yellow-500 text-3xl" />}
             />
           </motion.div>
-          <motion.div variants={cardVariants} initial="hidden" animate="visible">
+          <motion.div variants={cardVariants} initial="hidden" animate="visible" className="bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white rounded-lg">
             <DashboardCard
               title="Total Admins"
               value={stats.role_distribution?.admins || 0}

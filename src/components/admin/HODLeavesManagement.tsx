@@ -48,6 +48,8 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
   const [showModal, setShowModal] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [viewReason, setViewReason] = useState<string | null>(null);
+
 
   const fetchLeaves = async () => {
     setLoading(true);
@@ -107,6 +109,9 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
           icon: 'success',
           title: 'Leave Approved!',
           text: 'Hope the time off is refreshing!',
+          background: '#18181b', // dark background
+          color: '#E4E4E7',       // light text
+          confirmButtonColor: '#22c55e', // green button to match dark theme
         });
       } else {
         setError(response.message || "Failed to approve leave");
@@ -128,6 +133,7 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
       setLoading(false);
     }
   };
+
 
   const handleConfirmReject = async () => {
     if (selectedId !== null) {
@@ -182,11 +188,11 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
           <table className="w-full text-sm text-left text-gray-900">
             <thead className="border-b border-gray-200 text-gray-200">
               <tr>
-                <th className="py-2">HOD</th>
-                <th className="py-2">Period</th>
+                <th className="py-2 px-2">HOD</th>
+                <th className="py-2 px-12">Period</th>
                 <th className="py-2">Reason</th>
-                <th className="py-2">Status</th>
-                <th className="py-2">Action</th>
+                <th className="py-2 px-4">Status</th>
+                <th className="py-2 px-5">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -203,7 +209,14 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
                 <td className="py-3 text-sm text-white">
                   {leave.from} <span className="text-gray-300">to</span> {leave.to}
                 </td>
-                <td className="py-3 text-sm text-white">{leave.reason}</td>
+<td className="py-3 text-sm text-white">
+  <button
+    onClick={() => setViewReason(leave.reason)}
+    className="text-blue-400 hover:underline"
+  >
+    View
+  </button>
+</td>
                 <td className="py-3">{getStatusBadge(leave.status)}</td>
                 <td className="py-3">
                   {leave.status === "Pending" ? (
@@ -245,6 +258,32 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
           </table>
         </CardContent>
       </Card>
+
+      {/* View Reason Dialog */}
+      <Dialog open={!!viewReason} onOpenChange={() => setViewReason(null)}>
+        <DialogContent className="sm:max-w-lg bg-[#1c1c1e] text-gray-200 rounded-2xl shadow-lg thin-scrollbar">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold">Leave Reason</DialogTitle>
+          </DialogHeader>
+
+          <div
+            className="p-3 text-gray-300 text-base leading-relaxed whitespace-pre-wrap break-words 
+                      max-h-64 overflow-y-auto rounded-md"
+          >
+            {viewReason}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              className="text-gray-200 bg-gray-800 hover:bg-gray-700 border border-gray-600"
+              onClick={() => setViewReason(null)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="bg-[#18181b] text-gray-200 border border-gray-700">
