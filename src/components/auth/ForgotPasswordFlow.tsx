@@ -4,6 +4,8 @@ import { forgotPassword, resetPassword } from "../../utils/authService";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Mail, ArrowLeft, Send, Shield, LockKeyhole, CheckCircle, AlertCircle } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+
 
 interface ForgotPasswordFlowProps {
   setPage: (page: string) => void;
@@ -20,6 +22,8 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     // Check if there's a stored temp_user_id from a previous session
@@ -163,7 +167,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
                 Email Address
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                <Mail className="absolute left-3 top-4 h-4 w-4 text-gray-500" />
                 <Input
                   id="email"
                   type="email"
@@ -192,7 +196,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
                 Verification Code
               </label>
               <div className="relative">
-                <Shield className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                <Shield className="absolute left-3 top-4 h-4 w-4 text-gray-500" />
                 <Input
                   id="otp"
                   type="text"
@@ -225,32 +229,47 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
                 New Password
               </label>
               <div className="relative">
-                <LockKeyhole className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                <LockKeyhole className="absolute left-3 top-4 h-4 w-4 text-gray-500" />
                 <Input
                   id="newPassword"
-                  type="password"
+                  type={showNewPassword ? "text" : "password"} // toggle type
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"
-                  className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
+                  className="pl-10 pr-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
                 />
+                <button
+                  type="button"
+                  className="absolute right-3 top-4 text-gray-400"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                >
+                  {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
             </div>
+
             <div className="space-y-2">
               <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-300">
                 Confirm Password
               </label>
               <div className="relative">
-                <LockKeyhole className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                <LockKeyhole className="absolute left-3 top-4 h-4 w-4 text-gray-500" />
                 <Input
                   id="confirmPassword"
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"} // toggle type
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm new password"
-                  className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
+                  className="pl-10 pr-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
                   onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
                 />
+                <button
+                  type="button"
+                  className="absolute right-3 top-4 text-gray-400"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
             </div>
           </motion.div>

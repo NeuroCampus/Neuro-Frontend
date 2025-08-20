@@ -17,7 +17,6 @@ interface User {
 interface NavbarProps {
   role: "admin" | "hod" | "faculty" | "student";
   user?: User;
-  token?: string; 
   onNotificationClick?: () => void;
   setPage: (page: string) => void;
 }
@@ -29,33 +28,6 @@ interface NotificationBellProps {
 
 const Navbar = ({ role, user, onNotificationClick, setPage }: NavbarProps) => {
   const navigate = useNavigate();
-  const [token, setToken] = useState<string | null>(null);
-  const [unreadCount, setUnreadCount] = useState(0); // <-- add this
-  useEffect(() => {
-    const fetchUnreadCount = async () => {
-      const savedToken = localStorage.getItem("accessToken");
-      if (!savedToken) return;
-
-      try {
-        const res = await fetch("http://localhost:8000/api/notifications/unread-count/", {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${savedToken}`,
-          },
-        });
-        const data = await res.json();
-        if (data.success) setUnreadCount(data.unread_count);
-      } catch (err) {
-        console.error("Error fetching unread count:", err);
-      }
-    };
-
-    fetchUnreadCount(); // initial fetch
-    const interval = setInterval(fetchUnreadCount, 15000); // poll every 15s
-
-    return () => clearInterval(interval);
-  }, []);
-
 
   const handleNotificationClick = () => {
     if (onNotificationClick) {
@@ -148,22 +120,6 @@ const handleProfileClick = () => {
         >
           <FiMoon size={20} />
         </motion.button>
-
-        {/* Notification bell */}
-        <motion.div 
-          className="relative cursor-pointer p-2 rounded-lg hover:bg-gray-800/50 transition-colors duration-200" 
-          onClick={handleNotificationClick}   // ✅ FIXED
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <FiBell size={20} className="text-gray-300 hover:text-[#a259ff] transition-colors duration-200" />
-          
-          {unreadCount > 0 && (
-            <motion.span className="absolute -top-1 -right-1 text-xs bg-[#a259ff] text-white px-1.5 py-0.5 rounded-full">
-              {unreadCount}
-            </motion.span>
-          )}
-        </motion.div>
 
         {/* Profile section */}
         <motion.div 
