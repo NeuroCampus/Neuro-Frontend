@@ -40,8 +40,6 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
           localStorage.setItem("temp_user_id", response.user_id || "");
           setPage("otp");
         } else {
-          localStorage.setItem("accessToken", response.access);
-          localStorage.setItem("refreshToken", response.refresh || "");
           setRole(response.role || "");
           setUser(response.profile || {});
           setPage(response.role || "");
