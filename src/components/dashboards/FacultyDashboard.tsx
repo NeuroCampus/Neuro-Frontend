@@ -31,9 +31,16 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
     localStorage.setItem("facultyActivePage", activePage);
   }, [activePage]);
 
-  const handlePageChange = (page: string) => {
+    const handlePageChange = (page: string) => {
     setActivePage(page);
     setError(null);
+
+    // scroll window to top just in case
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleNotificationClick = () => {
+    setActivePage("announcements");
   };
 
   const handleLogout = async () => {
@@ -83,7 +90,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#1c1c1e]">
+    <div className="flex min-h-screen bg-[#1c1c1e] pt-16">
       <Sidebar
         role="faculty"
         setPage={handlePageChange}
@@ -104,6 +111,8 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
             user={user}
             toggleSidebar={toggleSidebar}
             isSidebarCollapsed={isSidebarCollapsed}
+            onNotificationClick={handleNotificationClick}
+            setPage={handlePageChange}
           />
         </div>
         <div className="p-6 w-full bg-[#1c1c1e]">
