@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState,useRef } from "react";
 import {
   Card,
   CardContent,
@@ -19,6 +19,8 @@ import {
 import { enrollUser } from "../../utils/admin_api";
 import { useToast } from "../../hooks/use-toast";
 
+
+
 interface EnrollUserProps {
   setError: (error: string | null) => void;
   toast: (options: any) => void;
@@ -32,11 +34,37 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
     role: "",
   });
   const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+
+    // Update form data
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Clear previous timeout
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
+    // Set a new timeout to validate after user stops typing
+    typingTimeoutRef.current = setTimeout(() => {
+      if (name === "email") {
+        const trimmedValue = value.trim();
+        // Strong email regex
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+        if (!trimmedValue) {
+          setEmailError("Email is required.");
+        } else if (!emailRegex.test(trimmedValue)) {
+          setEmailError("Please enter a valid email address.");
+        } else {
+          setEmailError("");
+        }
+      }
+    }, 500); // 500ms delay
   };
+
 
   const handleRoleChange = (value: string) => {
     setFormData((prev) => ({ ...prev, role: value }));
@@ -101,9 +129,9 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-black-50 px-4 py-10">
+    <div className="min-h-screen bg-black-50 px-4 py-10 overflow-y-hidden">
       <div className="max-w-2xl mx-auto ">
-        <Card className="w-full bg-text-gray-800 border border-gray-700 shadow-lg rounded-lg p-6">
+        <Card className="w-full bg-text-gray-800 border border-gray-700 shadow-lg rounded-lg p-6 over">
           <CardHeader className="pb-4 ">
             <CardTitle className="text-lg text-gray-100">User Enrollment Form</CardTitle>
             <CardDescription className="text-sm text-gray-400">
@@ -125,6 +153,9 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
                   value={formData.email}
                   onChange={handleInputChange}
                 />
+                {emailError && (
+                  <p className="mt-1 text-xs text-red-500">{emailError}</p>
+                )}
               </div>
               <div className="flex gap-4">
                 <div className="w-1/2">
