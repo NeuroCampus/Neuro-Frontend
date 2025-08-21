@@ -69,6 +69,16 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
     }
   };
 
+  useEffect(() => {
+  if (error) {
+    const timer = setTimeout(() => {
+      setError(null); // clear the error after 3s
+    }, 3000);
+
+    return () => clearTimeout(timer); // cleanup
+  }
+}, [error]);
+
   const renderContent = () => {
     switch (activePage) {
       case "dashboard":
