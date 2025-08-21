@@ -31,20 +31,24 @@ interface AdminDashboardProps {
 }
 
 const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
-  const [activePage, setActivePage] = useState("dashboard");
-  const [error, setError] = useState<string | null>(null);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const [activePage, setActivePage] = useState<string>(() => {
+  return localStorage.getItem("adminActivePage") || "dashboard";
+});
 
+const [error, setError] = useState<string | null>(null);
+const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+const { toast } = useToast();
+const navigate = useNavigate();
 
-  const handlePageChange = (page: string) => {
-    setActivePage(page);
-    setError(null);
+const handlePageChange = (page: string) => {
+  setActivePage(page);
+  setError(null);
 
-    // scroll window to top just in case
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  // persist page in localStorage
+  localStorage.setItem("adminActivePage", page);
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
@@ -219,7 +223,7 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
 
   return (
     <motion.div 
-      className="flex min-h-screen bg-[#1c1c1e] pt-16"
+      className="flex min-h-screen bg-[#1c1c1e] pt-16 thin-scrollbar"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -235,7 +239,8 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
         />
       </div>
       <div className={`flex-1 flex flex-col min-h-screen overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'ml-16' : 'ml-64'}`}>
-        <div className="sticky top-0 z-20 bg-[#1c1c1e] border-b border-gray-700">
+        {/* Navbar */}
+        <div className="sticky top-0 z-20 bg-[#1c1c1e] border-b border-gray-700 flex-shrink-0">
           <Navbar
             role="admin"
             user={user}
@@ -244,7 +249,8 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
           />
         </div>
         <motion.main 
-          className="flex-1 p-6 overflow-y-auto bg-gradient-to-br from-[#1c1c1e] via-[#1e1e1e] to-[#1a1a1a]"
+          className="flex-1 p-6 overflow-y-auto  bg-gradient-to-br from-[#1c1c1e] via-[#1e1e1e] to-[#1a1a1a]"
+          style={{ height: 'calc(100vh - 64px)' }} // 64px = navbar height
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}

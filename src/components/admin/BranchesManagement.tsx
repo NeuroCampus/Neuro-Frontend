@@ -272,30 +272,60 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
   if (loading && branches.length === 0) return <div className="text-center py-6">Loading...</div>;
 
   return (
-    <div className="p-6 bg-black-50 min-h-screen text-gray-700">
-      <Card className="bg-text-gray-800 border border-gray-700 shadow-sm">
-        <CardHeader className="pb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <CardTitle className="text-lg text-gray-200">Branch Management</CardTitle>
-            <p className="text-sm text-gray-400">Manage branches and assign department heads</p>
+    <div className="p-4 sm:p-6 bg-[#1c1c1e] min-h-screen text-gray-200">
+      <Card className="bg-[#1c1c1e] border border-gray-700 shadow-sm">
+        <CardHeader className="pb-2 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          {/* Title + paragraph always full width */}
+          <div className="w-full">
+            <CardTitle className="block text-lg md:text-xl text-gray-200">
+              Branch Management
+            </CardTitle>
+            <p className="block text-sm md:text-base text-gray-400">
+              Manage branches and assign department heads
+            </p>
           </div>
-          <div className="flex gap-2 ">
-            <Button size="sm" className="flex items-center gap-1 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 shadow-sm" onClick={() => setIsAddDialogOpen(true)} disabled={loading}>
+
+          {/* Buttons: stacked on mobile & tablet, inline on lg+ */}
+          <div className="flex flex-col lg:flex-row gap-2 w-full lg:w-auto">
+            <Button
+              size="sm"
+              className="flex items-center justify-center gap-1 text-gray-200 bg-gray-800 hover:bg-gray-600 border border-gray-600 shadow-sm w-full lg:w-auto"
+              onClick={() => setIsAddDialogOpen(true)}
+              disabled={loading}
+            >
               <PlusIcon className="w-4 h-4" /> Add Branch
             </Button>
-            <Button size="sm" className="flex items-center gap-1 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 shadow-sm" onClick={() => setIsAssignDialogOpen(true)} disabled={loading}>
+
+            <Button
+              size="sm"
+              className="flex items-center justify-center gap-1 text-gray-200 bg-gray-800 hover:bg-gray-600 border border-gray-600 shadow-sm w-full lg:w-auto"
+              onClick={() => setIsAssignDialogOpen(true)}
+              disabled={loading}
+            >
               <UserPlus2Icon className="w-4 h-4" /> Assign HOD
             </Button>
-            <Button size="sm" className="flex items-center gap-1 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 shadow-sm" onClick={exportToPDF} disabled={loading}>
+
+            <Button
+              size="sm"
+              className="flex items-center justify-center gap-1 text-gray-200 bg-gray-800 hover:bg-gray-600 border border-gray-600 shadow-sm w-full lg:w-auto"
+              onClick={exportToPDF}
+              disabled={loading}
+            >
               <FileDownIcon className="w-4 h-4" /> Export PDF
             </Button>
           </div>
+
         </CardHeader>
-        <CardContent className="overflow-x-auto ">
-          <div className="pt-3 pb-2 ">
-            <Input placeholder="Search by branch name..." value={filter} onChange={(e) => setFilter(e.target.value)} className="w-64 bg-[#232326] text-gray-200" />
+        <CardContent className="overflow-x-auto md:overflow-x-visible">
+          <div className="pt-3 pb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <Input
+              placeholder="Search by branch name..."
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="w-full sm:w-64 bg-[#232326] text-gray-200"
+            />
           </div>
-            <table className="w-full text-sm text-left text-gray-200">
+            <table className="w-full text-sm md:text-base text-left text-gray-200">
               <thead className="border-b border-gray-200 bg-[#232326] text-gray-200">
                 <tr>
                 <th className="py-2">ID</th>
@@ -431,73 +461,72 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
       </Dialog>
 
       <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
-  <DialogContent className="sm:max-w-md bg-[#1c1c1e] text-gray-200">
-    <DialogHeader>
-      <DialogTitle>Assign HOD to Branch</DialogTitle>
-    </DialogHeader>
+        <DialogContent className="sm:max-w-md bg-[#1c1c1e] text-gray-200">
+          <DialogHeader>
+            <DialogTitle>Assign HOD to Branch</DialogTitle>
+          </DialogHeader>
 
-    <div className="space-y-4">
-      {/* Branch Dropdown */}
-      <select
-        value={selectedBranchId || ""}
-        onChange={(e) => setSelectedBranchId(Number(e.target.value))}
-        className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-[#232326] text-gray-200"
-      >
-        <option className="bg-[#232326] text-gray-200" value="" disabled>
-          Select a branch
-        </option>
-        {branches.map((branch) => (
-          <option
-            key={branch.id}
-            value={branch.id}
-            className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
-          >
-            {branch.name}
-          </option>
-        ))}
-      </select>
+          <div className="space-y-4">
+            {/* Branch Dropdown */}
+            <select
+              value={selectedBranchId || ""}
+              onChange={(e) => setSelectedBranchId(Number(e.target.value))}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-[#232326] text-gray-200"
+            >
+              <option className="bg-[#232326] text-gray-200" value="" disabled>
+                Select a branch
+              </option>
+              {branches.map((branch) => (
+                <option
+                  key={branch.id}
+                  value={branch.id}
+                  className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                >
+                  {branch.name}
+                </option>
+              ))}
+            </select>
 
-      {/* HOD Dropdown */}
-      <select
-        value={newHodId}
-        onChange={(e) => setNewHodId(e.target.value)}
-        className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-[#232326] text-gray-200"
-      >
-        <option className="bg-[#232326] text-gray-200" value="" disabled>
-          Select HOD
-        </option>
-        {users.map((user) => (
-          <option
-            key={user.id}
-            value={user.id}
-            className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
-          >
-            {user.username}
-          </option>
-        ))}
-      </select>
-    </div>
+            {/* HOD Dropdown */}
+            <select
+              value={newHodId}
+              onChange={(e) => setNewHodId(e.target.value)}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-[#232326] text-gray-200"
+            >
+              <option className="bg-[#232326] text-gray-200" value="" disabled>
+                Select HOD
+              </option>
+              {users.map((user) => (
+                <option
+                  key={user.id}
+                  value={user.id}
+                  className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                >
+                  {user.username}
+                </option>
+              ))}
+            </select>
+          </div>
 
-    <DialogFooter>
-      <Button
-        variant="outline"
-        className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
-        onClick={() => setIsAssignDialogOpen(false)}
-        disabled={loading}
-      >
-        Cancel
-      </Button>
-      <Button
-        onClick={handleAssignHod}
-        className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
-        disabled={loading || !selectedBranchId || !newHodId}
-      >
-        {loading ? "Assigning..." : "Assign"}
-      </Button>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
-
+          <DialogFooter>
+            <Button
+              variant="outline"
+              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+              onClick={() => setIsAssignDialogOpen(false)}
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAssignHod}
+              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+              disabled={loading || !selectedBranchId || !newHodId}
+            >
+              {loading ? "Assigning..." : "Assign"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

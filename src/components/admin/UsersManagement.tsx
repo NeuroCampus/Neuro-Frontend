@@ -299,9 +299,10 @@ const filteredUsers = Array.isArray(users)
           <p className="text-sm text-gray-400">Manage all users in the system</p>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
-            <div className="flex flex-wrap gap-4 ">
-              <div>
+          <div className="flex flex-col md:flex-col lg:flex-row md:items-start lg:items-end md:justify-start lg:justify-between gap-4 mb-6">
+            {/* Filters */}
+            <div className="flex flex-col md:w-full lg:flex-row lg:gap-4">
+              <div className="w-full md:w-full lg:w-auto">
                 <span className="block text-sm text-gray-200 mb-1">Filter by Role</span>
                 <SelectMenu
                   label=""
@@ -310,7 +311,7 @@ const filteredUsers = Array.isArray(users)
                   options={roles}
                 />
               </div>
-              <div>
+              <div className="w-full md:w-full lg:w-auto">
                 <span className="block text-sm text-gray-200 mb-1">Filter by Status</span>
                 <SelectMenu
                   label=""
@@ -320,16 +321,19 @@ const filteredUsers = Array.isArray(users)
                 />
               </div>
             </div>
-            <div className="flex flex-col">
+
+            {/* Search */}
+            <div className="w-full md:w-full lg:w-auto flex flex-col">
               <label className="text-sm text-gray-200 mb-1">Search</label>
               <Input
                 placeholder="Search name or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-64 rounded bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white"
+                className="w-full md:w-full lg:w-64 rounded bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white"
               />
             </div>
           </div>
+
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left text-gray-400">
               <thead className="border-b border-gray-500 text-gray-200">
@@ -342,68 +346,72 @@ const filteredUsers = Array.isArray(users)
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.length > 0 ? (
+                  {filteredUsers.length > 0 ? (
                   filteredUsers.map((user) => (
                     <tr
                       key={user.id}
-                      className="border-b  border-gray-500 transition-colors duration-200 hover:bg-gray-800"
+                      className="border-b border-gray-500 transition-colors duration-200 hover:bg-gray-800"
                     >
-                      <td className="py-3 px-2">
+                      <td className="py-3 px-2 w-[150px]">
                         {editingId === user.id ? (
                           <Input
                             name="name"
                             value={editData?.name || ""}
                             onChange={handleEditChange}
-                            className="bg-[#232326] text-gray-200" // Make text visible
+                            className="bg-[#232326] text-gray-200 w-full"
                           />
                         ) : (
                           user.name
                         )}
                       </td>
-                      <td className="py-3 px-2">
+                      <td className="py-3 px-2 w-[200px]">
                         {editingId === user.id ? (
                           <Input
                             name="email"
                             value={editData?.email || ""}
                             onChange={handleEditChange}
-                            className="bg-[#232326] text-gray-200" // Make text visible
+                            className="bg-[#232326] text-gray-200 w-full"
                           />
                         ) : (
                           user.email
                         )}
                       </td>
-                      <td className="py-3">{getRoleBadge(user.role)}</td>
-                      <td className="py-3">{getStatusBadge(user.status)}</td>
-                      <td className="py-3 text-right space-x-2">
-                        {editingId === user.id ? (
-                          <Button
-                            size="sm"
-                            onClick={saveEdit}
-                            disabled={loading}
-                            className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
-                          >
-                            {loading ? "Saving..." : "Save"}
-                          </Button>
-                        ) : (
-                          <>
+                      <td className="py-3 w-[120px]">{getRoleBadge(user.role)}</td>
+                      <td className="py-3 w-[120px]">{getStatusBadge(user.status)}</td>
+                      <td className="py-3 text-right">
+                        <div className="flex flex-wrap sm:flex-nowrap justify-end gap-2">
+                          {editingId === user.id ? (
                             <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEdit(user)}
+                              size="sm"
+                              onClick={saveEdit}
                               disabled={loading}
+                              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 w-full sm:w-auto"
                             >
-                              <Pencil1Icon className="w-4 h-4 text-blue-600" />
+                              {loading ? "Saving..." : "Save"}
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => confirmDelete(user.id)}
-                              disabled={loading}
-                            >
-                              <TrashIcon className="w-4 h-4 text-red-600" />
-                            </Button>
-                          </>
-                        )}
+                          ) : (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEdit(user)}
+                                disabled={loading}
+                                className="p-2 rounded hover:bg-gray-700"
+                              >
+                                <Pencil1Icon className="w-5 h-5 text-blue-500" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => confirmDelete(user.id)}
+                                disabled={loading}
+                                className="p-2 rounded hover:bg-gray-700"
+                              >
+                                <TrashIcon className="w-5 h-5 text-red-500" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))

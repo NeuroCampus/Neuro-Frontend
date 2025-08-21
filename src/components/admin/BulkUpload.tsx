@@ -39,9 +39,11 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
           return;
         }
 
-        // Validate headers
+        // Normalize headers
         const headers = rows[0].split(",").map(h => h.trim().toLowerCase());
-        const missingHeaders = REQUIRED_HEADERS.filter((header) => !headers.includes(header));
+        const required = REQUIRED_HEADERS.map(h => h.toLowerCase());
+
+        const missingHeaders = required.filter((header) => !headers.includes(header));
         if (missingHeaders.length > 0) {
           reject(`Missing required column(s): ${missingHeaders.join(", ")}`);
           return;
@@ -59,14 +61,14 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
 
           const [usn, name, email] = cols;
 
-          // USN format check: 1 digit + 2 letters + 2 digits + 2 letters + 3 digits
+          // USN format check
           const usnRegex = /^[0-9][A-Z]{2}[0-9]{2}[A-Z]{2}[0-9]{3}$/;
           if (!usnRegex.test(usn)) {
             reject(`Invalid USN format at row ${i + 2}: ${usn}`);
             return;
           }
 
-          // Name validation (must be at least 2 characters)
+          // Name validation
           if (!name || name.length < 2) {
             reject(`Invalid name at row ${i + 2}`);
             return;
@@ -87,7 +89,6 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
       reader.readAsText(file);
     });
   };
-
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {

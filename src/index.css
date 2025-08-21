@@ -99,25 +99,18 @@
     @apply bg-background text-foreground;
   }
 }
-/* For Chrome, Safari, and Edge */
+/* in your global CSS file, e.g., index.css */
 .thin-scrollbar::-webkit-scrollbar {
-  width: 4px; /* very thin */
+  width: 0px; /* hide scrollbar */
+  background: transparent; /* optional: make background transparent */
 }
 
-.thin-scrollbar::-webkit-scrollbar-track {
-  background: transparent; /* transparent track */
-}
-
-.thin-scrollbar::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.3); /* light thumb */
-  border-radius: 9999px; /* fully rounded */
-}
-
-/* For Firefox */
 .thin-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
 }
+
+
 .bot-message * {
   background-color: #1c1c1e !important;
   color: #e5e7eb !important; /* Tailwind's gray-200 */
@@ -127,4 +120,35 @@
 .bot-message code {
   background-color: #1c1c1e !important; /* Tailwind's gray-800 */
   color: #e5e7eb !important;
+}
+
+@layer base {
+  html, body, #root {
+    @apply bg-[#1c1c1e] text-gray-200;
+    min-height: 100%;
+  }
+}
+
+/* Global scrollbar hiding but still scrollable */
+html, body, #root {
+  @apply overflow-auto; /* enable scrolling */
+}
+
+/* Chrome, Safari, Edge */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#root::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  background: transparent;
+}
+
+/* Firefox */
+html, body, #root {
+  scrollbar-width: none;
+}
+
+/* IE/Edge Legacy */
+html, body, #root {
+  -ms-overflow-style: none;
 }

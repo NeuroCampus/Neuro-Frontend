@@ -160,55 +160,47 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-black-50 text-gray-900 min-h-screen">
-      <Card className="md:col-span-2 bg-black-50 border border-gray-500 shadow-sm">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 sm:p-6 bg-[#1c1c1e] text-gray-200 min-h-screen">
+      {/* Notification History */}
+      <Card className="lg:col-span-2 bg-black-50 border border-gray-500 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-xl text-gray-200">
-            Notification History
-          </CardTitle>
-          <p className="text-sm text-gray-400">
-            List of all notifications sent to users
-          </p>
+          <CardTitle className="text-xl text-gray-200">Notification History</CardTitle>
+          <p className="text-sm text-gray-400">List of all notifications sent to users</p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-auto max-h-[400px] md:max-h-[500px] thin-scrollbar">
           {loading && notifications.length === 0 ? (
             <div className="text-center py-6">Loading...</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="border-b border-gray-300">
-                  <tr>
-                    <th className="pb-2 text-gray-200">Message</th>
-                    <th className="pb-2 text-gray-200">Target</th>
+            <table className="w-full text-left text-sm border-collapse">
+              <thead className="border-b border-gray-300 sticky top-0 bg-[#1c1c1e] z-10">
+                <tr>
+                  <th className="pb-2 text-gray-200">Message</th>
+                  <th className="pb-2 text-gray-200">Target</th>
+                </tr>
+              </thead>
+              <tbody>
+                {notifications.map((note) => (
+                  <tr key={note.id} className="border-b border-gray-200">
+                    <td className="py-3">
+                      <div className="font-medium text-gray-400">{note.title}</div>
+                      <div className="text-gray-400 text-sm">{note.message}</div>
+                    </td>
+                    <td className="py-3">
+                      <span className={`px-3 py-1 text-xs rounded-full ${note.color}`}>
+                        {note.target_role.charAt(0).toUpperCase() + note.target_role.slice(1).replace("_", " ")}
+                      </span>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {notifications.map((note) => (
-                    <tr
-                      key={note.id}
-                      className="border-b border-gray-200"
-                    >
-                      <td className="py-3">
-                        <div className="font-medium text-gray-400">{note.title}</div>
-                        <div className="text-gray-400 text-sm">{note.message}</div>
-                      </td>
-                      <td className="py-3">
-                        <span
-                          className={`px-3 py-1 text-xs rounded-full ${note.color}`}
-                        >
-                          {note.target_role.charAt(0).toUpperCase() + note.target_role.slice(1).replace("_", " ")}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           )}
         </CardContent>
+
       </Card>
 
-      <Card className="bg-black-50 border border-gray-500 shadow-sm">
+      {/* Create Notification */}
+      <Card className="bg-[#1c1c1e] border border-gray-600 shadow-sm w-full lg:w-auto">
         <CardHeader>
           <CardTitle className="text-xl text-gray-200">Create Notification</CardTitle>
           <p className="text-sm text-gray-400">Send a new notification to users</p>
@@ -272,6 +264,7 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
         </CardContent>
       </Card>
     </div>
+
   );
 };
 

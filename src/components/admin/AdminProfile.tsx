@@ -298,11 +298,29 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 id="mobile_number"
                 name="mobile_number"
                 value={profile.mobile_number}
-                onChange={handleChange}
+                onChange={(e) => {
+                  let val = e.target.value;
+
+                  // ✅ Allow only digits
+                  val = val.replace(/\D/g, "");
+
+                  // ✅ Limit to 10 digits
+                  if (val.length > 10) {
+                    val = val.slice(0, 10);
+                  }
+
+                  setProfile({ ...profile, mobile_number: val });
+                }}
+                maxLength={10} // extra safeguard
                 disabled={!editing || loading}
-                className={cn("w-full bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
+                className={cn(
+                  "w-full bg-[#232326] text-gray-200",
+                  !editing && "bg-[#232326] text-gray-200"
+                )}
+                placeholder="Enter 10-digit mobile number"
               />
             </div>
+
             <div>
               <Label htmlFor="address" className="text-xs text-gray-200 mb-1 block">
                 Address
@@ -311,9 +329,28 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 id="address"
                 name="address"
                 value={profile.address}
-                onChange={handleChange}
+                onChange={(e) => {
+                  let val = e.target.value;
+
+                  // ✅ Allow only letters, numbers, spaces, commas, dots, slashes, dashes
+                  val = val.replace(/[^a-zA-Z0-9\s,./-]/g, "");
+
+                  // ✅ Prevent multiple spaces at start
+                  val = val.replace(/^\s+/, "");
+
+                  // ✅ Limit length between 0 and 200 chars
+                  if (val.length > 200) {
+                    val = val.slice(0, 200);
+                  }
+
+                  setProfile({ ...profile, address: val });
+                }}
                 disabled={!editing || loading}
-                className={cn("w-full bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
+                className={cn(
+                  "w-full bg-[#232326] text-gray-200",
+                  !editing && "bg-[#232326] text-gray-200"
+                )}
+                placeholder="Enter your address (5–200 characters)"
               />
             </div>
             <div>
@@ -324,11 +361,25 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 id="bio"
                 name="bio"
                 value={profile.bio}
-                onChange={handleChange}
+                onChange={(e) => {
+                  let val = e.target.value;
+
+                  // ✅ Prevent input longer than 300 characters
+                  if (val.length > 300) {
+                    val = val.slice(0, 300);
+                  }
+
+                  setProfile({ ...profile, bio: val });
+                }}
                 disabled={!editing || loading}
-                className={cn("w-full p-2 border rounded-md bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
+                className={cn(
+                  "w-full p-2 border rounded-md bg-[#232326] text-gray-200 resize-none", // disable resize
+                  (!editing || loading) && "cursor-not-allowed opacity-70"
+                )}
+                placeholder="Tell us about yourself (10–300 characters)"
               />
             </div>
+
           </div>
         </CardContent>
       </Card>

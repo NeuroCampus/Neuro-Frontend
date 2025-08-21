@@ -185,77 +185,79 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
           <p className="text-sm text-gray-400">Review and approve leave requests from Heads of Departments</p>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          <table className="w-full text-sm text-left text-gray-900">
-            <thead className="border-b border-gray-200 text-gray-200">
-              <tr>
-                <th className="py-2 px-2">HOD</th>
-                <th className="py-2 px-12">Period</th>
-                <th className="py-2">Reason</th>
-                <th className="py-2 px-4">Status</th>
-                <th className="py-2 px-5">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.isArray(leaveRequests) && leaveRequests.length > 0 ? (
-              leaveRequests.map((leave) => (
-                <tr
-                key={leave.id}
-                className="border-b border-gray-100 transition-colors duration-200 hover:bg-gray-800"
-                >
-                <td className="py-3">
-                  <div className="font-medium text-white">{leave.name}</div>
-                  <div className="text-xs text-gray-300">{leave.department}</div>
-                </td>
-                <td className="py-3 text-sm text-white">
-                  {leave.from} <span className="text-gray-300">to</span> {leave.to}
-                </td>
-<td className="py-3 text-sm text-white">
-  <button
-    onClick={() => setViewReason(leave.reason)}
-    className="text-blue-400 hover:underline"
-  >
-    View
-  </button>
-</td>
-                <td className="py-3">{getStatusBadge(leave.status)}</td>
-                <td className="py-3">
-                  {leave.status === "Pending" ? (
-                  <div className="flex gap-2">
-                    <Button
-                    variant="outline"
-                    className="text-green-700 border-green-600 hover:bg-green-900 px-3 py-1 text-xs flex items-center gap-1"
-                    onClick={() => handleApprove(leave.id)}
-                    disabled={loading}
-                    >
-                    <CheckCircle size={16} /> Approve
-                    </Button>
-                    <Button
-                    variant="outline"
-                    className="text-red-700 border-red-600 hover:bg-red-900 px-3 py-1 text-xs flex items-center gap-1"
-                    onClick={() => {
-                      setShowModal(true);
-                      setSelectedId(leave.id);
-                    }}
-                    disabled={loading}
-                    >
-                    <XCircle size={16} /> Reject
-                    </Button>
-                  </div>
-                  ) : (
-                  <span className="text-xs text-gray-400">No action needed</span>
-                  )}
-                </td>
+          <div className="overflow-x-auto max-w-full thin-scrollbar">
+            <table className="w-full text-sm text-left text-gray-200 border-collapse">
+              <thead className="border-b border-gray-700 bg-[#1c1c1e] sticky top-0 z-10">
+                <tr>
+                  <th className="py-2 px-2 md:px-4 text-left">HOD</th>
+                  <th className="py-2 px-4 md:px-12 text-left">Period</th>
+                  <th className="py-2 px-2 text-left">Reason</th>
+                  <th className="py-2 px-2 text-left">Status</th>
+                  <th className="py-2 px-2 text-left">Action</th>
                 </tr>
-              ))
-              ) : (
-              <tr>
-                <td colSpan={5} className="text-center py-4 text-gray-400">
-                No leave requests available.
-                </td>
-              </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {Array.isArray(leaveRequests) && leaveRequests.length > 0 ? (
+                  leaveRequests.map((leave) => (
+                    <tr
+                      key={leave.id}
+                      className="border-b border-gray-700 transition-colors duration-200 hover:bg-gray-800"
+                    >
+                      <td className="py-3 px-2 md:px-4">
+                        <div className="font-medium text-white">{leave.name}</div>
+                        <div className="text-xs text-gray-400">{leave.department}</div>
+                      </td>
+                      <td className="py-3 px-2 md:px-4 text-sm text-white">
+                        {leave.from} <span className="text-gray-400">to</span> {leave.to}
+                      </td>
+                      <td className="py-3 px-2 md:px-4 text-sm text-white">
+                        <button
+                          onClick={() => setViewReason(leave.reason)}
+                          className="text-blue-400 hover:underline"
+                        >
+                          View
+                        </button>
+                      </td>
+                      <td className="py-3 px-2 md:px-4">{getStatusBadge(leave.status)}</td>
+                      <td className="py-3 px-2 md:px-4">
+                        {leave.status === "Pending" ? (
+                          <div className="flex flex-col md:flex-row gap-2">
+                            <Button
+                              variant="outline"
+                              className="text-green-700 border-green-600 hover:bg-green-900 px-3 py-1 text-xs flex items-center gap-1 w-full md:w-auto"
+                              onClick={() => handleApprove(leave.id)}
+                              disabled={loading}
+                            >
+                              <CheckCircle size={16} /> Approve
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="text-red-700 border-red-600 hover:bg-red-900 px-3 py-1 text-xs flex items-center gap-1 w-full md:w-auto"
+                              onClick={() => {
+                                setShowModal(true);
+                                setSelectedId(leave.id);
+                              }}
+                              disabled={loading}
+                            >
+                              <XCircle size={16} /> Reject
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">No action needed</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="text-center py-4 text-gray-400">
+                      No leave requests available.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
 
