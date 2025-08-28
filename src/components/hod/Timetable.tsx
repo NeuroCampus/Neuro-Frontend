@@ -143,12 +143,12 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, semest
         <div className="mb-4">
           <label className="block">Subject:</label>
           <Select value={newClassDetails.subject} onValueChange={(value) => handleSelectChange("subject", value)}>
-            <SelectTrigger className="w-full p-2 border rounded text-gray-500">
+            <SelectTrigger className="w-full p-2 border rounded text-gray-900">
               <SelectValue placeholder="Select Subject" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className=" bg-[#232326] text-gray-200">
               {subjects.map((subject: Subject) => (
-                <SelectItem key={subject.id} value={subject.name}>
+                <SelectItem className=" bg-[#232326] text-gray-200" key={subject.id} value={subject.name}>
                   {subject.name}
                 </SelectItem>
               ))}
@@ -163,12 +163,12 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, semest
             onValueChange={(value) => handleSelectChange("professor", value)}
             disabled={isLoadingAssignments}
           >
-            <SelectTrigger className="w-full p-2 border rounded text-gray-500">
+            <SelectTrigger className="w-full p-2 border rounded text-gray-900">
               <SelectValue placeholder={isLoadingAssignments ? "Loading..." : "Select Professor"} />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className=" bg-[#232326] text-gray-200">
               {faculties.map((faculty: Faculty) => (
-                <SelectItem key={faculty.id} value={`${faculty.first_name} ${faculty.last_name}`}>
+                <SelectItem className=" bg-[#232326] text-gray-200" key={faculty.id} value={`${faculty.first_name} ${faculty.last_name}`}>
                   {faculty.first_name} {faculty.last_name}
                 </SelectItem>
               ))}
@@ -183,12 +183,12 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, semest
             name="room"
             value={newClassDetails.room}
             onChange={handleChange}
-            className="w-full p-2 border rounded text-gray-500"
+            className="w-full p-2 border rounded text-gray-900 placeholder-gray-900"
             placeholder="e.g., R103"
           />
         </div>
 
-        <div className="mb-4 text-gray-500">
+        <div className="mb-4 text-gray-900">
           <label className="block">Start Time (HH:MM):</label>
           <input
             type="text"
@@ -200,7 +200,7 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, semest
           />
         </div>
 
-        <div className="mb-4 text-gray-500">
+        <div className="mb-4 text-gray-900">
           <label className="block">End Time (HH:MM):</label>
           <input
             type="text"
@@ -639,14 +639,15 @@ const Timetable = () => {
               className="flex items-center gap-2 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
               onClick={handleExportPDF}
             >
-              <DownloadIcon className="w-4 h-4 text-gray-700" /> Export PDF
+              <DownloadIcon className="w-4 h-4" />
+              <span>Export PDF</span>
             </Button>
             <Button
               variant="outline"
               className="flex items-center gap-2 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
               onClick={handleEdit}
             >
-              <EditIcon className="w-4 h-4 text-gray-900" /> {state.isEditing ? "Cancel Edit" : "Edit"}
+              <EditIcon className="w-4 h-4" /> {state.isEditing ? "Cancel Edit" : "Edit"}
             </Button>
 
           </div>
@@ -664,10 +665,10 @@ const Timetable = () => {
                       updateState({ semesterId: value, sectionId: "", sections: [], subjects: [], timetable: [] })
                     }
                   >
-                    <SelectTrigger className="w-40 bg-gray-500 border-gray-600 hover:bg-gray-200 hover:border-gray-600">
+                    <SelectTrigger className="w-40  bg-[#232326] text-gray-200">
                       <SelectValue placeholder="Select Semester" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-[#232326] text-gray-200">
                       {state.semesters.map((semester) => (
                         <SelectItem key={semester.id} value={semester.id}>
                           {semester.number} Semester
@@ -682,10 +683,10 @@ const Timetable = () => {
                     onValueChange={(value) => updateState({ sectionId: value, timetable: [] })}
                     disabled={!state.semesterId}
                   >
-                    <SelectTrigger className="w-40 bg-gray-500 border-gray-600 hover:bg-gray-200 hover:border-gray-600">
+                    <SelectTrigger className="w-40  bg-[#232326] text-gray-200">
                       <SelectValue placeholder="Select Section" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-[#232326] text-gray-200">
                       {state.sections
                         .filter((section) => section.semester_id === state.semesterId)
                         .map((section) => (

@@ -68,12 +68,37 @@ const NotificationsManagement = () => {
   }, []);
 
   const handleSendNotification = async () => {
-    if (!newNotification.title || !newNotification.message || !newNotification.target) {
-      setValidationError("Please fill out all required fields.");
+    // Trimmed values
+    const title = newNotification.title.trim();
+    const message = newNotification.message.trim();
+    const target = newNotification.target.trim();
+
+    if (!title) {
+      setValidationError("Title cannot be empty.");
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Please fill out all required fields.",
+        description: "Title cannot be empty.",
+      });
+      return;
+    }
+
+    if (!message) {
+      setValidationError("Message cannot be empty.");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Message cannot be empty.",
+      });
+      return;
+    }
+
+    if (!target) {
+      setValidationError("Please select a target role.");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select a target role.",
       });
       return;
     }
@@ -86,9 +111,12 @@ const NotificationsManagement = () => {
       "Students": "student",
       "Teachers": "teacher",
     };
+
     const payload = {
       ...newNotification,
-      target: roleMap[newNotification.target] || newNotification.target,
+      title,      // use trimmed values
+      message,
+      target: roleMap[target] || target,
     };
 
     try {
@@ -96,15 +124,28 @@ const NotificationsManagement = () => {
       console.log("Notification response:", response);
       if (response.success) {
         // Refresh both received and sent notifications
-        const receivedResponse = await manageNotifications({ branch_id: newNotification.branch_id }, "GET", "received");
+        const receivedResponse = await manageNotifications(
+          { branch_id: newNotification.branch_id },
+          "GET",
+          "received"
+        );
         if (receivedResponse.success && receivedResponse.data) {
           setNotifications(receivedResponse.data);
         }
+
         const sentResponse = await getSentNotifications(newNotification.branch_id);
         if (sentResponse.success && sentResponse.data) {
           setSentNotifications(sentResponse.data);
         }
-        setNewNotification({ action: "notify_all", title: "", message: "", target: "", branch_id: newNotification.branch_id });
+
+        setNewNotification({
+          action: "notify_all",
+          title: "",
+          message: "",
+          target: "",
+          branch_id: newNotification.branch_id,
+        });
+
         toast({ title: "Success", description: "Notification sent successfully" });
       } else {
         setError(response.message || "Failed to send notification");
@@ -168,10 +209,10 @@ const NotificationsManagement = () => {
           <CardTitle className="text-xl text-gray-200">Received Notifications</CardTitle>
           <p className="text-sm text-gray-400">Notifications sent to you</p>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
+        <CardContent className="overflow-auto max-h-[400px] md:max-h-[500px] thin-scrollbar">
+          <div>
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-gray-300">
+              <thead className="border-b border-gray-300 sticky top-0 bg-[#1c1c1e] z-10">
                 <tr>
                   <th className="pb-2 text-gray-200">Message</th>
                   <th className="pb-2 text-gray-200">Target</th>
@@ -203,7 +244,7 @@ const NotificationsManagement = () => {
         </CardContent>
       </Card>
 
-      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-200 shadow-sm">
+      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-200 shadow-sm max-h-[650px]">
         <CardHeader>
           <CardTitle className="text-xl text-gray-200">Create Notification</CardTitle>
           <p className="text-sm text-gray-400">Send a new group notification</p>
@@ -266,10 +307,10 @@ const NotificationsManagement = () => {
           <CardTitle className="text-xl text-gray-200">Sent Notifications</CardTitle>
           <p className="text-sm text-gray-400">Notifications you created</p>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
+        <CardContent className="overflow-auto max-h-[400px] md:max-h-[500px] thin-scrollbar">
+          <div>
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-gray-300">
+              <thead className="border-b border-gray-300 sticky top-0 bg-[#1c1c1e] z-10">
                 <tr>
                   <th className="pb-2 text-gray-200">Message</th>
                   <th className="pb-2 text-gray-200">Target</th>

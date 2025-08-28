@@ -221,42 +221,68 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
   };
 
   const handleAssignFaculty = async () => {
-    if (!validateForm() || !state.branchId) return;
-    updateState({ isAssigning: true });
-    try {
-      const data = {
-        action: state.editingId ? "update" : "create",
-        assignment_id: state.editingId,
-        faculty_id: state.facultyId,
-        subject_id: state.subjectId,
-        semester_id: state.semesterId,
-        section_id: state.sectionId,
-        branch_id: state.branchId,
-      };
-      const response = await manageFacultyAssignments(data, "POST");
-      if (response.success) {
-        const assignmentsResponse = await manageFacultyAssignments({ branch_id: state.branchId }, "GET");
-        if (assignmentsResponse.success && assignmentsResponse.data?.assignments) {
-          updateState({ assignments: assignmentsResponse.data.assignments });
-        }
-        toast({
-          title: state.editingId ? "Updated" : "Success",
-          description: state.editingId ? "Assignment updated successfully" : "Faculty assigned successfully",
-          className: "bg-green-100 text-green-800",
-          icon: <CheckCircle className="w-5 h-5" />,
-        });
-        resetForm();
-      } else {
-        throw new Error(response.message || "Failed to save assignment");
+  if (!validateForm() || !state.branchId) return;
+
+  // 🚨 Prevent multiple faculties for same subject + section + semester
+  const duplicate = state.assignments.find(
+    (a) =>
+      a.subject_id === state.subjectId &&
+      a.section_id === state.sectionId &&
+      a.semester_id === state.semesterId &&
+      a.branch_id === state.branchId &&
+      a.id !== state.editingId // allow editing the same assignment
+  );
+
+  if (duplicate) {
+    toast({
+      variant: "destructive",
+      title: "Duplicate Assignment",
+      description: `Faculty is already assigned for ${duplicate.subject} - Section ${duplicate.section}, Semester ${duplicate.semester}.`,
+    });
+    return; // ❌ stop here, don’t assign again
+  }
+
+  updateState({ isAssigning: true });
+
+  try {
+    const data = {
+      action: state.editingId ? "update" : "create",
+      assignment_id: state.editingId,
+      faculty_id: state.facultyId,
+      subject_id: state.subjectId,
+      semester_id: state.semesterId,
+      section_id: state.sectionId,
+      branch_id: state.branchId,
+    };
+
+    const response = await manageFacultyAssignments(data, "POST");
+    if (response.success) {
+      const assignmentsResponse = await manageFacultyAssignments({ branch_id: state.branchId }, "GET");
+      if (assignmentsResponse.success && assignmentsResponse.data?.assignments) {
+        updateState({ assignments: assignmentsResponse.data.assignments });
       }
-    } catch (err: any) {
-      const errorMessage = err.message || "Network error";
-      toast({ variant: "destructive", title: "Error", description: errorMessage });
-      setError(errorMessage);
-    } finally {
-      updateState({ isAssigning: false });
+      toast({
+        title: state.editingId ? "Updated" : "Success",
+        description: state.editingId
+          ? "Assignment updated successfully"
+          : "Faculty assigned successfully",
+        className: "bg-green-100 text-green-800",
+        icon: <CheckCircle className="w-5 h-5" />,
+      });
+      resetForm();
+    } else {
+      throw new Error(response.message || "Failed to save assignment");
     }
-  };
+  } catch (err: any) {
+    const errorMessage = err.message || "Network error";
+    toast({ variant: "destructive", title: "Error", description: errorMessage });
+    setError(errorMessage);
+  } finally {
+    updateState({ isAssigning: false });
+  }
+};
+
+
 
   const handleEdit = (assignment: Assignment) => {
     updateState({
@@ -306,6 +332,14 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
       .toLowerCase()
       .includes(state.search.toLowerCase())
   );
+  const facultyMap = state.faculties.reduce((acc, f) => {
+    acc[f.id] = {
+      name: `${f.first_name} ${f.last_name || ""}`.trim(),
+      email: f.username,
+    };
+    return acc;
+  }, {} as Record<string, { name: string; email: string }>);
+  
 
   return (
     <ErrorBoundary>
@@ -462,7 +496,12 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                         <td className="p-2">{assignment.subject}</td>
                         <td className="p-2">{assignment.section}</td>
                         <td className="p-2">{assignment.semester}</td>
-                        <td className="p-2">{assignment.faculty}</td>
+                        <td className="p-2">
+                          {facultyMap[assignment.faculty_id]?.name || assignment.faculty}
+                          <div className="text-xs text-gray-400">
+                            {facultyMap[assignment.faculty_id]?.email}
+                          </div>
+                        </td>
                         <td className="p-2 flex items-center gap-2">
                           <Button
                             size="icon"

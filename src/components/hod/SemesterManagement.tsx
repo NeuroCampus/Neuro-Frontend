@@ -367,7 +367,6 @@ const SemesterManagement = () => {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-2">SEMESTER ID</th>
                     <th className="text-left p-2">NAME</th>
                     <th className="text-left p-2">YEAR</th>
                     <th className="text-left p-2">SECTIONS</th>
@@ -379,25 +378,27 @@ const SemesterManagement = () => {
                     const semesterSections = sections.filter((s) => s.semester_id === sem.id);
                     return (
                       <tr key={sem.id} className="border-b">
-                        <td className="p-2">{sem.id}</td>
                         <td className="p-2">{getSemesterName(sem.number)}</td>
                         <td className="p-2">{getYear(sem.number)}</td>
                         <td className="p-2">
                           {semesterSections.length > 0 ? (
                             <div className="flex flex-wrap gap-2">
-                              {semesterSections.map((section) => (
-                                <div key={section.id} className="flex items-center gap-1">
-                                  <span>{section.name}</span>
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    onClick={() => openDeleteSectionModal(section)}
-                                    disabled={loading}
-                                  >
-                                    <Trash2 className="h-3 w-3 text-red-600" />
-                                  </Button>
-                                </div>
-                              ))}
+                              {semesterSections
+                                .slice()
+                                .sort((a, b) => a.name.localeCompare(b.name))
+                                .map((section) => (
+                                  <div key={section.id} className="flex items-center gap-1">
+                                    <span>{section.name}</span>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={() => openDeleteSectionModal(section)}
+                                      disabled={loading}
+                                    >
+                                      <Trash2 className="h-3 w-3 text-red-600" />
+                                    </Button>
+                                  </div>
+                                ))}
                             </div>
                           ) : (
                             "None"

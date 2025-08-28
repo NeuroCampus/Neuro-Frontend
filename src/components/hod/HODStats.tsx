@@ -47,8 +47,12 @@ interface StatsData {
     attendance_percentage: number;
   }>;
 }
+interface HODStatsProps {
+  setError: (err: string | null) => void;
+  setPage: (page: string) => void;
+}
 
-export default function DashboardPage() {
+export default function HODStats({ setError, setPage }: HODStatsProps) {
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [stats, setStats] = useState<StatsData | null>(null);
   const [hodName, setHodName] = useState("HOD");
@@ -230,7 +234,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="text-gray-200 p-8 space-y-6 font-sans min-h-screen bg-[#1c1c1e]">
+    <div className="text-gray-200 p-8 space-y-6 font-sans min-h-screen bg-[#1c1c1e] py-0">
       {/* Welcome Message */}
       <h1 className="text-2xl font-semibold text-gray-200 ">
         Welcome back, {hodName}, Here's what's happening in your {branchName} department.
@@ -247,12 +251,13 @@ export default function DashboardPage() {
       )}
 
       {/* Stats Cards */}
-      <div className="bg-[#1c1c1e] grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="bg-[#1c1c1e] grid grid-cols-1 md:grid-cols-4 gap-6 ">
         {[
           {
             title: "Total Faculty",
+            className: "text-gray-600",
             value: stats?.faculty_count.toString() || "0",
-            icon: <Users className="text-gray-600" />,
+            icon: <Users className="text-gray-600 " />,
             change: "+2.5% since last month",
             color: "text-gray-600",
           },
@@ -280,7 +285,7 @@ export default function DashboardPage() {
         ].map((item, i) => (
             <div
               key={i}
-              className="bg-[#23232a] p-4 rounded-lg shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow"
+              className="bg-[#23232a] p-4 rounded-lg shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white"
             >
               <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-200">
               {item.icon && (
@@ -365,12 +370,13 @@ export default function DashboardPage() {
       <div className="bg-[#1c1c1e] p-6 rounded-lg shadow-sm text-sm text-gray-200 border border-gray-200">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-gray-200">Leave Requests</h3>
-          <button
-            className="flex items-center gap-1 border border-gray-300 text-sm font-medium text-gray-200 bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-md transition"
-            onClick={() => navigate("/leaves")}
-          >
-            View All
-          </button>
+            <button
+              className="flex items-center gap-1 border border-gray-300 text-sm font-medium text-gray-200 bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-md transition"
+              onClick={() => setPage("leaves")} // <- this switches the dashboard page
+            >
+              View All
+            </button>
+
         </div>
         <table className="w-full">
           <thead>

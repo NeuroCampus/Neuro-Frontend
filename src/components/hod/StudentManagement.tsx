@@ -604,24 +604,113 @@ const StudentManagement = () => {
         </CardHeader>
         <CardContent>
           <div className="flex space-x-4">
-            <Input
-              placeholder="USN"
-              value={state.manualForm.usn}
-              onChange={(e) => updateState({ manualForm: { ...state.manualForm, usn: e.target.value } })}
-              className="flex-1 bg-[#232326] text-gray-200 border border-gray-700 placeholder-gray-400 focus:border-gray-500 focus:ring-0"
-            />
-            <Input
-              placeholder="Name"
-              value={state.manualForm.name}
-              onChange={(e) => updateState({ manualForm: { ...state.manualForm, name: e.target.value } })}
-              className="flex-1 bg-[#232326] text-gray-200 border border-gray-700 placeholder-gray-400 focus:border-gray-500 focus:ring-0"
-            />
-            <Input
-              placeholder="Email"
-              value={state.manualForm.email}
-              onChange={(e) => updateState({ manualForm: { ...state.manualForm, email: e.target.value } })}
-              className="flex-1 bg-[#232326] text-gray-200 border border-gray-700 placeholder-gray-400 focus:border-gray-500 focus:ring-0"
-            />
+            {/* USN */}
+            <div className="flex flex-col flex-1">
+              <Input
+                placeholder="USN"
+                value={state.manualForm.usn}
+                maxLength={10}
+                onChange={(e) => {
+                  const value = e.target.value.toUpperCase();
+                  updateState({
+                    manualForm: { ...state.manualForm, usn: value },
+                  });
+                }}
+                onBlur={(e) => {
+                  const value = e.target.value.toUpperCase();
+                  const usnRegex = /^[0-9][A-Z]{2}[0-9]{2}[A-Z]{2}[0-9]{3}$/;
+                  updateState({
+                    manualErrors: {
+                      ...state.manualErrors,
+                      usn: value && !usnRegex.test(value)
+                        ? "Invalid USN (e.g., 1AM22CI064)"
+                        : "",
+                    },
+                  });
+                }}
+                className={`flex-1 bg-[#232326] text-gray-200 border placeholder-gray-400 focus:ring-0 ${
+                  state.manualErrors?.usn
+                    ? "border-red-500"
+                    : "border-gray-700 focus:border-gray-500"
+                }`}
+              />
+              {/* Reserve space for error text */}
+              <span className="text-red-500 text-xs mt-1 h-4">
+                {state.manualErrors?.usn}
+              </span>
+            </div>
+
+            {/* Name */}
+            <div className="flex flex-col flex-1">
+              <Input
+                placeholder="Name"
+                value={state.manualForm.name}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^A-Za-z\s]/g, "");
+                  updateState({
+                    manualForm: { ...state.manualForm, name: value },
+                  });
+                }}
+                onBlur={(e) => {
+                  const value = e.target.value.trim();
+                  const nameRegex = /^[A-Za-z\s]+$/;
+                  updateState({
+                    manualErrors: {
+                      ...state.manualErrors,
+                      name:
+                        value && !nameRegex.test(value)
+                          ? "Name should contain only letters and spaces"
+                          : "",
+                    },
+                  });
+                }}
+                className={`flex-1 bg-[#232326] text-gray-200 border placeholder-gray-400 focus:ring-0 ${
+                  state.manualErrors?.name
+                    ? "border-red-500"
+                    : "border-gray-700 focus:border-gray-500"
+                }`}
+              />
+              <span className="text-red-500 text-xs mt-1 h-4">
+                {state.manualErrors?.name}
+              </span>
+            </div>
+
+            {/* Email */}
+            <div className="flex flex-col flex-1">
+              <Input
+                placeholder="Email"
+                type="text"
+                value={state.manualForm.email}
+                onChange={(e) => {
+                  let value = e.target.value;
+                  value = value.replace(/[!#$%^&*()_+<>?:"{}]/g, "");
+                  updateState({
+                    manualForm: { ...state.manualForm, email: value },
+                  });
+                }}
+                onBlur={(e) => {
+                  const value = e.target.value.trim();
+                  const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+                  updateState({
+                    manualErrors: {
+                      ...state.manualErrors,
+                      email:
+                        value && !emailRegex.test(value)
+                          ? "Invalid email format (e.g., user@example.com)"
+                          : "",
+                    },
+                  });
+                }}
+                className={`flex-1 bg-[#232326] text-gray-200 border placeholder-gray-400 focus:ring-0 ${
+                  state.manualErrors?.email
+                    ? "border-red-500"
+                    : "border-gray-700 focus:border-gray-500"
+                }`}
+              />
+              <span className="text-red-500 text-xs mt-1 h-4">
+                {state.manualErrors?.email}
+              </span>
+            </div>
             <Select
               value={state.manualForm.semester}
               onValueChange={(value) =>

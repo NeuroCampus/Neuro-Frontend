@@ -7,6 +7,8 @@ import { CalendarIcon, Filter as FilterIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { manageHODLeaves, ManageHODLeavesRequest, manageProfile } from "../../utils/hod_api";
 import { toast } from "react-toastify";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 interface Leave {
   id: string;
@@ -25,8 +27,6 @@ const statusColors = {
 const ApplyLeave = () => {
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [leaveTitle, setLeaveTitle] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
   const [reason, setReason] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [showFilter, setShowFilter] = useState(false);
@@ -34,6 +34,10 @@ const ApplyLeave = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [branchId, setBranchId] = useState("");
+  const [startDate, setStartDate] = useState<Date | null>(new Date());
+  const [endDate, setEndDate] = useState<Date | null>(new Date());
+  const today = new Date();
+
 
   // Fetch branch ID from HOD profile
   useEffect(() => {
@@ -137,65 +141,79 @@ const ApplyLeave = () => {
         <CardHeader>
           <CardTitle className="text-xl font-semibold">Leave Application Form</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 ">
+        <CardContent className="space-y-6">
+          {/* Leave Title */}
           <div>
-            <label className="block text-sm font-medium mb-1">Title for Leave *</label>
+            <label className="block text-sm font-medium mb-2">Title for Leave *</label>
             <Input
               value={leaveTitle}
               onChange={(e) => setLeaveTitle(e.target.value)}
-              className="bg-[#232326] text-gray-200"
               placeholder="Enter a title for your leave"
               disabled={loading}
+              className="w-full bg-[#232326] text-gray-200 border border-gray-700 rounded p-2"
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Start and End Date */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
+            {/* Start Date */}
             <div>
               <label className="block text-sm font-medium mb-1">Start Date *</label>
-              <div className="relative text-gray-500">
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="pr-10  bg-[#232326] text-gray-200"
+              <div className="flex items-center bg-[#232326] border border-gray-700 rounded w-full">
+                <DatePicker
+                  selected={startDate}
+                  onChange={(date) => setStartDate(date)}
+                  minDate={today}
+                  dateFormat="dd/MM/yyyy"
                   disabled={loading}
+                  className="flex-1 p-2 text-gray-200 bg-transparent border-none rounded-none focus:outline-none"
                 />
-                <CalendarIcon className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" />
+                <CalendarIcon className="h-5 w-5 text-gray-400 mr-2 ml-80" />
               </div>
             </div>
+
+            {/* End Date */}
             <div>
               <label className="block text-sm font-medium mb-1">End Date</label>
-              <div className="relative text-gray-500">
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="pr-10  bg-[#232326] text-gray-200"
+              <div className="flex items-center bg-[#232326] border border-gray-700 rounded w-full">
+                <DatePicker
+                  selected={endDate}
+                  onChange={(date) => setEndDate(date)}
+                  minDate={startDate || today}
+                  dateFormat="dd/MM/yyyy"
                   disabled={loading}
+                  className="flex-1 p-2 text-gray-200 bg-transparent border-none rounded-none focus:outline-none"
                 />
-                <CalendarIcon className="absolute right-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none" />
+                <CalendarIcon className="h-5 w-full mr-2 ml-80 text-gray-400" />
               </div>
             </div>
           </div>
 
+          {/* Reason for Leave */}
           <div>
-            <label className="block text-sm font-medium mb-1">Reason for Leave *</label>
+            <label className="block text-sm font-medium mb-2">Reason for Leave *</label>
             <Textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="Please provide a detailed reason for your leave request"
               rows={4}
               draggable={false}
-              className="resize-none bg-[#232326] text-gray-200"
+              className="w-full resize-none bg-[#232326] text-gray-200 border border-gray-700 rounded p-2"
               disabled={loading}
             />
           </div>
 
+          {/* Error/Success Messages */}
           {error && <p className="text-red-600 text-sm">{error}</p>}
           {successMessage && <p className="text-green-600 text-sm">{successMessage}</p>}
 
-          <div className="text-right ">
-            <Button onClick={handleSubmit} disabled={loading || !branchId} className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500">
+          {/* Submit Button */}
+          <div className="flex justify-end">
+            <Button
+              onClick={handleSubmit}
+              disabled={loading || !branchId}
+              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+            >
               {loading ? "Submitting..." : "Submit Application"}
             </Button>
           </div>
@@ -224,7 +242,7 @@ const ApplyLeave = () => {
                         setShowFilter(false);
                       }}
                       className={cn(
-                        "px-4 py-2 cursor-pointer hover:bg-gray-200",
+                        "px-4 py-2 cursor-pointer hover:bg-gray-500",
                         statusFilter === status && "font-semibold"
                       )}
                     >
@@ -236,7 +254,7 @@ const ApplyLeave = () => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="divide-y ">
+        <CardContent className="divide-y">
           {loading ? (
             <p className="text-sm text-gray-200 py-6 text-center">Loading...</p>
           ) : filteredLeaves.length === 0 ? (
@@ -244,10 +262,19 @@ const ApplyLeave = () => {
           ) : (
             filteredLeaves.map((leave) => (
               <div key={leave.id} className="flex items-start justify-between py-4">
-                <div className="pr-4">
-                  <p className="font-medium text-gray-200">{leave.title}</p>
-                  <p className="text-sm text-gray-400">{leave.date}</p>
-                  <p className="text-sm text-gray-400 mt-1">{leave.reason}</p>
+                <div className="pr-4 space-y-1">
+                  {/* Title / Subject */}
+                  <p className="font-medium text-gray-200">
+                    📌 {leave.title}
+                  </p>
+
+                  {/* Date */}
+                  <p className="text-sm text-gray-400">🗓 {leave.date}</p>
+
+                  {/* Reason */}
+                  <p className="text-sm text-gray-400">
+                    📝 <span className="font-semibold">Reason:</span> {leave.reason}
+                  </p>
                 </div>
                 <span
                   className={`px-3 py-1 text-xs font-semibold rounded-full h-fit mt-1 ${statusColors[leave.status]}`}

@@ -327,21 +327,37 @@ const AttendanceView = () => {
           </Select>
         </div>
 
-        <div className="flex justify-between items-center mt-4">
-          <Input
-            className="w-full max-w-md bg-[#232326] text-gray-200"
-            placeholder="Search by name or USN..."
-            value={state.search}
-            onChange={(e) => updateState({ search: e.target.value })}
-          />
+        <div className="flex flex-col md:flex-row justify-between items-center mt-4 gap-2 md:gap-4 w-full">
+          {/* Input + Error */}
+          <div className="flex flex-col w-full max-w-md">
+            <Input
+              className="w-full bg-[#232326] text-gray-200"
+              placeholder="Search by name or USN..."
+              value={state.search}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (/^[a-zA-Z0-9]*$/.test(value)) {
+                  updateState({ search: value });
+                }
+              }}
+            />
+            {state.search && /[^a-zA-Z0-9]/.test(state.search) && (
+              <span className="text-red-500 text-sm mt-1">
+                Only alphanumeric characters are allowed
+              </span>
+            )}
+          </div>
+
+          {/* Export Button */}
           <Button
-            className="ml-4 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 flex items-center gap-2"
+            className="ml-0 md:ml-4 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 flex items-center gap-2"
             onClick={handleExportPDF}
           >
             <FileDown size={16} />
             Export Report
           </Button>
         </div>
+
 
         <div className="overflow-x-auto mt-4">
           <table className="w-full table-auto border">
