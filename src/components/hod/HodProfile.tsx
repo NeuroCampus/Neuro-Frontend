@@ -275,9 +275,17 @@ const HodProfile = ({ user: propUser, setError }) => {
                 id="email"
                 name="email"
                 value={profile.email}
-                onChange={handleChange}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Strict email regex (disallows bad domains/TLDs)
+                  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$/;
+
+                  if (value === "" || emailRegex.test(value)) {
+                    handleChange(e); // Only update if valid or cleared
+                  }
+                }}
                 disabled={!editing || loading}
-                className={cn("w-full bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
+                className={cn("w-full bg-[#232326] text-gray-200", !editing && "cursor-not-allowed")}
               />
             </div>
             <div>
@@ -288,10 +296,29 @@ const HodProfile = ({ user: propUser, setError }) => {
                 id="mobile_number"
                 name="mobile_number"
                 value={profile.mobile_number}
-                onChange={handleChange}
+                onChange={(e) => {
+                  let value = e.target.value.trim();
+
+                  // Allow +91 optional
+                  if (value.startsWith("+91")) {
+                    value = value.replace("+91", "").trim();
+                  }
+
+                  // Remove spaces/dashes
+                  value = value.replace(/\s|-/g, "");
+
+                  // Allow only digits
+                  if (!/^\d*$/.test(value)) return;
+
+                  // Restrict to 10 digits
+                  if (value.length > 10) return;
+
+                  handleChange({ target: { name: "mobile_number", value } });
+                }}
                 disabled={!editing || loading}
-                className={cn("w-full bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
+                className={cn("w-full bg-[#232326] text-gray-200", !editing && "cursor-not-allowed resize-none")}
               />
+
             </div>
             <div>
               <Label htmlFor="address" className="text-xs text-gray-400 mb-1 block">
@@ -301,9 +328,19 @@ const HodProfile = ({ user: propUser, setError }) => {
                 id="address"
                 name="address"
                 value={profile.address}
-                onChange={handleChange}
+                onChange={(e) => {
+                  let value = e.target.value;
+
+                  // Restrict length
+                  if (value.length > 200) return;
+
+                  // Require at least one alphanumeric (when not empty)
+                  if (value && !/[a-zA-Z0-9]/.test(value)) return;
+
+                  handleChange(e);
+                }}
                 disabled={!editing || loading}
-                className={cn("w-full bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
+                className={cn("w-full bg-[#232326] text-gray-200", !editing && "cursor-not-allowed")}
               />
             </div>
             <div>
@@ -314,10 +351,27 @@ const HodProfile = ({ user: propUser, setError }) => {
                 id="bio"
                 name="bio"
                 value={profile.bio}
-                onChange={handleChange}
+                onChange={(e) => {
+                  let value = e.target.value;
+
+                  // Limit to 50 words (example)
+                  const words = value.trim().split(/\s+/);
+                  if (words.length > 50) return;
+
+                  // Trim and validate non-empty (when not blank)
+                  if (value.trim() === "" && value !== "") return;
+
+                  handleChange(e);
+                }}
                 disabled={!editing || loading}
-                className={cn("w-full p-2 border rounded-md bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
+                className={cn(
+                  "w-full p-2 border rounded-md bg-[#232326] text-gray-200 resize-none thin-scrollbar",
+                  !editing && "cursor-not-allowed"
+                )}
               />
+              <p className="text-xs text-gray-400 mt-1">
+                {profile.bio.trim().split(/\s+/).filter(Boolean).length}/50 words
+              </p>
             </div>
           </div>
         </CardContent>

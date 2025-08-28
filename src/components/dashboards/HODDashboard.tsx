@@ -46,6 +46,10 @@ interface ErrorBoundaryState {
   hasError: boolean;
   errorMessage: string;
 }
+interface HODStatsProps {
+  setError: (err: string | null) => void;
+  setPage: (page: string) => void;
+}
  
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   state: ErrorBoundaryState = { hasError: false, errorMessage: "" };
@@ -134,7 +138,7 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
   const renderContent = () => {
     switch (activePage) {
       case "dashboard":
-        return <HODStats setError={setError} />;
+        return <HODStats setError={setError} setPage={handlePageChange}/>;
       case "low-attendance":
         return <LowAttendance setError={setError} />;
       case "semesters":
@@ -166,7 +170,7 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
       case "hod-profile":
         return <HodProfile role="hod" user={user} setError={setError} />;
       default:
-        return <HODStats setError={setError} />;
+      return <HODStats setError={setError} setPage={handlePageChange} />;
     }
   };
  
