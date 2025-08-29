@@ -180,75 +180,54 @@ const Announcements = () => {
   }, [selectAll, selectedStudents.length]);
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen text-gray-900">
+    <div className="p-8 bg-[#1c1c1e] text-gray-200 min-h-screen ">
       <div className="grid grid-cols-3 gap-8">
-        {/* Notification History */}
-        <Card className="col-span-2 shadow-sm">
+        {/* Received Notifications */}
+        <Card className="col-span-2 shadow-sm bg-[#1c1c1e] text-gray-200">
           <CardHeader>
             <CardTitle className="text-lg">Received Notifications</CardTitle>
-            <p className="text-sm text-gray-500">Notifications from HOD and Admin</p>
+            <p className="text-sm text-gray-400">Notifications from HOD and Admin</p>
           </CardHeader>
           <CardContent className="space-y-6">
             {loadingNotifications ? (
               <div>Loading...</div>
             ) : notifications.length === 0 ? (
-              <div className="text-gray-500">No notifications found.</div>
+              <div className="text-gray-400">No notifications found.</div>
             ) : (
-              notifications.map((item, index) => (
-                <div key={item.id || index} className="border-b pb-4">
-                  <div className="flex justify-between items-center">
-                    <div className="font-semibold text-gray-800">{item.title}</div>
-                    <span className={`text-xs font-medium rounded-full px-2 py-1 ${roleColors[item.role] || "bg-gray-200 text-gray-700"}`}>
-                      {item.role}
-                    </span>
+              <div className="max-h-64 overflow-y-auto pr-2 space-y-4 thin-scrollbar">
+                {notifications.map((item, index) => (
+                  <div
+                    key={item.id || index}
+                    className="border-b border-gray-700 pb-4"
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="font-semibold text-gray-100">{item.title}</div>
+                      <span
+                        className={`text-xs font-medium rounded-full px-2 py-1 ${
+                          roleColors[item.role] || "bg-gray-700 text-gray-300"
+                        }`}
+                      >
+                        {item.role}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-300 mt-1">{item.message}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {item.created_by ? `From: ${item.created_by}` : ""} |{" "}
+                      {new Date(item.created_at).toLocaleString()}
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-600 mt-1">{item.message}</div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    {item.created_by ? `From: ${item.created_by}` : ""} | {new Date(item.created_at).toLocaleString()}
-                  </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Sent Notifications Section */}
-        <div className="col-span-2 mt-8">
-          <Card className="shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg">Sent Notifications</CardTitle>
-              <p className="text-sm text-gray-500">Notifications you have sent</p>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {loadingSent ? (
-                <div>Loading...</div>
-              ) : sentNotifications.length === 0 ? (
-                <div className="text-gray-500">No sent notifications found.</div>
-              ) : (
-                sentNotifications.map((item, index) => (
-                  <div key={item.id || index} className="border-b pb-4">
-                    <div className="flex justify-between items-center">
-                      <div className="font-semibold text-gray-800">{item.title}</div>
-                      <span className={`text-xs font-medium rounded-full px-2 py-1 ${roleColors[item.role] || "bg-gray-200 text-gray-700"}`}>
-                        {item.role}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-600 mt-1">{item.message}</div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      {item.created_by ? `By: ${item.created_by}` : ""} | {new Date(item.created_at).toLocaleString()}
-                    </div>
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Create Notification */}
-        <Card className="col-span-1 shadow-sm">
+        <Card className="col-span-1 shadow-sm bg-[#1c1c1e] text-gray-200">
           <CardHeader>
             <CardTitle className="text-lg">Send Notification to Proctor Students</CardTitle>
-            <p className="text-sm text-gray-500">Select students or send to all</p>
+            <p className="text-sm text-gray-200">Select students or send to all</p>
           </CardHeader>
           <CardContent className="space-y-4">
             {successMessage && (
@@ -256,7 +235,11 @@ const Announcements = () => {
                 {successMessage}
               </div>
             )}
-            {errors.message && <div className="bg-red-100 text-red-800 text-sm p-2 rounded">{errors.message}</div>}
+            {errors.message && (
+              <div className="bg-red-100 text-red-800 text-sm p-2 rounded">
+                {errors.message}
+              </div>
+            )}
             {selectedWarning}
             <div>
               <Input
@@ -264,8 +247,11 @@ const Announcements = () => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 disabled={sending}
+                className="bg-[#232326] text-gray-200"
               />
-              {errors.title && <p className="text-sm text-red-500 mt-1">{errors.title}</p>}
+              {errors.title && (
+                <p className="text-sm text-red-500 mt-1">{errors.title}</p>
+              )}
             </div>
             <div>
               <Textarea
@@ -273,34 +259,53 @@ const Announcements = () => {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 disabled={sending}
+                className="bg-[#232326] text-gray-200"
               />
-              {errors.message && <p className="text-sm text-red-500 mt-1">{errors.message}</p>}
+              {errors.message && (
+                <p className="text-sm text-red-500 mt-1">{errors.message}</p>
+              )}
             </div>
             <div>
+              {/* Select All */}
               <div className="flex items-center mb-2">
                 <Checkbox
                   checked={selectAll}
                   onCheckedChange={(checked) => setSelectAll(!!checked)}
                   id="select-all"
+                  className="cursor-pointer bg-gray-500"
                   disabled={sending}
                 />
-                <label htmlFor="select-all" className="ml-2 text-sm font-medium">
+                <label
+                  htmlFor="select-all"
+                  className="ml-2 text-sm font-medium text-gray-200"  // 👈 Added text color
+                >
                   Select All Proctor Students
                 </label>
               </div>
-              <div className="max-h-40 overflow-y-auto border rounded p-2 bg-white">
+
+              {/* Scrollable Student List */}
+              <div className="max-h-52 overflow-y-auto border border-gray-700 rounded-lg p-2 bg-[#232326] text-gray-200 custom-scrollbar">
                 {proctorStudents.length === 0 ? (
-                  <div className="text-gray-500 text-sm">No proctor students found.</div>
+                  <div className="text-gray-500 text-sm text-center py-2">
+                    No proctor students found.
+                  </div>
                 ) : (
                   proctorStudents.map((student) => (
-                    <div key={student.usn} className="flex items-center mb-1">
+                    <div
+                      key={student.usn}
+                      className="flex items-center mb-1 hover:bg-gray-700/30 rounded px-1"
+                    >
                       <Checkbox
                         checked={selectedStudents.includes(student.usn) || selectAll}
                         onCheckedChange={() => handleStudentSelect(student.usn)}
                         id={`student-${student.usn}`}
                         disabled={selectAll || sending}
+                        className="cursor-pointer bg-gray-500"
                       />
-                      <label htmlFor={`student-${student.usn}`} className="ml-2 text-sm">
+                      <label
+                        htmlFor={`student-${student.usn}`}
+                        className="ml-2 text-sm cursor-pointer text-gray-200" // 👈 ensure visibility
+                      >
                         {student.name} ({student.usn})
                       </label>
                     </div>
@@ -308,7 +313,13 @@ const Announcements = () => {
                 )}
               </div>
             </div>
-            <Button className="w-full flex items-center justify-center" onClick={handleSubmit} disabled={sending}>
+
+
+            <Button
+              className="w-full flex items-center justify-center text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+              onClick={handleSubmit}
+              disabled={sending}
+            >
               {sending ? (
                 <>
                   <Loader2 className="animate-spin mr-2" size={18} /> Sending...
@@ -319,8 +330,50 @@ const Announcements = () => {
             </Button>
           </CardContent>
         </Card>
+
+        {/* Sent Notifications Section */}
+        <Card className="col-span-3 shadow-sm bg-[#1c1c1e] text-gray-200">
+          <CardHeader>
+            <CardTitle className="text-lg text-gray-100">Sent Notifications</CardTitle>
+            <p className="text-sm text-gray-400">Notifications you have sent</p>
+          </CardHeader>
+
+          {/* Scrollable Content */}
+          <CardContent className="max-h-72 overflow-y-auto space-y-6 thin-scrollbar">
+            {loadingSent ? (
+              <div className="text-gray-400">Loading...</div>
+            ) : sentNotifications.length === 0 ? (
+              <div className="text-gray-500">No sent notifications found.</div>
+            ) : (
+              sentNotifications.map((item, index) => (
+                <div
+                  key={item.id || index}
+                  className="border-b border-gray-700 pb-4"
+                >
+                  <div className="flex justify-between items-center">
+                    <div className="font-semibold text-gray-100">{item.title}</div>
+                    <span
+                      className={`text-xs font-medium rounded-full px-2 py-1 ${
+                        roleColors[item.role] || "bg-gray-500 text-gray-200"
+                      }`}
+                    >
+                      {item.role}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-300 mt-1">{item.message}</div>
+                  <div className="text-xs text-gray-300 mt-1">
+                    {item.created_by ? `By: ${item.created_by}` : ""} |{" "}
+                    {new Date(item.created_at).toLocaleString()}
+                  </div>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+
       </div>
     </div>
+
   );
 };
 

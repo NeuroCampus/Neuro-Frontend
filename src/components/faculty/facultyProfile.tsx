@@ -73,20 +73,20 @@ const FacultyProfile = () => {
   }
 
   return (
-    <Card className="max-w-2xl mx-auto mt-10">
+    <Card className="max-w-2xl mx-auto mt-10 bg-[#1c1c1e] text-gray-200">
       <CardHeader className="flex flex-col items-start gap-2">
         <div className="flex justify-between items-center w-full">
           <div>
             <CardTitle className="text-xl font-semibold">
               Profile Information
             </CardTitle>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-300">
               View and update your personal information
             </p>
           </div>
           <Button
             variant="outline"
-            className="text-sm px-4 py-1.5"
+            className="text-sm px-4 py-1.5 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
             onClick={() => {
               if (isEditing) handleSave();
               else setIsEditing(true);
@@ -107,7 +107,7 @@ const FacultyProfile = () => {
           <div className="text-base font-medium">
             {formData.firstName} {formData.lastName}
           </div>
-          <div className="text-sm text-gray-500">Faculty</div>
+          <div className="text-sm text-gray-300">Faculty</div>
         </div>
 
         <div className="space-y-4">
@@ -119,15 +119,16 @@ const FacultyProfile = () => {
             { label: "Address", key: "address" },
           ].map(({ label, key }) => (
             <div key={key}>
-              <label className="block text-sm text-gray-600 mb-1">{label}</label>
+              <label className="block text-sm text-gray-200 mb-1">{label}</label>
               {isEditing ? (
                 <Input
                   value={formData[key as keyof typeof formData]}
                   onChange={(e) => handleChange(key, e.target.value)}
+                  className="w-full bg-[#232326] text-gray-200 border border-gray-600 focus:border-gray-400 focus:ring-0"
                 />
               ) : (
-                <div className="bg-gray-100 border rounded px-3 py-2 text-sm text-gray-700 hover:border-gray-400 hover:shadow-sm transition cursor-not-allowed">
-                  {formData[key as keyof typeof formData]}
+                <div className="w-full bg-[#232326] text-gray-200 border border-gray-600 rounded px-3 py-2 text-sm cursor-not-allowed">
+                  {formData[key as keyof typeof formData] || "—"}
                 </div>
               )}
             </div>
@@ -135,11 +136,11 @@ const FacultyProfile = () => {
 
           {/* Bio is always editable */}
           <div>
-            <label className="block text-sm text-gray-600 mb-1">Bio</label>
+            <label className="block text-sm text-gray-200 mb-1">Bio</label>
             <Textarea
               value={formData.bio}
               onChange={(e) => handleChange("bio", e.target.value)}
-              className="resize-none bg-white"
+              className="resize-none bg-[#232326]"
               disabled={!isEditing}
             />
           </div>

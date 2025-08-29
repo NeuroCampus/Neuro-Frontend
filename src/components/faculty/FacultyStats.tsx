@@ -120,15 +120,15 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
   }
 
   return (
-    <div className="p-4 md:p-6 bg-white text-gray-900 space-y-6">
+    <div className="p-4 md:p-6 bg-[#1c1c1e] text-gray-200 space-y-6">
       {/* Top Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 ">
         {stats.map((stat, idx) => (
-          <Card key={idx} className="flex flex-col justify-center">
+          <Card key={idx} className="flex flex-col justify-center bg-[#1c1c1e] text-gray-200">
             <CardContent className="p-4 flex items-center space-x-4">
-              <div className="p-2 bg-gray-100 rounded-full">{stat.icon}</div>
+              <div className="p-2 bg-gray-200 rounded-full">{stat.icon}</div>
               <div>
-                <p className="text-sm text-gray-500">{stat.label}</p>
+                <p className="text-sm text-gray-200">{stat.label}</p>
                 <h2 className="text-2xl font-bold">{stat.value}</h2>
                 {stat.sub && (
                   <p className="text-xs text-green-600 mt-1">{stat.sub}</p>
@@ -142,15 +142,15 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
       {/* Courses (Assigned Subjects) + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Assigned Subjects */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row justify-between items-center">
+        <Card className="lg:col-span-2 bg-[#1c1c1e] text-gray-200">
+          <CardHeader className="flex flex-row justify-between items-center text-gray-200">
             <CardTitle>Assigned Subjects</CardTitle>
-            <Button variant="link" onClick={() => setActivePage("timetable")}>View All</Button>
+            <Button variant="link" onClick={() => setActivePage("timetable")} className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500">View All</Button>
           </CardHeader>
           <CardContent className="space-y-4">
             {subjects.length > 0 ? (
               subjects.map((subj, idx) => (
-                <div key={idx} className="p-4 bg-gray-100 rounded-lg">
+                <div key={idx} className="p-4 bg-[#1c1c1e] text-gray-200 rounded-lg">
                   <div className="flex justify-between items-center mb-1">
                     <h3 className="font-semibold">{subj.subject_name} ({subj.subject_code})</h3>
                     <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-800">
@@ -160,17 +160,17 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
                 </div>
               ))
             ) : (
-              <p className="text-gray-500">No assigned subjects</p>
+              <p className="text-gray-200">No assigned subjects</p>
             )}
           </CardContent>
         </Card>
 
         {/* Quick Actions */}
-        <Card className="h-full flex flex-col shadow-sm rounded-2xl border border-gray-200">
+        <Card className="h-full flex flex-col shadow-sm rounded-2xl border bg-[#1c1c1e] text-gray-200">
           <CardHeader className="pb-3 pt-4 px-4">
-            <CardTitle className="text-lg font-semibold text-gray-800">Quick Actions</CardTitle>
+            <CardTitle className="text-lg font-semibold text-gray-200">Quick Actions</CardTitle>
           </CardHeader>
-          <div className="flex-grow grid grid-cols-2 grid-rows-2 gap-4 p-4">
+          <div className="flex-grow grid grid-cols-2 grid-rows-2 gap-4 p-4 text-gray-200">
             {[
               { label: "Take Attendance", icon: CheckSquare, page: "take-attendance" },
               { label: "Schedule Class", icon: PlusCircle, page: "timetable" },
@@ -184,7 +184,7 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
                 >
                   <action.icon className="w-6 h-6 text-indigo-600" />
                 </button>
-                <span className="mt-2 text-sm font-semibold text-gray-600">{action.label}</span>
+                <span className="mt-2 text-sm font-semibold text-gray-300">{action.label}</span>
               </div>
             ))}
           </div>
@@ -192,7 +192,7 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
       </div>
 
       {/* Performance Trends */}
-      <Card>
+      <Card className="bg-[#1c1c1e] text-gray-200">
         <CardHeader>
           <CardTitle>Performance Trends</CardTitle>
         </CardHeader>
@@ -204,33 +204,52 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
               {attendanceData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>
                   <LineChart data={attendanceData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="name" stroke="#6b7280" />
-                    <YAxis stroke="#6b7280" />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="attendance" stroke="#3b82f6" strokeWidth={2} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#2e2e30" /> {/* subtle dark grid */}
+                    <XAxis dataKey="name" stroke="#d1d5db" /> {/* light gray */}
+                    <YAxis stroke="#d1d5db" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#2c2c2e",
+                        border: "none",
+                        color: "#f3f4f6",
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="attendance"
+                      stroke="#60a5fa" // light blue
+                      strokeWidth={2}
+                      dot={{ fill: "#93c5fd" }} // softer dot
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
-                <p className="text-gray-500 text-center">No attendance data</p>
+                <p className="text-gray-400 text-center">No attendance data</p>
               )}
             </div>
+
             {/* Marks Bar Chart */}
             <div>
               <h3 className="font-semibold mb-2">Average Marks</h3>
               {marksData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={marksData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="name" stroke="#6b7280" />
-                    <YAxis stroke="#6b7280" />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="avgMark" fill="#6366f1" name="Avg Mark" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#2e2e30" />
+                    <XAxis dataKey="name" stroke="#d1d5db" />
+                    <YAxis stroke="#d1d5db" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "#2c2c2e",
+                        border: "none",
+                        color: "#f3f4f6",
+                      }}
+                    />
+                    <Legend wrapperStyle={{ color: "#d1d5db" }} />
+                    <Bar dataKey="avgMark" fill="#818cf8" name="Avg Mark" /> {/* indigo */}
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <p className="text-gray-500 text-center">No marks data</p>
+                <p className="text-gray-400 text-center">No marks data</p>
               )}
             </div>
           </div>

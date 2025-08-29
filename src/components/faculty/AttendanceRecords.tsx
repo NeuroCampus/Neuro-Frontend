@@ -117,33 +117,35 @@ const AttendanceRecords = () => {
   };
 
   return (
-    <div className="p-6 space-y-4 bg-white">
-      <Card>
+    <div className="p-6 space-y-4 bg-[#1c1c1e] text-gray-200">
+      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-700">
         <CardHeader>
-          <CardTitle>Attendance Records</CardTitle>
+          <CardTitle className="text-gray-200">Attendance Records</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex items-center justify-center p-8"><Loader2 className="animate-spin mr-2" /> Loading records...</div>
+            <div className="flex items-center justify-center p-8 text-gray-400">
+              <Loader2 className="animate-spin mr-2" /> Loading records...
+            </div>
           ) : error ? (
-            <div className="text-red-600 p-4">{error}</div>
+            <div className="text-red-500 p-4">{error}</div>
           ) : (
-            <ScrollArea className="rounded border">
+            <ScrollArea className="rounded border border-gray-700">
               <Table>
-                <TableHeader>
+                <TableHeader className="bg-[#1c1c1e]">
                   <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Subject</TableHead>
-                    <TableHead>Section</TableHead>
-                    <TableHead>Semester</TableHead>
-                    <TableHead>Branch</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Action</TableHead>
+                    <TableHead className="text-gray-300">Date</TableHead>
+                    <TableHead className="text-gray-300">Subject</TableHead>
+                    <TableHead className="text-gray-300">Section</TableHead>
+                    <TableHead className="text-gray-300">Semester</TableHead>
+                    <TableHead className="text-gray-300">Branch</TableHead>
+                    <TableHead className="text-gray-300">Status</TableHead>
+                    <TableHead className="text-gray-300">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {records.map((record) => (
-                    <TableRow key={record.id}>
+                    <TableRow key={record.id} className="hover:bg-[#2e2e31]">
                       <TableCell>{record.date}</TableCell>
                       <TableCell>{record.subject}</TableCell>
                       <TableCell>{record.section}</TableCell>
@@ -151,7 +153,11 @@ const AttendanceRecords = () => {
                       <TableCell>{record.branch}</TableCell>
                       <TableCell>{record.status}</TableCell>
                       <TableCell>
-                        <Button size="sm" onClick={() => handleViewDetails(record)}>
+                        <Button
+                          size="sm"
+                          className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                          onClick={() => handleViewDetails(record)}
+                        >
                           View Details
                         </Button>
                       </TableCell>
@@ -162,13 +168,15 @@ const AttendanceRecords = () => {
             </ScrollArea>
           )}
 
-          {/* Details Modal/Section */}
+          {/* Details Section */}
           {selectedRecord && (
             <div className="mt-6">
-              <h3 className="text-lg font-semibold mb-2">Attendance Details for {selectedRecord.date} - {selectedRecord.subject} ({selectedRecord.section})</h3>
+              <h3 className="text-lg font-semibold mb-2 text-gray-100">
+                Attendance Details for {selectedRecord.date} - {selectedRecord.subject} ({selectedRecord.section})
+              </h3>
               <div className="flex gap-8">
                 <div>
-                  <h4 className="font-semibold">Present Students</h4>
+                  <h4 className="font-semibold text-green-400">Present Students</h4>
                   <ul className="list-disc ml-6">
                     {presentList.map((s) => (
                       <li key={s.usn}>{s.name} ({s.usn})</li>
@@ -176,7 +184,7 @@ const AttendanceRecords = () => {
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-semibold">Absent Students</h4>
+                  <h4 className="font-semibold text-red-400">Absent Students</h4>
                   <ul className="list-disc ml-6">
                     {absentList.map((s) => (
                       <li key={s.usn}>{s.name} ({s.usn})</li>
@@ -185,19 +193,31 @@ const AttendanceRecords = () => {
                 </div>
               </div>
               <div className="mt-4">
-                <button className="btn btn-primary" onClick={handleExportPdf} disabled={exporting}>
+                <button
+                  className="px-4 py-2 rounded-lg text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                  onClick={handleExportPdf}
+                  disabled={exporting}
+                >
                   {exporting ? "Exporting..." : "Export to PDF"}
                 </button>
                 {pdfUrl && (
-                  <a href={pdfUrl} target="_blank" rel="noopener noreferrer" className="ml-4 text-blue-600 underline">Download PDF</a>
+                  <a
+                    href={pdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-4 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                  >
+                    Download PDF
+                  </a>
                 )}
               </div>
-              {detailsError && <div className="text-red-600 mt-2">{detailsError}</div>}
+              {detailsError && <div className="text-red-500 mt-2">{detailsError}</div>}
             </div>
           )}
         </CardContent>
       </Card>
     </div>
+
   );
 };
 

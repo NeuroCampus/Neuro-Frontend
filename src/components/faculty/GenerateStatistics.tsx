@@ -75,56 +75,78 @@ const GenerateStatistics = () => {
   }
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+    <div className="p-6 space-y-6 bg-[#1c1c1e] text-gray-200 min-h-screen">
       {/* Charts */}
       <div className="grid md:grid-cols-2 gap-6">
-        <Card className="shadow-sm">
+        {/* Attendance Overview */}
+        <Card className="shadow-sm bg-[#1c1c1e] text-gray-200">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-800">Attendance Overview</CardTitle>
+            <CardTitle className="text-lg font-semibold text-gray-200">
+              Attendance Overview
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={attendanceData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="attendance" stroke="#3b82f6" name="Attendance %" />
+                <CartesianGrid stroke="rgba(255,255,255,0.1)" />
+                <XAxis dataKey="name" stroke="#d1d5db" />
+                <YAxis stroke="#d1d5db" />
+                <Tooltip
+                  contentStyle={{ backgroundColor: "#2d2d30", border: "none", color: "#f3f4f6" }}
+                  itemStyle={{ color: "#f3f4f6" }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="attendance"
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  name="Attendance %"
+                />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
-        <Card className="shadow-sm">
+
+        {/* Average Marks */}
+        <Card className="shadow-sm bg-[#1c1c1e] text-gray-200">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-800">Average Marks</CardTitle>
+            <CardTitle className="text-lg font-semibold text-gray-200">
+              Average Marks
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={marksData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
+                <CartesianGrid stroke="rgba(255,255,255,0.1)" />
+                <XAxis dataKey="name" stroke="#d1d5db" />
+                <YAxis stroke="#d1d5db" />
+                <Tooltip
+                  contentStyle={{ backgroundColor: "#2d2d30", border: "none", color: "#f3f4f6" }}
+                  itemStyle={{ color: "#f3f4f6" }}
+                />
+                <Legend
+                  wrapperStyle={{ color: "#d1d5db" }}
+                />
                 <Bar dataKey="avgMark" fill="#6366f1" name="Avg Mark" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
+
       {/* Table */}
-      <Card className="shadow-sm">
+      <Card className="shadow-sm bg-[#1c1c1e] text-gray-200">
         <CardHeader className="flex flex-row justify-between items-center">
-          <CardTitle className="text-lg font-semibold text-gray-800">Proctor Students Table</CardTitle>
-          <Button variant="outline" size="sm" onClick={handleExportPDF} className="flex items-center">
-            <FileTextIcon className="mr-2 h-4 w-4" />
+          <CardTitle className="text-lg font-semibold text-gray-200">Proctor Students Table</CardTitle>
+          <Button variant="outline" size="sm" onClick={handleExportPDF} className="flex items-center text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500">
+            <FileTextIcon className="mr-2 h-4 w-4 " />
             Export PDF
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="max-h-64 overflow-y-auto overflow-x-auto thin-scrollbar">
             <table className="w-full text-sm border-collapse">
-              <thead className="bg-gray-100">
+              <thead className="bg-[#232326] sticky top-0 z-10">
                 <tr>
                   <th className="p-3 text-left">USN</th>
                   <th className="p-3 text-left">Name</th>
@@ -152,6 +174,7 @@ const GenerateStatistics = () => {
             </table>
           </div>
         </CardContent>
+
       </Card>
     </div>
   );

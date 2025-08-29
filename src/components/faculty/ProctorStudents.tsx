@@ -60,7 +60,7 @@ const ProctorStudents = () => {
   }
 
   return (
-    <Card className="bg-white shadow-md">
+    <Card className="bg-[#1c1c1e] text-gray-200 shadow-md">
       <CardHeader>
         <CardTitle className="text-xl font-semibold">Proctor Students</CardTitle>
       </CardHeader>
@@ -72,27 +72,27 @@ const ProctorStudents = () => {
             setSearch(e.target.value);
             setPage(1);
           }}
-          className="w-full"
+          className="w-full rounded bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white"
         />
         <div className="overflow-x-auto">
           <table className="min-w-full border border-gray-200 rounded-md">
-            <thead className="bg-gray-100">
+            <thead className="bg-[#1c1c1e] text-gray-200">
               <tr>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">USN</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Name</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Semester</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Attendance %</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Avg Mark</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">USN</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Name</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Semester</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Attendance %</th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Avg Mark</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {paginatedStudents.map((student, index) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  <td className="px-4 py-2 text-sm text-gray-800">{student.usn}</td>
-                  <td className="px-4 py-2 text-sm text-gray-800">{student.name}</td>
-                  <td className="px-4 py-2 text-sm text-gray-800">{student.semester}</td>
-                  <td className="px-4 py-2 text-sm text-gray-800">{student.attendance}%</td>
-                  <td className="px-4 py-2 text-sm text-gray-800">
+                <tr key={index} className="hover:bg-gray-500">
+                  <td className="px-4 py-2 text-sm text-gray-200">{student.usn}</td>
+                  <td className="px-4 py-2 text-sm text-gray-200">{student.name}</td>
+                  <td className="px-4 py-2 text-sm text-gray-200">{student.semester}</td>
+                  <td className="px-4 py-2 text-sm text-gray-200">{student.attendance}%</td>
+                  <td className="px-4 py-2 text-sm text-gray-200">
                     {student.marks && student.marks.length > 0
                       ? (
                           student.marks.reduce((sum, m) => sum + (m.mark || 0), 0) /
@@ -104,7 +104,7 @@ const ProctorStudents = () => {
               ))}
               {paginatedStudents.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="text-center text-gray-500 py-4">
+                  <td colSpan={5} className="text-center text-gray-200 py-4">
                     No students found.
                   </td>
                 </tr>
@@ -113,13 +113,13 @@ const ProctorStudents = () => {
           </table>
         </div>
         <div className="flex justify-end gap-2 pt-4">
-          <Button variant="outline" onClick={handlePrevious} disabled={page === 1}>
+          <Button variant="outline" onClick={handlePrevious} disabled={page === 1} className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500">
             Previous
           </Button>
-          <span className="text-sm text-gray-700 self-center">
+          <span className="text-sm text-gray-200 self-center">
             Page {page} of {totalPages}
           </span>
-          <Button variant="outline" onClick={handleNext} disabled={page === totalPages}>
+          <Button variant="outline" onClick={handleNext} disabled={page === totalPages} className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500">
             Next
           </Button>
         </div>
