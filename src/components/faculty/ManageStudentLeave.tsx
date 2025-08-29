@@ -85,9 +85,9 @@ const ManageStudentLeave = () => {
   });
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen text-gray-900">
+    <div className="p-6 bg-[#1c1c1e] text-gray-200 min-h-screen">
       <h2 className="text-2xl font-semibold mb-2">Leave Approvals</h2>
-      <p className="text-gray-600 mb-6">Review and manage student leave requests.</p>
+      <p className="text-gray-300 mb-6">Review and manage student leave requests.</p>
 
       {/* Loading and Errors */}
       {loading && <p className="text-gray-600 mb-4">Loading leave requests...</p>}
@@ -100,12 +100,12 @@ const ManageStudentLeave = () => {
           placeholder="Search by name or USN..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-64 border border-gray-300 rounded-md px-4 py-2 text-sm"
+          className="w-64 bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white rounded-md px-4 py-2 text-sm"
         />
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="border border-gray-300 rounded-md px-4 py-2 text-sm"
+          className="bg-[#232326] text-gray-200 rounded-md px-3 py-2 text-sm"
         >
           {statusOptions.map((status) => (
             <option key={status} value={status}>
@@ -116,13 +116,13 @@ const ManageStudentLeave = () => {
       </div>
 
       {/* Leave Requests Table */}
-      <div className="bg-white p-4 rounded-md shadow text-sm text-gray-800 border border-gray-200">
+      <div className="bg-[#1c1c1e] text-gray-200 p-4 rounded-md shadow text-sm border border-gray-200">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-base font-semibold text-gray-800">Leave Requests</h3>
+          <h3 className="text-base font-semibold text-gray-200">Leave Requests</h3>
         </div>
         <table className="w-full">
           <thead>
-            <tr className="text-left border-b text-gray-600 text-xs">
+            <tr className="text-left border-b text-gray-200 text-xs">
               <th className="pb-2">Student</th>
               <th>Period</th>
               <th>Reason</th>
@@ -133,7 +133,7 @@ const ManageStudentLeave = () => {
           <tbody>
             {filteredRows.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-3 text-center text-gray-500">
+                <td colSpan={5} className="py-3 text-center text-gray-200">
                   No leave requests found
                 </td>
               </tr>
@@ -142,8 +142,8 @@ const ManageStudentLeave = () => {
                 <tr key={row.id} className="border-b last:border-none text-sm">
                   <td className="py-3">
                     <div>
-                      <p className="font-medium text-gray-900">{row.student_name}</p>
-                      <p className="text-xs text-gray-500">{row.usn}</p>
+                      <p className="font-medium text-gray-200">{row.student_name}</p>
+                      <p className="text-xs text-gray-200">{row.usn}</p>
                     </div>
                   </td>
                   <td>{row.start_date} to {row.end_date}</td>
@@ -172,7 +172,7 @@ const ManageStudentLeave = () => {
                         </Button>
                       </div>
                     ) : (
-                      <span className="text-xs text-gray-500">No action needed</span>
+                      <span className="text-xs text-gray-200">No action needed</span>
                     )}
                   </td>
                 </tr>

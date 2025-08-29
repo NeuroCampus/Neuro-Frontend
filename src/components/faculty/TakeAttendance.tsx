@@ -102,62 +102,64 @@ const TakeAttendance = () => {
   };
 
   return (
-    <div className="space-y-4 p-6 bg-white min-h-screen">
-      <Card>
+    <div className="space-y-4 p-6 bg-[#1c1c1e] text-gray-200 min-h-screen">
+      <Card className="bg-[#1c1c1e] text-gray-200">
         <CardHeader>
           <CardTitle>Take Attendance</CardTitle>
-          <CardDescription>Record student attendance for your classes</CardDescription>
+          <CardDescription className="text-gray-200">Record student attendance for your classes</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
             <div className="grid grid-cols-4 gap-4">
               <Select value={branchId?.toString()} onValueChange={v => setBranchId(Number(v))}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-[#232326] text-gray-200">
                   <SelectValue placeholder="Select Branch" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[#232326] text-gray-200">
                   {branches.map(b => <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={semesterId?.toString()} onValueChange={v => setSemesterId(Number(v))} disabled={!branchId}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-[#232326] text-gray-200">
                   <SelectValue placeholder="Select Semester" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[#232326] text-gray-200">
                   {semesters.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={sectionId?.toString()} onValueChange={v => setSectionId(Number(v))} disabled={!semesterId}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-[#232326] text-gray-200">
                   <SelectValue placeholder="Select Section" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[#232326] text-gray-200">
                   {sections.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={subjectId?.toString()} onValueChange={v => setSubjectId(Number(v))} disabled={!sectionId}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-[#232326] text-gray-200">
                   <SelectValue placeholder="Select Subject" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[#232326] text-gray-200">
                   {subjects.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <Tabs defaultValue="manual">
-              <TabsList>
+              <TabsList className="bg-[#232326] text-gray-200 rounded-md">
                 <TabsTrigger value="manual">Manual Entry</TabsTrigger>
                 <TabsTrigger value="ai" disabled>AI Processing</TabsTrigger>
               </TabsList>
+
+              {/* Manual Entry Tab */}
               <TabsContent value="manual">
                 {loadingStudents ? (
-                  <div className="text-gray-500 mt-6">Loading students...</div>
+                  <div className="text-gray-400 mt-6">Loading students...</div>
                 ) : students.length > 0 ? (
-                  <div className="border rounded-md mt-4">
-                    <div className="p-4 font-semibold border-b">Student Attendance</div>
+                  <div className="border border-[#2e2e30] rounded-md mt-4 bg-[#232326]">
+                    <div className="p-4 font-semibold border-b border-[#2e2e30]">Student Attendance</div>
                     <div className="overflow-x-auto">
                       <table className="min-w-full text-sm">
-                        <thead className="bg-gray-100">
+                        <thead className="bg-[#2c2c2e]">
                           <tr>
                             <th className="text-left px-4 py-2">#</th>
                             <th className="text-left px-4 py-2">USN</th>
@@ -167,22 +169,26 @@ const TakeAttendance = () => {
                         </thead>
                         <tbody>
                           {students.map((s, idx) => (
-                            <tr key={s.id} className="border-t">
+                            <tr key={s.id} className="border-t border-[#2e2e30]">
                               <td className="px-4 py-2">{idx + 1}</td>
                               <td className="px-4 py-2">{s.usn}</td>
                               <td className="px-4 py-2">{s.name}</td>
                               <td className="px-4 py-2 flex items-center gap-4">
                                 <button
                                   onClick={() => handleAttendance(s.id, true)}
-                                  className={`p-1 rounded ${attendance[s.id] === true ? "bg-green-100" : ""}`}
+                                  className={`p-1 rounded ${
+                                    attendance[s.id] === true ? "bg-green-900/40" : "hover:bg-[#2c2c2e]"
+                                  }`}
                                 >
-                                  <Check className="text-green-500" size={16} />
+                                  <Check className="text-green-400" size={16} />
                                 </button>
                                 <button
                                   onClick={() => handleAttendance(s.id, false)}
-                                  className={`p-1 rounded ${attendance[s.id] === false ? "bg-red-100" : ""}`}
+                                  className={`p-1 rounded ${
+                                    attendance[s.id] === false ? "bg-red-900/40" : "hover:bg-[#2c2c2e]"
+                                  }`}
                                 >
-                                  <X className="text-red-500" size={16} />
+                                  <X className="text-red-400" size={16} />
                                 </button>
                               </td>
                             </tr>
@@ -191,24 +197,31 @@ const TakeAttendance = () => {
                       </table>
                     </div>
                     <div className="p-4 justify-end flex">
-                      <Button onClick={handleSubmit} disabled={submitting}>{submitting ? "Submitting..." : "Submit Attendance"}</Button>
+                      <Button onClick={handleSubmit} disabled={submitting}>
+                        {submitting ? "Submitting..." : "Submit Attendance"}
+                      </Button>
                     </div>
-                    {successMsg && <div className="text-green-600 text-sm p-2">{successMsg}</div>}
-                    {errorMsg && <div className="text-red-600 text-sm p-2">{errorMsg}</div>}
+                    {successMsg && <div className="text-green-400 text-sm p-2">{successMsg}</div>}
+                    {errorMsg && <div className="text-red-400 text-sm p-2">{errorMsg}</div>}
                   </div>
                 ) : (
-                  <div className="text-gray-500 mt-6">Select class details to load students.</div>
+                  <div className="text-gray-400 mt-6">Select class details to load students.</div>
                 )}
               </TabsContent>
+              
+              {/* AI Tab */}
               <TabsContent value="ai">
-                <div className="bg-white shadow-md rounded-lg p-6 max-w-2xl mx-auto space-y-6 opacity-50 pointer-events-none">
+                <div className="bg-[#232326] border border-[#2e2e30] rounded-lg p-6 max-w-2xl mx-auto space-y-6 opacity-50 pointer-events-none">
                   <div>
                     <h2 className="text-lg font-semibold">AI Attendance (Coming Soon)</h2>
-                    <p className="text-sm text-gray-600">This feature will allow attendance via face recognition.</p>
+                    <p className="text-sm text-gray-400">
+                      This feature will allow attendance via face recognition.
+                    </p>
                   </div>
                 </div>
               </TabsContent>
             </Tabs>
+
           </div>
         </CardContent>
       </Card>

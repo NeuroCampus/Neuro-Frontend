@@ -482,18 +482,18 @@ const UploadMarks = () => {
   };
 
   return (
-    <Card className="bg-white text-black shadow-md">
+    <Card className="bg-[#1c1c1e] text-gray-200 shadow-md">
       <CardHeader>
         <CardTitle className="text-xl font-bold">Upload Marks</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 ">
           {/* Branch Dropdown */}
           <Select onValueChange={value => handleSelectChange('branch_id', Number(value))}>
-            <SelectTrigger>
+            <SelectTrigger className="bg-[#232326] text-gray-200">
               <SelectValue placeholder="Select Branch" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-[#232326] text-gray-200">
               {dropdownData.branch.map((item) => (
                 <SelectItem key={item.id} value={item.id.toString()}>
                   {item.name}
@@ -503,10 +503,10 @@ const UploadMarks = () => {
           </Select>
           {/* Semester Dropdown */}
           <Select onValueChange={value => handleSelectChange('semester_id', Number(value))}>
-            <SelectTrigger>
+            <SelectTrigger className="bg-[#232326] text-gray-200">
               <SelectValue placeholder="Select Semester" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-[#232326] text-gray-200">
               {dropdownData.semester.map((item) => (
                 <SelectItem key={item.id} value={item.id.toString()}>
                   {item.number}
@@ -516,10 +516,10 @@ const UploadMarks = () => {
           </Select>
           {/* Section Dropdown */}
           <Select onValueChange={value => handleSelectChange('section_id', Number(value))}>
-            <SelectTrigger>
+            <SelectTrigger className="bg-[#232326] text-gray-200">
               <SelectValue placeholder="Select Section" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-[#232326] text-gray-200">
               {dropdownData.section.map((item) => (
                 <SelectItem key={item.id} value={item.id.toString()}>
                   {item.name}
@@ -529,10 +529,10 @@ const UploadMarks = () => {
           </Select>
           {/* Subject Dropdown */}
           <Select onValueChange={value => handleSelectChange('subject_id', Number(value))}>
-            <SelectTrigger>
+            <SelectTrigger className="bg-[#232326] text-gray-200">
               <SelectValue placeholder="Select Subject" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-[#232326] text-gray-200">
               {dropdownData.subject.map((item) => (
                 <SelectItem key={item.id} value={item.id.toString()}>
                   {item.name}
@@ -542,10 +542,10 @@ const UploadMarks = () => {
           </Select>
           {/* Test Type Dropdown */}
           <Select onValueChange={value => handleSelectChange('testType', value)}>
-            <SelectTrigger>
+            <SelectTrigger className="bg-[#232326] text-gray-200">
               <SelectValue placeholder="Select TestType" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-[#232326] text-gray-200">
               {dropdownData.testType.map((item) => (
                 <SelectItem key={item} value={item}>
                   {item}
@@ -555,30 +555,35 @@ const UploadMarks = () => {
           </Select>
         </div>
 
-        <Tabs value={tabValue} onValueChange={setTabValue}>
-          <TabsList className="mt-2">
+        <Tabs value={tabValue} onValueChange={setTabValue} className="text-gray-200">
+          <TabsList className="mt-2 bg-[#232326] text-gray-200 rounded-md">
             <TabsTrigger value="manual">Manual Entry</TabsTrigger>
             <TabsTrigger value="file">File Upload</TabsTrigger>
           </TabsList>
 
+          {/* Manual Entry Tab */}
           <TabsContent value="manual">
-            <div className="border rounded-lg overflow-hidden">
-              <div className="grid grid-cols-5 bg-gray-100 font-semibold text-sm p-2 border-b">
+            <div className="border border-[#2e2e30] rounded-lg overflow-hidden bg-[#1c1c1e]">
+              <div className="grid grid-cols-5 bg-[#1c1c1e] font-semibold text-sm p-2 border-b border-[#2e2e30]">
                 <div>#</div>
                 <div>USN</div>
                 <div>Name</div>
                 <div>Marks</div>
                 <div>Action</div>
               </div>
+
               {loadingStudents ? (
-                <div className="text-center text-gray-500 text-sm p-4">Loading students...</div>
+                <div className="text-center text-gray-400 text-sm p-4">Loading students...</div>
               ) : currentStudents.length === 0 ? (
-                <div className="text-center text-gray-500 text-sm p-4">
+                <div className="text-center text-gray-400 text-sm p-4">
                   No students found for selected criteria.
                 </div>
               ) : (
                 currentStudents.map((student, index) => (
-                  <div key={student.id} className="grid grid-cols-5 items-center p-2 border-b text-sm">
+                  <div
+                    key={student.id}
+                    className="grid grid-cols-5 items-center p-2 border-b border-[#2e2e30] text-sm"
+                  >
                     <div>{indexOfFirstStudent + index + 1}</div>
                     <div>{student.usn}</div>
                     <div>{student.name}</div>
@@ -589,7 +594,7 @@ const UploadMarks = () => {
                             type="text"
                             value={student.marks}
                             onChange={(e) => handleMarksChange(index, "marks", e.target.value)}
-                            className="w-16 h-8"
+                            className="w-16 h-8 bg-[#1c1c1e] border border-[#2e2e30] text-gray-200"
                             placeholder="Marks"
                           />
                           <span>/</span>
@@ -597,7 +602,7 @@ const UploadMarks = () => {
                             type="text"
                             value={student.total}
                             onChange={(e) => handleMarksChange(index, "total", e.target.value)}
-                            className="w-16 h-8"
+                            className="w-16 h-8 bg-[#1c1c1e] border border-[#2e2e30] text-gray-200"
                             placeholder="Total"
                           />
                         </>
@@ -609,12 +614,17 @@ const UploadMarks = () => {
                     </div>
                     <div>
                       {student.isEditing ? (
-                        <Button size="sm" variant="outline" onClick={() => saveRow(index)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border border-[#3b82f6] text-blue-400 hover:bg-blue-500/20"
+                          onClick={() => saveRow(index)}
+                        >
                           Save
                         </Button>
                       ) : (
                         <Pencil
-                          className="w-4 h-4 cursor-pointer text-gray-600 hover:text-black"
+                          className="w-4 h-4 cursor-pointer text-gray-400 hover:text-gray-200"
                           onClick={() => toggleEdit(index)}
                         />
                       )}
@@ -624,7 +634,8 @@ const UploadMarks = () => {
               )}
             </div>
 
-            <div className="flex justify-between items-center mt-4 px-2 text-sm">
+            {/* Pagination */}
+            <div className="flex justify-between items-center mt-4 px-2 text-sm text-gray-300">
               <span>
                 Page {currentPage} of {totalPages}
               </span>
@@ -632,6 +643,7 @@ const UploadMarks = () => {
                 <Button
                   variant="outline"
                   size="sm"
+                  className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
                   onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
                 >
@@ -640,6 +652,7 @@ const UploadMarks = () => {
                 <Button
                   variant="outline"
                   size="sm"
+                  className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
                   onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
                 >
@@ -649,13 +662,12 @@ const UploadMarks = () => {
             </div>
           </TabsContent>
 
+          {/* File Upload Tab */}
           <TabsContent value="file">
-            <div className="bg-white shadow-md rounded-lg p-6 max-w-2xl mx-auto space-y-6">
+            <div className="bg-[#232326] border border-[#2e2e30] rounded-lg p-6 max-w-2xl mx-auto space-y-6">
               <div>
                 <h2 className="text-lg font-semibold">Upload User Data</h2>
-                <p className="text-sm text-gray-600">
-                  Upload CSV or Excel files to bulk enroll users
-                </p>
+                <p className="text-sm text-gray-400">Upload CSV or Excel files to bulk enroll users</p>
               </div>
 
               <div
@@ -664,8 +676,8 @@ const UploadMarks = () => {
                 onDragLeave={handleDragLeave}
                 className={`border rounded-md p-6 text-center space-y-4 transition-all duration-300 ${
                   dragActive
-                    ? "border-blue-400 bg-blue-50"
-                    : "border-dashed border-gray-300 bg-white"
+                    ? "border-blue-400 bg-blue-900/30"
+                    : "border-dashed border-[#2e2e30] bg-[#1c1c1e]"
                 }`}
               >
                 <UploadCloud
@@ -673,16 +685,14 @@ const UploadMarks = () => {
                     dragActive ? "scale-110 rotate-6 text-blue-400" : ""
                   }`}
                 />
-                <p className="text-sm text-gray-700">Drag & drop file here</p>
-                <p className="text-xs text-gray-500">
-                  Supports CSV, XLS, XLSX (max 5MB)
-                </p>
+                <p className="text-sm text-gray-300">Drag & drop file here</p>
+                <p className="text-xs text-gray-500">Supports CSV, XLS, XLSX (max 5MB)</p>
 
                 {!selectedFile ? (
                   <div className="flex justify-center">
                     <button
                       onClick={() => document.getElementById("fileInput")?.click()}
-                      className="bg-transparent text-sm border px-4 py-2 rounded-md hover:bg-gray-100 transition"
+                      className="bg-transparent text-sm border border-[#2e2e30] px-4 py-2 rounded-md hover:bg-[#2c2c2e] transition"
                     >
                       Select File
                     </button>
@@ -696,9 +706,9 @@ const UploadMarks = () => {
                   </div>
                 ) : (
                   <div className="flex items-center justify-center gap-2 mt-2">
-                    <p className="text-sm text-green-600">{selectedFile.name}</p>
+                    <p className="text-sm text-green-400">{selectedFile.name}</p>
                     <Button variant="ghost" size="sm" onClick={handleClearFile}>
-                      <X className="h-4 w-4" />
+                      <X className="h-4 w-4 text-gray-400 hover:text-gray-200" />
                     </Button>
                   </div>
                 )}
@@ -706,28 +716,31 @@ const UploadMarks = () => {
 
               {/* Error message */}
               {errorMessage && (
-                <div className="text-red-600 text-sm font-medium text-center bg-red-50 border border-red-200 p-2 rounded-md">
+                <div className="text-red-400 text-sm font-medium text-center bg-red-900/30 border border-red-800 p-2 rounded-md">
                   {errorMessage}
                 </div>
               )}
 
-              <Button className="w-full" onClick={handleUpload} disabled={!selectedFile}>
+              <Button
+                className="w-full text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                onClick={handleUpload}
+                disabled={!selectedFile}
+              >
                 Upload File
               </Button>
 
-              <div className="text-sm text-gray-700 space-y-1">
+              <div className="text-sm text-gray-300 space-y-1">
                 <p className="font-semibold">Upload Instructions</p>
-                <ul className="list-disc list-inside text-gray-600">
+                <ul className="list-disc list-inside text-gray-400">
                   <li>Use the provided template for proper data formatting</li>
                   <li>
-                    Required columns: <strong>usn</strong>, <strong>name</strong>,{" "}
-                    <strong>marks</strong>
+                    Required columns: <strong>usn</strong>, <strong>name</strong>, <strong>marks</strong>
                   </li>
                   <li>Maximum 500 records per file</li>
                 </ul>
                 <button
                   onClick={handleDownloadTemplate}
-                  className="text-blue-600 underline text-sm"
+                  className="text-blue-400 hover:underline text-sm"
                 >
                   Download Template
                 </button>
@@ -735,9 +748,8 @@ const UploadMarks = () => {
             </div>
           </TabsContent>
         </Tabs>
-
         <div className="flex justify-end mt-4">
-          <Button onClick={handleSubmit} disabled={savingMarks}>
+          <Button className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={handleSubmit} disabled={savingMarks}>
             {savingMarks ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

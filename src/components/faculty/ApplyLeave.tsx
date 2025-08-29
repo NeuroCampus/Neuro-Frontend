@@ -162,41 +162,70 @@ const LeaveRequests = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="p-6 bg-[#1c1c1e] text-gray-200 min-h-screen">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Leave Requests</h2>
         <Dialog>
           <DialogTrigger asChild>
-            <Button className="bg-blue-500 hover:bg-blue-600 text-white font-semibold">
+            <Button className="text-gray-200 bg-gray-800 hover:bg-gray-600 border border-gray-600">
               Apply for Leave
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-white text-black max-w-md rounded-xl p-6 shadow-lg">
+          <DialogContent className="bg-[#1c1c1e] text-gray-200 max-w-md rounded-xl p-6 shadow-lg border border-gray-700">
             <DialogHeader>
               <DialogTitle className="text-lg font-bold">Leave Application Form</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 mt-4">
+              
+              {/* Branch */}
               <div className="grid gap-2">
                 <Label htmlFor="branch">Branch</Label>
                 <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-                  <SelectTrigger id="branch">
+                  <SelectTrigger 
+                    id="branch" 
+                    className="bg-[#232326] text-gray-200 border border-gray-700"
+                  >
                     <SelectValue placeholder="Select branch" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-[#232326] text-gray-200 border border-gray-700">
                     {branches.map((b) => (
-                      <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>
+                      <SelectItem 
+                        key={b.id} 
+                        value={b.id.toString()} 
+                        className="hover:bg-gray-700"
+                      >
+                        {b.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Start Date */}
               <div className="grid gap-2">
                 <Label htmlFor="start-date">Start Date</Label>
-                <Input type="date" id="start-date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                <Input 
+                  type="date" 
+                  id="start-date" 
+                  value={startDate} 
+                  onChange={(e) => setStartDate(e.target.value)} 
+                  className="bg-[#232326] text-gray-200 border border-gray-700"
+                />
               </div>
+
+              {/* End Date */}
               <div className="grid gap-2">
                 <Label htmlFor="end-date">End Date</Label>
-                <Input type="date" id="end-date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                <Input 
+                  type="date" 
+                  id="end-date" 
+                  value={endDate} 
+                  onChange={(e) => setEndDate(e.target.value)} 
+                  className="bg-[#232326] text-gray-200 border border-gray-700"
+                />
               </div>
+
+              {/* Reason */}
               <div className="grid gap-2">
                 <Label htmlFor="reason">Reason for Leave</Label>
                 <Textarea
@@ -204,11 +233,20 @@ const LeaveRequests = () => {
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="Please provide a detailed reason for your leave request"
+                  className="bg-[#232326] text-gray-200 border border-gray-700 placeholder-gray-400"
                 />
               </div>
-              {error && <div className="text-red-600 text-sm">{error}</div>}
-              {success && <div className="text-green-600 text-sm">{success}</div>}
-              <Button onClick={handleSubmit} className="bg-blue-600 text-white mt-4 hover:bg-blue-700" disabled={submitting}>
+
+              {/* Messages */}
+              {error && <div className="text-red-500 text-sm">{error}</div>}
+              {success && <div className="text-green-500 text-sm">{success}</div>}
+
+              {/* Submit Button */}
+              <Button 
+                onClick={handleSubmit} 
+                className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" 
+                disabled={submitting}
+              >
                 {submitting ? 'Submitting...' : 'Submit Application'}
               </Button>
             </div>
@@ -224,12 +262,12 @@ const LeaveRequests = () => {
           {leaveList.map((leave) => {
             console.log('Rendering leave card with status:', leave.status);
             return (
-              <Card key={leave.id} className="bg-white text-black border border-gray-200">
+              <Card key={leave.id} className="bg-[#1c1c1e] text-gray-200">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="text-lg font-semibold mb-2">{leave.title}</div>
-                      <div className="text-sm text-gray-700 mb-1">
+                      <div className="text-sm text-gray-200 mb-1">
                         {leave.from && leave.to ? (
                           <>
                             From: {leave.from} To: {leave.to}
@@ -238,8 +276,8 @@ const LeaveRequests = () => {
                           <>Date: {leave.date}</>
                         )}
                       </div>
-                      <div className="text-sm text-gray-600 mb-2">{leave.reason}</div>
-                      <div className="text-xs text-gray-500">Applied on: {leave.appliedOn}</div>
+                      <div className="text-sm text-gray-200 mb-2">{leave.reason}</div>
+                      <div className="text-xs text-gray-200">Applied on: {leave.appliedOn}</div>
                     </div>
                     <div className="ml-4 flex-shrink-0">
                       {renderStatus(leave.status)}

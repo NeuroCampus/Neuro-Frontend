@@ -131,28 +131,28 @@ const Timetable = ({ role }: TimetableProps) => {
   }, [filteredData, role]);
 
   return (
-    <Card>
+    <Card className="bg-[#1c1c1e] text-gray-200">
       <CardHeader>
         <CardTitle>Timetable - {role}</CardTitle>
       </CardHeader>
 
       <div className="flex justify-between items-center p-4">
         <h2 className="text-lg font-semibold ml-3">Timetable</h2>
-        <Button onClick={exportPDF} className="hidden md:flex items-center mr-3">
+        <Button onClick={exportPDF} className="hidden md:flex items-center mr-3 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500">
           <FaDownload  />
           Export PDF
         </Button>
       </div>
       <CardContent>
         {loading ? (
-          <div className="text-center text-gray-600">Loading timetable...</div>
+          <div className="text-center text-gray-200">Loading timetable...</div>
         ) : error ? (
           <div className="text-center text-red-600">{error}</div>
         ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full table-auto border-collapse text-sm border">
             <thead>
-              <tr className="bg-gray-100">
+              <tr className="bg-[#232326] text-gray-200">
                 <th className="border px-4 py-2 text-left">Time/Day</th>
                 {filteredData.map((d) => (
                   <th key={d.day} className="border px-4 py-2">{d.day}</th>

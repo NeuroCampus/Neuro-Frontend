@@ -100,12 +100,12 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
         toggleCollapse={toggleSidebar}
       />
       <div
-        className={`w-full max-h-screen overflow-y-auto bg-[#1c1c1e] transition-all duration-300 ${
+        className={`w-full max-h-screen overflow-y-auto bg-[#1c1c1e] thin-scrollbar transition-all duration-300 ${
           isSidebarCollapsed ? "ml-16" : "ml-64"
         }`}
       >
         {/* Navbar same as HOD, but role="faculty" */}
-        <div className="sticky top-0 z-20 bg-[#1c1c1e] border-b border-gray-700">
+        <div className="sticky top-0 z-20 bg-[#1c1c1e] border-b border-gray-700 ">
           <Navbar
             role="faculty"
             user={user}
