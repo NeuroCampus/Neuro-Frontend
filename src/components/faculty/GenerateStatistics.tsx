@@ -12,6 +12,28 @@ const GenerateStatistics = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Helper function to format attendance percentage
+  const formatAttendancePercentage = (percentage: number | string): string => {
+    if (percentage === "NA" || percentage === null || percentage === undefined) {
+      return "NA";
+    }
+    if (typeof percentage === "string") {
+      return percentage;
+    }
+    return `${percentage}%`;
+  };
+
+  // Helper function to get numeric value for charts (NA becomes 0 for visualization)
+  const getNumericAttendance = (percentage: number | string): number => {
+    if (percentage === "NA" || percentage === null || percentage === undefined) {
+      return 0;
+    }
+    if (typeof percentage === "string") {
+      return 0;
+    }
+    return percentage;
+  };
+
   useEffect(() => {
     const fetchProctorStudents = async () => {
       setLoading(true);
@@ -38,7 +60,7 @@ const GenerateStatistics = () => {
     const tableRows = proctorStudents.map(student => [
       student.usn,
       student.name,
-      `${student.attendance}%`,
+      formatAttendancePercentage(student.attendance),
       student.marks && student.marks.length > 0
         ? (
             student.marks.reduce((sum, m) => sum + (m.mark || 0), 0) /
@@ -55,7 +77,7 @@ const GenerateStatistics = () => {
   };
 
   // Prepare chart data
-  const attendanceData = proctorStudents.map(s => ({ name: s.name, attendance: s.attendance }));
+  const attendanceData = proctorStudents.map(s => ({ name: s.name, attendance: getNumericAttendance(s.attendance) }));
   const marksData = proctorStudents.map(s => ({
     name: s.name,
     avgMark:
@@ -159,7 +181,7 @@ const GenerateStatistics = () => {
                   <tr key={idx} className="border-t">
                     <td className="p-3">{student.usn}</td>
                     <td className="p-3">{student.name}</td>
-                    <td className="p-3">{student.attendance}%</td>
+                    <td className="p-3">{formatAttendancePercentage(student.attendance)}</td>
                     <td className="p-3">
                       {student.marks && student.marks.length > 0
                         ? (

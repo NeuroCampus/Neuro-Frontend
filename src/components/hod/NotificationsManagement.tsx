@@ -5,7 +5,7 @@ import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { useToast } from "../ui/use-toast";
-import { manageNotifications, manageProfile, getSentNotifications } from "../../utils/hod_api";
+import { sendNotification, getNotifications, manageProfile, getSentNotifications } from "../../utils/hod_api";
 
 interface Notification {
   id: string;
@@ -41,7 +41,7 @@ const NotificationsManagement = () => {
           setNewNotification((prev) => ({ ...prev, branch_id: branchId }));
 
           // Fetch received notifications
-          const receivedResponse = await manageNotifications({ branch_id: branchId }, "GET", "received");
+          const receivedResponse = await getNotifications(branchId);
           if (receivedResponse.success && receivedResponse.data) {
             setNotifications(receivedResponse.data);
           } else {
@@ -113,22 +113,19 @@ const NotificationsManagement = () => {
     };
 
     const payload = {
-      ...newNotification,
-      title,      // use trimmed values
+      action: (target === "all" ? "notify_all" : "notify") as "notify" | "notify_all" | "notify_low_attendance",
+      title,
       message,
-      target: roleMap[target] || target,
+      target: (roleMap[target] || target) as "all" | "student" | "teacher",
+      branch_id: newNotification.branch_id,
     };
 
     try {
-      const response = await manageNotifications(payload, "POST");
+      const response = await sendNotification(payload);
       console.log("Notification response:", response);
       if (response.success) {
         // Refresh both received and sent notifications
-        const receivedResponse = await manageNotifications(
-          { branch_id: newNotification.branch_id },
-          "GET",
-          "received"
-        );
+        const receivedResponse = await getNotifications(newNotification.branch_id);
         if (receivedResponse.success && receivedResponse.data) {
           setNotifications(receivedResponse.data);
         }

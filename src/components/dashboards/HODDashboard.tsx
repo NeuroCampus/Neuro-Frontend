@@ -21,6 +21,7 @@ import Chat from "../common/Chat";
 import HodProfile from "../hod/HodProfile";
 import { logoutUser } from "../../utils/authService";
 import StudyMaterial from "../hod/StudyMaterial";
+import PromotionManagement from "../hod/PromotionManagement";
  
 interface User {
   username?: string;
@@ -139,6 +140,8 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
     switch (activePage) {
       case "dashboard":
         return <HODStats setError={setError} setPage={handlePageChange}/>;
+      case "promotion-management":
+        return <PromotionManagement />;
       case "low-attendance":
         return <LowAttendance setError={setError} />;
       case "semesters":

@@ -7,6 +7,7 @@ import AdminStats from "../admin/AdminStats";
 import EnrollUser from "../admin/EnrollUser";
 import BulkUpload from "../admin/BulkUpload";
 import BranchesManagement from "../admin/BranchesManagement";
+import BatchManagement from "../admin/BatchManagement";
 import NotificationsManagement from "../admin/NotificationsManagement";
 import HODLeavesManagement from "../admin/HODLeavesManagement";
 import UsersManagement from "../admin/UsersManagement";
@@ -119,6 +120,12 @@ const handlePageChange = (page: string) => {
                 onClick={() => handlePageChange("branches")}
               />
               <DashboardCard
+                title="Manage Batches"
+                description="View or manage batches"
+                icon={<ClipboardList size={20} />}
+                onClick={() => handlePageChange("batches")}
+              />
+              <DashboardCard
                 title="Notifications"
                 description="Send or view notifications"
                 icon={<Bell size={20} />}
@@ -170,6 +177,17 @@ const handlePageChange = (page: string) => {
             transition={{ duration: 0.3 }}
           >
             <BranchesManagement setError={setError} toast={toast} />
+          </motion.div>
+        );
+      case "batches":
+        return (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <BatchManagement setError={setError} toast={toast} />
           </motion.div>
         );
       case "notifications":

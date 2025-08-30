@@ -21,10 +21,10 @@ interface Student {
   student_id: string;
   name: string;
   usn: string;
-  attendance_percentage: number;
+  attendance_percentage: number | string;
   total_sessions?: number;
   present_sessions?: number;
-  semester?: string;
+  semester?: number | string;
   section?: string;
 }
 
@@ -48,6 +48,39 @@ interface Subject {
 
 const AttendanceView = () => {
   const { toast } = useToast();
+
+  // Helper function to format attendance percentage
+  const formatAttendancePercentage = (percentage: number | string): string => {
+    if (percentage === "NA" || percentage === null || percentage === undefined) {
+      return "NA";
+    }
+    if (typeof percentage === "string") {
+      return percentage;
+    }
+    return `${percentage}%`;
+  };
+
+  // Helper function to get progress bar width
+  const getProgressBarWidth = (percentage: number | string): string => {
+    if (percentage === "NA" || percentage === null || percentage === undefined) {
+      return "0%";
+    }
+    if (typeof percentage === "string") {
+      return "0%";
+    }
+    return `${Math.min(percentage, 100)}%`;
+  };
+
+  // Helper function to get numeric value for sorting
+  const getNumericPercentage = (percentage: number | string): number => {
+    if (percentage === "NA" || percentage === null || percentage === undefined) {
+      return -1; // Sort NA values to the end
+    }
+    if (typeof percentage === "string") {
+      return -1;
+    }
+    return percentage;
+  };
   const [state, setState] = useState({
     search: "",
     currentPage: 1,
@@ -67,7 +100,7 @@ const AttendanceView = () => {
     subjects: [] as Subject[],
   });
 
-  const studentsPerPage = 5;
+  const studentsPerPage = 10;
 
   // Helper to update state
   const updateState = (newState: Partial<typeof state>) => {
@@ -209,7 +242,7 @@ const AttendanceView = () => {
     const tableRows = filteredStudents.map((student) => [
       student.name,
       student.usn,
-      `${student.attendance_percentage}%`,
+      formatAttendancePercentage(student.attendance_percentage),
       student.semester || "-",
       student.section || "-",
     ]);
@@ -381,11 +414,11 @@ const AttendanceView = () => {
                   </td>
                   <td className="p-3 border">
                     <div className="flex items-center gap-2">
-                      <span>{student.attendance_percentage}%</span>
+                      <span>{formatAttendancePercentage(student.attendance_percentage)}</span>
                       <div className="w-full bg-gray-200 h-2 rounded">
                         <div
                           className="h-2 bg-green-500 rounded"
-                          style={{ width: `${student.attendance_percentage}%` }}
+                          style={{ width: getProgressBarWidth(student.attendance_percentage) }}
                         ></div>
                       </div>
                     </div>
@@ -436,7 +469,7 @@ const AttendanceView = () => {
             </DialogHeader>
             <div className="space-y-2 mt-4 text-gray-700">
               <p><strong>USN:</strong> {state.selectedStudent?.usn}</p>
-              <p><strong>Attendance:</strong> {state.selectedStudent?.attendance_percentage}%</p>
+              <p><strong>Attendance:</strong> {formatAttendancePercentage(state.selectedStudent?.attendance_percentage)}</p>
               <p><strong>Total Sessions:</strong> {state.selectedStudent?.total_sessions || "-"}</p>
               <p><strong>Present Sessions:</strong> {state.selectedStudent?.present_sessions || "-"}</p>
               <p><strong>Branch:</strong> {state.branch.toUpperCase()}</p>

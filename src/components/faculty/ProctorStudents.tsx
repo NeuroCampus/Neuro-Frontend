@@ -7,6 +7,16 @@ import { getProctorStudents, ProctorStudent } from "../../utils/faculty_api";
 const ITEMS_PER_PAGE = 10;
 
 const ProctorStudents = () => {
+  // Helper function to format attendance percentage
+  const formatAttendancePercentage = (percentage: number | string): string => {
+    if (percentage === "NA" || percentage === null || percentage === undefined) {
+      return "NA";
+    }
+    if (typeof percentage === "string") {
+      return percentage;
+    }
+    return `${percentage}%`;
+  };
   const [students, setStudents] = useState<ProctorStudent[]>([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -91,7 +101,7 @@ const ProctorStudents = () => {
                   <td className="px-4 py-2 text-sm text-gray-200">{student.usn}</td>
                   <td className="px-4 py-2 text-sm text-gray-200">{student.name}</td>
                   <td className="px-4 py-2 text-sm text-gray-200">{student.semester}</td>
-                  <td className="px-4 py-2 text-sm text-gray-200">{student.attendance}%</td>
+                  <td className="px-4 py-2 text-sm text-gray-200">{formatAttendancePercentage(student.attendance)}</td>
                   <td className="px-4 py-2 text-sm text-gray-200">
                     {student.marks && student.marks.length > 0
                       ? (

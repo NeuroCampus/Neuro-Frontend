@@ -67,6 +67,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
   const getIcon = (page: string) => {
     const iconMap: { [key: string]: React.ReactNode } = {
       dashboard: <LayoutDashboard size={20} />,
+      "promotion-management": <UserCheck size={20} />,
       "enroll-user": <User size={20} />,
       "bulk-upload": <Upload size={20} />,
       branches: <GitBranch size={20} />,
@@ -111,6 +112,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       { name: "Enroll User", page: "enroll-user" },
       { name: "Bulk Upload", page: "bulk-upload" },
       { name: "Branches", page: "branches" },
+      { name: "Batches", page: "batches" },
       { name: "Notifications", page: "notifications" },
       { name: "HOD Leaves", page: "hod-leaves" },
       { name: "Users", page: "users" },
@@ -118,6 +120,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     ],
     hod: [
       { name: "Dashboard", page: "dashboard" },
+      { name: "Promotion Management", page: "promotion-management" },
       { name: "Low Attendance", page: "low-attendance" },
       { name: "Semester Management", page: "semesters" },
       { name: "Students", page: "students" },

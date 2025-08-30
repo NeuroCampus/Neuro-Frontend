@@ -32,6 +32,7 @@ interface LowAttendanceResponse {
       present_sessions: number;
       semester: number | null;
       section: string | null;
+      batch: string;
       subject: string;
     }>;
   };
@@ -69,6 +70,31 @@ interface GetBranchesResponse {
   success: boolean;
   message?: string;
   data?: Branch[];
+}
+
+interface Batch {
+  id: string;
+  name: string;
+  start_year: number;
+  end_year: number;
+  student_count: number;
+  created_at: string;
+}
+
+interface Course {
+  id: string;
+  name: string;
+}
+
+interface GetStudentOptionsResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    batches: Batch[];
+    courses: Course[];
+    semesters: Semester[];
+    sections: Section[];
+  };
 }
 
 interface Faculty {
@@ -111,7 +137,7 @@ interface ManageSectionsResponse {
 }
 
 interface ManageStudentsRequest {
-  action: "create" | "update" | "delete" | "bulk_update";
+  action: "create" | "update" | "delete" | "bulk_update" | "register_subjects";
   student_id?: string;
   usn?: string;
   name?: string;
@@ -119,7 +145,26 @@ interface ManageStudentsRequest {
   semester_id?: string;
   section_id?: string;
   branch_id: string;
-  bulk_data?: Array<{ usn: string; name: string; email: string }>;
+  batch_id?: string;
+  course_id?: string;
+  parent_name?: string;
+  parent_contact?: string;
+  emergency_contact?: string;
+  blood_group?: string;
+  date_of_admission?: string;
+  subject_ids?: string[];
+  bulk_data?: Array<{
+    usn: string;
+    name: string;
+    email: string;
+    batch_id?: string;
+    course_id?: string;
+    parent_name?: string;
+    parent_contact?: string;
+    emergency_contact?: string;
+    blood_group?: string;
+    date_of_admission?: string;
+  }>;
 }
 
 interface ManageStudentsResponse {
@@ -129,10 +174,23 @@ interface ManageStudentsResponse {
     usn: string;
     name: string;
     semester: number;
-    section: string;
-    subject: string;
+    section: string | null;
+    batch: string;
+    subject?: string;
     proctor: string | null;
   }> | { student_id: string } | { created_count: number };
+}
+
+interface ManageBatchesRequest {
+  start_year?: number;
+  end_year?: number;
+}
+
+interface ManageBatchesResponse {
+  success: boolean;
+  message?: string;
+  batches?: Batch[];
+  batch?: Batch;
 }
 
 interface Subject {
@@ -149,7 +207,7 @@ interface GetSubjectsResponse {
 }
 
 interface ManageSubjectsRequest {
-  action: "create" | "update";
+  action: "create" | "update" | "delete";
   subject_id?: string;
   name: string;
   subject_code?: string;
@@ -289,13 +347,13 @@ interface GetMarksParams {
   branch_id: string;
 }
 
-export interface TestMark {
+interface TestMark {
   test_number: number;
   mark: number;
   max_mark: number;
 }
 
-export interface Mark {
+interface Mark {
   student_id: string;
   student: string;
   usn: string;
@@ -325,12 +383,16 @@ interface CreateAnnouncementResponse {
 }
 
 interface SendNotificationRequest {
-  action: "notify" | "notify_all";
+  action: "notify" | "notify_all" | "notify_low_attendance";
   title: string;
   student_id?: string;
   message: string;
   target?: "student" | "teacher" | "all";
   branch_id: string;
+  semester_id?: string;
+  section_id?: string;
+  subject_id?: string;
+  threshold?: number;
 }
 
 interface SendNotificationResponse {
@@ -428,15 +490,214 @@ interface GetNotificationsResponse {
   data?: Notification[];
 }
 
+interface PromoteStudentsRequest {
+  from_semester_id: string;
+  to_semester_id: string;
+  section_id?: string;
+  branch_id: string;
+  student_ids?: string[];
+}
+
+interface PromoteStudentsResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    promoted: Array<{
+      usn: string;
+      name: string;
+      from_semester: number;
+      to_semester: number;
+      batch: string;
+    }>;
+  };
+}
+
+interface PromoteSelectedStudentsRequest {
+  student_ids: string[];
+  to_semester_id: string;
+  branch_id: string;
+}
+
+interface PromoteSelectedStudentsResponse {
+  success: boolean;
+  message?: string;
+  promoted?: Array<{
+    usn: string;
+    name: string;
+    from_semester: number;
+    to_semester: number;
+    batch: string;
+  }>;
+}
+
+interface DemoteStudentRequest {
+  student_id: string;
+  to_semester_id: string;
+  branch_id: string;
+  reason: string;
+  remarks?: string;
+  section_id?: string;
+}
+
+interface DemoteStudentResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    student_usn: string;
+    student_name: string;
+    from_semester: number;
+    to_semester: number;
+    reason: string;
+    remarks: string;
+  };
+}
+
+interface BulkDemoteStudentsRequest {
+  student_ids: string[];
+  to_semester_id: string;
+  branch_id: string;
+  reason: string;
+  remarks?: string;
+  section_id?: string;
+}
+
+interface BulkDemoteStudentsResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    demoted_students: Array<{
+      usn: string;
+      name: string;
+      from_semester: number;
+      to_semester: number;
+    }>;
+    failed_students: Array<{
+      usn: string;
+      name: string;
+      reason: string;
+    }>;
+    demoted_count: number;
+    failed_count: number;
+    target_semester: number;
+  };
+}
+
+interface PromotionEligibility {
+  student_id: string;
+  usn: string;
+  name: string;
+  is_eligible: boolean;
+  failed_subjects: string[];
+  attendance_percentage: number;
+}
+
+interface GetPromotionEligibilityParams {
+  semester_id: string;
+  section_id?: string;
+  branch_id: string;
+}
+
+interface GetPromotionEligibilityResponse {
+  success: boolean;
+  message?: string;
+  data?: { students: PromotionEligibility[] };
+}
+
+interface ExamFailure {
+  id: string;
+  student_id: string;
+  usn: string;
+  name: string;
+  subject_id: string;
+  subject_name: string;
+  semester_id: string;
+  semester_number: number;
+  failure_date: string;
+}
+
+interface GetExamFailuresParams {
+  semester_id?: string;
+  section_id?: string;
+  subject_id?: string;
+  branch_id: string;
+}
+
+interface GetExamFailuresResponse {
+  success: boolean;
+  message?: string;
+  data?: { failures: ExamFailure[] };
+}
+
+interface RecordExamFailureRequest {
+  student_id: string;
+  subject_id: string;
+  semester_id: string;
+  branch_id: string;
+  failure_date: string;
+}
+
+interface RecordExamFailureResponse {
+  success: boolean;
+  message?: string;
+  data?: { failure_id: string };
+}
+
+interface UploadStudyMaterialRequest {
+  title: string;
+  subject_name?: string;
+  subject_code?: string;
+  semester_id: string;
+  branch_id: string;
+  file: File;
+}
+
+interface StudyMaterial {
+  id: string;
+  title: string;
+  subject_name: string;
+  subject_code: string;
+  semester_id: string;
+  branch_id: string;
+  uploaded_by: string;
+  uploaded_at: string;
+  file_url: string;
+}
+
+interface UploadStudyMaterialResponse {
+  success: boolean;
+  message?: string;
+  data?: StudyMaterial;
+}
+
+interface GetStudyMaterialsResponse {
+  success: boolean;
+  message?: string;
+  data?: StudyMaterial[];
+}
+
+interface StudentPerformance {
+  student_id: string;
+  usn: string;
+  name: string;
+  subject: string;
+  attendance_percentage: number;
+  average_mark: number;
+  semester: number;
+  batch: string;
+  test_marks?: TestMark[];
+}
+
 // Utility function for error handling
 const handleApiError = (error: unknown, response?: Response): { success: boolean; message: string } => {
   console.error("API Error:", error);
   if (response?.status === 404) {
-    return { success: false, message: `Resource not found: Invalid branch ID or endpoint (Status: 404)` };
+    return { success: false, message: `Resource not found: Invalid ID or endpoint (Status: 404)` };
   } else if (response?.status === 403) {
-    return { success: false, message: "Access denied: Invalid or missing authentication token" };
+    return { success: false, message: "Access denied: Invalid or missing authentication token (Status: 403)" };
   } else if (response?.status === 400) {
-    return { success: false, message: (error as Error).message || "Invalid request data" };
+    return { success: false, message: (error as Error).message || "Invalid request data (Status: 400)" };
+  } else if (response?.status === 500) {
+    return { success: false, message: "Server error: Please try again later (Status: 500)" };
   } else if ((error as Error).message?.includes("Unexpected token")) {
     return { success: false, message: "Server returned invalid response (possibly HTML instead of JSON)" };
   }
@@ -459,7 +720,7 @@ export const getBranches = async (): Promise<GetBranchesResponse> => {
 
 export const getHODStats = async (branch_id: string): Promise<HODStatsResponse> => {
   try {
-    if (!branch_id) throw new Error("Branch ID required");
+    if (!branch_id) throw new Error("Branch ID is required");
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/dashboard-stats/?branch_id=${branch_id}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
@@ -477,7 +738,7 @@ export const getLowAttendance = async (
   filters: { semester_id?: string; section_id?: string; subject_id?: string } = {}
 ): Promise<LowAttendanceResponse> => {
   try {
-    if (!branch_id) throw new Error("Branch ID required");
+    if (!branch_id) throw new Error("Branch ID is required");
     const params: Record<string, string> = { threshold: threshold.toString(), branch_id };
     if (filters.semester_id) params.semester_id = filters.semester_id;
     if (filters.section_id) params.section_id = filters.section_id;
@@ -494,9 +755,45 @@ export const getLowAttendance = async (
   }
 };
 
+export const getAllAttendance = async (
+  branch_id: string,
+  filters: { semester_id?: string; section_id?: string; subject_id?: string } = {}
+): Promise<LowAttendanceResponse> => {
+  try {
+    if (!branch_id) throw new Error("Branch ID is required");
+    const params: Record<string, string> = { branch_id };
+    if (filters.semester_id) params.semester_id = filters.semester_id;
+    if (filters.section_id) params.section_id = filters.section_id;
+    if (filters.subject_id) params.subject_id = filters.subject_id;
+    const query = new URLSearchParams(params).toString();
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/all-attendance/?${query}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      timeout: 10000,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
+export const getStudentOptions = async (branch_id: string): Promise<GetStudentOptionsResponse> => {
+  try {
+    if (!branch_id) throw new Error("Branch ID is required");
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/student-options/?branch_id=${branch_id}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      timeout: 10000,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
 export const getSemesters = async (branch_id: string): Promise<GetSemestersResponse> => {
   try {
-    if (!branch_id) throw new Error("Branch ID required");
+    if (!branch_id) throw new Error("Branch ID is required");
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/semesters/?branch_id=${branch_id}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
@@ -510,7 +807,10 @@ export const getSemesters = async (branch_id: string): Promise<GetSemestersRespo
 
 export const manageSemesters = async (data: ManageSemestersRequest): Promise<ManageSemestersResponse> => {
   try {
-    if (!data.branch_id) throw new Error("Branch ID required");
+    if (!data.branch_id) throw new Error("Branch ID is required");
+    if (data.action === "create" && !data.number) throw new Error("Semester number is required for create action");
+    if (data.action === "update" && (!data.semester_id || !data.number)) throw new Error("Semester ID and number are required for update action");
+    if (data.action === "delete" && !data.semester_id) throw new Error("Semester ID is required for delete action");
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/semesters/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -529,10 +829,23 @@ export const manageSections = async (
 ): Promise<GetSectionsResponse> => {
   try {
     const branch_id = (data as { branch_id: string }).branch_id;
-    if (!branch_id) throw new Error("Branch ID required");
+    if (!branch_id) throw new Error("Branch ID is required");
     let url = `${API_BASE_URL}/hod/sections/?branch_id=${branch_id}`;
     if (method === "GET" && (data as any).semester_id) {
       url += `&semester_id=${(data as any).semester_id}`;
+    }
+    if (method === "POST") {
+      const req = data as ManageSectionsRequest;
+      if (!req.action) throw new Error("Action is required for POST requests");
+      if (req.action === "create" && (!req.name || !req.semester_id)) {
+        throw new Error("Name and Semester ID are required for create action");
+      }
+      if (req.action === "update" && (!req.section_id || !req.name || !req.semester_id)) {
+        throw new Error("Section ID, Name, and Semester ID are required for update action");
+      }
+      if (req.action === "delete" && !req.section_id) {
+        throw new Error("Section ID is required for delete action");
+      }
     }
     const response = await fetchWithTokenRefresh(url, {
       method,
@@ -552,10 +865,23 @@ export const manageSubjects = async (
 ): Promise<GetSubjectsResponse> => {
   try {
     const branch_id = (data as { branch_id: string }).branch_id;
-    if (!branch_id) throw new Error("Branch ID required");
+    if (!branch_id) throw new Error("Branch ID is required");
     let url = `${API_BASE_URL}/hod/subjects/?branch_id=${branch_id}`;
     if (method === "GET" && (data as any).semester_id) {
       url += `&semester_id=${(data as any).semester_id}`;
+    }
+    if (method === "POST") {
+      const req = data as ManageSubjectsRequest;
+      if (!req.action) throw new Error("Action is required for POST requests");
+      if (req.action === "create" && (!req.name || !req.semester_id || !req.subject_code)) {
+        throw new Error("Name, Semester ID, and Subject Code are required for create action");
+      }
+      if (req.action === "update" && (!req.subject_id || !req.name || !req.semester_id || !req.subject_code)) {
+        throw new Error("Subject ID, Name, Semester ID, and Subject Code are required for update action");
+      }
+      if (req.action === "delete" && !req.subject_id) {
+        throw new Error("Subject ID is required for delete action");
+      }
     }
     const response = await fetchWithTokenRefresh(url, {
       method,
@@ -569,13 +895,120 @@ export const manageSubjects = async (
   }
 };
 
+export const manageStudents = async (
+  data: ManageStudentsRequest | { branch_id: string; semester_id?: string; section_id?: string },
+  method: "GET" | "POST" = "GET"
+): Promise<ManageStudentsResponse> => {
+  try {
+    const branch_id = (data as { branch_id: string }).branch_id;
+    if (!branch_id) throw new Error("Branch ID is required");
+    let url = `${API_BASE_URL}/hod/students/?branch_id=${branch_id}`;
+    if (method === "GET") {
+      const params = new URLSearchParams({ branch_id });
+      if ((data as any).semester_id) params.append("semester_id", (data as any).semester_id);
+      if ((data as any).section_id) params.append("section_id", (data as any).section_id);
+      url = `${API_BASE_URL}/hod/students/?${params.toString()}`;
+    }
+    if (method === "POST") {
+      const req = data as ManageStudentsRequest;
+      if (!req.action) throw new Error("Action is required for POST requests");
+      if (req.action === "create" && (!req.usn || !req.name || !req.email || !req.semester_id || !req.section_id || !req.batch_id || !req.course_id || !req.date_of_admission)) {
+        throw new Error("USN, Name, Email, Semester ID, Section ID, Batch ID, Course ID, and Date of Admission are required for create action");
+      }
+      if (req.action === "update" && (!req.student_id || !req.name || !req.email || !req.semester_id || !req.section_id)) {
+        throw new Error("Student ID, Name, Email, Semester ID, and Section ID are required for update action");
+      }
+      if (req.action === "delete" && !req.student_id) {
+        throw new Error("Student ID is required for delete action");
+      }
+      if (req.action === "bulk_update") {
+        if (!req.semester_id || !req.section_id) {
+          throw new Error("Semester ID and Section ID are required for bulk_update action");
+        }
+        if (!req.bulk_data || !Array.isArray(req.bulk_data) || req.bulk_data.length === 0) {
+          throw new Error("Bulk data must be a non-empty array for bulk_update action");
+        }
+        for (const entry of req.bulk_data) {
+          if (!entry.usn || !entry.name || !entry.email || !entry.batch_id || !entry.course_id || !entry.date_of_admission) {
+            throw new Error("Each bulk data entry must include USN, Name, Email, Batch ID, Course ID, and Date of Admission");
+          }
+        }
+      }
+      if (req.action === "register_subjects" && (!req.student_id || !req.subject_ids || !Array.isArray(req.subject_ids))) {
+        throw new Error("Student ID and subject IDs array are required for register_subjects action");
+      }
+    }
+    const response = await fetchWithTokenRefresh(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: method === "POST" ? JSON.stringify(data) : undefined,
+      timeout: 10000,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
+export const manageBatches = async (
+  data?: ManageBatchesRequest,
+  batch_id?: string,
+  method: "GET" | "POST" | "PUT" | "DELETE" = "GET"
+): Promise<ManageBatchesResponse> => {
+  try {
+    const url = batch_id
+      ? `${API_BASE_URL}/hod/batches/${batch_id}/`
+      : `${API_BASE_URL}/hod/batches/`;
+    if (method === "POST" || method === "PUT") {
+      if (!data?.start_year || !data?.end_year) {
+        throw new Error("Start year and end year are required for POST/PUT requests");
+      }
+    }
+    if (method === "DELETE" && !batch_id) {
+      throw new Error("Batch ID is required for DELETE request");
+    }
+    const response = await fetchWithTokenRefresh(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: data ? JSON.stringify(data) : undefined,
+      timeout: 10000,
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      console.error("Manage Batches Failed:", { status: response.status, result });
+      return { success: false, message: result.message || `HTTP ${response.status}` };
+    }
+    return result;
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
+export const getStudentPerformance = async (
+  data: { branch_id: string; semester_id?: string; section_id?: string }
+): Promise<{ success: boolean; data?: StudentPerformance[]; message?: string }> => {
+  try {
+    if (!data.branch_id) throw new Error("Branch ID is required");
+    const params = new URLSearchParams({ branch_id: data.branch_id });
+    if (data.semester_id) params.append("semester_id", data.semester_id);
+    if (data.section_id) params.append("section_id", data.section_id);
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/performance/?${params.toString()}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      timeout: 10000,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
 export const manageFaculties = async (
   data: { branch_id: string },
   method: "GET" = "GET"
 ): Promise<GetFacultiesResponse> => {
   try {
-    if (!data.branch_id) throw new Error("Branch ID required");
-    console.log(`Fetching faculties with branch_id: ${data.branch_id}`);
+    if (!data.branch_id) throw new Error("Branch ID is required");
     const url = `${API_BASE_URL}/hod/faculties/?branch_id=${data.branch_id}`;
     const response = await fetchWithTokenRefresh(url, {
       method,
@@ -590,7 +1023,7 @@ export const manageFaculties = async (
 
 export const getProctors = async (branch_id: string): Promise<GetFacultiesResponse> => {
   try {
-    if (!branch_id) throw new Error("Branch ID required");
+    if (!branch_id) throw new Error("Branch ID is required");
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/proctors/list/?branch_id=${branch_id}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
@@ -607,20 +1040,19 @@ export const manageFacultyAssignments = async (
   method: "GET" | "POST" = "GET"
 ): Promise<ManageFacultyAssignmentsResponse> => {
   try {
-    if (!data.branch_id) throw new Error("Branch ID required");
+    if (!data.branch_id) throw new Error("Branch ID is required");
     if (method === "POST" && !data.action) {
       throw new Error("Action is required for POST requests");
     }
     if (data.action === "create" && (!data.faculty_id || !data.subject_id || !data.semester_id || !data.section_id)) {
-      throw new Error("Faculty ID, Subject ID, Semester ID, and Section ID required for create action");
+      throw new Error("Faculty ID, Subject ID, Semester ID, and Section ID are required for create action");
     }
     if (data.action === "update" && (!data.assignment_id || !data.faculty_id || !data.subject_id || !data.semester_id || !data.section_id)) {
-      throw new Error("Assignment ID, Faculty ID, Subject ID, Semester ID, and Section ID required for update action");
+      throw new Error("Assignment ID, Faculty ID, Subject ID, Semester ID, and Section ID are required for update action");
     }
     if (data.action === "delete" && !data.assignment_id) {
-      throw new Error("Assignment ID required for delete action");
+      throw new Error("Assignment ID is required for delete action");
     }
-    console.log("manageFacultyAssignments request data:", data);
     let url = `${API_BASE_URL}/hod/faculty-assignments/?branch_id=${data.branch_id}`;
     if (method === "GET") {
       const params = new URLSearchParams({ branch_id: data.branch_id });
@@ -634,9 +1066,7 @@ export const manageFacultyAssignments = async (
       body: method === "POST" ? JSON.stringify(data) : undefined,
       timeout: 10000,
     });
-    const result = await response.json();
-    console.log("manageFacultyAssignments response:", result);
-    return result;
+    return await response.json();
   } catch (error: unknown) {
     return handleApiError(error, (error as any).response);
   }
@@ -644,8 +1074,7 @@ export const manageFacultyAssignments = async (
 
 export const manageTimetable = async (data: ManageTimetableRequest): Promise<ManageTimetableResponse> => {
   try {
-    if (!data.branch_id) throw new Error("Branch ID required");
-    console.log("manageTimetable request data:", data);
+    if (!data.branch_id) throw new Error("Branch ID is required");
     if (data.action === "GET") {
       const params = new URLSearchParams({ branch_id: data.branch_id });
       if (data.semester_id) params.append("semester_id", data.semester_id);
@@ -655,35 +1084,36 @@ export const manageTimetable = async (data: ManageTimetableRequest): Promise<Man
         headers: { "Content-Type": "application/json" },
         timeout: 10000,
       });
-      const result = await response.json();
-      console.log("manageTimetable GET response:", result);
-      return result;
+      return await response.json();
     }
 
     if ((data.action === "create" || data.action === "update") && (!data.semester_id || !data.section_id)) {
-      throw new Error("Semester ID and Section ID required for create/update action");
+      throw new Error("Semester ID and Section ID are required for create/update action");
     }
 
     const headers: HeadersInit = {};
     let body: FormData | string;
 
     if (data.action === "bulk_create") {
-      if (!data.semester_id || !data.section_id || !data.room || !data.file) {
-        throw new Error("Semester ID, Section ID, Room, and File required for bulk_create action");
+      if (!data.semester_id || !data.section_id || !data.file) {
+        throw new Error("Semester ID, Section ID, and File are required for bulk_create action");
       }
       const formData = new FormData();
       formData.append("action", data.action);
       formData.append("branch_id", data.branch_id);
       formData.append("semester_id", data.semester_id);
       formData.append("section_id", data.section_id);
-      formData.append("room", data.room);
+      if (data.room) formData.append("room", data.room);
       formData.append("file", data.file);
       body = formData;
     } else {
       if (data.action === "create" || data.action === "update") {
         if (!data.assignment_id || !data.day || !data.start_time || !data.end_time) {
-          throw new Error("Assignment ID, Day, Start Time, and End Time required for create/update action");
+          throw new Error("Assignment ID, Day, Start Time, and End Time are required for create/update action");
         }
+      }
+      if (data.action === "delete" && !data.timetable_id) {
+        throw new Error("Timetable ID is required for delete action");
       }
       headers["Content-Type"] = "application/json";
       body = JSON.stringify(data);
@@ -695,9 +1125,7 @@ export const manageTimetable = async (data: ManageTimetableRequest): Promise<Man
       body,
       timeout: 10000,
     });
-    const result = await response.json();
-    console.log("manageTimetable POST response:", result);
-    return result;
+    return await response.json();
   } catch (error: unknown) {
     return handleApiError(error, (error as any).response);
   }
@@ -708,18 +1136,18 @@ export const manageHODLeaves = async (
   method: "GET" | "POST" = "GET"
 ): Promise<ManageHODLeavesResponse> => {
   try {
-    if (!data.branch_id) throw new Error("Branch ID required");
-    console.log("manageHODLeaves request:", { method, data });
+    if (!data.branch_id) throw new Error("Branch ID is required");
     const url = `${API_BASE_URL}/hod/leave-applications/?branch_id=${data.branch_id}`;
+    if (method === "POST" && (!data.title || !data.start_date || !data.end_date || !data.reason)) {
+      throw new Error("Title, Start Date, End Date, and Reason are required for POST request");
+    }
     const response = await fetchWithTokenRefresh(url, {
       method,
       headers: { "Content-Type": "application/json" },
       body: method === "POST" ? JSON.stringify(data) : undefined,
       timeout: 10000,
     });
-    const result = await response.json();
-    console.log("manageHODLeaves response:", result);
-    return result;
+    return await response.json();
   } catch (error: unknown) {
     return handleApiError(error, (error as any).response);
   }
@@ -730,19 +1158,18 @@ export const manageLeaves = async (
   method: "GET" | "PATCH" = "GET"
 ): Promise<ManageLeavesResponse> => {
   try {
-    if (!data.branch_id) throw new Error("Branch ID required");
-    console.log("manageLeaves request:", { method, data });
-    const url = `${API_BASE_URL}/hod/leaves/`;
+    if (!data.branch_id) throw new Error("Branch ID is required");
+    const url = `${API_BASE_URL}/hod/leaves/?branch_id=${data.branch_id}`;
+    if (method === "PATCH" && (!data.action || !data.leave_id || !data.status)) {
+      throw new Error("Action, Leave ID, and Status are required for PATCH request");
+    }
     const response = await fetchWithTokenRefresh(url, {
       method,
       headers: { "Content-Type": "application/json" },
       body: method === "PATCH" ? JSON.stringify(data) : undefined,
-      params: method === "GET" ? { branch_id: data.branch_id } : undefined,
       timeout: 10000,
     });
-    const result = await response.json();
-    console.log("manageLeaves response:", result);
-    return result;
+    return await response.json();
   } catch (error: unknown) {
     return handleApiError(error, (error as any).response);
   }
@@ -750,7 +1177,7 @@ export const manageLeaves = async (
 
 export const getAttendance = async (params: GetAttendanceParams): Promise<GetAttendanceResponse> => {
   try {
-    if (!params.branch_id) throw new Error("Branch ID required");
+    if (!params.branch_id) throw new Error("Branch ID is required");
     const query = new URLSearchParams(params as any).toString();
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/attendance/?${query}`, {
       method: "GET",
@@ -765,7 +1192,7 @@ export const getAttendance = async (params: GetAttendanceParams): Promise<GetAtt
 
 export const getMarks = async (params: GetMarksParams): Promise<GetMarksResponse> => {
   try {
-    if (!params.branch_id) throw new Error("Branch ID required");
+    if (!params.branch_id) throw new Error("Branch ID is required");
     const query = new URLSearchParams(params as any).toString();
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/marks/?${query}`, {
       method: "GET",
@@ -780,7 +1207,9 @@ export const getMarks = async (params: GetMarksParams): Promise<GetMarksResponse
 
 export const createAnnouncement = async (data: CreateAnnouncementRequest): Promise<CreateAnnouncementResponse> => {
   try {
-    if (!data.branch_id) throw new Error("Branch ID required");
+    if (!data.branch_id || !data.title || !data.content || !data.target) {
+      throw new Error("Branch ID, Title, Content, and Target are required");
+    }
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/announcements/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -793,37 +1222,35 @@ export const createAnnouncement = async (data: CreateAnnouncementRequest): Promi
   }
 };
 
-export const manageNotifications = async (
-  data: SendNotificationRequest,
-  method: "GET" | "POST" = "POST",
-  type: "received" | "sent" = "received"
-): Promise<GetNotificationsResponse> => {
+export const sendNotification = async (data: SendNotificationRequest): Promise<SendNotificationResponse> => {
   try {
-    if (!data.branch_id) throw new Error("Branch ID required");
-    const url = method === "GET" 
-      ? `${API_BASE_URL}/hod/notifications/${type === "received" ? "history" : "sent"}/?branch_id=${data.branch_id}` 
-      : `${API_BASE_URL}/hod/notifications/`;
-    
-    if (method === "POST") {
-      if (!data.message || !data.title) throw new Error("Title and message are required");
-      if (data.action === "notify" && !data.student_id) throw new Error("Student ID required for notify action");
-      if (data.action === "notify_all" && !data.target) throw new Error("Target required for notify_all action");
-      console.log("Sending notification request:", data);
+    if (!data.branch_id || !data.title || !data.message) throw new Error("Branch ID, Title, and Message are required");
+    if (data.action === "notify" && !data.student_id) throw new Error("Student ID is required for notify action");
+    if (data.action === "notify_all" && !data.target) throw new Error("Target is required for notify_all action");
+    if (data.action === "notify_low_attendance" && (!data.semester_id || !data.section_id || !data.subject_id || !data.threshold)) {
+      throw new Error("Semester ID, Section ID, Subject ID, and Threshold are required for notify_low_attendance action");
     }
-
-    const response = await fetchWithTokenRefresh(url, {
-      method,
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/notifications/`, {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: method === "POST" ? JSON.stringify(data) : undefined,
+      body: JSON.stringify(data),
       timeout: 10000,
     });
-    const result = await response.json();
-    console.log("Notification response:", result);
-    return {
-      success: result.success,
-      message: result.message || (result.success ? "Notification sent successfully" : "No message provided"),
-      data: result.data,
-    };
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
+export const getNotifications = async (branch_id: string): Promise<GetNotificationsResponse> => {
+  try {
+    if (!branch_id) throw new Error("Branch ID is required");
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/notifications/history/?branch_id=${branch_id}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      timeout: 10000,
+    });
+    return await response.json();
   } catch (error: unknown) {
     return handleApiError(error, (error as any).response);
   }
@@ -831,7 +1258,7 @@ export const manageNotifications = async (
 
 export const getSentNotifications = async (branch_id: string): Promise<GetNotificationsResponse> => {
   try {
-    if (!branch_id) throw new Error("Branch ID required");
+    if (!branch_id) throw new Error("Branch ID is required");
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/notifications/sent/?branch_id=${branch_id}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
@@ -845,7 +1272,9 @@ export const getSentNotifications = async (branch_id: string): Promise<GetNotifi
 
 export const assignProctor = async (data: AssignProctorRequest): Promise<AssignProctorResponse> => {
   try {
-    if (!data.branch_id) throw new Error("Branch ID required");
+    if (!data.branch_id || !data.student_id || !data.faculty_id) {
+      throw new Error("Branch ID, Student ID, and Faculty ID are required");
+    }
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/proctors/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -860,8 +1289,9 @@ export const assignProctor = async (data: AssignProctorRequest): Promise<AssignP
 
 export const assignProctorsBulk = async (data: AssignProctorsBulkRequest): Promise<AssignProctorsBulkResponse> => {
   try {
-    if (!data.branch_id) throw new Error("Branch ID required");
-    if (!data.usns.length || !data.faculty_id) throw new Error("USNs and faculty ID required");
+    if (!data.branch_id || !data.usns.length || !data.faculty_id) {
+      throw new Error("Branch ID, USNs, and Faculty ID are required");
+    }
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/proctors/bulk/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -879,8 +1309,17 @@ export const manageChat = async (
   method: "GET" | "POST" = "GET"
 ): Promise<ManageChatResponse> => {
   try {
-    if (!data.branch_id) throw new Error("Branch ID required");
-    const url = method === "GET" ? `${API_BASE_URL}/hod/chat/?branch_id=${data.branch_id}` : `${API_BASE_URL}/hod/chat/`;
+    if (!data.branch_id) throw new Error("Branch ID is required");
+    const url = `${API_BASE_URL}/hod/chat/?branch_id=${data.branch_id}`;
+    if (method === "POST") {
+      if (!data.action) throw new Error("Action is required for POST requests");
+      if (data.action === "create_channel" && (!data.name || !data.channel_type)) {
+        throw new Error("Name and Channel Type are required for create_channel action");
+      }
+      if (data.action === "send_message" && (!data.channel_id || !data.content)) {
+        throw new Error("Channel ID and Content are required for send_message action");
+      }
+    }
     const response = await fetchWithTokenRefresh(url, {
       method,
       headers: { "Content-Type": "application/json" },
@@ -910,135 +1349,18 @@ export const manageProfile = async (
   }
 };
 
-export const manageStudents = async (
-  data: ManageStudentsRequest | { branch_id: string },
-  method: "GET" | "POST" = "POST"
-): Promise<ManageStudentsResponse> => {
-  try {
-    const branch_id = (data as { branch_id: string }).branch_id;
-    if (!branch_id) throw new Error("Branch ID required");
-    const url = method === "GET" ? `${API_BASE_URL}/hod/students/?branch_id=${branch_id}` : `${API_BASE_URL}/hod/students/`;
-    if (method === "POST") {
-      if (!data.action) throw new Error("Action is required for POST requests");
-      if (data.action === "create" && (!data.usn || !data.name || !data.email || !data.semester_id || !data.section_id)) {
-        throw new Error("USN, Name, Email, Semester ID, and Section ID required for create action");
-      }
-      if (data.action === "update" && (!data.student_id || !data.name || !data.email || !data.semester_id || !data.section_id)) {
-        throw new Error("Student ID, Name, Email, Semester ID, and Section ID required for update action");
-      }
-      if (data.action === "delete" && !data.student_id) {
-        throw new Error("Student ID required for delete action");
-      }
-      if (data.action === "bulk_update") {
-        if (!data.semester_id || !data.section_id) {
-          throw new Error("Semester ID and Section ID required for bulk_update action");
-        }
-        if (!data.bulk_data || !Array.isArray(data.bulk_data) || data.bulk_data.length === 0) {
-          throw new Error("Bulk data must be a non-empty array for bulk_update action");
-        }
-        for (const entry of data.bulk_data) {
-          if (!entry.usn || !entry.name || !entry.email) {
-            throw new Error("Each bulk data entry must include usn, name, and email");
-          }
-        }
-      }
-      console.log("manageStudents request data:", data);
-    }
-    const response = await fetchWithTokenRefresh(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: method === "POST" ? JSON.stringify(data) : undefined,
-      timeout: 10000,
-    });
-    const result = await response.json();
-    console.log("manageStudents response:", result);
-    return result;
-  } catch (error: unknown) {
-    return handleApiError(error, (error as any).response);
-  }
-};
-
-export const getStudentPerformance = async (
-  data: { branch_id: string }
-): Promise<{ success: boolean; data?: { subject: string; attendance: number; marks: number; semester: string }[]; message?: string }> => {
-  try {
-    if (!data.branch_id) throw new Error("Branch ID required");
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/performance/?branch_id=${data.branch_id}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      timeout: 10000,
-    });
-    return await response.json();
-  } catch (error: unknown) {
-    return handleApiError(error, (error as any).response);
-  }
-};
-
-export const getAllAttendance = async (
-  branch_id: string,
-  filters: { semester_id?: string; section_id?: string; subject_id?: string } = {}
-): Promise<LowAttendanceResponse> => {
-  try {
-    if (!branch_id) throw new Error("Branch ID required");
-    const params: Record<string, string> = { branch_id };
-    if (filters.semester_id) params.semester_id = filters.semester_id;
-    if (filters.section_id) params.section_id = filters.section_id;
-    if (filters.subject_id) params.subject_id = filters.subject_id;
-    const query = new URLSearchParams(params).toString();
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/all-attendance/?${query}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      timeout: 10000,
-    });
-    return await response.json();
-  } catch (error: unknown) {
-    return handleApiError(error, (error as any).response);
-  }
-};
-
-interface UploadStudyMaterialRequest {
-  title: string;
-  subject_name: string;
-  subject_code: string;
-  semester_id: string;
-  file: File;
-  branch_id: string;
-}
-
-interface UploadStudyMaterialResponse {
-  success: boolean;
-  message?: string;
-  data?: { material_id: string; title: string };
-}
-
-interface StudyMaterial {
-  id: string;
-  title: string;
-  subject_name: string;
-  subject_code: string;
-  semester: number | null;
-  branch: string | null;
-  uploaded_by: string;
-  uploaded_at: string;
-  file_url: string;
-}
-
-interface GetStudyMaterialsResponse {
-  success: boolean;
-  message?: string;
-  data?: StudyMaterial[];
-}
-
 export const uploadStudyMaterial = async (data: UploadStudyMaterialRequest): Promise<UploadStudyMaterialResponse> => {
   try {
+    if (!data.branch_id || !data.semester_id || !data.title || !data.file) {
+      throw new Error("Branch ID, Semester ID, Title, and File are required");
+    }
     const formData = new FormData();
     formData.append("title", data.title);
     formData.append("subject_name", data.subject_name || "");
     formData.append("subject_code", data.subject_code || "");
-    formData.append("semester_id", data.semester_id || "");
+    formData.append("semester_id", data.semester_id);
+    formData.append("branch_id", data.branch_id);
     formData.append("file", data.file);
-    formData.append("branch_id", data.branch_id || "");
-
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/study-materials/`, {
       method: "POST",
       body: formData,
@@ -1050,10 +1372,129 @@ export const uploadStudyMaterial = async (data: UploadStudyMaterialRequest): Pro
   }
 };
 
-export const getStudyMaterials = async (): Promise<GetStudyMaterialsResponse> => {
+export const getStudyMaterials = async (branch_id: string): Promise<GetStudyMaterialsResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/study-materials/`, {
+    if (!branch_id) throw new Error("Branch ID is required");
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/study-materials/?branch_id=${branch_id}`, {
       method: "GET",
+      headers: { "Content-Type": "application/json" },
+      timeout: 10000,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
+export const promoteStudentsToNextSemester = async (data: PromoteStudentsRequest): Promise<PromoteStudentsResponse> => {
+  try {
+    if (!data.branch_id || !data.from_semester_id || !data.to_semester_id) {
+      throw new Error("Branch ID, From Semester ID, and To Semester ID are required");
+    }
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/promote-students/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      timeout: 10000,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
+export const promoteSelectedStudents = async (data: PromoteSelectedStudentsRequest): Promise<PromoteSelectedStudentsResponse> => {
+  try {
+    if (!data.branch_id || !data.student_ids?.length || !data.to_semester_id) {
+      throw new Error("Branch ID, non-empty Student IDs, and To Semester ID are required");
+    }
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/promote-selected-students/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      timeout: 10000,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
+export const demoteStudent = async (data: DemoteStudentRequest): Promise<DemoteStudentResponse> => {
+  try {
+    if (!data.branch_id || !data.student_id || !data.to_semester_id || !data.reason) {
+      throw new Error("Branch ID, Student ID, To Semester ID, and Reason are required");
+    }
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/demote-student/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      timeout: 10000,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
+export const bulkDemoteStudents = async (data: BulkDemoteStudentsRequest): Promise<BulkDemoteStudentsResponse> => {
+  try {
+    if (!data.branch_id || !data.student_ids?.length || !data.to_semester_id || !data.reason) {
+      throw new Error("Branch ID, non-empty Student IDs, To Semester ID, and Reason are required");
+    }
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/demote-students/bulk/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      timeout: 10000,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
+export const getPromotionEligibility = async (params: GetPromotionEligibilityParams): Promise<GetPromotionEligibilityResponse> => {
+  try {
+    if (!params.branch_id || !params.semester_id) {
+      throw new Error("Branch ID and Semester ID are required");
+    }
+    const query = new URLSearchParams(params as any).toString();
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/promotion-eligibility/?${query}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      timeout: 10000,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
+export const getExamFailures = async (params: GetExamFailuresParams): Promise<GetExamFailuresResponse> => {
+  try {
+    if (!params.branch_id) throw new Error("Branch ID is required");
+    const query = new URLSearchParams(params as any).toString();
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/exam-failures/?${query}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      timeout: 10000,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
+export const recordExamFailure = async (data: RecordExamFailureRequest): Promise<RecordExamFailureResponse> => {
+  try {
+    if (!data.branch_id || !data.student_id || !data.subject_id || !data.semester_id || !data.failure_date) {
+      throw new Error("Branch ID, Student ID, Subject ID, Semester ID, and Failure Date are required");
+    }
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/record-exam-failure/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
       timeout: 10000,
     });
     return await response.json();

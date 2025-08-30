@@ -11,6 +11,17 @@ const StudentStats = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Helper function to format attendance percentage
+  const formatAttendancePercentage = (percentage: number | string): string => {
+    if (percentage === "NA" || percentage === null || percentage === undefined) {
+      return "NA";
+    }
+    if (typeof percentage === "string") {
+      return percentage;
+    }
+    return `${percentage}%`;
+  };
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -69,7 +80,7 @@ const StudentStats = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <DashboardCard
           title="Overall Attendance"
-          value={`${stats?.attendance_status?.average || 0}%`}
+          value={formatAttendancePercentage(stats?.attendance_status?.average || 0)}
           icon={<Activity className="text-blue-500" />}
           trend={{
             value: 2.5,

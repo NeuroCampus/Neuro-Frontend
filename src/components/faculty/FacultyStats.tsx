@@ -99,7 +99,7 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
   // Prepare data for charts
   const attendanceData = proctorStudents.map((s) => ({
     name: s.name,
-    attendance: s.attendance,
+    attendance: s.attendance === "NA" || s.attendance === null || s.attendance === undefined ? 0 : typeof s.attendance === "string" ? 0 : s.attendance,
   }));
   const marksData = proctorStudents.map((s) => ({
     name: s.name,
