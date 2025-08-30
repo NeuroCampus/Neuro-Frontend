@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { getLowAttendance, getSemesters, manageSections, manageSubjects, manageProfile, manageNotifications } from "../../utils/hod_api";
+import { getLowAttendance, getSemesters, manageSections, manageSubjects, manageProfile, sendNotification } from "../../utils/hod_api";
 import { Component } from "react";
 
 // Interfaces
@@ -36,7 +36,7 @@ interface Student {
   subject: string;
   section: string;
   semester: number;
-  attendance_percentage: number;
+  attendance_percentage: number | string;
 }
 
 interface Semester {
@@ -78,6 +78,27 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 }
 
 const LowAttendance = ({ setError }: LowAttendanceProps) => {
+  // Helper function to format attendance percentage
+  const formatAttendancePercentage = (percentage: number | string): string => {
+    if (percentage === "NA" || percentage === null || percentage === undefined) {
+      return "NA";
+    }
+    if (typeof percentage === "string") {
+      return percentage;
+    }
+    return `${percentage}%`;
+  };
+
+  // Helper function to get numeric value for sorting
+  const getNumericPercentage = (percentage: number | string): number => {
+    if (percentage === "NA" || percentage === null || percentage === undefined) {
+      return -1; // Sort NA values to the end
+    }
+    if (typeof percentage === "string") {
+      return -1;
+    }
+    return percentage;
+  };
   const { toast } = useToast();
   const [state, setState] = useState({
     searchTerm: "",
@@ -243,7 +264,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
           student.subject,
           student.section,
           student.semester,
-          `${student.attendance_percentage}%`,
+          formatAttendancePercentage(student.attendance_percentage),
         ]),
         theme: "striped",
         headStyles: { fillColor: [200, 200, 200], textColor: "black" },
@@ -266,13 +287,13 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
     try {
       updateState({ isNotifyingAll: true });
       const studentIds = filteredStudents.map(student => student.usn);
-      const response = await manageNotifications({
-        action: "notify_low_attendance",
+      const response = await sendNotification({
+        action: "notify_all",
         title: "Low Attendance Warning",
         message: "Your attendance is below the required threshold. Please improve.",
-        student_ids: studentIds,
+        target: "student",
         branch_id: state.branchId,
-      }, "POST");
+      });
       if (response.success) {
         toast({
           title: "Success",
@@ -294,13 +315,13 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
   const notifyStudent = async (student: Student) => {
     try {
       updateState({ notifyingStudents: { ...state.notifyingStudents, [student.student_id]: true } });
-      const response = await manageNotifications({
+      const response = await sendNotification({
         action: "notify",
         title: "Low Attendance Alert",
         student_id: student.usn,
-        message: `Dear ${student.name}, your attendance in ${student.subject} is ${student.attendance_percentage}%. Please improve.`,
+        message: `Dear ${student.name}, your attendance in ${student.subject} is ${formatAttendancePercentage(student.attendance_percentage)}. Please improve.`,
         branch_id: state.branchId,
-      }, "POST");
+      });
       if (response.success) {
         toast({
           title: "Success",
@@ -460,7 +481,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
                     <td className="px-4 py-2">{student.section}</td>
                     <td className="px-4 py-2">{student.semester}</td>
                     <td className="px-4 py-2 text-yellow-600 font-medium">
-                      {student.attendance_percentage}%
+                      {formatAttendancePercentage(student.attendance_percentage)}
                     </td>
                     <td className="px-4 py-2">
                       <Button

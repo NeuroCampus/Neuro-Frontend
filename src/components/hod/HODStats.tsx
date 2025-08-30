@@ -44,7 +44,7 @@ interface StatsData {
     week: string;
     start_date: string;
     end_date: string;
-    attendance_percentage: number;
+    attendance_percentage: number | string;
   }>;
 }
 interface HODStatsProps {
@@ -222,9 +222,14 @@ export default function HODStats({ setError, setPage }: HODStatsProps) {
   const chartData = stats?.attendance_trend?.length
     ? stats.attendance_trend.map((item) => ({
         week: item.week,
-        attendance: item.attendance_percentage,
+        attendance: item.attendance_percentage === "NA" ? 0 : 
+                   typeof item.attendance_percentage === "string" ? 0 : 
+                   item.attendance_percentage,
       }))
     : [{ week: "No Data", attendance: 0 }];
+
+  // Calculate pending leaves count from actual leave requests
+  const pendingLeavesCount = leaveRequests.filter(request => request.status === "Pending").length;
 
   // Data for pie chart
   const memberData = [
@@ -277,7 +282,7 @@ export default function HODStats({ setError, setPage }: HODStatsProps) {
           },
           {
             title: "Pending Leaves",
-            value: stats?.pending_leaves.toString() || "0",
+            value: pendingLeavesCount.toString(),
             icon: <Calendar className="text-gray-600" />,
             change: "-12.4% since last month",
             color: "text-gray-600",
@@ -285,7 +290,7 @@ export default function HODStats({ setError, setPage }: HODStatsProps) {
         ].map((item, i) => (
             <div
               key={i}
-              className="bg-[#23232a] p-4 rounded-lg shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white"
+              className="bg-[#232326] p-4 rounded-lg shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow border text-gray-200 outline-none focus:ring-2 focus:ring-white"
             >
               <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-200">
               {item.icon && (

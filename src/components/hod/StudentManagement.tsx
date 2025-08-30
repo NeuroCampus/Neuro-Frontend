@@ -32,7 +32,7 @@ import {
   SelectItem,
   SelectValue,
 } from "../ui/select";
-import { manageStudents, getSemesters, manageSections, getStudentPerformance, manageProfile } from "../../utils/hod_api";
+import { manageStudents, getSemesters, manageSections, getStudentPerformance, manageProfile, manageBatches } from "../../utils/hod_api";
 
 const mockChartData = [
   { subject: "CS101", attendance: 85, marks: 78, semester: "4th Semester" },
@@ -45,10 +45,11 @@ interface Semester {
   number: number;
 }
 
-interface Section {
-  id: string;
+interface Batch {
+  id: number;
   name: string;
-  semester_id: string;
+  start_year: number;
+  end_year: number;
 }
 
 interface Student {
@@ -73,13 +74,14 @@ const StudentManagement = () => {
     uploadErrors: [] as string[],
     uploadedCount: 0,
     droppedFileName: null as string | null,
-    manualForm: { usn: "", name: "", email: "", section: "", semester: "" },
+    manualForm: { usn: "", name: "", email: "", section: "", semester: "", batch: "" },
     currentPage: 1,
     selectedSemester: "",
     semesters: [] as Semester[],
     manualSections: [] as Section[],
     listSections: [] as Section[],
     editSections: [] as Section[],
+    batches: [] as Batch[],
     branchId: "",
     chartData: mockChartData,
     isLoading: false,
@@ -210,6 +212,24 @@ const StudentManagement = () => {
     }
   };
 
+  // Fetch batches
+  const fetchBatches = async () => {
+    try {
+      const batchRes = await manageBatches();
+      if (batchRes.success && batchRes.data) {
+        const defaultBatch = batchRes.data[0]?.name || "";
+        updateState({ 
+          batches: batchRes.data,
+          manualForm: { ...state.manualForm, batch: defaultBatch }
+        });
+      } else {
+        updateState({ uploadErrors: [...state.uploadErrors, `Batches API: ${batchRes.message || "No batches found"}`] });
+      }
+    } catch (err) {
+      updateState({ uploadErrors: [...state.uploadErrors, "Failed to fetch batches"] });
+    }
+  };
+
   // Fetch initial data
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -219,6 +239,9 @@ const StudentManagement = () => {
         if (profileRes.success && profileRes.data?.branch_id) {
           const branchId = profileRes.data.branch_id;
           updateState({ branchId });
+
+          // Fetch batches first
+          await fetchBatches();
 
           const semesterRes = await getSemesters(branchId);
           if (semesterRes.success && semesterRes.data?.length > 0) {
@@ -295,6 +318,9 @@ const StudentManagement = () => {
 
   const getSectionId = (sectionName: string, sections: Section[]) =>
     sections.find((s) => s.name === sectionName)?.id || "";
+
+  const getBatchId = (batchName: string) =>
+    state.batches.find((b) => b.name === batchName)?.id?.toString() || "";
 
   // Handle file upload
   const handleFileUpload = async (file: File) => {
@@ -379,7 +405,7 @@ const StudentManagement = () => {
           semester_id: getSemesterId(state.manualForm.semester),
           section_id: getSectionId(state.manualForm.section, state.manualSections),
           bulk_data: validData,
-        });
+        }, "POST");
 
         if (res.success && res.data) {
           updateState({
@@ -411,8 +437,8 @@ const StudentManagement = () => {
 
   // Handle manual student entry
   const handleManualEntry = async () => {
-    const { usn, name, email, section, semester } = state.manualForm;
-    if (!usn || !name || !email || !section || !semester) {
+    const { usn, name, email, section, semester, batch } = state.manualForm;
+    if (!usn || !name || !email || !section || !semester || !batch) {
       updateState({ uploadErrors: ["All fields are required"] });
       return;
     }
@@ -426,7 +452,8 @@ const StudentManagement = () => {
         email,
         semester_id: getSemesterId(semester),
         section_id: getSectionId(section, state.manualSections),
-      });
+        batch_id: getBatchId(batch),
+      }, "POST");
 
       if (res.success) {
         await fetchStudents(state.branchId);
@@ -437,6 +464,7 @@ const StudentManagement = () => {
             email: "",
             section: state.manualSections[0]?.name || "",
             semester: state.semesters[0]?.number ? `${state.semesters[0].number}th Semester` : "",
+            batch: "",
           },
           uploadErrors: [],
         });
@@ -460,7 +488,7 @@ const StudentManagement = () => {
         email: state.editForm.email,
         semester_id: getSemesterId(state.editForm.semester),
         section_id: getSectionId(state.editForm.section, state.editSections),
-      });
+      }, "POST");
 
       if (res.success) {
         await fetchStudents(state.branchId);
@@ -481,7 +509,7 @@ const StudentManagement = () => {
         action: "delete",
         branch_id: state.branchId,
         student_id: state.selectedStudent!.usn,
-      });
+      }, "POST");
 
       if (res.success) {
         await fetchStudents(state.branchId);
@@ -758,9 +786,27 @@ const StudentManagement = () => {
                   ))}
               </SelectContent>
             </Select>
+            <Select
+              value={state.manualForm.batch}
+              onValueChange={(value) => updateState({ manualForm: { ...state.manualForm, batch: value } })}
+              disabled={state.isLoading || state.batches.length === 0}
+            >
+              <SelectTrigger className="flex-1 bg-[#232326] text-gray-200 border border-gray-700 placeholder-gray-400 focus:border-gray-500 focus:ring-0">
+                <SelectValue
+                  placeholder={state.batches.length === 0 ? "No batches available" : "Select Batch"}
+                />
+              </SelectTrigger>
+              <SelectContent className="bg-[#232326] text-gray-200 border border-gray-700">
+                {state.batches.map((batch) => (
+                  <SelectItem key={batch.id} value={batch.name}>
+                    {batch.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button
               onClick={handleManualEntry}
-              disabled={state.isLoading || !state.branchId || !state.manualForm.semester || !state.manualForm.section}
+              disabled={state.isLoading || !state.branchId || !state.manualForm.semester || !state.manualForm.section || !state.manualForm.batch}
               className="flex items-center gap-1  text-sm font-medium text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 px-3 py-1.5 rounded-md transition disabled:opacity-50"
             >
               + Add Student

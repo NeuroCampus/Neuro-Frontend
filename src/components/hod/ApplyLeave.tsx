@@ -5,10 +5,19 @@ import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { CalendarIcon, Filter as FilterIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { manageHODLeaves, ManageHODLeavesRequest, manageProfile } from "../../utils/hod_api";
+import { manageHODLeaves, manageProfile } from "../../utils/hod_api";
 import { toast } from "react-toastify";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { format } from "date-fns";
+
+interface ManageHODLeavesRequest {
+  branch_id: string;
+  title?: string;
+  start_date?: string;
+  end_date?: string;
+  reason?: string;
+}
 
 interface Leave {
   id: string;
@@ -97,8 +106,8 @@ const ApplyLeave = () => {
       const request: ManageHODLeavesRequest = {
         branch_id: branchId,
         title: leaveTitle,
-        start_date: startDate,
-        end_date: endDate || startDate,
+        start_date: format(startDate, "yyyy-MM-dd"),
+        end_date: endDate ? format(endDate, "yyyy-MM-dd") : format(startDate, "yyyy-MM-dd"),
         reason,
       };
       const response = await manageHODLeaves(request, "POST");
@@ -107,8 +116,8 @@ const ApplyLeave = () => {
         setSuccessMessage("Leave application submitted successfully.");
         setError("");
         setLeaveTitle("");
-        setStartDate("");
-        setEndDate("");
+        setStartDate(null);
+        setEndDate(null);
         setReason("");
         toast.success("Leave application submitted!");
       } else {
@@ -162,10 +171,11 @@ const ApplyLeave = () => {
               <div className="flex items-center bg-[#232326] border border-gray-700 rounded w-full">
                 <DatePicker
                   selected={startDate}
-                  onChange={(date) => setStartDate(date)}
+                  onChange={(dates) => setStartDate(dates[0] || null)}
                   minDate={today}
                   dateFormat="dd/MM/yyyy"
                   disabled={loading}
+                  selectsMultiple={true}
                   className="flex-1 p-2 text-gray-200 bg-transparent border-none rounded-none focus:outline-none"
                 />
                 <CalendarIcon className="h-5 w-5 text-gray-400 mr-2 ml-80" />
@@ -178,10 +188,11 @@ const ApplyLeave = () => {
               <div className="flex items-center bg-[#232326] border border-gray-700 rounded w-full">
                 <DatePicker
                   selected={endDate}
-                  onChange={(date) => setEndDate(date)}
+                  onChange={(dates) => setEndDate(dates[0] || null)}
                   minDate={startDate || today}
                   dateFormat="dd/MM/yyyy"
                   disabled={loading}
+                  selectsMultiple={true}
                   className="flex-1 p-2 text-gray-200 bg-transparent border-none rounded-none focus:outline-none"
                 />
                 <CalendarIcon className="h-5 w-full mr-2 ml-80 text-gray-400" />

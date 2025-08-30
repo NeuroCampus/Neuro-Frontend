@@ -97,7 +97,7 @@ export interface ProctorStudent {
   semester_id: number | null;
   section: string | null;
   section_id: number | null;
-  attendance: number;
+  attendance: number | string;
   marks: Array<{
     subject: string;
     subject_code: string | null;

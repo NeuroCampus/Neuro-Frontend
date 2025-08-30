@@ -28,10 +28,20 @@ interface AttendanceDetail {
   usn: string;
   present: number;
   total_sessions: number;
-  percentage: number;
+  percentage: number | string;
 }
 
 const AttendanceRecords = () => {
+  // Helper function to format attendance percentage
+  const formatAttendancePercentage = (percentage: number | string): string => {
+    if (percentage === "NA" || percentage === null || percentage === undefined) {
+      return "NA";
+    }
+    if (typeof percentage === "string") {
+      return percentage;
+    }
+    return `${percentage}%`;
+  };
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
