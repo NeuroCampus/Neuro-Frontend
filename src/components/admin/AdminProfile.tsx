@@ -32,7 +32,8 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
     address: "",
     bio: "",
   });
-  const [error, setLocalError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const [fetchedUser, setFetchedUser] = useState<any>(null);
 
@@ -126,9 +127,66 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
   }, [propUser, setError, toast]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setProfile({ ...profile, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let newValue = value;
+    let errorMessage = "";
+
+    switch (name) {
+      case "first_name":
+      case "last_name":
+        // Only alphabets, 2–50 chars
+        if (!/^[A-Za-z\s]{2,50}$/.test(newValue)) {
+          errorMessage = "Only letters allowed (2–50 characters)";
+        }
+        break;
+
+      case "email":
+        // Email format validation
+        if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z][a-zA-Z0-9-]*\.[a-zA-Z]{2,}$/.test(newValue)) {
+          errorMessage = "Invalid email format";
+        }
+        break;
+
+      case "mobile_number":
+        // Digits only, exactly 10 digits
+        newValue = newValue.replace(/\D/g, "");
+        if (newValue.length !== 10) {
+          errorMessage = "Mobile number must be exactly 10 digits";
+        }
+        break;
+
+      case "address":
+        // Only allow letters, numbers, spaces, commas, dots, slashes, hyphens
+        newValue = newValue.replace(/[^a-zA-Z0-9\s,./-]/g, "");
+        if (newValue.trim().length < 5) {
+          errorMessage = "Address must be at least 5 characters";
+        } else if (newValue.length > 200) {
+          newValue = newValue.slice(0, 200); // hard limit
+          errorMessage = "";
+        }
+        break;
+
+      case "bio":
+        // Only allow letters, numbers, spaces, basic punctuation (.,!?)
+        newValue = newValue.replace(/[^a-zA-Z0-9\s.,!?]/g, "");
+        if (newValue.trim().length < 10) {
+          errorMessage = "Bio must be at least 10 characters";
+        } else if (newValue.length > 300) {
+          newValue = newValue.slice(0, 300); // hard limit
+          errorMessage = "";
+        }
+        break;
+      
+      default:
+      newValue = value;
+      break;
+    }
+
+    setProfile((prev) => ({ ...prev, [name]: newValue }));
+    setLocalErrors((prev) => ({ ...prev, [name]: errorMessage }));
   };
 
+  
   const handleSaveProfile = async () => {
     setLoading(true);
     setLocalError(null);
@@ -234,7 +292,9 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
         </CardHeader>
 
         <CardContent className="px-6 pb-6 pt-2 space-y-8">
-          {error && <div className="text-red-500 text-center">{error}</div>}
+          {localError && <div className="text-red-500 text-center">{localError}</div>}
+
+          {/* Profile Avatar + Name */}
           <div className="flex flex-col items-center">
             <div className="w-20 h-20 rounded-full bg-blue-500 text-white flex items-center justify-center text-2xl font-semibold">
               {profile.first_name[0]}
@@ -250,7 +310,9 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
 
           <hr className="border-gray-500" />
 
+          {/* Form Inputs */}
           <div className="space-y-6">
+            {/* First Name */}
             <div>
               <Label htmlFor="first_name" className="text-xs text-gray-200 mb-1 block">
                 First Name
@@ -261,9 +323,15 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 value={profile.first_name}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className={cn("w-full bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
+                className="w-full bg-[#232326] text-gray-200"
+                placeholder="Enter your first name"
               />
+              {localErrors.first_name && (
+                <p className="text-red-500 text-xs mt-1">{localErrors.first_name}</p>
+              )}
             </div>
+
+            {/* Last Name */}
             <div>
               <Label htmlFor="last_name" className="text-xs text-gray-200 mb-1 block">
                 Last Name
@@ -274,9 +342,15 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 value={profile.last_name}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className={cn("w-full bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
+                className="w-full bg-[#232326] text-gray-200"
+                placeholder="Enter your last name"
               />
+              {localErrors.last_name && (
+                <p className="text-red-500 text-xs mt-1">{localErrors.last_name}</p>
+              )}
             </div>
+
+            {/* Email */}
             <div>
               <Label htmlFor="email" className="text-xs text-gray-200 mb-1 block">
                 Email Address
@@ -287,9 +361,15 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 value={profile.email}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className={cn("w-full bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
+                className="w-full bg-[#232326] text-gray-200"
+                placeholder="Enter a valid email"
               />
+              {localErrors.email && (
+                <p className="text-red-500 text-xs mt-1">{localErrors.email}</p>
+              )}
             </div>
+
+            {/* Mobile */}
             <div>
               <Label htmlFor="mobile_number" className="text-xs text-gray-200 mb-1 block">
                 Mobile Number
@@ -298,29 +378,18 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 id="mobile_number"
                 name="mobile_number"
                 value={profile.mobile_number}
-                onChange={(e) => {
-                  let val = e.target.value;
-
-                  // ✅ Allow only digits
-                  val = val.replace(/\D/g, "");
-
-                  // ✅ Limit to 10 digits
-                  if (val.length > 10) {
-                    val = val.slice(0, 10);
-                  }
-
-                  setProfile({ ...profile, mobile_number: val });
-                }}
-                maxLength={10} // extra safeguard
+                onChange={handleChange}
+                maxLength={10}
                 disabled={!editing || loading}
-                className={cn(
-                  "w-full bg-[#232326] text-gray-200",
-                  !editing && "bg-[#232326] text-gray-200"
-                )}
+                className="w-full bg-[#232326] text-gray-200"
                 placeholder="Enter 10-digit mobile number"
               />
+              {localErrors.mobile_number && (
+                <p className="text-red-500 text-xs mt-1">{localErrors.mobile_number}</p>
+              )}
             </div>
 
+            {/* Address */}
             <div>
               <Label htmlFor="address" className="text-xs text-gray-200 mb-1 block">
                 Address
@@ -329,30 +398,17 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 id="address"
                 name="address"
                 value={profile.address}
-                onChange={(e) => {
-                  let val = e.target.value;
-
-                  // ✅ Allow only letters, numbers, spaces, commas, dots, slashes, dashes
-                  val = val.replace(/[^a-zA-Z0-9\s,./-]/g, "");
-
-                  // ✅ Prevent multiple spaces at start
-                  val = val.replace(/^\s+/, "");
-
-                  // ✅ Limit length between 0 and 200 chars
-                  if (val.length > 200) {
-                    val = val.slice(0, 200);
-                  }
-
-                  setProfile({ ...profile, address: val });
-                }}
+                onChange={handleChange}
                 disabled={!editing || loading}
-                className={cn(
-                  "w-full bg-[#232326] text-gray-200",
-                  !editing && "bg-[#232326] text-gray-200"
-                )}
+                className="w-full bg-[#232326] text-gray-200"
                 placeholder="Enter your address (5–200 characters)"
               />
+              {localErrors.address && (
+                <p className="text-red-500 text-xs mt-1">{localErrors.address}</p>
+              )}
             </div>
+
+            {/* Bio */}
             <div>
               <Label htmlFor="bio" className="text-xs text-gray-200 mb-1 block">
                 Bio
@@ -361,27 +417,18 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 id="bio"
                 name="bio"
                 value={profile.bio}
-                onChange={(e) => {
-                  let val = e.target.value;
-
-                  // ✅ Prevent input longer than 300 characters
-                  if (val.length > 300) {
-                    val = val.slice(0, 300);
-                  }
-
-                  setProfile({ ...profile, bio: val });
-                }}
+                onChange={handleChange}
                 disabled={!editing || loading}
-                className={cn(
-                  "w-full p-2 border rounded-md bg-[#232326] text-gray-200 resize-none", // disable resize
-                  (!editing || loading) && "cursor-not-allowed opacity-70"
-                )}
+                className="w-full p-2 border rounded-md bg-[#232326] text-gray-200 resize-none"
                 placeholder="Tell us about yourself (10–300 characters)"
               />
+              {localErrors.bio && (
+                <p className="text-red-500 text-xs mt-1">{localErrors.bio}</p>
+              )}
             </div>
-
           </div>
         </CardContent>
+
       </Card>
     </div>
   );

@@ -52,7 +52,7 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
       if (name === "email") {
         const trimmedValue = value.trim();
         // Strong email regex
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z][a-zA-Z0-9-]*\.[a-zA-Z]{2,}$/;
 
         if (!trimmedValue) {
           setEmailError("Email is required.");
@@ -86,15 +86,25 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
       return;
     }
 
+    // Block submission if email is invalid
+    if (emailError || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z][a-zA-Z0-9-]*\.[a-zA-Z]{2,}$/.test(formData.email)) {
+      setError("Please enter a valid email address.");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter a valid email address.",
+      });
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
-    // Prepare payload with username derived from first_name and include first_name, last_name
     const payload = {
-      email: formData.email,
-      username: formData.first_name,
-      first_name: formData.first_name,
-      last_name: formData.last_name,
+      email: formData.email.trim(),
+      username: formData.first_name.trim(),
+      first_name: formData.first_name.trim(),
+      last_name: formData.last_name.trim(),
       role: formData.role,
     };
 
@@ -127,6 +137,7 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-black-50 px-4 py-10 overflow-y-hidden">

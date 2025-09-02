@@ -131,15 +131,43 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
 
   const saveEdit = async () => {
     if (editData) {
+      const trimmedName = editData.name.trim();
+
+      // ✅ Empty name check
+      if (!trimmedName) {
+        toast({ variant: "destructive", title: "Error", description: "Branch name is required" });
+        return;
+      }
+
+      // ✅ Only letters and spaces allowed
+      const validNameRegex = /^[A-Za-z\s]+$/;
+      if (!validNameRegex.test(trimmedName)) {
+        toast({ variant: "destructive", title: "Error", description: "Branch name must contain only letters and spaces" });
+        return;
+      }
+
+      // ✅ Prevent duplicates (excluding the current branch being edited)
+      const isDuplicate = branches.some(
+        (b) => b.id !== editData.id && b.name.toLowerCase() === trimmedName.toLowerCase()
+      );
+      if (isDuplicate) {
+        toast({ variant: "destructive", title: "Error", description: "Branch already exists" });
+        return;
+      }
+
       setLoading(true);
       try {
         const response = await manageBranches(
-          { name: editData.name, hod_id: editData.hod ? users.find((u) => u.username === editData.hod)?.id : null },
+          { 
+            name: trimmedName, 
+            hod_id: editData.hod ? users.find((u) => u.username === editData.hod)?.id : null 
+          },
           editData.id,
           "PUT"
         );
+
         if (response.success) {
-          setBranches(branches.map((b) => (b.id === editData.id ? editData : b)));
+          setBranches(branches.map((b) => (b.id === editData.id ? { ...editData, name: trimmedName } : b)));
           setEditingId(null);
           setEditData(null);
           toast({ title: "Success", description: "Branch updated successfully" });
@@ -155,6 +183,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
       }
     }
   };
+
 
   const confirmDelete = (id: number) => setDeleteId(id);
   const deleteBranch = async () => {
@@ -178,18 +207,37 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
   };
 
   const handleAddBranch = async () => {
-    if (!newBranch.name) {
+    const trimmedName = newBranch.name.trim();
+
+    // ✅ Empty or invalid branch name
+    if (!trimmedName) {
       toast({ variant: "destructive", title: "Error", description: "Branch name is required" });
       return;
     }
+
+    // ✅ Only letters and spaces allowed (e.g., "Computer Science", "ME")
+    const validNameRegex = /^[A-Za-z\s]+$/;
+    if (!validNameRegex.test(trimmedName)) {
+      toast({ variant: "destructive", title: "Error", description: "Branch name must contain only letters and spaces" });
+      return;
+    }
+
+    // ✅ Prevent duplicates (case-insensitive)
+    const isDuplicate = branches.some((b) => b.name.toLowerCase() === trimmedName.toLowerCase());
+    if (isDuplicate) {
+      toast({ variant: "destructive", title: "Error", description: "Branch already exists" });
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await manageBranches(
-        { name: newBranch.name },
+        { name: trimmedName },
         undefined,
         "POST"
       );
       console.log("Add Branch Response:", response);
+
       if (response.success) {
         const updatedBranchResponse = await manageBranches();
         if (updatedBranchResponse.success) {
@@ -217,6 +265,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
       setLoading(false);
     }
   };
+
 
   const handleAssignHod = async () => {
     if (!selectedBranchId) {

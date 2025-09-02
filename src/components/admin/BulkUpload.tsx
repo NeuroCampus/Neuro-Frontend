@@ -32,14 +32,14 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
         const text = e.target?.result as string;
 
         // Split rows (remove empty lines too)
-        const rows = text.trim().split("\n").filter(r => r.trim() !== "");
+        const rows = text.trim().split(/\r?\n/).filter(r => r.trim() !== "");
 
         if (rows.length < 2) {
           reject("CSV must contain headers and at least one row of data");
           return;
         }
 
-        // Normalize headers
+        // Normalize headers (case-insensitive, trim spaces)
         const headers = rows[0].split(",").map(h => h.trim().toLowerCase());
         const required = REQUIRED_HEADERS.map(h => h.toLowerCase());
 
@@ -49,35 +49,42 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
           return;
         }
 
+        // Map headers to indexes for flexibility in column order
+        const usnIndex = headers.indexOf("usn");
+        const nameIndex = headers.indexOf("name");
+        const emailIndex = headers.indexOf("email");
+
         // Validate data rows (skip header row)
         const dataRows = rows.slice(1);
         for (let i = 0; i < dataRows.length; i++) {
           const cols = dataRows[i].split(",").map(c => c.trim());
 
-          if (cols.length !== REQUIRED_HEADERS.length) {
-            reject(`Row ${i + 2} does not have the correct number of columns`);
+          if (cols.length < headers.length) {
+            reject(`Row ${i + 2} does not have enough columns`);
             return;
           }
 
-          const [usn, name, email] = cols;
+          const usn = cols[usnIndex];
+          const name = cols[nameIndex];
+          const email = cols[emailIndex];
 
-          // USN format check
+          // USN format check (example: 1AM22CI064)
           const usnRegex = /^[0-9][A-Z]{2}[0-9]{2}[A-Z]{2}[0-9]{3}$/;
           if (!usnRegex.test(usn)) {
-            reject(`Invalid USN format at row ${i + 2}: ${usn}`);
+            reject(`Invalid USN format at row ${i + 2}: "${usn}"`);
             return;
           }
 
           // Name validation
           if (!name || name.length < 2) {
-            reject(`Invalid name at row ${i + 2}`);
+            reject(`Invalid name at row ${i + 2}: "${name}"`);
             return;
           }
 
           // Email validation
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$/;
           if (!emailRegex.test(email)) {
-            reject(`Invalid email at row ${i + 2}: ${email}`);
+            reject(`Invalid email at row ${i + 2}: "${email}"`);
             return;
           }
         }
@@ -89,6 +96,7 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
       reader.readAsText(file);
     });
   };
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
