@@ -30,15 +30,8 @@ interface SubjectMarks {
   max_mark: number;
 }
 
-interface ApiResponse {
-  success: boolean;
-  data: {
-    [subject: string]: SubjectMarks[];
-  };
-}
-
 const InternalMarks = () => {
-  const [marksData, setMarksData] = useState<ApiResponse["data"]>({});
+  const [marksData, setMarksData] = useState<{ [subject: string]: SubjectMarks[] }>({});
   const [loading, setLoading] = useState(true);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -46,9 +39,24 @@ const InternalMarks = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const data = await getInternalMarks();
-      if (data.success && data.data) {
-        setMarksData(data.data);
+      const response = await getInternalMarks();
+      if (response.success && response.data) {
+        // Transform flat marks array into grouped format
+        const groupedData: { [subject: string]: SubjectMarks[] } = {};
+        
+        response.data.forEach(mark => {
+          const subjectName = mark.subject; // subject is already a string
+          if (!groupedData[subjectName]) {
+            groupedData[subjectName] = [];
+          }
+          groupedData[subjectName].push({
+            test_number: mark.test_number,
+            mark: mark.mark,
+            max_mark: mark.max_mark
+          });
+        });
+        
+        setMarksData(groupedData);
       }
       setLoading(false);
     };
@@ -133,9 +141,14 @@ const InternalMarks = () => {
         </div>
         {filteredSubjects.map((subject, index) => {
           const tests = marksData[subject];
-          const t1 = tests.find((t) => t.test_number === 1)?.mark ?? "-";
-          const t2 = tests.find((t) => t.test_number === 2)?.mark ?? "-";
-          const avg = ((+t1 || 0) + (+t2 || 0)) / 2;
+          const t1 = tests.find((t) => t.test_number === 1)?.mark ?? null;
+          const t2 = tests.find((t) => t.test_number === 2)?.mark ?? null;
+          
+          // Calculate average only from available test marks
+          const availableMarks = [t1, t2].filter(mark => mark !== null && mark !== undefined);
+          const avg = availableMarks.length > 0 
+            ? availableMarks.reduce((sum, mark) => sum + mark, 0) / availableMarks.length 
+            : 0;
 
           return (
             <div
@@ -143,10 +156,10 @@ const InternalMarks = () => {
               className="grid grid-cols-4 p-3 text-sm text-gray-800 border-b hover:bg-gray-50"
             >
               <div>{subject}</div>
-              <div className="text-center">{t1}</div>
-              <div className="text-center">{t2}</div>
+              <div className="text-center">{t1 !== null ? t1 : "-"}</div>
+              <div className="text-center">{t2 !== null ? t2 : "-"}</div>
               <div className="text-center font-semibold">
-                {isNaN(avg) ? "-" : avg.toFixed(1)}
+                {availableMarks.length > 0 ? avg.toFixed(1) : "-"}
               </div>
             </div>
           );

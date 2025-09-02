@@ -35,10 +35,21 @@ interface AttendanceRecord {
   status: string;
 }
 
+interface SubjectAttendance {
+  records: { date: string; status: "Present" | "Absent" }[];
+  present: number;
+  total: number;
+  percentage: number;
+}
+
+interface AttendanceData {
+  [subject: string]: SubjectAttendance;
+}
+
 interface GetStudentAttendanceResponse {
   success: boolean;
   message?: string;
-  attendance_records?: AttendanceRecord[];
+  data?: AttendanceData;
 }
 
 interface Mark {
@@ -49,10 +60,21 @@ interface Mark {
   max_mark: number;
 }
 
+interface InternalMark {
+  subject: string;
+  subject_code: string;
+  test_number: number;
+  mark: number;
+  max_mark: number;
+  percentage: number;
+  faculty: string;
+  recorded_at: string;
+}
+
 interface GetInternalMarksResponse {
   success: boolean;
   message?: string;
-  marks?: Mark[];
+  data?: InternalMark[];
 }
 
 interface SubmitLeaveRequestRequest {
@@ -137,7 +159,7 @@ interface UpdateProfileResponse {
 }
 
 interface Announcement {
-  id: number;
+  id?: number;
   title: string;
   content: string;
   created_at: string;
@@ -146,7 +168,7 @@ interface Announcement {
 interface GetAnnouncementsResponse {
   success: boolean;
   message?: string;
-  announcements?: Announcement[];
+  data?: Announcement[];
 }
 
 interface ChatMessage {
@@ -227,10 +249,16 @@ export const getStudentAttendance = async (): Promise<GetStudentAttendanceRespon
         "Content-Type": "application/json",
       },
     });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     return await response.json();
   } catch (error) {
     console.error("Get Student Attendance Error:", error);
-    return { success: false, message: "Network error" };
+    const errorMessage = error instanceof Error ? error.message : "Network error";
+    return { success: false, message: errorMessage };
   }
 };
 

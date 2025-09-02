@@ -138,7 +138,7 @@ const Announcements = () => {
       groups = grouped.map((g) => ({ ...g, usns: selected.filter(s => s.branch_id === g.branch_id && s.semester_id === g.semester_id && s.section_id === g.section_id).map(s => s.usn) }));
     }
     for (const group of groups) {
-      const req: CreateAnnouncementRequest & { student_usns?: string[] } = {
+      const req: CreateAnnouncementRequest = {
         branch_id: String(group.branch_id),
         semester_id: String(group.semester_id),
         section_id: String(group.section_id),

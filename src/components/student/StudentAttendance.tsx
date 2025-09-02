@@ -8,6 +8,7 @@ import {
   Tooltip,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { getStudentAttendance } from "../../utils/student_api";
 
 interface AttendanceRecord {
   date: string;
@@ -32,13 +33,22 @@ const StudentAttendance = () => {
   useEffect(() => {
     const fetchAttendance = async () => {
       try {
-        const res = await fetch("/student/attendance/");
-        const data = await res.json();
-        if (data.success) {
-          setAttendanceData(data.data);
+        const response = await getStudentAttendance();
+        
+        // Check if response is valid
+        if (!response) {
+          console.error("Failed to fetch attendance data: No response received");
+          return;
+        }
+        
+        if (response.success && response.data) {
+          // Backend already returns data in the expected format
+          setAttendanceData(response.data);
+        } else {
+          console.error("Failed to fetch attendance data:", response.message || "Unknown error");
         }
       } catch (error) {
-        console.error("Failed to fetch attendance data:", error);
+        console.error("Failed to fetch attendance data:", error instanceof Error ? error.message : "Unknown error");
       } finally {
         setLoading(false);
       }

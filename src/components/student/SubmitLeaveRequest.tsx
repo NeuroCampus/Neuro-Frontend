@@ -8,6 +8,7 @@ import { PopoverTrigger, Popover, PopoverContent } from "../ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
+import { submitLeaveRequest } from "../../utils/student_api";
 
 const SubmitLeaveRequest = () => {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -24,31 +25,26 @@ const SubmitLeaveRequest = () => {
 
     setLoading(true);
 
-    const body = {
+    const requestData = {
       start_date: format(dateRange.from, "yyyy-MM-dd"),
       end_date: format(dateRange.to, "yyyy-MM-dd"),
       reason: reason.trim(),
     };
 
     try {
-      const response = await fetch("/student/submit-leave-request/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to submit leave request.");
+      const response = await submitLeaveRequest(requestData);
+      
+      if (response.success) {
+        setSuccess(true);
+        setDateRange(undefined);
+        setReason("");
+        alert("Leave request submitted successfully!");
+      } else {
+        throw new Error(response.message || "Failed to submit leave request.");
       }
-
-      setSuccess(true);
-      setDateRange(undefined);
-      setReason("");
     } catch (error) {
-      console.error(error);
-      alert("Something went wrong. Please try again.");
+      console.error("Failed to submit leave request:", error);
+      alert(error instanceof Error ? error.message : "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
