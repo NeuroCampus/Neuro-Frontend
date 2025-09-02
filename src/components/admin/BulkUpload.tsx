@@ -22,7 +22,7 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const REQUIRED_HEADERS = ["usn", "name", "email"];
+  const REQUIRED_HEADERS = ["name", "email"];
 
   const validateFile = (file: File): Promise<boolean> => {
     return new Promise((resolve, reject) => {
@@ -31,49 +31,43 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
       reader.onload = (e) => {
         const text = e.target?.result as string;
 
-        // Split rows (remove empty lines too)
-        const rows = text.trim().split(/\r?\n/).filter(r => r.trim() !== "");
+        // Split rows and remove empty lines
+        const rows = text.split(/\r?\n/).filter(r => r.trim() !== "");
 
         if (rows.length < 2) {
           reject("CSV must contain headers and at least one row of data");
           return;
         }
 
-        // Normalize headers (case-insensitive, trim spaces)
+        // Get headers (first row)
         const headers = rows[0].split(",").map(h => h.trim().toLowerCase());
         const required = REQUIRED_HEADERS.map(h => h.toLowerCase());
 
-        const missingHeaders = required.filter((header) => !headers.includes(header));
+        const missingHeaders = required.filter(h => !headers.includes(h));
         if (missingHeaders.length > 0) {
           reject(`Missing required column(s): ${missingHeaders.join(", ")}`);
           return;
         }
 
-        // Map headers to indexes for flexibility in column order
-        const usnIndex = headers.indexOf("usn");
+        // Map headers to indexes
         const nameIndex = headers.indexOf("name");
         const emailIndex = headers.indexOf("email");
 
-        // Validate data rows (skip header row)
+        // Validate all rows except the first one (skip header)
         const dataRows = rows.slice(1);
         for (let i = 0; i < dataRows.length; i++) {
           const cols = dataRows[i].split(",").map(c => c.trim());
+
+          // Skip empty rows
+          if (cols.every(c => c === "")) continue;
 
           if (cols.length < headers.length) {
             reject(`Row ${i + 2} does not have enough columns`);
             return;
           }
 
-          const usn = cols[usnIndex];
           const name = cols[nameIndex];
           const email = cols[emailIndex];
-
-          // USN format check (example: 1AM22CI064)
-          const usnRegex = /^[0-9][A-Z]{2}[0-9]{2}[A-Z]{2}[0-9]{3}$/;
-          if (!usnRegex.test(usn)) {
-            reject(`Invalid USN format at row ${i + 2}: "${usn}"`);
-            return;
-          }
 
           // Name validation
           if (!name || name.length < 2) {
@@ -96,6 +90,7 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
       reader.readAsText(file);
     });
   };
+
 
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,9 +148,9 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
     }
   };
 
-    const handleDownloadTemplate = () => {
-    const csvContent = `usn,name,email
-  1AM22CI064,John Doe,john@example.com`; // Updated template with USN
+  const handleDownloadTemplate = () => {
+    const csvContent = `name,email
+    John Doe,john@example.com`; // Updated template without USN
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -163,7 +158,6 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
     link.setAttribute("download", "faculty_template.csv");
     link.click();
   };
-
 
   return (
     <div className="px-4 py-8 max-w-4xl mx-auto">
@@ -241,7 +235,7 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
             <p className="font-medium mb-2">Upload Instructions</p>
             <ul className="list-disc pl-5 text-sm text-gray-400 space-y-1 ">
               <li>Use the provided template for proper data formatting</li>
-              <li>Required columns: usn, name, email</li>
+              <li>Required columns: name, email</li>
               <li>role not required, defaults to teacher</li>
               <li>Maximum 500 records per file</li>
               <li>

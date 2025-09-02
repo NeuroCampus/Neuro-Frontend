@@ -199,13 +199,28 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
         <CardContent>
           <div className="w-full h-[250px] grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Attendance Line Chart */}
-            <div>
-              <h3 className="font-semibold mb-2">Attendance (%)</h3>
-              {attendanceData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={200}>
+            <div className={attendanceData.length > 10 ? "overflow-x-auto" : ""}>
+              <h3 className="font-semibold mb-2">Performance</h3>
+              <div
+                style={{
+                  width:
+                    attendanceData.length > 10
+                      ? `${attendanceData.length * 80}px` // scrollable when large
+                      : "100%", // normal fit when small
+                  height: "200px",
+                }}
+              >
+                <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={attendanceData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#2e2e30" /> {/* subtle dark grid */}
-                    <XAxis dataKey="name" stroke="#d1d5db" /> {/* light gray */}
+                    <CartesianGrid strokeDasharray="3 3" stroke="#2e2e30" />
+                    <XAxis
+                      dataKey="name"
+                      stroke="#d1d5db"
+                      interval={0}
+                      angle={attendanceData.length > 10 ? -45 : 0} // rotate only if crowded
+                      textAnchor={attendanceData.length > 10 ? "end" : "middle"}
+                      height={attendanceData.length > 10 ? 80 : 40}
+                    />
                     <YAxis stroke="#d1d5db" />
                     <Tooltip
                       contentStyle={{
@@ -217,15 +232,13 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
                     <Line
                       type="monotone"
                       dataKey="attendance"
-                      stroke="#60a5fa" // light blue
+                      stroke="#60a5fa"
                       strokeWidth={2}
-                      dot={{ fill: "#93c5fd" }} // softer dot
+                      dot={{ fill: "#93c5fd" }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
-              ) : (
-                <p className="text-gray-400 text-center">No attendance data</p>
-              )}
+              </div>
             </div>
 
             {/* Marks Bar Chart */}
