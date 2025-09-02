@@ -7,7 +7,6 @@ import StudentAttendance from "../student/StudentAttendance";
 import InternalMarks from "../student/InternalMarks";
 import SubmitLeaveRequest from "../student/SubmitLeaveRequest";
 import LeaveStatus from "../student/LeaveStatus";
-import CertificatesManagement from "../student/CertificatesManagement";
 import StudentProfile from "../student/StudentProfile";
 import StudentAnnouncements from "../student/StudentAnnouncements";
 import Chat from "../common/Chat";
@@ -63,8 +62,7 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
         return <SubmitLeaveRequest />;
       case "leave-status":
         return <LeaveStatus />;
-      case "certificates":
-        return <CertificatesManagement />;
+      
       case "profile":
         return <StudentProfile user={user} />;
       case "announcements":

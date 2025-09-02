@@ -158,7 +158,6 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       { name: "Internal Marks", page: "marks" },
       { name: "Leave Request", page: "leave-request" },
       { name: "Leave Status", page: "leave-status" },
-      { name: "Certificates", page: "certificates" },
       { name: "Profile", page: "profile" },
       { name: "Announcements", page: "announcements" },
       { name: "Chat", page: "chat" },

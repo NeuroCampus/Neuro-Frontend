@@ -8,6 +8,7 @@ import {
 } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Megaphone, Bell } from "lucide-react";
+import { getAnnouncements } from "../../utils/student_api";
 
 // Style maps for optional fields (if backend expands later)
 const categoryStyles = {
@@ -24,6 +25,7 @@ const priorityStyles = {
 };
 
 interface Announcement {
+  id?: number;
   title: string;
   content: string;
   created_at: string;
@@ -39,10 +41,11 @@ const StudentAnnouncements = () => {
   useEffect(() => {
     const fetchAnnouncements = async () => {
       try {
-        const response = await fetch("/student/announcements/");
-        const json = await response.json();
-        if (json.success && Array.isArray(json.data)) {
-          setAnnouncements(json.data);
+        const response = await getAnnouncements();
+        if (response.success && response.data) {
+          setAnnouncements(response.data);
+        } else {
+          console.error("Failed to fetch announcements:", response.message);
         }
       } catch (error) {
         console.error("Failed to fetch announcements:", error);

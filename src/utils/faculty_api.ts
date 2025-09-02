@@ -79,7 +79,8 @@ interface CreateAnnouncementRequest {
   section_id: string;
   title: string;
   content: string;
-  target: "student" | "faculty" | "both";
+  target?: "student" | "faculty" | "both";
+  student_usns?: string[];
 }
 
 interface CreateAnnouncementResponse {
