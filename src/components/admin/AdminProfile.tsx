@@ -6,6 +6,8 @@ import { Label } from "../ui/label";
 import { cn } from "@/lib/utils";
 import { manageAdminProfile } from "../../utils/admin_api";
 import { useToast } from "../../hooks/use-toast";
+import { Textarea } from "../ui/textarea";
+
 
 interface AdminProfileProps {
   user: any;
@@ -409,23 +411,33 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
             </div>
 
             {/* Bio */}
-            <div>
-              <Label htmlFor="bio" className="text-xs text-gray-200 mb-1 block">
-                Bio
-              </Label>
-              <textarea
-                id="bio"
-                name="bio"
-                value={profile.bio}
-                onChange={handleChange}
-                disabled={!editing || loading}
-                className="w-full p-2 border rounded-md bg-[#232326] text-gray-200 resize-none"
-                placeholder="Tell us about yourself (10–300 characters)"
-              />
-              {localErrors.bio && (
-                <p className="text-red-500 text-xs mt-1">{localErrors.bio}</p>
-              )}
-            </div>
+          <div>
+            <Label htmlFor="bio" className="text-xs text-gray-200 mb-1 block">
+              Bio
+            </Label>
+            <Textarea
+              id="bio"
+              name="bio"
+              value={profile.bio}
+              onChange={handleChange}
+              disabled={!editing || loading}
+              className="w-full bg-[#232326] text-gray-200 resize-none overflow-y-auto thin-scrollbar"
+              placeholder="Tell us about yourself (10–300 characters)"
+              rows={1} // start small
+              style={{
+                maxHeight: "200px", // stops growing beyond this
+              }}
+              onInput={(e) => {
+                const target = e.currentTarget;
+                target.style.height = "auto"; // reset
+                target.style.height = `${Math.min(target.scrollHeight, 200)}px`; // expand
+              }}
+            />
+            {localErrors.bio && (
+              <p className="text-red-500 text-xs mt-1">{localErrors.bio}</p>
+            )}
+          </div>
+
           </div>
         </CardContent>
 

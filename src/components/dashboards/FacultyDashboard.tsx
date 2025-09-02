@@ -100,7 +100,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
         toggleCollapse={toggleSidebar}
       />
       <div
-        className={`w-full max-h-screen overflow-y-auto bg-[#1c1c1e] thin-scrollbar transition-all duration-300 ${
+        className={`flex-1 overflow-y-auto bg-[#1c1c1e] thin-scrollbar transition-all duration-300 scroll-smooth ${
           isSidebarCollapsed ? "ml-16" : "ml-64"
         }`}
       >

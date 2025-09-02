@@ -69,7 +69,7 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
     fetchStats();
   }, [setError, toast]);
 
-const filteredBranches = Array.isArray(stats?.branch_distribution)
+  const filteredBranches = Array.isArray(stats?.branch_distribution)
   ? stats.branch_distribution
       .filter(
         (branch: any) =>
@@ -88,16 +88,17 @@ const filteredBranches = Array.isArray(stats?.branch_distribution)
         if (aStarts && !bStarts) return -1;
         if (bStarts && !aStarts) return 1;
 
-        // 2. Shorter distance between match position → higher rank
+        // 2. Prioritize by index of match (earlier is better)
         const aIndex = aName.indexOf(s);
         const bIndex = bName.indexOf(s);
         if (aIndex !== bIndex) return aIndex - bIndex;
 
-        // 3. Shorter name length → higher rank
-        return aName.length - bName.length;
+        // 3. If equal relevance, sort alphabetically
+        return aName.localeCompare(bName);
       })
   : [];
 
+  
   const handleExportPDF = () => {
     const doc = new jsPDF();
     doc.setFontSize(16);
@@ -115,6 +116,8 @@ const filteredBranches = Array.isArray(stats?.branch_distribution)
     doc.save("branch_statistics_current_term.pdf");
   };
 
+  const filteredLabels = filteredBranches.map((b: any) => b.name);
+
   const studentMap = Object.fromEntries(
     filteredBranches.map((b: any) => [b.name, b.students || 0])
   );
@@ -124,25 +127,24 @@ const filteredBranches = Array.isArray(stats?.branch_distribution)
   );
 
   const barData = {
-    labels: allLabels,
+    labels: filteredLabels,
     datasets: [
       {
         label: "Students",
-        data: allLabels.map((label) => studentMap[label] || 0),
+        data: filteredLabels.map((label: string) => studentMap[label] || 0),
         backgroundColor: "rgba(59, 130, 246, 0.6)",
         borderColor: "rgba(59, 130, 246, 1)",
         borderWidth: 1,
       },
       {
         label: "Faculty",
-        data: allLabels.map((label) => facultyMap[label] || 0),
+        data: filteredLabels.map((label: string) => facultyMap[label] || 0),
         backgroundColor: "rgba(168, 85, 247, 0.6)",
         borderColor: "rgba(168, 85, 247, 1)",
         borderWidth: 1,
       },
     ],
   };
-
 
   // Pie chart data for role distribution
   const pieData = {
@@ -282,34 +284,72 @@ const filteredBranches = Array.isArray(stats?.branch_distribution)
             </p>
 
             <div className="h-80 flex items-center justify-center">
-              {filteredBranches.length > 0 ? (
-                <Bar
-                  data={barData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: {
-                      duration: 800,
-                      easing: "easeInOutQuart",
+              {filteredBranches.length > 0 ? (() => {
+                const filteredLabels = filteredBranches.map((b: any) => b.name);
+
+                const barData = {
+                  labels: filteredLabels,
+                  datasets: [
+                    {
+                      label: "Students",
+                      data: filteredLabels.map((label: string) => studentMap[label] || 0),
+                      backgroundColor: "rgba(59, 130, 246, 0.6)",
+                      borderColor: "rgba(59, 130, 246, 1)",
+                      borderWidth: 1,
                     },
-                    plugins: {
-                      legend: {
-                        position: "top",
-                        labels: { color: "#fff" },
+                    {
+                      label: "Faculty",
+                      data: filteredLabels.map((label: string) => facultyMap[label] || 0),
+                      backgroundColor: "rgba(168, 85, 247, 0.6)",
+                      borderColor: "rgba(168, 85, 247, 1)",
+                      borderWidth: 1,
+                    },
+                  ],
+                };
+
+                const hasData = barData.datasets.some((d) =>
+                  d.data.some((val) => val > 0)
+                );
+
+                return hasData ? (
+                  <Bar
+                    data={barData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      animation: {
+                        duration: 800,
+                        easing: "easeInOutQuart",
                       },
-                      tooltip: { enabled: true },
-                    },
-                    scales: {
-                      x: { ticks: { color: "#fff" } },
-                      y: {
-                        beginAtZero: true,
-                        title: { display: true, text: "Count", color: "#fff" },
-                        ticks: { color: "#fff" },
+                      plugins: {
+                        legend: {
+                          position: "top",
+                          labels: { color: "#fff" },
+                        },
+                        tooltip: { enabled: true },
                       },
-                    },
-                  }}
-                />
-              ) : (
+                      scales: {
+                        x: { ticks: { color: "#fff" } },
+                        y: {
+                          beginAtZero: true,
+                          title: { display: true, text: "Count", color: "#fff" },
+                          ticks: { color: "#fff" },
+                        },
+                      },
+                    }}
+                  />
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="text-center text-gray-400"
+                  >
+                    <p className="text-lg font-semibold">No data</p>
+                    <p className="text-sm">This branch has no records</p>
+                  </motion.div>
+                );
+              })() : (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -323,6 +363,7 @@ const filteredBranches = Array.isArray(stats?.branch_distribution)
               )}
             </div>
           </motion.div>
+
 
           {/* Pie Chart */}
           <motion.div
