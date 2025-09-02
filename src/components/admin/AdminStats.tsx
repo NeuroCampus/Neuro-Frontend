@@ -31,6 +31,10 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const normalize = (str: string) => str.toLowerCase().trim();
+  const allLabels = Array.isArray(stats?.branch_distribution)
+    ? stats.branch_distribution.map((b: any) => b.name || "N/A")
+    : [];
+
 
 
   useEffect(() => {
@@ -111,26 +115,34 @@ const filteredBranches = Array.isArray(stats?.branch_distribution)
     doc.save("branch_statistics_current_term.pdf");
   };
 
-  // Bar chart data for branch distribution
+  const studentMap = Object.fromEntries(
+    filteredBranches.map((b: any) => [b.name, b.students || 0])
+  );
+
+  const facultyMap = Object.fromEntries(
+    filteredBranches.map((b: any) => [b.name, b.faculty || 0])
+  );
+
   const barData = {
-    labels: filteredBranches.map((b: any) => b.name || "N/A"),
+    labels: allLabels,
     datasets: [
       {
         label: "Students",
-        data: filteredBranches.map((b: any) => b.students || 0),
+        data: allLabels.map((label) => studentMap[label] || 0),
         backgroundColor: "rgba(59, 130, 246, 0.6)",
         borderColor: "rgba(59, 130, 246, 1)",
         borderWidth: 1,
       },
       {
         label: "Faculty",
-        data: filteredBranches.map((b: any) => b.faculty || 0),
+        data: allLabels.map((label) => facultyMap[label] || 0),
         backgroundColor: "rgba(168, 85, 247, 0.6)",
         borderColor: "rgba(168, 85, 247, 1)",
         borderWidth: 1,
       },
     ],
   };
+
 
   // Pie chart data for role distribution
   const pieData = {
@@ -268,29 +280,47 @@ const filteredBranches = Array.isArray(stats?.branch_distribution)
             <p className="text-sm text-gray-400 mb-4">
               Students and faculty across branches
             </p>
-            <div className="h-80">
-              <Bar
-                data={barData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      position: "top",
-                      labels: { color: "#fff" } // Legend text white
+
+            <div className="h-80 flex items-center justify-center">
+              {filteredBranches.length > 0 ? (
+                <Bar
+                  data={barData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                      duration: 800,
+                      easing: "easeInOutQuart",
                     },
-                    tooltip: { enabled: true },
-                  },
-                  scales: {
-                    x: { ticks: { color: "#fff" } },
-                    y: { 
-                      beginAtZero: true, 
-                      title: { display: true, text: "Count", color: "#fff" },
-                      ticks: { color: "#fff" }
+                    plugins: {
+                      legend: {
+                        position: "top",
+                        labels: { color: "#fff" },
+                      },
+                      tooltip: { enabled: true },
                     },
-                  },
-                }}
-              />
+                    scales: {
+                      x: { ticks: { color: "#fff" } },
+                      y: {
+                        beginAtZero: true,
+                        title: { display: true, text: "Count", color: "#fff" },
+                        ticks: { color: "#fff" },
+                      },
+                    },
+                  }}
+                />
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.4 }}
+                  className="text-center text-gray-400"
+                >
+                  <p className="text-lg font-semibold">No results found</p>
+                  <p className="text-sm">Try a different search term</p>
+                </motion.div>
+              )}
             </div>
           </motion.div>
 

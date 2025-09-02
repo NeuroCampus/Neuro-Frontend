@@ -73,12 +73,15 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
   }, [setError, toast]);
 
   const handleSendNotification = async () => {
-    if (!title || !message || !targetRole) {
-      setValidationError("Please fill out all fields before sending.");
+  // Regex: At least one alphanumeric character required
+    const isValidInput = (text: string) => /\w/.test(text.trim());
+
+    if (!isValidInput(title) || !isValidInput(message) || !targetRole) {
+      setValidationError("Please enter a valid title and message (not just spaces/symbols).");
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Please fill out all fields.",
+        description: "Title and Message must contain meaningful text.",
       });
       return;
     }
@@ -97,10 +100,12 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
     const backendRole = roleMap[targetRole] || targetRole;
 
     try {
-      const payload = { title, message, target_role: backendRole };
-      console.log("Send Notification Payload:", payload); // Debug log
-      const response = await manageNotifications(payload, "POST"); // Pass method as separate argument
-      console.log("Send Notification Response:", response); // Debug log
+      const payload = { title: title.trim(), message: message.trim(), target_role: backendRole };
+      console.log("Send Notification Payload:", payload);
+
+      const response = await manageNotifications(payload, "POST");
+      console.log("Send Notification Response:", response);
+
       if (response.success) {
         // Refetch notifications to get the new notification with its ID
         const updatedResponse = await manageNotifications();
@@ -125,7 +130,7 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
         });
       }
     } catch (err) {
-      console.error("Send Notification Error:", err); // Debug log
+      console.error("Send Notification Error:", err);
       setError("Network error while sending notification");
       toast({
         variant: "destructive",
@@ -136,6 +141,7 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
       setLoading(false);
     }
   };
+
 
   const getBadgeColor = (role: string) => {
     switch (role) {
