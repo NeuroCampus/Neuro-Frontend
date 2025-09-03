@@ -87,7 +87,7 @@ const PromotionManagement = () => {
           <Button
             onClick={() => setActiveTab("overview")}
             variant="outline"
-            className="border-gray-600 text-gray-300"
+            className=" text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
           >
             Back to Overview
           </Button>

@@ -347,7 +347,7 @@ const SemesterManagement = () => {
               placeholder="Search by semester number..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="max-w-sm bg-[#232326] text-gray-200 border border-gray-700 placeholder-gray-400 focus:border-gray-500 focus:ring-0"
+              className="max-w-sm bg-[#232326] text-gray-200 border border-gray-700 placeholder:text-gray-400 focus:border-gray-500 focus:ring-0"
             />
             <Button
               onClick={() => openModal()}
@@ -363,79 +363,82 @@ const SemesterManagement = () => {
           ) : filteredSemesters.length === 0 ? (
             <div className="text-center py-4">No semesters found.</div>
           ) : (
-            <div className="rounded-md border overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-2">NAME</th>
-                    <th className="text-left p-2">YEAR</th>
-                    <th className="text-left p-2">SECTIONS</th>
-                    <th className="text-left p-2">ACTIONS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredSemesters.map((sem) => {
-                    const semesterSections = sections.filter((s) => s.semester_id === sem.id);
-                    return (
-                      <tr key={sem.id} className="border-b">
-                        <td className="p-2">{getSemesterName(sem.number)}</td>
-                        <td className="p-2">{getYear(sem.number)}</td>
-                        <td className="p-2">
-                          {semesterSections.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                              {semesterSections
-                                .slice()
-                                .sort((a, b) => a.name.localeCompare(b.name))
-                                .map((section) => (
-                                  <div key={section.id} className="flex items-center gap-1">
-                                    <span>{section.name}</span>
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      onClick={() => openDeleteSectionModal(section)}
-                                      disabled={loading}
-                                    >
-                                      <Trash2 className="h-3 w-3 text-red-600" />
-                                    </Button>
-                                  </div>
-                                ))}
-                            </div>
-                          ) : (
-                            "None"
-                          )}
-                        </td>
-                        <td className="p-2 flex items-center gap-2">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => openModal(sem)}
-                            disabled={loading}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => openSectionModal(sem)}
-                            disabled={loading}
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => openDeleteModal(sem)}
-                            disabled={loading}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="rounded-md border overflow-hidden">
+              <div className="overflow-y-auto max-h-96 custom-scrollbar"> {/* scrollable wrapper */}
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 bg-[#1c1c1e] text-gray-200 z-10">
+                    <tr className="border-b">
+                      <th className="p-2">NAME</th>
+                      <th className="p-2">YEAR</th>
+                      <th className="p-2">SECTIONS</th>
+                      <th className="p-2">ACTIONS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredSemesters.slice(0, 8).map((sem) => {   // ✅ limit to 8 rows
+                      const semesterSections = sections.filter((s) => s.semester_id === sem.id);
+                      return (
+                        <tr key={sem.id} className="border-b text-center">
+                          <td className="p-2">{getSemesterName(sem.number)}</td>
+                          <td className="p-2">{getYear(sem.number)}</td>
+                          <td className="p-2">
+                            {semesterSections.length > 0 ? (
+                              <div className="flex flex-wrap gap-2 justify-center">
+                                {semesterSections
+                                  .slice()
+                                  .sort((a, b) => a.name.localeCompare(b.name))
+                                  .map((section) => (
+                                    <div key={section.id} className="flex items-center gap-1">
+                                      <span>{section.name}</span>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        onClick={() => openDeleteSectionModal(section)}
+                                        disabled={loading}
+                                      >
+                                        <Trash2 className="h-3 w-3 text-red-600" />
+                                      </Button>
+                                    </div>
+                                  ))}
+                              </div>
+                            ) : (
+                              "None"
+                            )}
+                          </td>
+                          <td className="p-2 flex justify-center gap-2">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => openModal(sem)}
+                              disabled={loading}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => openSectionModal(sem)}
+                              disabled={loading}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => openDeleteModal(sem)}
+                              disabled={loading}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
+
           )}
         </CardContent>
       </Card>
@@ -510,10 +513,10 @@ const SemesterManagement = () => {
         </div>
           </div>
           <DialogFooter className="mt-4">
-        <Button variant="outline" onClick={closeSectionModal} disabled={loading} className="text-gray-200 bg-transparent">
+        <Button variant="outline" onClick={closeSectionModal} disabled={loading} className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 bg-transparent">
           Cancel
         </Button>
-        <Button onClick={handleSaveSection} disabled={loading}>
+        <Button  onClick={handleSaveSection} disabled={loading} className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500">
           Add Section
         </Button>
           </DialogFooter>

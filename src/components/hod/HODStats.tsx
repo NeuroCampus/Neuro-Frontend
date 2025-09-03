@@ -375,83 +375,91 @@ export default function HODStats({ setError, setPage }: HODStatsProps) {
       <div className="bg-[#1c1c1e] p-6 rounded-lg shadow-sm text-sm text-gray-200 border border-gray-200">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-gray-200">Leave Requests</h3>
-            <button
-              className="flex items-center gap-1 border border-gray-300 text-sm font-medium text-gray-200 bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-md transition"
-              onClick={() => setPage("leaves")} // <- this switches the dashboard page
-            >
-              View All
-            </button>
-
+          <button
+            className="flex items-center gap-1 border border-gray-300 text-sm font-medium text-gray-200 bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-md transition"
+            onClick={() => setPage("leaves")}
+          >
+            View All
+          </button>
         </div>
-        <table className="w-full">
-          <thead>
-            <tr className="text-left border-b text-gray-200 text-xs">
-              <th className="pb-2">Faculty</th>
-              <th>Period</th>
-              <th>Reason</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {leaveRequests.length === 0 && !isLoading ? (
-              <tr>
-                <td colSpan={5} className="py-3 text-center text-gray-200">No leave requests found</td>
+
+        <div className="max-h-64 overflow-y-auto custom-scrollbar scroll-smooth"> 
+          <table className="w-full">
+            <thead className="sticky top-0 bg-[#1c1c1e] z-10">
+              <tr className="text-center border-b text-gray-200 text-xs">
+                <th className="pb-2">Faculty</th>
+                <th>Period</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Action</th>
               </tr>
-            ) : (
-              leaveRequests.map((row, index) => (
-                <tr key={row.id} className="border-b last:border-none text-sm hover:bg-gray-800">
-                  <td className="py-3">
-                    <div>
-                      <p className="font-medium text-gray-200">{row.name}</p>
-                      <p className="text-xs text-gray-400">{row.dept}</p>
-                    </div>
-                  </td>
-                  <td>{row.period}</td>
-                  <td>{row.reason}</td>
-                  <td>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                        row.status === "Pending"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : row.status === "Approved"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {row.status}
-                    </span>
-                  </td>
-                  <td>
-                    {row.status === "Pending" ? (
-                        <div className="flex gap-2">
-                        <button
-                          onClick={() => handleApprove(index)}
-                          className="flex items-center gap-1 bg-green-700 text-gray-100 hover:bg-green-800 text-sm font-medium px-3 py-1.5 rounded-md transition"
-                          disabled={isLoading}
-                        >
-                          <CheckCircle className="w-4 h-4" />
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => handleReject(index)}
-                          className="flex items-center gap-1 bg-red-700 text-gray-100 hover:bg-red-800 text-sm font-medium px-3 py-1.5 rounded-md transition"
-                          disabled={isLoading}
-                        >
-                          <XCircle className="w-4 h-4" />
-                          Reject
-                        </button>
-                        </div>
-                    ) : (
-                      <span className="text-xs text-gray-500">No action needed</span>
-                    )}
+            </thead>
+            <tbody>
+              {leaveRequests.length === 0 && !isLoading ? (
+                <tr>
+                  <td colSpan={5} className="py-3 text-center text-gray-200">
+                    No leave requests found
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                leaveRequests.slice(0, 20).map((row, index) => (   // limit to first 20 rows for example
+                  <tr
+                    key={row.id}
+                    className="border-b last:border-none text-sm hover:bg-gray-800 text-center"
+                  >
+                    <td className="py-3">
+                      <div>
+                        <p className="font-medium text-gray-200">{row.name}</p>
+                        <p className="text-xs text-gray-400">{row.dept}</p>
+                      </div>
+                    </td>
+                    <td>{row.period}</td>
+                    <td>{row.reason}</td>
+                    <td>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium align-middle ${
+                          row.status === "Pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : row.status === "Approved"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {row.status}
+                      </span>
+                    </td>
+                    <td>
+                      {row.status === "Pending" ? (
+                        <div className="flex gap-2 align-middle text-center px-1 justify-center">
+                          <button
+                            onClick={() => handleApprove(index)}
+                            className="flex items-center gap-1 bg-green-700 text-gray-100 hover:bg-green-800 text-sm font-medium px-3 py-1.5 rounded-md transition"
+                            disabled={isLoading}
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => handleReject(index)}
+                            className="flex items-center gap-1 bg-red-700 text-gray-100 hover:bg-red-800 text-sm font-medium px-3 py-1.5 rounded-md transition"
+                            disabled={isLoading}
+                          >
+                            <XCircle className="w-4 h-4" />
+                            Reject
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-500">No action needed</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
     </div>
   );
 };

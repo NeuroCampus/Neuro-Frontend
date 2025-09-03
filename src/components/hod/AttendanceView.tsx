@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Eye, FileDown } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import Fuse from "fuse.js";
 import {
   Dialog,
   DialogContent,
@@ -214,12 +215,19 @@ const AttendanceView = () => {
   }, [state.branchId, state.filters.semester_id, state.filters.section_id, state.filters.subject_id, toast]);
 
   // Filter students for search
-  const filteredStudents = state.students.filter((student) => {
-    const matchesSearch =
-      student.name.toLowerCase().includes(state.search.toLowerCase()) ||
-      student.usn.toLowerCase().includes(state.search.toLowerCase());
-    return matchesSearch;
-  });
+  const normalizeText = (text: string) =>
+  text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+const fuse = new Fuse(state.students, {
+  keys: ["name", "usn", "semester", "section"],
+  threshold: 0.3,   // lower = stricter, higher = fuzzier
+  includeScore: true,
+});
+
+// Use fuzzy search
+const filteredStudents = state.search
+  ? fuse.search(state.search).map((result) => result.item)
+  : state.students;
 
   const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
   const currentStudents = filteredStudents.slice(
@@ -306,9 +314,9 @@ const AttendanceView = () => {
                 placeholder={state.semesters.length === 0 ? "No semesters available" : "Select Semester"}
               />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className=" bg-[#232326] text-gray-200">
               {state.semesters.map((semester) => (
-                <SelectItem key={semester.id} value={semester.id}>
+                <SelectItem  key={semester.id} value={semester.id}>
                   Semester {semester.number}
                 </SelectItem>
               ))}
@@ -326,7 +334,7 @@ const AttendanceView = () => {
                 }
               />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className=" bg-[#232326] text-gray-200">
               {state.sections
                 .filter((section) => section.semester_id === state.filters.semester_id)
                 .map((section) => (
@@ -348,7 +356,7 @@ const AttendanceView = () => {
                 }
               />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className=" bg-[#232326] text-gray-200">
               {state.subjects
                 .filter((subject) => subject.semester_id === state.filters.semester_id)
                 .map((subject) => (
@@ -364,7 +372,7 @@ const AttendanceView = () => {
           {/* Input + Error */}
           <div className="flex flex-col w-full max-w-md">
             <Input
-              className="w-full bg-[#232326] text-gray-200"
+              className="w-full bg-[#232326] text-gray-200 placeholder:text-gray-500"
               placeholder="Search by name or USN..."
               value={state.search}
               onChange={(e) => {
@@ -393,52 +401,59 @@ const AttendanceView = () => {
 
 
         <div className="overflow-x-auto mt-4">
-          <table className="w-full table-auto border">
-            <thead className="bg-[#232326] text-gray-200 text-left">
-              <tr>
-                <th className="p-3 border">Student</th>
-                <th className="p-3 border">Attendance</th>
-                <th className="p-3 border">Semester</th>
-                <th className="p-3 border">Section</th>
-                <th className="p-3 border">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentStudents.map((student) => (
-                <tr key={student.student_id} className="hover:bg-gray-600">
-                  <td className="p-3 border">
-                    <div>
-                      <p className="font-medium">{student.name}</p>
-                      <p className="text-sm text-gray-500">{student.usn}</p>
-                    </div>
-                  </td>
-                  <td className="p-3 border">
-                    <div className="flex items-center gap-2">
-                      <span>{formatAttendancePercentage(student.attendance_percentage)}</span>
-                      <div className="w-full bg-gray-200 h-2 rounded">
-                        <div
-                          className="h-2 bg-green-500 rounded"
-                          style={{ width: getProgressBarWidth(student.attendance_percentage) }}
-                        ></div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-3 border">{student.semester || "-"}</td>
-                  <td className="p-3 border">{student.section || "-"}</td>
-                  <td className="p-3 border">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
-                      onClick={() => updateState({ selectedStudent: student })}
-                    >
-                      <Eye size={16} /> View Details
-                    </Button>
-                  </td>
+          {/* Height ≈ 5 rows (5 × h-16 = 80 = 20rem). Adjust if your row height differs */}
+          <div className="h-80 overflow-y-auto custom-scrollbar border rounded">
+            <table className="w-full table-fixed border-collapse">
+              <thead className="bg-[#232326] text-gray-200 text-left sticky top-0 z-10">
+                <tr>
+                  <th className="p-3 border w-[24%]">Student</th>
+                  <th className="p-3 border w-[32%]">Attendance</th>
+                  <th className="p-3 border w-[12%]">Semester</th>
+                  <th className="p-3 border w-[12%]">Section</th>
+                  <th className="p-3 border w-[20%]">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+
+              <tbody>
+                {currentStudents.map((student) => (
+                  <tr key={student.student_id} className="hover:bg-gray-600 h-16">
+                    <td className="p-3 border">
+                      <div>
+                        <p className="font-medium">{student.name}</p>
+                        <p className="text-sm text-gray-200">{student.usn}</p>
+                      </div>
+                    </td>
+
+                    <td className="p-3 border">
+                      <div className="flex items-center gap-2">
+                        <span>{formatAttendancePercentage(student.attendance_percentage)}</span>
+                        <div className="w-full bg-gray-200 h-2 rounded">
+                          <div
+                            className="h-2 bg-green-500 rounded"
+                            style={{ width: getProgressBarWidth(student.attendance_percentage) }}
+                          />
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="p-3 border">{student.semester || "-"}</td>
+                    <td className="p-3 border">{student.section || "-"}</td>
+
+                    <td className="p-3 border">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                        onClick={() => updateState({ selectedStudent: student })}
+                      >
+                        <Eye size={16} /> View Details
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div className="flex justify-between items-center mt-6">
@@ -462,22 +477,28 @@ const AttendanceView = () => {
         </div>
 
         <Dialog open={!!state.selectedStudent} onOpenChange={() => updateState({ selectedStudent: null })}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md bg-[#1c1c1e] text-gray-200 border border-gray-700">
             <DialogHeader>
-              <DialogTitle>{state.selectedStudent?.name}'s Details</DialogTitle>
-              <DialogDescription>Full attendance record</DialogDescription>
+              <DialogTitle className="text-gray-100">
+                {state.selectedStudent?.name}'s Details
+              </DialogTitle>
+              <DialogDescription className="text-gray-400">
+                Full attendance record
+              </DialogDescription>
             </DialogHeader>
-            <div className="space-y-2 mt-4 text-gray-700">
-              <p><strong>USN:</strong> {state.selectedStudent?.usn}</p>
-              <p><strong>Attendance:</strong> {formatAttendancePercentage(state.selectedStudent?.attendance_percentage)}</p>
-              <p><strong>Total Sessions:</strong> {state.selectedStudent?.total_sessions || "-"}</p>
-              <p><strong>Present Sessions:</strong> {state.selectedStudent?.present_sessions || "-"}</p>
-              <p><strong>Branch:</strong> {state.branch.toUpperCase()}</p>
-              <p><strong>Semester:</strong> {state.selectedStudent?.semester || "-"}</p>
-              <p><strong>Section:</strong> {state.selectedStudent?.section?.toUpperCase() || "-"}</p>
+
+            <div className="space-y-2 mt-4 text-gray-300">
+              <p><strong className="text-gray-100">USN:</strong> {state.selectedStudent?.usn}</p>
+              <p><strong className="text-gray-100">Attendance:</strong> {formatAttendancePercentage(state.selectedStudent?.attendance_percentage)}</p>
+              <p><strong className="text-gray-100">Total Sessions:</strong> {state.selectedStudent?.total_sessions || "-"}</p>
+              <p><strong className="text-gray-100">Present Sessions:</strong> {state.selectedStudent?.present_sessions || "-"}</p>
+              <p><strong className="text-gray-100">Branch:</strong> {state.branch.toUpperCase()}</p>
+              <p><strong className="text-gray-100">Semester:</strong> {state.selectedStudent?.semester || "-"}</p>
+              <p><strong className="text-gray-100">Section:</strong> {state.selectedStudent?.section?.toUpperCase() || "-"}</p>
             </div>
+
             <DialogClose asChild>
-              <Button className="mt-6 w-full bg-gray-700 text-white hover:bg-gray-800">
+              <Button className="mt-6 w-full  text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500">
                 Close
               </Button>
             </DialogClose>

@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useToast } from "../ui/use-toast";
-import { getSemesters, manageSections, manageSubjects, manageFaculties, manageTimetable, manageProfile, manageFacultyAssignments } from "../../utils/hod_api";
+import { getSemesters, manageSections, manageSubjects, manageFaculties, manageTimetable, manageProfile, manageFacultyAssignments,getBranches } from "../../utils/hod_api";
 
 // Interfaces
 interface Semester {
@@ -234,6 +234,7 @@ const Timetable = () => {
   const { toast } = useToast();
   const [state, setState] = useState({
     branchId: "",
+    branches: [] as { id: string; name: string }[],   // ✅ add this
     semesterId: "",
     sectionId: "",
     isEditing: false,
@@ -274,6 +275,13 @@ const Timetable = () => {
           updateState({ branchId: profileResponse.data.branch_id });
         } else {
           throw new Error("Invalid or missing branch in profile");
+        }
+
+        const branchesResponse = await getBranches();
+        if (branchesResponse.success && branchesResponse.data) {
+          updateState({ branches: branchesResponse.data });
+        } else {
+          throw new Error(branchesResponse.message || "Failed to fetch branches");
         }
 
         const semestersResponse = await getSemesters(profileResponse.data.branch_id);
@@ -583,11 +591,19 @@ const Timetable = () => {
     const doc = new jsPDF();
     doc.setFont("helvetica", "normal");
     doc.setFontSize(16);
-    const title = state.semesterId && state.sectionId
-      ? `${state.semesters.find((s) => s.id === state.semesterId)?.number} Semester - Section ${
-          state.sections.find((s) => s.id === state.sectionId)?.name
-        } Timetable`
-      : "Timetable";
+
+    const branchName =
+      state.branches.find((b) => b.id === state.branchId)?.name || "Branch";
+    const semesterNumber =
+      state.semesters.find((s) => s.id === state.semesterId)?.number || "Semester";
+    const sectionName =
+      state.sections.find((s) => s.id === state.sectionId)?.name || "Section";
+
+    const title =
+      state.semesterId && state.sectionId && state.branchId
+        ? `${branchName} - ${semesterNumber} Semester - Section ${sectionName} Timetable`
+        : "Timetable";
+
     doc.text(title, 10, 15);
 
     const headers = ["Time/Day", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -617,8 +633,12 @@ const Timetable = () => {
       },
     });
 
-    doc.save(`${state.semesterId || "timetable"}_${state.sectionId || "section"}.pdf`);
+    // ✅ Save as (branch-semester-section).pdf
+    const safeBranch = branchName.replace(/\s+/g, "_");
+    doc.save(`${safeBranch}-${semesterNumber}-${sectionName}.pdf`);
   };
+
+
 
   if (state.loading) {
     return <div className="text-center py-6">Loading...</div>;
@@ -723,11 +743,11 @@ const Timetable = () => {
                 <tbody>
                   {getTableData().map((row: any, idx: number) => (
                     <tr key={idx} className="border-t hover:bg-gray-700 transition text-gray-200">
-                      <td className="py-3 px-4 font-medium text-gray-500">{row.time}</td>
+                      <td className="py-3 px-4 font-medium text-gray-200">{row.time}</td>
                       {["mon", "tue", "wed", "thu", "fri", "sat"].map((day, i) => (
                         <td
                           key={i}
-                          className="py-3 px-4 whitespace-pre-line text-gray-700 cursor-pointer"
+                          className="py-3 px-4 whitespace-pre-line text-gray-200 cursor-pointer"
                           onClick={() => handleClassClick(row.time, day.toUpperCase())}
                         >
                           {row[day] ? (
@@ -739,7 +759,7 @@ const Timetable = () => {
                               {row[day].split("\n")[2]}
                             </>
                           ) : (
-                            state.isEditing && <span className="text-gray-400">Click to add</span>
+                            state.isEditing && <span className="text-gray-300">Click to add</span>
                           )}
                         </td>
                       ))}
