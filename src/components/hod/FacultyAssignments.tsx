@@ -221,66 +221,94 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
   };
 
   const handleAssignFaculty = async () => {
-  if (!validateForm() || !state.branchId) return;
+    if (!validateForm() || !state.branchId) return;
 
-  // 🚨 Prevent multiple faculties for same subject + section + semester
-  const duplicate = state.assignments.find(
-    (a) =>
-      a.subject_id === state.subjectId &&
-      a.section_id === state.sectionId &&
-      a.semester_id === state.semesterId &&
-      a.branch_id === state.branchId &&
-      a.id !== state.editingId // allow editing the same assignment
-  );
+    // 🚨 Case 1: Prevent multiple faculties for the SAME subject + section + semester
+    const duplicate = state.assignments.find(
+      (a) =>
+        a.subject_id === state.subjectId && // ✅ subject included now
+        a.section_id === state.sectionId &&
+        a.semester_id === state.semesterId &&
+        a.branch_id === state.branchId &&
+        a.id !== state.editingId
+    );
 
-  if (duplicate) {
-    toast({
-      variant: "destructive",
-      title: "Duplicate Assignment",
-      description: `Faculty is already assigned for ${duplicate.subject} - Section ${duplicate.section}, Semester ${duplicate.semester}.`,
-    });
-    return; // ❌ stop here, don’t assign again
-  }
-
-  updateState({ isAssigning: true });
-
-  try {
-    const data = {
-      action: state.editingId ? "update" : "create",
-      assignment_id: state.editingId,
-      faculty_id: state.facultyId,
-      subject_id: state.subjectId,
-      semester_id: state.semesterId,
-      section_id: state.sectionId,
-      branch_id: state.branchId,
-    };
-
-    const response = await manageFacultyAssignments(data, "POST");
-    if (response.success) {
-      const assignmentsResponse = await manageFacultyAssignments({ branch_id: state.branchId }, "GET");
-      if (assignmentsResponse.success && assignmentsResponse.data?.assignments) {
-        updateState({ assignments: assignmentsResponse.data.assignments });
-      }
+    if (duplicate) {
       toast({
-        title: state.editingId ? "Updated" : "Success",
-        description: state.editingId
-          ? "Assignment updated successfully"
-          : "Faculty assigned successfully",
-        className: "bg-green-100 text-green-800",
-        icon: <CheckCircle className="w-5 h-5" />,
+        variant: "destructive",
+        title: "Duplicate Assignment",
+        description: `Faculty is already assigned for ${duplicate.subject} - Section ${duplicate.section}, Semester ${duplicate.semester}.`,
       });
-      resetForm();
-    } else {
-      throw new Error(response.message || "Failed to save assignment");
+      return; // ❌ stop here
     }
-  } catch (err: any) {
-    const errorMessage = err.message || "Network error";
-    toast({ variant: "destructive", title: "Error", description: errorMessage });
-    setError(errorMessage);
-  } finally {
-    updateState({ isAssigning: false });
-  }
-};
+
+    // 🚨 Case 2: Prevent same faculty being assigned again to the SAME subject+section+semester
+    const duplicateFaculty = state.assignments.find(
+      (a) =>
+        a.faculty_id === state.facultyId &&
+        a.subject_id === state.subjectId &&
+        a.section_id === state.sectionId &&
+        a.semester_id === state.semesterId &&
+        a.branch_id === state.branchId &&
+        a.id !== state.editingId
+    );
+
+    if (duplicateFaculty) {
+      toast({
+        variant: "destructive",
+        title: "Duplicate Faculty Assignment",
+        description: `${state.faculties.find(f => f.id === state.facultyId)?.name || "This faculty"} is already assigned to ${duplicateFaculty.subject} - Section ${duplicateFaculty.section}, Semester ${duplicateFaculty.semester}.`,
+      });
+      return; // ❌ stop here
+    }
+
+    // ✅ Proceed if no duplicates
+    updateState({ isAssigning: true });
+
+    try {
+      const data = {
+        action: state.editingId ? "update" : "create",
+        assignment_id: state.editingId,
+        faculty_id: state.facultyId,
+        subject_id: state.subjectId,
+        semester_id: state.semesterId,
+        section_id: state.sectionId,
+        branch_id: state.branchId,
+      };
+
+      const response = await manageFacultyAssignments(data, "POST");
+
+      if (response.success) {
+        const assignmentsResponse = await manageFacultyAssignments({ branch_id: state.branchId }, "GET");
+        if (assignmentsResponse.success && assignmentsResponse.data?.assignments) {
+          updateState({ assignments: assignmentsResponse.data.assignments });
+        }
+
+        toast({
+          title: state.editingId ? "Updated" : "Success",
+          description: state.editingId
+            ? "Assignment updated successfully"
+            : "Faculty assigned successfully",
+          className: "bg-green-100 text-green-800",
+          icon: <CheckCircle className="w-5 h-5" />,
+        });
+
+        resetForm();
+      } else {
+        throw new Error(response.message || "Failed to save assignment");
+      }
+    } catch (err: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err.response?.data?.message || err.message || "Network error",
+      });
+      setError(err.message || "Network error");
+    } finally {
+      updateState({ isAssigning: false });
+    }
+  };
+
 
 
 
@@ -479,9 +507,9 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
             ) : filteredAssignments.length === 0 ? (
               <div className="text-center py-4 text-gray-400">No assignments found.</div>
             ) : (
-              <div className="rounded-md border border-gray-700 overflow-x-auto">
-                <table className="w-full text-sm text-gray-200">
-                  <thead className="bg-[#2c2c2e]">
+              <div className="rounded-md border border-gray-700 overflow-x-auto max-h-80 overflow-y-auto custom-scrollbar">
+                <table className="w-full text-sm text-gray-200  scroll-smooth">
+                  <thead className="bg-[#2c2c2e] sticky top-0 z-10">
                     <tr className="border-b border-gray-700">
                       <th className="text-left p-2">Subject</th>
                       <th className="text-left p-2">Section</th>
@@ -492,7 +520,10 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                   </thead>
                   <tbody>
                     {filteredAssignments.map((assignment) => (
-                      <tr key={assignment.id} className="border-b border-gray-700 hover:bg-[#2c2c2e]">
+                      <tr
+                        key={assignment.id}
+                        className="border-b border-gray-700 hover:bg-[#2c2c2e]"
+                      >
                         <td className="p-2">{assignment.subject}</td>
                         <td className="p-2">{assignment.section}</td>
                         <td className="p-2">{assignment.semester}</td>
@@ -516,7 +547,12 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                             size="icon"
                             variant="ghost"
                             className="hover:bg-gray-700"
-                            onClick={() => updateState({ deleteId: assignment.id, openDeleteModal: true })}
+                            onClick={() =>
+                              updateState({
+                                deleteId: assignment.id,
+                                openDeleteModal: true,
+                              })
+                            }
                             disabled={state.loading || state.isAssigning}
                           >
                             <Trash2 className="h-4 w-4 text-red-500" />
@@ -527,6 +563,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                   </tbody>
                 </table>
               </div>
+
             )}
           </CardContent>
         </Card>

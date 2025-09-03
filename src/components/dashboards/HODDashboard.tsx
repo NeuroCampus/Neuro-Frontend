@@ -188,7 +188,7 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
         toggleCollapse={toggleSidebar}
       />
       <div
-        className={`w-full max-h-screen overflow-y bg-[#1c1c1e] transition-all duration-300 ${
+        className={`flex-1 overflow-y-auto bg-[#1c1c1e] transition-all duration-300 scroll-smooth ${
           isSidebarCollapsed ? "ml-16" : "ml-64"
         }`}
       >

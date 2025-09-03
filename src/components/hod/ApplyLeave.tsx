@@ -10,6 +10,8 @@ import { toast } from "react-toastify";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format } from "date-fns";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+
 
 interface ManageHODLeavesRequest {
   branch_id: string;
@@ -43,8 +45,9 @@ const ApplyLeave = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [branchId, setBranchId] = useState("");
-  const [startDate, setStartDate] = useState<Date | null>(new Date());
-  const [endDate, setEndDate] = useState<Date | null>(new Date());
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const today = new Date();
 
 
@@ -159,43 +162,43 @@ const ApplyLeave = () => {
               onChange={(e) => setLeaveTitle(e.target.value)}
               placeholder="Enter a title for your leave"
               disabled={loading}
-              className="w-full bg-[#232326] text-gray-200 border border-gray-700 rounded p-2"
+              className="w-full bg-[#232326] text-gray-200 border border-gray-700 rounded p-2 placeholder:text-gray-400"
             />
           </div>
 
-          {/* Start and End Date */}
+         {/* Start and End Date */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
             {/* Start Date */}
             <div>
               <label className="block text-sm font-medium mb-1">Start Date *</label>
-              <div className="flex items-center bg-[#232326] border border-gray-700 rounded w-full">
+              <div className="relative flex items-center bg-[#232326] border border-gray-700 rounded w-full">
                 <DatePicker
                   selected={startDate}
-                  onChange={(dates) => setStartDate(dates[0] || null)}
-                  minDate={today}
+                  onChange={(date) => setStartDate(date || null)}
+                  minDate={today}   // ✅ only today & future
                   dateFormat="dd/MM/yyyy"
                   disabled={loading}
-                  selectsMultiple={true}
-                  className="flex-1 p-2 text-gray-200 bg-transparent border-none rounded-none focus:outline-none"
+                  placeholderText="Select start date"
+                  className="w-full p-2 text-gray-200 bg-transparent border-none rounded focus:outline-none placeholder-gray-500"
                 />
-                <CalendarIcon className="h-5 w-5 text-gray-400 mr-2 ml-80" />
+                <CalendarIcon className="absolute right-3 h-5 w-5 text-gray-400 pointer-events-none" />
               </div>
             </div>
 
             {/* End Date */}
             <div>
               <label className="block text-sm font-medium mb-1">End Date</label>
-              <div className="flex items-center bg-[#232326] border border-gray-700 rounded w-full">
+              <div className="relative flex items-center bg-[#232326] border border-gray-700 rounded w-full">
                 <DatePicker
                   selected={endDate}
-                  onChange={(dates) => setEndDate(dates[0] || null)}
-                  minDate={startDate || today}
+                  onChange={(date) => setEndDate(date || null)}
+                  minDate={startDate || today}   // ✅ must be ≥ start date
                   dateFormat="dd/MM/yyyy"
                   disabled={loading}
-                  selectsMultiple={true}
-                  className="flex-1 p-2 text-gray-200 bg-transparent border-none rounded-none focus:outline-none"
+                  placeholderText="Select end date"
+                  className="w-full p-2 text-gray-200 bg-transparent border-none rounded focus:outline-none placeholder-gray-500"
                 />
-                <CalendarIcon className="h-5 w-full mr-2 ml-80 text-gray-400" />
+                <CalendarIcon className="absolute right-3 h-5 w-5 text-gray-400 pointer-events-none" />
               </div>
             </div>
           </div>
@@ -209,7 +212,7 @@ const ApplyLeave = () => {
               placeholder="Please provide a detailed reason for your leave request"
               rows={4}
               draggable={false}
-              className="w-full resize-none bg-[#232326] text-gray-200 border border-gray-700 rounded p-2"
+              className="w-full resize-none bg-[#232326] text-gray-200 border border-gray-700 rounded p-2 placeholder:text-gray-400 thin-scrollbar"
               disabled={loading}
             />
           </div>
@@ -265,6 +268,7 @@ const ApplyLeave = () => {
             </div>
           </div>
         </CardHeader>
+
         <CardContent className="divide-y">
           {loading ? (
             <p className="text-sm text-gray-200 py-6 text-center">Loading...</p>
@@ -275,18 +279,20 @@ const ApplyLeave = () => {
               <div key={leave.id} className="flex items-start justify-between py-4">
                 <div className="pr-4 space-y-1">
                   {/* Title / Subject */}
-                  <p className="font-medium text-gray-200">
-                    📌 {leave.title}
-                  </p>
+                  <p className="font-medium text-gray-200">📌 {leave.title}</p>
 
                   {/* Date */}
                   <p className="text-sm text-gray-400">🗓 {leave.date}</p>
 
-                  {/* Reason */}
-                  <p className="text-sm text-gray-400">
-                    📝 <span className="font-semibold">Reason:</span> {leave.reason}
-                  </p>
+                  {/* Reason Button */}
+                  <button
+                    onClick={() => setSelectedReason(leave.reason)}
+                    className="text-sm text-blue-400 hover:underline"
+                  >
+                    📝 View Reason
+                  </button>
                 </div>
+
                 <span
                   className={`px-3 py-1 text-xs font-semibold rounded-full h-fit mt-1 ${statusColors[leave.status]}`}
                 >
@@ -296,6 +302,33 @@ const ApplyLeave = () => {
             ))
           )}
         </CardContent>
+
+        {/* Popup Modal */}
+        <Dialog open={!!selectedReason} onOpenChange={() => setSelectedReason(null)}>
+          <DialogContent className="bg-[#1c1c1e] text-gray-200 border border-gray-700 max-w-md">
+            <DialogHeader>
+              <DialogTitle>Leave Reason</DialogTitle>
+              <DialogDescription className="text-gray-400">
+                The full reason provided by the applicant:
+              </DialogDescription>
+            </DialogHeader>
+
+            {/* Scrollable reason */}
+            <div className="mt-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+              <p className="text-sm text-gray-200 whitespace-pre-line">{selectedReason}</p>
+            </div>
+
+            <div className="flex justify-end mt-4">
+              <Button
+                variant="secondary"
+                onClick={() => setSelectedReason(null)}
+                className=" text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+              >
+                Close
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </Card>
     </div>
   );
