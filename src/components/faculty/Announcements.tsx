@@ -194,7 +194,7 @@ const Announcements = () => {
             ) : notifications.length === 0 ? (
               <div className="text-gray-400">No notifications found.</div>
             ) : (
-              <div className="max-h-64 overflow-y-auto pr-2 space-y-4 thin-scrollbar">
+              <div className="max-h-64 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
                 {notifications.map((item, index) => (
                   <div
                     key={item.id || index}
@@ -339,7 +339,7 @@ const Announcements = () => {
           </CardHeader>
 
           {/* Scrollable Content */}
-          <CardContent className="max-h-72 overflow-y-auto space-y-6 thin-scrollbar">
+          <CardContent className="max-h-72 overflow-y-auto space-y-6 custom-scrollbar">
             {loadingSent ? (
               <div className="text-gray-400">Loading...</div>
             ) : sentNotifications.length === 0 ? (

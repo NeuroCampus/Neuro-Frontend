@@ -231,3 +231,32 @@ html, body, #root {
   scrollbar-width: thin;
   scrollbar-color: #555 #1c1c1e;
 }
+
+/* Dark theme for SweetAlert2 */
+.swal2-popup {
+  background: #1c1c1e !important;
+  color: #f0f0f0 !important;
+  border-radius: 12px !important;
+}
+
+.swal2-title {
+  color: #ffffff !important;
+  font-size: 1.25rem !important;
+}
+
+.swal2-html-container {
+  color: #cccccc !important;
+}
+
+.swal2-confirm {
+  background-color: #2563eb !important; /* Blue */
+  color: #fff !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+}
+
+.swal2-cancel {
+  background-color: #374151 !important;
+  color: #e5e7eb !important;
+  border-radius: 8px !important;
+}

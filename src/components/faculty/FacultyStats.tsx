@@ -13,6 +13,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { Button } from "@/components/ui/button";
 import {
   LineChart,
@@ -24,7 +31,7 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
-  Legend,
+  LabelList,
 } from "recharts";
 import { getFacultyAssignments, getProctorStudents, FacultyAssignment, ProctorStudent } from "@/utils/faculty_api";
 
@@ -45,6 +52,9 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
   const [proctorStudents, setProctorStudents] = useState<ProctorStudent[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedClass, setSelectedClass] = useState<string>("All");
+  const [selectedSection, setSelectedSection] = useState<string>("All");
+  const [selectedDate, setSelectedDate] = useState<string>("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -111,6 +121,23 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
           ).toFixed(2)
         : 0,
   }));
+
+  // Get unique classes and sections from proctorStudents
+  const classOptions = [
+    "All",
+    ...Array.from(new Set(proctorStudents.map((s) => s.branch || ""))).filter(Boolean),
+  ];
+  const sectionOptions = [
+    "All",
+    ...Array.from(new Set(proctorStudents.map((s) => s.section || ""))).filter(Boolean),
+  ];
+
+  // Filter data based on selections
+  const filteredStudents = proctorStudents.filter((s) => {
+    const classMatch = selectedClass === "All" || s.branch === selectedClass;
+    const sectionMatch = selectedSection === "All" || s.section === selectedSection;
+    return classMatch && sectionMatch;
+  });
 
   if (loading) {
     return <div className="p-6 text-center text-gray-600">Loading dashboard...</div>;
@@ -197,19 +224,59 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
           <CardTitle>Performance Trends</CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Filters */}
+          <div className="flex flex-wrap gap-4 mb-4">
+            {/* Class */}
+            <div className="flex flex-col">
+              <label className="block text-sm font-medium mb-1 text-gray-200">Class</label>
+              <Select value={selectedClass} onValueChange={setSelectedClass}>
+                <SelectTrigger className="bg-[#232326] text-gray-200 border border-gray-600 h-10 w-20 px-3 rounded focus:ring-0 focus:ring-white">
+                  <SelectValue placeholder="Select Class" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#232326] text-gray-200 border border-gray-600">
+                  {classOptions.map((opt) => (
+                    <SelectItem key={opt} value={opt}>
+                      {opt}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Section */}
+            <div className="flex flex-col">
+              <label className="block text-sm font-medium mb-1 text-gray-200">Section</label>
+              <Select value={selectedSection} onValueChange={setSelectedSection}>
+                <SelectTrigger className="bg-[#232326] text-gray-200 border border-gray-600 h-10 w-20 px-3 rounded focus:ring-0 focus:ring-white">
+                  <SelectValue placeholder="Select Section" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#232326] text-gray-200 border border-gray-600">
+                  {sectionOptions.map((opt) => (
+                    <SelectItem key={opt} value={opt}>
+                      {opt}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+
           <div className="w-full h-[250px] grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Attendance Line Chart */}
             <div className={attendanceData.length > 10 ? "overflow-x-auto" : ""}>
               <h3 className="font-semibold mb-2">Performance</h3>
+
+              {/* Dynamic chart width */}
               <div
                 style={{
-                  width:
-                    attendanceData.length > 10
-                      ? `${attendanceData.length * 80}px` // scrollable when large
-                      : "100%", // normal fit when small
-                  height: "200px",
+                  width: attendanceData.length > 10 
+                    ? `${attendanceData.length * 80}px` // give each student ~80px
+                    : "100%",
+                  height: "250px",
                 }}
               >
+                {/* Remove ResponsiveContainer width="100%" */}
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={attendanceData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#2e2e30" />
@@ -217,7 +284,7 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
                       dataKey="name"
                       stroke="#d1d5db"
                       interval={0}
-                      angle={attendanceData.length > 10 ? -45 : 0} // rotate only if crowded
+                      angle={attendanceData.length > 10 ? -45 : 0}
                       textAnchor={attendanceData.length > 10 ? "end" : "middle"}
                       height={attendanceData.length > 10 ? 80 : 40}
                     />
@@ -241,26 +308,50 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
               </div>
             </div>
 
+
             {/* Marks Bar Chart */}
-            <div>
+            <div className={marksData.length > 10 ? "overflow-x-auto" : ""}>
               <h3 className="font-semibold mb-2">Average Marks</h3>
               {marksData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={marksData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#2e2e30" />
-                    <XAxis dataKey="name" stroke="#d1d5db" />
-                    <YAxis stroke="#d1d5db" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#2c2c2e",
-                        border: "none",
-                        color: "#f3f4f6",
-                      }}
-                    />
-                    <Legend wrapperStyle={{ color: "#d1d5db" }} />
-                    <Bar dataKey="avgMark" fill="#818cf8" name="Avg Mark" /> {/* indigo */}
-                  </BarChart>
-                </ResponsiveContainer>
+                <div
+                  style={{
+                    width: marksData.length > 10 
+                      ? `${marksData.length * 80}px`
+                      : "100%",
+                    height: "250px",
+                  }}
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={marksData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#2e2e30" />
+                      <XAxis
+                        dataKey="name"
+                        stroke="#d1d5db"
+                        interval={0}
+                        angle={marksData.length > 10 ? -45 : 0}
+                        textAnchor={marksData.length > 10 ? "end" : "middle"}
+                        height={marksData.length > 10 ? 80 : 40}
+                      />
+                      <YAxis stroke="#d1d5db" />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#2c2c2e",
+                          border: "none",
+                          color: "#f3f4f6",
+                        }}
+                      />
+                      {/* Removed <Legend /> */}
+                      <Bar dataKey="avgMark" fill="#818cf8">
+                        <LabelList 
+                          dataKey="avgMark" 
+                          position="top" 
+                          fill="#f3f4f6" 
+                          fontSize={12} 
+                        />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               ) : (
                 <p className="text-gray-400 text-center">No marks data</p>
               )}

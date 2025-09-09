@@ -17,15 +17,40 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { UploadCloud, X } from "lucide-react";
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
-import { getStudentsForClass, ClassStudent, uploadInternalMarks, getFacultyAssignments, FacultyAssignment, getInternalMarksForClass, InternalMarkStudent } from "../../utils/faculty_api";
+import {
+  getStudentsForClass,
+  ClassStudent,
+  uploadInternalMarks,
+  getFacultyAssignments,
+  FacultyAssignment,
+  getInternalMarksForClass,
+  InternalMarkStudent
+} from "../../utils/faculty_api";
 
 const MySwal = withReactContent(Swal);
 
 // Constants for validation
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const REQUIRED_HEADERS = ['usn', 'name', 'marks']; // Updated to match sample data format
+const REQUIRED_HEADERS = ['usn', 'name', 'marks'];
 const MAX_RECORDS = 500;
-const SAMPLE_ROW = ['CS001', 'Amit Kumar', '85/100']; // Example row for validation
+const SAMPLE_ROW = ['1AM22CI064', 'Amit Kumar', '85/100'];
+
+const normalizeMarks = (value: string): string => {
+  const num = parseInt(value, 10);
+  if (isNaN(num)) return "00";
+  return num.toString().padStart(2, "0");
+};
+
+const validateMarks = (marks: string, total: string): boolean => {
+  const marksNum = parseInt(marks, 10);
+  const totalNum = parseInt(total, 10);
+  return (
+    !isNaN(marksNum) &&
+    !isNaN(totalNum) &&
+    marksNum >= 0 &&
+    marksNum <= totalNum
+  );
+};
 
 const UploadMarks = () => {
   const [assignments, setAssignments] = useState<FacultyAssignment[]>([]);
@@ -36,7 +61,6 @@ const UploadMarks = () => {
     subject: [] as { id: number; name: string }[],
     testType: ["IA1", "IA2", "IA3", "SEE"],
   });
-
   const [selected, setSelected] = useState({
     branch: "",
     branch_id: undefined as number | undefined,
@@ -48,7 +72,6 @@ const UploadMarks = () => {
     semester_id: undefined as number | undefined,
     testType: "",
   });
-
   const [students, setStudents] = useState<(ClassStudent & { marks: string; total: string; isEditing: boolean })[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -60,11 +83,9 @@ const UploadMarks = () => {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    // Fetch assignments on mount
     getFacultyAssignments().then(res => {
       if (res.success && res.data) {
         setAssignments(res.data);
-        // Populate unique branches (id + name)
         const branches = Array.from(
           new Map(res.data.map(a => [a.branch_id, { id: a.branch_id, name: a.branch }])).values()
         );
@@ -78,7 +99,12 @@ const UploadMarks = () => {
       const actualIndex = (currentPage - 1) * studentsPerPage + index;
       setStudents((prev) =>
         prev.map((student, i) =>
-          i === actualIndex ? { ...student, [field]: value } : student
+          i === actualIndex
+            ? {
+                ...student,
+                [field]: field === "marks" ? normalizeMarks(value) : value,
+              }
+            : student
         )
       );
     }
@@ -104,7 +130,6 @@ const UploadMarks = () => {
 
   const handleSubmit = async () => {
     setSavingMarks(true);
-    // Validate selection
     const { branch_id, subject_id, section_id, semester_id, testType } = selected;
     if (!branch_id || !subject_id || !section_id || !semester_id || !testType) {
       MySwal.fire({
@@ -114,14 +139,10 @@ const UploadMarks = () => {
       });
       return;
     }
-    // Map testType to test_number (e.g., IA1=1, IA2=2, IA3=3, SEE=4)
+
     const testMap: Record<string, number> = { IA1: 1, IA2: 2, IA3: 3, SEE: 4 };
     const test_number = testMap[testType] || 1;
-    // Prepare marks array
-    const marks = students.map((s) => ({
-      student_id: s.id.toString(),
-      mark: parseInt(s.marks || "0"),
-    }));
+
     try {
       const res = await uploadInternalMarks({
         branch_id: branch_id.toString(),
@@ -129,8 +150,12 @@ const UploadMarks = () => {
         section_id: section_id.toString(),
         subject_id: subject_id.toString(),
         test_number,
-        marks,
+        marks: students.map((s) => ({
+          student_id: s.id.toString(),
+          mark: parseInt(s.marks || "0"),
+        })),
       });
+
       if (res.success) {
         MySwal.fire({
           title: "Marks uploaded!",
@@ -161,20 +186,17 @@ const UploadMarks = () => {
   const currentStudents = students.slice(indexOfFirstStudent, indexOfLastStudent);
   const totalPages = Math.ceil(students.length / studentsPerPage);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
-    // 1. Validate size
     if (file.size > MAX_FILE_SIZE) {
       setErrorMessage('File size exceeds the 5MB limit.');
       return;
     }
 
-    // 2. Determine file type
     const isCSV = file.name.endsWith('.csv');
     const isExcel = file.name.endsWith('.xls') || file.name.endsWith('.xlsx');
-
     if (!isCSV && !isExcel) {
       setErrorMessage('Unsupported file type. Please upload CSV or Excel file.');
       return;
@@ -183,114 +205,124 @@ const UploadMarks = () => {
     setSelectedFile(file);
     setErrorMessage("");
 
-    // 3. Parse and validate
     const reader = new FileReader();
-
     reader.onload = async (event) => {
-      let data;
+      let data: any[] = [];
       if (isCSV) {
-        // Parse CSV
-        const text = event.target.result;
+        const text = event.target?.result as string;
         const parsed = Papa.parse(text, { skipEmptyLines: true });
         data = parsed.data;
       } else {
-        // Parse Excel
-        const workbook = XLSX.read(event.target.result, { type: 'binary' });
+        const workbook = XLSX.read(event.target?.result, { type: 'binary' });
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         data = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
       }
 
-      // 4. Validate header
-      const header = data[0]?.map(cell => String(cell).trim().toLowerCase());
+      const header = data[0]?.map((cell: any) => String(cell).trim().toLowerCase());
       const expectedHeader = REQUIRED_HEADERS.map(h => h.toLowerCase());
       if (JSON.stringify(header) !== JSON.stringify(expectedHeader)) {
         setErrorMessage('Invalid header. Required: usn, name, marks');
         return;
       }
 
-      // 5. Validate first row
-      const firstRow = data[1]?.map(cell => String(cell).trim());
-
+      const firstRow = data[1]?.map((cell: any) => String(cell).trim());
       if (!firstRow || firstRow.length < 3) {
-        setErrorMessage(
-          "Invalid first row. It must contain at least 3 values: USN, Name, and Marks."
-        );
+        setErrorMessage("Invalid first row. It must contain at least 3 values: USN, Name, and Marks.");
         return;
       }
 
-      if (firstRow[0] !== SAMPLE_ROW[0]) {
-        setErrorMessage(`Invalid USN in first row. Expected: ${SAMPLE_ROW[0]}`);
+      if (!firstRow[0]?.trim()) {
+        setErrorMessage("USN in the first row is empty.");
         return;
       }
 
-      if (firstRow[1] !== SAMPLE_ROW[1]) {
-        setErrorMessage(`Invalid Name in first row. Expected: ${SAMPLE_ROW[1]}`);
-        return;
-      }
-
-      if (isNaN(firstRow[2].split('/')[0]) || isNaN(firstRow[2].split('/')[1])) {
+      const [usn, name, marksStr] = firstRow;
+      const [marks, total] = marksStr.split("/").map((s: string) => s.trim());
+      if (isNaN(parseInt(marks, 10)) || isNaN(parseInt(total, 10))) {
         setErrorMessage(`Invalid Marks or Total in first row. Expected: Numeric values`);
         return;
       }
 
-      // 6. Validate max records
-      const recordCount = data.length - 1; // exclude header
+      const recordCount = data.length - 1;
       if (recordCount > MAX_RECORDS) {
         setErrorMessage('File contains more than 500 records.');
         return;
       }
 
-      // Transform data to match the manual entry format
-      const studentsData = data.slice(1).map(row => ({
-        usn: row[0],
-        name: row[1],
-        marks: row[2].split('/')[0],
-        total: row[2].split('/')[1],
-        isEditing: false,
-      }));
-
-      // If all validations pass
-      setStudents(studentsData);
-
-      // After validation, upload to backend
-      const { branch, semester, section, subject, testType } = selected;
-      if (!branch || !semester || !section || !subject || !testType) {
-        setErrorMessage("Select all class and test details before uploading.");
-        return;
-      }
-      const testMap = { IA1: 1, IA2: 2, IA3: 3, SEE: 4 };
-      const test_number = testMap[testType] || 1;
-      const assignment = assignments.find(a => a.branch === branch && a.semester.toString() === semester && a.section === section && a.subject_name === subject);
-      if (!assignment) {
-        setErrorMessage("Assignment not found for upload.");
-        return;
-      }
-      const branch_id = branch.toString();
-      const semester_id = semester.toString();
-      const section_id = section.toString();
-      const subject_id = assignment.subject_code.toString();
-      if (isNaN(parseInt(subject_id))) {
-        setErrorMessage("Subject ID must be numeric. Please check your assignments data.");
-        setLoadingStudents(false);
-        return;
-      }
       try {
+        const { branch_id, semester_id, section_id, subject_id } = selected;
+        if (!branch_id || !semester_id || !section_id || !subject_id) {
+          setErrorMessage("Select all class details before uploading.");
+          return;
+        }
+
+        console.log("Fetching students with:", { branch_id, semester_id, section_id, subject_id });
+
+        const studentsList = await getStudentsForClass(branch_id, semester_id, section_id, subject_id);
+        console.log("Students list response:", studentsList);
+
+        if (!studentsList) {
+          setErrorMessage("Failed to fetch student list.");
+          return;
+        }
+
+        const usnToIdMap = new Map<string, number>();
+        studentsList.forEach((student: ClassStudent) => {
+          usnToIdMap.set(student.usn.toUpperCase(), student.id);
+        });
+
+        console.log("USN to ID map:", usnToIdMap);
+
+        const studentsData = data.slice(1).map((row: any[]) => {
+          const [usn, name, marksStr] = row;
+          const [marks, total] = marksStr.split("/").map((s: string) => s.trim());
+          const normalizedMarks = normalizeMarks(marks);
+
+          if (!validateMarks(normalizedMarks, total)) {
+            throw new Error(`Invalid marks or total for student ${name}`);
+          }
+
+          const studentId = usnToIdMap.get(usn.toUpperCase());
+          if (!studentId) {
+            throw new Error(`Student with USN ${usn} not found in the selected class.`);
+          }
+
+          return {
+            id: studentId,
+            usn: usn.toUpperCase(),
+            name,
+            marks: normalizedMarks,
+            total,
+            isEditing: false,
+          };
+        });
+
+        setStudents(studentsData);
+
+        const testMap = { IA1: 1, IA2: 2, IA3: 3, SEE: 4 };
+        const test_number = testMap[selected.testType] || 1;
+
         const res = await uploadInternalMarks({
           branch_id: branch_id.toString(),
           semester_id: semester_id.toString(),
           section_id: section_id.toString(),
           subject_id: subject_id.toString(),
           test_number,
-          file,
+          marks: studentsData.map(s => ({
+            student_id: s.id.toString(),
+            mark: parseInt(s.marks || "0"),
+          })),
         });
+
         if (res.success) {
           MySwal.fire({ title: "Marks uploaded!", icon: "success", confirmButtonText: "OK" });
         } else {
           setErrorMessage(res.message || "Upload failed");
         }
-      } catch (err) {
-        setErrorMessage("Network error during upload");
+      } catch (err: any) {
+        setErrorMessage(err.message);
+        console.error("Error in handleFileChange:", err);
       }
     };
 
@@ -311,23 +343,14 @@ const UploadMarks = () => {
       setErrorMessage("No file selected.");
       return;
     }
-
     const fileType = selectedFile.name.split(".").pop()?.toLowerCase();
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      const content = e.target?.result;
-      if (typeof content === "string") {
-        console.log("File content:", content);
-
-        // You can parse CSV here and convert to attendance records
-        const rows = content.split("\n").map(row => row.split(","));
-        console.log("Parsed rows:", rows);
-        alert(`Successfully parsed ${rows.length} rows!`);
-      }
-    };
-
     if (fileType === "csv") {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        console.log("File content:", content);
+        alert(`File is ready for upload!`);
+      };
       reader.readAsText(selectedFile);
     } else {
       setErrorMessage("Only CSV file type is supported for now.");
@@ -336,24 +359,17 @@ const UploadMarks = () => {
 
   const handleDownloadTemplate = () => {
     const csvContent = [
-      ['usn', 'name', 'marks'],  // Headers
-      ['CS001', 'Amit Kumar', '85/100'],
-      // Add more sample data rows as needed
+      ['usn', 'name', 'marks'],
+      ['1AM22CI064', 'Pannaga J A', '85/100'],
     ]
       .map((row) => row.join(','))
       .join('\n');
-
-    // Create a Blob from the CSV content
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-
-    // Create a download link and trigger it
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', 'template.csv'); // Filename for download
+    link.setAttribute('download', 'template.csv');
     link.click();
-
-    // Clean up the URL object
     URL.revokeObjectURL(url);
   };
 
@@ -365,40 +381,34 @@ const UploadMarks = () => {
     </div>
   );
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(true);
   };
 
-  const handleDragLeave = (e) => {
+  const handleDragLeave = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
     const file = e.dataTransfer.files?.[0];
     if (file) {
-      handleFile(file);
+      const event = { target: { files: [file] } } as React.ChangeEvent<HTMLInputElement>;
+      handleFileChange(event);
     }
   };
 
-  const handleFile = (file) => {
-    // logic from handleFileChange, separated out for reuse
-    const event = { target: { files: [file] } };
-    handleFileChange(event);
-  };
-
   const handleSelectChange = async (field: string, value: string | number) => {
-    setErrorMessage(""); // Clear previous error
+    setErrorMessage("");
     const updated = { ...selected };
     if (field.endsWith('_id')) {
       updated[field] = value as number;
-      // Also update the corresponding name field
       if (field === 'branch_id') {
         const branchObj = dropdownData.branch.find(b => b.id === value);
         updated.branch = branchObj ? branchObj.name : "";
@@ -417,7 +427,6 @@ const UploadMarks = () => {
     }
     setSelected(updated);
 
-    // Dynamically update dependent dropdowns
     let filtered = assignments;
     if (updated.branch_id) filtered = filtered.filter(a => a.branch_id === updated.branch_id);
     if (updated.semester_id) filtered = filtered.filter(a => a.semester_id === updated.semester_id);
@@ -443,20 +452,21 @@ const UploadMarks = () => {
       setSelected(prev => ({ ...prev, subject: "", subject_id: undefined }));
     }
 
-    // Only fetch students and marks if all required fields are selected
     const { branch_id, semester_id, section_id, subject_id, testType } = { ...updated };
     if (branch_id && semester_id && section_id && subject_id && testType) {
       setLoadingStudents(true);
       try {
-        // Find the assignment by IDs
-        const assignment = assignments.find(a => a.branch_id === branch_id && a.semester_id === semester_id && a.section_id === section_id && a.subject_id === subject_id);
-        console.log('Selected IDs:', { branch_id, semester_id, section_id, subject_id });
-        console.log('Assignment:', assignment);
+        const assignment = assignments.find(a =>
+          a.branch_id === branch_id &&
+          a.semester_id === semester_id &&
+          a.section_id === section_id &&
+          a.subject_id === subject_id
+        );
         if (!assignment) throw new Error("Assignment not found");
-        // Map testType to test_number
+
         const testMap: Record<string, number> = { IA1: 1, IA2: 2, IA3: 3, SEE: 4 };
         const test_number = testMap[testType] || 1;
-        // Fetch students and their marks for this test
+
         const marksList: InternalMarkStudent[] = await getInternalMarksForClass(
           branch_id,
           semester_id,
@@ -464,16 +474,18 @@ const UploadMarks = () => {
           subject_id,
           test_number
         );
+
         setStudents(marksList.map(s => ({
           id: s.id,
           name: s.name,
           usn: s.usn,
-          marks: s.mark !== '' ? s.mark.toString() : '',
+          marks: s.mark !== '' ? normalizeMarks(s.mark.toString()) : '',
           total: s.max_mark.toString(),
           isEditing: false
         })));
+
         setCurrentPage(1);
-      } catch (err) {
+      } catch (err: any) {
         setStudents([]);
         setErrorMessage(err?.message || "Failed to fetch students/marks");
       }
@@ -487,8 +499,7 @@ const UploadMarks = () => {
         <CardTitle className="text-xl font-bold">Upload Marks</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 ">
-          {/* Branch Dropdown */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Select onValueChange={value => handleSelectChange('branch_id', Number(value))}>
             <SelectTrigger className="bg-[#232326] text-gray-200">
               <SelectValue placeholder="Select Branch" />
@@ -501,7 +512,6 @@ const UploadMarks = () => {
               ))}
             </SelectContent>
           </Select>
-          {/* Semester Dropdown */}
           <Select onValueChange={value => handleSelectChange('semester_id', Number(value))}>
             <SelectTrigger className="bg-[#232326] text-gray-200">
               <SelectValue placeholder="Select Semester" />
@@ -514,7 +524,6 @@ const UploadMarks = () => {
               ))}
             </SelectContent>
           </Select>
-          {/* Section Dropdown */}
           <Select onValueChange={value => handleSelectChange('section_id', Number(value))}>
             <SelectTrigger className="bg-[#232326] text-gray-200">
               <SelectValue placeholder="Select Section" />
@@ -527,7 +536,6 @@ const UploadMarks = () => {
               ))}
             </SelectContent>
           </Select>
-          {/* Subject Dropdown */}
           <Select onValueChange={value => handleSelectChange('subject_id', Number(value))}>
             <SelectTrigger className="bg-[#232326] text-gray-200">
               <SelectValue placeholder="Select Subject" />
@@ -540,7 +548,6 @@ const UploadMarks = () => {
               ))}
             </SelectContent>
           </Select>
-          {/* Test Type Dropdown */}
           <Select onValueChange={value => handleSelectChange('testType', value)}>
             <SelectTrigger className="bg-[#232326] text-gray-200">
               <SelectValue placeholder="Select TestType" />
@@ -554,14 +561,11 @@ const UploadMarks = () => {
             </SelectContent>
           </Select>
         </div>
-
         <Tabs value={tabValue} onValueChange={setTabValue} className="text-gray-200">
           <TabsList className="mt-2 bg-[#232326] text-gray-200 rounded-md">
             <TabsTrigger value="manual">Manual Entry</TabsTrigger>
             <TabsTrigger value="file">File Upload</TabsTrigger>
           </TabsList>
-
-          {/* Manual Entry Tab */}
           <TabsContent value="manual">
             <div className="border border-[#2e2e30] rounded-lg overflow-hidden bg-[#1c1c1e]">
               <div className="grid grid-cols-5 bg-[#1c1c1e] font-semibold text-sm p-2 border-b border-[#2e2e30]">
@@ -571,7 +575,6 @@ const UploadMarks = () => {
                 <div>Marks</div>
                 <div>Action</div>
               </div>
-
               {loadingStudents ? (
                 <div className="text-center text-gray-400 text-sm p-4">Loading students...</div>
               ) : currentStudents.length === 0 ? (
@@ -633,8 +636,6 @@ const UploadMarks = () => {
                 ))
               )}
             </div>
-
-            {/* Pagination */}
             <div className="flex justify-between items-center mt-4 px-2 text-sm text-gray-300">
               <span>
                 Page {currentPage} of {totalPages}
@@ -661,15 +662,12 @@ const UploadMarks = () => {
               </div>
             </div>
           </TabsContent>
-
-          {/* File Upload Tab */}
           <TabsContent value="file">
             <div className="bg-[#232326] border border-[#2e2e30] rounded-lg p-6 max-w-2xl mx-auto space-y-6">
               <div>
                 <h2 className="text-lg font-semibold">Upload User Data</h2>
                 <p className="text-sm text-gray-400">Upload CSV or Excel files to bulk enroll users</p>
               </div>
-
               <div
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
@@ -687,7 +685,6 @@ const UploadMarks = () => {
                 />
                 <p className="text-sm text-gray-300">Drag & drop file here</p>
                 <p className="text-xs text-gray-500">Supports CSV, XLS, XLSX (max 5MB)</p>
-
                 {!selectedFile ? (
                   <div className="flex justify-center">
                     <button
@@ -713,14 +710,11 @@ const UploadMarks = () => {
                   </div>
                 )}
               </div>
-
-              {/* Error message */}
               {errorMessage && (
                 <div className="text-red-400 text-sm font-medium text-center bg-red-900/30 border border-red-800 p-2 rounded-md">
                   {errorMessage}
                 </div>
               )}
-
               <Button
                 className="w-full text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
                 onClick={handleUpload}
@@ -728,7 +722,6 @@ const UploadMarks = () => {
               >
                 Upload File
               </Button>
-
               <div className="text-sm text-gray-300 space-y-1">
                 <p className="font-semibold">Upload Instructions</p>
                 <ul className="list-disc list-inside text-gray-400">
