@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileTextIcon } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, LineChart, Line, CartesianGrid, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, LineChart, Line, CartesianGrid, ResponsiveContainer,LabelList  } from "recharts";
 import { getProctorStudents, ProctorStudent } from '../../utils/faculty_api';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -108,10 +108,18 @@ const GenerateStatistics = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={250}>
               <LineChart data={attendanceData}>
                 <CartesianGrid stroke="rgba(255,255,255,0.1)" />
-                <XAxis dataKey="name" stroke="#d1d5db" />
+                <XAxis
+                  dataKey="name"
+                  stroke="#d1d5db"
+                  interval={0} // show all labels, but we’ll control them
+                  tick={{ fontSize: 10 }} // smaller font
+                  angle={-45} // rotate labels
+                  textAnchor="end"
+                  height={60} // extra space for rotated labels
+                />
                 <YAxis stroke="#d1d5db" />
                 <Tooltip
                   contentStyle={{ backgroundColor: "#2d2d30", border: "none", color: "#f3f4f6" }}
@@ -137,19 +145,27 @@ const GenerateStatistics = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={250}>
               <BarChart data={marksData}>
                 <CartesianGrid stroke="rgba(255,255,255,0.1)" />
-                <XAxis dataKey="name" stroke="#d1d5db" />
+                <XAxis
+                  dataKey="name"
+                  stroke="#d1d5db"
+                  interval={0}
+                  tick={{ fontSize: 10 }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
+                />
                 <YAxis stroke="#d1d5db" />
                 <Tooltip
                   contentStyle={{ backgroundColor: "#2d2d30", border: "none", color: "#f3f4f6" }}
                   itemStyle={{ color: "#f3f4f6" }}
                 />
-                <Legend
-                  wrapperStyle={{ color: "#d1d5db" }}
-                />
-                <Bar dataKey="avgMark" fill="#6366f1" name="Avg Mark" />
+                <Bar dataKey="avgMark" fill="#6366f1">
+                  {/* 👇 Label inside each bar */}
+                  <LabelList dataKey="avgMark" position="insideTop" fill="#fff" fontSize={10} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -166,7 +182,7 @@ const GenerateStatistics = () => {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="max-h-64 overflow-y-auto overflow-x-auto thin-scrollbar">
+          <div className="max-h-64 overflow-y-auto overflow-x-auto custom-scrollbar">
             <table className="w-full text-sm border-collapse">
               <thead className="bg-[#232326] sticky top-0 z-10">
                 <tr>
@@ -196,7 +212,6 @@ const GenerateStatistics = () => {
             </table>
           </div>
         </CardContent>
-
       </Card>
     </div>
   );

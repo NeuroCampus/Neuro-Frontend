@@ -84,9 +84,9 @@ const ProctorStudents = () => {
           }}
           className="w-full rounded bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white"
         />
-        <div className="overflow-x-auto">
+        <div className="max-h-96 overflow-y-auto overflow-x-auto">
           <table className="min-w-full border border-gray-200 rounded-md">
-            <thead className="bg-[#1c1c1e] text-gray-200">
+            <thead className="bg-[#1c1c1e] text-gray-200 sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">USN</th>
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Name</th>
@@ -101,7 +101,9 @@ const ProctorStudents = () => {
                   <td className="px-4 py-2 text-sm text-gray-200">{student.usn}</td>
                   <td className="px-4 py-2 text-sm text-gray-200">{student.name}</td>
                   <td className="px-4 py-2 text-sm text-gray-200">{student.semester}</td>
-                  <td className="px-4 py-2 text-sm text-gray-200">{formatAttendancePercentage(student.attendance)}</td>
+                  <td className="px-4 py-2 text-sm text-gray-200">
+                    {formatAttendancePercentage(student.attendance)}
+                  </td>
                   <td className="px-4 py-2 text-sm text-gray-200">
                     {student.marks && student.marks.length > 0
                       ? (

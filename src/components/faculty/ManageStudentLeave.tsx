@@ -99,7 +99,11 @@ const ManageStudentLeave = () => {
           type="text"
           placeholder="Search by name or USN..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            // ✅ Allow only letters, numbers, and spaces
+            const value = e.target.value.replace(/[^a-zA-Z0-9\s]/g, "");
+            setSearch(value);
+          }}
           className="w-64 bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white rounded-md px-4 py-2 text-sm"
         />
         <select
@@ -109,7 +113,9 @@ const ManageStudentLeave = () => {
         >
           {statusOptions.map((status) => (
             <option key={status} value={status}>
-              {status === "All" ? "All Statuses" : status.charAt(0) + status.slice(1).toLowerCase()}
+              {status === "All"
+                ? "All Statuses"
+                : status.charAt(0) + status.slice(1).toLowerCase()}
             </option>
           ))}
         </select>

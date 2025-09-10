@@ -139,10 +139,8 @@ const UploadMarks = () => {
       });
       return;
     }
-
     const testMap: Record<string, number> = { IA1: 1, IA2: 2, IA3: 3, SEE: 4 };
     const test_number = testMap[testType] || 1;
-
     try {
       const res = await uploadInternalMarks({
         branch_id: branch_id.toString(),
@@ -155,7 +153,6 @@ const UploadMarks = () => {
           mark: parseInt(s.marks || "0"),
         })),
       });
-
       if (res.success) {
         MySwal.fire({
           title: "Marks uploaded!",
@@ -189,22 +186,18 @@ const UploadMarks = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (file.size > MAX_FILE_SIZE) {
       setErrorMessage('File size exceeds the 5MB limit.');
       return;
     }
-
     const isCSV = file.name.endsWith('.csv');
     const isExcel = file.name.endsWith('.xls') || file.name.endsWith('.xlsx');
     if (!isCSV && !isExcel) {
       setErrorMessage('Unsupported file type. Please upload CSV or Excel file.');
       return;
     }
-
     setSelectedFile(file);
     setErrorMessage("");
-
     const reader = new FileReader();
     reader.onload = async (event) => {
       let data: any[] = [];
@@ -218,76 +211,58 @@ const UploadMarks = () => {
         const sheet = workbook.Sheets[sheetName];
         data = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
       }
-
       const header = data[0]?.map((cell: any) => String(cell).trim().toLowerCase());
       const expectedHeader = REQUIRED_HEADERS.map(h => h.toLowerCase());
       if (JSON.stringify(header) !== JSON.stringify(expectedHeader)) {
         setErrorMessage('Invalid header. Required: usn, name, marks');
         return;
       }
-
       const firstRow = data[1]?.map((cell: any) => String(cell).trim());
       if (!firstRow || firstRow.length < 3) {
         setErrorMessage("Invalid first row. It must contain at least 3 values: USN, Name, and Marks.");
         return;
       }
-
       if (!firstRow[0]?.trim()) {
         setErrorMessage("USN in the first row is empty.");
         return;
       }
-
       const [usn, name, marksStr] = firstRow;
       const [marks, total] = marksStr.split("/").map((s: string) => s.trim());
       if (isNaN(parseInt(marks, 10)) || isNaN(parseInt(total, 10))) {
         setErrorMessage(`Invalid Marks or Total in first row. Expected: Numeric values`);
         return;
       }
-
       const recordCount = data.length - 1;
       if (recordCount > MAX_RECORDS) {
         setErrorMessage('File contains more than 500 records.');
         return;
       }
-
       try {
         const { branch_id, semester_id, section_id, subject_id } = selected;
         if (!branch_id || !semester_id || !section_id || !subject_id) {
           setErrorMessage("Select all class details before uploading.");
           return;
         }
-
-        console.log("Fetching students with:", { branch_id, semester_id, section_id, subject_id });
-
         const studentsList = await getStudentsForClass(branch_id, semester_id, section_id, subject_id);
-        console.log("Students list response:", studentsList);
-
         if (!studentsList) {
           setErrorMessage("Failed to fetch student list.");
           return;
         }
-
         const usnToIdMap = new Map<string, number>();
         studentsList.forEach((student: ClassStudent) => {
           usnToIdMap.set(student.usn.toUpperCase(), student.id);
         });
-
-        console.log("USN to ID map:", usnToIdMap);
-
         const studentsData = data.slice(1).map((row: any[]) => {
           const [usn, name, marksStr] = row;
           const [marks, total] = marksStr.split("/").map((s: string) => s.trim());
           const normalizedMarks = normalizeMarks(marks);
-
           if (!validateMarks(normalizedMarks, total)) {
             throw new Error(`Invalid marks or total for student ${name}`);
           }
-
           const studentId = usnToIdMap.get(usn.toUpperCase());
           if (!studentId) {
             throw new Error(`Student with USN ${usn} not found in the selected class.`);
           }
-
           return {
             id: studentId,
             usn: usn.toUpperCase(),
@@ -297,35 +272,15 @@ const UploadMarks = () => {
             isEditing: false,
           };
         });
-
         setStudents(studentsData);
-
-        const testMap = { IA1: 1, IA2: 2, IA3: 3, SEE: 4 };
-        const test_number = testMap[selected.testType] || 1;
-
-        const res = await uploadInternalMarks({
-          branch_id: branch_id.toString(),
-          semester_id: semester_id.toString(),
-          section_id: section_id.toString(),
-          subject_id: subject_id.toString(),
-          test_number,
-          marks: studentsData.map(s => ({
-            student_id: s.id.toString(),
-            mark: parseInt(s.marks || "0"),
-          })),
-        });
-
-        if (res.success) {
-          MySwal.fire({ title: "Marks uploaded!", icon: "success", confirmButtonText: "OK" });
-        } else {
-          setErrorMessage(res.message || "Upload failed");
-        }
+        setCurrentPage(1);
+        setTabValue("manual");
+        setErrorMessage("");
       } catch (err: any) {
         setErrorMessage(err.message);
         console.error("Error in handleFileChange:", err);
       }
     };
-
     if (isCSV) {
       reader.readAsText(file);
     } else {
@@ -336,25 +291,6 @@ const UploadMarks = () => {
   const handleClearFile = () => {
     setSelectedFile(null);
     setErrorMessage("");
-  };
-
-  const handleUpload = () => {
-    if (!selectedFile) {
-      setErrorMessage("No file selected.");
-      return;
-    }
-    const fileType = selectedFile.name.split(".").pop()?.toLowerCase();
-    if (fileType === "csv") {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const content = e.target?.result as string;
-        console.log("File content:", content);
-        alert(`File is ready for upload!`);
-      };
-      reader.readAsText(selectedFile);
-    } else {
-      setErrorMessage("Only CSV file type is supported for now.");
-    }
   };
 
   const handleDownloadTemplate = () => {
@@ -372,14 +308,6 @@ const UploadMarks = () => {
     link.click();
     URL.revokeObjectURL(url);
   };
-
-  const TemplateDownload = () => (
-    <div>
-      <button onClick={handleDownloadTemplate} className="text-blue-600 underline text-sm">
-        Download Template
-      </button>
-    </div>
-  );
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -426,12 +354,10 @@ const UploadMarks = () => {
       updated[field] = value as string;
     }
     setSelected(updated);
-
     let filtered = assignments;
     if (updated.branch_id) filtered = filtered.filter(a => a.branch_id === updated.branch_id);
     if (updated.semester_id) filtered = filtered.filter(a => a.semester_id === updated.semester_id);
     if (updated.section_id) filtered = filtered.filter(a => a.section_id === updated.section_id);
-
     if (field === "branch_id") {
       const semesters = Array.from(
         new Map(filtered.map(a => [a.semester_id, { id: a.semester_id, number: a.semester }])).values()
@@ -451,7 +377,6 @@ const UploadMarks = () => {
       setDropdownData(prev => ({ ...prev, subject: subjects }));
       setSelected(prev => ({ ...prev, subject: "", subject_id: undefined }));
     }
-
     const { branch_id, semester_id, section_id, subject_id, testType } = { ...updated };
     if (branch_id && semester_id && section_id && subject_id && testType) {
       setLoadingStudents(true);
@@ -463,10 +388,8 @@ const UploadMarks = () => {
           a.subject_id === subject_id
         );
         if (!assignment) throw new Error("Assignment not found");
-
         const testMap: Record<string, number> = { IA1: 1, IA2: 2, IA3: 3, SEE: 4 };
         const test_number = testMap[testType] || 1;
-
         const marksList: InternalMarkStudent[] = await getInternalMarksForClass(
           branch_id,
           semester_id,
@@ -474,7 +397,6 @@ const UploadMarks = () => {
           subject_id,
           test_number
         );
-
         setStudents(marksList.map(s => ({
           id: s.id,
           name: s.name,
@@ -483,7 +405,6 @@ const UploadMarks = () => {
           total: s.max_mark.toString(),
           isEditing: false
         })));
-
         setCurrentPage(1);
       } catch (err: any) {
         setStudents([]);
@@ -715,13 +636,6 @@ const UploadMarks = () => {
                   {errorMessage}
                 </div>
               )}
-              <Button
-                className="w-full text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
-                onClick={handleUpload}
-                disabled={!selectedFile}
-              >
-                Upload File
-              </Button>
               <div className="text-sm text-gray-300 space-y-1">
                 <p className="font-semibold">Upload Instructions</p>
                 <ul className="list-disc list-inside text-gray-400">
