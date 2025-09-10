@@ -107,62 +107,106 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
   };
  
   const menuItems: { [key: string]: { name: string; page: string }[] } = {
-    admin: [
-      { name: "Dashboard", page: "dashboard" },
-      { name: "Enroll User", page: "enroll-user" },
-      { name: "Bulk Upload", page: "bulk-upload" },
-      { name: "Branches", page: "branches" },
-      { name: "Batches", page: "batches" },
-      { name: "Notifications", page: "notifications" },
-      { name: "HOD Leaves", page: "hod-leaves" },
-      { name: "Users", page: "users" },
-      { name: "Profile", page: "profile" },
-    ],
-    hod: [
-      { name: "Dashboard", page: "dashboard" },
-      { name: "Promotion Management", page: "promotion-management" },
-      { name: "Low Attendance", page: "low-attendance" },
-      { name: "Semester Management", page: "semesters" },
-      { name: "Students", page: "students" },
-      { name: "Subjects", page: "subjects" },
-      { name: "Faculty Assignments", page: "faculty-assignments" },
-      { name: "Timetable", page: "timetable" },
-      { name: "Faculty Leaves", page: "leaves" },
-      { name: "Apply Leaves", page: "apply-leaves" },
-      { name: "Attendance", page: "attendance" },
-      { name: "Marks", page: "marks" },
-      { name: "Notifications", page: "notifications" },
-      { name: "Study Material", page: "study-materials" },
-      { name: "Proctors", page: "proctors" },
-      { name: "Chat", page: "chat" },
-      { name: "Profile", page: "hod-profile" },
-    ],
-    faculty: [
-      { name: "Dashboard", page: "dashboard" },
-      { name: "Take Attendance", page: "take-attendance" },
-      { name: "Upload Marks", page: "upload-marks" },
-      { name: "Apply Leave", page: "apply-leave" },
-      { name: "Attendance Records", page: "attendance-records" },
-      { name: "Announcements", page: "announcements" },
-      { name: "Proctor Students", page: "proctor-students" },
-      { name: "Manage Student Leave", page: "student-leave" },
-      { name: "Timetable", page: "timetable" },
-      { name: "Chat", page: "chat" },
-      { name: "Profile", page: "faculty-profile" },
-      { name: "Generate Statistics", page: "statistics" },
-    ],
-    student: [
-      { name: "Dashboard", page: "dashboard" },
-      { name: "Timetable", page: "timetable" },
-      { name: "Attendance", page: "attendance" },
-      { name: "Internal Marks", page: "marks" },
-      { name: "Leave Request", page: "leave-request" },
-      { name: "Leave Status", page: "leave-status" },
-      { name: "Profile", page: "profile" },
-      { name: "Announcements", page: "announcements" },
-      { name: "Chat", page: "chat" },
-    ],
-  };
+  admin: [
+    // Main
+    { name: "Dashboard", page: "dashboard" },
+    
+    // User Management
+    { name: "Enroll User", page: "enroll-user" },
+    { name: "Bulk Upload", page: "bulk-upload" },
+    { name: "Users", page: "users" },
+    
+    // Academic Structure
+    { name: "Branches", page: "branches" },
+    { name: "Batches", page: "batches" },
+    
+    // Notifications & Leaves
+    { name: "Notifications", page: "notifications" },
+    { name: "HOD Leaves", page: "hod-leaves" },
+    
+    // Profile
+    { name: "Profile", page: "profile" },
+  ],
+
+  hod: [
+    // Main
+    { name: "Dashboard", page: "dashboard" },
+    
+    // Academic Management
+    { name: "Semester Management", page: "semesters" },
+    { name: "Students", page: "students" },
+    { name: "Subjects", page: "subjects" },
+    { name: "Faculty Assignments", page: "faculty-assignments" },
+    { name: "Timetable", page: "timetable" },
+    
+    // Attendance & Marks
+    { name: "Attendance", page: "attendance" },
+    { name: "Marks", page: "marks" },
+    { name: "Low Attendance", page: "low-attendance" },
+    { name: "Promotion Management", page: "promotion-management" },
+    
+    // Leaves
+    { name: "Faculty Leaves", page: "leaves" },
+    { name: "Apply Leaves", page: "apply-leaves" },
+    
+    // Resources & Communication
+    { name: "Study Material", page: "study-materials" },
+    { name: "Proctors", page: "proctors" },
+    { name: "Notifications", page: "notifications" },
+    { name: "Chat", page: "chat" },
+    
+    // Profile
+    { name: "Profile", page: "hod-profile" },
+  ],
+
+  faculty: [
+    // Main
+    { name: "Dashboard", page: "dashboard" },
+    
+    // Attendance & Marks
+    { name: "Take Attendance", page: "take-attendance" },
+    { name: "Attendance Records", page: "attendance-records" },
+    { name: "Upload Marks", page: "upload-marks" },
+    { name: "Generate Statistics", page: "statistics" },
+    
+    // Leave Management
+    { name: "Apply Leave", page: "apply-leave" },
+    { name: "Manage Student Leave", page: "student-leave" },
+    
+    // Academic
+    { name: "Timetable", page: "timetable" },
+    { name: "Proctor Students", page: "proctor-students" },
+    
+    // Communication
+    { name: "Announcements", page: "announcements" },
+    { name: "Chat", page: "chat" },
+    
+    // Profile
+    { name: "Profile", page: "faculty-profile" },
+  ],
+
+  student: [
+    // Main
+    { name: "Dashboard", page: "dashboard" },
+    
+    // Academic
+    { name: "Timetable", page: "timetable" },
+    { name: "Attendance", page: "attendance" },
+    { name: "Internal Marks", page: "marks" },
+    
+    // Leave Management
+    { name: "Leave Request", page: "leave-request" },
+    { name: "Leave Status", page: "leave-status" },
+    
+    // Communication
+    { name: "Announcements", page: "announcements" },
+    { name: "Chat", page: "chat" },
+    
+    // Profile
+    { name: "Profile", page: "profile" },
+  ],
+};
+
  
   const sidebarContent = (
     <motion.div 
