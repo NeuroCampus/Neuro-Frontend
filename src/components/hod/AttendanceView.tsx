@@ -16,7 +16,7 @@ import {
   DialogClose,
 } from "../ui/dialog";
 import { useToast } from "../ui/use-toast";
-import { getAllAttendance, manageProfile, manageSections, manageSubjects, getBranches, getSemesters } from "../../utils/hod_api";
+import { getAllAttendance, manageProfile, manageSections, manageSubjects, getBranches, getSemesters, getAttendanceBootstrap } from "../../utils/hod_api";
 
 interface Student {
   student_id: string;
@@ -108,101 +108,37 @@ const AttendanceView = () => {
     setState((prev) => ({ ...prev, ...newState }));
   };
 
-  // Fetch branch ID and branch name
+  // Fetch all data using combined endpoint
   useEffect(() => {
-    const fetchProfileAndData = async () => {
-      updateState({ loading: true });
-      try {
-        // Fetch HOD profile to get branch
-        const profileResponse = await manageProfile({}, "GET");
-        console.log("Profile response:", profileResponse);
-        if (profileResponse.success && profileResponse.data && profileResponse.data.branch) {
-          updateState({ branch: profileResponse.data.branch });
-        } else {
-          throw new Error("Invalid or missing branch in profile");
-        }
-
-        // Fetch branches to map branch name to branch_id
-        const branchesResponse = await getBranches();
-        if (branchesResponse.success && branchesResponse.data) {
-          const branchData = branchesResponse.data.find((b: any) => b.name === profileResponse.data.branch);
-          if (branchData) {
-            updateState({ branchId: branchData.id });
-          } else {
-            throw new Error("Branch ID not found for branch: " + profileResponse.data.branch);
-          }
-        } else {
-          throw new Error(branchesResponse.message || "Failed to fetch branches");
-        }
-      } catch (err: any) {
-        updateState({ error: err.message || "Network error" });
-        toast({ variant: "destructive", title: "Error", description: err.message });
-      } finally {
-        updateState({ loading: false });
-      }
-    };
-    fetchProfileAndData();
-  }, [toast]);
-
-  // Fetch additional data (semesters, sections, subjects, attendance)
-  useEffect(() => {
-    const fetchAdditionalData = async () => {
-      if (!state.branchId) return; // Wait until branchId is set
+    const fetchData = async () => {
       updateState({ loading: true, search: "", currentPage: 1 });
       try {
-        // Fetch semesters
-        const semestersResponse = await getSemesters(state.branchId);
-        if (semestersResponse.success && semestersResponse.data) {
-          updateState({ semesters: semestersResponse.data });
-        } else {
-          throw new Error(semestersResponse.message || "Failed to fetch semesters");
-        }
-
-        // Fetch sections based on selected semester (or all if no semester selected)
-        const sectionsResponse = await manageSections({
-          branch_id: state.branchId,
-          ...(state.filters.semester_id && { semester_id: state.filters.semester_id }),
-        });
-        if (sectionsResponse.success && sectionsResponse.data) {
-          updateState({
-            sections: sectionsResponse.data.map((s: any) => ({
-              id: s.id,
-              name: s.name,
-              semester_id: s.semester_id.toString(),
-            })),
-          });
-        } else {
-          throw new Error(sectionsResponse.message || "Failed to fetch sections");
-        }
-
-        // Fetch subjects based on selected semester (or all if no semester selected)
-        const subjectsResponse = await manageSubjects({
-          branch_id: state.branchId,
-          ...(state.filters.semester_id && { semester_id: state.filters.semester_id }),
-        });
-        if (subjectsResponse.success && subjectsResponse.data) {
-          updateState({
-            subjects: subjectsResponse.data.map((s: any) => ({
-              id: s.id,
-              name: s.name,
-              subject_code: s.subject_code,
-              semester_id: s.semester_id.toString(),
-            })),
-          });
-        } else {
-          throw new Error(subjectsResponse.message || "Failed to fetch subjects");
-        }
-
-        // Fetch all attendance students
-        const response = await getAllAttendance(state.branchId, {
+        // Fetch all data in one call
+        const response = await getAttendanceBootstrap("", {
           ...(state.filters.semester_id && { semester_id: state.filters.semester_id }),
           ...(state.filters.section_id && { section_id: state.filters.section_id }),
           ...(state.filters.subject_id && { subject_id: state.filters.subject_id }),
         });
         if (response.success && response.data) {
-          updateState({ students: response.data.students });
+          updateState({
+            branch: response.data.profile.branch,
+            branchId: response.data.profile.branch_id,
+            semesters: response.data.semesters,
+            sections: response.data.sections.map((s: any) => ({
+              id: s.id,
+              name: s.name,
+              semester_id: s.semester_id.toString(),
+            })),
+            subjects: response.data.subjects.map((s: any) => ({
+              id: s.id,
+              name: s.name,
+              subject_code: s.subject_code,
+              semester_id: s.semester_id.toString(),
+            })),
+            students: response.data.attendance.students,
+          });
         } else {
-          throw new Error(response.message || "Failed to fetch attendance data");
+          throw new Error(response.message || "Failed to fetch data");
         }
       } catch (err: any) {
         updateState({ error: err.message || "Network error" });
@@ -211,8 +147,8 @@ const AttendanceView = () => {
         updateState({ loading: false });
       }
     };
-    fetchAdditionalData();
-  }, [state.branchId, state.filters.semester_id, state.filters.section_id, state.filters.subject_id, toast]);
+    fetchData();
+  }, [state.filters.semester_id, state.filters.section_id, state.filters.subject_id, toast]);
 
   // Filter students for search
   const normalizeText = (text: string) =>

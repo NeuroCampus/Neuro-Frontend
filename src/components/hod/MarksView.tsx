@@ -16,7 +16,7 @@ import { useToast } from "../ui/use-toast";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import autoTable from "jspdf-autotable";
 import jsPDF from "jspdf";
-import { manageProfile, getStudentPerformance, getSemesters, manageSections, manageSubjects, getMarks } from "../../utils/hod_api";
+import { manageProfile, getStudentPerformance, getSemesters, manageSections, manageSubjects, getMarks, getAttendanceBootstrap } from "../../utils/hod_api";
 import type { Mark } from "../../utils/hod_api";
 
 interface Student {
@@ -76,133 +76,77 @@ const MarksView = () => {
   };
 
   useEffect(() => {
-    const fetchInitialData = async () => {
-      updateState({ loading: true });
+    const fetchData = async () => {
+      updateState({ loading: true, error: null });
       try {
-        const profileRes = await manageProfile({}, "GET");
-        console.log("manageProfile response:", profileRes);
-        if (!profileRes.success || !profileRes.data?.branch_id) {
-          throw new Error("Failed to fetch branch ID: No branch assigned");
+        const filters: { semester_id?: string; section_id?: string; subject_id?: string } = {};
+        if (state.semesterFilter !== "all") {
+          filters.semester_id = state.semesterFilter;
         }
-        const branchId = profileRes.data.branch_id;
+        if (state.sectionFilter && state.sectionFilter !== "all") {
+          filters.section_id = state.sectionFilter;
+        }
+        if (state.subjectFilter && state.subjectFilter !== "all") {
+          filters.subject_id = state.subjectFilter;
+        }
 
-        const semestersRes = await getSemesters(branchId);
-        console.log("getSemesters response:", semestersRes);
-        if (!semestersRes.success || !semestersRes.data) {
-          throw new Error(semestersRes.message || "Failed to fetch semesters");
+        const response = await getAttendanceBootstrap("", filters);
+        if (!response.success || !response.data) {
+          throw new Error(response.message || "Failed to fetch data");
         }
-        const semestersData = semestersRes.data.map((s: Semester) => ({
+
+        const data = response.data;
+
+        // Set branchId
+        updateState({ branchId: data.profile.branch_id });
+
+        // Set semesters
+        const semestersData = data.semesters.map((s: any) => ({
           id: s.id,
           name: `${s.number}th Semester`,
         }));
 
-        updateState({ branchId, semesters: semestersData, loading: false });
-      } catch (err: any) {
-        const errorMessage = err.message || "Network error";
-        updateState({ loading: false, error: errorMessage });
-        toast({ variant: "destructive", title: "Error", description: errorMessage });
-      }
-    };
-    fetchInitialData();
-  }, [toast]);
+        // Set sections
+        const sectionsData = data.sections.map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          semester_id: s.semester_id,
+        }));
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!state.branchId) {
-        console.log("Skipping fetch: branchId not set");
-        updateState({
-          students: [],
-          chartData: [],
-          sections: [],
-          subjects: [],
-          loading: false,
-          error: "Branch ID not set",
-        });
-        return;
-      }
-      updateState({ loading: true, error: null });
-      try {
-        const performanceParams = { branch_id: state.branchId };
-        console.log("getStudentPerformance params:", performanceParams);
-        const performanceRes = await getStudentPerformance(performanceParams);
-        console.log("getStudentPerformance response:", performanceRes);
-        if (!performanceRes.success || !performanceRes.data) {
-          throw new Error(performanceRes.message || "No performance data found");
-        }
+        // Set subjects
+        const subjectsData = data.subjects.map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          semester_id: s.semester_id,
+        }));
 
-        // Filter chart data based on semesterFilter
+        // Process performance data for chart
         const chartData = state.semesterFilter === "all"
-          ? performanceRes.data.map((c: ChartData) => ({
-              subject: c.subject,
-              subject_code: c.subject,
-              average: c.average,
+          ? data.performance.map((p: any) => ({
+              subject: p.subject,
+              subject_code: p.subject,
+              average: p.marks,
               max: 100,
-              attendance: c.attendance,
-              semester: c.semester,
+              attendance: p.attendance,
+              semester: p.semester,
             }))
-          : performanceRes.data
-              .filter((c: ChartData) => {
-                const selectedSemester = state.semesters.find(s => s.id === state.semesterFilter);
-                return c.semester === selectedSemester?.name;
+          : data.performance
+              .filter((p: any) => {
+                const selectedSemester = semestersData.find(s => s.id === state.semesterFilter);
+                return p.semester === selectedSemester?.name;
               })
-              .map((c: ChartData) => ({
-                subject: c.subject,
-                subject_code: c.subject,
-                average: c.average,
+              .map((p: any) => ({
+                subject: p.subject,
+                subject_code: p.subject,
+                average: p.marks,
                 max: 100,
-                attendance: c.attendance,
-                semester: c.semester,
+                attendance: p.attendance,
+                semester: p.semester,
               }));
 
-        const sectionsParams = { branch_id: state.branchId, semester_id: state.semesterFilter === "all" ? "" : state.semesterFilter };
-        const sectionsRes = await manageSections(sectionsParams, "GET");
-        console.log("manageSections response:", sectionsRes);
-        if (!sectionsRes.success || !sectionsRes.data) {
-          throw new Error(sectionsRes.message || "Failed to fetch sections");
-        }
-        const sectionsData = sectionsRes.data.map((s: Section) => ({
-          id: s.id,
-          name: s.name,
-          semester_id: s.semester_id,
-        }));
-
-        const subjectsParams = { branch_id: state.branchId, semester_id: state.semesterFilter === "all" ? "" : state.semesterFilter };
-        const subjectsRes = await manageSubjects(subjectsParams, "GET");
-        console.log("manageSubjects response:", subjectsRes);
-        if (!subjectsRes.success || !subjectsRes.data) {
-          throw new Error(subjectsRes.message || "Failed to fetch subjects");
-        }
-        const subjectsData = subjectsRes.data.map((s: Subject) => ({
-          id: s.id,
-          name: s.name,
-          semester_id: s.semester_id,
-        }));
-
-        const marksParams: { branch_id: string; semester_id?: string; section_id?: string; subject_id?: string } = {
-          branch_id: state.branchId,
-        };
-        if (state.semesterFilter !== "all") {
-          marksParams.semester_id = state.semesterFilter;
-        }
-        if (state.sectionFilter && state.sectionFilter !== "all") {
-          marksParams.section_id = state.sectionFilter;
-        }
-        if (state.subjectFilter && state.subjectFilter !== "all") {
-          marksParams.subject_id = state.subjectFilter;
-        }
-        console.log("getMarks params:", marksParams);
-        const marksRes = await getMarks(marksParams);
-        console.log("getMarks response:", marksRes);
-        console.log("getMarks marks data:", marksRes.data?.marks);
-        if (!marksRes.success) {
-          throw new Error(marksRes.message || "Failed to fetch marks");
-        }
-        if (!marksRes.data?.marks) {
-          throw new Error("No marks data returned from server");
-        }
-
+        // Process marks data
         const studentsMap = new Map<string, Student>();
-        marksRes.data.marks.forEach((mark: Mark) => {
+        data.marks.forEach((mark: any) => {
           const studentId = mark.student_id;
           if (!studentsMap.has(studentId)) {
             studentsMap.set(studentId, {
@@ -218,27 +162,16 @@ const MarksView = () => {
           };
         });
         const studentsData = Array.from(studentsMap.values());
-        console.log("Transformed studentsData:", studentsData);
 
-        if (studentsData.length === 0) {
-          updateState({
-            students: [],
-            chartData,
-            sections: sectionsData,
-            subjects: subjectsData,
-            loading: false,
-            error: "No marks found for the selected filters",
-          });
-        } else {
-          updateState({
-            students: studentsData,
-            chartData,
-            sections: sectionsData,
-            subjects: subjectsData,
-            loading: false,
-            error: null,
-          });
-        }
+        updateState({
+          semesters: semestersData,
+          sections: sectionsData,
+          subjects: subjectsData,
+          chartData,
+          students: studentsData,
+          loading: false,
+          error: null,
+        });
       } catch (err: any) {
         const errorMessage = err.message || "Failed to fetch data";
         console.error("Error fetching data:", err);
@@ -254,7 +187,7 @@ const MarksView = () => {
       }
     };
     fetchData();
-  }, [state.branchId, state.semesterFilter, state.sectionFilter, state.subjectFilter, toast]);
+  }, [state.semesterFilter, state.sectionFilter, state.subjectFilter, toast]);
 
   const subjectKeys = state.subjects.map((s) => s.name);
 

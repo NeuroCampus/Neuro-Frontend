@@ -23,10 +23,11 @@ import { Button } from "../ui/button";
 import { Check, X, UploadCloud } from "lucide-react";
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
-import { getFacultyAssignments, getStudentsForClass, takeAttendance, FacultyAssignment, ClassStudent } from "@/utils/faculty_api";
+import { getStudentsForClass, takeAttendance, FacultyAssignment, ClassStudent } from "@/utils/faculty_api";
+import { useFacultyAssignments } from "@/context/FacultyAssignmentsContext";
 
 const TakeAttendance = () => {
-  const [assignments, setAssignments] = useState<FacultyAssignment[]>([]);
+  const { assignments, loading: assignmentsLoading, error: assignmentsError } = useFacultyAssignments();
   const [branchId, setBranchId] = useState<number | null>(null);
   const [semesterId, setSemesterId] = useState<number | null>(null);
   const [sectionId, setSectionId] = useState<number | null>(null);
@@ -38,12 +39,7 @@ const TakeAttendance = () => {
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Fetch assignments on mount
-  useEffect(() => {
-    getFacultyAssignments().then(res => {
-      if (res.success && res.data) setAssignments(res.data);
-    });
-  }, []);
+  // Assignments are now loaded via context
 
   // Reset selections if branch/semester/section/subject changes
   useEffect(() => {

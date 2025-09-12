@@ -5,7 +5,7 @@ import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { CalendarIcon, Filter as FilterIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { manageHODLeaves, manageProfile } from "../../utils/hod_api";
+import { manageHODLeaves, getLeaveBootstrap } from "../../utils/hod_api";
 import { toast } from "react-toastify";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -51,50 +51,43 @@ const ApplyLeave = () => {
   const today = new Date();
 
 
-  // Fetch branch ID from HOD profile
+  // Fetch profile and leaves data using combined endpoint
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const profileResponse = await manageProfile({}, "GET");
-        if (!profileResponse.success || !profileResponse.data?.branch_id) {
-          throw new Error(profileResponse.message || "Failed to fetch HOD profile");
+        const response = await getLeaveBootstrap();
+        if (!response.success || !response.data) {
+          throw new Error(response.message || "Failed to fetch data");
         }
-        setBranchId(profileResponse.data.branch_id);
-      } catch (error) {
-        const errorMessage = (error as Error).message || "Network error";
-        setError(errorMessage);
-        toast.error(errorMessage);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProfile();
-  }, []);
 
-  // Fetch leaves when branchId is available
-  useEffect(() => {
-    const fetchLeaves = async () => {
-      if (!branchId) return;
-      setLoading(true);
-      try {
-        const response = await manageHODLeaves({ branch_id: branchId }, "GET");
-        if (response.success && response.data) {
-          setLeaves(response.data as Leave[]);
-        } else {
-          setError(response.message || "Failed to fetch leaves");
-          toast.error(response.message || "Failed to fetch leaves");
-        }
-      } catch (err) {
-        const errorMessage = "Network error occurred";
+        const data = response.data;
+
+        // Set branch ID from profile
+        setBranchId(data.profile.branch_id);
+
+        // Set leaves data
+        const leavesData = data.leaves.map((leave: any) => ({
+          id: leave.id.toString(),
+          title: leave.title || "Leave Application",
+          date: leave.start_date,
+          reason: leave.reason,
+          status: leave.status
+        })) as Leave[];
+        setLeaves(leavesData);
+        setError("");
+      } catch (err: any) {
+        const errorMessage = err.message || "Failed to fetch data";
+        console.error("Error fetching data:", err);
         setError(errorMessage);
         toast.error(errorMessage);
+        setLeaves([]);
       } finally {
         setLoading(false);
       }
     };
-    fetchLeaves();
-  }, [branchId]);
+    fetchData();
+  }, []);
 
   const handleSubmit = async () => {
     if (!leaveTitle || !startDate || !reason) {

@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { getLowAttendance, getSemesters, manageSections, manageSubjects, manageProfile, sendNotification } from "../../utils/hod_api";
+import { getLowAttendance, getSemesters, manageSections, manageSubjects, manageProfile, sendNotification, getAttendanceBootstrap } from "../../utils/hod_api";
 import { Component } from "react";
 
 // Interfaces
@@ -123,98 +123,79 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
     setState(prev => ({ ...prev, ...newState }));
   };
 
-  // Fetch initial data
+  // Fetch all data using combined endpoint
   useEffect(() => {
-    const fetchInitialData = async () => {
+    const fetchData = async () => {
       updateState({ loading: true });
       try {
-        const profileResponse = await manageProfile({}, "GET");
-        if (!profileResponse.success || !profileResponse.data?.branch_id) {
-          throw new Error(profileResponse.message || "Failed to fetch HOD profile");
+        const filters: { semester_id?: string; section_id?: string; subject_id?: string } = {};
+        if (state.semesterFilter !== "All") {
+          filters.semester_id = state.semesterFilter;
         }
-        const branchId = profileResponse.data.branch_id;
-        const semesterResponse = await getSemesters(branchId);
-        if (!semesterResponse.success || !semesterResponse.data) {
-          throw new Error(semesterResponse.message || "Failed to fetch semesters");
+        if (state.sectionFilter !== "All") {
+          filters.section_id = state.sectionFilter;
         }
-        updateState({
-          branchId,
-          semesters: semesterResponse.data.map((s: any) => ({
-            id: s.id.toString(),
-            number: s.number,
-          })),
-        });
-      } catch (err: any) {
-        const errorMessage = err.message || "Network error";
-        setError(errorMessage);
-        toast({ variant: "destructive", title: "Error", description: errorMessage });
-      } finally {
-        updateState({ loading: false });
-      }
-    };
-    fetchInitialData();
-  }, [toast, setError]);
+        if (state.subjectFilter !== "All") {
+          filters.subject_id = state.subjectFilter;
+        }
 
-  // Fetch subjects, sections, and low attendance data
-  useEffect(() => {
-    const fetchSemesterData = async () => {
-      if (!state.branchId) return;
-      updateState({ loading: true });
-      try {
-        const subjectsResponse = await manageSubjects({
-          branch_id: state.branchId,
-          ...(state.semesterFilter !== "All" && { semester_id: state.semesterFilter }),
-        });
-        if (!subjectsResponse.success || !subjectsResponse.data) {
-          throw new Error(subjectsResponse.message || "Failed to fetch subjects");
-        }
-        const sectionResponse = await manageSections({
-          branch_id: state.branchId,
-          ...(state.semesterFilter !== "All" && { semester_id: state.semesterFilter }),
-        });
-        if (!sectionResponse.success || !sectionResponse.data) {
-          throw new Error(sectionResponse.message || "Failed to fetch sections");
-        }
-        const filters = {
-          semester_id: state.semesterFilter !== "All" ? state.semesterFilter : undefined,
-          section_id: state.sectionFilter !== "All" ? state.sectionFilter : undefined,
-          subject_id: state.subjectFilter !== "All" ? state.subjectFilter : undefined,
-        };
-        const response = await getLowAttendance(state.branchId, 75, filters);
+        const response = await getAttendanceBootstrap("", filters);
         if (!response.success || !response.data) {
-          throw new Error(response.message || "Failed to fetch low attendance data");
+          throw new Error(response.message || "Failed to fetch data");
         }
+
+        const data = response.data;
+
+        // Set branchId
+        updateState({ branchId: data.profile.branch_id });
+
+        // Set semesters
+        const semestersData = data.semesters.map((s: any) => ({
+          id: s.id,
+          number: s.number,
+        }));
+
+        // Set sections
+        const sectionsData = data.sections.map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          semester_id: s.semester_id,
+        }));
+
+        // Set subjects
+        const subjectsData = data.subjects.map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          semester_id: s.semester_id,
+        }));
+
+        // Set low attendance students
+        const studentsData = data.low_attendance.students.map((student: any) => ({
+          student_id: student.student_id,
+          usn: student.usn,
+          name: student.name,
+          subject: student.subject,
+          section: student.section || "Section A",
+          semester: student.semester || 0,
+          attendance_percentage: student.attendance_percentage,
+        }));
+
         updateState({
-          subjects: subjectsResponse.data.map((s: any) => ({
-            id: s.id,
-            name: s.name,
-            semester_id: s.semester_id.toString(),
-          })),
-          sections: sectionResponse.data.map((s: any) => ({
-            id: s.id,
-            name: s.name,
-            semester_id: s.semester_id.toString(),
-          })),
-          students: response.data.students.map((student: any) => ({
-            student_id: student.student_id,
-            usn: student.usn,
-            name: student.name,
-            subject: student.subject,
-            section: student.section || "Section A",
-            semester: student.semester || 0,
-            attendance_percentage: student.attendance_percentage,
-          })),
+          semesters: semestersData,
+          sections: sectionsData,
+          subjects: subjectsData,
+          students: studentsData,
+          loading: false,
         });
       } catch (err: any) {
         const errorMessage = err.message || "Failed to fetch data";
         toast({ variant: "destructive", title: "Error", description: errorMessage });
         setError(errorMessage);
-      } finally {
         updateState({ loading: false });
       }
     };
-    fetchSemesterData();
-  }, [state.semesterFilter, state.subjectFilter, state.sectionFilter, state.branchId, toast, setError]);
+    fetchData();
+  }, [state.semesterFilter, state.subjectFilter, state.sectionFilter, toast, setError]);
 
   const filteredStudents = state.students.filter((student) => {
     const matchesSearch =

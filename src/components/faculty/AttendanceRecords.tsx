@@ -5,23 +5,29 @@ import { ScrollArea } from "../ui/scroll-area";
 import { Button } from "../ui/button";
 import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
-import { getAttendanceRecordsList, getAttendanceRecordDetails } from "@/utils/faculty_api";
+import { getAttendanceRecordsWithSummary, getAttendanceRecordDetails } from "@/utils/faculty_api";
 import { API_BASE_URL } from "@/utils/config";
 import { fetchWithTokenRefresh } from "@/utils/authService";
 
 interface AttendanceRecord {
   id: number;
   date: string;
-  subject: string;
-  section: string;
-  semester: number;
-  branch: string;
+  subject: string | null;
+  section: string | null;
+  semester: number | null;
+  branch: string | null;
   file_path: string | null;
   status: string;
-  branch_id: number;
-  section_id: number;
-  subject_id: number;
-  semester_id: number;
+  branch_id: number | null;
+  section_id: number | null;
+  subject_id: number | null;
+  semester_id: number | null;
+  summary: {
+    present_count: number;
+    absent_count: number;
+    total_count: number;
+    present_percentage: number;
+  };
 }
 
 interface AttendanceDetail {
@@ -56,7 +62,7 @@ const AttendanceRecords = () => {
 
   useEffect(() => {
     setLoading(true);
-    getAttendanceRecordsList()
+    getAttendanceRecordsWithSummary()
       .then((res) => {
         if (res.success && res.data) setRecords(res.data);
         else setError(res.message || "Failed to fetch records");
@@ -149,6 +155,9 @@ const AttendanceRecords = () => {
                     <TableHead className="text-gray-300">Section</TableHead>
                     <TableHead className="text-gray-300">Semester</TableHead>
                     <TableHead className="text-gray-300">Branch</TableHead>
+                    <TableHead className="text-gray-300">Present</TableHead>
+                    <TableHead className="text-gray-300">Absent</TableHead>
+                    <TableHead className="text-gray-300">Attendance %</TableHead>
                     <TableHead className="text-gray-300">Status</TableHead>
                     <TableHead className="text-gray-300">Action</TableHead>
                   </TableRow>
@@ -161,6 +170,9 @@ const AttendanceRecords = () => {
                       <TableCell>{record.section}</TableCell>
                       <TableCell>{record.semester}</TableCell>
                       <TableCell>{record.branch}</TableCell>
+                      <TableCell className="text-green-400 font-semibold">{record.summary.present_count}</TableCell>
+                      <TableCell className="text-red-400 font-semibold">{record.summary.absent_count}</TableCell>
+                      <TableCell className="font-semibold">{record.summary.present_percentage}%</TableCell>
                       <TableCell>{record.status}</TableCell>
                       <TableCell>
                         <Dialog>
@@ -177,6 +189,9 @@ const AttendanceRecords = () => {
                             <DialogHeader>
                               <DialogTitle className="text-gray-200">
                                 Attendance Details for {selectedRecord?.date} - {selectedRecord?.subject} ({selectedRecord?.section})
+                                <div className="text-sm text-gray-400 mt-1">
+                                  Present: {selectedRecord?.summary.present_count} | Absent: {selectedRecord?.summary.absent_count} | Attendance: {selectedRecord?.summary.present_percentage}%
+                                </div>
                               </DialogTitle>
                             </DialogHeader>
                             <div className="grid gap-4 py-4">

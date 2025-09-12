@@ -72,6 +72,84 @@ interface GetBranchesResponse {
   data?: Branch[];
 }
 
+interface GetAttendanceBootstrapResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    profile: {
+      username: string;
+      email: string;
+      first_name: string;
+      last_name: string;
+      mobile_number: string;
+      address: string;
+      bio: string;
+      branch: string;
+      branch_id: string;
+    };
+    branches: Branch[];
+    semesters: Array<{ id: string; number: number }>;
+    sections: Array<{ id: string; name: string; semester_id: string }>;
+    subjects: Array<{ id: string; name: string; subject_code: string; semester_id: string }>;
+    performance: Array<{
+      subject: string;
+      attendance: number;
+      marks: number;
+      semester: string;
+    }>;
+    marks: Array<{
+      student_id: string;
+      student: string;
+      usn: string;
+      subject: string;
+      subject_id: string;
+      average_mark: number;
+      test_marks: Array<{
+        test_number: number;
+        mark: number;
+        max_mark: number;
+      }>;
+    }>;
+    attendance: {
+      students: Array<{
+        student_id: string;
+        name: string;
+        usn: string;
+        attendance_percentage: number | string;
+        total_sessions: number;
+        present_sessions: number;
+        semester: number | null;
+        section: string | null;
+        batch: string | null;
+        subject: string;
+      }>;
+    };
+    low_attendance: {
+      students: Array<{
+        student_id: string;
+        name: string;
+        usn: string;
+        attendance_percentage: number | string;
+        total_sessions: number;
+        present_sessions: number;
+        semester: number | null;
+        section: string | null;
+        batch: string | null;
+        subject: string;
+      }>;
+    };
+    leaves: Array<{
+      id: number;
+      faculty_name: string;
+      department: string;
+      start_date: string;
+      end_date: string;
+      reason: string;
+      status: string;
+    }>;
+  };
+}
+
 interface Batch {
   id: string;
   name: string;
@@ -711,6 +789,139 @@ export const getBranches = async (): Promise<GetBranchesResponse> => {
       method: "GET",
       headers: { "Content-Type": "application/json" },
       timeout: 10000,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
+interface GetLeaveBootstrapResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    profile: {
+      username: string;
+      email: string;
+      first_name: string;
+      last_name: string;
+      mobile_number: string;
+      address: string;
+      bio: string;
+      branch: string;
+      branch_id: string;
+    };
+    leaves: Array<{
+      id: number;
+      faculty_name: string;
+      department: string;
+      start_date: string;
+      end_date: string;
+      reason: string;
+      status: string;
+    }>;
+  };
+}
+
+export const getLeaveBootstrap = async (
+  branch_id?: string
+): Promise<GetLeaveBootstrapResponse> => {
+  try {
+    const params: Record<string, string> = {};
+    if (branch_id) params.branch_id = branch_id;
+    const query = new URLSearchParams(params).toString();
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/leave-bootstrap/${query ? '?' + query : ''}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
+export const getFacultyLeavesBootstrap = async (
+  branch_id?: string
+): Promise<GetLeaveBootstrapResponse> => {
+  try {
+    const params: Record<string, string> = {};
+    if (branch_id) params.branch_id = branch_id;
+    const query = new URLSearchParams(params).toString();
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/faculty-leaves-bootstrap/${query ? '?' + query : ''}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
+interface GetProctorBootstrapResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    profile: {
+      username: string;
+      email: string;
+      first_name: string;
+      last_name: string;
+      mobile_number: string;
+      address: string;
+      bio: string;
+      branch: string;
+      branch_id: string;
+    };
+    students: Array<{
+      usn: string;
+      name: string;
+      semester: number | null;
+      branch: string;
+      section: string | null;
+      proctor: string | null;
+    }>;
+    proctors: Array<{
+      id: string;
+      name: string;
+      first_name: string;
+      last_name: string;
+    }>;
+    semesters: Array<{ id: string; number: number }>;
+    sections: Array<{ id: string; name: string; semester_id: string }>;
+  };
+}
+
+export const getProctorBootstrap = async (
+  branch_id?: string
+): Promise<GetProctorBootstrapResponse> => {
+  try {
+    const params: Record<string, string> = {};
+    if (branch_id) params.branch_id = branch_id;
+    const query = new URLSearchParams(params).toString();
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/proctor-bootstrap/${query ? '?' + query : ''}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
+export const getAttendanceBootstrap = async (
+  branch_id?: string,
+  filters: { semester_id?: string; section_id?: string; subject_id?: string } = {}
+): Promise<GetAttendanceBootstrapResponse> => {
+  try {
+    const params: Record<string, string> = {};
+    if (branch_id) params.branch_id = branch_id;
+    if (filters.semester_id) params.semester_id = filters.semester_id;
+    if (filters.section_id) params.section_id = filters.section_id;
+    if (filters.subject_id) params.subject_id = filters.subject_id;
+    const query = new URLSearchParams(params).toString();
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/attendance-bootstrap/${query ? '?' + query : ''}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
     });
     return await response.json();
   } catch (error: unknown) {

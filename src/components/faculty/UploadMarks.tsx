@@ -21,11 +21,11 @@ import {
   getStudentsForClass,
   ClassStudent,
   uploadInternalMarks,
-  getFacultyAssignments,
   FacultyAssignment,
   getInternalMarksForClass,
   InternalMarkStudent
 } from "../../utils/faculty_api";
+import { useFacultyAssignments } from "../../context/FacultyAssignmentsContext";
 
 const MySwal = withReactContent(Swal);
 
@@ -53,7 +53,7 @@ const validateMarks = (marks: string, total: string): boolean => {
 };
 
 const UploadMarks = () => {
-  const [assignments, setAssignments] = useState<FacultyAssignment[]>([]);
+  const { assignments, loading: assignmentsLoading, error: assignmentsError } = useFacultyAssignments();
   const [dropdownData, setDropdownData] = useState({
     branch: [] as { id: number; name: string }[],
     semester: [] as { id: number; number: number }[],
@@ -82,17 +82,13 @@ const UploadMarks = () => {
   const [dragActive, setDragActive] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Update dropdown data when assignments change
   useEffect(() => {
-    getFacultyAssignments().then(res => {
-      if (res.success && res.data) {
-        setAssignments(res.data);
-        const branches = Array.from(
-          new Map(res.data.map(a => [a.branch_id, { id: a.branch_id, name: a.branch }])).values()
-        );
-        setDropdownData(prev => ({ ...prev, branch: branches }));
-      }
-    });
-  }, []);
+    const branches = Array.from(
+      new Map(assignments.map(a => [a.branch_id, { id: a.branch_id, name: a.branch }])).values()
+    );
+    setDropdownData(prev => ({ ...prev, branch: branches }));
+  }, [assignments]);
 
   const handleMarksChange = (index: number, field: "marks" | "total", value: string) => {
     if (/^\d*$/.test(value)) {

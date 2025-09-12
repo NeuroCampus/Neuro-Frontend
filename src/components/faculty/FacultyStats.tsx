@@ -33,7 +33,7 @@ import {
   Bar,
   LabelList,
 } from "recharts";
-import { getFacultyAssignments, getProctorStudents, FacultyAssignment, ProctorStudent } from "@/utils/faculty_api";
+import { getFacultyDashboardBootstrap, FacultyAssignment, ProctorStudent } from "@/utils/faculty_api";
 
 interface Stat {
   label: string;
@@ -60,40 +60,26 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch assigned subjects
-        const assignmentsRes = await getFacultyAssignments();
-        if (assignmentsRes.success && assignmentsRes.data) {
-          setSubjects(assignmentsRes.data);
+        // Fetch both assignments and proctor students in single call
+        const bootstrapRes = await getFacultyDashboardBootstrap();
+        if (bootstrapRes.success && bootstrapRes.data) {
+          const { assignments, proctor_students } = bootstrapRes.data;
+          setSubjects(assignments);
+          setProctorStudents(proctor_students);
           setStats([
             {
               label: "Assigned Subjects",
-              value: assignmentsRes.data.length,
+              value: assignments.length,
               icon: <CalendarDays className="text-blue-600 w-5 h-5" />,
             },
             {
               label: "Total Proctor Students",
-              value: proctorStudents.length,
+              value: proctor_students.length,
               icon: <Users className="text-green-600 w-5 h-5" />,
             },
           ]);
         } else {
-          setError(assignmentsRes.message || "Failed to load assignments");
-        }
-
-        // Fetch proctor students
-        const proctorRes = await getProctorStudents();
-        if (proctorRes.success && proctorRes.data) {
-          setProctorStudents(proctorRes.data);
-          setStats((prev) => [
-            prev[0],
-            {
-              label: "Total Proctor Students",
-              value: proctorRes.data.length,
-              icon: <Users className="text-green-600 w-5 h-5" />,
-            },
-          ]);
-        } else {
-          setError(proctorRes.message || "Failed to load proctor students");
+          setError(bootstrapRes.message || "Failed to load dashboard data");
         }
       } catch (err) {
         setError("Network error occurred while fetching data");

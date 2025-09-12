@@ -13,11 +13,11 @@ import {
 } from "@/components/ui/select";
 import {
   getFacultyNotifications,
-  getProctorStudents,
   createAnnouncement,
   ProctorStudent,
   getFacultySentNotifications,
 } from "@/utils/faculty_api";
+import { useProctorStudents } from "@/context/ProctorStudentsContext";
 import type { CreateAnnouncementRequest } from "@/utils/faculty_api";
 import { Loader2 } from "lucide-react";
 
@@ -41,7 +41,7 @@ const roleColors: Record<string, string> = {
 const Announcements = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
-  const [proctorStudents, setProctorStudents] = useState<ProctorStudent[]>([]);
+  const { proctorStudents } = useProctorStudents();
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [title, setTitle] = useState("");
@@ -62,15 +62,6 @@ const Announcements = () => {
         }
       })
       .finally(() => setLoadingNotifications(false));
-  }, []);
-
-  // Fetch proctor students
-  useEffect(() => {
-    getProctorStudents().then((res) => {
-      if (res.success && res.data) {
-        setProctorStudents(res.data);
-      }
-    });
   }, []);
 
   // Fetch sent notifications

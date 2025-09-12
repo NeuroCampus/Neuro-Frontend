@@ -132,3 +132,13 @@ Username Pattern: CI@HOD
 This represents the branch name followed by "HOD".
 Password: HOD@2024
 A generic password for HODs, combining the role and year.
+
+
+
+the goal is to reduce the backend calls to reduce server load so we have to combine endpoints to one endpoint that should work correctly so refer backend hod_views , hod2_views.py and urls and also in frontend hod_api.ts and also hodbootstrapcontext and now we are only concentrating on hod pages 
+note : donot chnage the exisiting implementation like hod_views.py and urls.py , you can do it in hod2_views and add urls and can add that new endpoints structure in the hod_api.ts in frontend and change the page to call that endpoint correctly , 
+say yes if you understood what exactly you should do and explain in short 
+
+
+
+Yes, I understood. I'll review the backend files (hod_views.py, hod2_views.py, urls.py) to identify the current HOD-related endpoints and their data. Then, in hod2_views.py, I'll create a new combined endpoint that aggregates the necessary data into a single response. I'll add the new URL pattern in urls.py without altering existing ones. In the frontend, I'll update hod_api.ts to include the new endpoint structure, modify HODBootstrapContext.tsx to handle the combined data, and adjust the HOD pages to call this single endpoint instead of multiple ones, ensuring the implementation works correctly while reducing backend calls.

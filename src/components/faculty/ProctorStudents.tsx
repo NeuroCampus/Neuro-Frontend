@@ -2,7 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { useState, useEffect } from "react";
-import { getProctorStudents, ProctorStudent } from "../../utils/faculty_api";
+import { ProctorStudent } from "../../utils/faculty_api";
+import { useProctorStudents } from "../../context/ProctorStudentsContext";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -17,30 +18,14 @@ const ProctorStudents = () => {
     }
     return `${percentage}%`;
   };
+  const { proctorStudents, loading, error } = useProctorStudents();
   const [students, setStudents] = useState<ProctorStudent[]>([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchStudents = async () => {
-      setLoading(true);
-      try {
-        const res = await getProctorStudents();
-        if (res.success && res.data) {
-          setStudents(res.data);
-        } else {
-          setError(res.message || "Failed to fetch proctor students");
-        }
-      } catch (err) {
-        setError("Network error");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStudents();
-  }, []);
+    setStudents(proctorStudents);
+  }, [proctorStudents]);
 
   const filteredStudents = students.filter(
     s =>
