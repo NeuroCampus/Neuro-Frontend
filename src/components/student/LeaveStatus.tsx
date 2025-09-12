@@ -3,6 +3,12 @@ import { Badge } from "../ui/badge";
 import { Bell, CheckCircle2, Clock3, XCircle } from "lucide-react";
 import { Button } from "../ui/button";
 import { getLeaveRequests } from "@/utils/student_api";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
 
 type LeaveStatusType = "PENDING" | "APPROVED" | "REJECTED";
 
@@ -14,6 +20,9 @@ interface LeaveRequest {
   end_date?: string;
   applied_on?: string;
   status: LeaveStatusType;
+}
+interface LeaveStatusProps {
+  setPage: (page: string) => void;
 }
 
 const statusStyles: Record<
@@ -37,7 +46,7 @@ const statusStyles: Record<
   },
 };
 
-const LeaveStatus = () => {
+const LeaveStatus: React.FC<LeaveStatusProps> = ({ setPage }) => {
   const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -53,11 +62,12 @@ const LeaveStatus = () => {
   }, []);
 
   return (
-    <div className="bg-white min-h-screen p-6 text-gray-900">
+    <div className="bg-[#1c1c1e] text-gray-200 min-h-screen p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-sm font-semibold">Leave Requests</h2>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-1.5">
+        <CardTitle>Leave Requests</CardTitle>
+        <Button className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 text-sm px-4 py-1.5"
+          onClick={() => setPage("leave-request")}>
           <Bell className="w-4 h-4 mr-2" />
           Apply for Leave
         </Button>
@@ -65,29 +75,29 @@ const LeaveStatus = () => {
 
       {/* Loading State */}
       {loading ? (
-        <div className="text-sm text-gray-500">Loading leave requests...</div>
+        <div className="text-sm text-gray-200">Loading leave requests...</div>
       ) : leaves.length === 0 ? (
-        <div className="text-sm text-gray-500">No leave requests found.</div>
+        <div className="text-sm text-gray-200">No leave requests found.</div>
       ) : (
         <div className="space-y-4">
           {leaves.map((item) => (
             <div
               key={item.id}
-              className="bg-gray-50 border border-gray-200 rounded-md px-4 py-4 shadow-sm"
+              className="bg-[#1c1c1e] text-gray-200 border border-gray-200 rounded-md px-4 py-4 shadow-sm"
             >
               <div className="flex justify-between items-start">
                 {/* Left Section */}
                 <div className="space-y-1 text-sm">
                   <p className="font-medium">{item.title ?? "Leave Request"}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-200">
                     From: {item.start_date}
                     {item.end_date ? ` To: ${item.end_date}` : ""}
                   </p>
                   {item.reason && (
-                    <p className="text-xs text-gray-500">{item.reason}</p>
+                    <p className="text-xs text-gray-200">{item.reason}</p>
                   )}
                   {item.applied_on && (
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-gray-300">
                       Applied on: {item.applied_on}
                     </p>
                   )}
@@ -103,7 +113,7 @@ const LeaveStatus = () => {
                       {item.status.charAt(0) + item.status.slice(1).toLowerCase()}
                     </div>
                   </Badge>
-                  <span className="text-xs text-gray-400">#{item.id.slice(0, 6)}</span>
+                  <span className="text-xs text-gray-200">#{item.id.slice(0, 6)}</span>
                 </div>
               </div>
             </div>

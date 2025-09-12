@@ -170,7 +170,7 @@ const ChatWithPDF: React.FC = () => {
 
   if (!chatStarted) {
     return (
-      <div className="min-h-screen bg-[#1c1c1e] text-gray-200 flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-[#1c1c1e] text-gray-200 flex flex-col items-center  p-4">
         <div className="max-w-2xl w-full bg-[#232326] text-gray-200 rounded-2xl shadow-xl p-8">
           <div className="text-center mb-6">
             <BookOpen className="mx-auto text-blue-600 w-12 h-12 mb-3" />
