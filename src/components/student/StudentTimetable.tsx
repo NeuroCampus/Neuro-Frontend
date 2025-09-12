@@ -170,19 +170,19 @@ const StudentTimetable = () => {
 
       {/* Filter Modal */}
       <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
-        <DialogContent>
+        <DialogContent className="bg-[#1c1c1e] text-gray-200">
           <DialogHeader>
             <DialogTitle>Filter Timetable</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
-            <div>
+            <div >
               <label className="text-sm font-medium">Subject</label>
               <Select value={subjectFilter} onValueChange={setSubjectFilter}>
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="mt-1 bg-[#232326] text-gray-200">
                   <SelectValue placeholder="Select subject" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[#232326] text-gray-200">
                   <SelectItem value="all">All</SelectItem>
                   {uniqueSubjects.map((subj) => (
                     <SelectItem key={subj} value={subj}>
@@ -196,10 +196,10 @@ const StudentTimetable = () => {
             <div>
               <label className="text-sm font-medium">Faculty</label>
               <Select value={facultyFilter} onValueChange={setFacultyFilter}>
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="mt-1 bg-[#232326] text-gray-200">
                   <SelectValue placeholder="Select faculty" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[#232326] text-gray-200">
                   <SelectItem value="all">All</SelectItem>
                   {uniqueFaculty.map((f) => (
                     <SelectItem key={f} value={f}>
@@ -213,10 +213,10 @@ const StudentTimetable = () => {
             <div>
               <label className="text-sm font-medium">Room</label>
               <Select value={roomFilter} onValueChange={setRoomFilter}>
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="mt-1 bg-[#232326] text-gray-200">
                   <SelectValue placeholder="Select room" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-[#232326] text-gray-200">
                   <SelectItem value="all">All</SelectItem>
                   {uniqueRooms.map((r) => (
                     <SelectItem key={r} value={r}>
@@ -228,7 +228,7 @@ const StudentTimetable = () => {
             </div>
 
             <div className="flex justify-end pt-2">
-              <Button variant="secondary" onClick={clearFilters}>
+              <Button variant="secondary" className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={clearFilters}>
                 Clear Filters
               </Button>
             </div>
