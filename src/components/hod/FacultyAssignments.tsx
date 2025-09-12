@@ -6,7 +6,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from ".
 import { useToast } from "../ui/use-toast";
 import { Pencil, Trash2, Loader2, CheckCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogFooter } from "../ui/dialog";
-import { manageFacultyAssignments, manageSubjects, manageSections, manageProfile, getSemesters, manageFaculties } from "../../utils/hod_api";
+import { manageFacultyAssignments, manageSubjects, manageSections, manageProfile, getSemesters, manageFaculties, getHODSubjectBootstrap } from "../../utils/hod_api";
 
 // Interfaces
 interface FacultyAssignmentsProps {
@@ -111,29 +111,15 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
     const fetchInitialData = async () => {
       updateState({ loading: true });
       try {
-        const profileResponse = await manageProfile({}, "GET");
-        if (!profileResponse.success || !profileResponse.data?.branch_id) {
-          throw new Error(profileResponse.message || "Failed to fetch HOD profile");
+        const boot = await getHODSubjectBootstrap();
+        if (!boot.success || !boot.data?.profile?.branch_id) {
+          throw new Error(boot.message || "Failed to bootstrap faculty assignments");
         }
-        const branchId = profileResponse.data.branch_id;
-        const semestersResponse = await getSemesters(branchId);
-        if (!semestersResponse.success || !semestersResponse.data) {
-          throw new Error(semestersResponse.message || "Failed to fetch semesters");
-        }
-        const facultiesResponse = await manageFaculties({ branch_id: branchId }, "GET");
-        if (!facultiesResponse.success || !facultiesResponse.data) {
-          throw new Error(facultiesResponse.message || "Failed to fetch faculties");
-        }
-        const assignmentsResponse = await manageFacultyAssignments({ branch_id: branchId }, "GET");
-        if (!assignmentsResponse.success || !assignmentsResponse.data?.assignments) {
-          throw new Error(assignmentsResponse.message || "Failed to fetch assignments");
-        }
-        updateState({
-          branchId,
-          semesters: semestersResponse.data.map((s: any) => ({ id: s.id.toString(), number: s.number })),
-          faculties: facultiesResponse.data,
-          assignments: assignmentsResponse.data.assignments,
-        });
+        const branchId = boot.data.profile.branch_id;
+        const semesters = (boot.data.semesters || []).map((s: any) => ({ id: s.id.toString(), number: s.number }));
+        const faculties = boot.data.faculties || [];
+        const assignments = boot.data.assignments || [];
+        updateState({ branchId, semesters, faculties, assignments });
       } catch (err: any) {
         const errorMessage = err.message || "Network error";
         setError(errorMessage);

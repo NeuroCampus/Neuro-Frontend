@@ -22,6 +22,8 @@ import HodProfile from "../hod/HodProfile";
 import { logoutUser } from "../../utils/authService";
 import StudyMaterial from "../hod/StudyMaterial";
 import PromotionManagement from "../hod/PromotionManagement";
+import { getHODBootstrap } from "../../utils/hod_api";
+import { HODBootstrapProvider } from "../../context/HODBootstrapContext";
  
 interface User {
   username?: string;
@@ -83,6 +85,7 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
   );
   const [error, setError] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [bootstrap, setBootstrap] = useState<{ branch_id?: string; semesters?: any[]; sections?: any[] } | null>(null);
  
   useEffect(() => {
     if (!validateUser(user)) {
@@ -96,6 +99,24 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
   useEffect(() => {
     localStorage.setItem("hodActivePage", activePage);
   }, [activePage]);
+
+  // Fetch combined profile + semesters + sections once
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await getHODBootstrap();
+        if (res.success && res.data) {
+          setBootstrap({
+            branch_id: res.data.profile?.branch_id,
+            semesters: res.data.semesters,
+            sections: res.data.sections,
+          });
+        }
+      } catch (e) {
+        // non-blocking; individual screens still handle errors
+      }
+    })();
+  }, []);
  
   useEffect(() => {
     if (error) {
@@ -178,6 +199,7 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
   };
  
   return (
+    <HODBootstrapProvider value={bootstrap}>
     <div className="flex min-h-screen bg-[#1c1c1e] pt-16">
       <Sidebar
         role="hod"
@@ -213,6 +235,7 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
         </div>
       </div>
     </div>
+    </HODBootstrapProvider>
   );
 };
  

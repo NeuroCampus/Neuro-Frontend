@@ -15,14 +15,7 @@ import {
   DialogFooter,
 } from "../ui/dialog";
 import { Pencil, Trash2, UploadCloud, Upload } from "lucide-react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+// Removed chart imports; performance chart is no longer shown on this page
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import {
@@ -32,7 +25,8 @@ import {
   SelectItem,
   SelectValue,
 } from "../ui/select";
-import { manageStudents, getSemesters, manageSections, getStudentPerformance, manageProfile, manageBatches } from "../../utils/hod_api";
+import { manageStudents, getSemesters, manageSections, manageProfile, manageBatches, getHODStudentBootstrap } from "../../utils/hod_api";
+import { useHODBootstrap } from "../../context/HODBootstrapContext";
 
 const mockChartData = [
   { subject: "CS101", attendance: 85, marks: 78, semester: "4th Semester" },
@@ -88,6 +82,9 @@ const StudentManagement = () => {
     isEditSectionsLoading: false,
   });
 
+  const bootstrap = useHODBootstrap();
+  const [sectionsCache, setSectionsCache] = useState<Record<string, Section[]>>({});
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const itemsPerPage = 10;
 
@@ -120,6 +117,15 @@ const StudentManagement = () => {
   // Fetch sections for Add Student Manually
   const fetchManualSections = async (branchId: string, semesterId: string) => {
     try {
+      const cacheKey = semesterId || "ALL";
+      const cached = sectionsCache[cacheKey];
+      if (cached) {
+        updateState({
+          manualSections: cached,
+          manualForm: { ...state.manualForm, section: cached[0]?.name || "" },
+        });
+        return;
+      }
       console.log("Fetching manual sections for branch:", branchId, "semester:", semesterId || "None");
       const sectionRes = await manageSections({
         branch_id: branchId,
@@ -127,14 +133,9 @@ const StudentManagement = () => {
       });
       console.log("Manual section response:", sectionRes);
       if (sectionRes.success && sectionRes.data?.length > 0) {
-        updateState({
-          manualSections: sectionRes.data.map((s: any) => ({
-            id: s.id,
-            name: s.name,
-            semester_id: s.semester_id.toString(),
-          })),
-          manualForm: { ...state.manualForm, section: sectionRes.data[0].name },
-        });
+        const mapped = sectionRes.data.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id.toString() }));
+        setSectionsCache((prev) => ({ ...prev, [cacheKey]: mapped }));
+        updateState({ manualSections: mapped, manualForm: { ...state.manualForm, section: mapped[0]?.name || "" } });
       } else {
         updateState({
           manualSections: [],
@@ -151,6 +152,12 @@ const StudentManagement = () => {
   // Fetch sections for Student List filter
   const fetchListSections = async (branchId: string, semesterId: string) => {
     try {
+      const cacheKey = semesterId || "ALL";
+      const cached = sectionsCache[cacheKey];
+      if (cached) {
+        updateState({ listSections: cached });
+        return;
+      }
       console.log("Fetching list sections for branch:", branchId, "semester:", semesterId || "None");
       const sectionRes = await manageSections({
         branch_id: branchId,
@@ -158,13 +165,9 @@ const StudentManagement = () => {
       });
       console.log("List section response:", sectionRes);
       if (sectionRes.success && sectionRes.data?.length > 0) {
-        updateState({
-          listSections: sectionRes.data.map((s: any) => ({
-            id: s.id,
-            name: s.name,
-            semester_id: s.semester_id.toString(),
-          })),
-        });
+        const mapped = sectionRes.data.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id.toString() }));
+        setSectionsCache((prev) => ({ ...prev, [cacheKey]: mapped }));
+        updateState({ listSections: mapped });
       } else {
         updateState({
           listSections: [],
@@ -182,6 +185,15 @@ const StudentManagement = () => {
   const fetchEditSections = async (branchId: string, semesterId: string) => {
     try {
       updateState({ isEditSectionsLoading: true });
+      const cacheKey = semesterId || "ALL";
+      const cached = sectionsCache[cacheKey];
+      if (cached) {
+        updateState({
+          editSections: cached,
+          editForm: { ...state.editForm, section: cached.find((s: any) => s.name === state.editForm.section)?.name || cached[0]?.name || "" },
+        });
+        return;
+      }
       console.log("Fetching edit sections for branch:", branchId, "semester:", semesterId || "None");
       const sectionRes = await manageSections({
         branch_id: branchId,
@@ -189,13 +201,11 @@ const StudentManagement = () => {
       });
       console.log("Edit section response:", sectionRes);
       if (sectionRes.success && sectionRes.data?.length > 0) {
+        const mapped = sectionRes.data.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id.toString() }));
+        setSectionsCache((prev) => ({ ...prev, [cacheKey]: mapped }));
         updateState({
-          editSections: sectionRes.data.map((s: any) => ({
-            id: s.id,
-            name: s.name,
-            semester_id: s.semester_id.toString(),
-          })),
-          editForm: { ...state.editForm, section: sectionRes.data.find((s: any) => s.name === state.editForm.section)?.name || sectionRes.data[0].name },
+          editSections: mapped,
+          editForm: { ...state.editForm, section: mapped.find((s: any) => s.name === state.editForm.section)?.name || mapped[0]?.name || "" },
         });
       } else {
         updateState({
@@ -235,42 +245,41 @@ const StudentManagement = () => {
     const fetchInitialData = async () => {
       updateState({ isLoading: true });
       try {
-        const profileRes = await manageProfile({}, "GET");
-        if (profileRes.success && profileRes.data?.branch_id) {
-          const branchId = profileRes.data.branch_id;
-          updateState({ branchId });
-
-          // Fetch batches first
-          await fetchBatches();
-
-          const semesterRes = await getSemesters(branchId);
-          if (semesterRes.success && semesterRes.data?.length > 0) {
-            const semesters = semesterRes.data.map((s: any) => ({
-              id: s.id.toString(),
-              number: s.number,
-            }));
-            const defaultSemester = `${semesters[0].number}th Semester`;
-            updateState({
-              semesters,
-              selectedSemester: defaultSemester,
-              manualForm: { ...state.manualForm, semester: defaultSemester },
-            });
-
-            await fetchManualSections(branchId, semesters[0].id);
-            await fetchStudents(branchId);
-
-            const perfRes = await getStudentPerformance({ branch_id: branchId });
-            if (perfRes.success && perfRes.data) {
-              updateState({ chartData: perfRes.data });
-            } else {
-              updateState({ uploadErrors: [...state.uploadErrors, `Performance API: ${perfRes.message || "No data found"}`] });
-            }
-          } else {
-            updateState({ uploadErrors: [...state.uploadErrors, "No semesters found"] });
-          }
-        } else {
-          updateState({ uploadErrors: [...state.uploadErrors, "No branch found in HOD profile"] });
+        const boot = await getHODStudentBootstrap();
+        if (!boot.success || !boot.data?.profile?.branch_id) {
+          throw new Error(boot.message || "Failed to bootstrap student management");
         }
+        const branchId = boot.data.profile.branch_id;
+        updateState({ branchId });
+
+        // Batches
+        if (Array.isArray(boot.data.batches)) {
+          const defaultBatch = boot.data.batches[0]?.name || "";
+          updateState({ batches: boot.data.batches, manualForm: { ...state.manualForm, batch: defaultBatch } });
+        } else {
+          await fetchBatches();
+        }
+
+        // Semesters
+        if (Array.isArray(boot.data.semesters) && boot.data.semesters.length > 0) {
+          const semesters = boot.data.semesters.map((s: any) => ({ id: s.id.toString(), number: s.number }));
+          const defaultSemester = `${semesters[0].number}th Semester`;
+          updateState({ semesters, selectedSemester: defaultSemester, manualForm: { ...state.manualForm, semester: defaultSemester } });
+          // Manual sections default
+          await fetchManualSections(branchId, semesters[0].id);
+        } else {
+          updateState({ uploadErrors: [...state.uploadErrors, "No semesters found"] });
+        }
+
+        // Students
+        if (Array.isArray(boot.data.students)) {
+          const students = boot.data.students.map((s: any) => ({ usn: s.usn, name: s.name, email: s.email, section: s.section || "Unknown", semester: s.semester || "Unknown" }));
+          updateState({ students });
+        } else {
+          await fetchStudents(branchId);
+        }
+
+        // Performance fetch removed (chart not shown on this page)
       } catch (err) {
         console.error("Error fetching initial data:", err);
         updateState({ uploadErrors: [...state.uploadErrors, "Failed to connect to backend"] });
@@ -610,8 +619,7 @@ const StudentManagement = () => {
     }
   };
 
-  // Filter chart data
-  const filteredChartData = state.chartData.filter((item) => item.semester === state.selectedSemester);
+  // Chart removed
 
   return (
     <div className="p-6 space-y-6 bg-[#1c1c1e] min-h-screen text-gray-200">
@@ -992,57 +1000,7 @@ const StudentManagement = () => {
         </CardContent>
       </Card>
 
-      <Card className="bg-[#1c1c1e] border border-gray-800 text-gray-200">
-        <CardHeader className="flex justify-between items-center">
-          <CardTitle className="text-lg text-gray-100">Student Performance Comparison</CardTitle>
-          <Select
-            value={state.selectedSemester}
-            onValueChange={(value) => updateState({ selectedSemester: value })}
-            disabled={state.isLoading || state.semesters.length === 0}
-          >
-            <SelectTrigger className="w-48 bg-[#2c2c2e] border border-gray-700 text-gray-200">
-              <SelectValue
-                placeholder={
-                  state.semesters.length === 0
-                    ? "No semesters available"
-                    : "Select Semester"
-                }
-              />
-            </SelectTrigger>
-            <SelectContent className="bg-[#2c2c2e] text-gray-200 border border-gray-700">
-              {state.semesters.map((s) => (
-                <SelectItem key={s.id} value={`${s.number}th Semester`} className="hover:bg-gray-700">
-                  Semester {s.number}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardHeader>
-        <CardContent>
-          {filteredChartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={filteredChartData}>
-                <XAxis dataKey="subject" stroke="#a1a1aa" />
-                <YAxis stroke="#a1a1aa" />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#2c2c2e",
-                    border: "1px solid #3f3f46",
-                    color: "#e4e4e7",
-                  }}
-                />
-                <Bar dataKey="attendance" fill="#60a5fa" name="Attendance %" />
-                <Bar dataKey="marks" fill="#a78bfa" name="Marks %" />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="text-center text-gray-400">
-              <p>No data available for the selected semester.</p>
-              <p>Please select a different semester or upload data for this semester.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Student Performance Comparison chart removed to reduce calls and simplify page */}
 
 
       <Dialog open={state.addStudentModal} onOpenChange={closeModal}>

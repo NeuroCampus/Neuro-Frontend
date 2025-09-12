@@ -732,6 +732,40 @@ export const getHODStats = async (branch_id: string): Promise<HODStatsResponse> 
   }
 };
 
+// Combined HOD dashboard (stats + leaves in one call)
+export const getHODDashboard = async (
+  branch_id: string
+): Promise<{
+  success: boolean;
+  message?: string;
+  data?: {
+    overview?: {
+      faculty_count: number;
+      student_count: number;
+      pending_leaves: number;
+    };
+    attendance_trend?: Array<{
+      week: string;
+      start_date: string;
+      end_date: string;
+      attendance_percentage: number;
+    }>;
+    leaves?: Array<any>;
+  };
+}> => {
+  try {
+    if (!branch_id) throw new Error("Branch ID is required");
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/dashboard/?branch_id=${branch_id}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      timeout: 10000,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response) as any;
+  }
+};
+
 export const getLowAttendance = async (
   branch_id: string,
   threshold: number = 75,
@@ -859,6 +893,86 @@ export const manageSections = async (
   }
 };
 
+// Combined semester data: sections + subjects + faculty assignments
+export const getHODTimetableSemesterData = async (semester_id: string): Promise<{
+  success: boolean;
+  message?: string;
+  data?: {
+    sections: Array<{ id: string; name: string; semester_id: string }>;
+    subjects: Array<{ id: string; name: string; subject_code: string; semester_id: string }>;
+    faculty_assignments: Array<{
+      id: string;
+      faculty: string;
+      faculty_id: string;
+      faculty_name: string;
+      subject: string;
+      subject_id: string;
+      section: string;
+      section_id: string;
+      semester: number;
+      semester_id: string;
+    }>;
+  };
+}> => {
+  try {
+    if (!semester_id) throw new Error("Semester ID is required");
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/timetable-semester-data/?semester_id=${semester_id}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      timeout: 10000,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response) as any;
+  }
+};
+
+// Combined bootstrap: profile + semesters + sections
+export const getHODBootstrap = async (): Promise<{
+  success: boolean;
+  message?: string;
+  data?: {
+    profile: { first_name?: string; last_name?: string; email?: string; branch?: string; branch_id: string };
+    semesters: Array<{ id: string; number: number }>;
+    sections: Array<{ id: string; name: string; semester_id: string | null }>;
+  };
+}> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/bootstrap/`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      timeout: 10000,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response) as any;
+  }
+};
+
+// Student management bootstrap (profile + semesters + sections + batches + students + performance)
+export const getHODStudentBootstrap = async (): Promise<{
+  success: boolean;
+  message?: string;
+  data?: {
+    profile: { branch_id: string };
+    semesters: Array<{ id: string; number: number }>;
+    sections: Array<{ id: string; name: string; semester_id: string | null }>;
+    batches: Array<{ id: number; name: string; start_year: number; end_year: number }>;
+    students: Array<{ usn: string; name: string; email: string; section: string; semester: string }>;
+    performance: Array<{ subject: string; attendance: number; marks: number; semester: string }>;
+  };
+}> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/student-bootstrap/`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      timeout: 15000,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response) as any;
+  }
+};
 export const manageSubjects = async (
   data: ManageSubjectsRequest | { branch_id: string; semester_id?: string },
   method: "GET" | "POST" = "GET"
@@ -895,6 +1009,29 @@ export const manageSubjects = async (
   }
 };
 
+// Subject management bootstrap (profile + semesters + subjects)
+export const getHODSubjectBootstrap = async (): Promise<{
+  success: boolean;
+  message?: string;
+  data?: {
+    profile: { branch_id: string };
+    semesters: Array<{ id: string; number: number }>;
+    subjects: Array<{ id: string; name: string; subject_code: string; semester_id: string | null }>;
+    faculties: Array<{ id: string; username: string; first_name: string; last_name: string | null }>;
+    assignments: Array<{ id: string; faculty: string; subject: string; section: string; semester: number; faculty_id: string; subject_id: string; section_id: string; semester_id: string }>;  
+  };
+}> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/subject-bootstrap/`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      timeout: 15000,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response) as any;
+  }
+};
 export const manageStudents = async (
   data: ManageStudentsRequest | { branch_id: string; semester_id?: string; section_id?: string },
   method: "GET" | "POST" = "GET"
@@ -912,8 +1049,8 @@ export const manageStudents = async (
     if (method === "POST") {
       const req = data as ManageStudentsRequest;
       if (!req.action) throw new Error("Action is required for POST requests");
-      if (req.action === "create" && (!req.usn || !req.name || !req.email || !req.semester_id || !req.section_id || !req.batch_id || !req.course_id || !req.date_of_admission)) {
-        throw new Error("USN, Name, Email, Semester ID, Section ID, Batch ID, Course ID, and Date of Admission are required for create action");
+      if (req.action === "create" && (!req.usn || !req.name || !req.email || !req.semester_id || !req.section_id || !req.batch_id)) {
+        throw new Error("USN, Name, Email, Semester ID, Section ID, and Batch ID are required for create action");
       }
       if (req.action === "update" && (!req.student_id || !req.name || !req.email || !req.semester_id || !req.section_id)) {
         throw new Error("Student ID, Name, Email, Semester ID, and Section ID are required for update action");
@@ -929,8 +1066,8 @@ export const manageStudents = async (
           throw new Error("Bulk data must be a non-empty array for bulk_update action");
         }
         for (const entry of req.bulk_data) {
-          if (!entry.usn || !entry.name || !entry.email || !entry.batch_id || !entry.course_id || !entry.date_of_admission) {
-            throw new Error("Each bulk data entry must include USN, Name, Email, Batch ID, Course ID, and Date of Admission");
+          if (!entry.usn || !entry.name || !entry.email || !entry.batch_id) {
+            throw new Error("Each bulk data entry must include USN, Name, Email, and Batch ID");
           }
         }
       }
@@ -950,6 +1087,30 @@ export const manageStudents = async (
   }
 };
 
+// Timetable bootstrap (profile + branches + semesters + sections + subjects + faculties)
+export const getHODTimetableBootstrap = async (): Promise<{
+  success: boolean;
+  message?: string;
+  data?: {
+    profile: { branch_id: string };
+    branches: Array<{ id: string; name: string }>;
+    semesters: Array<{ id: string; number: number }>;
+    sections: Array<{ id: string; name: string; semester_id: string | null }>;
+    subjects: Array<{ id: string; name: string; subject_code: string; semester_id: string | null }>;
+    faculties: Array<{ id: string; username: string; first_name: string; last_name: string | null }>;
+  };
+}> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/timetable-bootstrap/`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      timeout: 15000,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response) as any;
+  }
+};
 export const manageBatches = async (
   data?: ManageBatchesRequest,
   batch_id?: string,

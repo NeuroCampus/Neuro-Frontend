@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { manageSubjects, getSemesters, manageProfile } from "../../utils/hod_api";
+import { manageSubjects, getSemesters, manageProfile, getHODSubjectBootstrap } from "../../utils/hod_api";
 
 interface Subject {
   id: string;
@@ -59,19 +59,16 @@ const SubjectManagement = () => {
   const fetchData = async () => {
     updateState({ loading: true });
     try {
-      // Fetch branch ID from HOD profile
-      const profileResponse = await manageProfile({}, "GET");
-      if (!profileResponse.success || !profileResponse.data?.branch_id) {
-        throw new Error(profileResponse.message || "Failed to fetch HOD profile");
+      // Bootstrap in one call
+      const boot = await getHODSubjectBootstrap();
+      if (!boot.success || !boot.data?.profile?.branch_id) {
+        throw new Error(boot.message || "Failed to bootstrap subject management");
       }
-      const branchId = profileResponse.data.branch_id;
+      const branchId = boot.data.profile.branch_id;
       updateState({ branchId });
 
-      // Fetch semesters and subjects concurrently
-      const [semestersRes, subjectsRes] = await Promise.all([
-        getSemesters(branchId),
-        manageSubjects({ branch_id: branchId }, "GET"),
-      ]);
+      // Semesters
+      const semestersRes = boot.data.semesters ? { success: true, data: boot.data.semesters } : await getSemesters(branchId);
 
       if (semestersRes.success) {
         console.log("Semesters fetched:", semestersRes.data); // Debug semesters
@@ -83,11 +80,13 @@ const SubjectManagement = () => {
         updateState({ error: semestersRes.message || "Failed to fetch semesters" });
       }
 
-      if (subjectsRes.success) {
-        console.log("Subjects fetched:", subjectsRes.data); // Debug subjects
-        updateState({ subjects: subjectsRes.data || [] });
+      // Subjects
+      if (boot.data.subjects) {
+        console.log("Subjects fetched:", boot.data.subjects);
+        updateState({ subjects: boot.data.subjects || [] });
       } else {
-        updateState({ error: subjectsRes.message || "Failed to fetch subjects" });
+        const subjectsRes = await manageSubjects({ branch_id: branchId }, "GET");
+        if (subjectsRes.success) updateState({ subjects: subjectsRes.data || [] }); else updateState({ error: subjectsRes.message || "Failed to fetch subjects" });
       }
     } catch (err: any) {
       updateState({ error: err.message || "Failed to fetch data" });
