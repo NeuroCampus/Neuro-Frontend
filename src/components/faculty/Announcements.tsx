@@ -17,7 +17,7 @@ import {
   ProctorStudent,
   getFacultySentNotifications,
 } from "@/utils/faculty_api";
-import { useProctorStudents } from "@/context/ProctorStudentsContext";
+import { useProctorStudentsQuery } from "@/hooks/useApiQueries";
 import type { CreateAnnouncementRequest } from "@/utils/faculty_api";
 import { Loader2 } from "lucide-react";
 
@@ -41,7 +41,7 @@ const roleColors: Record<string, string> = {
 const Announcements = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
-  const { proctorStudents } = useProctorStudents();
+  const { data: proctorStudents = [] } = useProctorStudentsQuery();
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [title, setTitle] = useState("");

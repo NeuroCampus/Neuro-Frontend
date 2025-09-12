@@ -18,7 +18,7 @@ interface DashboardOverviewResponse {
   };
 }
 
-interface TakeAttendanceRequest {
+export interface TakeAttendanceRequest {
   branch_id: string;
   subject_id: string;
   section_id: string;
@@ -33,7 +33,7 @@ interface TakeAttendanceResponse {
   message?: string;
 }
 
-interface UploadMarksRequest {
+export interface UploadMarksRequest {
   branch_id: string;
   semester_id: string;
   section_id: string;
@@ -48,7 +48,7 @@ interface UploadMarksResponse {
   message?: string;
 }
 
-interface ApplyLeaveRequest {
+export interface ApplyLeaveRequest {
   branch_ids: string[];
   start_date: string;
   end_date: string;
@@ -73,7 +73,7 @@ interface ViewAttendanceRecordsResponse {
   }>;
 }
 
-interface CreateAnnouncementRequest {
+export interface CreateAnnouncementRequest {
   branch_id: string;
   semester_id: string;
   section_id: string;
@@ -249,7 +249,7 @@ interface SendChatMessageRequest {
   section_id?: string;
 }
 
-interface ManageProfileRequest {
+export interface ManageProfileRequest {
   first_name?: string;
   last_name?: string;
   email?: string;
@@ -268,7 +268,7 @@ interface ManageProfileResponse {
   };
 }
 
-interface ScheduleMentoringRequest {
+export interface ScheduleMentoringRequest {
   student_id: string;
   date: string;
   purpose: string;
@@ -319,7 +319,7 @@ export interface FacultyLeaveRequest {
   reviewed_by?: string | null;
 }
 
-export type { CreateAnnouncementRequest };
+
 
 // Faculty-specific API functions
 export const getDashboardOverview = async (): Promise<DashboardOverviewResponse> => {

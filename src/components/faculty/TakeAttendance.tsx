@@ -24,10 +24,10 @@ import { Check, X, UploadCloud } from "lucide-react";
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import { getStudentsForClass, takeAttendance, FacultyAssignment, ClassStudent } from "@/utils/faculty_api";
-import { useFacultyAssignments } from "@/context/FacultyAssignmentsContext";
+import { useFacultyAssignmentsQuery } from "@/hooks/useApiQueries";
 
 const TakeAttendance = () => {
-  const { assignments, loading: assignmentsLoading, error: assignmentsError } = useFacultyAssignments();
+  const { data: assignments = [], isLoading: assignmentsLoading, error: assignmentsError } = useFacultyAssignmentsQuery();
   const [branchId, setBranchId] = useState<number | null>(null);
   const [semesterId, setSemesterId] = useState<number | null>(null);
   const [sectionId, setSectionId] = useState<number | null>(null);

@@ -7,8 +7,6 @@ import AdminDashboard from "../components/dashboards/AdminDashboard";
 import HODDashboard from "../components/dashboards/HODDashboard";
 import FacultyDashboard from "../components/dashboards/FacultyDashboard";
 import StudentDashboard from "../components/dashboards/StudentDashboard";
-import { ProctorStudentsProvider } from "../context/ProctorStudentsContext";
-import { FacultyAssignmentsProvider } from "../context/FacultyAssignmentsContext";
 import { startTokenRefresh, stopTokenRefresh } from "../utils/authService";
 
 const Index = () => {
@@ -61,11 +59,7 @@ const Index = () => {
   if (role === "admin") return <AdminDashboard user={user} setPage={setPage} />;
   if (role === "hod") return <HODDashboard user={user} setPage={setPage} />;
   if (role === "teacher") return (
-    <FacultyAssignmentsProvider>
-      <ProctorStudentsProvider>
-        <FacultyDashboard user={user} setPage={setPage} />
-      </ProctorStudentsProvider>
-    </FacultyAssignmentsProvider>
+    <FacultyDashboard user={user} setPage={setPage} />
   );
   if (role === "student") return <StudentDashboard user={user} setPage={setPage} />;
 
