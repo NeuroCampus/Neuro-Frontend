@@ -20,11 +20,7 @@ import {
 } from "recharts";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
-import {
-  getHODStats,
-  manageLeaves,
-  manageProfile,
-} from "../../utils/hod_api";
+import { getHODStats, manageLeaves, manageProfile, getHODDashboard } from "../../utils/hod_api";
 
 interface LeaveRequest {
   id: string;
@@ -90,46 +86,38 @@ export default function HODStats({ setError, setPage }: HODStatsProps) {
     }
   };
 
-  // Fetch dashboard stats
-  const fetchStats = async () => {
-    if (!branchId) return;
-    try {
-      const statsRes = await getHODStats(branchId);
-      console.log("Stats data:", statsRes.data); // Debug stats
-      if (statsRes.success && statsRes.data) {
-        setStats(statsRes.data);
-      } else {
-        setErrors((prev) => [...prev, statsRes.message || "Failed to fetch stats"]);
-      }
-    } catch (err) {
-      setErrors((prev) => [...prev, "Failed to fetch dashboard stats"]);
-    }
-  };
-
-  // Fetch leave requests
-  const fetchLeaveRequests = async () => {
+  // Fetch combined dashboard (stats + leaves in one call)
+  const fetchDashboard = async () => {
     if (!branchId) return;
     setIsLoading(true);
     try {
-      const res = await manageLeaves({ branch_id: branchId }, "GET");
-      console.log("Leave requests response:", res); // Debug response
-      if (res.success && Array.isArray(res.data)) {
-        const requests = res.data.map((req: any) => ({
-          id: req.id.toString(),
-          name: req.faculty_name || "Unknown",
-          dept: req.department || "Unknown",
-          period: formatPeriod(req.start_date, req.end_date),
-          reason: req.reason || "No reason provided",
-          status: req.status === "APPROVED" ? "Approved" : req.status === "REJECTED" ? "Rejected" : "Pending",
-        })) as LeaveRequest[];
-        setLeaveRequests(requests);
+      const res = await getHODDashboard(branchId);
+      if (res.success && res.data) {
+        if (res.data.overview) {
+          setStats({
+            faculty_count: res.data.overview.faculty_count,
+            student_count: res.data.overview.student_count,
+            pending_leaves: res.data.overview.pending_leaves,
+            average_attendance: 0,
+            attendance_trend: res.data.attendance_trend || [],
+          });
+        }
+        if (Array.isArray(res.data.leaves)) {
+          const requests = res.data.leaves.map((req: any) => ({
+            id: req.id.toString(),
+            name: req.faculty_name || "Unknown",
+            dept: req.department || "Unknown",
+            period: formatPeriod(req.start_date, req.end_date),
+            reason: req.reason || "No reason provided",
+            status: req.status === "APPROVED" ? "Approved" : req.status === "REJECTED" ? "Rejected" : "Pending",
+          })) as LeaveRequest[];
+          setLeaveRequests(requests);
+        }
       } else {
-        setErrors((prev) => [...prev, res.message || "No leave requests found"]);
-        setLeaveRequests([]);
+        setErrors((prev) => [...prev, res.message || "Failed to fetch dashboard"]);
       }
     } catch (err) {
-      setErrors((prev) => [...prev, "Failed to fetch leave requests"]);
-      setLeaveRequests([]);
+      setErrors((prev) => [...prev, "Failed to fetch dashboard"]);
     } finally {
       setIsLoading(false);
     }
@@ -210,11 +198,10 @@ export default function HODStats({ setError, setPage }: HODStatsProps) {
     fetchBranchId();
   }, []);
 
-  // Fetch stats and leave requests when branchId changes
+  // Fetch combined dashboard when branchId changes
   useEffect(() => {
     if (branchId) {
-      fetchStats();
-      fetchLeaveRequests();
+      fetchDashboard();
     }
   }, [branchId]);
 

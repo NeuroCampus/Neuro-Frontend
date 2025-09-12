@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useToast } from "../ui/use-toast";
-import { getSemesters, manageSections, manageSubjects, manageFaculties, manageTimetable, manageProfile, manageFacultyAssignments,getBranches } from "../../utils/hod_api";
+import { getSemesters, manageSections, manageSubjects, manageFaculties, manageTimetable, manageProfile, manageFacultyAssignments,getBranches, getHODTimetableBootstrap, getHODTimetableSemesterData } from "../../utils/hod_api";
 
 // Interfaces
 interface Semester {
@@ -61,7 +61,7 @@ interface ClassDetails {
 }
 
 // Edit Modal Component
-const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, semesterId, sectionId, branchId }: any) => {
+const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, facultyAssignments, semesterId, sectionId, branchId }: any) => {
   const [newClassDetails, setNewClassDetails] = useState({
     subject: classDetails.subject || "",
     professor: classDetails.professor || "",
@@ -73,7 +73,7 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, semest
 
   useEffect(() => {
     const fetchFacultyAssignment = async () => {
-      if (!newClassDetails.subject || !semesterId || !sectionId || !branchId) {
+      if (!newClassDetails.subject || !semesterId || !sectionId) {
         setNewClassDetails((prev) => ({ ...prev, professor: "" }));
         return;
       }
@@ -81,42 +81,34 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, semest
       setIsLoadingAssignments(true);
       try {
         const subject = subjects.find((s: Subject) => s.name === newClassDetails.subject);
-        if (!subject) return;
+        if (!subject) {
+          setNewClassDetails((prev) => ({ ...prev, professor: "" }));
+          return;
+        }
 
-        const assignmentResponse = await manageFacultyAssignments({
-          action: "GET",
-          branch_id: branchId,
-          semester_id: semesterId,
-          section_id: sectionId,
-        });
-
-        if (assignmentResponse.success && assignmentResponse.data?.assignments) {
-          const assignment = assignmentResponse.data.assignments.find(
-            (a: any) => a.subject_id === subject.id && a.semester_id === semesterId && a.section_id === sectionId
-          );
-          if (assignment) {
-            const faculty = faculties.find((f: Faculty) => f.id === assignment.faculty_id);
-            if (faculty) {
-              setNewClassDetails((prev) => ({
-                ...prev,
-                professor: `${faculty.first_name} ${faculty.last_name}`,
-              }));
-            } else {
-              setNewClassDetails((prev) => ({ ...prev, professor: "" }));
-            }
-          } else {
-            setNewClassDetails((prev) => ({ ...prev, professor: "" }));
-          }
+        // Use faculty assignments from props instead of API call
+        const assignment = facultyAssignments.find(
+          (a: any) => a.subject_id === subject.id && a.semester_id === semesterId && a.section_id === sectionId
+        );
+        
+        if (assignment) {
+          setNewClassDetails((prev) => ({
+            ...prev,
+            professor: assignment.faculty_name,
+          }));
+        } else {
+          setNewClassDetails((prev) => ({ ...prev, professor: "" }));
         }
       } catch (err) {
-        console.error("Error fetching faculty assignment:", err);
+        console.error("Error finding faculty assignment:", err);
+        setNewClassDetails((prev) => ({ ...prev, professor: "" }));
       } finally {
         setIsLoadingAssignments(false);
       }
     };
 
     fetchFacultyAssignment();
-  }, [newClassDetails.subject, semesterId, sectionId, branchId, subjects, faculties]);
+  }, [newClassDetails.subject, semesterId, sectionId, subjects, facultyAssignments]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -243,6 +235,18 @@ const Timetable = () => {
     sections: [] as Section[],
     subjects: [] as Subject[],
     faculties: [] as Faculty[],
+    facultyAssignments: [] as Array<{
+      id: string;
+      faculty: string;
+      faculty_id: string;
+      faculty_name: string;
+      subject: string;
+      subject_id: string;
+      section: string;
+      section_id: string;
+      semester: number;
+      semester_id: string;
+    }>,
     timetable: [] as TimetableEntry[],
     loading: true,
     error: null as string | null,
@@ -265,31 +269,62 @@ const Timetable = () => {
   ];
   const days = ["MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
-  // Fetch branch ID and semesters
+  // Fetch sections, subjects, and faculty assignments for semester in one call
+  const fetchSemesterData = async (semesterId: string) => {
+    if (!state.branchId || !semesterId) {
+      updateState({ sections: [], subjects: [] });
+      return;
+    }
+    
+    try {
+      const semesterData = await getHODTimetableSemesterData(semesterId);
+      
+      if (semesterData.success && semesterData.data) {
+        const mappedSections = semesterData.data.sections.map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          semester_id: s.semester_id?.toString() || "",
+        }));
+        
+        const mappedSubjects = semesterData.data.subjects.map((s: any) => ({
+          id: s.id,
+          name: s.name,
+          subject_code: s.subject_code || "",
+          semester_id: s.semester_id?.toString() || "",
+        }));
+        
+        updateState({ 
+          sections: mappedSections,
+          subjects: mappedSubjects,
+          facultyAssignments: semesterData.data.faculty_assignments || [],
+        });
+      } else {
+        updateState({ sections: [], subjects: [] });
+      }
+    } catch (err) {
+      console.error("Error fetching semester data:", err);
+      updateState({ sections: [], subjects: [] });
+    }
+  };
+
+  // Fetch branch ID and initial data via bootstrap
   useEffect(() => {
     const fetchProfileAndSemesters = async () => {
       updateState({ loading: true });
       try {
-        const profileResponse = await manageProfile({}, "GET");
-        if (profileResponse.success && profileResponse.data && profileResponse.data.branch_id) {
-          updateState({ branchId: profileResponse.data.branch_id });
-        } else {
-          throw new Error("Invalid or missing branch in profile");
+        const boot = await getHODTimetableBootstrap();
+        if (!boot.success || !boot.data?.profile?.branch_id) {
+          throw new Error(boot.message || "Failed to bootstrap timetable");
         }
-
-        const branchesResponse = await getBranches();
-        if (branchesResponse.success && branchesResponse.data) {
-          updateState({ branches: branchesResponse.data });
-        } else {
-          throw new Error(branchesResponse.message || "Failed to fetch branches");
-        }
-
-        const semestersResponse = await getSemesters(profileResponse.data.branch_id);
-        if (semestersResponse.success && semestersResponse.data) {
-          updateState({ semesters: semestersResponse.data });
-        } else {
-          throw new Error(semestersResponse.message || "Failed to fetch semesters");
-        }
+        updateState({
+          branchId: boot.data.profile.branch_id,
+          branches: boot.data.branches || [],
+          semesters: boot.data.semesters || [],
+          sections: [], // Start with empty sections - will be fetched when semester is selected
+          subjects: [], // Start with empty subjects - will be fetched when semester is selected
+          faculties: boot.data.faculties || [],
+          facultyAssignments: [], // Start with empty assignments - will be fetched when semester is selected
+        });
       } catch (err: any) {
         updateState({ error: err.message || "Network error" });
         toast({ variant: "destructive", title: "Error", description: err.message });
@@ -300,61 +335,25 @@ const Timetable = () => {
     fetchProfileAndSemesters();
   }, [toast]);
 
+  // Fetch sections and subjects when semester changes
+  useEffect(() => {
+    if (state.semesterId && state.branchId) {
+      fetchSemesterData(state.semesterId);
+    } else {
+      updateState({ sections: [], subjects: [] });
+    }
+  }, [state.semesterId, state.branchId]);
+
   // Fetch sections, subjects, faculties, and timetable when semesterId or sectionId changes
   useEffect(() => {
     const fetchData = async () => {
       if (!state.branchId) return;
       updateState({ loading: true });
       try {
-        // Fetch sections
-        const sectionsResponse = await manageSections({
-          action: "GET",
-          branch_id: state.branchId,
-          ...(state.semesterId && { semester_id: state.semesterId }),
-        });
-        if (sectionsResponse.success && sectionsResponse.data) {
-          updateState({
-            sections: sectionsResponse.data.map((s: any) => ({
-              id: s.id,
-              name: s.name,
-              semester_id: s.semester_id.toString(),
-            })),
-          });
-        } else {
-          throw new Error(sectionsResponse.message || "Failed to fetch sections");
-        }
-
-        // Fetch subjects (filtered by semester)
-        const subjectsResponse = await manageSubjects({
-          action: "GET",
-          branch_id: state.branchId,
-          ...(state.semesterId && { semester_id: state.semesterId }),
-        });
-        if (subjectsResponse.success && subjectsResponse.data) {
-          updateState({
-            subjects: subjectsResponse.data.map((s: any) => ({
-              id: s.id,
-              name: s.name,
-              subject_code: s.subject_code,
-              semester_id: s.semester_id.toString(),
-            })),
-          });
-        } else {
-          throw new Error(subjectsResponse.message || "Failed to fetch subjects");
-        }
-
-        // Fetch faculties (filtered by branch)
-        const facultiesResponse = await manageFaculties({ branch_id: state.branchId });
-        if (facultiesResponse.success && facultiesResponse.data) {
-          updateState({ faculties: facultiesResponse.data });
-        } else {
-          throw new Error(facultiesResponse.message || "Failed to fetch faculties");
-        }
-
         // Fetch timetable only if both semesterId and sectionId are set
         if (state.semesterId && state.sectionId) {
           const timetableResponse = await manageTimetable({
-            action: "GET",
+            action: "GET" as "GET",
             branch_id: state.branchId,
             semester_id: state.semesterId,
             section_id: state.sectionId,
@@ -503,7 +502,7 @@ const Timetable = () => {
           assignmentId = createAssignmentResponse.data.assignment_id;
         } else if (createAssignmentResponse.message === "Assignment already exists") {
           const retryAssignmentResponse = await manageFacultyAssignments({
-            action: "GET",
+            action: "GET" as const,
             branch_id: state.branchId,
             semester_id: state.semesterId,
             section_id: state.sectionId,
@@ -523,7 +522,7 @@ const Timetable = () => {
       }
 
       const timetableRequest = {
-        action: state.selectedClass?.timetable_id ? "update" : "create",
+        action: state.selectedClass?.timetable_id ? "update" as const : "create" as const,
         timetable_id: state.selectedClass?.timetable_id,
         assignment_id: assignmentId,
         day: state.selectedClass!.day,
@@ -539,7 +538,7 @@ const Timetable = () => {
       if (response.success) {
         // Re-fetch timetable to ensure consistency
         const fetchTimetableResponse = await manageTimetable({
-          action: "GET",
+          action: "GET" as "GET",
           branch_id: state.branchId,
           semester_id: state.semesterId,
           section_id: state.sectionId,
@@ -707,13 +706,11 @@ const Timetable = () => {
                       <SelectValue placeholder="Select Section" />
                     </SelectTrigger>
                     <SelectContent className="bg-[#232326] text-gray-200">
-                      {state.sections
-                        .filter((section) => section.semester_id === state.semesterId)
-                        .map((section) => (
-                          <SelectItem key={section.id} value={section.id}>
-                            Section {section.name}
-                          </SelectItem>
-                        ))}
+                      {state.sections.map((section) => (
+                        <SelectItem key={section.id} value={section.id}>
+                          Section {section.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -777,8 +774,9 @@ const Timetable = () => {
           classDetails={state.selectedClass}
           onSave={handleSaveClass}
           onCancel={handleCancelEdit}
-          subjects={state.subjects.filter((s) => s.semester_id === state.semesterId)}
+          subjects={state.subjects}
           faculties={state.faculties}
+          facultyAssignments={state.facultyAssignments}
           semesterId={state.semesterId}
           sectionId={state.sectionId}
           branchId={state.branchId}

@@ -7,6 +7,7 @@ import { useToast } from "../ui/use-toast";
 import { Pencil, Trash2, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogFooter } from "../ui/dialog";
 import { getSemesters, manageSemesters, manageSections, manageProfile } from "../../utils/hod_api";
+import { useHODBootstrap } from "../../context/HODBootstrapContext";
 
 interface Semester {
   id: string;
@@ -44,6 +45,7 @@ const SemesterManagement = () => {
   const [branchId, setBranchId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const bootstrap = useHODBootstrap();
 
   // Derive NAME and YEAR from semester number
   const getSemesterName = (number: number) => {
@@ -63,35 +65,35 @@ const SemesterManagement = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch HOD profile to get branch_id
-        const profileResponse = await manageProfile({}, "GET");
-        if (!profileResponse.success || !profileResponse.data?.branch_id) {
-          throw new Error(profileResponse.message || "Failed to fetch HOD profile or missing branch ID");
-        }
-        const branchId = profileResponse.data.branch_id;
-        setBranchId(branchId);
-
-        // Fetch semesters
-        const semestersResponse = await getSemesters(branchId);
-        if (semestersResponse.success && semestersResponse.data) {
-          setSemesters(semestersResponse.data.map((s: any) => ({
-            id: s.id.toString(),
-            number: s.number,
-          })));
+        const bId = bootstrap?.branch_id;
+        if (bId) {
+          setBranchId(bId);
+          if (bootstrap?.semesters) {
+            setSemesters((bootstrap.semesters as any[]).map((s: any) => ({ id: s.id.toString(), number: s.number })));
+          }
+          if (bootstrap?.sections) {
+            setSections((bootstrap.sections as any[]).map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id?.toString() })));
+          }
         } else {
-          throw new Error(semestersResponse.message || "Failed to fetch semesters");
-        }
-
-        // Fetch sections
-        const sectionsResponse = await manageSections({ branch_id: branchId }, "GET");
-        if (sectionsResponse.success && sectionsResponse.data) {
-          setSections(sectionsResponse.data.map((s: any) => ({
-            id: s.id,
-            name: s.name,
-            semester_id: s.semester_id.toString(),
-          })));
-        } else {
-          throw new Error(sectionsResponse.message || "Failed to fetch sections");
+          // Fallback to existing separate calls if bootstrap not present yet
+          const profileResponse = await manageProfile({}, "GET");
+          if (!profileResponse.success || !profileResponse.data?.branch_id) {
+            throw new Error(profileResponse.message || "Failed to fetch HOD profile or missing branch ID");
+          }
+          const branchId = profileResponse.data.branch_id;
+          setBranchId(branchId);
+          const semestersResponse = await getSemesters(branchId);
+          if (semestersResponse.success && semestersResponse.data) {
+            setSemesters(semestersResponse.data.map((s: any) => ({ id: s.id.toString(), number: s.number })));
+          } else {
+            throw new Error(semestersResponse.message || "Failed to fetch semesters");
+          }
+          const sectionsResponse = await manageSections({ branch_id: branchId }, "GET");
+          if (sectionsResponse.success && sectionsResponse.data) {
+            setSections(sectionsResponse.data.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id.toString() })));
+          } else {
+            throw new Error(sectionsResponse.message || "Failed to fetch sections");
+          }
         }
       } catch (err: any) {
         const errorMessage = err.message || "Network error";
