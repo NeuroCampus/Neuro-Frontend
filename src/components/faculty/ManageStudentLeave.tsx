@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { getProctorStudents, manageStudentLeave, ProctorStudent, LeaveRow } from "@/utils/faculty_api";
+import { manageStudentLeave, ProctorStudent, LeaveRow } from "@/utils/faculty_api";
+import { useProctorStudents } from "@/context/ProctorStudentsContext";
 import { Button } from "../ui/button";
 
 const statusColors = {
@@ -11,43 +12,30 @@ const statusColors = {
 const statusOptions = ["All", "PENDING", "APPROVED", "REJECTED"];
 
 const ManageStudentLeave = () => {
+  const { proctorStudents, loading: contextLoading, error: contextError } = useProctorStudents();
   const [students, setStudents] = useState<ProctorStudent[]>([]);
   const [leaveRows, setLeaveRows] = useState<LeaveRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
 
-  const fetchLeaves = () => {
-    setLoading(true);
-    getProctorStudents()
-      .then((res) => {
-        if (res.success && res.data) {
-          setStudents(res.data);
-          const rows: LeaveRow[] = [];
-          res.data.forEach((s: ProctorStudent) => {
-            (s.leave_requests || []).forEach((leave) => {
-              rows.push({
-                ...leave,
-                status: leave.status as "PENDING" | "APPROVED" | "REJECTED",
-                student_name: s.name,
-                usn: s.usn,
-              });
-            });
-          });
-          setLeaveRows(rows);
-        } else {
-          setError(res.message || "Failed to fetch students");
-        }
-      })
-      .catch((e) => setError(e.message || "Failed to fetch students"))
-      .finally(() => setLoading(false));
-  };
-
   useEffect(() => {
-    fetchLeaves();
-  }, []);
+    setStudents(proctorStudents);
+    const rows: LeaveRow[] = [];
+    proctorStudents.forEach((s: ProctorStudent) => {
+      (s.leave_requests || []).forEach((leave) => {
+        rows.push({
+          ...leave,
+          status: leave.status as "PENDING" | "APPROVED" | "REJECTED",
+          student_name: s.name,
+          usn: s.usn,
+        });
+      });
+    });
+    setLeaveRows(rows);
+  }, [proctorStudents]);
 
   const handleAction = async (leaveId: string, action: "APPROVE" | "REJECT") => {
     const confirmMsg =
@@ -59,7 +47,8 @@ const ManageStudentLeave = () => {
     try {
       const res = await manageStudentLeave({ leave_id: leaveId, action });
       if (res.success) {
-        fetchLeaves(); // Refetch to get backend-updated status
+        // The context will automatically update the data
+        alert("Action completed successfully");
       } else {
         alert(res.message || "Action failed");
       }

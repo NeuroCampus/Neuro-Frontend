@@ -3,14 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileTextIcon } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, LineChart, Line, CartesianGrid, ResponsiveContainer,LabelList  } from "recharts";
-import { getProctorStudents, ProctorStudent } from '../../utils/faculty_api';
+import { ProctorStudent } from '../../utils/faculty_api';
+import { useProctorStudents } from '../../context/ProctorStudentsContext';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 const GenerateStatistics = () => {
-  const [proctorStudents, setProctorStudents] = useState<ProctorStudent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { proctorStudents, loading, error } = useProctorStudents();
 
   // Helper function to format attendance percentage
   const formatAttendancePercentage = (percentage: number | string): string => {
@@ -33,25 +32,6 @@ const GenerateStatistics = () => {
     }
     return percentage;
   };
-
-  useEffect(() => {
-    const fetchProctorStudents = async () => {
-      setLoading(true);
-      try {
-        const res = await getProctorStudents();
-        if (res.success && res.data) {
-          setProctorStudents(res.data);
-        } else {
-          setError(res.message || 'Failed to fetch proctor students');
-        }
-      } catch (err) {
-        setError('Network error');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProctorStudents();
-  }, []);
 
   const handleExportPDF = () => {
     const doc = new jsPDF();

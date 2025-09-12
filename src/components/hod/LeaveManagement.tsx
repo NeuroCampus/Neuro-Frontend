@@ -5,7 +5,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import Swal from 'sweetalert2';
-import { manageLeaves, manageProfile } from "../../utils/hod_api";
+import { manageLeaves, manageProfile, getFacultyLeavesBootstrap } from "../../utils/hod_api";
 
 interface LeaveRequest {
   id: string;
@@ -91,10 +91,10 @@ const LeaveManagement = () => {
   const handleApprove = async (index: number) => {
     const leave = leaveRequests[index];
     const payload = {
-      action: "update",
+      action: "update" as const,
       branch_id: branchId,
       leave_id: leave.id,
-      status: "APPROVED",
+      status: "APPROVED" as const,
     };
     console.log("Approve payload:", payload); // Debug log
     try {
@@ -117,10 +117,10 @@ const LeaveManagement = () => {
   const handleReject = async (index: number) => {
     const leave = leaveRequests[index];
     const payload = {
-      action: "update",
+      action: "update" as const,
       branch_id: branchId,
       leave_id: leave.id,
-      status: "REJECTED",
+      status: "REJECTED" as const,
     };
     console.log("Reject payload:", payload); // Debug log
     Swal.fire({
@@ -154,17 +154,43 @@ const LeaveManagement = () => {
     });
   };
 
-  // Fetch initial data
+  // Fetch all data using combined endpoint
   useEffect(() => {
-    fetchBranchId();
-  }, []);
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const response = await getFacultyLeavesBootstrap();
+        if (!response.success || !response.data) {
+          throw new Error(response.message || "Failed to fetch data");
+        }
 
-  // Fetch leave requests when branchId is available
-  useEffect(() => {
-    if (branchId) {
-      fetchLeaveRequests();
-    }
-  }, [branchId]);
+        const data = response.data;
+
+        // Set branchId
+        setBranchId(data.profile.branch_id);
+
+        // Set leave requests
+        const requests = data.leaves.map((req: any) => ({
+          id: req.id.toString(),
+          name: req.faculty_name || "Unknown",
+          dept: req.department || "Unknown",
+          period: formatPeriod(req.start_date, req.end_date),
+          reason: req.reason || "No reason provided",
+          status: req.status === "APPROVED" ? "Approved" : req.status === "REJECTED" ? "Rejected" : "Pending",
+        })) as LeaveRequest[];
+        setLeaveRequests(requests);
+        setErrors([]);
+      } catch (err: any) {
+        const errorMessage = err.message || "Failed to fetch data";
+        console.error("Error fetching data:", err);
+        setErrors([errorMessage]);
+        setLeaveRequests([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   // Filter requests
   const filteredRequests = leaveRequests.filter((req) => {

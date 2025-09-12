@@ -7,7 +7,7 @@ import { FileDown } from "lucide-react";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useToast } from "@/components/ui/use-toast";
-import { getProctors, manageStudents, assignProctorsBulk, getSemesters, manageSections, manageProfile } from "../../utils/hod_api";
+import { getProctors, manageStudents, assignProctorsBulk, getSemesters, manageSections, manageProfile, getProctorBootstrap } from "../../utils/hod_api";
 
 interface Student {
   usn: string;
@@ -63,79 +63,46 @@ const ProctorStudents = () => {
     setState((prev) => ({ ...prev, ...newState }));
   };
 
-  // Fetch branch ID from HOD profile
-  useEffect(() => {
-    const fetchProfile = async () => {
-      updateState({ loading: true, error: null });
-      try {
-        const profileResponse = await manageProfile({}, "GET");
-        if (!profileResponse.success || !profileResponse.data?.branch_id) {
-          throw new Error(profileResponse.message || "Failed to fetch HOD profile");
-        }
-        updateState({
-          branchId: profileResponse.data.branch_id,
-          branchName: profileResponse.data.branch || "Computer Science",
-        });
-      } catch (error) {
-        const errorMessage = (error as Error).message || "Network error";
-        updateState({ error: errorMessage });
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: errorMessage,
-        });
-      } finally {
-        updateState({ loading: false });
-      }
-    };
-    fetchProfile();
-  }, [toast]);
-
-  // Fetch students, proctors, semesters, and sections
+  // Fetch all data using combined endpoint
   useEffect(() => {
     const fetchData = async () => {
-      if (!state.branchId) return;
       updateState({ loading: true, error: null });
       try {
-        const studentsResponse = await manageStudents({ branch_id: state.branchId }, "GET");
-        if (!studentsResponse.success) {
-          throw new Error(studentsResponse.message || "Failed to fetch students");
+        const response = await getProctorBootstrap();
+        if (!response.success || !response.data) {
+          throw new Error(response.message || "Failed to fetch data");
         }
-        const students = studentsResponse.data?.map((s) => ({
+
+        const data = response.data;
+
+        // Set branch ID and name from profile
+        updateState({
+          branchId: data.profile.branch_id,
+          branchName: data.profile.branch,
+        });
+
+        // Process students data
+        const students = data.students.map((s) => ({
           usn: s.usn,
           name: s.name,
-          semester: s.semester,
-          branch: state.branchName,
-          section: s.section,
+          semester: s.semester ? `${s.semester}th Semester` : "N/A",
+          branch: data.profile.branch,
+          section: s.section || "N/A",
           proctor: s.proctor,
-        })) || [];
+        }));
 
-        const proctorsResponse = await getProctors(state.branchId);
-        if (!proctorsResponse.success) {
-          throw new Error(proctorsResponse.message || "Failed to fetch proctors");
-        }
-        const proctors = proctorsResponse.data?.map((f) => ({
+        // Process proctors data
+        const proctors = data.proctors.map((f) => ({
           id: f.id,
-          name: `${f.first_name} ${f.last_name}`,
-        })) || [];
+          name: f.name,
+        }));
 
-        const semestersResponse = await getSemesters(state.branchId);
-        if (!semestersResponse.success) {
-          throw new Error(semestersResponse.message || "Failed to fetch semesters");
-        }
-        const semesters = semestersResponse.data || [];
-
-        const sectionsResponse = await manageSections({ branch_id: state.branchId }, "GET");
-        if (!sectionsResponse.success) {
-          throw new Error(sectionsResponse.message || "Failed to fetch sections");
-        }
-        const sections = sectionsResponse.data || [];
-
+        // Set all data at once
         updateState({
           students,
           proctors,
-          semesters,
-          sections,
+          semesters: data.semesters,
+          sections: data.sections,
           filters: {
             semester_id: "all",
             section_id: "all",
@@ -153,9 +120,8 @@ const ProctorStudents = () => {
         updateState({ loading: false });
       }
     };
-
     fetchData();
-  }, [state.branchId, state.branchName]);
+  }, [toast]);
 
   const handleFilterChange = (field: string, value: string) => {
     updateState({

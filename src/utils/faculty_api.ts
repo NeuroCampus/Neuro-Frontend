@@ -173,6 +173,52 @@ interface GetFacultyAssignmentsResponse {
   data?: FacultyAssignment[];
 }
 
+interface GetFacultyDashboardBootstrapResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    assignments: FacultyAssignment[];
+    proctor_students: ProctorStudent[];
+  };
+}
+
+interface AttendanceRecordSummary {
+  id: number;
+  date: string;
+  subject: string | null;
+  section: string | null;
+  semester: number | null;
+  branch: string | null;
+  file_path: string | null;
+  status: string;
+  branch_id: number | null;
+  section_id: number | null;
+  subject_id: number | null;
+  semester_id: number | null;
+  summary: {
+    present_count: number;
+    absent_count: number;
+    total_count: number;
+    present_percentage: number;
+  };
+}
+
+interface GetAttendanceRecordsWithSummaryResponse {
+  success: boolean;
+  message?: string;
+  data?: AttendanceRecordSummary[];
+}
+
+interface GetApplyLeaveBootstrapResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    assignments: FacultyAssignment[];
+    leave_requests: FacultyLeaveRequest[];
+    branches: { id: number; name: string }[];
+  };
+}
+
 interface GetTimetableResponse {
   success: boolean;
   message?: string;
@@ -439,6 +485,54 @@ export const getFacultyAssignments = async (): Promise<GetFacultyAssignmentsResp
     return await response.json();
   } catch (error) {
     console.error("Get Faculty Assignments Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const getFacultyDashboardBootstrap = async (): Promise<GetFacultyDashboardBootstrapResponse> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/dashboard/bootstrap/`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Faculty Dashboard Bootstrap Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const getAttendanceRecordsWithSummary = async (): Promise<GetAttendanceRecordsWithSummaryResponse> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/attendance-records/summary/`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Attendance Records With Summary Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const getApplyLeaveBootstrap = async (): Promise<GetApplyLeaveBootstrapResponse> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/apply-leave/bootstrap/`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Apply Leave Bootstrap Error:", error);
     return { success: false, message: "Network error" };
   }
 };

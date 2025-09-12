@@ -7,7 +7,7 @@ import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
 import { Circle, CalendarCheck2, CalendarX2 } from 'lucide-react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
-import { applyLeave, getFacultyAssignments, getFacultyLeaveRequests, FacultyLeaveRequest, FacultyAssignment } from '../../utils/faculty_api';
+import { applyLeave, getApplyLeaveBootstrap, FacultyLeaveRequest, FacultyAssignment } from '../../utils/faculty_api';
 
 const statusStyles = {
   Pending: 'text-yellow-700 bg-yellow-100',
@@ -42,39 +42,37 @@ const LeaveRequests = () => {
   // Fetch branches and leave history on mount
   useEffect(() => {
     setLoading(true);
-    Promise.all([
-      getFacultyAssignments(),
-      getFacultyLeaveRequests().catch(() => []),
-    ])
-      .then(([assignmentsRes, leaveRes]) => {
-        if (assignmentsRes.success && assignmentsRes.data) {
-          // Deduplicate branches
-          const branches = Array.from(
-            new Map(assignmentsRes.data.map(a => [a.branch_id, { id: a.branch_id, name: a.branch }])).values()
-          );
+    getApplyLeaveBootstrap()
+      .then((res) => {
+        if (res.success && res.data) {
+          const { assignments, leave_requests, branches } = res.data;
+
+          // Set branches from the combined response
           setBranches(branches);
           if (branches.length > 0) setSelectedBranch(branches[0].id.toString());
+
+          // Transform backend data to match original mock structure
+          const transformedLeaves: LeaveRequestDisplay[] = leave_requests.map((leave, index) => {
+            console.log('Original status from backend:', leave.status);
+            const mappedStatus = (leave.status === 'PENDING' ? 'Pending' :
+                                leave.status === 'APPROVED' ? 'Approved' :
+                                leave.status === 'REJECTED' ? 'Rejected' : 'Pending') as 'Pending' | 'Approved' | 'Rejected';
+            console.log('Mapped status:', mappedStatus);
+
+            return {
+              id: leave.id,
+              title: `Leave Request ${index + 1}`,
+              from: leave.start_date,
+              to: leave.end_date,
+              reason: leave.reason,
+              status: mappedStatus,
+              appliedOn: leave.applied_on,
+            };
+          });
+          setLeaveList(transformedLeaves);
+        } else {
+          setError(res.message || 'Failed to load data');
         }
-        
-        // Transform backend data to match original mock structure
-        const transformedLeaves: LeaveRequestDisplay[] = (leaveRes || []).map((leave, index) => {
-          console.log('Original status from backend:', leave.status);
-          const mappedStatus = (leave.status === 'PENDING' ? 'Pending' : 
-                              leave.status === 'APPROVED' ? 'Approved' : 
-                              leave.status === 'REJECTED' ? 'Rejected' : 'Pending') as 'Pending' | 'Approved' | 'Rejected';
-          console.log('Mapped status:', mappedStatus);
-          
-          return {
-            id: leave.id,
-            title: `Leave Request ${index + 1}`,
-            from: leave.start_date,
-            to: leave.end_date,
-            reason: leave.reason,
-            status: mappedStatus,
-            appliedOn: leave.applied_on,
-          };
-        });
-        setLeaveList(transformedLeaves);
       })
       .catch(() => setError('Failed to load data'))
       .finally(() => setLoading(false));
@@ -101,20 +99,19 @@ const LeaveRequests = () => {
         setStartDate('');
         setEndDate('');
         setReason('');
-        // Refresh leave list
-        const leaveRes = await getFacultyLeaveRequests();
-        const transformedLeaves: LeaveRequestDisplay[] = (leaveRes || []).map((leave, index) => ({
-          id: leave.id,
-          title: `Leave Request ${index + 1}`,
-          from: leave.start_date,
-          to: leave.end_date,
-          reason: leave.reason,
-          status: (leave.status === 'PENDING' ? 'Pending' : 
-                  leave.status === 'APPROVED' ? 'Approved' : 
-                  leave.status === 'REJECTED' ? 'Rejected' : 'Pending') as 'Pending' | 'Approved' | 'Rejected',
-          appliedOn: leave.applied_on,
-        }));
-        setLeaveList(transformedLeaves);
+
+        // Optimistically update the leave list instead of making another API call
+        const selectedBranchName = branches.find(b => b.id.toString() === selectedBranch)?.name || 'Unknown Branch';
+        const newLeave: LeaveRequestDisplay = {
+          id: `temp-${Date.now()}`, // Temporary ID
+          title: `Leave Request ${leaveList.length + 1}`,
+          from: startDate,
+          to: endDate,
+          reason: reason,
+          status: 'Pending',
+          appliedOn: new Date().toLocaleString(),
+        };
+        setLeaveList(prev => [newLeave, ...prev]);
       } else {
         setError(res.message || 'Failed to apply for leave');
       }
