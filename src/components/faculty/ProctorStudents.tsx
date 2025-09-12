@@ -3,7 +3,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { useState, useEffect } from "react";
 import { ProctorStudent } from "../../utils/faculty_api";
-import { useProctorStudents } from "../../context/ProctorStudentsContext";
+import { useProctorStudentsQuery } from "../../hooks/useApiQueries";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -18,7 +18,7 @@ const ProctorStudents = () => {
     }
     return `${percentage}%`;
   };
-  const { proctorStudents, loading, error } = useProctorStudents();
+  const { data: proctorStudents = [], isLoading: loading, error } = useProctorStudentsQuery();
   const [students, setStudents] = useState<ProctorStudent[]>([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -51,7 +51,7 @@ const ProctorStudents = () => {
     return <div className="p-6 text-center text-gray-600">Loading students...</div>;
   }
   if (error) {
-    return <div className="p-6 bg-red-100 text-red-700 rounded-lg">{error}</div>;
+    return <div className="p-6 bg-red-100 text-red-700 rounded-lg">{error.message}</div>;
   }
 
   return (

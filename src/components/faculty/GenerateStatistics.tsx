@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { FileTextIcon } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, LineChart, Line, CartesianGrid, ResponsiveContainer,LabelList  } from "recharts";
 import { ProctorStudent } from '../../utils/faculty_api';
-import { useProctorStudents } from '../../context/ProctorStudentsContext';
+import { useProctorStudentsQuery } from '../../hooks/useApiQueries';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 const GenerateStatistics = () => {
-  const { proctorStudents, loading, error } = useProctorStudents();
+  const { data: proctorStudents = [], isLoading: loading, error } = useProctorStudentsQuery();
 
   // Helper function to format attendance percentage
   const formatAttendancePercentage = (percentage: number | string): string => {
@@ -73,7 +73,7 @@ const GenerateStatistics = () => {
     return <div className="p-6 text-center text-gray-600">Loading statistics...</div>;
   }
   if (error) {
-    return <div className="p-6 bg-red-100 text-red-700 rounded-lg">{error}</div>;
+    return <div className="p-6 bg-red-100 text-red-700 rounded-lg">{error.message}</div>;
   }
 
   return (

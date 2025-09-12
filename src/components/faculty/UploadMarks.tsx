@@ -25,7 +25,7 @@ import {
   getInternalMarksForClass,
   InternalMarkStudent
 } from "../../utils/faculty_api";
-import { useFacultyAssignments } from "../../context/FacultyAssignmentsContext";
+import { useFacultyAssignmentsQuery } from "../../hooks/useApiQueries";
 
 const MySwal = withReactContent(Swal);
 
@@ -53,7 +53,7 @@ const validateMarks = (marks: string, total: string): boolean => {
 };
 
 const UploadMarks = () => {
-  const { assignments, loading: assignmentsLoading, error: assignmentsError } = useFacultyAssignments();
+  const { data: assignments = [], isLoading: assignmentsLoading, error: assignmentsError } = useFacultyAssignmentsQuery();
   const [dropdownData, setDropdownData] = useState({
     branch: [] as { id: number; name: string }[],
     semester: [] as { id: number; number: number }[],

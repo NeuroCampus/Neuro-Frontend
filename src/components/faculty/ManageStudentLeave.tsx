@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { manageStudentLeave, ProctorStudent, LeaveRow } from "@/utils/faculty_api";
-import { useProctorStudents } from "@/context/ProctorStudentsContext";
+import { useProctorStudentsQuery } from "@/hooks/useApiQueries";
 import { Button } from "../ui/button";
 
 const statusColors = {
@@ -12,7 +12,7 @@ const statusColors = {
 const statusOptions = ["All", "PENDING", "APPROVED", "REJECTED"];
 
 const ManageStudentLeave = () => {
-  const { proctorStudents, loading: contextLoading, error: contextError } = useProctorStudents();
+  const { data: proctorStudents = [], isLoading: contextLoading, error: contextError } = useProctorStudentsQuery();
   const [students, setStudents] = useState<ProctorStudent[]>([]);
   const [leaveRows, setLeaveRows] = useState<LeaveRow[]>([]);
   const [loading, setLoading] = useState(false);

@@ -1,11 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getProctorStudents, ProctorStudent } from '../utils/faculty_api';
 
 interface ProctorStudentsContextType {
   proctorStudents: ProctorStudent[];
   loading: boolean;
   error: string | null;
-  refetch: () => Promise<void>;
+  refetch: () => void;
   isLoaded: boolean;
 }
 
@@ -16,52 +17,37 @@ interface ProctorStudentsProviderProps {
 }
 
 export const ProctorStudentsProvider: React.FC<ProctorStudentsProviderProps> = ({ children }) => {
-  const [proctorStudents, setProctorStudents] = useState<ProctorStudent[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const queryClient = useQueryClient();
 
-  const fetchProctorStudents = async () => {
-    if (isLoaded) return; // Don't fetch if already loaded
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await getProctorStudents();
-      if (response.success && response.data) {
-        setProctorStudents(response.data);
-        setIsLoaded(true);
-      } else {
-        setError(response.message || 'Failed to fetch proctor students');
-      }
-    } catch (err) {
-      setError('Network error while fetching proctor students');
-      console.error('Proctor students fetch error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const refetch = async () => {
-    setIsLoaded(false); // Reset loaded state to force refetch
-    await fetchProctorStudents();
-  };
-
-  useEffect(() => {
-    fetchProctorStudents();
-  }, []);
-
-  const value: ProctorStudentsContextType = {
-    proctorStudents,
-    loading,
+  const {
+    data: proctorStudents = [],
+    isLoading: loading,
     error,
     refetch,
-    isLoaded,
+    isSuccess: isLoaded
+  } = useQuery({
+    queryKey: ['proctorStudents'],
+    queryFn: async () => {
+      const response = await getProctorStudents();
+      if (response.success && response.data) {
+        return response.data;
+      }
+      throw new Error(response.message || 'Failed to fetch proctor students');
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+
+  const contextValue: ProctorStudentsContextType = {
+    proctorStudents,
+    loading,
+    error: error?.message || null,
+    refetch,
+    isLoaded
   };
 
   return (
-    <ProctorStudentsContext.Provider value={value}>
+    <ProctorStudentsContext.Provider value={contextValue}>
       {children}
     </ProctorStudentsContext.Provider>
   );
