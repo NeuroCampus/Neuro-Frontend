@@ -67,22 +67,23 @@ const StudentAnnouncements = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="bg-[#1c1c1e] text-gray-200">
         <CardHeader>
           <div className="flex items-center gap-2">
             <Megaphone className="h-5 w-5" />
             <CardTitle>Announcements</CardTitle>
           </div>
-          <CardDescription>
+          <CardDescription className="text-gray-300">
             Stay updated with the latest announcements and notifications
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-6">
-            {announcements.map((announcement, idx) => (
+          {/* Make announcements scrollable */}
+          <div className="space-y-6 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
+            {announcements.slice(0, 6).map((announcement, idx) => (
               <div
                 key={idx}
-                className="rounded-lg border p-4 hover:bg-accent transition-colors"
+                className="rounded-lg border p-4 hover:bg-gray-800 transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
@@ -97,11 +98,13 @@ const StudentAnnouncements = () => {
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-300">
                       {announcement.content}
                     </p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{announcement.from || "Admin Office"}</span>
+                      <span className="text-gray-300">
+                        {announcement.from || "Admin Office"}
+                      </span>
                       <span>•</span>
                       <span>{announcement.created_at}</span>
                     </div>
@@ -112,7 +115,7 @@ const StudentAnnouncements = () => {
                       className={`${
                         categoryStyles[
                           announcement.category as keyof typeof categoryStyles
-                        ] || "bg-gray-400"
+                        ] || "bg-gray-200"
                       } text-white`}
                     >
                       {announcement.category}
@@ -130,6 +133,7 @@ const StudentAnnouncements = () => {
             )}
           </div>
         </CardContent>
+
       </Card>
     </div>
   );

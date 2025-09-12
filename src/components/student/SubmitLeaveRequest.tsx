@@ -51,46 +51,47 @@ const SubmitLeaveRequest = () => {
   };
 
   return (
-    <Card>
+    <Card className="max-w-2xl justify-self-center w-full bg-[#1c1c1e] text-gray-200">
       <CardHeader>
         <CardTitle>Submit Leave Request</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <Label>Date Range</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-left font-normal"
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dateRange?.from ? (
-                    dateRange.to ? (
-                      <>
-                        {format(dateRange.from, "PPP")} -{" "}
-                        {format(dateRange.to, "PPP")}
-                      </>
-                    ) : (
-                      format(dateRange.from, "PPP")
-                    )
+          <Label className="text-gray-200">Date Range</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-start text-left font-normal bg-[#232326] text-gray-200 border border-gray-700 hover:bg-[#2c2c2f] hover:text-gray-200"
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {dateRange?.from ? (
+                  dateRange.to ? (
+                    <>
+                      {format(dateRange.from, "PPP")} - {format(dateRange.to, "PPP")}
+                    </>
                   ) : (
-                    <span>Pick a date range</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="range"
-                  selected={dateRange}
-                  onSelect={setDateRange}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+                    format(dateRange.from, "PPP")
+                  )
+                ) : (
+                  <span className="text-gray-400">Pick a date range</span>
+                )}
+              </Button>
+            </PopoverTrigger>
 
+            {/* Dark themed calendar */}
+            <PopoverContent className="w-auto p-0 bg-[#1c1c1e] text-gray-200 border border-gray-700 shadow-lg">
+              <Calendar
+                mode="range"
+                selected={dateRange}
+                onSelect={setDateRange}
+                initialFocus
+                className="rounded-md bg-[#1c1c1e] text-gray-200 [&_.rdp-day:hover]:bg-[#2c2c2f] [&_.rdp-day_selected]:bg-blue-600 [&_.rdp-day_selected]:text-white"
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
           <div className="space-y-2">
             <Label htmlFor="reason">Reason</Label>
             <Textarea
@@ -98,12 +99,12 @@ const SubmitLeaveRequest = () => {
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="Please provide a detailed reason for your leave request"
-              className="min-h-[100px]"
+              className="min-h-[100px] bg-[#232326] text-gray-200"
               required
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" disabled={loading}>
             {loading ? "Submitting..." : "Submit Request"}
           </Button>
 

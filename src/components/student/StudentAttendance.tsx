@@ -6,6 +6,7 @@ import {
   YAxis,
   ResponsiveContainer,
   Tooltip,
+  CartesianGrid,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { getStudentAttendance } from "../../utils/student_api";
@@ -92,25 +93,53 @@ const StudentAttendance = () => {
   }
 
   return (
-    <div className="p-4 space-y-6 text-gray-800">
+    <div className="p-4 space-y-6 bg-[#1c1c1e] text-gray-200">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900">Attendance Tracker</h2>
-        <p className="text-sm text-gray-500">
+        <h2 className="text-xl font-semibold text-gray-200">Attendance Tracker</h2>
+        <p className="text-sm text-gray-300">
           Monitor your subject-wise attendance and trends
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="col-span-2 bg-white border border-gray-200 shadow-sm">
+        <Card className="col-span-2 bg-[#1c1c1e] text-gray-200 border border-gray-200 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-base text-gray-800">Attendance Trends</CardTitle>
+            <CardTitle className="text-base text-gray-200">Attendance Trends</CardTitle>
           </CardHeader>
-          <CardContent className="h-[300px]">
+          <CardContent className="h-[300px] text-gray-200">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={generateTrendData()}>
-                <XAxis dataKey="name" stroke="#666" />
-                <YAxis stroke="#666" domain={[0, 100]} />
-                <Tooltip />
+                {/* Add Grid for better visibility */}
+                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+
+                {/* X Axis - Visible with ticks */}
+                <XAxis
+                  dataKey="name"
+                  stroke="#ccc"
+                  tick={{ fill: "#ccc", fontSize: 12 }}
+                  axisLine={{ stroke: "#ccc" }}
+                  tickLine={{ stroke: "#ccc" }}
+                />
+
+                {/* Y Axis - Visible with ticks */}
+                <YAxis
+                  stroke="#ccc"
+                  tick={{ fill: "#ccc", fontSize: 12 }}
+                  axisLine={{ stroke: "#ccc" }}
+                  tickLine={{ stroke: "#ccc" }}
+                  domain={[0, 100]}
+                />
+
+                {/* Tooltip remains the same */}
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1c1c1e",
+                    border: "1px solid #333",
+                    color: "#fff",
+                  }}
+                />
+
+                {/* Lines for subjects */}
                 {Object.keys(attendanceData).map((subject, idx) => (
                   <Line
                     key={subject}
@@ -121,6 +150,8 @@ const StudentAttendance = () => {
                         idx % 5
                       ]
                     }
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
                   />
                 ))}
               </LineChart>
@@ -128,9 +159,9 @@ const StudentAttendance = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-white border border-gray-200 shadow-sm">
+        <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-200 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-base text-gray-800">Overview</CardTitle>
+            <CardTitle className="text-base text-gray-200">Overview</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2 text-sm">
@@ -159,14 +190,14 @@ const StudentAttendance = () => {
         </Card>
       </div>
 
-      <Card className="bg-white border border-gray-200 shadow-sm">
+      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-200 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-base text-gray-800">Subject-wise Attendance</CardTitle>
+          <CardTitle className="text-base text-gray-200">Subject-wise Attendance</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          <table className="min-w-full text-sm text-left text-gray-800">
+          <table className="min-w-full text-sm text-left text-gray-200">
             <thead className="border-b border-gray-200">
-              <tr className="uppercase text-xs text-gray-500">
+              <tr className="uppercase text-xs text-gray-200">
                 <th className="p-3">Subject</th>
                 <th className="p-3">Total Classes</th>
                 <th className="p-3">Present</th>
@@ -186,7 +217,7 @@ const StudentAttendance = () => {
                     <td className="p-3">{percentage}%</td>
                     <td className="p-3">
                       <span
-                        className={`text-xs font-medium px-2 py-1 rounded ${
+                        className={`text-xs font-medium px-2 py-1 rounded-xl ${
                           status === "Good"
                             ? "bg-green-100 text-green-700"
                             : "bg-red-100 text-red-700"

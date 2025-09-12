@@ -120,14 +120,14 @@ const StudentTimetable = () => {
   const uniqueRooms = [...new Set(Object.values(facultyRoomMap).map((f) => f.room))];
 
   return (
-    <Card>
+    <Card className="bg-[#1c1c1e] text-gray-200">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Timetable</CardTitle>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowFilterModal(true)}>
+        <div className="flex gap-2 ">
+          <Button variant="outline" size="sm" className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={() => setShowFilterModal(true)}>
             <Filter className="w-4 h-4 mr-2" /> Filter
           </Button>
-          <Button variant="outline" size="sm" onClick={exportToCSV}>
+          <Button variant="outline" size="sm" className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={exportToCSV}>
             <Download className="w-4 h-4 mr-2" /> Export
           </Button>
         </div>
@@ -144,7 +144,7 @@ const StudentTimetable = () => {
           <ScrollArea className="w-full overflow-auto">
             <table className="w-full border text-sm">
               <thead>
-                <tr className="bg-muted">
+                <tr className="bg-[#1c1c1e] text-gray-200">
                   <th className="text-left p-2">Day</th>
                   <th className="text-left p-2">Start Time</th>
                   <th className="text-left p-2">End Time</th>

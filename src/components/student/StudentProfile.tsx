@@ -43,12 +43,12 @@ const StudentProfile = () => {
   };
 
   return (
-    <div className="p-6 space-y-6 text-gray-900">
+    <div className="p-6 space-y-6 bg-[#1c1c1e] text-gray-200">
       <h2 className="text-lg font-semibold">Profile</h2>
 
       <Tabs defaultValue="profile" className="space-y-6">
         {/* Personal Info Card */}
-        <Card className="bg-white border border-gray-300">
+        <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-300">
           <div className="p-6 flex flex-col md:flex-row gap-6">
             <div className="w-full md:w-1/4 flex flex-col items-center text-center">
               <img
@@ -57,7 +57,7 @@ const StudentProfile = () => {
                 className="w-24 h-24 rounded-full object-cover mb-2"
               />
               <p className="font-medium">{form.first_name} {form.last_name}</p>
-              <p className="text-sm text-gray-500">21CS234</p>
+              <p className="text-sm text-gray-300">21CS234</p>
             </div>
             <div className="w-full md:w-3/4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -65,6 +65,7 @@ const StudentProfile = () => {
                   <Label>Full Name</Label>
                   <Input
                     name="first_name"
+                    className="bg-[#232326] text-gray-200"
                     value={form.first_name}
                     onChange={handleChange}
                   />
@@ -73,6 +74,7 @@ const StudentProfile = () => {
                   <Label>Email</Label>
                   <Input
                     name="email"
+                    className="bg-[#232326] text-gray-200"
                     value={form.email}
                     onChange={handleChange}
                   />
@@ -81,6 +83,7 @@ const StudentProfile = () => {
                   <Label>Phone</Label>
                   <Input
                     name="phone"
+                    className="bg-[#232326] text-gray-200"
                     value={form.phone}
                     onChange={handleChange}
                   />
@@ -89,6 +92,7 @@ const StudentProfile = () => {
                   <Label>Department</Label>
                   <Input
                     name="department"
+                    className="bg-[#232326] text-gray-200"
                     value={form.department}
                     onChange={handleChange}
                   />
@@ -97,6 +101,7 @@ const StudentProfile = () => {
                   <Label>Year of Study</Label>
                   <Input
                     name="year_of_study"
+                    className="bg-[#232326] text-gray-200"
                     value={form.year_of_study}
                     onChange={handleChange}
                   />
@@ -106,6 +111,7 @@ const StudentProfile = () => {
                   <Input
                     type="date"
                     name="dob"
+                    className="bg-[#232326] text-gray-200"
                     value={form.dob}
                     onChange={handleChange}
                   />
@@ -116,6 +122,7 @@ const StudentProfile = () => {
                 <Label>Address</Label>
                 <Input
                   name="address"
+                  className="bg-[#232326] text-gray-200"
                   value={form.address}
                   onChange={handleChange}
                 />
@@ -125,6 +132,7 @@ const StudentProfile = () => {
                 <Label>About</Label>
                 <Textarea
                   name="about"
+                  className="bg-[#232326] text-gray-200"
                   value={form.about}
                   onChange={handleChange}
                 />
@@ -134,12 +142,13 @@ const StudentProfile = () => {
         </Card>
 
         {/* Academic Info Card */}
-        <Card className="bg-white border border-gray-300">
+        <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-300">
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Current CGPA</Label>
               <Input
                 value={form.cgpa}
+                className="bg-[#232326] text-gray-200"
                 onChange={handleChange}
                 name="cgpa"
               />
@@ -148,6 +157,7 @@ const StudentProfile = () => {
               <Label>Current Semester</Label>
               <Input
                 value={form.semester}
+                className="bg-[#232326] text-gray-200"
                 onChange={handleChange}
                 name="semester"
               />
@@ -156,6 +166,7 @@ const StudentProfile = () => {
               <Label>Enrollment Year</Label>
               <Input
                 value={form.enrollment_year}
+                className="bg-[#232326] text-gray-200"
                 onChange={handleChange}
                 name="enrollment_year"
               />
@@ -164,6 +175,7 @@ const StudentProfile = () => {
               <Label>Expected Graduation</Label>
               <Input
                 value={form.graduation_year}
+                className="bg-[#232326] text-gray-200"
                 onChange={handleChange}
                 name="graduation_year"
               />
@@ -172,6 +184,7 @@ const StudentProfile = () => {
               <Label>Faculty Advisor</Label>
               <Input
                 value={form.advisor}
+                className="bg-[#232326] text-gray-200"
                 onChange={handleChange}
                 name="advisor"
               />
@@ -182,14 +195,14 @@ const StudentProfile = () => {
                 value={form.status}
                 onChange={handleChange}
                 name="status"
-                className="text-green-600 font-semibold"
+                className="bg-[#232326] text-green-600 font-semibold"
               />
             </div>
           </div>
         </Card>
 
         <div className="flex justify-end">
-          <Button className="mt-4">Save Changes</Button>
+          <Button className="mt-4 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500">Save Changes</Button>
         </div>
       </Tabs>
     </div>

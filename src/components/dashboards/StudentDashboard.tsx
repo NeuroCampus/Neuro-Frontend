@@ -51,7 +51,7 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
   const renderContent = () => {
     switch (activePage) {
       case "dashboard":
-        return <StudentDashboardOverview />;
+        return <StudentDashboardOverview setPage={handlePageChange} user={user} />;
       case "timetable":
         return <StudentTimetable />;
       case "attendance":
@@ -61,7 +61,7 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
       case "leave-request":
         return <SubmitLeaveRequest />;
       case "leave-status":
-        return <LeaveStatus />;
+        return <LeaveStatus setPage={handlePageChange} />;
       
       case "profile":
         return <StudentProfile user={user} />;
@@ -78,36 +78,71 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
       case "student-assignment":
         return <StudentAssignments />;
       default:
-        return <StudentDashboardOverview />;
+        return <StudentDashboardOverview setPage={handlePageChange} user={user} />;
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100 text-gray-900 pt-16">
-      <Sidebar role="student" setPage={handlePageChange} activePage={activePage} logout={handleLogout} />
-      <div className="ml-64 w-full">
-        <div className="fixed top-0 left-64 right-0 z-10 bg-white shadow">
-          <Navbar role="student" user={user}  onNotificationClick={handleNotificationClick} setPage={handlePageChange}/>
-        </div>
-        <div className="pt-20 px-6 pb-6 overflow-y max-h-screen">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-            <h1 className="text-2xl font-bold text-gray-800">Student Dashboard - Overview</h1>
-            <div className="text-sm text-gray-500">
-              Welcome, {user?.username || "Student"}
-              {user?.branch && ` | ${user.branch}`}
-              {user?.semester && ` | Semester: ${user.semester}`}
-              {user?.section && ` | Section: ${user.section}`}
-            </div>
-          </div>
-          {error && (
-            <div className="bg-red-500 text-white p-2 rounded mb-4">
-              {error}
-            </div>
+   <div className="flex min-h-screen bg-[#1c1c1e] text-foreground">
+  {/* Sidebar (fixed left) */}
+  <Sidebar
+    role="student"
+    setPage={handlePageChange}
+    activePage={activePage}
+    logout={handleLogout}
+  />
+
+  {/* Main Content */}
+  <div className="flex-1 flex flex-col pl-64">
+    {/* Navbar (fixed) */}
+    <div className="fixed top-0 left-64 right-0 z-10 bg-card shadow-sm">
+      <Navbar
+        role="student"
+        user={user}
+        onNotificationClick={handleNotificationClick}
+        setPage={handlePageChange}
+      />
+    </div>
+
+    {/* Main Page Content (no margin-left, uses pl-64 instead) */}
+    <main className="flex-1 mt-16 p-6 overflow-y-auto bg-[#1c1c1e] text-gray-200">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <h1 className="text-2xl font-bold tracking-tight text-white">
+          Student Dashboard – Overview
+        </h1>
+
+        <div className="text-base text-gray-100">
+          <span className="text-lg font-semibold text-blue-400">
+            Welcome, {user?.username || "Student"}
+          </span>
+          {user?.branch && (
+            <span className="ml-2 text-gray-300">| {user.branch}</span>
           )}
-          {renderContent()}
+          {user?.semester && (
+            <span className="ml-2 text-gray-300">| Semester: {user.semester}</span>
+          )}
+          {user?.section && (
+            <span className="ml-2 text-gray-300">| Section: {user.section}</span>
+          )}
         </div>
       </div>
-    </div>
+
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-destructive text-destructive-foreground p-3 rounded-lg mb-4 shadow">
+          {error}
+        </div>
+      )}
+
+      {/* Dashboard Content */}
+      <div className="grid gap-6">{renderContent()}</div>
+    </main>
+  </div>
+</div>
+
+
   );
 };
 
