@@ -69,7 +69,7 @@ const ProctorStudents = () => {
           }}
           className="w-full rounded bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white"
         />
-        <div className="max-h-96 overflow-y-auto overflow-x-auto">
+        <div className="max-h-max overflow-y-auto overflow-x-auto">
           <table className="min-w-full border border-gray-200 rounded-md">
             <thead className="bg-[#1c1c1e] text-gray-200 sticky top-0 z-10">
               <tr>
