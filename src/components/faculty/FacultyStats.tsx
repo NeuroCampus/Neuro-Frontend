@@ -247,32 +247,60 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
             </div>
           </div>
 
-
           <div className="w-full h-[250px] grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Attendance Line Chart */}
-            <div className={attendanceData.length > 10 ? "overflow-x-auto" : ""}>
+            <div className="relative">
               <h3 className="font-semibold mb-2">Performance</h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart
+                  data={attendanceData}
+                  margin={{ top: 5, right: 20, left: 0, bottom: 50 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#2e2e30" />
+                  <XAxis
+                    dataKey="name"
+                    stroke="#d1d5db"
+                    interval={0}
+                    angle={attendanceData.length > 10 ? -45 : 0}
+                    textAnchor={attendanceData.length > 10 ? "end" : "middle"}
+                    height={attendanceData.length > 10 ? 60 : 40}
+                  />
+                  <YAxis stroke="#d1d5db" />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "#2c2c2e",
+                      border: "none",
+                      color: "#f3f4f6",
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="attendance"
+                    stroke="#60a5fa"
+                    strokeWidth={2}
+                    dot={{ fill: "#93c5fd" }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
 
-              {/* Dynamic chart width */}
-              <div
-                style={{
-                  width: attendanceData.length > 10 
-                    ? `${attendanceData.length * 80}px` // give each student ~80px
-                    : "100%",
-                  height: "250px",
-                }}
-              >
-                {/* Remove ResponsiveContainer width="100%" */}
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={attendanceData}>
+            {/* Marks Bar Chart */}
+            <div className="relative">
+              <h3 className="font-semibold mb-2">Average Marks</h3>
+              {marksData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <BarChart
+                    data={marksData}
+                    margin={{ top: 5, right: 20, left: 0, bottom: 50 }}
+                  >
                     <CartesianGrid strokeDasharray="3 3" stroke="#2e2e30" />
                     <XAxis
                       dataKey="name"
                       stroke="#d1d5db"
                       interval={0}
-                      angle={attendanceData.length > 10 ? -45 : 0}
-                      textAnchor={attendanceData.length > 10 ? "end" : "middle"}
-                      height={attendanceData.length > 10 ? 80 : 40}
+                      angle={marksData.length > 10 ? -45 : 0}
+                      textAnchor={marksData.length > 10 ? "end" : "middle"}
+                      height={marksData.length > 10 ? 60 : 40}
                     />
                     <YAxis stroke="#d1d5db" />
                     <Tooltip
@@ -282,67 +310,17 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
                         color: "#f3f4f6",
                       }}
                     />
-                    <Line
-                      type="monotone"
-                      dataKey="attendance"
-                      stroke="#60a5fa"
-                      strokeWidth={2}
-                      dot={{ fill: "#93c5fd" }}
-                    />
-                  </LineChart>
+                    <Bar dataKey="avgMark" fill="#818cf8">
+                      <LabelList dataKey="avgMark" position="top" fill="#f3f4f6" fontSize={12} />
+                    </Bar>
+                  </BarChart>
                 </ResponsiveContainer>
-              </div>
-            </div>
-
-
-            {/* Marks Bar Chart */}
-            <div className={marksData.length > 10 ? "overflow-x-auto" : ""}>
-              <h3 className="font-semibold mb-2">Average Marks</h3>
-              {marksData.length > 0 ? (
-                <div
-                  style={{
-                    width: marksData.length > 10 
-                      ? `${marksData.length * 80}px`
-                      : "100%",
-                    height: "250px",
-                  }}
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={marksData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#2e2e30" />
-                      <XAxis
-                        dataKey="name"
-                        stroke="#d1d5db"
-                        interval={0}
-                        angle={marksData.length > 10 ? -45 : 0}
-                        textAnchor={marksData.length > 10 ? "end" : "middle"}
-                        height={marksData.length > 10 ? 80 : 40}
-                      />
-                      <YAxis stroke="#d1d5db" />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "#2c2c2e",
-                          border: "none",
-                          color: "#f3f4f6",
-                        }}
-                      />
-                      {/* Removed <Legend /> */}
-                      <Bar dataKey="avgMark" fill="#818cf8">
-                        <LabelList 
-                          dataKey="avgMark" 
-                          position="top" 
-                          fill="#f3f4f6" 
-                          fontSize={12} 
-                        />
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
               ) : (
                 <p className="text-gray-400 text-center">No marks data</p>
               )}
             </div>
           </div>
+
         </CardContent>
       </Card>
     </div>

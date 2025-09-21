@@ -333,8 +333,8 @@ const StudentManagement = () => {
 
   // Handle file upload
   const handleFileUpload = async (file: File) => {
-    if (!state.manualForm.semester || !state.manualForm.section) {
-      updateState({ uploadErrors: ["Please select semester and section before uploading"] });
+    if (!state.manualForm.semester || !state.manualForm.section || !state.manualForm.batch) {
+      updateState({ uploadErrors: ["Please select batch, semester and section before uploading"] });
       return;
     }
 
@@ -360,74 +360,67 @@ const StudentManagement = () => {
           data = XLSX.utils.sheet_to_json(worksheet);
         }
 
-        const bulkData = data.map((entry) => ({
-          usn: String(entry.usn || entry.USN || "").trim(),
-          name: String(entry.name || entry.Name || "").trim(),
-          email: String(entry.email || entry.Email || "").trim(),
-        }));
-
+        // Validate and sanitize
         const errors: string[] = [];
-        const validData: any[] = [];
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const usnRegex = /^[1-4][A-Z]{2}\d{2}[A-Z]{2}\d{3}$/;
-        const existingUSNs = new Set(state.students.map((s) => s.usn));
 
-        bulkData.forEach((entry, index) => {
-          const rowNumber = index + 2;
-          if (!entry.usn || !entry.name || !entry.email) {
-            errors.push(`Row ${rowNumber}: Missing required fields (usn, name, email)`);
-            return;
-          }
-          if (!usnRegex.test(entry.usn)) {
-            errors.push(`Row ${rowNumber}: Invalid USN format "${entry.usn}" (e.g., 1AM22CI001)`);
-            return;
-          }
-          if (existingUSNs.has(entry.usn)) {
-            errors.push(`Row ${rowNumber}: Duplicate USN "${entry.usn}"`);
-            return;
-          }
-          if (!emailRegex.test(entry.email)) {
-            errors.push(`Row ${rowNumber}: Invalid email "${entry.email}"`);
-            return;
-          }
-          if (entry.name.length < 2) {
-            errors.push(`Row ${rowNumber}: Name "${entry.name}" is too short`);
-            return;
-          }
-          validData.push(entry);
-          existingUSNs.add(entry.usn);
-        });
+        const bulkData = data
+          .map((entry, index) => {
+            const usn = String(entry.usn || entry.USN || "").trim();
+            const name = String(entry.name || entry.Name || "").trim();
+            const email = String(entry.email || entry.Email || "").trim();
+            const row = index + 2;
+
+            if (!usn || !name || !email) {
+              errors.push(`Row ${row}: Missing required fields`);
+              return null;
+            }
+            if (!usnRegex.test(usn)) {
+              errors.push(`Row ${row}: Invalid USN "${usn}"`);
+              return null;
+            }
+            if (!emailRegex.test(email)) {
+              errors.push(`Row ${row}: Invalid email "${email}"`);
+              return null;
+            }
+            return { usn, name, email };
+          })
+          .filter(Boolean);
 
         if (errors.length > 0) {
           updateState({ uploadErrors: errors, uploadedCount: 0 });
           return;
         }
 
-        if (validData.length > 500) {
-          updateState({ uploadErrors: ["Maximum 500 records allowed per file"], uploadedCount: 0 });
-          return;
-        }
+        // Get IDs from state
+        const selectedBatchId = getBatchId(state.manualForm.batch);
+        const selectedSemesterId = getSemesterId(state.manualForm.semester);
+        const selectedSectionId = getSectionId(state.manualForm.section, state.manualSections);
 
-        const res = await manageStudents({
-          action: "bulk_update",
-          branch_id: state.branchId,
-          semester_id: getSemesterId(state.manualForm.semester),
-          section_id: getSectionId(state.manualForm.section, state.manualSections),
-          bulk_data: validData,
-        }, "POST");
+        // 🔑 Call bulk_update
+        const res = await manageStudents(
+          {
+            action: "bulk_update",
+            branch_id: state.branchId,
+            semester_id: selectedSemesterId,
+            section_id: selectedSectionId,
+            batch_id: selectedBatchId,
+            bulk_data: bulkData,
+          },
+          "POST"
+        );
 
-        if (res.success && res.data) {
+        if (res.success) {
           updateState({
-            uploadedCount: res.data.created_count || validData.length,
+            uploadedCount: bulkData.length,
             uploadErrors: [],
             droppedFileName: null,
           });
-          if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-          }
+          if (fileInputRef.current) fileInputRef.current.value = "";
           await fetchStudents(state.branchId);
         } else {
-          updateState({ uploadErrors: [res.message || "Error uploading students"], uploadedCount: 0 });
+          updateState({ uploadErrors: [res.message || "Bulk upload failed"], uploadedCount: 0 });
         }
       } catch (err) {
         console.error("File upload error:", err);
@@ -440,9 +433,14 @@ const StudentManagement = () => {
     } else if (extension === "xls" || extension === "xlsx") {
       reader.readAsBinaryString(file);
     } else {
-      updateState({ uploadErrors: ["Unsupported file type (use CSV, XLS, or XLSX)"], uploadedCount: 0 });
+      updateState({
+        uploadErrors: ["Unsupported file type (use CSV, XLS, or XLSX)"],
+        uploadedCount: 0,
+      });
     }
   };
+
+
 
   // Handle manual student entry
   const handleManualEntry = async () => {
@@ -581,18 +579,61 @@ const StudentManagement = () => {
   };
 
   // Filter students for table
-  const filteredStudents = state.students.filter((student) => {
-    const matchesSearch =
-      student.name.toLowerCase().includes(state.search.toLowerCase()) ||
-      student.usn.toLowerCase().includes(state.search.toLowerCase());
-    const matchesSection =
-      state.sectionFilter === "All" ||
-      student.section === state.listSections.find((s) => s.id === state.sectionFilter)?.name;
-    const matchesSemester =
-      state.semesterFilter === "All" ||
-      student.semester === state.semesters.find((s) => s.id === state.semesterFilter)?.number.toString() + "th Semester";
-    return matchesSearch && matchesSection && matchesSemester;
-  });
+  const filteredStudents = state.students
+    .map((student) => {
+      const search = state.search.toLowerCase().trim();
+
+      // Match section & semester (exact filter)
+      const matchesSection =
+        state.sectionFilter === "All" ||
+        student.section === state.listSections.find((s) => s.id === state.sectionFilter)?.name;
+
+      const matchesSemester =
+        state.semesterFilter === "All" ||
+        student.semester ===
+          state.semesters.find((s) => s.id === state.semesterFilter)?.number.toString() + "th Semester";
+
+      if (!matchesSection || !matchesSemester) return null;
+
+      if (!search) return { student, score: 0 }; // No search → neutral score
+
+      const name = student.name.toLowerCase();
+      const usn = student.usn.toLowerCase();
+
+      // Relevance scoring:
+      let score = 0;
+      if (name === search || usn === search) score += 100; // Exact match = highest priority
+      else if (name.startsWith(search) || usn.startsWith(search)) score += 80; // Starts with = very strong match
+      else if (name.includes(search) || usn.includes(search)) score += 50; // Contains = good match
+      else {
+        // Fuzzy match (levenshtein-like scoring)
+        const distanceName = levenshteinDistance(name, search);
+        const distanceUSN = levenshteinDistance(usn, search);
+        const minDistance = Math.min(distanceName, distanceUSN);
+        if (minDistance <= 2) score += 30; // Allow up to 2 typos
+      }
+
+      return score > 0 || !search ? { student, score } : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.score - a.score) // Sort by relevance
+    .map((entry) => entry!.student);
+
+    function levenshteinDistance(a: string, b: string): number {
+    const dp: number[][] = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+
+    for (let i = 0; i <= a.length; i++) dp[i][0] = i;
+    for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+
+    for (let i = 1; i <= a.length; i++) {
+      for (let j = 1; j <= b.length; j++) {
+        if (a[i - 1] === b[j - 1]) dp[i][j] = dp[i - 1][j - 1];
+        else dp[i][j] = Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]) + 1;
+      }
+    }
+    return dp[a.length][b.length];
+  }
+
 
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
   const paginatedStudents = filteredStudents.slice(
@@ -828,6 +869,32 @@ const StudentManagement = () => {
           <div className="flex justify-between items-center">
             <CardTitle className="text-lg text-gray-100">Student List</CardTitle>
             <div className="flex gap-2">
+              <Button
+                onClick={() => updateState({ addStudentModal: true })}
+                className="flex items-center gap-1  text-sm font-semibold text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 px-3 py-1.5 rounded-md transition"
+                disabled={state.isLoading || !state.branchId}
+              >
+                <Upload className="w-4 h-4" />
+                Bulk Upload
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          <div className="flex justify-between items-center mb-4">
+            {/* Left side: Search input */}
+            <Input
+              placeholder="Search students..."
+              className="w-64 bg-[#2c2c2e] text-gray-200 border border-gray-700 placeholder-gray-500"
+              value={state.search}
+              onChange={(e) =>
+                updateState({ search: e.target.value, currentPage: 1 })
+              }
+            />
+
+            {/* Right side: Dropdowns */}
+            <div className="flex gap-4">
               <Select
                 value={state.semesterFilter}
                 onValueChange={(value) =>
@@ -883,9 +950,7 @@ const StudentManagement = () => {
                 <SelectContent className="bg-[#2c2c2e] text-gray-200 border border-gray-700">
                   <SelectItem value="All">All Sections</SelectItem>
                   {state.listSections
-                    .filter(
-                      (section) => section.semester_id === state.semesterFilter
-                    )
+                    .filter((section) => section.semester_id === state.semesterFilter)
                     .map((section) => (
                       <SelectItem key={section.id} value={section.id}>
                         Section {section.name}
@@ -893,29 +958,7 @@ const StudentManagement = () => {
                     ))}
                 </SelectContent>
               </Select>
-
-              <Button
-                onClick={() => updateState({ addStudentModal: true })}
-                className="flex items-center gap-1  text-sm font-semibold text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 px-3 py-1.5 rounded-md transition"
-                disabled={state.isLoading || !state.branchId}
-              >
-                <Upload className="w-4 h-4" />
-                Bulk Upload
-              </Button>
             </div>
-          </div>
-        </CardHeader>
-
-        <CardContent>
-          <div className="flex justify-start mb-4">
-            <Input
-              placeholder="Search students..."
-              className="w-64 bg-[#2c2c2e] text-gray-200 border border-gray-700 placeholder-gray-500"
-              value={state.search}
-              onChange={(e) =>
-                updateState({ search: e.target.value, currentPage: 1 })
-              }
-            />
           </div>
 
           <div className="overflow-x-auto">
@@ -1012,9 +1055,49 @@ const StudentManagement = () => {
           {/* Semester & Section Select */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-300 mb-1">
-              Select Semester and Section
+              Select Batch, Semester, and Section
             </label>
             <div className="flex gap-4">
+              {/* Batch Dropdown */}
+              <Select
+                value={state.manualForm.batch}
+                onValueChange={(value) =>
+                  updateState({
+                    manualForm: {
+                      ...state.manualForm,
+                      batch: value,
+                      semester: "",
+                      section: "",
+                    },
+                    manualSemesters: [], // Clear semesters when batch changes (optional)
+                    manualSections: [], // Clear sections when batch changes
+                  })
+                }
+                disabled={state.isLoading || state.batches.length === 0}
+              >
+                <SelectTrigger className="w-full bg-[#2c2c2e] border border-gray-700 text-gray-200">
+                  <SelectValue
+                    placeholder={
+                      state.batches.length === 0
+                        ? "No batches available"
+                        : "Select Batch"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent className="bg-[#2c2c2e] text-gray-200 border border-gray-700">
+                  {state.batches.map((batch) => (
+                    <SelectItem
+                      key={batch.id}
+                      value={batch.name}
+                      className="hover:bg-gray-700"
+                    >
+                      Batch {batch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Semester Dropdown */}
               <Select
                 value={state.manualForm.semester}
                 onValueChange={(value) =>
@@ -1023,7 +1106,11 @@ const StudentManagement = () => {
                     manualSections: [],
                   })
                 }
-                disabled={state.isLoading || state.semesters.length === 0}
+                disabled={
+                  state.isLoading ||
+                  !state.manualForm.batch || // Disable if no batch selected
+                  state.semesters.length === 0
+                }
               >
                 <SelectTrigger className="w-full bg-[#2c2c2e] border border-gray-700 text-gray-200">
                   <SelectValue
@@ -1047,6 +1134,7 @@ const StudentManagement = () => {
                 </SelectContent>
               </Select>
 
+              {/* Section Dropdown */}
               <Select
                 value={state.manualForm.section}
                 onValueChange={(value) =>
@@ -1087,6 +1175,7 @@ const StudentManagement = () => {
               </Select>
             </div>
           </div>
+
 
           {/* File Upload Drop Zone */}
           <div
