@@ -78,27 +78,35 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
     return remaining === 0 ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />;
   };
 
-  const handleDownloadReceipt = async (paymentId: number) => {
-    try {
-      const response = await fetch(`http://127.0.0.1:8001/api/student/payments/${paymentId}/receipt/`, {
-        method: 'GET',
-      });
-      if (!response.ok) {
-        throw new Error('Failed to download receipt');
-      }
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `receipt_${paymentId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error downloading receipt:', error);
+const handleDownloadReceipt = async (paymentId: number) => {
+  try {
+    const usn = user?.usn || user?.username;
+    if (!usn) {
+      console.error('USN not available for receipt download');
+      return;
     }
-  };
+    
+    const response = await fetch(`http://127.0.0.1:8001/api/student/complete-fee-data/${usn}/?download_receipt=${paymentId}`, {
+      method: 'GET',
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to download receipt');
+    }
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `receipt_${paymentId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Error downloading receipt:', error);
+  }
+};
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
@@ -119,19 +127,19 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-gray-500">Name</label>
-              <p className="text-lg font-semibold">{user?.name}</p>
+              <p className="text-lg font-semibold">{feeData?.student?.name || 'N/A'}</p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">USN</label>
-              <p className="text-lg font-semibold">{user?.usn}</p>
+              <p className="text-lg font-semibold">{feeData?.student?.usn || 'N/A'}</p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">Department</label>
-              <p className="text-lg font-semibold">{user?.dept}</p>
+              <p className="text-lg font-semibold">{feeData?.student?.dept || 'N/A'}</p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-500">Semester</label>
-              <p className="text-lg font-semibold">{user?.semester}</p>
+              <p className="text-lg font-semibold">{feeData?.student?.semester || 'N/A'}</p>
             </div>
           </div>
         </CardContent>
