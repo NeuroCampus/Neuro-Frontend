@@ -15,6 +15,7 @@ import FaceRecognition from "../student/FaceRecognition";
 import StudentDashboardOverview from "../student/StudentDashboardOverview";
 import StudentStudyMaterial from "../student/StudentStudyMaterial";
 import StudentAssignments from "../student/StudentAssignments";
+import StudentFees from "../../pages/StudentFees";
 import { logoutUser } from "../../utils/authService";
 
 interface StudentDashboardProps {
@@ -62,7 +63,8 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
         return <SubmitLeaveRequest />;
       case "leave-status":
         return <LeaveStatus setPage={handlePageChange} />;
-      
+      case "fees":
+        return <StudentFees user={user} />;
       case "profile":
         return <StudentProfile user={user} />;
       case "announcements":
