@@ -22,6 +22,7 @@ import {
   GraduationCap,
   BookOpen,
   Upload,
+  CreditCard,
 } from "lucide-react";
 import { useIsMobile } from "../../hooks/use-mobile";
 import {
@@ -102,6 +103,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       "leave-request": <FileText size={20} />,
       "leave-status": <FileText size={20} />,
       certificates: <FileText size={20} />,
+      fees: <CreditCard size={20} />,
     };
     return iconMap[page] || <LayoutDashboard size={20} />;
   };
@@ -193,6 +195,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Timetable", page: "timetable" },
     { name: "Attendance", page: "attendance" },
     { name: "Internal Marks", page: "marks" },
+    { name: "Fees", page: "fees" },
     
     // Leave Management
     { name: "Leave Request", page: "leave-request" },
