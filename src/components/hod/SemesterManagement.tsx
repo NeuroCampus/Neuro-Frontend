@@ -370,65 +370,81 @@ const SemesterManagement = () => {
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-[#1c1c1e] text-gray-200 z-10">
                     <tr className="border-b">
-                      <th className="p-2">NAME</th>
-                      <th className="p-2">YEAR</th>
-                      <th className="p-2">SECTIONS</th>
-                      <th className="p-2">ACTIONS</th>
+                      <th className="p-2 text-left">NAME</th>
+                      <th className="p-2 text-left">YEAR</th>
+                      <th className="p-2 text-left">SECTIONS</th>
+                      <th className="p-2 text-center">ACTIONS</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredSemesters.slice(0, 8).map((sem) => {   // ✅ limit to 8 rows
-                      const semesterSections = sections.filter((s) => s.semester_id === sem.id);
+                    {filteredSemesters.slice(0, 8).map((sem) => {
+                      const semesterSections = sections
+                        .filter((s) => s.semester_id === sem.id)
+                        .sort((a, b) => a.name.localeCompare(b.name));
+
                       return (
                         <tr key={sem.id} className="border-b text-center">
-                          <td className="p-2">{getSemesterName(sem.number)}</td>
-                          <td className="p-2">{getYear(sem.number)}</td>
-                          <td className="p-2">
+                          {/* Semester Name */}
+                          <td className="p-2 text-left">{getSemesterName(sem.number)}</td>
+
+                          {/* Year */}
+                          <td className="p-2 text-left">{getYear(sem.number)}</td>
+
+                          {/* Sections */}
+                          <td className="p-2 text-left">
                             {semesterSections.length > 0 ? (
-                              <div className="flex flex-wrap gap-2 justify-center">
-                                {semesterSections
-                                  .slice()
-                                  .sort((a, b) => a.name.localeCompare(b.name))
-                                  .map((section) => (
-                                    <div key={section.id} className="flex items-center gap-1">
-                                      <span>{section.name}</span>
-                                      <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        onClick={() => openDeleteSectionModal(section)}
-                                        disabled={loading}
-                                      >
-                                        <Trash2 className="h-3 w-3 text-red-600" />
-                                      </Button>
-                                    </div>
-                                  ))}
+                              <div className="flex flex-wrap gap-2">
+                                {semesterSections.map((section) => (
+                                  <div
+                                    key={section.id}
+                                    className="flex items-center gap-1 px-2 py-1 border rounded-md bg-[#232326] text-gray-200"
+                                  >
+                                    <span>{section.name}</span>
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={() => openDeleteSectionModal(section)}
+                                      disabled={loading}
+                                      title="Delete Section"
+                                    >
+                                      <Trash2 className="h-3 w-3 text-red-600" />
+                                    </Button>
+                                  </div>
+                                ))}
                               </div>
                             ) : (
-                              "None"
+                              <span className="text-gray-400">None</span>
                             )}
                           </td>
+
+                          {/* Semester Actions */}
                           <td className="p-2 flex justify-center gap-2">
                             <Button
                               size="icon"
                               variant="ghost"
                               onClick={() => openModal(sem)}
                               disabled={loading}
+                              title="Edit Semester Name"
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
+
                             <Button
                               size="icon"
                               variant="ghost"
                               onClick={() => openSectionModal(sem)}
                               disabled={loading}
+                              title="Add Section"
                             >
                               <Plus className="h-4 w-4" />
                             </Button>
+
                             <Button
                               size="icon"
                               variant="ghost"
                               onClick={() => openDeleteModal(sem)}
                               disabled={loading}
+                              title="Delete Semester"
                             >
                               <Trash2 className="h-4 w-4 text-red-600" />
                             </Button>
@@ -440,7 +456,6 @@ const SemesterManagement = () => {
                 </table>
               </div>
             </div>
-
           )}
         </CardContent>
       </Card>
