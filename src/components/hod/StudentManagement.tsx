@@ -445,22 +445,54 @@ const StudentManagement = () => {
   // Handle manual student entry
   const handleManualEntry = async () => {
     const { usn, name, email, section, semester, batch } = state.manualForm;
-    if (!usn || !name || !email || !section || !semester || !batch) {
-      updateState({ uploadErrors: ["All fields are required"] });
+
+    const newErrors: any = {};
+
+    // Strong USN regex (last 3 digits cannot be 000)
+    const usnRegex = /^[1-9][A-Z]{2}[0-9]{2}[A-Z]{2}[0-9]{3}$/;
+    if (!usn) newErrors.usn = "USN is required";
+    else if (!usnRegex.test(usn.toUpperCase()))
+      newErrors.usn = "Invalid USN (e.g., 1AM22CI064)";
+
+    // Name validation
+    const nameRegex = /^[A-Za-z\s]+$/;
+    if (!name) newErrors.name = "Name is required";
+    else if (!nameRegex.test(name)) newErrors.name = "Name should contain only letters and spaces";
+
+    // Strong email validation
+    const emailRegex =
+      /^[a-zA-Z0-9]+([._%+-]?[a-zA-Z0-9]+)*@([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\.)+[A-Za-z]{2,10}$/;
+    const consecutiveDotRegex = /\.{2,}/;
+    if (!email) newErrors.email = "Email is required";
+    else if (!emailRegex.test(email) || consecutiveDotRegex.test(email))
+      newErrors.email = "Invalid email format (e.g., user@example.com)";
+
+    // Section, semester, batch
+    if (!section) newErrors.section = "Section is required";
+    if (!semester) newErrors.semester = "Semester is required";
+    if (!batch) newErrors.batch = "Batch is required";
+
+    // If any validation errors, update state and stop
+    if (Object.keys(newErrors).length > 0) {
+      updateState({ manualErrors: newErrors, uploadErrors: ["Fix errors before submitting"] });
       return;
     }
 
+    // If all valid, call API
     try {
-      const res = await manageStudents({
-        action: "create",
-        branch_id: state.branchId,
-        usn,
-        name,
-        email,
-        semester_id: getSemesterId(semester),
-        section_id: getSectionId(section, state.manualSections),
-        batch_id: getBatchId(batch),
-      }, "POST");
+      const res = await manageStudents(
+        {
+          action: "create",
+          branch_id: state.branchId,
+          usn,
+          name,
+          email,
+          semester_id: getSemesterId(semester),
+          section_id: getSectionId(section, state.manualSections),
+          batch_id: getBatchId(batch),
+        },
+        "POST"
+      );
 
       if (res.success) {
         await fetchStudents(state.branchId);
@@ -470,9 +502,12 @@ const StudentManagement = () => {
             name: "",
             email: "",
             section: state.manualSections[0]?.name || "",
-            semester: state.semesters[0]?.number ? `${state.semesters[0].number}th Semester` : "",
+            semester: state.semesters[0]?.number
+              ? `${state.semesters[0].number}th Semester`
+              : "",
             batch: "",
           },
+          manualErrors: {},
           uploadErrors: [],
         });
       } else {
@@ -483,6 +518,7 @@ const StudentManagement = () => {
       updateState({ uploadErrors: ["Failed to add student"] });
     }
   };
+
 
   // Handle edit save
   const handleEditSave = async () => {
@@ -689,20 +725,35 @@ const StudentManagement = () => {
                 maxLength={10}
                 onChange={(e) => {
                   const value = e.target.value.toUpperCase();
+                  let error = "";
+
+                  const usnRegex = /^[1-9][A-Z]{2}[0-9]{2}[A-Z]{2}[0-9]{3}$/;
+
+                  if (value && !usnRegex.test(value)) {
+                    error = "Invalid USN (e.g., 1AM22CI064)";
+                  } else if (value.slice(-3) === "000") {
+                    error = "Invalid USN (cannot end with 000)";
+                  }
+
                   updateState({
                     manualForm: { ...state.manualForm, usn: value },
+                    manualErrors: { ...state.manualErrors, usn: error },
                   });
                 }}
                 onBlur={(e) => {
                   const value = e.target.value.toUpperCase();
-                  const usnRegex = /^[0-9][A-Z]{2}[0-9]{2}[A-Z]{2}[0-9]{3}$/;
+                  let error = "";
+
+                  const usnRegex = /^[1-9][A-Z]{2}[0-9]{2}[A-Z]{2}[0-9]{3}$/;
+
+                  if (value && !usnRegex.test(value)) {
+                    error = "Invalid USN (e.g., 1AM22CI064)";
+                  } else if (value.slice(-3) === "000") {
+                    error = "Invalid USN (cannot end with 000)";
+                  }
+
                   updateState({
-                    manualErrors: {
-                      ...state.manualErrors,
-                      usn: value && !usnRegex.test(value)
-                        ? "Invalid USN (e.g., 1AM22CI064)"
-                        : "",
-                    },
+                    manualErrors: { ...state.manualErrors, usn: error },
                   });
                 }}
                 className={`flex-1 bg-[#232326] text-gray-200 border placeholder-gray-400 focus:ring-0 ${
@@ -711,34 +762,39 @@ const StudentManagement = () => {
                     : "border-gray-700 focus:border-gray-500"
                 }`}
               />
-              {/* Reserve space for error text */}
               <span className="text-red-500 text-xs mt-1 h-4">
                 {state.manualErrors?.usn}
               </span>
             </div>
 
-            {/* Name */}
+            {/* Name Field */}
             <div className="flex flex-col flex-1">
               <Input
                 placeholder="Name"
                 value={state.manualForm.name}
                 onChange={(e) => {
                   const value = e.target.value.replace(/[^A-Za-z\s]/g, "");
+                  let error = "";
+
+                  // Live validation: only letters and spaces allowed
+                  if (value && !/^[A-Za-z\s]*$/.test(value)) {
+                    error = "Name should contain only letters and spaces";
+                  }
+
                   updateState({
                     manualForm: { ...state.manualForm, name: value },
+                    manualErrors: { ...state.manualErrors, name: error },
                   });
                 }}
                 onBlur={(e) => {
                   const value = e.target.value.trim();
                   const nameRegex = /^[A-Za-z\s]+$/;
+                  let error = "";
+                  if (!value) error = "Name is required";
+                  else if (!nameRegex.test(value)) error = "Name should contain only letters and spaces";
+
                   updateState({
-                    manualErrors: {
-                      ...state.manualErrors,
-                      name:
-                        value && !nameRegex.test(value)
-                          ? "Name should contain only letters and spaces"
-                          : "",
-                    },
+                    manualErrors: { ...state.manualErrors, name: error },
                   });
                 }}
                 className={`flex-1 bg-[#232326] text-gray-200 border placeholder-gray-400 focus:ring-0 ${
@@ -752,6 +808,7 @@ const StudentManagement = () => {
               </span>
             </div>
 
+
             {/* Email */}
             <div className="flex flex-col flex-1">
               <Input
@@ -760,22 +817,22 @@ const StudentManagement = () => {
                 value={state.manualForm.email}
                 onChange={(e) => {
                   let value = e.target.value;
+
+                  // Remove spaces and invalid characters commonly not allowed in email
                   value = value.replace(/[!#$%^&*()_+<>?:"{}]/g, "");
+
+                  // Professional-grade email regex
+                  const emailRegex =/^[a-zA-Z0-9]+([._%+-]?[a-zA-Z0-9]+)*@([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\.)+[A-Za-z]{2,10}$/;
+                  const consecutiveDotRegex = /\.{2,}/;
+
+                  const error =
+                    value && (!emailRegex.test(value) || consecutiveDotRegex.test(value))
+                      ? "Invalid email format (e.g., user@example.com)"
+                      : "";
+
                   updateState({
                     manualForm: { ...state.manualForm, email: value },
-                  });
-                }}
-                onBlur={(e) => {
-                  const value = e.target.value.trim();
-                  const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
-                  updateState({
-                    manualErrors: {
-                      ...state.manualErrors,
-                      email:
-                        value && !emailRegex.test(value)
-                          ? "Invalid email format (e.g., user@example.com)"
-                          : "",
-                    },
+                    manualErrors: { ...state.manualErrors, email: error },
                   });
                 }}
                 className={`flex-1 bg-[#232326] text-gray-200 border placeholder-gray-400 focus:ring-0 ${
@@ -788,6 +845,7 @@ const StudentManagement = () => {
                 {state.manualErrors?.email}
               </span>
             </div>
+
             <Select
               value={state.manualForm.semester}
               onValueChange={(value) =>

@@ -21,6 +21,8 @@ import {
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { getHODStats, manageLeaves, manageProfile, getHODDashboard } from "../../utils/hod_api";
+import { motion } from "framer-motion";
+
 
 interface LeaveRequest {
   id: string;
@@ -51,12 +53,12 @@ interface HODStatsProps {
 export default function HODStats({ setError, setPage }: HODStatsProps) {
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [stats, setStats] = useState<StatsData | null>(null);
-  const [hodName, setHodName] = useState("HOD");
-  const [branchName, setBranchName] = useState("your");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
-  const [branchId, setBranchId] = useState("");
   const navigate = useNavigate();
+  const [branchId, setBranchId] = useState<string | null>(null);
+  const [hodName, setHodName] = useState("HOD");
+  const [branchName, setBranchName] = useState("your");
 
   // Format date range to "MMM DD, YYYY to MMM DD, YYYY"
   const formatPeriod = (startDate: string, endDate: string): string => {
@@ -123,34 +125,51 @@ export default function HODStats({ setError, setPage }: HODStatsProps) {
     }
   };
 
-  // Handle approve
-  const handleApprove = async (index: number) => {
-    const leave = leaveRequests[index];
-    try {
-      const res = await manageLeaves(
-        {
-          action: "update",
-          branch_id: branchId,
-          leave_id: leave.id,
-          status: "APPROVED",
-        },
-        "PATCH"
-      );
-      if (res.success) {
-        await fetchLeaveRequests();
-        Swal.fire("Approved!", "The leave request has been approved.", "success");
-      } else {
-        setErrors([res.message || "Failed to approve leave"]);
-      }
-    } catch (err) {
-      setErrors(["Failed to approve leave"]);
-      Swal.fire("Error!", "Failed to approve the leave request.", "error");
-    }
+  const updateDashboardPendingLeaves = (change: number) => {
+    setStats((prev) => ({
+      ...prev,
+      pending_leaves: (prev.pending_leaves || 0) + change,
+    }));
   };
 
-  // Handle reject
+  const updateLeaveStatus = (index: number, status: "PENDING" | "APPROVED" | "REJECTED") => {
+    const updatedLeaves = [...leaveRequests];
+    updatedLeaves[index] = { ...updatedLeaves[index], status };
+    setLeaveRequests(updatedLeaves);
+  };
+
+  // Handle approve
+  // Approve
+const handleApprove = async (index: number) => {
+  const leave = leaveRequests[index];
+
+  updateLeaveStatus(index, "APPROVED"); // Optimistic UI
+
+  try {
+    const res = await manageLeaves(
+      { action: "update", branch_id: branchId, leave_id: leave.id, status: "APPROVED" },
+      "PATCH"
+    );
+
+    if (!res.success) {
+      updateLeaveStatus(index, leave.status as any); // rollback
+      setErrors([res.message || "Failed to approve leave"]);
+      Swal.fire("Error!", "Failed to approve the leave request.", "error");
+    } else {
+      Swal.fire("Approved!", "The leave request has been approved.", "success");
+      await fetchDashboard(); // ✅ Refresh dashboard data
+    }
+  } catch (err) {
+    updateLeaveStatus(index, leave.status as any); // rollback
+    setErrors(["Failed to approve leave"]);
+    Swal.fire("Error!", "Failed to approve the leave request.", "error");
+  }
+};
+
+// Reject
   const handleReject = async (index: number) => {
     const leave = leaveRequests[index];
+
     const result = await Swal.fire({
       title: "Are you sure?",
       text: "You are about to reject this leave request.",
@@ -160,38 +179,34 @@ export default function HODStats({ setError, setPage }: HODStatsProps) {
       cancelButtonText: "No, keep it",
       background: "#23232a",
       color: "#e5e7eb",
-      customClass: {
-      popup: "swal2-dark",
-      confirmButton: "bg-red-600 text-white",
-      cancelButton: "bg-gray-700 text-gray-200",
-      title: "text-gray-100",
-      content: "text-gray-200",
-      },
     });
-    if (result.isConfirmed) {
-      try {
-        const res = await manageLeaves(
-          {
-            action: "update",
-            branch_id: branchId,
-            leave_id: leave.id,
-            status: "REJECTED",
-          },
-          "PATCH"
-        );
-        if (res.success) {
-          await fetchLeaveRequests();
-          Swal.fire("Rejected!", "The leave request has been rejected.", "success");
-        } else {
-          setErrors([res.message || "Failed to reject leave"]);
-          Swal.fire("Error!", "Failed to reject the leave request.", "error");
-        }
-      } catch (err) {
-        setErrors(["Failed to reject leave"]);
+
+    if (!result.isConfirmed) return;
+
+    updateLeaveStatus(index, "REJECTED");
+
+    try {
+      const res = await manageLeaves(
+        { action: "update", branch_id: branchId, leave_id: leave.id, status: "REJECTED" },
+        "PATCH"
+      );
+
+      if (!res.success) {
+        updateLeaveStatus(index, leave.status as any);
+        setErrors([res.message || "Failed to reject leave"]);
         Swal.fire("Error!", "Failed to reject the leave request.", "error");
+      } else {
+        Swal.fire("Rejected!", "The leave request has been rejected.", "success");
+        await fetchDashboard(); // ✅ Refresh dashboard data
       }
+    } catch (err) {
+      updateLeaveStatus(index, leave.status as any);
+      setErrors(["Failed to reject leave"]);
+      Swal.fire("Error!", "Failed to reject the leave request.", "error");
     }
   };
+
+
 
   // Initial data fetch
   useEffect(() => {
@@ -334,7 +349,7 @@ export default function HODStats({ setError, setPage }: HODStatsProps) {
             <h3 className="text-lg font-semibold text-gray-200">Member Distribution</h3>
           </div>
           <p className="text-sm text-gray-400 mb-4">Faculty, Students, and Total Members</p>
-          <div className="min-h-[250px]">
+          <div className="min-h-[250px] focus:outline-none">
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
                 <Pie
@@ -347,9 +362,15 @@ export default function HODStats({ setError, setPage }: HODStatsProps) {
                   label
                   isAnimationActive={true}
                   animationDuration={800}
+                  activeIndex={-1}
+                  onClick={() => {}}
                 />
                 <Tooltip
-                  contentStyle={{ backgroundColor: "#fff", borderRadius: "8px", border: "1px solid #e5e7eb" }}
+                  contentStyle={{
+                    backgroundColor: "#fff",
+                    borderRadius: "8px",
+                    border: "1px solid #e5e7eb",
+                  }}
                 />
                 <Legend verticalAlign="bottom" height={36} />
               </PieChart>
@@ -446,7 +467,6 @@ export default function HODStats({ setError, setPage }: HODStatsProps) {
           </table>
         </div>
       </div>
-
     </div>
   );
 };

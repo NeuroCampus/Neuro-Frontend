@@ -260,3 +260,8 @@ html, body, #root {
   color: #e5e7eb !important;
   border-radius: 8px !important;
 }
+
+/* Disable focus outline for all SVG elements inside Recharts PieChart */
+.recharts-wrapper svg *:focus {
+  outline: none;
+}
