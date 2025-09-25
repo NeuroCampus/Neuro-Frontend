@@ -18,6 +18,13 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useEffect, useState } from "react";
 import { Filter } from "lucide-react";
 import { getInternalMarks } from "@/utils/student_api";
@@ -102,38 +109,82 @@ const InternalMarks = () => {
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-gray-800">Internal Marks</h2>
+    <div className="space-y-4 bg-[#1c1c1e] text-gray-200">
+      <h2 className="text-xl font-semibold">Internal Marks</h2>
 
       {/* Chart Section */}
-      <Card>
-        <CardHeader>
+     <Card className="bg-[#1c1c1e] text-gray-200 rounded-2xl border border-gray-200 shadow-lg">
+        <CardHeader className="bg-[#1c1c1e] text-gray-200 rounded-t-2xl border-b border-gray-200">
           <CardTitle className="text-base">📊 Performance Overview</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="h-[250px]">
-            <Bar data={chartData} options={chartOptions} />
+        <CardContent className="bg-[#1c1c1e] text-gray-200 rounded-b-2xl p-4">
+          <div className="flex items-center justify-center h-[300px]">
+            <div className="w-full max-w-[600px] h-[250px]">
+              <Bar
+                data={chartData}
+                options={{
+                  ...chartOptions,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      labels: {
+                        color: "#9ca3af", // text-gray-400
+                      },
+                    },
+                    tooltip: {
+                      backgroundColor: "#1f1f21", // dark tooltip
+                      titleColor: "#e5e7eb",
+                      bodyColor: "#d1d5db",
+                      borderColor: "#27272a",
+                      borderWidth: 1,
+                    },
+                  },
+                  scales: {
+                    x: {
+                      ticks: { color: "#9ca3af" },
+                      grid: {
+                        color: "rgba(255, 255, 255, 0.05)",
+                      },
+                    },
+                    y: {
+                      ticks: { color: "#9ca3af" },
+                      grid: {
+                        color: "rgba(255, 255, 255, 0.05)",
+                      },
+                    },
+                  },
+                }}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
 
+
       {/* Filter Row */}
       <div className="flex items-center justify-between">
+        {/* Search Input */}
         <Input
           placeholder="Search subjects..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-72"
+          className="w-72 bg-[#232326] text-gray-200 border border-gray-600 focus:border-gray-400 focus:ring-0 rounded-md placeholder:text-gray-200"
         />
-        <Button variant="outline" onClick={() => setShowFilter(true)}>
+
+        {/* Filter Button */}
+        <Button
+          variant="outline"
+          className="text-gray-200 bg-gray-800 hover:bg-gray-700 border border-gray-600"
+          onClick={() => setShowFilter(true)}
+        >
           <Filter className="w-4 h-4 mr-2" />
           Filter
         </Button>
       </div>
 
       {/* Table */}
-      <div className="rounded-md border border-gray-300 overflow-hidden">
-        <div className="grid grid-cols-4 p-3 bg-gray-100 font-medium text-gray-700 text-sm border-b">
+      <div className="rounded-md border border-gray-300 overflow-hidden bg-[#1c1c1e] text-gray-200">
+        <div className="grid grid-cols-4 p-3 bg-[#1c1c1e] text-gray-200 font-medium text-sm">
           <div>Subject</div>
           <div className="text-center">Test 1</div>
           <div className="text-center">Test 2</div>
@@ -153,7 +204,7 @@ const InternalMarks = () => {
           return (
             <div
               key={index}
-              className="grid grid-cols-4 p-3 text-sm text-gray-800 border-b hover:bg-gray-50"
+              className="grid grid-cols-4 p-3 text-sm text-gray-200 hover:bg-gray-800"
             >
               <div>{subject}</div>
               <div className="text-center">{t1 !== null ? t1 : "-"}</div>
@@ -168,35 +219,64 @@ const InternalMarks = () => {
 
       {/* Filter Dialog */}
       <Dialog open={showFilter} onOpenChange={setShowFilter}>
-        <DialogContent>
+        <DialogContent className="bg-[#1c1c1e] text-gray-200 rounded-xl w-80 border border-gray-700">
           <DialogHeader>
-            <DialogTitle>Filter by Subject</DialogTitle>
+            <DialogTitle className="text-lg font-semibold">
+              Filter by Subject
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-2 max-h-60 overflow-y-auto">
-            {allSubjects.map((subject) => (
-              <div key={subject} className="flex items-center gap-2">
-                <Checkbox
-                  checked={selectedSubjects.includes(subject)}
-                  onCheckedChange={() =>
-                    setSelectedSubjects((prev) =>
-                      prev.includes(subject)
-                        ? prev.filter((s) => s !== subject)
-                        : [...prev, subject]
-                    )
-                  }
-                />
-                <span className="text-sm">{subject}</span>
-              </div>
-            ))}
-          </div>
-          <div className="pt-4 space-x-2">
-            <Button onClick={() => setShowFilter(false)}>Apply</Button>
-            <Button variant="secondary" onClick={() => {
-              setSelectedSubjects([]);
-              setSearchQuery("");
-              setShowFilter(false);
-            }}>
-              Clear Filter
+
+          {/* Dropdown inside Dialog */}
+          <Select
+            value={selectedSubjects.length ? selectedSubjects[0] : "All"}
+            onValueChange={(value) => {
+              if (value === "All") {
+                setSelectedSubjects([]); // Show all subjects
+              } else {
+                setSelectedSubjects([value]);
+              }
+            }}
+          >
+            <SelectTrigger className="w-full bg-[#232326] text-gray-200 rounded-md">
+              <SelectValue placeholder="Choose a Subject" />
+            </SelectTrigger>
+            <SelectContent className="bg-[#1c1c1e] text-gray-200 border border-gray-700 rounded-md shadow-lg">
+              {/* "All" Option */}
+              <SelectItem
+                value="All"
+                className="hover:bg-[#2c2c2e] cursor-pointer font-semibold"
+              >
+                All Subjects
+              </SelectItem>
+
+              {/* Subject List */}
+              {allSubjects.map((subject) => (
+                <SelectItem
+                  key={subject}
+                  value={subject}
+                  className="hover:bg-[#2c2c2e] cursor-pointer"
+                >
+                  {subject}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              variant="secondary"
+              className="bg-gray-200 hover:bg-gray-600 border border-gray-500 text-gray-800"
+              onClick={() => {
+                setSelectedSubjects([]);
+                setSearchQuery("");
+                setShowFilter(false);
+              }}
+            >
+              Clear
+            </Button>
+            <Button className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={() => setShowFilter(false)}>
+              Apply
             </Button>
           </div>
         </DialogContent>
