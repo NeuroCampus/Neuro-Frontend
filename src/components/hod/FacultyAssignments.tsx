@@ -210,25 +210,25 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
     if (!validateForm() || !state.branchId) return;
 
     // 🚨 Case 1: Prevent multiple faculties for the SAME subject + section + semester
-    const duplicate = state.assignments.find(
+    const duplicateAssignment = state.assignments.find(
       (a) =>
-        a.subject_id === state.subjectId && // ✅ subject included now
+        a.subject_id === state.subjectId &&
         a.section_id === state.sectionId &&
         a.semester_id === state.semesterId &&
         a.branch_id === state.branchId &&
         a.id !== state.editingId
     );
 
-    if (duplicate) {
+    if (duplicateAssignment) {
       toast({
         variant: "destructive",
         title: "Duplicate Assignment",
-        description: `Faculty is already assigned for ${duplicate.subject} - Section ${duplicate.section}, Semester ${duplicate.semester}.`,
+        description: `Subject "${duplicateAssignment.subject}" is already assigned to Section ${duplicateAssignment.section}, Semester ${duplicateAssignment.semester}. Only one faculty can be assigned.`,
       });
-      return; // ❌ stop here
+      return; // Stop here
     }
 
-    // 🚨 Case 2: Prevent same faculty being assigned again to the SAME subject+section+semester
+    // 🚨 Case 2: Prevent same faculty being assigned again to the SAME subject + section + semester
     const duplicateFaculty = state.assignments.find(
       (a) =>
         a.faculty_id === state.facultyId &&
@@ -240,12 +240,15 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
     );
 
     if (duplicateFaculty) {
+      const facultyName =
+        state.faculties.find((f) => f.id === state.facultyId)?.name || "This faculty";
+
       toast({
         variant: "destructive",
         title: "Duplicate Faculty Assignment",
-        description: `${state.faculties.find(f => f.id === state.facultyId)?.name || "This faculty"} is already assigned to ${duplicateFaculty.subject} - Section ${duplicateFaculty.section}, Semester ${duplicateFaculty.semester}.`,
+        description: `${facultyName} is already assigned to ${duplicateFaculty.subject} - Section ${duplicateFaculty.section}, Semester ${duplicateFaculty.semester}.`,
       });
-      return; // ❌ stop here
+      return; // Stop here
     }
 
     // ✅ Proceed if no duplicates
@@ -265,7 +268,12 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
       const response = await manageFacultyAssignments(data, "POST");
 
       if (response.success) {
-        const assignmentsResponse = await manageFacultyAssignments({ branch_id: state.branchId }, "GET");
+        // Refresh assignments list
+        const assignmentsResponse = await manageFacultyAssignments(
+          { branch_id: state.branchId },
+          "GET"
+        );
+
         if (assignmentsResponse.success && assignmentsResponse.data?.assignments) {
           updateState({ assignments: assignmentsResponse.data.assignments });
         }
@@ -294,9 +302,6 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
       updateState({ isAssigning: false });
     }
   };
-
-
-
 
   const handleEdit = (assignment: Assignment) => {
     updateState({

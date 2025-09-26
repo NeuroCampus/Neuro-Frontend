@@ -103,8 +103,7 @@ const PromotionOverview = ({ onTabChange }: { onTabChange: (tab: "overview" | "p
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Promotion Card */}
-      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-700 hover:border-green-500 transition-colors cursor-pointer"
-            onClick={() => onTabChange("promote")}>
+      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-700 hover:border-green-500 transition-colors cursor-pointer">
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-green-600 rounded-lg">
@@ -131,15 +130,14 @@ const PromotionOverview = ({ onTabChange }: { onTabChange: (tab: "overview" | "p
               <ArrowRight className="h-4 w-4 text-gray-500" />
             </div>
           </div>
-          <Button className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white">
+          <Button onClick={() => onTabChange("promote")} className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white">
             Manage Promotions
           </Button>
         </CardContent>
       </Card>
 
       {/* Demotion Card */}
-      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-700 hover:border-red-500 transition-colors cursor-pointer"
-            onClick={() => onTabChange("demote")}>
+      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-700 hover:border-red-500 transition-colors cursor-pointer">
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-red-600 rounded-lg">
@@ -166,7 +164,7 @@ const PromotionOverview = ({ onTabChange }: { onTabChange: (tab: "overview" | "p
               <ArrowRight className="h-4 w-4 text-gray-500" />
             </div>
           </div>
-          <Button className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white">
+          <Button onClick={() => onTabChange("demote")} className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white">
             Manage Demotions
           </Button>
         </CardContent>
@@ -1046,7 +1044,7 @@ const DemotionPage = () => {
             <Button
               onClick={() => updateState({ showBulkDemoteDialog: false, bulkDemoteReason: "" })}
               variant="outline"
-              className="border-gray-600 text-gray-300"
+              className="border-gray-600 text-gray-900"
             >
               Cancel
             </Button>

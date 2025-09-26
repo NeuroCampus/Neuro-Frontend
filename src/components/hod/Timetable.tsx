@@ -181,28 +181,29 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, facult
         </div>
 
         <div className="mb-4 text-gray-900">
-          <label className="block">Start Time (HH:MM):</label>
+          <label className="block text-gray-200">Start Time (HH:MM):</label>
           <input
             type="text"
             name="start_time"
             value={newClassDetails.start_time}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
+            readOnly
+            className="w-full p-2 border rounded bg-gray-100 cursor-not-allowed"
             placeholder="e.g., 11:00"
           />
         </div>
 
         <div className="mb-4 text-gray-900">
-          <label className="block">End Time (HH:MM):</label>
+          <label className="block text-gray-200">End Time (HH:MM):</label>
           <input
             type="text"
             name="end_time"
             value={newClassDetails.end_time}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
+            readOnly
+            className="w-full p-2 border rounded bg-gray-100 cursor-not-allowed"
             placeholder="e.g., 12:00"
           />
         </div>
+
 
         <div className="flex justify-end space-x-4 ">
           <Button variant="outline" className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={onCancel}>Cancel</Button>
@@ -563,7 +564,6 @@ const Timetable = () => {
           updateState({
             timetable: normalizedTimetable,
             selectedClass: null,
-            isEditing: false,
           });
           console.log("Updated timetable:", normalizedTimetable);
           toast({ title: "Success", description: "Timetable updated successfully" });
@@ -666,12 +666,11 @@ const Timetable = () => {
               className="flex items-center gap-2 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
               onClick={handleEdit}
             >
-              <EditIcon className="w-4 h-4" /> {state.isEditing ? "Cancel Edit" : "Edit"}
+              <EditIcon className="w-4 h-4" /> {state.isEditing ? "Save Edit" : "Edit"}
             </Button>
 
           </div>
         </CardHeader>
-
 
         <CardContent className="bg-[#1c1c1e]">
           <div className="border rounded-lg p-4">
@@ -715,7 +714,7 @@ const Timetable = () => {
                   </Select>
                 </div>
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-200">
                 {state.semesterId && state.sectionId
                   ? `${state.semesters.find((s) => s.id === state.semesterId)?.number} Semester - Section ${
                       state.sections.find((s) => s.id === state.sectionId)?.name

@@ -345,7 +345,7 @@ const StudentManagement = () => {
       try {
         const result = e.target?.result;
         if (!result) {
-          updateState({ uploadErrors: ["No data in file"] });
+          updateState({ uploadErrors: ["No data in file"], uploadedCount: 0 });
           return;
         }
 
@@ -358,6 +358,12 @@ const StudentManagement = () => {
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
           data = XLSX.utils.sheet_to_json(worksheet);
+        } else {
+          updateState({
+            uploadErrors: ["Unsupported file type (use CSV, XLS, or XLSX)"],
+            uploadedCount: 0,
+          });
+          return;
         }
 
         // Validate and sanitize
@@ -365,11 +371,20 @@ const StudentManagement = () => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const usnRegex = /^[1-4][A-Z]{2}\d{2}[A-Z]{2}\d{3}$/;
 
+        const selectedBatchId = getBatchId(state.manualForm.batch);
+        const selectedSemesterId = getSemesterId(state.manualForm.semester);
+        const selectedSectionId = getSectionId(state.manualForm.section, state.manualSections);
+
         const bulkData = data
           .map((entry, index) => {
             const usn = String(entry.usn || entry.USN || "").trim();
             const name = String(entry.name || entry.Name || "").trim();
             const email = String(entry.email || entry.Email || "").trim();
+            const parent_name = String(entry.parent_name || entry.ParentName || "").trim() || "";
+            const parent_contact = String(entry.parent_contact || entry.ParentContact || "").trim() || "";
+            const emergency_contact = String(entry.emergency_contact || entry.EmergencyContact || "").trim() || "";
+            const blood_group = String(entry.blood_group || entry.BloodGroup || "").trim() || "";
+            const date_of_admission = entry.date_of_admission || entry.DateOfAdmission || new Date().toISOString().split("T")[0];
             const row = index + 2;
 
             if (!usn || !name || !email) {
@@ -384,7 +399,21 @@ const StudentManagement = () => {
               errors.push(`Row ${row}: Invalid email "${email}"`);
               return null;
             }
-            return { usn, name, email };
+
+            return {
+              usn,
+              name,
+              email,
+              parent_name,
+              parent_contact,
+              emergency_contact,
+              blood_group,
+              date_of_admission,
+              semester_id: selectedSemesterId,
+              section_id: selectedSectionId,
+              batch_id: selectedBatchId,
+              branch_id: state.branchId
+            };
           })
           .filter(Boolean);
 
@@ -393,12 +422,7 @@ const StudentManagement = () => {
           return;
         }
 
-        // Get IDs from state
-        const selectedBatchId = getBatchId(state.manualForm.batch);
-        const selectedSemesterId = getSemesterId(state.manualForm.semester);
-        const selectedSectionId = getSectionId(state.manualForm.section, state.manualSections);
-
-        // 🔑 Call bulk_update
+        // Send to backend
         const res = await manageStudents(
           {
             action: "bulk_update",
@@ -432,15 +456,8 @@ const StudentManagement = () => {
       reader.readAsText(file);
     } else if (extension === "xls" || extension === "xlsx") {
       reader.readAsBinaryString(file);
-    } else {
-      updateState({
-        uploadErrors: ["Unsupported file type (use CSV, XLS, or XLSX)"],
-        uploadedCount: 0,
-      });
     }
   };
-
-
 
   // Handle manual student entry
   const handleManualEntry = async () => {

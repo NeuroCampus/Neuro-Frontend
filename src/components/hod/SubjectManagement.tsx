@@ -38,7 +38,13 @@ const SubjectManagement = () => {
     success: null as string | null,
     loading: false,
     branchId: "",
+    subjects: [],
+    currentPage: 1,
+    pageSize: 10,
   });
+
+  const totalPages = Math.ceil(state.subjects.length / state.pageSize);
+
 
   // Helper to update state
   const updateState = (newState: Partial<typeof state>) => {
@@ -225,28 +231,92 @@ const SubjectManagement = () => {
                 </tr>
               </thead>
               <tbody className="bg-[#1c1c1e]">
-                {state.subjects.map((subject, index) => (
-                  <tr
-                    key={subject.id}
-                    className={index % 2 === 0 ? "bg-[#1c1c1e]" : "bg-[#1c1c1e]"}
-                  >
-                    <td className="px-4 py-3">{subject.subject_code}</td>
-                    <td className="px-4 py-3">{subject.name}</td>
-                    <td className="px-4 py-3">{getSemesterNumber(subject.semester_id)}</td>
-                    <td className="px-4 py-3 flex gap-5">
-                      <Pencil
-                        className="w-4 h-4 text-blue-500 hover:text-blue-700 cursor-pointer"
-                        onClick={() => handleEdit(subject)}
-                      />
-                      <Trash2
-                        className="w-4 h-4 text-red-500 hover:text-red-700 cursor-pointer"
-                        onClick={() => handleDelete(subject.id)}
-                      />
-                    </td>
+                {state.subjects
+                  .slice(
+                    (state.currentPage - 1) * state.pageSize,
+                    state.currentPage * state.pageSize
+                  )
+                  .map((subject, index) => (
+                    <tr
+                      key={subject.id}
+                      className={
+                        index % 2 === 0 ? "bg-[#1c1c1e]" : "bg-[#1c1c1e]"
+                      }
+                    >
+                      <td className="px-4 py-3">{subject.subject_code}</td>
+                      <td className="px-4 py-3">{subject.name}</td>
+                      <td className="px-4 py-3">
+                        {getSemesterNumber(subject.semester_id)}
+                      </td>
+                      <td className="px-4 py-3 flex gap-5">
+                        <Pencil
+                          className="w-4 h-4 text-blue-500 hover:text-blue-700 cursor-pointer"
+                          onClick={() => handleEdit(subject)}
+                        />
+                        <Trash2
+                          className="w-4 h-4 text-red-500 hover:text-red-700 cursor-pointer"
+                          onClick={() => handleDelete(subject.id)}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+
+                {/* Keep layout consistent by filling empty rows */}
+                {Array.from({
+                  length:
+                    state.pageSize -
+                    Math.min(
+                      state.pageSize,
+                      state.subjects.length -
+                        (state.currentPage - 1) * state.pageSize
+                    ),
+                }).map((_, i) => (
+                  <tr key={`empty-${i}`} className="bg-[#1c1c1e] h-[48px]">
+                    <td colSpan={4}></td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Info + Pagination */}
+          <div className="flex justify-between items-center mt-4">
+            {/* Showing count */}
+            <div className="text-sm text-gray-400">
+              Showing{" "}
+              {Math.min(
+                state.pageSize,
+                state.subjects.length - (state.currentPage - 1) * state.pageSize
+              )}{" "}
+              out of {state.subjects.length} Subjects
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex items-center">
+              <Button
+                onClick={() =>
+                  updateState({ currentPage: Math.max(state.currentPage - 1, 1) })
+                }
+                disabled={state.currentPage === 1}
+                className="w-24 flex items-center justify-center gap-1 text-sm font-medium text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed py-1.5 rounded-md transition"
+              >
+                Previous
+              </Button>
+              <div className="w-16 text-center text-sm font-medium text-gray-200 bg-gray-800 border border-gray-500 py-1.5 mx-2 rounded-md">
+                {state.currentPage}
+              </div>
+              <Button
+                onClick={() =>
+                  updateState({
+                    currentPage: Math.min(state.currentPage + 1, totalPages),
+                  })
+                }
+                disabled={state.currentPage === totalPages}
+                className="w-24 flex items-center justify-center gap-1 text-sm font-medium text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed py-1.5 rounded-md transition"
+              >
+                Next
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -282,26 +352,39 @@ const SubjectManagement = () => {
       {state.showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
           <div className="bg-[#1c1c1e] p-6 rounded-lg shadow-lg w-96 text-gray-200">
-            <h3 className="text-xl font-semibold mb-4">
+            <h3 className="text-xl font-semibold mb-2">
               {state.showModal === "add" ? "Add New Subject" : "Edit Subject"}
             </h3>
 
+            {/* Display modal-level error below title */}
+            {state.modalError && (
+              <p className="text-red-500 text-sm mb-4">{state.modalError}</p>
+            )}
+
+            {/* Subject Code */}
             <div className="mb-4">
               <label className="block mb-2 text-gray-300">Subject Code</label>
               <Input
                 type="text"
                 value={state.newSubject.code}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const code = e.target.value.toUpperCase(); // auto-uppercase
+                  const pattern = /^(\d{2})?[A-Z]{2,4}\d{1,3}[A-Z]?[a-z]?(\([A-Z]\))?$/;
                   updateState({
-                    newSubject: { ...state.newSubject, code: e.target.value },
-                  })
-                }
-                placeholder="e.g., MATH101"
+                    newSubject: { ...state.newSubject, code },
+                    modalError: code && !pattern.test(code)
+                      ? "Invalid Subject Code. Examples: PH1L001, BCS601, 19ACE54A"
+                      : null,
+                  });
+                }}
+                placeholder="e.g., PH1L001, BCS601"
                 disabled={state.loading}
-                className="bg-[#2c2c2e] border border-gray-600 text-gray-200 placeholder-gray-500"
+                className={`bg-[#2c2c2e] border rounded text-gray-200 placeholder-gray-500 px-3 py-2
+                  ${state.modalError ? "border-red-500" : "border-gray-600"}`}
               />
             </div>
 
+            {/* Subject Name */}
             <div className="mb-4">
               <label className="block mb-2 text-gray-300">Subject Name</label>
               <Input
@@ -310,25 +393,25 @@ const SubjectManagement = () => {
                 onChange={(e) =>
                   updateState({
                     newSubject: { ...state.newSubject, name: e.target.value },
+                    modalError: null,
                   })
                 }
                 placeholder="e.g., Mathematics"
                 disabled={state.loading}
-                className="bg-[#2c2c2e] border border-gray-600 text-gray-200 placeholder-gray-500"
+                className="bg-[#2c2c2e] border border-gray-600 text-gray-200 placeholder-gray-500 px-3 py-2 rounded"
               />
             </div>
 
+            {/* Semester */}
             <div className="mb-4">
               <label className="block mb-2 text-gray-300">Semester</label>
               <select
-                className="w-full px-4 py-2 bg-[#2c2c2e] border border-gray-600 rounded text-gray-200 placeholder-gray-500"
+                className="w-full px-4 py-2 bg-[#2c2c2e] border border-gray-600 rounded text-gray-200"
                 value={state.newSubject.semester_id}
                 onChange={(e) =>
                   updateState({
-                    newSubject: {
-                      ...state.newSubject,
-                      semester_id: e.target.value,
-                    },
+                    newSubject: { ...state.newSubject, semester_id: e.target.value },
+                    modalError: null,
                   })
                 }
                 disabled={state.loading}
@@ -342,6 +425,7 @@ const SubjectManagement = () => {
               </select>
             </div>
 
+            {/* Action Buttons */}
             <div className="flex justify-end gap-4">
               <Button
                 onClick={() => {
@@ -349,6 +433,7 @@ const SubjectManagement = () => {
                     showModal: null,
                     newSubject: { code: "", name: "", semester_id: "" },
                     currentSubject: null,
+                    modalError: null,
                   });
                 }}
                 className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
@@ -356,8 +441,51 @@ const SubjectManagement = () => {
               >
                 Cancel
               </Button>
+
               <Button
-                onClick={handleSubmit}
+                onClick={async () => {
+                  const pattern = /^(\d{2})?[A-Z]{2,4}\d{1,3}[A-Z]?[a-z]?(\([A-Z]\))?$/;
+
+                  if (!state.newSubject.code || !state.newSubject.name || !state.newSubject.semester_id) {
+                    updateState({ modalError: "All fields are required" });
+                    return;
+                  }
+
+                  if (!pattern.test(state.newSubject.code)) {
+                    updateState({ modalError: "Invalid Subject Code. Examples: PH1L001, CSEB107(P), 19ACE54a" });
+                    return;
+                  }
+
+                  const data: ManageSubjectsRequest = {
+                    action: state.showModal === "add" ? "create" : "update",
+                    branch_id: state.branchId,
+                    name: state.newSubject.name,
+                    subject_code: state.newSubject.code,
+                    semester_id: state.newSubject.semester_id,
+                    ...(state.showModal === "edit" && state.currentSubject ? { subject_id: state.currentSubject.id } : {}),
+                  };
+
+                  updateState({ loading: true, modalError: null, success: null });
+                  try {
+                    const response = await manageSubjects(data, "POST");
+                    if (response.success) {
+                      updateState({
+                        success: state.showModal === "add" ? "Subject added successfully" : "Subject updated successfully",
+                        showModal: null,
+                        newSubject: { code: "", name: "", semester_id: "" },
+                        currentSubject: null,
+                        modalError: null,
+                      });
+                      fetchData();
+                    } else {
+                      updateState({ modalError: response.message });
+                    }
+                  } catch (err) {
+                    updateState({ modalError: "Failed to save subject" });
+                  } finally {
+                    updateState({ loading: false });
+                  }
+                }}
                 className="bg-[#1c1c1e] hover:bg-[#2c2c2e] text-white border border-gray-600"
                 disabled={state.loading}
               >
