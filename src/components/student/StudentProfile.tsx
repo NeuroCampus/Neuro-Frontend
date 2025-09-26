@@ -9,29 +9,51 @@ import { getFullStudentProfile } from "@/utils/student_api";
 
 const StudentProfile = () => {
   const [form, setForm] = useState({
-    first_name: "John",
-    last_name: "Smith",
-    email: "john.smith@example.edu",
-    phone: "+1 (555) 123-4567",
-    department: "Computer Science",
-    dob: "1998-12-05",
-    year_of_study: "2nd Year",
-    address: "123 Campus Street, College Town, CT 56789",
-    about:
-      "Computer Science student with interests in AI and machine learning. Active member of the coding club and robotics team.",
-    cgpa: "8.75",
-    semester: "4th Semester",
-    enrollment_year: "2023",
-    graduation_year: "2027",
-    advisor: "Dr. Robert Williams",
-    status: "Active",
+    user_id: "",
+    username: "",
+    email: "",
+    first_name: "",
+    last_name: "",
+    phone: "",
+    date_of_birth: "",
+    address: "",
+    about: "",
+    profile_picture: "",
+    branch: "",
+    department: "",
+    semester: "",
+    current_semester: "",
+    year_of_study: "",
+    section: "",
+    usn: "",
+    enrollment_year: "",
+    expected_graduation: "",
+    student_status: "",
+    mode_of_admission: "",
+    proctor: {
+      id: "",
+      username: "",
+      first_name: "",
+      last_name: "",
+      email: ""
+    }
   });
 
   useEffect(() => {
     const fetchProfile = async () => {
       const data = await getFullStudentProfile();
       if (data.success && data.profile) {
-        setForm((prev) => ({ ...prev, ...data.profile }));
+        setForm((prev) => {
+          const newForm = { ...prev };
+          Object.keys(data.profile).forEach(key => {
+            if (typeof data.profile[key] === 'string' || data.profile[key] === null) {
+              newForm[key] = data.profile[key] || "";
+            } else {
+              newForm[key] = data.profile[key];
+            }
+          });
+          return newForm;
+        });
       }
     };
     fetchProfile();
@@ -52,21 +74,41 @@ const StudentProfile = () => {
           <div className="p-6 flex flex-col md:flex-row gap-6">
             <div className="w-full md:w-1/4 flex flex-col items-center text-center">
               <img
-                src="/default-avatar.png"
+                src={form.profile_picture || "/default-avatar.png"}
                 alt="Profile"
                 className="w-24 h-24 rounded-full object-cover mb-2"
               />
-              <p className="font-medium">{form.first_name} {form.last_name}</p>
-              <p className="text-sm text-gray-300">21CS234</p>
+              <p className="font-medium">
+                {form.first_name} {form.last_name ? form.last_name : ''}
+              </p>
+              <p className="text-sm text-gray-300">{form.username}</p>
             </div>
             <div className="w-full md:w-3/4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label>Full Name</Label>
+                  <Label>First Name</Label>
                   <Input
                     name="first_name"
                     className="bg-[#232326] text-gray-200"
                     value={form.first_name}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div>
+                  <Label>Last Name</Label>
+                  <Input
+                    name="last_name"
+                    className="bg-[#232326] text-gray-200"
+                    value={form.last_name || ''}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div>
+                  <Label>USN</Label>
+                  <Input
+                    name="usn"
+                    className="bg-[#232326] text-gray-200"
+                    value={form.usn}
                     onChange={handleChange}
                   />
                 </div>
@@ -89,11 +131,11 @@ const StudentProfile = () => {
                   />
                 </div>
                 <div>
-                  <Label>Department</Label>
+                  <Label>Department/Branch</Label>
                   <Input
                     name="department"
                     className="bg-[#232326] text-gray-200"
-                    value={form.department}
+                    value={form.branch}
                     onChange={handleChange}
                   />
                 </div>
@@ -110,9 +152,9 @@ const StudentProfile = () => {
                   <Label>Date of Birth</Label>
                   <Input
                     type="date"
-                    name="dob"
+                    name="date_of_birth"
                     className="bg-[#232326] text-gray-200"
-                    value={form.dob}
+                    value={form.date_of_birth}
                     onChange={handleChange}
                   />
                 </div>
@@ -145,21 +187,21 @@ const StudentProfile = () => {
         <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-300">
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label>Current CGPA</Label>
+              <Label>Current Semester</Label>
               <Input
-                value={form.cgpa}
+                value={form.current_semester}
                 className="bg-[#232326] text-gray-200"
                 onChange={handleChange}
-                name="cgpa"
+                name="current_semester"
               />
             </div>
             <div>
-              <Label>Current Semester</Label>
+              <Label>Section</Label>
               <Input
-                value={form.semester}
+                value={form.section}
                 className="bg-[#232326] text-gray-200"
                 onChange={handleChange}
-                name="semester"
+                name="section"
               />
             </div>
             <div>
@@ -174,28 +216,38 @@ const StudentProfile = () => {
             <div>
               <Label>Expected Graduation</Label>
               <Input
-                value={form.graduation_year}
+                value={form.expected_graduation}
                 className="bg-[#232326] text-gray-200"
                 onChange={handleChange}
-                name="graduation_year"
+                name="expected_graduation"
               />
             </div>
             <div>
-              <Label>Faculty Advisor</Label>
+              <Label>Proctor</Label>
               <Input
-                value={form.advisor}
+                value={form.proctor?.first_name && form.proctor?.last_name ? 
+                      `${form.proctor.first_name} ${form.proctor.last_name}` : 
+                      form.proctor?.username || ''}
                 className="bg-[#232326] text-gray-200"
-                onChange={handleChange}
-                name="advisor"
+                readOnly
               />
             </div>
             <div>
               <Label>Student Status</Label>
               <Input
-                value={form.status}
+                value={form.student_status}
                 onChange={handleChange}
-                name="status"
+                name="student_status"
                 className="bg-[#232326] text-green-600 font-semibold"
+              />
+            </div>
+            <div>
+              <Label>Mode of Admission</Label>
+              <Input
+                value={form.mode_of_admission}
+                className="bg-[#232326] text-gray-200"
+                onChange={handleChange}
+                name="mode_of_admission"
               />
             </div>
           </div>
