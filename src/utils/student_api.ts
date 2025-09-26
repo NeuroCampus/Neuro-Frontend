@@ -2,14 +2,79 @@ import { API_BASE_URL } from "./config";
 import { fetchWithTokenRefresh } from "./authService";
 
 // Type definitions for request and response data
+interface NextLecture {
+  subject: string;
+  start_time: string;
+  teacher: string;
+  room: string;
+}
+
+interface AttendanceWarning {
+  subject: string;
+  percentage: number;
+}
+
+interface CurrentSession {
+  subject: string;
+  teacher: string;
+  room: string;
+  start_time: string;
+  end_time: string;
+}
+
+interface NextSession {
+  subject: string;
+  teacher: string;
+  room: string;
+  start_time: string;
+  starts_at: string;
+}
+
+interface SubjectPerformance {
+  subject: string;
+  attendance_percentage: number;
+  average_mark: number;
+}
+
+interface LeaveRequestStatus {
+  period: string;
+  reason: string;
+  status: string;
+}
+
+interface NotificationItem {
+  title: string;
+  message: string;
+  created_at: string;
+  read: boolean;
+}
+
+interface DashboardOverviewData {
+  today_lectures: {
+    count: number;
+    next_lecture: NextLecture | null;
+  };
+  attendance_status: {
+    percentage: number;
+    warnings: AttendanceWarning[];
+  };
+  current_next_session: {
+    live_time: string;
+    current_session: CurrentSession | null;
+    next_session: NextSession | null;
+  };
+  performance_overview: {
+    correlation: number;
+    subject_performance: SubjectPerformance[];
+  };
+  leave_request_status: LeaveRequestStatus[];
+  notification_panel: NotificationItem[];
+}
+
 interface DashboardOverviewResponse {
   success: boolean;
   message?: string;
-  data?: {
-    total_attendance: number;
-    total_leaves: number;
-    recent_announcements: Array<{ id: number; title: string; content: string }>;
-  };
+  data?: DashboardOverviewData;
 }
 
 interface TimetableEntry {
@@ -217,10 +282,16 @@ export const getDashboardOverview = async (): Promise<DashboardOverviewResponse>
         "Content-Type": "application/json",
       },
     });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     return await response.json();
   } catch (error) {
     console.error("Get Dashboard Overview Error:", error);
-    return { success: false, message: "Network error" };
+    const errorMessage = error instanceof Error ? error.message : "Network error";
+    return { success: false, message: errorMessage };
   }
 };
 
