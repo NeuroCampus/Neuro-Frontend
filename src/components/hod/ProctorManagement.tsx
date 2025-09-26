@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { FileDown } from "lucide-react";
+import { FileDown,Loader2 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useToast } from "@/components/ui/use-toast";
@@ -54,6 +54,8 @@ const ProctorStudents = () => {
       semester_id: "all",
       section_id: "all",
     },
+    saving: false,
+    cancelling: false,
   });
 
   const studentsPerPage = 10;
@@ -141,6 +143,63 @@ const ProctorStudents = () => {
         : [...state.selectedUSNs, usn],
     });
   };
+
+  const handleSaveProctor = async () => {
+    if (state.selectedProctor && state.selectedUSNs.length > 0) {
+      updateState({ loading: true });
+      try {
+        const response = await assignProctorsBulk({
+          usns: state.selectedUSNs,
+          faculty_id: state.selectedProctor,
+          branch_id: state.branchId,
+        });
+        if (!response.success) {
+          throw new Error(response.message || "Failed to assign proctors");
+        }
+
+        const updatedStudents = state.students.map((student) =>
+          state.selectedUSNs.includes(student.usn)
+            ? { ...student, proctor: state.proctors.find((p) => p.id === state.selectedProctor)?.name || null }
+            : student
+        );
+
+        updateState({
+          students: updatedStudents,
+          editMode: false,
+          selectedUSNs: [],
+          selectedProctor: "",
+        });
+
+        toast({
+          title: "Success",
+          description: `${state.selectedUSNs.length} students assigned to ${state.proctors.find((p) => p.id === state.selectedProctor)?.name}`,
+        });
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: (error as Error).message,
+        });
+      } finally {
+        updateState({ loading: false });
+      }
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select at least one student and a proctor",
+      });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    updateState({
+      editMode: false,
+      selectedUSNs: [],
+      selectedProctor: "",
+    });
+  };
+
 
   const handleEditToggle = async () => {
     if (state.editMode) {
@@ -278,12 +337,41 @@ const ProctorStudents = () => {
             </Select>
           )}
           <Button
-            onClick={handleEditToggle}
-            className="min-w-fit text-sm font-medium px-4 py-2 rounded-md text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
-            disabled={state.loading}
+            onClick={() => updateState({ editMode: true })}
+            className="min-w-fit text-sm font-medium px-4 py-2 rounded-md text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 transition-all duration-200 ease-in-out transform hover:scale-105"
+            disabled={state.loading || state.editMode} // disable when already editing
           >
-            {state.editMode ? "Save Changes" : "Edit Proctors"}
+            Edit Proctors
           </Button>
+
+          {state.editMode && (
+            <div className="flex gap-2">
+              <Button
+              className="min-w-fit text-sm font-medium px-4 py-2 rounded-md text-gray-200 bg-green-600 hover:bg-green-700 transition-all duration-200 ease-in-out transform hover:scale-105 flex items-center gap-2"
+                onClick={async () => {
+                  updateState({ saving: true });
+                  await handleEditToggle(); // your save logic
+                  updateState({ saving: false });
+                }}
+                disabled={state.saving || state.selectedUSNs.length === 0 || !state.selectedProctor}
+              >
+                {state.saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : "Save Changes"}
+              </Button>
+              <Button
+              className="min-w-fit text-sm font-medium px-4 py-2 rounded-md text-gray-200 bg-gray-500 hover:bg-gray-600 transition-all duration-200 ease-in-out transform hover:scale-105 flex items-center gap-2"
+                onClick={async () => {
+                  updateState({ cancelling: true });
+                  await handleCancelEdit();
+                  updateState({ cancelling: false });
+                }}
+                disabled={state.cancelling}
+              >
+                {state.cancelling ? <><Loader2 className="w-4 h-4 animate-spin" /> Cancelling...</> : "Cancel"}
+              </Button>
+            </div>
+          )}
+
+
           <Button
             variant="outline"
             className="min-w-fit text-sm font-medium px-4 py-2 rounded-md text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 flex items-center gap-2"
