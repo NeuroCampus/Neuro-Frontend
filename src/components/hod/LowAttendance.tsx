@@ -113,7 +113,9 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
     loading: true,
     branchId: "",
     notifyingStudents: {} as Record<string, boolean>,
+    notifiedStudents: {} as Record<string, boolean>, 
     isNotifyingAll: false,
+    hasNotifiedAll: false,
   });
 
   const studentsPerPage = 10;
@@ -267,7 +269,9 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
   const notifyAll = async () => {
     try {
       updateState({ isNotifyingAll: true });
-      const studentIds = filteredStudents.map(student => student.usn);
+
+      const studentIds = filteredStudents.map((student) => student.student_id); // ✅ use student_id
+
       const response = await sendNotification({
         action: "notify_all",
         title: "Low Attendance Warning",
@@ -275,12 +279,21 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
         target: "student",
         branch_id: state.branchId,
       });
+
       if (response.success) {
         toast({
           title: "Success",
           description: `Notified ${studentIds.length} students!`,
           className: "bg-green-100 text-green-800",
           icon: <CheckCircle className="w-5 h-5" />,
+        });
+
+        updateState({
+          hasNotifiedAll: true,
+          notifiedStudents: studentIds.reduce(
+            (acc, id) => ({ ...acc, [id]: true }),
+            state.notifiedStudents
+          ),
         });
       } else {
         throw new Error(response.message || "Failed to send notifications");
@@ -293,22 +306,35 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
     }
   };
 
+
+
   const notifyStudent = async (student: Student) => {
     try {
-      updateState({ notifyingStudents: { ...state.notifyingStudents, [student.student_id]: true } });
+      updateState({
+        notifyingStudents: { ...state.notifyingStudents, [student.student_id]: true },
+      });
+
       const response = await sendNotification({
         action: "notify",
         title: "Low Attendance Alert",
         student_id: student.usn,
-        message: `Dear ${student.name}, your attendance in ${student.subject} is ${formatAttendancePercentage(student.attendance_percentage)}. Please improve.`,
+        message: `Dear ${student.name}, your attendance in ${student.subject} is ${formatAttendancePercentage(
+          student.attendance_percentage
+        )}. Please improve.`,
         branch_id: state.branchId,
       });
+
       if (response.success) {
         toast({
           title: "Success",
           description: `Notification sent to ${student.name}`,
           className: "bg-green-100 text-gray-800",
           icon: <CheckCircle className="w-5 h-5" />,
+        });
+
+        // ✅ mark as notified
+        updateState({
+          notifiedStudents: { ...state.notifiedStudents, [student.student_id]: true },
         });
       } else {
         throw new Error(response.message || "Failed to send notification");
@@ -317,9 +343,12 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
       const errorMessage = err.message || "Network error";
       toast({ variant: "destructive", title: "Error", description: errorMessage });
     } finally {
-      updateState({ notifyingStudents: { ...state.notifyingStudents, [student.student_id]: false } });
+      updateState({
+        notifyingStudents: { ...state.notifyingStudents, [student.student_id]: false },
+      });
     }
   };
+
 
   return (
     <ErrorBoundary>
@@ -407,18 +436,31 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
             </Button>
             <Button
               onClick={notifyAll}
-              className="flex items-center gap-2 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 rounded-md px-4 py-2 shadow-sm"
-              disabled={state.loading || filteredStudents.length === 0 || state.isNotifyingAll}
+              className={`flex items-center gap-2 rounded-md px-4 py-2 shadow-sm border transition-colors
+                ${
+                  state.hasNotifiedAll
+                    ? "bg-green-800 border-green-600 text-white cursor-default"
+                    : "bg-gray-800 hover:bg-gray-600 border-gray-500 text-gray-200"
+                }`}
+              disabled={
+                state.loading ||
+                filteredStudents.length === 0 ||
+                state.isNotifyingAll ||
+                state.hasNotifiedAll
+              }
             >
               {state.isNotifyingAll ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Sending...
-          </>
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Sending...
+                </>
+              ) : state.hasNotifiedAll ? (
+                "All Notified ✓"
               ) : (
-          "Notify All"
+                "Notify All"
               )}
             </Button>
+
           </div>
         </div>
         <div className="mb-4 relative w-full md:w-1/3">
@@ -461,21 +503,42 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
                     <td className="px-4 py-2">{student.subject}</td>
                     <td className="px-4 py-2">{student.section}</td>
                     <td className="px-4 py-2">{student.semester}</td>
-                    <td className="px-4 py-2 text-yellow-600 font-medium">
+                    <td
+                      className={`px-4 py-2 font-medium ${
+                        student.attendance_percentage === "NA" || student.attendance_percentage === null
+                          ? "text-gray-400"
+                          : student.attendance_percentage < 40
+                          ? "text-red-500"
+                          : student.attendance_percentage <= 60
+                          ? "text-orange-500"
+                          : "text-green-500"
+                      }`}
+                    >
                       {formatAttendancePercentage(student.attendance_percentage)}
                     </td>
                     <td className="px-4 py-2">
-                      <Button
+                     <Button
                         size="sm"
                         onClick={() => notifyStudent(student)}
-                        className="bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-300 rounded-md px-4 py-2 flex items-center gap-2 shadow-sm"
-                        disabled={state.loading || state.notifyingStudents[student.student_id]}
+                        className={`px-4 py-2 flex items-center gap-2 rounded-md shadow-sm border transition-colors
+                          ${
+                            state.notifiedStudents?.[student.student_id]
+                              ? "bg-green-700 border-green-600 text-white cursor-default"
+                              : "bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-300"
+                          }`}
+                        disabled={
+                          state.loading ||
+                          state.notifyingStudents?.[student.student_id] ||
+                          state.notifiedStudents?.[student.student_id]
+                        }
                       >
-                        {state.notifyingStudents[student.student_id] ? (
+                        {state.notifyingStudents?.[student.student_id] ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin" />
                             Sending...
                           </>
+                        ) : state.notifiedStudents?.[student.student_id] ? (
+                          "Notified ✓"
                         ) : (
                           "Notify"
                         )}
