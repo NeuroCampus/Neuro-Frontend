@@ -40,7 +40,7 @@ interface Invoice {
       fee_type: string;
     };
     academic_year: string;
-  };
+  } | null;
   total_amount: number;
   paid_amount: number;
   pending_amount: number;
@@ -48,6 +48,7 @@ interface Invoice {
   status: 'unpaid' | 'partially_paid' | 'paid' | 'overdue';
   created_at: string;
   updated_at: string;
+  academic_year?: string;
 }
 
 interface Payment {
@@ -79,7 +80,7 @@ const InvoiceManagement: React.FC = () => {
   const fetchInvoices = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
 
       const response = await fetch('http://127.0.0.1:8000/api/fees-manager/invoices/', {
         headers: { 'Authorization': `Bearer ${token}` },
@@ -100,7 +101,7 @@ const InvoiceManagement: React.FC = () => {
 
   const fetchInvoiceDetails = async (invoiceId: number) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
 
       const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/invoices/${invoiceId}/`, {
         headers: { 'Authorization': `Bearer ${token}` },
@@ -121,7 +122,7 @@ const InvoiceManagement: React.FC = () => {
 
   const downloadInvoice = async (invoiceId: number) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
 
       const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/invoices/${invoiceId}/download/`, {
         headers: { 'Authorization': `Bearer ${token}` },
@@ -147,7 +148,7 @@ const InvoiceManagement: React.FC = () => {
 
   const sendInvoiceReminder = async (invoiceId: number) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
 
       const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/invoices/${invoiceId}/remind/`, {
         method: 'POST',
@@ -411,8 +412,12 @@ const InvoiceManagement: React.FC = () => {
                       <TableCell>{invoice.student.usn}</TableCell>
                       <TableCell>
                         <div>
-                          <p className="font-medium">{invoice.fee_assignment.template.name}</p>
-                          <p className="text-sm text-gray-600">{invoice.fee_assignment.template.fee_type}</p>
+                          <p className="font-medium">
+                            {invoice.fee_assignment?.template?.name || 'N/A'}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {invoice.fee_assignment?.template?.fee_type || 'N/A'}
+                          </p>
                         </div>
                       </TableCell>
                       <TableCell className="font-semibold">
@@ -488,8 +493,8 @@ const InvoiceManagement: React.FC = () => {
                 <div>
                   <h3 className="font-semibold mb-2">Invoice Information</h3>
                   <p><strong>Invoice #:</strong> {selectedInvoice.invoice_number}</p>
-                  <p><strong>Fee Type:</strong> {selectedInvoice.fee_assignment.template.name}</p>
-                  <p><strong>Academic Year:</strong> {selectedInvoice.fee_assignment.academic_year}</p>
+                  <p><strong>Fee Type:</strong> {selectedInvoice.fee_assignment?.template?.name || 'N/A'}</p>
+                  <p><strong>Academic Year:</strong> {selectedInvoice.fee_assignment?.academic_year || selectedInvoice.academic_year || 'N/A'}</p>
                   <p><strong>Created:</strong> {new Date(selectedInvoice.created_at).toLocaleDateString()}</p>
                 </div>
               </div>

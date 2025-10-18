@@ -75,7 +75,7 @@ const Reports: React.FC = () => {
   const fetchReportData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
 
       const params = new URLSearchParams({
         report_type: reportType,
@@ -93,7 +93,22 @@ const Reports: React.FC = () => {
       }
 
       const data = await response.json();
-      setReportData(data.data);
+      // Ensure all required arrays exist with defaults
+      const reportData = data.data || {};
+      setReportData({
+        summary: reportData.summary || {
+          total_students: 0,
+          total_invoices: 0,
+          total_payments: 0,
+          total_revenue: 0,
+          pending_amount: 0,
+          overdue_amount: 0,
+        },
+        department_wise: reportData.department_wise || [],
+        fee_type_wise: reportData.fee_type_wise || [],
+        monthly_trends: reportData.monthly_trends || [],
+        overdue_invoices: reportData.overdue_invoices || [],
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -103,7 +118,7 @@ const Reports: React.FC = () => {
 
   const downloadReport = async (format: 'pdf' | 'excel' | 'csv') => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
 
       const params = new URLSearchParams({
         report_type: reportType,
@@ -274,7 +289,7 @@ const Reports: React.FC = () => {
                     <div>
                       <p className="text-sm font-medium text-gray-600">Total Revenue</p>
                       <p className="text-3xl font-bold text-green-600">
-                        {formatCurrency(reportData.summary.total_revenue)}
+                        {formatCurrency(reportData.summary?.total_revenue || 0)}
                       </p>
                     </div>
                     <IndianRupee className="h-12 w-12 text-green-600" />
@@ -288,7 +303,7 @@ const Reports: React.FC = () => {
                     <div>
                       <p className="text-sm font-medium text-gray-600">Pending Amount</p>
                       <p className="text-3xl font-bold text-yellow-600">
-                        {formatCurrency(reportData.summary.pending_amount)}
+                        {formatCurrency(reportData.summary?.pending_amount || 0)}
                       </p>
                     </div>
                     <Clock className="h-12 w-12 text-yellow-600" />
@@ -302,7 +317,7 @@ const Reports: React.FC = () => {
                     <div>
                       <p className="text-sm font-medium text-gray-600">Overdue Amount</p>
                       <p className="text-3xl font-bold text-red-600">
-                        {formatCurrency(reportData.summary.overdue_amount)}
+                        {formatCurrency(reportData.summary?.overdue_amount || 0)}
                       </p>
                     </div>
                     <AlertTriangle className="h-12 w-12 text-red-600" />
@@ -317,7 +332,7 @@ const Reports: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-600">Total Students</p>
-                      <p className="text-3xl font-bold">{reportData.summary.total_students}</p>
+                      <p className="text-3xl font-bold">{reportData.summary?.total_students || 0}</p>
                     </div>
                     <Users className="h-12 w-12 text-blue-600" />
                   </div>
@@ -329,7 +344,7 @@ const Reports: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-600">Total Invoices</p>
-                      <p className="text-3xl font-bold">{reportData.summary.total_invoices}</p>
+                      <p className="text-3xl font-bold">{reportData.summary?.total_invoices || 0}</p>
                     </div>
                     <FileText className="h-12 w-12 text-purple-600" />
                   </div>
@@ -341,7 +356,7 @@ const Reports: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-600">Total Payments</p>
-                      <p className="text-3xl font-bold">{reportData.summary.total_payments}</p>
+                      <p className="text-3xl font-bold">{reportData.summary?.total_payments || 0}</p>
                     </div>
                     <CheckCircle className="h-12 w-12 text-green-600" />
                   </div>
@@ -368,23 +383,31 @@ const Reports: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {reportData.department_wise.map((dept, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{dept.department}</TableCell>
-                        <TableCell>{dept.students}</TableCell>
-                        <TableCell className="font-semibold text-green-600">
-                          {formatCurrency(dept.revenue)}
-                        </TableCell>
-                        <TableCell className="font-semibold text-yellow-600">
-                          {formatCurrency(dept.pending)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={dept.pending === 0 ? 'default' : 'secondary'}>
-                            {dept.revenue > 0 ? Math.round(((dept.revenue - dept.pending) / dept.revenue) * 100) : 0}%
-                          </Badge>
+                    {reportData.department_wise && reportData.department_wise.length > 0 ? (
+                      reportData.department_wise.map((dept, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-medium">{dept.department}</TableCell>
+                          <TableCell>{dept.students}</TableCell>
+                          <TableCell className="font-semibold text-green-600">
+                            {formatCurrency(dept.revenue)}
+                          </TableCell>
+                          <TableCell className="font-semibold text-yellow-600">
+                            {formatCurrency(dept.pending)}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={dept.pending === 0 ? 'default' : 'secondary'}>
+                              {dept.revenue > 0 ? Math.round(((dept.revenue - dept.pending) / dept.revenue) * 100) : 0}%
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                          No department data available
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -408,18 +431,26 @@ const Reports: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {reportData.fee_type_wise.map((feeType, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{feeType.fee_type}</TableCell>
-                        <TableCell>{feeType.count}</TableCell>
-                        <TableCell className="font-semibold text-green-600">
-                          {formatCurrency(feeType.revenue)}
-                        </TableCell>
-                        <TableCell className="font-semibold">
-                          {formatCurrency(feeType.revenue / feeType.count)}
+                    {reportData.fee_type_wise && reportData.fee_type_wise.length > 0 ? (
+                      reportData.fee_type_wise.map((feeType, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-medium">{feeType.fee_type}</TableCell>
+                          <TableCell>{feeType.count}</TableCell>
+                          <TableCell className="font-semibold text-green-600">
+                            {formatCurrency(feeType.revenue)}
+                          </TableCell>
+                          <TableCell className="font-semibold">
+                            {formatCurrency(feeType.revenue / feeType.count)}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                          No fee type data available
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -443,18 +474,26 @@ const Reports: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {reportData.monthly_trends.map((trend, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{trend.month}</TableCell>
-                        <TableCell>{trend.payments}</TableCell>
-                        <TableCell className="font-semibold text-green-600">
-                          {formatCurrency(trend.revenue)}
-                        </TableCell>
-                        <TableCell className="font-semibold">
-                          {formatCurrency(trend.payments > 0 ? trend.revenue / trend.payments : 0)}
+                    {reportData.monthly_trends && reportData.monthly_trends.length > 0 ? (
+                      reportData.monthly_trends.map((trend, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-medium">{trend.month}</TableCell>
+                          <TableCell>{trend.payments}</TableCell>
+                          <TableCell className="font-semibold text-green-600">
+                            {formatCurrency(trend.revenue)}
+                          </TableCell>
+                          <TableCell className="font-semibold">
+                            {formatCurrency(trend.payments > 0 ? trend.revenue / trend.payments : 0)}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                          No monthly trend data available
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -468,7 +507,7 @@ const Reports: React.FC = () => {
                 <CardTitle>Overdue Invoices</CardTitle>
               </CardHeader>
               <CardContent>
-                {reportData.overdue_invoices.length === 0 ? (
+                {reportData.overdue_invoices && reportData.overdue_invoices.length === 0 ? (
                   <div className="text-center py-12">
                     <CheckCircle className="h-16 w-16 mx-auto mb-4 text-green-600" />
                     <h3 className="text-lg font-semibold mb-2">No Overdue Invoices</h3>
@@ -488,7 +527,7 @@ const Reports: React.FC = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {reportData.overdue_invoices.map((invoice, index) => (
+                      {reportData.overdue_invoices && reportData.overdue_invoices.map((invoice, index) => (
                         <TableRow key={index}>
                           <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
                           <TableCell>{invoice.student_name}</TableCell>

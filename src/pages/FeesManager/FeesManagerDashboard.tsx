@@ -15,11 +15,15 @@ import {
   Settings,
   UserCheck,
   Receipt,
-  DollarSign
+  DollarSign,
+  Plus
 } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import FeeTemplates from './FeeTemplates';
 import FeeAssignments from './FeeAssignments';
+import FeeComponents from './FeeComponents';
+import IndividualFeeAssignment from './IndividualFeeAssignment';
+import BulkAssignment from './BulkAssignment';
 import InvoiceManagement from './InvoiceManagement';
 import PaymentMonitoring from './PaymentMonitoring';
 import Reports from './Reports';
@@ -40,13 +44,20 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user }) => 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
       const response = await fetch('http://127.0.0.1:8000/api/fees-manager/dashboard/', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
+
+      if (response.status === 401) {
+        // Token expired or invalid, redirect to login
+        localStorage.clear();
+        window.location.href = '/';
+        return;
+      }
 
       if (!response.ok) {
         throw new Error('Failed to fetch dashboard data');
@@ -186,10 +197,13 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user }) => 
 
       {/* Main Dashboard Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-9">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="components">Components</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
           <TabsTrigger value="assignments">Assignments</TabsTrigger>
+          <TabsTrigger value="individual-fees">Individual Fees</TabsTrigger>
+          <TabsTrigger value="bulk-assignment">Bulk Assignment</TabsTrigger>
           <TabsTrigger value="invoices">Invoices</TabsTrigger>
           <TabsTrigger value="payments">Payments</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
@@ -210,24 +224,24 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user }) => 
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">New fee template created</p>
-                      <p className="text-xs text-gray-600">B.Tech Semester Template</p>
+                      <p className="text-sm font-medium">New fee component created</p>
+                      <p className="text-xs text-gray-600">Library Fee Component</p>
                     </div>
                     <span className="text-xs text-gray-500">2h ago</span>
                   </div>
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Payment received</p>
-                      <p className="text-xs text-gray-600">₹25,000 from John Doe</p>
+                      <p className="text-sm font-medium">Fee template updated</p>
+                      <p className="text-xs text-gray-600">B.Tech Semester Template</p>
                     </div>
                     <span className="text-xs text-gray-500">4h ago</span>
                   </div>
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">Invoice overdue</p>
-                      <p className="text-xs text-gray-600">Semester 5 fees for Jane Smith</p>
+                      <p className="text-sm font-medium">Payment received</p>
+                      <p className="text-xs text-gray-600">₹25,000 from John Doe</p>
                     </div>
                     <span className="text-xs text-gray-500">1d ago</span>
                   </div>
@@ -245,12 +259,20 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user }) => 
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button className="w-full justify-start" variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Fee Component
+                </Button>
+                <Button className="w-full justify-start" variant="outline">
                   <FileText className="h-4 w-4 mr-2" />
                   Create Fee Template
                 </Button>
                 <Button className="w-full justify-start" variant="outline">
                   <UserCheck className="h-4 w-4 mr-2" />
                   Assign Fees to Students
+                </Button>
+                <Button className="w-full justify-start" variant="outline">
+                  <Users className="h-4 w-4 mr-2" />
+                  Bulk Fee Assignment
                 </Button>
                 <Button className="w-full justify-start" variant="outline">
                   <Receipt className="h-4 w-4 mr-2" />
@@ -269,12 +291,24 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user }) => 
           </div>
         </TabsContent>
 
+        <TabsContent value="components">
+          <FeeComponents />
+        </TabsContent>
+
         <TabsContent value="templates">
           <FeeTemplates />
         </TabsContent>
 
         <TabsContent value="assignments">
           <FeeAssignments />
+        </TabsContent>
+
+        <TabsContent value="individual-fees">
+          <IndividualFeeAssignment />
+        </TabsContent>
+
+        <TabsContent value="bulk-assignment">
+          <BulkAssignment />
         </TabsContent>
 
         <TabsContent value="invoices">
