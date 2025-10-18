@@ -7,6 +7,7 @@ import AdminDashboard from "../components/dashboards/AdminDashboard";
 import HODDashboard from "../components/dashboards/HODDashboard";
 import FacultyDashboard from "../components/dashboards/FacultyDashboard";
 import StudentDashboard from "../components/dashboards/StudentDashboard";
+import FeesManagerDashboard from "../components/dashboards/FeesManagerDashboard";
 import { startTokenRefresh, stopTokenRefresh } from "../utils/authService";
 
 const Index = () => {
@@ -58,6 +59,7 @@ const Index = () => {
   // Role-based dashboard pages
   if (role === "admin") return <AdminDashboard user={user} setPage={setPage} />;
   if (role === "hod") return <HODDashboard user={user} setPage={setPage} />;
+  if (role === "fees_manager") return <FeesManagerDashboard user={user} setPage={setPage} />;
   if (role === "teacher") return (
     <FacultyDashboard user={user} setPage={setPage} />
   );
