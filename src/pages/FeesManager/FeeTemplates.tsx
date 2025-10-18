@@ -25,6 +25,7 @@ interface FeeComponent {
   name: string;
   amount: number;
   description?: string;
+  is_active: boolean;
 }
 
 interface FeeTemplate {
@@ -35,7 +36,10 @@ interface FeeTemplate {
   fee_type: string;
   semester?: number;
   is_active: boolean;
-  components: FeeComponent[];
+  components: Array<{
+    component: FeeComponent;
+    amount_override?: number;
+  }>;
   created_at: string;
 }
 
@@ -57,15 +61,42 @@ const FeeTemplates: React.FC = () => {
   const [componentName, setComponentName] = useState('');
   const [componentAmount, setComponentAmount] = useState('');
   const [componentDescription, setComponentDescription] = useState('');
+  const [selectedComponents, setSelectedComponents] = useState<number[]>([]);
+  const [componentOverrides, setComponentOverrides] = useState<Record<number, number>>({});
+
+  // Available components from backend
+  const [availableComponents, setAvailableComponents] = useState<FeeComponent[]>([]);
 
   useEffect(() => {
     fetchTemplates();
+    fetchAvailableComponents();
   }, []);
+
+  const fetchAvailableComponents = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch('http://127.0.0.1:8000/api/fees-manager/components/', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch fee components');
+      }
+
+      const data = await response.json();
+      setAvailableComponents(data.data || []);
+    } catch (err) {
+      console.error('Error fetching components:', err);
+    }
+  };
 
   const fetchTemplates = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
       const response = await fetch('http://127.0.0.1:8000/api/fees-manager/fee-templates/', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -91,10 +122,12 @@ const FeeTemplates: React.FC = () => {
     setTemplateDescription('');
     setFeeType('semester');
     setSemester(undefined);
-    setComponents([]);
+    setSelectedComponents([]);
+    setComponentOverrides({});
     setComponentName('');
     setComponentAmount('');
     setComponentDescription('');
+    setEditingTemplate(null);
   };
 
   const addComponent = () => {
@@ -105,37 +138,27 @@ const FeeTemplates: React.FC = () => {
       name: componentName.trim(),
       amount: parseFloat(componentAmount),
       description: componentDescription.trim() || undefined,
+      is_active: true,
     };
 
-    setComponents([...components, newComponent]);
+    setAvailableComponents([...availableComponents, newComponent]);
     setComponentName('');
     setComponentAmount('');
     setComponentDescription('');
   };
 
-  const removeComponent = (componentId: number) => {
-    setComponents(components.filter(comp => comp.id !== componentId));
-  };
-
-  const calculateTotal = () => {
-    return components.reduce((sum, comp) => sum + comp.amount, 0);
-  };
-
   const handleCreateTemplate = async () => {
-    if (!templateName.trim() || components.length === 0) return;
+    if (!templateName.trim() || selectedComponents.length === 0) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
       const templateData = {
         name: templateName.trim(),
-        description: templateDescription.trim() || undefined,
+        description: templateDescription.trim() || null,
         fee_type: feeType,
         semester: semester,
-        components: components.map(comp => ({
-          name: comp.name,
-          amount: comp.amount,
-          description: comp.description,
-        })),
+        component_ids: selectedComponents,
+        component_overrides: componentOverrides,
       };
 
       const response = await fetch('http://127.0.0.1:8000/api/fees-manager/fee-templates/', {
@@ -148,7 +171,8 @@ const FeeTemplates: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create fee template');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create fee template');
       }
 
       await fetchTemplates();
@@ -163,8 +187,8 @@ const FeeTemplates: React.FC = () => {
     if (!confirm('Are you sure you want to delete this template?')) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/fee-templates/${templateId}/`, {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/templates/${templateId}/`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -271,87 +295,121 @@ const FeeTemplates: React.FC = () => {
 
               {/* Components Section */}
               <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold mb-4">Fee Components</h3>
+                <h3 className="text-lg font-semibold mb-4">Select Fee Components</h3>
 
-                {/* Add Component Form */}
-                <div className="grid grid-cols-4 gap-4 mb-4">
-                  <div>
-                    <Label htmlFor="componentName">Component Name *</Label>
-                    <Input
-                      id="componentName"
-                      value={componentName}
-                      onChange={(e) => setComponentName(e.target.value)}
-                      placeholder="e.g., Tuition Fee"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="componentAmount">Amount *</Label>
-                    <Input
-                      id="componentAmount"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={componentAmount}
-                      onChange={(e) => setComponentAmount(e.target.value)}
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="componentDescription">Description</Label>
-                    <Input
-                      id="componentDescription"
-                      value={componentDescription}
-                      onChange={(e) => setComponentDescription(e.target.value)}
-                      placeholder="Optional description"
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <Button onClick={addComponent} disabled={!componentName || !componentAmount}>
-                      Add Component
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Components List */}
-                {components.length > 0 && (
-                  <div className="border rounded-lg p-4 mb-4">
-                    <h4 className="font-medium mb-3">Added Components:</h4>
-                    <div className="space-y-2">
-                      {components.map((component) => (
-                        <div key={component.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                          <div>
-                            <span className="font-medium">{component.name}</span>
-                            {component.description && (
-                              <span className="text-sm text-gray-600 ml-2">({component.description})</span>
-                            )}
+                {/* Available Components */}
+                <div className="max-h-60 overflow-y-auto border rounded-lg p-4 mb-4">
+                  <h4 className="font-medium mb-3">Available Components:</h4>
+                  {availableComponents.length > 0 ? (
+                    <div className="space-y-3">
+                      {availableComponents.map((component) => (
+                        <div key={component.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <input
+                              type="checkbox"
+                              id={`component-${component.id}`}
+                              checked={selectedComponents.includes(component.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedComponents([...selectedComponents, component.id]);
+                                } else {
+                                  setSelectedComponents(selectedComponents.filter(id => id !== component.id));
+                                  // Remove override if unchecked
+                                  const newOverrides = { ...componentOverrides };
+                                  delete newOverrides[component.id];
+                                  setComponentOverrides(newOverrides);
+                                }
+                              }}
+                              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <div>
+                              <label htmlFor={`component-${component.id}`} className="font-medium cursor-pointer">
+                                {component.name}
+                              </label>
+                              {component.description && (
+                                <p className="text-sm text-gray-600">{component.description}</p>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold">{formatCurrency(component.amount)}</span>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => removeComponent(component.id)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
+                          <div className="flex items-center space-x-2">
+                            {selectedComponents.includes(component.id) && (
+                              <div className="flex items-center space-x-2">
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  placeholder={component.amount.toString()}
+                                  value={componentOverrides[component.id] || ''}
+                                  onChange={(e) => {
+                                    const value = e.target.value;
+                                    setComponentOverrides({
+                                      ...componentOverrides,
+                                      [component.id]: value ? parseFloat(value) : component.amount,
+                                    });
+                                  }}
+                                  className="w-24"
+                                />
+                                <span className="text-sm text-gray-500">₹</span>
+                              </div>
+                            )}
+                            {!selectedComponents.includes(component.id) && (
+                              <span className="font-semibold text-green-600">
+                                {formatCurrency(component.amount)}
+                              </span>
+                            )}
                           </div>
                         </div>
                       ))}
                     </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No components available</p>
+                      <p className="text-sm">Create fee components first in the Components tab</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Selected Components Summary */}
+                {selectedComponents.length > 0 && (
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-medium mb-3">Selected Components Summary:</h4>
+                    <div className="space-y-2">
+                      {selectedComponents.map((componentId) => {
+                        const component = availableComponents.find(c => c.id === componentId);
+                        if (!component) return null;
+                        const overrideAmount = componentOverrides[componentId];
+                        const finalAmount = overrideAmount !== undefined ? overrideAmount : component.amount;
+                        return (
+                          <div key={componentId} className="flex justify-between items-center p-2 bg-blue-50 rounded">
+                            <span className="font-medium">{component.name}</span>
+                            <span className="font-semibold text-green-600">
+                              {formatCurrency(finalAmount)}
+                              {overrideAmount !== undefined && overrideAmount !== component.amount && (
+                                <span className="text-sm text-gray-500 ml-2">
+                                  (was {formatCurrency(component.amount)})
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
                     <div className="mt-4 pt-4 border-t">
                       <div className="flex justify-between items-center">
                         <span className="font-semibold">Total Amount:</span>
-                        <span className="text-lg font-bold text-green-600">{formatCurrency(calculateTotal())}</span>
+                        <span className="text-lg font-bold text-green-600">
+                          {formatCurrency(
+                            selectedComponents.reduce((sum, componentId) => {
+                              const component = availableComponents.find(c => c.id === componentId);
+                              if (!component) return sum;
+                              const overrideAmount = componentOverrides[componentId];
+                              return sum + (overrideAmount !== undefined ? overrideAmount : component.amount);
+                            }, 0)
+                          )}
+                        </span>
                       </div>
                     </div>
-                  </div>
-                )}
-
-                {components.length === 0 && (
-                  <div className="text-center py-8 text-gray-500 border-2 border-dashed rounded-lg">
-                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No components added yet</p>
-                    <p className="text-sm">Add fee components above to build your template</p>
                   </div>
                 )}
               </div>
@@ -363,7 +421,7 @@ const FeeTemplates: React.FC = () => {
                 </Button>
                 <Button
                   onClick={handleCreateTemplate}
-                  disabled={!templateName.trim() || components.length === 0}
+                  disabled={!templateName.trim() || selectedComponents.length === 0}
                 >
                   <Save className="h-4 w-4 mr-2" />
                   Create Template
@@ -453,13 +511,13 @@ const FeeTemplates: React.FC = () => {
                       {template.components.map((component, index) => (
                         <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                           <div>
-                            <p className="font-medium text-sm">{component.name}</p>
-                            {component.description && (
-                              <p className="text-xs text-gray-600">{component.description}</p>
+                            <p className="font-medium text-sm">{component.component.name}</p>
+                            {component.component.description && (
+                              <p className="text-xs text-gray-600">{component.component.description}</p>
                             )}
                           </div>
                           <span className="font-semibold text-green-600">
-                            {formatCurrency(component.amount)}
+                            {formatCurrency(component.amount_override || component.component.amount)}
                           </span>
                         </div>
                       ))}

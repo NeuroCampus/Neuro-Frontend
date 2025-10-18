@@ -88,7 +88,7 @@ const PaymentMonitoring: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
 
       // Fetch payments and stats in parallel
       const [paymentsRes, statsRes] = await Promise.all([
@@ -120,7 +120,7 @@ const PaymentMonitoring: React.FC = () => {
 
   const fetchPaymentDetails = async (paymentId: number) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
 
       const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/payments/${paymentId}/`, {
         headers: { 'Authorization': `Bearer ${token}` },
@@ -142,7 +142,7 @@ const PaymentMonitoring: React.FC = () => {
     if (!confirm('Are you sure you want to process a refund for this payment?')) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
 
       const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/payments/${paymentId}/refund/`, {
         method: 'POST',
@@ -163,7 +163,7 @@ const PaymentMonitoring: React.FC = () => {
 
   const downloadReceipt = async (paymentId: number) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
 
       const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/payments/${paymentId}/receipt/`, {
         headers: { 'Authorization': `Bearer ${token}` },

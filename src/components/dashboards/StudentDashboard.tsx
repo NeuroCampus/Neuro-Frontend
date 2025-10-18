@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "../common/Sidebar";
 import Navbar from "../common/Navbar";
 import StudentStats from "../student/StudentStats";
@@ -16,6 +16,8 @@ import StudentDashboardOverview from "../student/StudentDashboardOverview";
 import StudentStudyMaterial from "../student/StudentStudyMaterial";
 import StudentAssignments from "../student/StudentAssignments";
 import StudentFees from "../../pages/StudentFees";
+import PaymentSuccess from "../../pages/PaymentSuccess";
+import PaymentCancel from "../../pages/PaymentCancel";
 import { logoutUser } from "../../utils/authService";
 
 interface StudentDashboardProps {
@@ -26,6 +28,20 @@ interface StudentDashboardProps {
 const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
   const [activePage, setActivePage] = useState("dashboard");
   const [error, setError] = useState<string | null>(null);
+
+  // Check URL path on mount to handle direct navigation (e.g., from Stripe redirects)
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path === '/payment/success') {
+      setActivePage('payment-success');
+      // Clean up URL to avoid confusion
+      window.history.replaceState({}, '', '/');
+    } else if (path === '/payment/cancel') {
+      setActivePage('payment-cancel');
+      // Clean up URL to avoid confusion
+      window.history.replaceState({}, '', '/');
+    }
+  }, []);
 
   const handlePageChange = (page: string) => {
     setActivePage(page);
@@ -65,6 +81,10 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
         return <LeaveStatus setPage={handlePageChange} />;
       case "fees":
         return <StudentFees user={user} />;
+      case "payment-success":
+        return <PaymentSuccess setPage={handlePageChange} />;
+      case "payment-cancel":
+        return <PaymentCancel setPage={handlePageChange} />;
       case "profile":
         return <StudentProfile user={user} />;
       case "announcements":

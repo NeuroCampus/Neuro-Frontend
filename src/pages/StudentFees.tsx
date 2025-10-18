@@ -1,17 +1,95 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from '@/components/ui/badge';
 import { Button } from "@/components/ui/button";
 import { Loader2, CreditCard, Receipt, AlertCircle, CheckCircle, Calendar, IndianRupee, Download } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { loadStripe } from '@stripe/stripe-js';
 
-interface FeeData {
+interface InvoiceComponent {
+  component_name: string;
+  component_amount: number;
+  paid_amount: number;
+  balance_amount: number;
+}
+
+interface InvoiceData {
+  id: number;
+  invoice_number: string;
+  semester: number;
+  academic_year: string;
+  total_amount: number;
+  paid_amount: number;
+  balance_amount: number;
+  status: string;
+  due_date: string | null;
+  created_at: string | null;
+  invoice_type: string;
+  components?: InvoiceComponent[];
+}
+
+interface PaymentData {
+  id: number;
+  invoice_id: number;
+  amount: number;
+  mode: string;
+  status: string;
+  timestamp: string;
+  transaction_id: string;
+  payment_reference: string;
+}
+
+interface ReceiptData {
+  id: number;
+  receipt_number: string;
+  amount: number;
+  payment_id: number;
+  payment_date: string;
+  payment_mode: string;
+  transaction_id: string;
+  invoice_id: number;
+  semester: number;
+  generated_at: string;
+}
+
+interface StudentInfo {
+  id: number;
+  name: string;
+  usn: string;
+  dept: string;
+  semester: number;
+  admission_mode: string;
+  status: boolean;
+  email: string;
+}
+
+interface FeeSummary {
   total_fees: number;
   amount_paid: number;
   remaining_fees: number;
   due_date: string | null;
+  payment_status: string;
+}
+
+interface FeeDataResponse {
+  student: StudentInfo;
+  fee_summary: FeeSummary;
+  fee_breakdown: Record<string, number>;
+  invoices: InvoiceData[];
+  payments: PaymentData[];
+  receipts: ReceiptData[];
+  statistics: {
+    total_invoices: number;
+    total_payments: number;
+    total_receipts: number;
+    successful_payments: number;
+    pending_payments: number;
+    failed_payments: number;
+  };
 }
 
 interface StudentFeesProps {
@@ -19,26 +97,32 @@ interface StudentFeesProps {
 }
 
 const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentType, setPaymentType] = useState<'full' | 'component'>('full');
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(null);
+  const [selectedComponents, setSelectedComponents] = useState<Set<number>>(new Set());
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
   console.log('StudentFees user object:', user);
   console.log('StudentFees user.usn:', user?.usn);
   console.log('StudentFees user.username:', user?.username);
 
-  // Fetch complete fee data from unauthenticated API endpoint
-  const { data: feeData, isLoading, error } = useQuery({
+  // Fetch complete fee data from Django backend
+  const { data: feeData, isLoading, error } = useQuery<FeeDataResponse>({
     queryKey: ['studentCompleteFeeData', user?.usn || user?.username],
-    queryFn: async (): Promise<any> => {
-      const usn = user?.usn || user?.username;
-      console.log('Making API call with USN:', usn);
-      const response = await fetch(`http://127.0.0.1:8001/api/student/complete-fee-data/${usn}/`);
-      console.log('API response status:', response.status);
+    queryFn: async (): Promise<FeeDataResponse> => {
+      const response = await fetch(`http://127.0.0.1:8000/api/student/fee-data/`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch fee data');
       }
-      const data = await response.json();
-      console.log('API response data:', data);
-      return data;
+      return await response.json();
     },
-    enabled: !!(user?.usn || user?.username),
+    enabled: !!user,
   });
 
   if (isLoading) {
@@ -78,35 +162,112 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
     return remaining === 0 ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />;
   };
 
-const handleDownloadReceipt = async (paymentId: number) => {
-  try {
-    const usn = user?.usn || user?.username;
-    if (!usn) {
-      console.error('USN not available for receipt download');
-      return;
+  const handlePaymentClick = (invoiceId: number) => {
+    setSelectedInvoiceId(invoiceId);
+    setPaymentType('full');
+    setSelectedComponents(new Set());
+    setPaymentModalOpen(true);
+  };
+
+  const handleComponentPaymentClick = (invoiceId: number) => {
+    setSelectedInvoiceId(invoiceId);
+    setPaymentType('component');
+    setSelectedComponents(new Set());
+    setPaymentModalOpen(true);
+  };
+
+  const handleComponentToggle = (componentId: number) => {
+    const newSet = new Set(selectedComponents);
+    if (newSet.has(componentId)) {
+      newSet.delete(componentId);
+    } else {
+      newSet.add(componentId);
     }
-    
-    const response = await fetch(`http://127.0.0.1:8001/api/student/complete-fee-data/${usn}/?download_receipt=${paymentId}`, {
-      method: 'GET',
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to download receipt');
+    setSelectedComponents(newSet);
+  };
+
+  const initiateStripePayment = async () => {
+    try {
+      setIsProcessingPayment(true);
+      const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+      
+      if (!stripeKey) {
+        alert('Payment configuration error. Please contact support.');
+        return;
+      }
+
+      const stripe = await loadStripe(stripeKey);
+      if (!stripe) {
+        alert('Failed to initialize payment. Please try again.');
+        return;
+      }
+
+      if (!selectedInvoiceId) return;
+
+      const response = await fetch(`http://127.0.0.1:8000/api/payments/create-checkout-session/${selectedInvoiceId}/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          payment_type: paymentType,
+          selected_components: paymentType === 'component' ? Array.from(selectedComponents) : null,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create checkout session');
+      }
+
+      const { session_id, checkout_url } = await response.json();
+      
+      // Redirect to Stripe checkout with proper API key
+      if (checkout_url) {
+        // Use the checkout_url provided by backend if available
+        window.location.href = checkout_url;
+      } else if (session_id) {
+        // Fallback: construct checkout URL with publishable key
+        const checkoutUrl = `https://checkout.stripe.com/pay/${session_id}?key=${stripeKey}`;
+        window.location.href = checkoutUrl;
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert('Error initiating payment. Please try again.');
+    } finally {
+      setIsProcessingPayment(false);
     }
-    
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `receipt_${paymentId}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error('Error downloading receipt:', error);
-  }
-};
+  };
+
+  const handleDownloadReceipt = async (paymentId: number) => {
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/payments/receipt/${paymentId}/`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+      
+      if (!response.ok) throw new Error('Failed to download receipt');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `receipt_${paymentId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading receipt:', error);
+      alert('Failed to download receipt.');
+    }
+  };
+
+  if (!feeData) return null;
+
+  const currentInvoice = feeData?.invoices?.find(inv => inv.id === selectedInvoiceId);
 
   return (
     <div className="container mx-auto p-6 max-w-4xl">
@@ -149,43 +310,28 @@ const handleDownloadReceipt = async (paymentId: number) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Fees</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {formatCurrency(feeData?.fee_summary?.total_fees || 0)}
-                </p>
-              </div>
-              <IndianRupee className="h-8 w-8 text-blue-600" />
-            </div>
+            <p className="text-sm font-medium text-gray-600">Total Fees</p>
+            <p className="text-2xl font-bold text-gray-900">
+              {formatCurrency(feeData?.fee_summary?.total_fees || 0)}
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Amount Paid</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {formatCurrency(feeData?.fee_summary?.amount_paid || 0)}
-                </p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-600" />
-            </div>
+            <p className="text-sm font-medium text-gray-600">Amount Paid</p>
+            <p className="text-2xl font-bold text-green-600">
+              {formatCurrency(feeData?.fee_summary?.amount_paid || 0)}
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Remaining Fees</p>
-                <p className="text-2xl font-bold text-red-600">
-                  {formatCurrency(feeData?.fee_summary?.remaining_fees || 0)}
-                </p>
-              </div>
-              <AlertCircle className="h-8 w-8 text-red-600" />
-            </div>
+            <p className="text-sm font-medium text-gray-600">Remaining Fees</p>
+            <p className="text-2xl font-bold text-red-600">
+              {formatCurrency(feeData?.fee_summary?.remaining_fees || 0)}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -199,7 +345,7 @@ const handleDownloadReceipt = async (paymentId: number) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <Badge className={getStatusColor(feeData?.fee_summary?.remaining_fees || 0)}>
                 {(feeData?.fee_summary?.remaining_fees || 0) === 0 ? 'All Paid' : 'Pending Payment'}
@@ -212,10 +358,27 @@ const handleDownloadReceipt = async (paymentId: number) => {
               )}
             </div>
             {(feeData?.fee_summary?.remaining_fees || 0) > 0 && (
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <CreditCard className="h-4 w-4 mr-2" />
-                Pay Now
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={() => {
+                    const inv = feeData?.invoices?.find(inv => inv.balance_amount > 0);
+                    if (inv) handlePaymentClick(inv.id);
+                  }}
+                >
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Pay Full Amount
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    const inv = feeData?.invoices?.find(inv => inv.balance_amount > 0);
+                    if (inv) handleComponentPaymentClick(inv.id);
+                  }}
+                >
+                  Pay by Component
+                </Button>
+              </div>
             )}
           </div>
         </CardContent>
@@ -230,7 +393,7 @@ const handleDownloadReceipt = async (paymentId: number) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {feeData?.invoices && feeData.invoices.length > 0 ? (
+          {feeData?.invoices?.length ? (
             <div className="space-y-4">
               {feeData.invoices.map((invoice) => (
                 <div key={invoice.id} className="border rounded-lg p-4">
@@ -243,7 +406,7 @@ const handleDownloadReceipt = async (paymentId: number) => {
                       {invoice.status}
                     </Badge>
                   </div>
-                  <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="grid grid-cols-3 gap-4 text-sm mb-4">
                     <div>
                       <p className="text-gray-600">Total Amount</p>
                       <p className="font-semibold">{formatCurrency(invoice.total_amount)}</p>
@@ -257,19 +420,21 @@ const handleDownloadReceipt = async (paymentId: number) => {
                       <p className="font-semibold text-red-600">{formatCurrency(invoice.balance_amount)}</p>
                     </div>
                   </div>
-                  {invoice.due_date && (
-                    <p className="text-sm text-gray-600 mt-2">
-                      Due: {new Date(invoice.due_date).toLocaleDateString()}
-                    </p>
+                  {invoice.balance_amount > 0 && (
+                    <div className="flex gap-2">
+                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => handlePaymentClick(invoice.id)}>
+                        Pay Full
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => handleComponentPaymentClick(invoice.id)}>
+                        Pay by Component
+                      </Button>
+                    </div>
                   )}
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Receipt className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No invoices found</p>
-            </div>
+            <p className="text-center py-8 text-gray-500">No invoices found</p>
           )}
         </CardContent>
       </Card>
@@ -283,29 +448,22 @@ const handleDownloadReceipt = async (paymentId: number) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {feeData?.payments && feeData.payments.length > 0 ? (
+          {feeData?.payments?.length ? (
             <div className="space-y-4">
               {feeData.payments.map((payment) => (
                 <div key={payment.id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
+                  <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-semibold">{formatCurrency(payment.amount)}</h3>
                       <p className="text-sm text-gray-600">
                         {new Date(payment.timestamp).toLocaleDateString()} • {payment.mode}
                       </p>
-                      {payment.transaction_id && (
-                        <p className="text-xs text-gray-500">Txn: {payment.transaction_id}</p>
-                      )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex gap-2">
                       <Badge variant={payment.status === 'success' ? 'default' : 'secondary'}>
                         {payment.status}
                       </Badge>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDownloadReceipt(payment.id)}
-                      >
+                      <Button variant="outline" size="sm" onClick={() => handleDownloadReceipt(payment.id)}>
                         <Download className="h-4 w-4 mr-1" />
                         Receipt
                       </Button>
@@ -315,71 +473,92 @@ const handleDownloadReceipt = async (paymentId: number) => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No payment history available</p>
-            </div>
+            <p className="text-center py-8 text-gray-500">No payment history</p>
           )}
         </CardContent>
       </Card>
 
-      {/* Receipts Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Receipt className="h-5 w-5" />
-            Fee Receipts
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {feeData?.receipts && feeData.receipts.length > 0 ? (
+      {/* Payment Modal */}
+      <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {paymentType === 'full' ? 'Pay Full Amount' : 'Pay by Component'}
+            </DialogTitle>
+          </DialogHeader>
+
+          {paymentType === 'full' ? (
             <div className="space-y-4">
-              {feeData.receipts.map((receipt) => (
-                <div key={receipt.id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className="font-semibold">Receipt #{receipt.receipt_number}</h3>
-                      <p className="text-sm text-gray-600">
-                        Amount: {formatCurrency(receipt.amount)}
-                      </p>
-                      {receipt.payment_date && (
-                        <p className="text-sm text-gray-600">
-                          Payment Date: {new Date(receipt.payment_date).toLocaleDateString()}
-                        </p>
-                      )}
-                      {receipt.payment_mode && (
-                        <p className="text-sm text-gray-600">
-                          Mode: {receipt.payment_mode}
-                        </p>
-                      )}
-                      {receipt.transaction_id && (
-                        <p className="text-xs text-gray-500">Txn: {receipt.transaction_id}</p>
-                      )}
-                      {receipt.semester && (
-                        <p className="text-xs text-gray-500">Semester: {receipt.semester}</p>
-                      )}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDownloadReceipt(receipt.payment_id)}
-                    >
-                      <Download className="h-4 w-4 mr-1" />
-                      Download
-                    </Button>
-                  </div>
-                </div>
-              ))}
+              <div className="bg-gray-100 p-4 rounded-lg">
+                <p className="text-sm text-gray-600">Total Amount to Pay</p>
+                <p className="text-2xl font-bold">
+                  {formatCurrency(currentInvoice?.balance_amount || 0)}
+                </p>
+              </div>
+              <Button onClick={initiateStripePayment} disabled={isProcessingPayment} className="w-full bg-blue-600 hover:bg-blue-700">
+                {isProcessingPayment ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Proceed to Payment
+                  </>
+                )}
+              </Button>
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Receipt className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No receipts available</p>
-              <p className="text-sm">Receipts will appear here once payments are processed</p>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">Select components to pay:</p>
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {currentInvoice?.components?.map((component, idx) => (
+                  <div key={idx} className="flex items-center space-x-3 p-2 border rounded">
+                    <Checkbox 
+                      checked={selectedComponents.has(idx)}
+                      onCheckedChange={() => handleComponentToggle(idx)}
+                    />
+                    <Label className="flex-1 cursor-pointer">
+                      <div>
+                        <p className="font-medium">{component.component_name}</p>
+                        <p className="text-sm text-gray-600">{formatCurrency(component.balance_amount)}</p>
+                      </div>
+                    </Label>
+                  </div>
+                ))}
+              </div>
+
+              {selectedComponents.size > 0 && (
+                <div className="bg-gray-100 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600">Total Selected</p>
+                  <p className="text-2xl font-bold">
+                    {formatCurrency(
+                      (currentInvoice?.components || [])
+                        .filter((_, idx) => selectedComponents.has(idx))
+                        .reduce((sum, comp) => sum + comp.balance_amount, 0)
+                    )}
+                  </p>
+                </div>
+              )}
+
+              <Button onClick={initiateStripePayment} disabled={isProcessingPayment || selectedComponents.size === 0} className="w-full bg-blue-600 hover:bg-blue-700">
+                {isProcessingPayment ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Proceed to Payment
+                  </>
+                )}
+              </Button>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

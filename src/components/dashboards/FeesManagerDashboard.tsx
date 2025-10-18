@@ -47,13 +47,20 @@ const FeesManagerDashboardWrapper: React.FC<FeesManagerDashboardProps> = ({ user
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
       const response = await fetch('http://127.0.0.1:8000/api/fees-manager/dashboard/', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
+
+      if (response.status === 401) {
+        // Token expired or invalid, redirect to login
+        localStorage.clear();
+        setPage("login");
+        return;
+      }
 
       if (!response.ok) {
         throw new Error('Failed to fetch dashboard data');

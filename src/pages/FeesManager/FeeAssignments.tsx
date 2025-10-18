@@ -78,7 +78,7 @@ const FeeAssignments: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
 
       // Fetch assignments, students, and templates in parallel
       const [assignmentsRes, studentsRes, templatesRes] = await Promise.all([
@@ -127,7 +127,7 @@ const FeeAssignments: React.FC = () => {
     if (!selectedStudent || !selectedTemplate) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
       const assignmentData = {
         student_id: parseInt(selectedStudent),
         template_id: parseInt(selectedTemplate),
@@ -160,7 +160,7 @@ const FeeAssignments: React.FC = () => {
     if (!selectedTemplate || !selectedBatch) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('access_token');
       const assignmentData = {
         batch: selectedBatch,
         department: selectedDepartment || undefined,
