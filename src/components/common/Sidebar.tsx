@@ -33,7 +33,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "../ui/dialog";
- 
+import { useTheme } from "../../context/ThemeContext";
+
 interface SidebarProps {
   role: string;
   setPage: (page: string) => void;
@@ -42,29 +43,30 @@ interface SidebarProps {
   collapsed: boolean;
   toggleCollapse: () => void;
 }
- 
+
 const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse }: SidebarProps) => {
   const isMobile = useIsMobile();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
- 
+  const { theme } = useTheme();
+
   const handlePageChange = (page: string) => {
     setPage(page);
     if (isMobile) {
       toggleCollapse();
     }
   };
- 
+
   const handleLogoutClick = () => {
     setShowLogoutDialog(true);
   };
- 
+
   const confirmLogout = () => {
     if (logout) {
       logout();
     }
     setShowLogoutDialog(false);
   };
- 
+
   const getIcon = (page: string) => {
     const iconMap: { [key: string]: React.ReactNode } = {
       dashboard: <LayoutDashboard size={20} />,
@@ -107,7 +109,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     };
     return iconMap[page] || <LayoutDashboard size={20} />;
   };
- 
+
   const menuItems: { [key: string]: { name: string; page: string }[] } = {
   admin: [
     // Main
@@ -213,27 +215,30 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
  
   const sidebarContent = (
     <motion.div 
-      className="h-full flex flex-col bg-[#1c1c1e] border-r border-gray-700 "
+      className={`h-full flex flex-col border-r ${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-200'}`}
       initial={{ x: -100, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
       {/* Header */}
       <motion.div 
-        className="p-4 border-b border-gray-700 bg-[#1c1c1e] "
+        className={`p-4 border-b ${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-200'}`}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
       >
-        <div className="flex items-center gap-3 ">
+        <div className="flex items-center gap-3">
           <div
-            className="w-12 h-12 rounded-lg flex items-center justify-center shadow-lg overflow-hidden border-2 border-[#a259ff] bg-white"
+            className="w-12 h-12 rounded-lg flex items-center justify-center shadow-lg overflow-hidden border-2 border-[#a259ff]"
           >
             <img
               src="/logo.jpeg"
               alt="Logo"
               className="w-full h-full object-contain"
-              style={{ borderRadius: '0.5rem' }}
+              style={{ 
+                borderRadius: '0.5rem',
+                filter: theme === 'dark' ? 'brightness(0) invert(1)' : 'none'
+              }}
             />
           </div>
           <AnimatePresence>
@@ -244,8 +249,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
                 exit={{ opacity: 0, width: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <h1 className="text-white font-bold text-lg">NEURO CAMPUS</h1>
-                <p className="text-gray-400 text-xs capitalize">{role} Portal</p>
+                <h1 className={`font-bold text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>NEURO CAMPUS</h1>
+                <p className={`text-xs capitalize ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{role} Portal</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -272,7 +277,9 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
                 className={`w-full justify-start gap-3 h-10 transition-all duration-200 ${
                   activePage === item.page
                     ? "bg-[#a259ff] hover:bg-[#a259ff]/90 text-white shadow-lg shadow-[#a259ff]/20"
-                    : "text-gray-300 hover:text-white hover:bg-gray-800/50"
+                    : theme === 'dark' 
+                      ? "text-muted-foreground hover:text-foreground hover:bg-accent" 
+                      : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                 } ${collapsed ? "px-2" : "px-3"}`}
                 onClick={() => handlePageChange(item.page)}
               >
@@ -303,14 +310,18 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
  
       {/* Logout Button */}
       <motion.div 
-        className="p-3 border-t border-gray-700"
+        className={`p-3 border-t ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.5 }}
       >
         <Button
           variant="ghost"
-          className={`w-full justify-start gap-3 h-10 text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-200 ${collapsed ? "px-2" : "px-3"}`}
+          className={`w-full justify-start gap-3 h-10 transition-all duration-200 ${collapsed ? "px-2" : "px-3"} ${
+            theme === 'dark' 
+              ? "text-destructive hover:text-destructive-foreground hover:bg-destructive/10" 
+              : "text-red-600 hover:text-red-700 hover:bg-red-50"
+          }`}
           onClick={handleLogoutClick}
         >
           <motion.div
@@ -352,7 +363,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
           )}
         </AnimatePresence>
         <motion.div
-          className={`fixed top-0 left-0 h-full bg-[#1c1c1e] z-40 w-64 shadow-2xl`}
+          className={`fixed top-0 left-0 h-full z-40 shadow-2xl ${theme === 'dark' ? 'bg-background' : 'bg-white'}`}
           initial={{ x: "-100%" }}
           animate={{ x: collapsed ? "-100%" : "0%" }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
@@ -360,16 +371,23 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
           {sidebarContent}
         </motion.div>
         <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-          <DialogContent className="bg-[#1c1c1e] border-gray-700">
+          <DialogContent className={theme === 'dark' ? "bg-background border-border text-foreground" : "bg-white border-gray-200 text-gray-900"}>
             <DialogHeader>
-              <DialogTitle className="text-white">Confirm Logout</DialogTitle>
-              <DialogDescription className="text-gray-400">Are you sure you want to log out?</DialogDescription>
+              <DialogTitle className={theme === 'dark' ? "text-foreground" : "text-gray-900"}>Confirm Logout</DialogTitle>
+              <DialogDescription className={theme === 'dark' ? "text-muted-foreground" : "text-gray-500"}>Are you sure you want to log out?</DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowLogoutDialog(false)} className="border-gray-700 text-gray-300 hover:bg-gray-800">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowLogoutDialog(false)} 
+                className={theme === 'dark' ? "border-border text-foreground hover:bg-accent" : "border-gray-300 text-gray-700 hover:bg-gray-100"}
+              >
                 Cancel
               </Button>
-              <Button onClick={confirmLogout} className="bg-red-600 hover:bg-red-700 text-white">
+              <Button 
+                onClick={confirmLogout} 
+                className={theme === 'dark' ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground" : "bg-red-600 hover:bg-red-700 text-white"}
+              >
                 Logout
               </Button>
             </DialogFooter>
@@ -381,19 +399,19 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
  
   return (
     <motion.div
-      className={`fixed top-0 left-0 h-screen bg-[#1c1c1e] z-40 shadow-xl transition-all duration-300 ${
+      className={`fixed top-0 left-0 h-screen z-40 shadow-xl transition-all duration-300 ${
         collapsed ? "w-16" : "w-64"
-      }`}
+      } ${theme === 'dark' ? 'bg-background' : 'bg-white'}`}
       initial={{ x: -100 }}
       animate={{ x: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
     >
       {sidebarContent}
       <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-        <DialogContent className="bg-[#1c1c1e] border-gray-700 text-white">
+        <DialogContent className={theme === 'dark' ? "bg-background border-border text-foreground" : "bg-white border-gray-200 text-gray-900"}>
           <DialogHeader>
-        <DialogTitle className="text-white">Confirm Logout</DialogTitle>
-        <DialogDescription className="text-gray-200">
+        <DialogTitle className={theme === 'dark' ? "text-foreground" : "text-gray-900"}>Confirm Logout</DialogTitle>
+        <DialogDescription className={theme === 'dark' ? "text-muted-foreground" : "text-gray-500"}>
           Are you sure you want to log out?
         </DialogDescription>
           </DialogHeader>
@@ -401,13 +419,13 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
         <Button
           variant="outline"
           onClick={() => setShowLogoutDialog(false)}
-          className="border-gray-200 text-gray-900 hover:bg-gray-500"
+          className={theme === 'dark' ? "border-border text-foreground hover:bg-accent" : "border-gray-300 text-gray-700 hover:bg-gray-100"}
         >
           Cancel
         </Button>
         <Button
           onClick={confirmLogout}
-          className="bg-red-600 hover:bg-red-700 text-white"
+          className={theme === 'dark' ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground" : "bg-red-600 hover:bg-red-700 text-white"}
         >
           Logout
         </Button>

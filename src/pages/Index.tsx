@@ -9,6 +9,7 @@ import FacultyDashboard from "../components/dashboards/FacultyDashboard";
 import StudentDashboard from "../components/dashboards/StudentDashboard";
 import FeesManagerDashboard from "../pages/FeesManager/FeesManagerDashboard";
 import { startTokenRefresh, stopTokenRefresh } from "../utils/authService";
+import { ThemeProvider } from "../context/ThemeContext";
 
 const Index = () => {
   const [role, setRole] = useState<string | null>(localStorage.getItem("role"));
@@ -59,7 +60,11 @@ const Index = () => {
   if (page === "reset-password") return <ResetPassword setPage={setPage} />;
 
   // Role-based dashboard pages
-  if (role === "admin") return <AdminDashboard user={user} setPage={setPage} />;
+  if (role === "admin") return (
+    <ThemeProvider>
+      <AdminDashboard user={user} setPage={setPage} />
+    </ThemeProvider>
+  );
   if (role === "hod") return <HODDashboard user={user} setPage={setPage} />;
   if (role === "fees_manager") return <FeesManagerDashboard user={user} setPage={setPage} />;
   if (role === "teacher") return (

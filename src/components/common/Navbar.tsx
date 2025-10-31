@@ -1,8 +1,8 @@
 import { motion } from "framer-motion";
-import { FiBell, FiMoon, FiMenu } from "react-icons/fi";
+import { FiBell, FiMoon, FiSun, FiMenu } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-
+import { useTheme } from "../../context/ThemeContext";
 
 interface User {
   username: string;
@@ -28,6 +28,7 @@ interface NotificationBellProps {
 
 const Navbar = ({ role, user, onNotificationClick, setPage }: NavbarProps) => {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
 
   const handleNotificationClick = () => {
     if (onNotificationClick) {
@@ -54,7 +55,11 @@ const handleProfileClick = () => {
 
   return (
     <motion.div 
-      className="fixed top-0 mr-60 w-[calc(100%-16rem)] z-50 bg-[#1c1c1e] border-b border-gray-700 flex items-center justify-between px-6 py-3 backdrop-blur-sm"
+      className={`fixed top-0 mr-60 w-[calc(100%-16rem)] z-50 flex items-center justify-between px-6 py-3 backdrop-blur-sm ${
+        theme === 'dark' 
+          ? 'bg-background border-b border-border' 
+          : 'bg-white border-b border-gray-200'
+      }`}
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -69,19 +74,21 @@ const handleProfileClick = () => {
         <div className="flex items-center gap-3">
           <div>
             <motion.div 
-              className="text-white font-bold text-lg text-gray-400"
+              className={`font-bold text-lg ${
+                theme === 'dark' ? 'text-foreground' : 'text-gray-900'
+              }`}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4, delay: 0.5 }}
             >
               Welcome,{" "}
-              <span className="text-[#a259ff] font-medium">
+              <span className={theme === 'dark' ? 'text-primary font-medium' : 'text-blue-600 font-medium'}>
                 {user?.first_name
                   ? user.first_name.charAt(0).toUpperCase() + user.first_name.slice(1) + "!"
                   : user?.username || "User!"}
               </span>
             </motion.div>
-            <p className="text-gray-400 text-xs">Academic Management System</p>
+            <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Academic Management System</p>
           </div>
 
 
@@ -97,7 +104,9 @@ const handleProfileClick = () => {
       >
         {/* Date & Time */}
         <motion.div 
-          className="text-right text-sm text-gray-300 hidden md:block"
+          className={`text-right text-sm hidden md:block ${
+            theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'
+          }`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.3 }}
@@ -107,23 +116,32 @@ const handleProfileClick = () => {
             month: "short",
             day: "numeric",
           })}
-          <div className="text-xs text-gray-400">
+          <div className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`}>
             {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </div>
         </motion.div>
 
         {/* Theme toggle */}
         <motion.button
-          className="text-gray-300 hover:text-[#a259ff] transition-colors duration-200 p-2 rounded-lg hover:bg-gray-800/50"
+          className={`transition-colors duration-200 p-2 rounded-lg ${
+            theme === 'dark'
+              ? 'text-foreground hover:text-primary hover:bg-accent'
+              : 'text-gray-700 hover:text-blue-600 hover:bg-gray-100'
+          }`}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
+          onClick={toggleTheme}
         >
-          <FiMoon size={20} />
+          {theme === 'dark' ? <FiSun size={20} /> : <FiMoon size={20} />}
         </motion.button>
 
         {/* Profile section */}
         <motion.div 
-          className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800/30 transition-colors duration-200 cursor-pointer"
+          className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 cursor-pointer ${
+            theme === 'dark'
+              ? 'hover:bg-accent'
+              : 'hover:bg-gray-100'
+          }`}
           onClick={handleProfileClick}  
           whileHover={{ scale: 1.02 }}
           initial={{ opacity: 0, scale: 0.8 }}
@@ -131,7 +149,7 @@ const handleProfileClick = () => {
           transition={{ duration: 0.3, delay: 0.4 }}
         >
           <motion.div 
-            className="w-10 h-10 rounded-full bg-gradient-to-r from-[#a259ff] to-[#7c3aed] flex items-center justify-center font-semibold text-sm text-white shadow-lg"
+            className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm shadow-lg bg-[#a259ff] text-white"
             whileHover={{ scale: 1.1 }}
             transition={{ duration: 0.2 }}
           >
@@ -139,10 +157,10 @@ const handleProfileClick = () => {
           </motion.div>
 
           <div className="text-sm hidden sm:block">
-            <div className="font-medium text-white">
+            <div className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               {user?.first_name || (role ? role.charAt(0).toUpperCase() + role.slice(1) : "User")}
             </div>
-            <div className="text-xs text-gray-400">
+            <div className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               {role === "admin"
                 ? "Principal"
                 : role === "hod"

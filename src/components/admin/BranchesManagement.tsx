@@ -15,6 +15,7 @@ import autoTable from "jspdf-autotable";
 import { FileDownIcon } from "lucide-react";
 import { manageBranches, manageUsers, getBranchesWithHODs } from "../../utils/admin_api";
 import { useToast } from "../../hooks/use-toast";
+import { useTheme } from "../../context/ThemeContext";
 
 interface Branch {
   id: number;
@@ -43,7 +44,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
   const [newHodId, setNewHodId] = useState("");
   const [loading, setLoading] = useState(true);
   const normalize = (str: string) => str.toLowerCase().trim();
-
+  const { theme } = useTheme();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -130,7 +131,6 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
 
   const unassignedBranches = branches.filter((b) => !b.hod);
 
-
   const handleEdit = (branch: Branch) => {
     setEditingId(branch.id);
     setEditData(branch);
@@ -198,7 +198,6 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
       }
     }
   };
-
 
   const confirmDelete = (id: number) => setDeleteId(id);
   const deleteBranch = async () => {
@@ -292,7 +291,6 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
     }
   };
 
-
   const handleAssignHod = async () => {
     if (!selectedBranchId) {
       toast({ variant: "destructive", title: "Error", description: "Branch selection is required" });
@@ -348,18 +346,18 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
     doc.save("Branch_list.pdf");
   };
 
-  if (loading && branches.length === 0) return <div className="text-center py-6">Loading...</div>;
+  if (loading && branches.length === 0) return <div className={`text-center py-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading...</div>;
 
   return (
-    <div className="p-4 sm:p-6 bg-[#1c1c1e] min-h-screen text-gray-200">
-      <Card className="bg-[#1c1c1e] border border-gray-700 shadow-sm">
+    <div className={`p-4 sm:p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}>
         <CardHeader className="pb-2 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           {/* Title + paragraph always full width */}
           <div className="w-full">
-            <CardTitle className="block text-lg md:text-xl text-gray-200">
+            <CardTitle className={`block text-lg md:text-xl ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Branch Management
             </CardTitle>
-            <p className="block text-sm md:text-base text-gray-400">
+            <p className={`block text-sm md:text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               Manage branches and assign department heads
             </p>
           </div>
@@ -368,7 +366,11 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
           <div className="flex flex-col lg:flex-row gap-2 w-full lg:w-auto">
             <Button
               size="sm"
-              className="flex items-center justify-center gap-1 text-gray-200 bg-gray-800 hover:bg-gray-600 border border-gray-600 shadow-sm w-full lg:w-auto"
+              className={`flex items-center justify-center gap-1 ${
+                theme === 'dark' 
+                  ? 'text-foreground bg-card border border-border hover:bg-accent' 
+                  : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+              } shadow-sm w-full lg:w-auto`}
               onClick={() => setIsAddDialogOpen(true)}
               disabled={loading}
             >
@@ -377,7 +379,11 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
 
             <Button
               size="sm"
-              className="flex items-center justify-center gap-1 text-gray-200 bg-gray-800 hover:bg-gray-600 border border-gray-600 shadow-sm w-full lg:w-auto"
+              className={`flex items-center justify-center gap-1 ${
+                theme === 'dark' 
+                  ? 'text-foreground bg-card border border-border hover:bg-accent' 
+                  : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+              } shadow-sm w-full lg:w-auto`}
               onClick={() => setIsAssignDialogOpen(true)}
               disabled={loading}
             >
@@ -386,7 +392,11 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
 
             <Button
               size="sm"
-              className="flex items-center justify-center gap-1 text-gray-200 bg-gray-800 hover:bg-gray-600 border border-gray-600 shadow-sm w-full lg:w-auto"
+              className={`flex items-center justify-center gap-1 ${
+                theme === 'dark' 
+                  ? 'text-foreground bg-card border border-border hover:bg-accent' 
+                  : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+              } shadow-sm w-full lg:w-auto`}
               onClick={exportToPDF}
               disabled={loading}
             >
@@ -401,11 +411,11 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
               placeholder="Search by branch name..."
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="w-full sm:w-64 bg-[#232326] text-gray-200"
+              className={theme === 'dark' ? 'w-full sm:w-64 bg-card text-foreground' : 'w-full sm:w-64 bg-white text-gray-900'}
             />
           </div>
-            <table className="w-full text-sm md:text-base text-left text-gray-200">
-              <thead className="border-b border-gray-200 bg-[#232326] text-gray-200">
+            <table className="w-full text-sm md:text-base text-left">
+              <thead className={`border-b ${theme === 'dark' ? 'border-border bg-card text-foreground' : 'border-gray-200 bg-gray-100 text-gray-900'}`}>
                 <tr>
                 <th className="py-2">ID</th>
                 <th className="py-2">Branch</th>
@@ -417,22 +427,26 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                 {filteredBranches.map((branch) => (
                   <tr
                     key={branch.id}
-                    className="border-b border-gray-100 transition-colors text-gray-200 duration-200 hover:bg-gray-800/60"
+                    className={`border-b transition-colors duration-200 ${
+                      theme === 'dark' 
+                        ? 'border-border hover:bg-accent text-foreground' 
+                        : 'border-gray-200 hover:bg-gray-50 text-gray-900'
+                    }`}
                   >
                     {/* ID column */}
                     <td className="py-3">{branch.id}</td>
 
                     {/* Branch Name column */}
-                    <td className="py-3 pr-2 text-gray-200">
+                    <td className="py-3 pr-2">
                       {editingId === branch.id ? (
                         <select
                           name="name"
                           value={editData?.name || ""}
                           onChange={handleEditChange}
-                          className="bg-[#232326] text-gray-200 px-2 py-1 rounded"
+                          className={theme === 'dark' ? 'bg-card text-foreground px-2 py-1 rounded border border-border' : 'bg-white text-gray-900 px-2 py-1 rounded border border-gray-300'}
                         >
                           {branches.map((b) => (
-                            <option  className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" key={b.id} value={b.name}>
+                            <option className={theme === 'dark' ? 'text-foreground bg-card' : 'text-gray-900 bg-white'} key={b.id} value={b.name}>
                               {b.name}
                             </option>
                           ))}
@@ -443,17 +457,17 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                     </td>
 
                     {/* HOD column */}
-                    <td className="py-3 text-gray-200">
+                    <td className="py-3">
                       {editingId === branch.id ? (
                         <select
                           name="hod"
                           value={editData?.hod || ""}
                           onChange={handleEditChange}
-                          className="bg-[#232326] text-gray-200 border-gray-200 px-2 py-1 rounded"
+                          className={theme === 'dark' ? 'bg-card text-foreground border border-border px-2 py-1 rounded' : 'bg-white text-gray-900 border border-gray-300 px-2 py-1 rounded'}
                         >
-                          <option value="">-- Select HOD --</option>
+                          <option value="" className={theme === 'dark' ? 'text-foreground bg-card' : 'text-gray-900 bg-white'}>-- Select HOD --</option>
                           {users.map((u) => (
-                            <option  className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" key={u.id} value={u.username}>
+                            <option className={theme === 'dark' ? 'text-foreground bg-card' : 'text-gray-900 bg-white'} key={u.id} value={u.username}>
                               {u.username}
                             </option>
                           ))}
@@ -469,7 +483,9 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                         <>
                           <Button
                             size="sm"
-                            className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                            className={theme === 'dark' 
+                              ? 'text-foreground bg-card border border-border hover:bg-accent' 
+                              : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
                             onClick={saveEdit}
                             disabled={loading}
                           >
@@ -483,6 +499,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                               setEditData(null);
                             }}
                             disabled={loading}
+                            className={theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-100'}
                           >
                             Cancel
                           </Button>
@@ -493,8 +510,9 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                           size="icon"
                           onClick={() => handleEdit(branch)}
                           disabled={loading}
+                          className={theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-100'}
                         >
-                          <PencilIcon className="w-4 h-4 text-blue-600" />
+                          <PencilIcon className={theme === 'dark' ? 'w-4 h-4 text-primary' : 'w-4 h-4 text-blue-600'} />
                         </Button>
                       )}
 
@@ -503,8 +521,9 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                         size="icon"
                         onClick={() => confirmDelete(branch.id)}
                         disabled={loading}
+                        className={theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-100'}
                       >
-                        <TrashIcon className="w-4 h-4 text-red-600" />
+                        <TrashIcon className={theme === 'dark' ? 'w-4 h-4 text-destructive' : 'w-4 h-4 text-red-600'} />
                       </Button>
                     </td>
                   </tr>
@@ -516,31 +535,69 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
       </Card>
 
       <Dialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
-        <DialogContent className="sm:max-w-md bg-[#1c1c1e] text-gray-200">
+        <DialogContent className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
           <DialogHeader><DialogTitle>Confirm Deletion</DialogTitle></DialogHeader>
           <p>Are you sure you want to delete this branch? This action cannot be undone.</p>
           <DialogFooter>
-            <Button variant="outline" className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={() => setDeleteId(null)} disabled={loading}>Cancel</Button>
-            <Button variant="destructive" onClick={deleteBranch} disabled={loading}>{loading ? "Deleting..." : "Delete"}</Button>
+            <Button 
+              variant="outline" 
+              className={theme === 'dark' 
+                ? 'text-foreground bg-card border border-border hover:bg-accent' 
+                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'} 
+              onClick={() => setDeleteId(null)} 
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={deleteBranch} 
+              disabled={loading}
+              className={theme === 'dark' ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 'bg-red-600 hover:bg-red-700 text-white'}
+            >
+              {loading ? "Deleting..." : "Delete"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-[#1c1c1e] text-gray-200">
+        <DialogContent className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
           <DialogHeader><DialogTitle>Add New Branch</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <Input className="bg-[#232326] text-gray-200" placeholder="Branch Name" value={newBranch.name} onChange={(e) => setNewBranch({ ...newBranch, name: e.target.value })} />
+            <Input 
+              className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'} 
+              placeholder="Branch Name" 
+              value={newBranch.name} 
+              onChange={(e) => setNewBranch({ ...newBranch, name: e.target.value })} 
+            />
           </div>
           <DialogFooter>
-            <Button className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" variant="outline" onClick={() => setIsAddDialogOpen(false)} disabled={loading}>Cancel</Button>
-            <Button className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={handleAddBranch} disabled={loading}>{loading ? "Adding..." : "Add"}</Button>
+            <Button 
+              className={theme === 'dark' 
+                ? 'text-foreground bg-card border border-border hover:bg-accent' 
+                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'} 
+              variant="outline" 
+              onClick={() => setIsAddDialogOpen(false)} 
+              disabled={loading}
+            >
+              Cancel
+            </Button>
+            <Button 
+              className={theme === 'dark' 
+                ? 'text-foreground bg-card border border-border hover:bg-accent' 
+                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'} 
+              onClick={handleAddBranch} 
+              disabled={loading}
+            >
+              {loading ? "Adding..." : "Add"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-[#1c1c1e] text-gray-200">
+        <DialogContent className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
           <DialogHeader>
             <DialogTitle>Assign HOD to Branch</DialogTitle>
           </DialogHeader>
@@ -550,16 +607,15 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
             <select
               value={selectedBranchId || ""}
               onChange={(e) => setSelectedBranchId(Number(e.target.value))}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-[#232326] text-gray-200"
+              className={theme === 'dark' ? 'w-full border border-border rounded px-3 py-2 text-sm bg-card text-foreground' : 'w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white text-gray-900'}
             >
-              <option className="bg-[#232326] text-gray-200" value="" disabled>
+              <option value="" disabled>
                 Select a branch
               </option>
               {branches.map((branch) => (
                 <option
                   key={branch.id}
                   value={branch.id}
-                  className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
                 >
                   {branch.name}
                 </option>
@@ -570,16 +626,15 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
             <select
               value={newHodId}
               onChange={(e) => setNewHodId(e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-[#232326] text-gray-200"
+              className={theme === 'dark' ? 'w-full border border-border rounded px-3 py-2 text-sm bg-card text-foreground' : 'w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white text-gray-900'}
             >
-              <option className="bg-[#232326] text-gray-200" value="" disabled>
+              <option value="" disabled>
                 Select HOD
               </option>
               {users.map((user) => (
                 <option
                   key={user.id}
                   value={user.id}
-                  className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
                 >
                   {user.username}
                 </option>
@@ -590,7 +645,9 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
           <DialogFooter>
             <Button
               variant="outline"
-              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+              className={theme === 'dark' 
+                ? 'text-foreground bg-card border border-border hover:bg-accent' 
+                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
               onClick={() => setIsAssignDialogOpen(false)}
               disabled={loading}
             >
@@ -598,7 +655,9 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
             </Button>
             <Button
               onClick={handleAssignHod}
-              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+              className={theme === 'dark' 
+                ? 'text-foreground bg-card border border-border hover:bg-accent' 
+                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
               disabled={loading || !selectedBranchId || !newHodId}
             >
               {loading ? "Assigning..." : "Assign"}

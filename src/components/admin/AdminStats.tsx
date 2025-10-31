@@ -17,6 +17,7 @@ import autoTable from "jspdf-autotable";
 import DashboardCard from "../common/DashboardCard";
 import { getAdminStats } from "../../utils/admin_api";
 import { useToast } from "../../hooks/use-toast";
+import { useTheme } from "../../context/ThemeContext";
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
@@ -30,12 +31,11 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { theme } = useTheme();
   const normalize = (str: string) => str.toLowerCase().trim();
   const allLabels = Array.isArray(stats?.branch_distribution)
     ? stats.branch_distribution.map((b: any) => b.name || "N/A")
     : [];
-
-
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -187,7 +187,7 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
 
   if (loading) {
     return (
-      <div className="text-center py-6 text-gray-600 animate-pulse">
+      <div className={`text-center py-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'} animate-pulse`}>
         Loading Dashboard...
       </div>
     );
@@ -195,72 +195,75 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
 
   if (!stats) {
     return (
-      <div className="text-center py-6 text-red-600">
+      <div className={`text-center py-6 ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>
         No statistics available
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 text-gray-800 bg-black-50 min-h-screen p-6">
+    <div className={`space-y-8 min-h-screen p-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
       >
         
-
         {/* Dashboard Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 ">
-          <motion.div variants={cardVariants} initial="hidden" animate="visible" className="bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white rounded-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <motion.div variants={cardVariants} initial="hidden" animate="visible">
             <DashboardCard
               title="Total Students"
               value={stats.total_students || 0}
               description="Enrolled in all branches"
-              icon={<FaUserGraduate className="text-blue-500 text-3xl" />}
+              icon={<FaUserGraduate className={theme === 'dark' ? "text-blue-400 text-3xl" : "text-blue-500 text-3xl"} />}
             />
           </motion.div>
-          <motion.div variants={cardVariants} initial="hidden" animate="visible" className="bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white rounded-lg">
+          <motion.div variants={cardVariants} initial="hidden" animate="visible">
             <DashboardCard
               title="Total Faculty"
               value={stats.total_faculty || 0}
               description="Teaching staff"
-              icon={<FaChalkboardTeacher className="text-purple-500 text-3xl" />}
+              icon={<FaChalkboardTeacher className={theme === 'dark' ? "text-purple-400 text-3xl" : "text-purple-500 text-3xl"} />}
             />
           </motion.div>
-          <motion.div variants={cardVariants} initial="hidden" animate="visible" className="bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white rounded-lg">
+          <motion.div variants={cardVariants} initial="hidden" animate="visible">
             <DashboardCard
               title="Total HODs"
               value={stats.total_hods || 0}
               description="Department heads"
-              icon={<FaUserTie className="text-yellow-500 text-3xl" />}
+              icon={<FaUserTie className={theme === 'dark' ? "text-yellow-400 text-3xl" : "text-yellow-500 text-3xl"} />}
             />
           </motion.div>
-          <motion.div variants={cardVariants} initial="hidden" animate="visible" className="bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white rounded-lg">
+          <motion.div variants={cardVariants} initial="hidden" animate="visible">
             <DashboardCard
               title="Total Admins"
               value={stats.role_distribution?.admins || 0}
               description="System administrators"
-              icon={<FaUserShield className="text-red-500 text-3xl" />}
+              icon={<FaUserShield className={theme === 'dark' ? "text-red-400 text-3xl" : "text-red-500 text-3xl"} />}
             />
           </motion.div>
         </div>
 
         {/* Search and Export */}
         <div className="flex justify-between items-center flex-wrap gap-4 mt-8">
-          <div className="flex items-center w-full sm:w-1/2 bg-black-50 border border-gray-200 rounded-lg px-4 py-2 shadow-sm">
-            <FiSearch className="text-white mr-3" />
+          <div className={`flex items-center w-full sm:w-1/2 rounded-lg px-4 py-2 shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
+            <FiSearch className={theme === 'dark' ? "text-foreground mr-3" : "text-gray-500 mr-3"} />
             <input
               type="text"
               placeholder="Search by branch name"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full outline-none text-sm bg-transparent text-white"
+              className={`w-full outline-none text-sm bg-transparent ${theme === 'dark' ? 'text-foreground placeholder:text-muted-foreground' : 'text-gray-900 placeholder:text-gray-500'}`}
             />
           </div>
           <button
             onClick={handleExportPDF}
-            className="flex items-center gap-2 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 text-sm font-medium px-5 py-2.5 rounded-lg shadow-md transition duration-200"
+            className={`flex items-center gap-2 text-sm font-medium px-5 py-2.5 rounded-lg shadow-md transition duration-200 ${
+              theme === 'dark' 
+                ? 'text-foreground bg-card border border-border hover:bg-accent' 
+                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+            }`}
           >
             <FiDownload />
             Export PDF
@@ -274,12 +277,12 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
             variants={chartVariants}
             initial="hidden"
             animate="visible"
-            className="text-gray-800 rounded-lg shadow border border-gray-700 p-6"
+            className={`rounded-lg shadow p-6 ${theme === 'dark' ? 'border border-border' : 'border border-gray-200'}`}
           >
-            <h3 className="text-lg font-semibold mb-1 text-gray-100">
+            <h3 className={`text-lg font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Branch Distribution
             </h3>
-            <p className="text-sm text-gray-400 mb-4">
+            <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               Students and faculty across branches
             </p>
 
@@ -324,16 +327,28 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
                       plugins: {
                         legend: {
                           position: "top",
-                          labels: { color: "#fff" },
+                          labels: { 
+                            color: theme === 'dark' ? "#fff" : "#000" 
+                          },
                         },
                         tooltip: { enabled: true },
                       },
                       scales: {
-                        x: { ticks: { color: "#fff" } },
+                        x: { 
+                          ticks: { 
+                            color: theme === 'dark' ? "#fff" : "#000" 
+                          } 
+                        },
                         y: {
                           beginAtZero: true,
-                          title: { display: true, text: "Count", color: "#fff" },
-                          ticks: { color: "#fff" },
+                          title: { 
+                            display: true, 
+                            text: "Count", 
+                            color: theme === 'dark' ? "#fff" : "#000" 
+                          },
+                          ticks: { 
+                            color: theme === 'dark' ? "#fff" : "#000" 
+                          },
                         },
                       },
                     }}
@@ -343,7 +358,7 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4 }}
-                    className="text-center text-gray-400"
+                    className={`text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}
                   >
                     <p className="text-lg font-semibold">No data</p>
                     <p className="text-sm">This branch has no records</p>
@@ -355,7 +370,7 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.4 }}
-                  className="text-center text-gray-400"
+                  className={`text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}
                 >
                   <p className="text-lg font-semibold">No results found</p>
                   <p className="text-sm">Try a different search term</p>
@@ -364,18 +379,17 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
             </div>
           </motion.div>
 
-
           {/* Pie Chart */}
           <motion.div
             variants={chartVariants}
             initial="hidden"
             animate="visible"
-            className="text-gray-800 rounded-lg shadow border border-gray-700 p-6"
+            className={`rounded-lg shadow p-6 ${theme === 'dark' ? 'border border-border' : 'border border-gray-200'}`}
           >
-            <h3 className="text-lg font-semibold mb-1 text-gray-100">
+            <h3 className={`text-lg font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Role Distribution
             </h3>
-            <p className="text-sm text-gray-400 mb-4">
+            <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               Breakdown of users by role
             </p>
             <div className="h-80">
@@ -387,7 +401,9 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
                   plugins: {
                     legend: { 
                       position: "right", 
-                      labels: { color: "#fff" }
+                      labels: { 
+                        color: theme === 'dark' ? "#fff" : "#000" 
+                      }
                     },
                     tooltip: { enabled: true },
                   },
@@ -397,24 +413,23 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
           </motion.div>
         </div>
 
-
         {/* Branch Statistics Table */}
         <motion.div
           variants={chartVariants}
           initial="hidden"
           animate="visible"
-          className="text-gray-800 rounded-lg shadow border border-gray-700 p-6 mt-5"
+          className={`rounded-lg shadow p-6 mt-5 ${theme === 'dark' ? 'border border-border' : 'border border-gray-200'}`}
         >
-          <h3 className="text-lg font-semibold mb-1 text-gray-100">
+          <h3 className={`text-lg font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
             Branch Statistics
           </h3>
-          <p className="text-sm text-gray-400 mb-4">
+          <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
             Detailed distribution of students and faculty
           </p>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-300">
+            <table className="w-full text-sm text-left">
               <thead>
-                <tr className="text-gray-100 text-gray-200 border-b border-gray-700">
+                <tr className={`border-b ${theme === 'dark' ? 'border-border text-foreground' : 'border-gray-200 text-gray-900'}`}>
                   <th className="py-3 px-4">Branch</th>
                   <th className="py-3 px-4">Student Count</th>
                   <th className="py-3 px-4">Faculty Count</th>
@@ -425,7 +440,7 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
                   filteredBranches.map((branch: any, index: number) => (
                     <tr
                       key={index}
-                      className="border-b border-gray-700 hover:bg-[#2E2E40] transition"
+                      className={`border-b ${theme === 'dark' ? 'border-border hover:bg-accent' : 'border-gray-200 hover:bg-gray-50'} transition`}
                     >
                       <td className="py-3 px-4">{branch.name || "N/A"}</td>
                       <td className="py-3 px-4">{branch.students || 0}</td>
@@ -434,7 +449,7 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3} className="text-center py-4 text-gray-500">
+                    <td colSpan={3} className={`text-center py-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                       No branches match your search.
                     </td>
                   </tr>

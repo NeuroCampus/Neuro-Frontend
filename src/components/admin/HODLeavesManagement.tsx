@@ -12,6 +12,7 @@ import {
 import { manageHODLeaves } from "../../utils/admin_api";
 import { useToast } from "../../hooks/use-toast";
 import Swal from 'sweetalert2';
+import { useTheme } from "../../context/ThemeContext";
 
 interface LeaveRequest {
   id: number;
@@ -28,18 +29,18 @@ interface HODLeavesManagementProps {
   toast: (options: any) => void;
 }
 
-const getStatusBadge = (status: string) => {
+const getStatusBadge = (status: string, theme: string) => {
   switch (status) {
     case "Pending":
-      return <span className="px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-xs font-medium">Pending</span>;
+      return <span className={`px-3 py-1 rounded-full text-xs font-medium ${theme === 'dark' ? 'bg-yellow-900 text-yellow-200' : 'bg-yellow-100 text-yellow-700'}`}>Pending</span>;
     case "Approved":
     case "APPROVE":
-      return <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-medium">Approved</span>;
+      return <span className={`px-3 py-1 rounded-full text-xs font-medium ${theme === 'dark' ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-700'}`}>Approved</span>;
     case "Rejected":
     case "REJECT":
-      return <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-medium">Rejected</span>;
+      return <span className={`px-3 py-1 rounded-full text-xs font-medium ${theme === 'dark' ? 'bg-red-900 text-red-200' : 'bg-red-100 text-red-700'}`}>Rejected</span>;
     default:
-      return <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-medium">Unknown</span>;
+      return <span className={`px-3 py-1 rounded-full text-xs font-medium ${theme === 'dark' ? 'bg-gray-700 text-gray-200' : 'bg-gray-100 text-gray-700'}`}>Unknown</span>;
   }
 };
 
@@ -49,7 +50,7 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [viewReason, setViewReason] = useState<string | null>(null);
-
+  const { theme } = useTheme();
 
   const fetchLeaves = async () => {
     setLoading(true);
@@ -109,9 +110,9 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
           icon: 'success',
           title: 'Leave Approved!',
           text: 'Hope the time off is refreshing!',
-          background: '#18181b', // dark background
-          color: '#E4E4E7',       // light text
-          confirmButtonColor: '#22c55e', // green button to match dark theme
+          background: theme === 'dark' ? '#1c1c1e' : '#ffffff',
+          color: theme === 'dark' ? '#E4E4E7' : '#000000',
+          confirmButtonColor: '#22c55e',
         });
       } else {
         setError(response.message || "Failed to approve leave");
@@ -134,7 +135,6 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
     }
   };
 
-
   const handleConfirmReject = async () => {
     if (selectedId !== null) {
       setLoading(true);
@@ -150,6 +150,8 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
             icon: 'error',
             title: 'Leave Rejected',
             text: 'We hope for a better time next time!',
+            background: theme === 'dark' ? '#1c1c1e' : '#ffffff',
+            color: theme === 'dark' ? '#E4E4E7' : '#000000',
           });
         } else {
           setError(response.message || "Failed to reject leave");
@@ -174,26 +176,26 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
   };
 
   if (loading && leaveRequests.length === 0) {
-    return <div className="text-center py-6">Loading...</div>;
+    return <div className={`text-center py-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading...</div>;
   }
 
   return (
-    <div className="p-6 bg-black-50 min-h-screen text-gray-200">
-      <Card className="bg-black-50 border border-gray-500 shadow-sm">
+    <div className={`p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}>
         <CardHeader>
-          <CardTitle className="text-lg text-gray-200">Leave Requests</CardTitle>
-          <p className="text-sm text-gray-400">Review and approve leave requests from Heads of Departments</p>
+          <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Requests</CardTitle>
+          <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Review and approve leave requests from Heads of Departments</p>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           <div className="overflow-x-auto max-w-full thin-scrollbar">
-            <table className="w-full text-sm text-left text-gray-200 border-collapse">
-              <thead className="border-b border-gray-700 bg-[#1c1c1e] sticky top-0 z-10">
+            <table className="w-full text-sm text-left border-collapse">
+              <thead className={`border-b ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-200 bg-gray-50'}`}>
                 <tr>
-                  <th className="py-2 px-2 md:px-4 text-left">HOD</th>
-                  <th className="py-2 px-4 md:px-12 text-left">Period</th>
-                  <th className="py-2 px-2 text-left">Reason</th>
-                  <th className="py-2 px-2 text-left">Status</th>
-                  <th className="py-2 px-2 text-left">Action</th>
+                  <th className={`py-2 px-2 md:px-4 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>HOD</th>
+                  <th className={`py-2 px-4 md:px-12 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Period</th>
+                  <th className={`py-2 px-2 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Reason</th>
+                  <th className={`py-2 px-2 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Status</th>
+                  <th className={`py-2 px-2 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -201,30 +203,34 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
                   leaveRequests.map((leave) => (
                     <tr
                       key={leave.id}
-                      className="border-b border-gray-700 transition-colors duration-200 hover:bg-gray-800"
+                      className={`border-b transition-colors duration-200 ${theme === 'dark' ? 'border-border hover:bg-accent' : 'border-gray-200 hover:bg-gray-50'}`}
                     >
                       <td className="py-3 px-2 md:px-4">
-                        <div className="font-medium text-white">{leave.name}</div>
-                        <div className="text-xs text-gray-400">{leave.department}</div>
+                        <div className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{leave.name}</div>
+                        <div className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{leave.department}</div>
                       </td>
-                      <td className="py-3 px-2 md:px-4 text-sm text-white">
-                        {leave.from} <span className="text-gray-400">to</span> {leave.to}
+                      <td className={`py-3 px-2 md:px-4 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                        {leave.from} <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>to</span> {leave.to}
                       </td>
-                      <td className="py-3 px-2 md:px-4 text-sm text-white">
+                      <td className="py-3 px-2 md:px-4 text-sm">
                         <button
                           onClick={() => setViewReason(leave.reason)}
-                          className="text-blue-400 hover:underline"
+                          className={theme === 'dark' ? 'text-primary hover:underline' : 'text-blue-600 hover:underline'}
                         >
                           View
                         </button>
                       </td>
-                      <td className="py-3 px-2 md:px-4">{getStatusBadge(leave.status)}</td>
+                      <td className="py-3 px-2 md:px-4">{getStatusBadge(leave.status, theme)}</td>
                       <td className="py-3 px-2 md:px-4">
                         {leave.status === "Pending" ? (
                           <div className="flex flex-col md:flex-row gap-2">
                             <Button
                               variant="outline"
-                              className="text-green-700 border-green-600 hover:bg-green-900 px-3 py-1 text-xs flex items-center gap-1 w-full md:w-auto"
+                              className={`px-3 py-1 text-xs flex items-center gap-1 w-full md:w-auto ${
+                                theme === 'dark' 
+                                  ? 'text-green-400 border-green-400 hover:bg-green-900/20' 
+                                  : 'text-green-700 border-green-600 hover:bg-green-100'
+                              }`}
                               onClick={() => handleApprove(leave.id)}
                               disabled={loading}
                             >
@@ -232,7 +238,11 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
                             </Button>
                             <Button
                               variant="outline"
-                              className="text-red-700 border-red-600 hover:bg-red-900 px-3 py-1 text-xs flex items-center gap-1 w-full md:w-auto"
+                              className={`px-3 py-1 text-xs flex items-center gap-1 w-full md:w-auto ${
+                                theme === 'dark' 
+                                  ? 'text-red-400 border-red-400 hover:bg-red-900/20' 
+                                  : 'text-red-700 border-red-600 hover:bg-red-100'
+                              }`}
                               onClick={() => {
                                 setShowModal(true);
                                 setSelectedId(leave.id);
@@ -243,14 +253,14 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
                             </Button>
                           </div>
                         ) : (
-                          <span className="text-xs text-gray-400">No action needed</span>
+                          <span className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No action needed</span>
                         )}
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="text-center py-4 text-gray-400">
+                    <td colSpan={5} className={`text-center py-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                       No leave requests available.
                     </td>
                   </tr>
@@ -263,14 +273,14 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
 
       {/* View Reason Dialog */}
       <Dialog open={!!viewReason} onOpenChange={() => setViewReason(null)}>
-        <DialogContent className="sm:max-w-lg bg-[#1c1c1e] text-gray-200 rounded-2xl shadow-lg thin-scrollbar">
+        <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'}>
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold">Leave Reason</DialogTitle>
+            <DialogTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Reason</DialogTitle>
           </DialogHeader>
 
           <div
-            className="p-3 text-gray-300 text-base leading-relaxed whitespace-pre-wrap break-words 
-                      max-h-64 overflow-y-auto rounded-md"
+            className={`p-3 text-base leading-relaxed whitespace-pre-wrap break-words 
+                      max-h-64 overflow-y-auto rounded-md ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
           >
             {viewReason}
           </div>
@@ -278,7 +288,9 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
           <DialogFooter>
             <Button
               variant="outline"
-              className="text-gray-200 bg-gray-800 hover:bg-gray-700 border border-gray-600"
+              className={theme === 'dark' 
+                ? 'text-foreground bg-card border border-border hover:bg-accent' 
+                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
               onClick={() => setViewReason(null)}
             >
               Close
@@ -288,15 +300,17 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
       </Dialog>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="bg-[#18181b] text-gray-200 border border-gray-700">
+        <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'}>
           <DialogHeader>
-            <DialogTitle className="text-gray-200">Reject Leave Request</DialogTitle>
+            <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Reject Leave Request</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-gray-300">Are you sure you want to reject this leave request?</p>
+          <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Are you sure you want to reject this leave request?</p>
           <DialogFooter className="pt-4 flex justify-end gap-2">
             <Button
               variant="outline"
-              className="border-gray-600 text-gray-200 bg-[#18181b]"
+              className={theme === 'dark' 
+                ? 'border-border text-foreground bg-card hover:bg-accent' 
+                : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'}
               onClick={() => setShowModal(false)}
               disabled={loading}
               style={{ boxShadow: "none" }}
@@ -304,7 +318,9 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
               Cancel
             </Button>
             <Button
-              className="bg-red-800 text-gray-100 border border-red-800 hover:bg-red-900"
+              className={theme === 'dark' 
+                ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90 border border-destructive' 
+                : 'bg-red-600 text-white hover:bg-red-700 border border-red-600'}
               onClick={handleConfirmReject}
               disabled={loading}
               style={{ boxShadow: "none" }}
