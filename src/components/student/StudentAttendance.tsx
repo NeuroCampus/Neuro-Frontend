@@ -95,20 +95,20 @@ const StudentAttendance = () => {
   }
 
   return (
-    <div className={`p-4 space-y-6 ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`p-4 space-y-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <div>
-        <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Attendance Tracker</h2>
-        <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+        <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Attendance Tracker</h2>
+        <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
           Monitor your subject-wise attendance and trends
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className={theme === 'dark' ? 'col-span-2 bg-[#1c1c1e] text-gray-200 border-gray-300' : 'col-span-2 bg-white text-gray-900 border-gray-200'}>
+        <Card className={theme === 'dark' ? 'col-span-2 bg-card text-card-foreground border-border' : 'col-span-2 bg-white text-gray-900 border-gray-200'}>
           <CardHeader>
-            <CardTitle className={theme === 'dark' ? 'text-base text-gray-200' : 'text-base text-gray-900'}>Attendance Trends</CardTitle>
+            <CardTitle className={theme === 'dark' ? 'text-base text-card-foreground' : 'text-base text-gray-900'}>Attendance Trends</CardTitle>
           </CardHeader>
-          <CardContent className={`h-[300px] ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
+          <CardContent className={`h-[300px] ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={generateTrendData()}>
                 {/* Add Grid for better visibility */}
@@ -161,12 +161,12 @@ const StudentAttendance = () => {
           </CardContent>
         </Card>
 
-        <Card className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-300' : 'bg-white text-gray-900 border-gray-200'}>
+        <Card className={theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
           <CardHeader>
-            <CardTitle className={theme === 'dark' ? 'text-base text-gray-200' : 'text-base text-gray-900'}>Overview</CardTitle>
+            <CardTitle className={theme === 'dark' ? 'text-base text-card-foreground' : 'text-base text-gray-900'}>Overview</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className={`space-y-2 text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
+            <div className={`space-y-2 text-sm ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
               <div className="flex justify-between">
                 <span>Total Classes</span>
                 <span>{overview.total}</span>
@@ -177,7 +177,7 @@ const StudentAttendance = () => {
               </div>
               <div className="flex justify-between">
                 <span>Overall Percentage</span>
-                <span className={theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}>{overallPercentage}</span>
+                <span className={theme === 'dark' ? 'text-primary' : 'text-blue-600'}>{overallPercentage}</span>
               </div>
               <div className="flex justify-between">
                 <span>Minimum Required</span>
@@ -192,12 +192,12 @@ const StudentAttendance = () => {
         </Card>
       </div>
 
-      <Card className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-300' : 'bg-white text-gray-900 border-gray-200'}>
+      <Card className={theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
-          <CardTitle className={theme === 'dark' ? 'text-base text-gray-200' : 'text-base text-gray-900'}>Subject-wise Attendance</CardTitle>
+          <CardTitle className={theme === 'dark' ? 'text-base text-card-foreground' : 'text-base text-gray-900'}>Subject-wise Attendance</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          <table className={`min-w-full text-sm text-left ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
+          <table className={`min-w-full text-sm text-left ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
             <thead className={theme === 'dark' ? 'border-b border-gray-300' : 'border-b border-gray-200'}>
               <tr className={`uppercase text-xs ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
                 <th className="p-3">Subject</th>
