@@ -144,16 +144,16 @@ const StudentStudyMaterial = () => {
   });
 
   return (
-    <div className={`p-6 space-y-6 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+    <div className={`p-6 space-y-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Study Materials</h2>
+        <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Study Materials</h2>
         <div className="flex items-center space-x-4">
           <Button
             variant="ghost"
             className={cn(
               "flex items-center space-x-1 text-sm",
-              !viewBookmarked && (theme === 'dark' ? "text-gray-200 font-medium" : "text-black font-medium")
+              !viewBookmarked && (theme === 'dark' ? "text-foreground font-medium" : "text-black font-medium")
             )}
             onClick={() => setViewBookmarked(false)}
           >
@@ -164,7 +164,7 @@ const StudentStudyMaterial = () => {
             variant="ghost"
             className={cn(
               "flex items-center space-x-1 text-sm",
-              viewBookmarked && (theme === 'dark' ? "text-gray-200 font-medium" : "text-black font-medium")
+              viewBookmarked && (theme === 'dark' ? "text-foreground font-medium" : "text-black font-medium")
             )}
             onClick={() => setViewBookmarked(true)}
           >
@@ -180,25 +180,25 @@ const StudentStudyMaterial = () => {
           placeholder="Search for study materials..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className={theme === 'dark' ? 'max-w-md bg-[#232326] text-gray-200 border-gray-600' : 'max-w-md bg-white text-gray-900 border-gray-300'}
+          className={theme === 'dark' ? 'max-w-md bg-background text-foreground border-border' : 'max-w-md bg-white text-gray-900 border-gray-300'}
         />
         <div className="flex items-center space-x-2">
           <select
             value={subjectFilter}
             onChange={(e) => setSubjectFilter(e.target.value)}
-            className={theme === 'dark' ? 'border rounded px-3 py-2 text-sm bg-[#232326] text-gray-200 border-gray-600' : 'border rounded px-3 py-2 text-sm bg-white text-gray-900 border-gray-300'}
+            className={theme === 'dark' ? 'border rounded px-3 py-2 text-sm bg-background text-foreground border-border' : 'border rounded px-3 py-2 text-sm bg-white text-gray-900 border-gray-300'}
           >
             {getAllSubjects().map((s) => (
-              <option key={s} className={theme === 'dark' ? 'bg-[#232326] text-gray-200' : 'bg-white text-gray-900'}>{s}</option>
+              <option key={s} className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>{s}</option>
             ))}
           </select>
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className={theme === 'dark' ? 'border rounded px-3 py-2 text-sm bg-[#232326] text-gray-200 border-gray-600' : 'border rounded px-3 py-2 text-sm bg-white text-gray-900 border-gray-300'}
+            className={theme === 'dark' ? 'border rounded px-3 py-2 text-sm bg-background text-foreground border-border' : 'border rounded px-3 py-2 text-sm bg-white text-gray-900 border-gray-300'}
           >
             {getAllTypes().map((t) => (
-              <option key={t} className={theme === 'dark' ? 'bg-[#232326] text-gray-200' : 'bg-white text-gray-900'}>{t}</option>
+              <option key={t} className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>{t}</option>
             ))}
           </select>
           <Button 

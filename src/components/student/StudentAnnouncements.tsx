@@ -69,13 +69,13 @@ const StudentAnnouncements = () => {
 
   return (
     <div className="space-y-6">
-      <Card className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200' : 'bg-white text-gray-900'}>
+      <Card className={theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
           <div className="flex items-center gap-2">
             <Megaphone className="h-5 w-5" />
-            <CardTitle className={theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}>Announcements</CardTitle>
+            <CardTitle className={theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}>Announcements</CardTitle>
           </div>
-          <CardDescription className={theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}>
+          <CardDescription className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>
             Stay updated with the latest announcements and notifications
           </CardDescription>
         </CardHeader>
@@ -86,13 +86,13 @@ const StudentAnnouncements = () => {
               <div
                 key={idx}
                 className={`rounded-lg border p-4 transition-colors ${
-                  theme === 'dark' ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-200 hover:bg-gray-50'
+                  theme === 'dark' ? 'border-border hover:bg-accent' : 'border-gray-200 hover:bg-gray-50'
                 }`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <h3 className={`font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>{announcement.title}</h3>
+                      <h3 className={`font-medium ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>{announcement.title}</h3>
                       {announcement.priority === "high" && (
                         <Badge
                           variant="destructive"
@@ -102,11 +102,11 @@ const StudentAnnouncements = () => {
                         </Badge>
                       )}
                     </div>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                    <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                       {announcement.content}
                     </p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}>
+                      <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>
                         {announcement.from || "Admin Office"}
                       </span>
                       <span>•</span>
@@ -130,7 +130,7 @@ const StudentAnnouncements = () => {
             ))}
 
             {announcements.length === 0 && (
-              <div className={`text-center py-8 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+              <div className={`text-center py-8 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                 <Bell className="mx-auto h-8 w-8 mb-2" />
                 <p>No announcements at the moment</p>
               </div>

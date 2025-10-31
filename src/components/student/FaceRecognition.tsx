@@ -74,18 +74,18 @@ const FaceRecognition = () => {
   };
 
   return (
-    <Card className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}>
+    <Card className={theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
       <CardHeader>
-        <CardTitle className={theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}>Face Recognition</CardTitle>
-        <CardDescription className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>Upload your face images for attendance recognition</CardDescription>
+        <CardTitle className={theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}>Face Recognition</CardTitle>
+        <CardDescription className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Upload your face images for attendance recognition</CardDescription>
       </CardHeader>
       <CardContent>
-        {error && <div className={`p-2 rounded mb-4 ${theme === 'dark' ? 'bg-red-900/30 text-red-400' : 'bg-red-500 text-white'}`}>{error}</div>}
+        {error && <div className={`p-2 rounded mb-4 ${theme === 'dark' ? 'bg-destructive/20 text-destructive-foreground' : 'bg-red-500 text-white'}`}>{error}</div>}
         {success && <div className={`p-2 rounded mb-4 ${theme === 'dark' ? 'bg-green-900/30 text-green-400' : 'bg-green-500 text-white'}`}>{success}</div>}
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="face-images" className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
+            <label htmlFor="face-images" className={`block text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Upload Face Images (3-5 recommended)
             </label>
             <input
@@ -94,21 +94,21 @@ const FaceRecognition = () => {
               accept="image/*"
               multiple
               onChange={handleFileChange}
-              className={`block w-full text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}
+              className={`block w-full text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}
                 file:mr-4 file:py-2 file:px-4
                 file:rounded-full file:border-0
                 file:text-sm file:font-semibold
-                ${theme === 'dark' ? 'file:bg-blue-900/30 file:text-blue-400 hover:file:bg-blue-800/50' : 'file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100'}
-                ${theme === 'dark' ? 'bg-[#232326] border-gray-600' : 'bg-white border-gray-300'}`}
+                ${theme === 'dark' ? 'file:bg-primary/10 file:text-primary hover:file:bg-primary/20' : 'file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100'}
+                ${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}`}
             />
-            <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+            <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               Upload clear images of your face from different angles. JPG or PNG format recommended.
             </p>
           </div>
 
           {previewUrls.length > 0 && (
             <div>
-              <h3 className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Selected Images:</h3>
+              <h3 className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Selected Images:</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {previewUrls.map((url, index) => (
                   <div key={index} className="relative">
@@ -120,7 +120,7 @@ const FaceRecognition = () => {
                   </div>
                 ))}
               </div>
-              <p className={`text-xs mt-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+              <p className={`text-xs mt-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                 {previewUrls.length} images selected
               </p>
             </div>
@@ -129,14 +129,14 @@ const FaceRecognition = () => {
           <Button
             onClick={handleUpload}
             disabled={loading || !selectedFiles}
-            className={`w-full ${theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
+            className={`w-full ${theme === 'dark' ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
           >
             {loading ? "Uploading..." : "Upload Images"}
           </Button>
 
-          <div className={`p-4 rounded text-sm ${theme === 'dark' ? 'bg-blue-900/20' : 'bg-blue-50'}`}>
-            <h3 className={`font-medium mb-1 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-800'}`}>Why we need your face images:</h3>
-            <p className={theme === 'dark' ? 'text-blue-300' : 'text-blue-600'}>
+          <div className={`p-4 rounded text-sm ${theme === 'dark' ? 'bg-primary/10' : 'bg-blue-50'}`}>
+            <h3 className={`font-medium mb-1 ${theme === 'dark' ? 'text-primary' : 'text-blue-800'}`}>Why we need your face images:</h3>
+            <p className={theme === 'dark' ? 'text-primary/80' : 'text-blue-600'}>
               These images will be used for automatic attendance marking using facial recognition.
               Your images will be securely stored and only used for attendance purposes.
             </p>

@@ -326,7 +326,7 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
 
   if (isLoading) {
     return (
-      <div className={`space-y-6 ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
+      <div className={`space-y-6 ${theme === 'dark' ? 'bg-background text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
         <div className="flex justify-center items-center min-h-[400px]">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
         </div>
@@ -336,14 +336,14 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
 
   if (error) {
     return (
-      <div className={`space-y-6 ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
-        <div className={`rounded-lg p-6 text-center ${theme === 'dark' ? 'bg-red-900/20 border border-red-500' : 'bg-red-100 border border-red-200'}`}>
-          <FaExclamationTriangle className={`w-12 h-12 mx-auto mb-4 ${theme === 'dark' ? 'text-red-500' : 'text-red-600'}`} />
-          <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-red-400' : 'text-red-700'}`}>Error Loading Dashboard</h3>
+      <div className={`space-y-6 ${theme === 'dark' ? 'bg-background text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
+        <div className={`rounded-lg p-6 text-center ${theme === 'dark' ? 'bg-destructive/20 border border-destructive' : 'bg-red-100 border border-red-200'}`}>
+          <FaExclamationTriangle className={`w-12 h-12 mx-auto mb-4 ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`} />
+          <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-destructive' : 'text-red-700'}`}>Error Loading Dashboard</h3>
           <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>{error}</p>
           <Button 
             onClick={() => window.location.reload()} 
-            className={`mt-4 ${theme === 'dark' ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'}`}
+            className={`mt-4 ${theme === 'dark' ? 'bg-destructive hover:bg-destructive/80 text-destructive-foreground' : 'bg-red-600 hover:bg-red-700 text-white'}`}
           >
             Retry
           </Button>
@@ -354,7 +354,7 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
 
   if (!dashboardData) {
     return (
-      <div className={`space-y-6 ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
+      <div className={`space-y-6 ${theme === 'dark' ? 'bg-background text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
         <div className="text-center py-12">
           <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>No dashboard data available</p>
         </div>
@@ -363,19 +363,19 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
   }
 
   return (
-    <div className={`space-y-6 ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`space-y-6 ${theme === 'dark' ? 'bg-background text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
       {/* Top Cards Row */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Today's Lectures Card */}
-        <div className={`border rounded-md p-4 flex items-center gap-4 relative shadow-sm ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-300' : 'bg-white text-gray-900 border-gray-200'}`}>
+        <div className={`border rounded-md p-4 flex items-center gap-4 relative shadow-sm ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
           <div className="absolute top-0 left-0 h-full w-1 bg-blue-600 rounded-l-md" />
           <div className={`p-2 rounded-md ${theme === 'dark' ? 'bg-blue-100 text-blue-600' : 'bg-blue-50 text-blue-700'}`}>
             <FaBookOpen className="w-5 h-5" />
           </div>
           <div className="text-sm">
-            <p className={theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}>Today's Lectures</p>
+            <p className={theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}>Today's Lectures</p>
             <p className="text-lg font-semibold">{dashboardData.today_lectures.count}</p>
-            <p className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>
+            <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               {dashboardData.today_lectures.next_lecture 
                 ? `Next: ${dashboardData.today_lectures.next_lecture.subject} at ${dashboardData.today_lectures.next_lecture.start_time}`
                 : "No more lectures today"
@@ -385,7 +385,7 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
         </div>
 
         {/* Attendance Status Card */}
-        <div className={`border rounded-md p-4 flex items-center gap-4 relative shadow-sm ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-300' : 'bg-white text-gray-900 border-gray-200'}`}>
+        <div className={`border rounded-md p-4 flex items-center gap-4 relative shadow-sm ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
           <div className={`absolute top-0 left-0 h-full w-1 rounded-l-md ${
             dashboardData.attendance_status.percentage >= 75 ? 'bg-green-500' : 'bg-yellow-500'
           }`} />
@@ -397,9 +397,9 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
             <FaCheckCircle className="w-5 h-5" />
           </div>
           <div className="text-sm">
-            <p className={theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}>Attendance Status</p>
+            <p className={theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}>Attendance Status</p>
             <p className="text-lg font-semibold">{dashboardData.attendance_status.percentage}%</p>
-            <p className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>
+            <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               {dashboardData.attendance_status.warnings.length > 0
                 ? `Warning: Low in ${dashboardData.attendance_status.warnings[0].subject} (${dashboardData.attendance_status.warnings[0].percentage}%)`
                 : "All subjects above 75%"
@@ -411,14 +411,14 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
 
       {/* Current & Next Session */}
       <section className="w-full px-0 py-4">
-        <Card className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-300' : 'bg-white text-gray-900 border-gray-200'}>
+        <Card className={theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
           <CardHeader>
             <div className="flex items-center justify-between w-full">
-              <CardTitle className={theme === 'dark' ? 'text-base text-gray-200' : 'text-base text-gray-900'}>Current & Next Session</CardTitle>
+              <CardTitle className={theme === 'dark' ? 'text-base text-card-foreground' : 'text-base text-gray-900'}>Current & Next Session</CardTitle>
               <div className="flex items-center gap-3 text-sm">
                 <FaClock className="w-5 h-5" />
                 <span className={`flex items-center gap-2 px-3 py-1 rounded-full font-medium shadow-sm ${
-                  theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-900'
+                  theme === 'dark' ? 'bg-muted text-muted-foreground' : 'bg-gray-100 text-gray-900'
                 }`}>
                   <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                   Live: {currentTime.toLocaleTimeString('en-US', { hour12: false })}
@@ -434,16 +434,16 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
                 <div className={`border-2 border-blue-500 rounded-md p-6 w-full sm:w-1/2 shadow-md flex flex-col items-center sm:items-start gap-2 ${
                   theme === 'dark' ? 'bg-blue-900/20' : 'bg-blue-50'
                 }`}>
-                  <h4 className={`font-semibold text-lg mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
+                  <h4 className={`font-semibold text-lg mb-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
                     {currentSession.subject}
                   </h4>
-                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                     Teacher: {currentSession.teacher}
                   </p>
-                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                     Room: {currentSession.room}
                   </p>
-                  <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                     {currentSession.start_time} - {currentSession.end_time}
                   </p>
                   <p className={`text-xs mt-1 font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>Currently Running</p>
@@ -456,18 +456,18 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
                       ? (theme === 'dark' ? 'border-orange-500 bg-orange-900/20' : 'border-orange-500 bg-orange-50')
                       : getSessionStatus(nextSession)?.status === 'upcoming'
                       ? (theme === 'dark' ? 'border-yellow-500 bg-yellow-900/20' : 'border-yellow-500 bg-yellow-50')
-                      : (theme === 'dark' ? 'border-gray-600 bg-[#27272a]' : 'border-gray-300 bg-gray-50')
+                      : (theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-gray-50')
                   }`}>
-                    <h4 className={`font-semibold text-lg mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
+                    <h4 className={`font-semibold text-lg mb-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
                       {nextSession.subject}
                     </h4>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                    <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                       Teacher: {nextSession.teacher}
                     </p>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                    <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                       Room: {nextSession.room}
                     </p>
-                    <p className={`text-xs mt-1 font-medium ${getSessionStatus(nextSession)?.color || (theme === 'dark' ? 'text-gray-400' : 'text-gray-500')}`}>
+                    <p className={`text-xs mt-1 font-medium ${getSessionStatus(nextSession)?.color || (theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500')}`}>
                       {getSessionStatus(nextSession)?.message || `Starts at ${nextSession.starts_at || nextSession.start_time}`}
                     </p>
                   </div>
@@ -475,25 +475,25 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
               </>
             ) : (
               <div className="w-full text-center">
-                <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>No class is currently running</p>
+                <p className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>No class is currently running</p>
                 {nextSession && (
                   <div className={`border rounded-md p-6 mt-4 shadow-md ${
                     getSessionStatus(nextSession)?.status === 'starting-soon' 
                       ? (theme === 'dark' ? 'border-orange-500 bg-orange-900/20' : 'border-orange-500 bg-orange-50')
                       : getSessionStatus(nextSession)?.status === 'upcoming'
                       ? (theme === 'dark' ? 'border-yellow-500 bg-yellow-900/20' : 'border-yellow-500 bg-yellow-50')
-                      : (theme === 'dark' ? 'border-gray-600 bg-[#27272a]' : 'border-gray-300 bg-gray-50')
+                      : (theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-gray-50')
                   }`}>
-                    <h4 className={`font-semibold text-lg mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
+                    <h4 className={`font-semibold text-lg mb-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
                       Next: {nextSession.subject}
                     </h4>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                    <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                       Teacher: {nextSession.teacher}
                     </p>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                    <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                       Room: {nextSession.room}
                     </p>
-                    <p className={`text-xs mt-1 font-medium ${getSessionStatus(nextSession)?.color || (theme === 'dark' ? 'text-gray-400' : 'text-gray-500')}`}>
+                    <p className={`text-xs mt-1 font-medium ${getSessionStatus(nextSession)?.color || (theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500')}`}>
                       {getSessionStatus(nextSession)?.message || `Starts at ${nextSession.starts_at || nextSession.start_time}`}
                     </p>
                     {getSessionStatus(nextSession)?.status === 'starting-soon' && (
@@ -512,12 +512,12 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
 
       {/* Performance Overview */}
       <section>
-        <div className={`p-4 border rounded-lg shadow-lg ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-300' : 'bg-white text-gray-900 border-gray-200'}`}>
-          <h2 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Performance Overview</h2>
-          <p className={`text-sm mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+        <div className={`p-4 border rounded-lg shadow-lg ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
+          <h2 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>Performance Overview</h2>
+          <p className={`text-sm mb-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
             Subject-wise attendance percentage and average marks comparison
           </p>
-          <p className={`text-xs mb-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+          <p className={`text-xs mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
             Correlation coefficient: {dashboardData.performance_overview.correlation}
           </p>
           
@@ -529,7 +529,7 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
             </div>
           ) : (
             <div className="text-center py-12">
-              <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>No performance data available</p>
+              <p className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>No performance data available</p>
             </div>
           )}
         </div>
@@ -539,13 +539,13 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
       <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">
         
         {/* Leave Request Status */}
-        <div className={`border rounded-lg shadow-sm p-4 max-h-96 overflow-y-auto ${theme === 'dark' ? 'bg-[#1c1c1e] border-gray-300' : 'bg-white border-gray-200'}`}>
+        <div className={`border rounded-lg shadow-sm p-4 max-h-96 overflow-y-auto ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
           <div className="flex justify-between items-center mb-4">
-            <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Leave Request Status</h2>
+            <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>Leave Request Status</h2>
             <button
               className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition ${
                 theme === 'dark' 
-                  ? 'border border-gray-300 text-gray-200 bg-gray-800 hover:bg-gray-700' 
+                  ? 'border border-border text-card-foreground bg-muted hover:bg-accent' 
                   : 'border border-gray-300 text-gray-700 bg-gray-100 hover:bg-gray-200'
               }`}
               onClick={() => setPage("leave-request")}
@@ -554,9 +554,9 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
             </button>
           </div>
 
-          <table className={`w-full rounded-md overflow-hidden ${theme === 'dark' ? 'border border-gray-600' : 'border border-gray-300'}`}>
-            <thead className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-[#1c1c1e]' : 'bg-white'}`}>
-              <tr className={`text-center ${theme === 'dark' ? 'border-b border-gray-600 text-gray-200' : 'border-b border-gray-300 text-gray-900'} text-xs`}>
+          <table className={`w-full rounded-md overflow-hidden ${theme === 'dark' ? 'border border-border' : 'border border-gray-300'}`}>
+            <thead className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-card' : 'bg-white'}`}>
+              <tr className={`text-center ${theme === 'dark' ? 'border-b border-border text-card-foreground' : 'border-b border-gray-300 text-gray-900'} text-xs`}>
                 <th className="py-2">Period</th>
                 <th className="py-2">Reason</th>
                 <th className="py-2">Status</th>
@@ -565,7 +565,7 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
             <tbody>
               {(!dashboardData.leave_request_status || dashboardData.leave_request_status.length === 0) ? (
                 <tr>
-                  <td colSpan={3} className={`py-3 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <td colSpan={3} className={`py-3 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                     No leave requests found
                   </td>
                 </tr>
@@ -573,14 +573,14 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
                 dashboardData.leave_request_status.slice(0, 10).map((request, index) => (
                   <tr
                     key={index}
-                    className={`border-b last:border-none text-sm ${theme === 'dark' ? 'hover:bg-gray-800' : 'hover:bg-gray-50'} text-center`}
+                    className={`border-b last:border-none text-sm ${theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-50'} text-center`}
                   >
                     <td className="py-3">{request.period}</td>
                     <td className="py-3">
                       <button
                         className={`px-3 py-1 rounded-md text-xs font-medium transition ${
                           theme === 'dark' 
-                            ? 'text-gray-200 bg-gray-800 hover:bg-gray-700' 
+                            ? 'text-card-foreground bg-muted hover:bg-accent' 
                             : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
                         }`}
                         onClick={() => setSelectedReason(request.reason)}
@@ -609,13 +609,13 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
         </div>
         
         {/* Notification Panel */}
-        <div className={`text-gray-200 border rounded-lg p-4 shadow-sm ${theme === 'dark' ? 'bg-[#1c1c1e] border-gray-300' : 'bg-white border-gray-200'}`}>
+        <div className={`text-gray-200 border rounded-lg p-4 shadow-sm ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
           <div className="flex justify-between items-center mb-4">
-            <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Notification Panel</h2>
+            <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>Notification Panel</h2>
             <button
               className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition ${
                 theme === 'dark' 
-                  ? 'border border-gray-500 text-gray-200 bg-gray-800 hover:bg-gray-700' 
+                  ? 'border border-border text-card-foreground bg-muted hover:bg-accent' 
                   : 'border border-gray-300 text-gray-700 bg-gray-100 hover:bg-gray-200'
               }`}
               onClick={() => setPage("announcements")}
@@ -626,19 +626,19 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
 
           <ul className="space-y-4 max-h-64 overflow-y-auto">
             {dashboardData.notification_panel.length === 0 ? (
-              <li className={`text-center py-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>No notifications available</li>
+              <li className={`text-center py-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No notifications available</li>
             ) : (
               dashboardData.notification_panel.slice(0, 5).map((notification, index) => (
                 <li key={index} className="flex gap-3">
                   {getNotificationIcon(notification.title)}
-                  <div className={notification.read ? '' : (theme === 'dark' ? 'bg-blue-900/20 p-2 rounded' : 'bg-blue-50 p-2 rounded')}>
-                    <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>{notification.title}</p>
-                    <p className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{notification.message}</p>
-                    <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>
+                  <div className={notification.read ? '' : (theme === 'dark' ? 'bg-primary/10 p-2 rounded' : 'bg-blue-50 p-2 rounded')}>
+                    <p className={`text-sm font-medium ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>{notification.title}</p>
+                    <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>{notification.message}</p>
+                    <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                       {new Date(notification.created_at).toLocaleString()}
                     </p>
                     {!notification.read && (
-                      <span className="inline-block w-2 h-2 bg-blue-500 rounded-full ml-2"></span>
+                      <span className="inline-block w-2 h-2 bg-primary rounded-full ml-2"></span>
                     )}
                   </div>
                 </li>
@@ -649,16 +649,16 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
 
         {/* Reason Dialog */}
         <Dialog open={!!selectedReason} onOpenChange={() => setSelectedReason(null)}>
-          <DialogContent className={`rounded-lg w-80 ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border border-gray-700' : 'bg-white text-gray-900 border border-gray-300'}`}>
+          <DialogContent className={`rounded-lg w-80 ${theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
             <DialogHeader>
-              <DialogTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Leave Reason</DialogTitle>
+              <DialogTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Reason</DialogTitle>
             </DialogHeader>
-            <div className={`text-sm mt-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{selectedReason}</div>
+            <div className={`text-sm mt-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>{selectedReason}</div>
             <div className="flex justify-end pt-4">
               <Button 
                 className={`${
                   theme === 'dark' 
-                    ? 'text-gray-200 bg-gray-800 hover:bg-gray-700 border border-gray-600' 
+                    ? 'text-foreground bg-muted hover:bg-accent border border-border' 
                     : 'text-gray-900 bg-gray-200 hover:bg-gray-300 border border-gray-300'
                 }`} 
                 onClick={() => setSelectedReason(null)}

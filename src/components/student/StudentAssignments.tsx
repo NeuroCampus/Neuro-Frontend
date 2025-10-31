@@ -60,15 +60,15 @@ const StudentAssignment = () => {
   }, [assignments]);
 
   return (
-    <div className={`p-6 space-y-6 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
+    <div className={`p-6 space-y-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Heading */}
-      <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Assignments</h2>
+      <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Assignments</h2>
 
       {/* Summary Row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-        <div className={theme === 'dark' ? 'bg-gray-800 rounded-lg p-4' : 'bg-gray-100 rounded-lg p-4'}>
-          <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Total</p>
-          <p className={`text-xl font-bold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>{summary.total}</p>
+        <div className={theme === 'dark' ? 'bg-card rounded-lg p-4' : 'bg-gray-100 rounded-lg p-4'}>
+          <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Total</p>
+          <p className={`text-xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{summary.total}</p>
         </div>
         <div className={theme === 'dark' ? 'bg-yellow-900/20 rounded-lg p-4' : 'bg-yellow-100 rounded-lg p-4'}>
           <p className={`text-sm ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-800'}`}>Pending</p>
@@ -78,9 +78,9 @@ const StudentAssignment = () => {
           <p className={`text-sm ${theme === 'dark' ? 'text-blue-400' : 'text-blue-800'}`}>Submitted</p>
           <p className={`text-xl font-bold ${theme === 'dark' ? 'text-blue-300' : 'text-blue-900'}`}>{summary.submitted}</p>
         </div>
-        <div className={theme === 'dark' ? 'bg-red-900/20 rounded-lg p-4' : 'bg-red-100 rounded-lg p-4'}>
-          <p className={`text-sm ${theme === 'dark' ? 'text-red-400' : 'text-red-800'}`}>Overdue</p>
-          <p className={`text-xl font-bold ${theme === 'dark' ? 'text-red-300' : 'text-red-900'}`}>{summary.overdue}</p>
+        <div className={theme === 'dark' ? 'bg-destructive/20 rounded-lg p-4' : 'bg-red-100 rounded-lg p-4'}>
+          <p className={`text-sm ${theme === 'dark' ? 'text-destructive' : 'text-red-800'}`}>Overdue</p>
+          <p className={`text-xl font-bold ${theme === 'dark' ? 'text-destructive' : 'text-red-900'}`}>{summary.overdue}</p>
         </div>
       </div>
 
@@ -90,18 +90,18 @@ const StudentAssignment = () => {
           placeholder="Search assignments..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className={theme === 'dark' ? 'max-w-sm bg-[#232326] text-gray-200 border-gray-600' : 'max-w-sm bg-white text-gray-900 border-gray-300'}
+          className={theme === 'dark' ? 'max-w-sm bg-background text-foreground border-border' : 'max-w-sm bg-white text-gray-900 border-gray-300'}
         />
         <div className="flex gap-2">
           <Button 
             variant="outline" 
-            className={theme === 'dark' ? 'border-gray-600 text-gray-200 hover:bg-gray-800' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}
+            className={theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}
           >
             All Statuses
           </Button>
           <Button 
             variant="outline" 
-            className={theme === 'dark' ? 'border-gray-600 text-gray-200 hover:bg-gray-800' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}
+            className={theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}
           >
             All Subjects
           </Button>
@@ -109,21 +109,21 @@ const StudentAssignment = () => {
       </div>
 
       {/* Table */}
-      <Card className={theme === 'dark' ? 'bg-[#1c1c1e] border-gray-700' : 'bg-white border-gray-200'}>
+      <Card className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
         <CardContent className="p-0">
-          <table className={`min-w-full text-sm text-left ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
-            <thead className={theme === 'dark' ? 'bg-gray-800 text-gray-300 font-medium' : 'bg-gray-100 text-gray-600 font-medium'}>
+          <table className={`min-w-full text-sm text-left ${theme === 'dark' ? 'divide-border' : 'divide-gray-200'}`}>
+            <thead className={theme === 'dark' ? 'bg-muted text-muted-foreground font-medium' : 'bg-gray-100 text-gray-600 font-medium'}>
               <tr>
                 <th className="px-4 py-3">Title</th>
                 <th className="px-4 py-3">End Date</th>
                 <th className="px-4 py-3">Status</th>
               </tr>
             </thead>
-            <tbody className={theme === 'dark' ? 'divide-gray-700' : 'divide-gray-100'}>
+            <tbody className={theme === 'dark' ? 'divide-border' : 'divide-gray-100'}>
               {filtered.map((assignment, idx) => (
-                <tr key={idx} className={theme === 'dark' ? 'hover:bg-gray-800 transition' : 'hover:bg-gray-50 transition'}>
-                  <td className={`px-4 py-3 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>{assignment.title}</td>
-                  <td className={`px-4 py-3 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                <tr key={idx} className={theme === 'dark' ? 'hover:bg-accent transition' : 'hover:bg-gray-50 transition'}>
+                  <td className={`px-4 py-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-800'}`}>{assignment.title}</td>
+                  <td className={`px-4 py-3 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                     {format(new Date(assignment.dueDate), "MMM dd, yyyy")}
                   </td>
                   <td className="px-4 py-3">
@@ -133,7 +133,7 @@ const StudentAssignment = () => {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={3} className={`px-4 py-4 text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <td colSpan={3} className={`px-4 py-4 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                     No assignments found.
                   </td>
                 </tr>

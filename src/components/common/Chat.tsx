@@ -108,9 +108,9 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
         const data = await response.json();
         
         const formattedAnswer = `
-          <div style="background-color: ${theme === 'dark' ? '#1c1c1e' : '#f0f4ff'}; padding: 1rem; border-radius: 8px; border-left: 4px solid #4a90e2; font-family: sans-serif;">
-            <h3 style="margin-top: 0; color: #4a90e2;">📘 Quick Revision Note:</h3>
-            <div style="color: ${theme === 'dark' ? '#e5e7eb' : '#000'}">
+          <div style="background-color: ${theme === 'dark' ? 'hsl(var(--card))' : '#f0f4ff'}; padding: 1rem; border-radius: 8px; border-left: 4px solid hsl(var(--primary)); font-family: sans-serif;">
+            <h3 style="margin-top: 0; color: hsl(var(--primary));">📘 Quick Revision Note:</h3>
+            <div style="color: ${theme === 'dark' ? 'hsl(var(--card-foreground))' : '#000'}">
               ${data.answer
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                 .replace(/\n/g, '<br>')
@@ -176,12 +176,12 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
 
   if (!chatStarted) {
     return (
-      <div className={`min-h-screen flex flex-col items-center p-4 ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
-        <div className={`max-w-2xl w-full rounded-2xl shadow-xl p-8 ${theme === 'dark' ? 'bg-[#232326] text-gray-200' : 'bg-white text-gray-900'}`}>
+      <div className={`min-h-screen flex flex-col items-center p-4 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+        <div className={`max-w-2xl w-full rounded-2xl shadow-xl p-8 ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
           <div className="text-center mb-6">
-            <BookOpen className={`mx-auto w-12 h-12 mb-3 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
-            <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Revision Buddy</h1>
-            <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Upload a PDF to start quick revision or reference key concepts.</p>
+            <BookOpen className={`mx-auto w-12 h-12 mb-3 ${theme === 'dark' ? 'text-primary' : 'text-blue-600'}`} />
+            <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Revision Buddy</h1>
+            <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Upload a PDF to start quick revision or reference key concepts.</p>
           </div>
           <div
             onDragOver={(e) => {
@@ -193,16 +193,16 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
             className={`border-4 border-dashed rounded-xl p-6 text-center transition-colors ${
               dragActive 
                 ? theme === 'dark' 
-                  ? 'border-blue-400 bg-blue-900/20' 
+                  ? 'border-primary bg-primary/10' 
                   : 'border-blue-400 bg-blue-50' 
                 : theme === 'dark' 
-                  ? 'border-gray-600 bg-[#1c1c1e]' 
+                  ? 'border-border bg-card' 
                   : 'border-gray-300 bg-white'
             }`}
           >
-            <CloudUpload className={`mx-auto w-10 h-10 mb-3 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
-            <p className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Drag & drop your PDF here</p>
-            <p className={`text-xs mb-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>or click to select (PDF only, max 50MB)</p>
+            <CloudUpload className={`mx-auto w-10 h-10 mb-3 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`} />
+            <p className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Drag & drop your PDF here</p>
+            <p className={`text-xs mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>or click to select (PDF only, max 50MB)</p>
             <input
               type="file"
               accept="application/pdf"
@@ -214,7 +214,7 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
               htmlFor="file-upload"
               className={`cursor-pointer inline-block px-4 py-2 rounded-lg text-sm font-medium transition ${
                 theme === 'dark' 
-                  ? 'bg-blue-900/30 text-blue-400 hover:bg-blue-800/50' 
+                  ? 'bg-primary/10 text-primary hover:bg-primary/20' 
                   : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
               }`}
             >
@@ -222,10 +222,10 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
             </label>
             {file && (
               <div className={`mt-4 flex items-center justify-between rounded-lg p-3 ${
-                theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'
+                theme === 'dark' ? 'bg-muted' : 'bg-gray-100'
               }`}>
                 <span className={`truncate max-w-[70%] text-sm ${
-                  theme === 'dark' ? 'text-gray-200' : 'text-gray-700'
+                  theme === 'dark' ? 'text-foreground' : 'text-gray-700'
                 }`}>
                   {file.name}
                 </span>
@@ -233,7 +233,7 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
                   onClick={handleClearFile}
                   className={`flex items-center gap-1 text-sm ${
                     theme === 'dark' 
-                      ? 'text-red-400 hover:text-red-300' 
+                      ? 'text-destructive hover:text-destructive/80' 
                       : 'text-red-600 hover:text-red-800'
                   }`}
                 >
@@ -247,8 +247,8 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
             disabled={!file || loading}
             className={`w-full mt-6 font-semibold py-3 rounded-lg transition disabled:opacity-50 ${
               theme === 'dark' 
-                ? 'text-gray-200 bg-gray-800 hover:bg-gray-700 border border-gray-600' 
-                : 'text-gray-900 bg-gray-200 hover:bg-gray-300 border border-gray-300'
+                ? 'text-foreground bg-muted hover:bg-accent border-border' 
+                : 'text-gray-900 bg-gray-200 hover:bg-gray-300 border-gray-300'
             }`}
           >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Start Revision'}
@@ -260,15 +260,15 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
 
   return (
     <div className={`min-h-screen flex flex-col px-4 py-4 ${
-      theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200' : 'bg-gray-50 text-gray-900'
+      theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'
     }`}>
       <header className={`relative shadow-sm h-16 flex items-center justify-between px-6 ${
-        theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-b border-gray-700' : 'bg-white text-gray-900 border-b border-gray-200'
+        theme === 'dark' ? 'bg-background text-foreground border-b border-border' : 'bg-white text-gray-900 border-b border-gray-200'
       }`}>
         {/* Centered Title */}
         <div className="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
-          <BookOpen className={`w-6 h-6 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
-          <h1 className={`text-xl font-bold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Revision Buddy</h1>
+          <BookOpen className={`w-6 h-6 ${theme === 'dark' ? 'text-primary' : 'text-blue-600'}`} />
+          <h1 className={`text-xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Revision Buddy</h1>
         </div>
 
         {/* Right Buttons */}
@@ -277,8 +277,8 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
             onClick={exportToPDF}
             className={`font-medium flex items-center gap-2 ${
               theme === 'dark' 
-                ? 'text-gray-200 bg-gray-800 hover:bg-gray-700 border border-gray-600' 
-                : 'text-gray-900 bg-gray-200 hover:bg-gray-300 border border-gray-300'
+                ? 'text-foreground bg-muted hover:bg-accent border-border' 
+                : 'text-gray-900 bg-gray-200 hover:bg-gray-300 border-gray-300'
             }`}
           >
             <Download className="w-4 h-4" /> Export PDF
@@ -291,8 +291,8 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
             }}
             className={`font-medium ${
               theme === 'dark' 
-                ? 'text-gray-200 bg-gray-800 hover:bg-gray-700 border border-gray-600' 
-                : 'text-gray-900 bg-gray-200 hover:bg-gray-300 border border-gray-300'
+                ? 'text-foreground bg-muted hover:bg-accent border-border' 
+                : 'text-gray-900 bg-gray-200 hover:bg-gray-300 border-gray-300'
             }`}
           >
             New PDF
@@ -303,14 +303,14 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
       <div 
         ref={chatContainerRef} 
         className={`flex-1 overflow-y-auto p-6 rounded-lg ${
-          theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border border-gray-700' : 'bg-white text-gray-900 border border-gray-200'
+          theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'
         }`}
       >
         <div className="max-w-7xl mx-auto space-y-5">
           {messages.length === 0 && (
-            <div className={`text-center mt-10 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
-              <p className={`text-lg font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Start your revision!</p>
-              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Ask about key concepts, definitions, or specific topics from the uploaded PDF.</p>
+            <div className={`text-center mt-10 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+              <p className={`text-lg font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Start your revision!</p>
+              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Ask about key concepts, definitions, or specific topics from the uploaded PDF.</p>
               
               <div className={`flex justify-center items-center mt-4 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-700'}`}>
                 <AlertTriangle className="w-5 h-5 mr-2" />
@@ -327,7 +327,7 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
             >
               {msg.role === 'bot' && (
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  theme === 'dark' ? 'bg-gray-800 text-gray-200' : 'bg-gray-200 text-gray-900'
+                  theme === 'dark' ? 'bg-muted text-foreground' : 'bg-gray-200 text-gray-900'
                 }`}>
                   <Bot className="w-6 h-6" />
                 </div>
@@ -336,17 +336,17 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
                 className={`p-4 rounded-lg max-w-xl shadow-md bot-message ${
                   msg.role === 'user'
                     ? theme === 'dark' 
-                      ? 'bg-blue-600 text-gray-200 rounded-br-none' 
+                      ? 'bg-primary text-primary-foreground rounded-br-none' 
                       : 'bg-blue-600 text-white rounded-br-none'
                     : theme === 'dark' 
-                      ? 'bg-gray-800 text-gray-200 border border-gray-700 rounded-bl-none' 
-                      : 'bg-gray-100 text-gray-900 border border-gray-200 rounded-bl-none'
+                      ? 'bg-muted text-foreground border-border rounded-bl-none' 
+                      : 'bg-gray-100 text-gray-900 border-gray-200 rounded-bl-none'
                 }`}
                 dangerouslySetInnerHTML={{ __html: msg.text }}
               />
               {msg.role === 'user' && (
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                  theme === 'dark' ? 'bg-gray-800 text-gray-200' : 'bg-gray-200 text-gray-900'
+                  theme === 'dark' ? 'bg-muted text-foreground' : 'bg-gray-200 text-gray-900'
                 }`}>
                   <User className="w-6 h-6" />
                 </div>
@@ -356,12 +356,12 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
           {loading && (
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                theme === 'dark' ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-600'
+                theme === 'dark' ? 'bg-primary/10 text-primary' : 'bg-blue-100 text-blue-600'
               }`}>
                 <Bot className="w-6 h-6" />
               </div>
               <div className={`flex items-center gap-2 text-sm ${
-                theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+                theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'
               }`}>
                 <Loader2 className="animate-spin h-5 w-5" />
                 Summarizing...
@@ -372,7 +372,7 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
         </div>
       </div>
       <footer className={`shadow-t h-20 flex items-center px-6 ${
-        theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-t border-gray-700' : 'bg-white text-gray-900 border-t border-gray-200'
+        theme === 'dark' ? 'bg-background text-foreground border-t border-border' : 'bg-white text-gray-900 border-t border-gray-200'
       }`}>
         <div className="max-w-7xl mx-auto w-full flex gap-3">
           <input
@@ -382,8 +382,8 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
             placeholder="Ask about a concept, topic, or question..."
             className={`flex-1 px-4 py-3 rounded-lg outline-none text-sm focus:ring-2 ${
               theme === 'dark' 
-                ? 'bg-[#232326] text-gray-200 border border-gray-600 focus:ring-blue-500' 
-                : 'bg-white text-gray-900 border border-gray-300 focus:ring-blue-500'
+                ? 'bg-background text-foreground border-border focus:ring-primary' 
+                : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'
             }`}
           />
           <Button
@@ -391,8 +391,8 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
             disabled={loading || !input.trim()}
             className={`px-6 py-3 font-semibold rounded-lg transition disabled:opacity-50 ${
               theme === 'dark' 
-                ? 'text-gray-200 bg-gray-800 hover:bg-gray-700 border border-gray-600' 
-                : 'text-gray-900 bg-gray-200 hover:bg-gray-300 border border-gray-300'
+                ? 'text-foreground bg-muted hover:bg-accent border-border' 
+                : 'text-gray-900 bg-gray-200 hover:bg-gray-300 border-gray-300'
             }`}
           >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Ask'}
