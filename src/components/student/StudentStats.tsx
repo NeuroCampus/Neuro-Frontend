@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import DashboardCard from "../common/DashboardCard";
 import { Activity, BookOpen, Calendar, Clock } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
@@ -10,6 +10,7 @@ const StudentStats = () => {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { theme } = useTheme();
 
   // Helper function to format attendance percentage
   const formatAttendancePercentage = (percentage: number | string): string => {
@@ -59,15 +60,15 @@ const StudentStats = () => {
 
   if (error) {
     return (
-      <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+      <div className={`border-l-4 p-4 mb-4 ${theme === 'dark' ? 'bg-red-900/20 border-red-500' : 'bg-red-50 border-red-500'}`}>
         <div className="flex">
           <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+            <svg className={`h-5 w-5 ${theme === 'dark' ? 'text-red-400' : 'text-red-400'}`} viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
             </svg>
           </div>
           <div className="ml-3">
-            <p className="text-sm text-red-700">{error}</p>
+            <p className={`text-sm ${theme === 'dark' ? 'text-red-400' : 'text-red-700'}`}>{error}</p>
           </div>
         </div>
       </div>
@@ -106,31 +107,35 @@ const StudentStats = () => {
       </div>
 
       {/* Recent Activity */}
-      <Card>
+      <Card className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Your latest academic activities and updates</CardDescription>
+          <CardTitle className={theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}>Recent Activity</CardTitle>
+          <CardDescription className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>
+            Your latest academic activities and updates
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {stats?.recent_activities?.map((activity: any, index: number) => (
               <div
                 key={index}
-                className="flex items-center p-3 rounded-lg hover:bg-accent transition-colors"
+                className={`flex items-center p-3 rounded-lg transition-colors ${theme === 'dark' ? 'hover:bg-[#232326]' : 'hover:bg-gray-100'}`}
               >
                 <div className="mr-4">
-                  <div className="p-2 rounded-full bg-primary/10">
-                    <Activity className="w-4 h-4 text-primary" />
+                  <div className={`p-2 rounded-full ${theme === 'dark' ? 'bg-blue-900/30' : 'bg-primary/10'}`}>
+                    <Activity className={`w-4 h-4 ${theme === 'dark' ? 'text-blue-400' : 'text-primary'}`} />
                   </div>
                 </div>
                 <div>
-                  <p className="font-medium">{activity.title}</p>
-                  <p className="text-sm text-muted-foreground">{activity.timestamp}</p>
+                  <p className={`font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>{activity.title}</p>
+                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{activity.timestamp}</p>
                 </div>
               </div>
             ))}
             {(!stats?.recent_activities || stats.recent_activities.length === 0) && (
-              <p className="text-muted-foreground text-center py-4">No recent activities</p>
+              <p className={`text-center py-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                No recent activities
+              </p>
             )}
           </div>
         </CardContent>
@@ -138,12 +143,12 @@ const StudentStats = () => {
 
       {/* Low Attendance Warning */}
       {stats?.attendance_status?.below_75_count > 0 && (
-        <Card className="border-red-200 bg-red-50">
+        <Card className={theme === 'dark' ? 'border-red-900/50 bg-red-900/20' : 'border-red-200 bg-red-50'}>
           <CardHeader>
-            <CardTitle className="text-red-700">Attendance Warning</CardTitle>
+            <CardTitle className={theme === 'dark' ? 'text-red-400' : 'text-red-700'}>Attendance Warning</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-red-600">
+            <p className={theme === 'dark' ? 'text-red-400' : 'text-red-600'}>
               Your attendance is below 75% in {stats.attendance_status.below_75_count}{" "}
               subject{stats.attendance_status.below_75_count > 1 ? "s" : ""}. Please improve your attendance.
             </p>

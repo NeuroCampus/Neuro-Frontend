@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { loadStripe } from '@stripe/stripe-js';
+import { useTheme } from "@/context/ThemeContext";
 
 interface InvoiceComponent {
   component_name: string;
@@ -102,6 +103,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(null);
   const [selectedComponents, setSelectedComponents] = useState<Set<number>>(new Set());
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const { theme } = useTheme();
 
   console.log('StudentFees user object:', user);
   console.log('StudentFees user.usn:', user?.usn);
@@ -136,7 +138,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
 
   if (error) {
     return (
-      <Alert className="max-w-2xl mx-auto mt-8">
+      <Alert className={`max-w-2xl mx-auto mt-8 ${theme === 'dark' ? 'bg-red-900/20 border border-red-500 text-red-200' : 'bg-red-100 border border-red-200 text-red-800'}`}>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
           Unable to load fee information. Please try again later.
@@ -153,9 +155,9 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
   };
 
   const getStatusColor = (remaining: number) => {
-    if (remaining === 0) return 'bg-green-100 text-green-800';
-    if (remaining > 0) return 'bg-red-100 text-red-800';
-    return 'bg-gray-100 text-gray-800';
+    if (remaining === 0) return theme === 'dark' ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800';
+    if (remaining > 0) return theme === 'dark' ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-800';
+    return theme === 'dark' ? 'bg-gray-800 text-gray-300' : 'bg-gray-100 text-gray-800';
   };
 
   const getStatusIcon = (remaining: number) => {
@@ -270,16 +272,16 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
   const currentInvoice = feeData?.invoices?.find(inv => inv.id === selectedInvoiceId);
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
+    <div className={`container mx-auto p-6 max-w-4xl ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Fee Information</h1>
-        <p className="text-gray-600 mt-2">View your current fee status and payment details</p>
+        <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Fee Information</h1>
+        <p className={`mt-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>View your current fee status and payment details</p>
       </div>
 
       {/* Student Info Card */}
-      <Card className="mb-6">
+      <Card className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className={`flex items-center gap-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
             <CreditCard className="h-5 w-5" />
             Student Details
           </CardTitle>
@@ -287,20 +289,20 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-500">Name</label>
-              <p className="text-lg font-semibold">{feeData?.student?.name || 'N/A'}</p>
+              <label className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Name</label>
+              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>{feeData?.student?.name || 'N/A'}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-500">USN</label>
-              <p className="text-lg font-semibold">{feeData?.student?.usn || 'N/A'}</p>
+              <label className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>USN</label>
+              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>{feeData?.student?.usn || 'N/A'}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-500">Department</label>
-              <p className="text-lg font-semibold">{feeData?.student?.dept || 'N/A'}</p>
+              <label className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Department</label>
+              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>{feeData?.student?.dept || 'N/A'}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-500">Semester</label>
-              <p className="text-lg font-semibold">{feeData?.student?.semester || 'N/A'}</p>
+              <label className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Semester</label>
+              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>{feeData?.student?.semester || 'N/A'}</p>
             </div>
           </div>
         </CardContent>
@@ -308,28 +310,28 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
 
       {/* Fee Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Card>
+        <Card className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}>
           <CardContent className="p-6">
-            <p className="text-sm font-medium text-gray-600">Total Fees</p>
-            <p className="text-2xl font-bold text-gray-900">
+            <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Total Fees</p>
+            <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
               {formatCurrency(feeData?.fee_summary?.total_fees || 0)}
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}>
           <CardContent className="p-6">
-            <p className="text-sm font-medium text-gray-600">Amount Paid</p>
-            <p className="text-2xl font-bold text-green-600">
+            <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Amount Paid</p>
+            <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
               {formatCurrency(feeData?.fee_summary?.amount_paid || 0)}
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}>
           <CardContent className="p-6">
-            <p className="text-sm font-medium text-gray-600">Remaining Fees</p>
-            <p className="text-2xl font-bold text-red-600">
+            <p className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Remaining Fees</p>
+            <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
               {formatCurrency(feeData?.fee_summary?.remaining_fees || 0)}
             </p>
           </CardContent>
@@ -337,9 +339,9 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
       </div>
 
       {/* Status Card */}
-      <Card className="mb-6">
+      <Card className={`mb-6 ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}`}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className={`flex items-center gap-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
             {getStatusIcon(feeData?.fee_summary?.remaining_fees || 0)}
             Payment Status
           </CardTitle>
@@ -351,7 +353,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                 {(feeData?.fee_summary?.remaining_fees || 0) === 0 ? 'All Paid' : 'Pending Payment'}
               </Badge>
               {feeData?.fee_summary?.due_date && (
-                <p className="text-sm text-gray-600 mt-2 flex items-center gap-1">
+                <p className={`text-sm mt-2 flex items-center gap-1 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                   <Calendar className="h-4 w-4" />
                   Due Date: {new Date(feeData.fee_summary.due_date).toLocaleDateString()}
                 </p>
@@ -360,7 +362,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
             {(feeData?.fee_summary?.remaining_fees || 0) > 0 && (
               <div className="flex gap-2">
                 <Button 
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className={`${theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
                   onClick={() => {
                     const inv = feeData?.invoices?.find(inv => inv.balance_amount > 0);
                     if (inv) handlePaymentClick(inv.id);
@@ -371,6 +373,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                 </Button>
                 <Button 
                   variant="outline"
+                  className={theme === 'dark' ? 'border-gray-600 text-gray-200 hover:bg-gray-800' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}
                   onClick={() => {
                     const inv = feeData?.invoices?.find(inv => inv.balance_amount > 0);
                     if (inv) handleComponentPaymentClick(inv.id);
@@ -385,9 +388,9 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
       </Card>
 
       {/* Invoices Section */}
-      <Card className="mb-6">
+      <Card className={`mb-6 ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}`}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className={`flex items-center gap-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
             <Receipt className="h-5 w-5" />
             Fee Invoices
           </CardTitle>
@@ -396,11 +399,11 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
           {feeData?.invoices?.length ? (
             <div className="space-y-4">
               {feeData.invoices.map((invoice) => (
-                <div key={invoice.id} className="border rounded-lg p-4">
+                <div key={invoice.id} className={`border rounded-lg p-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h3 className="font-semibold">Semester {invoice.semester}</h3>
-                      <p className="text-sm text-gray-600">Invoice #{invoice.invoice_number}</p>
+                      <h3 className={`font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Semester {invoice.semester}</h3>
+                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Invoice #{invoice.invoice_number}</p>
                     </div>
                     <Badge variant={invoice.status === 'paid' ? 'default' : 'destructive'}>
                       {invoice.status}
@@ -408,24 +411,29 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                   </div>
                   <div className="grid grid-cols-3 gap-4 text-sm mb-4">
                     <div>
-                      <p className="text-gray-600">Total Amount</p>
-                      <p className="font-semibold">{formatCurrency(invoice.total_amount)}</p>
+                      <p className={`text-gray-600 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Total Amount</p>
+                      <p className={`font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>{formatCurrency(invoice.total_amount)}</p>
                     </div>
                     <div>
-                      <p className="text-gray-600">Paid Amount</p>
-                      <p className="font-semibold text-green-600">{formatCurrency(invoice.paid_amount)}</p>
+                      <p className={`text-gray-600 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Paid Amount</p>
+                      <p className={`font-semibold ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{formatCurrency(invoice.paid_amount)}</p>
                     </div>
                     <div>
-                      <p className="text-gray-600">Balance</p>
-                      <p className="font-semibold text-red-600">{formatCurrency(invoice.balance_amount)}</p>
+                      <p className={`text-gray-600 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Balance</p>
+                      <p className={`font-semibold ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{formatCurrency(invoice.balance_amount)}</p>
                     </div>
                   </div>
                   {invoice.balance_amount > 0 && (
                     <div className="flex gap-2">
-                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => handlePaymentClick(invoice.id)}>
+                      <Button size="sm" className={`${theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'} text-white`} onClick={() => handlePaymentClick(invoice.id)}>
                         Pay Full
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleComponentPaymentClick(invoice.id)}>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        className={theme === 'dark' ? 'border-gray-600 text-gray-200 hover:bg-gray-800' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}
+                        onClick={() => handleComponentPaymentClick(invoice.id)}
+                      >
                         Pay by Component
                       </Button>
                     </div>
@@ -434,15 +442,15 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
               ))}
             </div>
           ) : (
-            <p className="text-center py-8 text-gray-500">No invoices found</p>
+            <p className={`text-center py-8 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>No invoices found</p>
           )}
         </CardContent>
       </Card>
 
       {/* Payment History Section */}
-      <Card className="mb-6">
+      <Card className={`mb-6 ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}`}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className={`flex items-center gap-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
             <CreditCard className="h-5 w-5" />
             Payment History
           </CardTitle>
@@ -451,11 +459,11 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
           {feeData?.payments?.length ? (
             <div className="space-y-4">
               {feeData.payments.map((payment) => (
-                <div key={payment.id} className="border rounded-lg p-4">
+                <div key={payment.id} className={`border rounded-lg p-4 ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="font-semibold">{formatCurrency(payment.amount)}</h3>
-                      <p className="text-sm text-gray-600">
+                      <h3 className={`font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>{formatCurrency(payment.amount)}</h3>
+                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                         {new Date(payment.timestamp).toLocaleDateString()} • {payment.mode}
                       </p>
                     </div>
@@ -463,7 +471,12 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                       <Badge variant={payment.status === 'success' ? 'default' : 'secondary'}>
                         {payment.status}
                       </Badge>
-                      <Button variant="outline" size="sm" onClick={() => handleDownloadReceipt(payment.id)}>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className={theme === 'dark' ? 'border-gray-600 text-gray-200 hover:bg-gray-800' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}
+                        onClick={() => handleDownloadReceipt(payment.id)}
+                      >
                         <Download className="h-4 w-4 mr-1" />
                         Receipt
                       </Button>
@@ -473,29 +486,33 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
               ))}
             </div>
           ) : (
-            <p className="text-center py-8 text-gray-500">No payment history</p>
+            <p className={`text-center py-8 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>No payment history</p>
           )}
         </CardContent>
       </Card>
 
       {/* Payment Modal */}
       <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className={`max-w-md ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}`}>
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className={theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}>
               {paymentType === 'full' ? 'Pay Full Amount' : 'Pay by Component'}
             </DialogTitle>
           </DialogHeader>
 
           {paymentType === 'full' ? (
             <div className="space-y-4">
-              <div className="bg-gray-100 p-4 rounded-lg">
-                <p className="text-sm text-gray-600">Total Amount to Pay</p>
-                <p className="text-2xl font-bold">
+              <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Total Amount to Pay</p>
+                <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
                   {formatCurrency(currentInvoice?.balance_amount || 0)}
                 </p>
               </div>
-              <Button onClick={initiateStripePayment} disabled={isProcessingPayment} className="w-full bg-blue-600 hover:bg-blue-700">
+              <Button 
+                onClick={initiateStripePayment} 
+                disabled={isProcessingPayment} 
+                className={`${theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'} text-white w-full`}
+              >
                 {isProcessingPayment ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -511,18 +528,19 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
             </div>
           ) : (
             <div className="space-y-4">
-              <p className="text-sm text-gray-600">Select components to pay:</p>
+              <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Select components to pay:</p>
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {currentInvoice?.components?.map((component, idx) => (
-                  <div key={idx} className="flex items-center space-x-3 p-2 border rounded">
+                  <div key={idx} className={`flex items-center space-x-3 p-2 border rounded ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
                     <Checkbox 
                       checked={selectedComponents.has(idx)}
                       onCheckedChange={() => handleComponentToggle(idx)}
+                      className={theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}
                     />
-                    <Label className="flex-1 cursor-pointer">
+                    <Label className={`flex-1 cursor-pointer ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
                       <div>
                         <p className="font-medium">{component.component_name}</p>
-                        <p className="text-sm text-gray-600">{formatCurrency(component.balance_amount)}</p>
+                        <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{formatCurrency(component.balance_amount)}</p>
                       </div>
                     </Label>
                   </div>
@@ -530,9 +548,9 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
               </div>
 
               {selectedComponents.size > 0 && (
-                <div className="bg-gray-100 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600">Total Selected</p>
-                  <p className="text-2xl font-bold">
+                <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Total Selected</p>
+                  <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
                     {formatCurrency(
                       (currentInvoice?.components || [])
                         .filter((_, idx) => selectedComponents.has(idx))
@@ -542,7 +560,11 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                 </div>
               )}
 
-              <Button onClick={initiateStripePayment} disabled={isProcessingPayment || selectedComponents.size === 0} className="w-full bg-blue-600 hover:bg-blue-700">
+              <Button 
+                onClick={initiateStripePayment} 
+                disabled={isProcessingPayment || selectedComponents.size === 0} 
+                className={`${theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'} text-white w-full`}
+              >
                 {isProcessingPayment ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />

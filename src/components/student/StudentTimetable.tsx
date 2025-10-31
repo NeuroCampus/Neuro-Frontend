@@ -22,6 +22,7 @@ import { Button } from "../ui/button";
 import { CalendarDays, Download, Filter } from "lucide-react";
 import { ScrollArea } from "../ui/scroll-area";
 import { getTimetable } from "@/utils/student_api";
+import { useTheme } from "@/context/ThemeContext";
 
 // Dummy data for one semester
 const timetableData = [
@@ -52,6 +53,7 @@ const StudentTimetable = () => {
   const [facultyFilter, setFacultyFilter] = useState("all");
   const [roomFilter, setRoomFilter] = useState("all");
   const [timetableData, setTimetableData] = useState<any[]>([]);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const fetchTimetable = async () => {
@@ -79,7 +81,7 @@ const StudentTimetable = () => {
     if (!filterCell(subject)) return null;
 
     if (subject === "Break") {
-      return <i className="text-muted-foreground">Break</i>;
+      return <i className={`text-muted-foreground ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Break</i>;
     }
 
     const faculty = facultyRoomMap[subject]?.faculty || "Prof. Smith";
@@ -87,9 +89,9 @@ const StudentTimetable = () => {
 
     return (
       <div>
-        <strong>{subject}</strong>
-        <div className="text-sm text-muted-foreground">{faculty}</div>
-        <div className="text-sm text-muted-foreground">{room}</div>
+        <strong className={theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}>{subject}</strong>
+        <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{faculty}</div>
+        <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{room}</div>
       </div>
     );
   };
@@ -120,46 +122,56 @@ const StudentTimetable = () => {
   const uniqueRooms = [...new Set(Object.values(facultyRoomMap).map((f) => f.room))];
 
   return (
-    <Card className="bg-[#1c1c1e] text-gray-200">
+    <Card className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200' : 'bg-white text-gray-900'}>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Timetable</CardTitle>
+        <CardTitle className={theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}>Timetable</CardTitle>
         <div className="flex gap-2 ">
-          <Button variant="outline" size="sm" className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={() => setShowFilterModal(true)}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className={theme === 'dark' ? 'text-gray-200 bg-gray-800 hover:bg-gray-700 border-gray-600' : 'text-gray-700 bg-white hover:bg-gray-100 border-gray-300'}
+            onClick={() => setShowFilterModal(true)}
+          >
             <Filter className="w-4 h-4 mr-2" /> Filter
           </Button>
-          <Button variant="outline" size="sm" className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={exportToCSV}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className={theme === 'dark' ? 'text-gray-200 bg-gray-800 hover:bg-gray-700 border-gray-600' : 'text-gray-700 bg-white hover:bg-gray-100 border-gray-300'}
+            onClick={exportToCSV}
+          >
             <Download className="w-4 h-4 mr-2" /> Export
           </Button>
         </div>
       </CardHeader>
 
       <CardContent>
-        <div className="border rounded-lg p-4">
+        <div className={`border rounded-lg p-4 ${theme === 'dark' ? 'border-gray-300' : 'border-gray-200'}`}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
+            <h2 className={`text-lg font-semibold flex items-center gap-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
               <CalendarDays className="w-5 h-5" /> Timetable
             </h2>
           </div>
 
           <ScrollArea className="w-full overflow-auto">
-            <table className="w-full border text-sm">
+            <table className={`w-full text-sm ${theme === 'dark' ? 'border-gray-300' : 'border-gray-200'}`}>
               <thead>
-                <tr className="bg-[#1c1c1e] text-gray-200">
-                  <th className="text-left p-2">Day</th>
-                  <th className="text-left p-2">Start Time</th>
-                  <th className="text-left p-2">End Time</th>
-                  <th className="text-left p-2">Subject</th>
-                  <th className="text-left p-2">Room</th>
+                <tr className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200' : 'bg-white text-gray-900'}>
+                  <th className={`text-left p-2 ${theme === 'dark' ? 'border-b border-gray-300' : 'border-b border-gray-200'}`}>Day</th>
+                  <th className={`text-left p-2 ${theme === 'dark' ? 'border-b border-gray-300' : 'border-b border-gray-200'}`}>Start Time</th>
+                  <th className={`text-left p-2 ${theme === 'dark' ? 'border-b border-gray-300' : 'border-b border-gray-200'}`}>End Time</th>
+                  <th className={`text-left p-2 ${theme === 'dark' ? 'border-b border-gray-300' : 'border-b border-gray-200'}`}>Subject</th>
+                  <th className={`text-left p-2 ${theme === 'dark' ? 'border-b border-gray-300' : 'border-b border-gray-200'}`}>Room</th>
                 </tr>
               </thead>
               <tbody>
                 {timetableData.map((entry, idx) => (
-                  <tr key={idx} className="border-t">
-                    <td className="p-2 font-medium">{entry.day}</td>
-                    <td className="p-2">{entry.start_time}</td>
-                    <td className="p-2">{entry.end_time}</td>
-                    <td className="p-2">{entry.subject}</td>
-                    <td className="p-2">{entry.room}</td>
+                  <tr key={idx} className={theme === 'dark' ? 'border-t border-gray-300' : 'border-t border-gray-200'}>
+                    <td className={`p-2 font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>{entry.day}</td>
+                    <td className={`p-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{entry.start_time}</td>
+                    <td className={`p-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{entry.end_time}</td>
+                    <td className={`p-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{entry.subject}</td>
+                    <td className={`p-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{entry.room}</td>
                   </tr>
                 ))}
               </tbody>
@@ -170,22 +182,22 @@ const StudentTimetable = () => {
 
       {/* Filter Modal */}
       <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
-        <DialogContent className="bg-[#1c1c1e] text-gray-200">
+        <DialogContent className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}>
           <DialogHeader>
-            <DialogTitle>Filter Timetable</DialogTitle>
+            <DialogTitle className={theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}>Filter Timetable</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
             <div >
-              <label className="text-sm font-medium">Subject</label>
+              <label className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Subject</label>
               <Select value={subjectFilter} onValueChange={setSubjectFilter}>
-                <SelectTrigger className="mt-1 bg-[#232326] text-gray-200">
+                <SelectTrigger className={theme === 'dark' ? 'mt-1 bg-[#232326] text-gray-200 border-gray-600' : 'mt-1 bg-white text-gray-900 border-gray-300'}>
                   <SelectValue placeholder="Select subject" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#232326] text-gray-200">
-                  <SelectItem value="all">All</SelectItem>
+                <SelectContent className={theme === 'dark' ? 'bg-[#232326] text-gray-200 border-gray-600' : 'bg-white text-gray-900 border-gray-300'}>
+                  <SelectItem value="all" className={theme === 'dark' ? 'hover:bg-[#2c2c2e]' : 'hover:bg-gray-100'}>All</SelectItem>
                   {uniqueSubjects.map((subj) => (
-                    <SelectItem key={subj} value={subj}>
+                    <SelectItem key={subj} value={subj} className={theme === 'dark' ? 'hover:bg-[#2c2c2e]' : 'hover:bg-gray-100'}>
                       {subj}
                     </SelectItem>
                   ))}
@@ -194,15 +206,15 @@ const StudentTimetable = () => {
             </div>
 
             <div>
-              <label className="text-sm font-medium">Faculty</label>
+              <label className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Faculty</label>
               <Select value={facultyFilter} onValueChange={setFacultyFilter}>
-                <SelectTrigger className="mt-1 bg-[#232326] text-gray-200">
+                <SelectTrigger className={theme === 'dark' ? 'mt-1 bg-[#232326] text-gray-200 border-gray-600' : 'mt-1 bg-white text-gray-900 border-gray-300'}>
                   <SelectValue placeholder="Select faculty" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#232326] text-gray-200">
-                  <SelectItem value="all">All</SelectItem>
+                <SelectContent className={theme === 'dark' ? 'bg-[#232326] text-gray-200 border-gray-600' : 'bg-white text-gray-900 border-gray-300'}>
+                  <SelectItem value="all" className={theme === 'dark' ? 'hover:bg-[#2c2c2e]' : 'hover:bg-gray-100'}>All</SelectItem>
                   {uniqueFaculty.map((f) => (
-                    <SelectItem key={f} value={f}>
+                    <SelectItem key={f} value={f} className={theme === 'dark' ? 'hover:bg-[#2c2c2e]' : 'hover:bg-gray-100'}>
                       {f}
                     </SelectItem>
                   ))}
@@ -211,15 +223,15 @@ const StudentTimetable = () => {
             </div>
 
             <div>
-              <label className="text-sm font-medium">Room</label>
+              <label className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Room</label>
               <Select value={roomFilter} onValueChange={setRoomFilter}>
-                <SelectTrigger className="mt-1 bg-[#232326] text-gray-200">
+                <SelectTrigger className={theme === 'dark' ? 'mt-1 bg-[#232326] text-gray-200 border-gray-600' : 'mt-1 bg-white text-gray-900 border-gray-300'}>
                   <SelectValue placeholder="Select room" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#232326] text-gray-200">
-                  <SelectItem value="all">All</SelectItem>
+                <SelectContent className={theme === 'dark' ? 'bg-[#232326] text-gray-200 border-gray-600' : 'bg-white text-gray-900 border-gray-300'}>
+                  <SelectItem value="all" className={theme === 'dark' ? 'hover:bg-[#2c2c2e]' : 'hover:bg-gray-100'}>All</SelectItem>
                   {uniqueRooms.map((r) => (
-                    <SelectItem key={r} value={r}>
+                    <SelectItem key={r} value={r} className={theme === 'dark' ? 'hover:bg-[#2c2c2e]' : 'hover:bg-gray-100'}>
                       {r}
                     </SelectItem>
                   ))}
@@ -228,7 +240,11 @@ const StudentTimetable = () => {
             </div>
 
             <div className="flex justify-end pt-2">
-              <Button variant="secondary" className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={clearFilters}>
+              <Button 
+                variant="secondary" 
+                className={theme === 'dark' ? 'text-gray-200 bg-gray-800 hover:bg-gray-700 border-gray-600' : 'text-gray-700 bg-gray-200 hover:bg-gray-300 border-gray-300'}
+                onClick={clearFilters}
+              >
                 Clear Filters
               </Button>
             </div>

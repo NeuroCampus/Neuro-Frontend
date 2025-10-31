@@ -15,6 +15,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils"; // Optional, used to conditionally join classes
 import { getStudentStudyMaterials } from "@/utils/student_api";
+import { useTheme } from "@/context/ThemeContext";
 
 const initialMaterials = [
   {
@@ -83,16 +84,16 @@ const initialMaterials = [
   },
 ];
 
-const getFileIcon = (type: string) => {
+const getFileIcon = (type: string, theme: string) => {
   switch (type) {
     case "pdf":
-      return <FileText className="text-red-500 w-5 h-5" />;
+      return <FileText className={theme === 'dark' ? "text-red-400 w-5 h-5" : "text-red-500 w-5 h-5"} />;
     case "ppt":
-      return <FileBarChart className="text-orange-500 w-5 h-5" />;
+      return <FileBarChart className={theme === 'dark' ? "text-orange-400 w-5 h-5" : "text-orange-500 w-5 h-5"} />;
     case "doc":
-      return <FileSpreadsheet className="text-blue-500 w-5 h-5" />;
+      return <FileSpreadsheet className={theme === 'dark' ? "text-blue-400 w-5 h-5" : "text-blue-500 w-5 h-5"} />;
     default:
-      return <FileCode className="text-gray-500 w-5 h-5" />;
+      return <FileCode className={theme === 'dark' ? "text-gray-400 w-5 h-5" : "text-gray-500 w-5 h-5"} />;
   }
 };
 
@@ -112,6 +113,7 @@ const StudentStudyMaterial = () => {
   const [typeFilter, setTypeFilter] = useState("All Types");
   const [viewBookmarked, setViewBookmarked] = useState(false);
   const [materials, setMaterials] = useState<any[]>([]);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const fetchMaterials = async () => {
@@ -142,16 +144,16 @@ const StudentStudyMaterial = () => {
   });
 
   return (
-    <div className="p-6 space-y-6 text-gray-800">
+    <div className={`p-6 space-y-6 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-gray-900">Study Materials</h2>
+        <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Study Materials</h2>
         <div className="flex items-center space-x-4">
           <Button
             variant="ghost"
             className={cn(
               "flex items-center space-x-1 text-sm",
-              !viewBookmarked && "text-black font-medium"
+              !viewBookmarked && (theme === 'dark' ? "text-gray-200 font-medium" : "text-black font-medium")
             )}
             onClick={() => setViewBookmarked(false)}
           >
@@ -162,7 +164,7 @@ const StudentStudyMaterial = () => {
             variant="ghost"
             className={cn(
               "flex items-center space-x-1 text-sm",
-              viewBookmarked && "text-black font-medium"
+              viewBookmarked && (theme === 'dark' ? "text-gray-200 font-medium" : "text-black font-medium")
             )}
             onClick={() => setViewBookmarked(true)}
           >
@@ -178,39 +180,43 @@ const StudentStudyMaterial = () => {
           placeholder="Search for study materials..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="max-w-md"
+          className={theme === 'dark' ? 'max-w-md bg-[#232326] text-gray-200 border-gray-600' : 'max-w-md bg-white text-gray-900 border-gray-300'}
         />
         <div className="flex items-center space-x-2">
           <select
             value={subjectFilter}
             onChange={(e) => setSubjectFilter(e.target.value)}
-            className="border rounded px-3 py-2 text-sm"
+            className={theme === 'dark' ? 'border rounded px-3 py-2 text-sm bg-[#232326] text-gray-200 border-gray-600' : 'border rounded px-3 py-2 text-sm bg-white text-gray-900 border-gray-300'}
           >
             {getAllSubjects().map((s) => (
-              <option key={s}>{s}</option>
+              <option key={s} className={theme === 'dark' ? 'bg-[#232326] text-gray-200' : 'bg-white text-gray-900'}>{s}</option>
             ))}
           </select>
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="border rounded px-3 py-2 text-sm"
+            className={theme === 'dark' ? 'border rounded px-3 py-2 text-sm bg-[#232326] text-gray-200 border-gray-600' : 'border rounded px-3 py-2 text-sm bg-white text-gray-900 border-gray-300'}
           >
             {getAllTypes().map((t) => (
-              <option key={t}>{t}</option>
+              <option key={t} className={theme === 'dark' ? 'bg-[#232326] text-gray-200' : 'bg-white text-gray-900'}>{t}</option>
             ))}
           </select>
-          <Button variant="outline" size="icon">
+          <Button 
+            variant="outline" 
+            size="icon"
+            className={theme === 'dark' ? 'border-gray-600 text-gray-200 hover:bg-gray-800' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}
+          >
             <Filter className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
       {/* Materials Table */}
-      <Card className="bg-white border border-gray-200 shadow-sm">
+      <Card className={theme === 'dark' ? 'bg-[#1c1c1e] border-gray-700' : 'bg-white border-gray-200'}>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-sm text-left">
-              <thead className="bg-gray-100 text-gray-600 font-medium">
+            <table className={`min-w-full text-sm text-left ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
+              <thead className={theme === 'dark' ? 'bg-gray-800 text-gray-300 font-medium' : 'bg-gray-100 text-gray-600 font-medium'}>
                 <tr>
                   <th className="px-4 py-3">Type</th>
                   <th className="px-4 py-3">Title</th>
@@ -220,27 +226,32 @@ const StudentStudyMaterial = () => {
                   <th className="px-4 py-3">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className={theme === 'dark' ? 'divide-gray-700' : 'divide-gray-100'}>
                 {filteredMaterials.length > 0 ? (
                   filteredMaterials.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-gray-50 transition">
-                      <td className="px-4 py-3">{getFileIcon(item.type)}</td>
+                    <tr key={idx} className={theme === 'dark' ? 'hover:bg-gray-800 transition' : 'hover:bg-gray-50 transition'}>
+                      <td className="px-4 py-3">{getFileIcon(item.type, theme)}</td>
                       <td className="px-4 py-3">
-                        <a href="#" className="text-blue-600 hover:underline">
+                        <a href="#" className={theme === 'dark' ? 'text-blue-400 hover:underline' : 'text-blue-600 hover:underline'}>
                           {item.title}
                         </a>
                       </td>
-                      <td className="px-4 py-3 text-gray-700">{item.subject}</td>
-                      <td className="px-4 py-3 text-gray-600">{item.uploaded}</td>
-                      <td className="px-4 py-3 text-gray-600">{item.size}</td>
+                      <td className={`px-4 py-3 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{item.subject}</td>
+                      <td className={`px-4 py-3 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{item.uploaded}</td>
+                      <td className={`px-4 py-3 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{item.size}</td>
                       <td className="px-4 py-3 flex space-x-2">
-                        <Button size="icon" variant="ghost">
+                        <Button 
+                          size="icon" 
+                          variant="ghost"
+                          className={theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-200'}
+                        >
                           <Download className="h-4 w-4" />
                         </Button>
                         <Button
                           size="icon"
                           variant="ghost"
                           onClick={() => toggleBookmark(materials.indexOf(item))}
+                          className={theme === 'dark' ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-200'}
                         >
                           {item.bookmarked ? (
                             <BookmarkCheck className="h-4 w-4 text-yellow-500" />
@@ -253,7 +264,7 @@ const StudentStudyMaterial = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="text-center py-6 text-gray-500">
+                    <td colSpan={6} className={`text-center py-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                       No study materials found.
                     </td>
                   </tr>

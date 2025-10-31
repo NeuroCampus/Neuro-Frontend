@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { getStudentAttendance } from "../../utils/student_api";
+import { useTheme } from "@/context/ThemeContext";
 
 interface AttendanceRecord {
   date: string;
@@ -30,6 +31,7 @@ interface AttendanceData {
 const StudentAttendance = () => {
   const [attendanceData, setAttendanceData] = useState<AttendanceData>({});
   const [loading, setLoading] = useState(true);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const fetchAttendance = async () => {
@@ -93,49 +95,49 @@ const StudentAttendance = () => {
   }
 
   return (
-    <div className="p-4 space-y-6 bg-[#1c1c1e] text-gray-200">
+    <div className={`p-4 space-y-6 ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
       <div>
-        <h2 className="text-xl font-semibold text-gray-200">Attendance Tracker</h2>
-        <p className="text-sm text-gray-300">
+        <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Attendance Tracker</h2>
+        <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
           Monitor your subject-wise attendance and trends
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className="col-span-2 bg-[#1c1c1e] text-gray-200 border border-gray-200 shadow-sm">
+        <Card className={theme === 'dark' ? 'col-span-2 bg-[#1c1c1e] text-gray-200 border-gray-300' : 'col-span-2 bg-white text-gray-900 border-gray-200'}>
           <CardHeader>
-            <CardTitle className="text-base text-gray-200">Attendance Trends</CardTitle>
+            <CardTitle className={theme === 'dark' ? 'text-base text-gray-200' : 'text-base text-gray-900'}>Attendance Trends</CardTitle>
           </CardHeader>
-          <CardContent className="h-[300px] text-gray-200">
+          <CardContent className={`h-[300px] ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={generateTrendData()}>
                 {/* Add Grid for better visibility */}
-                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? "#444" : "#ddd"} />
 
                 {/* X Axis - Visible with ticks */}
                 <XAxis
                   dataKey="name"
-                  stroke="#ccc"
-                  tick={{ fill: "#ccc", fontSize: 12 }}
-                  axisLine={{ stroke: "#ccc" }}
-                  tickLine={{ stroke: "#ccc" }}
+                  stroke={theme === 'dark' ? "#ccc" : "#666"}
+                  tick={{ fill: theme === 'dark' ? "#ccc" : "#666", fontSize: 12 }}
+                  axisLine={{ stroke: theme === 'dark' ? "#ccc" : "#666" }}
+                  tickLine={{ stroke: theme === 'dark' ? "#ccc" : "#666" }}
                 />
 
                 {/* Y Axis - Visible with ticks */}
                 <YAxis
-                  stroke="#ccc"
-                  tick={{ fill: "#ccc", fontSize: 12 }}
-                  axisLine={{ stroke: "#ccc" }}
-                  tickLine={{ stroke: "#ccc" }}
+                  stroke={theme === 'dark' ? "#ccc" : "#666"}
+                  tick={{ fill: theme === 'dark' ? "#ccc" : "#666", fontSize: 12 }}
+                  axisLine={{ stroke: theme === 'dark' ? "#ccc" : "#666" }}
+                  tickLine={{ stroke: theme === 'dark' ? "#ccc" : "#666" }}
                   domain={[0, 100]}
                 />
 
-                {/* Tooltip remains the same */}
+                {/* Tooltip */}
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#1c1c1e",
-                    border: "1px solid #333",
-                    color: "#fff",
+                    backgroundColor: theme === 'dark' ? "#1c1c1e" : "#fff",
+                    border: theme === 'dark' ? "1px solid #333" : "1px solid #ddd",
+                    color: theme === 'dark' ? "#fff" : "#000",
                   }}
                 />
 
@@ -159,12 +161,12 @@ const StudentAttendance = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-200 shadow-sm">
+        <Card className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-300' : 'bg-white text-gray-900 border-gray-200'}>
           <CardHeader>
-            <CardTitle className="text-base text-gray-200">Overview</CardTitle>
+            <CardTitle className={theme === 'dark' ? 'text-base text-gray-200' : 'text-base text-gray-900'}>Overview</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 text-sm">
+            <div className={`space-y-2 text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
               <div className="flex justify-between">
                 <span>Total Classes</span>
                 <span>{overview.total}</span>
@@ -175,11 +177,11 @@ const StudentAttendance = () => {
               </div>
               <div className="flex justify-between">
                 <span>Overall Percentage</span>
-                <span className="text-blue-600">{overallPercentage}</span>
+                <span className={theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}>{overallPercentage}</span>
               </div>
               <div className="flex justify-between">
                 <span>Minimum Required</span>
-                <span className="text-orange-600">75%</span>
+                <span className={theme === 'dark' ? 'text-orange-400' : 'text-orange-600'}>75%</span>
               </div>
               <div className="flex justify-between">
                 <span>Classes to Attend</span>
@@ -190,14 +192,14 @@ const StudentAttendance = () => {
         </Card>
       </div>
 
-      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-200 shadow-sm">
+      <Card className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-300' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
-          <CardTitle className="text-base text-gray-200">Subject-wise Attendance</CardTitle>
+          <CardTitle className={theme === 'dark' ? 'text-base text-gray-200' : 'text-base text-gray-900'}>Subject-wise Attendance</CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
-          <table className="min-w-full text-sm text-left text-gray-200">
-            <thead className="border-b border-gray-200">
-              <tr className="uppercase text-xs text-gray-200">
+          <table className={`min-w-full text-sm text-left ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
+            <thead className={theme === 'dark' ? 'border-b border-gray-300' : 'border-b border-gray-200'}>
+              <tr className={`uppercase text-xs ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
                 <th className="p-3">Subject</th>
                 <th className="p-3">Total Classes</th>
                 <th className="p-3">Present</th>
@@ -210,7 +212,7 @@ const StudentAttendance = () => {
                 const percentage = Math.round(data.percentage);
                 const status = percentage < 75 ? "At Risk" : "Good";
                 return (
-                  <tr key={index} className="border-t border-gray-100">
+                  <tr key={index} className={theme === 'dark' ? 'border-t border-gray-300' : 'border-t border-gray-200'}>
                     <td className="p-3">{subject}</td>
                     <td className="p-3">{data.total}</td>
                     <td className="p-3">{data.present}</td>
@@ -219,8 +221,8 @@ const StudentAttendance = () => {
                       <span
                         className={`text-xs font-medium px-2 py-1 rounded-xl ${
                           status === "Good"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
+                            ? (theme === 'dark' ? "bg-green-900/30 text-green-400" : "bg-green-100 text-green-700")
+                            : (theme === 'dark' ? "bg-red-900/30 text-red-400" : "bg-red-100 text-red-700")
                         }`}
                       >
                         {status}
