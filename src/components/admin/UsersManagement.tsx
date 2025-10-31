@@ -71,6 +71,11 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
   const normalize = (str: string) => str.toLowerCase().trim();
   const { theme } = useTheme();
 
+  // Reset current page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [roleFilter, statusFilter, searchQuery]);
+
   useEffect(() => {
     const fetchUsers = async () => {
       setLoading(true);
@@ -92,7 +97,19 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
           filterParams.is_active = statusFilter === "Active";
         }
 
+        // Add search filter if not empty
+        if (searchQuery.trim()) {
+          filterParams.search = searchQuery.trim();
+        }
+
         const response = await manageUsers(filterParams);
+        
+        // Handle invalid page due to filter changes
+        if (!response.success && response.message && response.message.includes("Invalid page")) {
+          setCurrentPage(1);
+          return;
+        }
+        
         // Check if the response has the expected structure
         const hasResults = response && typeof response === 'object' && 'results' in response;
         const dataSource = hasResults ? (response as any).results : (response as any);
@@ -114,7 +131,13 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
           
           setUsers(transformedUsers);
           setTotalUsers(paginationData.count || 0);
-          setTotalPages(Math.ceil((paginationData.count || 0) / pageSize));
+          const calculatedTotalPages = Math.ceil((paginationData.count || 0) / pageSize);
+          setTotalPages(calculatedTotalPages);
+          
+          // Reset to page 1 if current page exceeds total pages
+          if (currentPage > calculatedTotalPages && calculatedTotalPages > 0) {
+            setCurrentPage(1);
+          }
         } else {
           setError(dataSource?.message || "Failed to fetch users");
           toast({
@@ -136,44 +159,9 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
       }
     };
     fetchUsers();
-  }, [setError, toast, currentPage, roleFilter, statusFilter, pageSize]);
+  }, [setError, toast, currentPage, roleFilter, statusFilter, searchQuery, pageSize]);
 
-const filteredUsers = Array.isArray(users)
-  ? users
-      .filter((user) => {
-        // Client-side search filtering (since search is not implemented server-side)
-        const searchMatch =
-          (user.name &&
-            normalize(user.name).includes(normalize(searchQuery))) ||
-          (user.email &&
-            normalize(user.email).includes(normalize(searchQuery)));
-
-        return searchMatch;
-      })
-      .sort((a, b) => {
-        const s = normalize(searchQuery);
-        const aName = normalize(a.name || "");
-        const bName = normalize(b.name || "");
-
-        // 1. Exact match
-        if (aName === s && bName !== s) return -1;
-        if (bName === s && aName !== s) return 1;
-
-        // 2. StartsWith
-        const aStarts = aName.startsWith(s);
-        const bStarts = bName.startsWith(s);
-        if (aStarts && !bStarts) return -1;
-        if (bStarts && !aStarts) return 1;
-
-        // 3. Earlier index of match
-        const aIndex = aName.indexOf(s);
-        const bIndex = bName.indexOf(s);
-        if (aIndex !== bIndex) return aIndex - bIndex;
-
-        // 4. Shorter name is better
-        return aName.length - bName.length;
-      })
-  : [];
+const filteredUsers = Array.isArray(users) ? users : [];
 
   const handleEdit = (user: User) => {
     setEditingId(user.id);
@@ -213,6 +201,7 @@ const filteredUsers = Array.isArray(users)
             page_size: pageSize,
             role: roleFilter !== "All" ? roleMap[roleFilter] : undefined,
             is_active: statusFilter !== "All" ? statusFilter === "Active" : undefined,
+            search: searchQuery.trim() || undefined,
           });
           const hasRefreshResults = refreshResponse && typeof refreshResponse === 'object' && 'results' in refreshResponse;
           const refreshDataSource = hasRefreshResults ? (refreshResponse as any).results : (refreshResponse as any);
@@ -281,6 +270,7 @@ const filteredUsers = Array.isArray(users)
             page_size: pageSize,
             role: roleFilter !== "All" ? roleMap[roleFilter] : undefined,
             is_active: statusFilter !== "All" ? statusFilter === "Active" : undefined,
+            search: searchQuery.trim() || undefined,
           });
           const hasRefreshResults = refreshResponse && typeof refreshResponse === 'object' && 'results' in refreshResponse;
           const refreshDataSource = hasRefreshResults ? (refreshResponse as any).results : (refreshResponse as any);

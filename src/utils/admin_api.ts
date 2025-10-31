@@ -438,7 +438,7 @@ export const manageHODLeaves = async (
 };
 
 export const manageUsers = async (
-  data?: { page?: number; page_size?: number; role?: string; is_active?: boolean },
+  data?: { page?: number; page_size?: number; role?: string; is_active?: boolean; search?: string },
   method: "GET" | "POST" = "GET"
 ): Promise<ManageUsersResponse> => {
   try {
@@ -451,6 +451,7 @@ export const manageUsers = async (
       if (data.page_size) params.append('page_size', data.page_size.toString());
       if (data.role) params.append('role', data.role);
       if (data.is_active !== undefined) params.append('is_active', data.is_active.toString());
+      if (data.search) params.append('search', data.search);
       if (params.toString()) url += `?${params.toString()}`;
     }
     
