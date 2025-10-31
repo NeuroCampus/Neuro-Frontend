@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { logoutUser } from "../../utils/authService";
 import { useRef, useEffect } from "react";
+import { useTheme } from "../../context/ThemeContext";
 
 
 interface AdminDashboardProps {
@@ -40,6 +41,7 @@ const [error, setError] = useState<string | null>(null);
 const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 const { toast } = useToast();
 const navigate = useNavigate();
+const { theme } = useTheme();
 
 const handlePageChange = (page: string) => {
   setActivePage(page);
@@ -241,7 +243,7 @@ const handlePageChange = (page: string) => {
 
   return (
     <motion.div 
-      className="flex min-h-screen bg-[#1c1c1e] pt-16 thin-scrollbar"
+      className={`flex min-h-screen pt-16 thin-scrollbar ${theme === 'dark' ? 'dark bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -258,7 +260,7 @@ const handlePageChange = (page: string) => {
       </div>
       <div className={`flex-1 flex flex-col min-h-screen overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'ml-16' : 'ml-64'}`}>
         {/* Navbar */}
-        <div className="sticky top-0 z-20 bg-[#1c1c1e] border-b border-gray-700 flex-shrink-0">
+        <div className="sticky top-0 z-20 flex-shrink-0">
           <Navbar
             role="admin"
             user={user}
@@ -267,7 +269,7 @@ const handlePageChange = (page: string) => {
           />
         </div>
         <motion.main 
-          className="flex-1 p-6 overflow-y-auto  bg-gradient-to-br from-[#1c1c1e] via-[#1e1e1e] to-[#1a1a1a]"
+          className={`flex-1 p-6 overflow-y-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}
           style={{ height: 'calc(100vh - 64px)' }} // 64px = navbar height
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -280,7 +282,7 @@ const handlePageChange = (page: string) => {
             transition={{ duration: 0.3, delay: 0.3 }}
           >
             <motion.h1 
-              className="text-xl md:text-2xl font-bold text-white"
+              className={`text-xl md:text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4, delay: 0.4 }}
@@ -295,7 +297,7 @@ const handlePageChange = (page: string) => {
           </motion.div>
           {error && (
             <motion.div 
-              className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg mb-4"
+              className={`p-3 rounded-lg mb-4 ${theme === 'dark' ? 'bg-destructive/10 border border-destructive/20 text-destructive-foreground' : 'bg-red-100 border border-red-200 text-red-700'}`}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3 }}

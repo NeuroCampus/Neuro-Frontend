@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import * as Select from "@radix-ui/react-select";
@@ -14,6 +13,7 @@ import {
 } from "../ui/dialog";
 import { manageUsers, manageUserAction } from "../../utils/admin_api";
 import { useToast } from "../../hooks/use-toast";
+import { useTheme } from "../../context/ThemeContext";
 
 interface User {
   id: number;
@@ -29,17 +29,17 @@ interface UsersManagementProps {
   toast: (options: any) => void;
 }
 
-const getStatusBadge = (status: string) => {
+const getStatusBadge = (status: string, theme: string) => {
   const baseClass = "px-3 py-1 rounded-full text-xs font-medium";
   if (status === "Active")
-    return <span className={`${baseClass} bg-green-100 text-green-700`}>Active</span>;
+    return <span className={`${baseClass} ${theme === 'dark' ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-700'}`}>Active</span>;
   if (status === "Inactive")
-    return <span className={`${baseClass} bg-red-500 text-white`}>Inactive</span>;
+    return <span className={`${baseClass} ${theme === 'dark' ? 'bg-red-900 text-red-300' : 'bg-red-500 text-white'}`}>Inactive</span>;
 };
 
-const getRoleBadge = (role: string) => {
+const getRoleBadge = (role: string, theme: string) => {
   return (
-    <span className="px-3 py-1 rounded-full bg-gray-200 text-gray-800 text-xs font-medium">
+    <span className={`px-3 py-1 rounded-full text-xs font-medium ${theme === 'dark' ? 'bg-gray-700 text-gray-200' : 'bg-gray-200 text-gray-800'}`}>
       {role}
     </span>
   );
@@ -69,7 +69,7 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
   const [totalUsers, setTotalUsers] = useState(0);
   const [pageSize] = useState(10); // Fixed page size for consistency
   const normalize = (str: string) => str.toLowerCase().trim();
-
+  const { theme } = useTheme();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -345,26 +345,38 @@ const filteredUsers = Array.isArray(users)
     options: string[];
   }) => (
     <div className="flex flex-col">
-      <label className="text-sm text-gray-300 mb-1">{label}</label>
+      <label className={`text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>{label}</label>
       <Select.Root value={value} onValueChange={onChange}>
-        <Select.Trigger className="inline-flex items-center justify-between px-3 py-2 rounded w-48 text-sm shadow-sm bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white">
+        <Select.Trigger className={`inline-flex items-center justify-between px-3 py-2 rounded w-48 text-sm shadow-sm outline-none focus:ring-2 ${
+          theme === 'dark' 
+            ? 'bg-card border border-border text-foreground focus:ring-primary' 
+            : 'bg-white border border-gray-300 text-gray-900 focus:ring-blue-500'
+        }`}>
           <Select.Value />
           <Select.Icon>
-            <ChevronDownIcon className="text-gray-400" />
+            <ChevronDownIcon className={theme === 'dark' ? 'text-foreground' : 'text-gray-500'} />
           </Select.Icon>
         </Select.Trigger>
         <Select.Portal>
-          <Select.Content className="bg-[#232326] text-gray-200 rounded shadow-lg z-50 border border-gray-700">
+          <Select.Content className={`rounded shadow-lg z-50 ${
+            theme === 'dark' 
+              ? 'bg-card border border-border text-foreground' 
+              : 'bg-white border border-gray-300 text-gray-900'
+          }`}>
             <Select.Viewport>
               {options.map((opt) => (
                 <Select.Item
                   key={opt}
                   value={opt}
-                  className="px-3 py-2 cursor-pointer hover:bg-gray-800 text-sm text-gray-200 flex items-center"
+                  className={`px-3 py-2 cursor-pointer text-sm flex items-center ${
+                    theme === 'dark' 
+                      ? 'hover:bg-accent text-foreground' 
+                      : 'hover:bg-gray-100 text-gray-900'
+                  }`}
                 >
                   <Select.ItemText>{opt}</Select.ItemText>
                   <Select.ItemIndicator className="ml-2">
-                    <CheckIcon className="text-blue-400" />
+                    <CheckIcon className={theme === 'dark' ? 'text-primary' : 'text-blue-500'} />
                   </Select.ItemIndicator>
                 </Select.Item>
               ))}
@@ -376,22 +388,22 @@ const filteredUsers = Array.isArray(users)
   );
 
   if (loading && users.length === 0) {
-    return <div className="text-center py-6">Loading...</div>;
+    return <div className={`text-center py-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading...</div>;
   }
 
   return (
-    <div className="p-6 bg-black-50 min-h-screen">
-      <Card className="bg-black-50 border border-gray-500 shadow-sm">
+    <div className={`p-6 min-h-screen ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+      <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}>
         <CardHeader>
-          <CardTitle className="text-lg text-gray-200">User Management</CardTitle>
-          <p className="text-sm text-gray-400">Manage all users in the system</p>
+          <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>User Management</CardTitle>
+          <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Manage all users in the system</p>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-col lg:flex-row md:items-start lg:items-end md:justify-start lg:justify-between gap-4 mb-6">
             {/* Filters */}
             <div className="flex flex-col md:w-full lg:flex-row lg:gap-4">
               <div className="w-full md:w-full lg:w-auto">
-                <span className="block text-sm text-gray-200 mb-1">Filter by Role</span>
+                <span className={`block text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Filter by Role</span>
                 <SelectMenu
                   label=""
                   value={roleFilter}
@@ -400,7 +412,7 @@ const filteredUsers = Array.isArray(users)
                 />
               </div>
               <div className="w-full md:w-full lg:w-auto">
-                <span className="block text-sm text-gray-200 mb-1">Filter by Status</span>
+                <span className={`block text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Filter by Status</span>
                 <SelectMenu
                   label=""
                   value={statusFilter}
@@ -412,19 +424,21 @@ const filteredUsers = Array.isArray(users)
 
             {/* Search */}
             <div className="w-full md:w-full lg:w-auto flex flex-col">
-              <label className="text-sm text-gray-200 mb-1">Search</label>
+              <label className={`text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Search</label>
               <Input
                 placeholder="Search name or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full md:w-full lg:w-64 rounded bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white"
+                className={theme === 'dark' 
+                  ? 'w-full md:w-full lg:w-64 rounded bg-card border border-border text-foreground' 
+                  : 'w-full md:w-full lg:w-64 rounded bg-white border border-gray-300 text-gray-900'}
               />
             </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-400">
-              <thead className="border-b border-gray-500 text-gray-200">
+            <table className="w-full text-sm text-left">
+              <thead className={`border-b ${theme === 'dark' ? 'border-border text-foreground' : 'border-gray-200 text-gray-900'}`}>
                 <tr>
                   <th className="py-2">Full Name</th>
                   <th className="py-2">Email</th>
@@ -438,7 +452,11 @@ const filteredUsers = Array.isArray(users)
                   filteredUsers.map((user) => (
                     <tr
                       key={user.id}
-                      className="border-b border-gray-500 transition-colors duration-200 hover:bg-gray-800"
+                      className={`border-b transition-colors duration-200 ${
+                        theme === 'dark' 
+                          ? 'border-border hover:bg-accent' 
+                          : 'border-gray-200 hover:bg-gray-50'
+                      }`}
                     >
                       <td className="py-3 px-2 w-[150px]">
                         {editingId === user.id ? (
@@ -446,7 +464,9 @@ const filteredUsers = Array.isArray(users)
                             name="name"
                             value={editData?.name || ""}
                             onChange={handleEditChange}
-                            className="bg-[#232326] text-gray-200 w-full"
+                            className={theme === 'dark' 
+                              ? 'bg-card text-foreground w-full' 
+                              : 'bg-white text-gray-900 w-full'}
                           />
                         ) : (
                           user.name
@@ -458,14 +478,16 @@ const filteredUsers = Array.isArray(users)
                             name="email"
                             value={editData?.email || ""}
                             onChange={handleEditChange}
-                            className="bg-[#232326] text-gray-200 w-full"
+                            className={theme === 'dark' 
+                              ? 'bg-card text-foreground w-full' 
+                              : 'bg-white text-gray-900 w-full'}
                           />
                         ) : (
                           user.email
                         )}
                       </td>
-                      <td className="py-3 w-[120px]">{getRoleBadge(user.role)}</td>
-                      <td className="py-3 w-[120px]">{getStatusBadge(user.status)}</td>
+                      <td className="py-3 w-[120px]">{getRoleBadge(user.role, theme)}</td>
+                      <td className="py-3 w-[120px]">{getStatusBadge(user.status, theme)}</td>
                       <td className="py-3 text-right">
                         <div className="flex flex-wrap sm:flex-nowrap justify-end gap-2">
                           {editingId === user.id ? (
@@ -473,7 +495,9 @@ const filteredUsers = Array.isArray(users)
                               size="sm"
                               onClick={saveEdit}
                               disabled={loading}
-                              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 w-full sm:w-auto"
+                              className={theme === 'dark' 
+                                ? 'text-foreground bg-card border border-border w-full sm:w-auto hover:bg-accent' 
+                                : 'text-gray-700 bg-white border border-gray-300 w-full sm:w-auto hover:bg-gray-50'}
                             >
                               {loading ? "Saving..." : "Save"}
                             </Button>
@@ -484,18 +508,22 @@ const filteredUsers = Array.isArray(users)
                                 size="icon"
                                 onClick={() => handleEdit(user)}
                                 disabled={loading}
-                                className="p-2 rounded hover:bg-gray-700"
+                                className={theme === 'dark' 
+                                  ? 'p-2 rounded hover:bg-accent' 
+                                  : 'p-2 rounded hover:bg-gray-100'}
                               >
-                                <Pencil1Icon className="w-5 h-5 text-blue-500" />
+                                <Pencil1Icon className={theme === 'dark' ? 'w-5 h-5 text-primary' : 'w-5 h-5 text-blue-500'} />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => confirmDelete(user.id)}
                                 disabled={loading}
-                                className="p-2 rounded hover:bg-gray-700"
+                                className={theme === 'dark' 
+                                  ? 'p-2 rounded hover:bg-accent' 
+                                  : 'p-2 rounded hover:bg-gray-100'}
                               >
-                                <TrashIcon className="w-5 h-5 text-red-500" />
+                                <TrashIcon className={theme === 'dark' ? 'w-5 h-5 text-destructive' : 'w-5 h-5 text-red-500'} />
                               </Button>
                             </>
                           )}
@@ -505,7 +533,7 @@ const filteredUsers = Array.isArray(users)
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="py-4 text-center text-gray-500">
+                    <td colSpan={5} className={`py-4 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                       No users found.
                     </td>
                   </tr>
@@ -517,7 +545,7 @@ const filteredUsers = Array.isArray(users)
           {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-6">
-              <div className="text-sm text-gray-400">
+              <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                 Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalUsers)} of {totalUsers} users
               </div>
               <div className="flex items-center space-x-2">
@@ -526,7 +554,9 @@ const filteredUsers = Array.isArray(users)
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1 || loading}
-                  className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                  className={theme === 'dark' 
+                    ? 'text-foreground bg-card border border-border hover:bg-accent' 
+                    : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
                 >
                   Previous
                 </Button>
@@ -543,8 +573,12 @@ const filteredUsers = Array.isArray(users)
                       onClick={() => setCurrentPage(pageNum)}
                       disabled={loading}
                       className={currentPage === pageNum 
-                        ? "bg-blue-600 text-white" 
-                        : "text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                        ? (theme === 'dark' 
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'bg-blue-600 text-white')
+                        : (theme === 'dark' 
+                            ? 'text-foreground bg-card border border-border hover:bg-accent' 
+                            : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50')
                       }
                     >
                       {pageNum}
@@ -557,7 +591,9 @@ const filteredUsers = Array.isArray(users)
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages || loading}
-                  className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                  className={theme === 'dark' 
+                    ? 'text-foreground bg-card border border-border hover:bg-accent' 
+                    : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
                 >
                   Next
                 </Button>
@@ -568,11 +604,11 @@ const filteredUsers = Array.isArray(users)
       </Card>
 
       <Dialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
-        <DialogContent className="sm:max-w-md bg-[#18181b] border border-gray-700 text-gray-200">
+        <DialogContent className={theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-200 text-gray-900'}>
           <DialogHeader>
-            <DialogTitle className="text-gray-100">Confirm Deletion</DialogTitle>
+            <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Confirm Deletion</DialogTitle>
           </DialogHeader>
-          <p className="text-gray-300">
+          <p className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>
             Are you sure you want to delete this user? This action cannot be undone.
           </p>
           <DialogFooter>
@@ -580,7 +616,9 @@ const filteredUsers = Array.isArray(users)
               variant="outline"
               onClick={() => setDeleteId(null)}
               disabled={loading}
-              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+              className={theme === 'dark' 
+                ? 'text-foreground bg-card border border-border hover:bg-accent' 
+                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
             >
               Cancel
             </Button>
@@ -588,7 +626,9 @@ const filteredUsers = Array.isArray(users)
               variant="destructive"
               onClick={deleteUser}
               disabled={loading}
-              className="bg-red-700 hover:bg-red-800 text-white"
+              className={theme === 'dark' 
+                ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' 
+                : 'bg-red-600 hover:bg-red-700 text-white'}
             >
               {loading ? "Deleting..." : "Delete"}
             </Button>

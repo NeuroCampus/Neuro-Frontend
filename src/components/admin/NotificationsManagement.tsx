@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Input } from "../ui/input";
@@ -13,6 +12,7 @@ import {
 } from "../ui/select";
 import { manageNotifications } from "../../utils/admin_api";
 import { useToast } from "../../hooks/use-toast";
+import { useTheme } from "../../context/ThemeContext";
 
 interface Notification {
   id: number;
@@ -35,6 +35,7 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const [validationError, setValidationError] = useState("");
+  const { theme } = useTheme();
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -142,57 +143,56 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
     }
   };
 
-
-  const getBadgeColor = (role: string) => {
+  const getBadgeColor = (role: string, theme: string) => {
     switch (role) {
       case "all":
       case "All Users":
-        return "bg-blue-100 text-blue-800";
+        return theme === 'dark' ? "bg-blue-900 text-blue-200" : "bg-blue-100 text-blue-800";
       case "teacher":
       case "Teacher":
-        return "bg-purple-100 text-purple-800";
+        return theme === 'dark' ? "bg-purple-900 text-purple-200" : "bg-purple-100 text-purple-800";
       case "hod":
       case "Head of Department":
-        return "bg-green-100 text-green-800";
+        return theme === 'dark' ? "bg-green-900 text-green-200" : "bg-green-100 text-green-800";
       case "student":
       case "Student":
-        return "bg-pink-100 text-pink-800";
+        return theme === 'dark' ? "bg-pink-900 text-pink-200" : "bg-pink-100 text-pink-800";
       case "admin":
       case "Admin":
-        return "bg-red-100 text-red-800";
+        return theme === 'dark' ? "bg-red-900 text-red-200" : "bg-red-100 text-red-800";
       default:
-        return "bg-gray-100 text-gray-800";
+        return theme === 'dark' ? "bg-gray-700 text-gray-200" : "bg-gray-100 text-gray-800";
     }
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 sm:p-6 bg-[#1c1c1e] text-gray-200 min-h-screen">
+    <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 sm:p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Notification History */}
-      <Card className="lg:col-span-2 bg-black-50 border border-gray-500 shadow-sm">
+      <Card className={theme === 'dark' ? 'lg:col-span-2 bg-card border border-border' : 'lg:col-span-2 bg-white border border-gray-200'}>
         <CardHeader>
-          <CardTitle className="text-xl text-gray-200">Notification History</CardTitle>
-          <p className="text-sm text-gray-400">List of all notifications sent to users</p>
+          <CardTitle className={`text-xl ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Notification History</CardTitle>
+          <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>List of all notifications sent to users</p>
         </CardHeader>
         <CardContent className="overflow-auto max-h-[400px] md:max-h-[500px] thin-scrollbar">
           {loading && notifications.length === 0 ? (
-            <div className="text-center py-6">Loading...</div>
+            <div className={`text-center py-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading...</div>
           ) : (
             <table className="w-full text-left text-sm border-collapse">
-              <thead className="border-b border-gray-300 sticky top-0 bg-[#1c1c1e] z-10">
+              <thead className={`border-b ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-200 bg-gray-50'}`}>
                 <tr>
-                  <th className="pb-2 text-gray-200">Message</th>
-                  <th className="pb-2 text-gray-200">Target</th>
+                  <th className={`pb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Message</th>
+                  <th className={`pb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Target</th>
                 </tr>
               </thead>
               <tbody>
                 {notifications.map((note) => (
-                  <tr key={note.id} className="border-b border-gray-200">
+                  <tr key={note.id} className={`border-b ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
                     <td className="py-3">
-                      <div className="font-medium text-gray-400">{note.title}</div>
-                      <div className="text-gray-400 text-sm">{note.message}</div>
+                      <div className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{note.title}</div>
+                      <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{note.message}</div>
                     </td>
                     <td className="py-3">
-                      <span className={`px-3 py-1 text-xs rounded-full ${note.color}`}>
+                      <span className={`px-3 py-1 text-xs rounded-full ${getBadgeColor(note.target_role, theme)}`}>
                         {note.target_role.charAt(0).toUpperCase() + note.target_role.slice(1).replace("_", " ")}
                       </span>
                     </td>
@@ -206,16 +206,16 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
       </Card>
 
       {/* Create Notification */}
-      <Card className="bg-[#1c1c1e] border border-gray-600 shadow-sm w-full lg:w-auto">
+      <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}>
         <CardHeader>
-          <CardTitle className="text-xl text-gray-200">Create Notification</CardTitle>
-          <p className="text-sm text-gray-400">Send a new notification to users</p>
+          <CardTitle className={`text-xl ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Create Notification</CardTitle>
+          <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Send a new notification to users</p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm mb-1 text-gray-200">Title</label>
+            <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Title</label>
             <Input
-              className="bg-[#232326] text-gray-200 border-gray-300"
+              className={theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-300'}
               placeholder="Notification Title"
               value={title}
               onChange={(e) => {
@@ -225,9 +225,9 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
             />
           </div>
           <div>
-            <label className="block text-sm mb-1 text-gray-200">Message</label>
+            <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Message</label>
             <Textarea
-              className="bg-[#232326] text-gray-200 border-gray-300"
+              className={theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-300'}
               rows={4}
               placeholder="Write your message here..."
               value={message}
@@ -238,7 +238,7 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
             />
           </div>
           <div>
-            <label className="block text-sm mb-1 text-gray-200">Target Role</label>
+            <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Target Role</label>
             <Select
               value={targetRole}
               onValueChange={(val) => {
@@ -246,10 +246,10 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
                 setValidationError("");
               }}
             >
-              <SelectTrigger className="bg-[#232326] text-gray-200 border-gray-300">
+              <SelectTrigger className={theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-300'}>
                 <SelectValue placeholder="Select a target role" />
               </SelectTrigger>
-              <SelectContent className="bg-[#232326] text-gray-200 border-gray-200">
+              <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-300'}>
                 <SelectItem value="All Users">All Users</SelectItem>
                 <SelectItem value="Student">Student</SelectItem>
                 <SelectItem value="Teacher">Teacher</SelectItem>
@@ -261,7 +261,9 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
             <div className="text-red-600 text-sm font-medium">{validationError}</div>
           )}
           <Button
-            className="w-full text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+            className={theme === 'dark' 
+              ? 'w-full text-foreground bg-card border border-border hover:bg-accent' 
+              : 'w-full text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
             onClick={handleSendNotification}
             disabled={loading}
           >

@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
@@ -7,6 +6,7 @@ import { Upload, X } from "lucide-react";
 import clsx from "clsx";
 import { bulkUploadFaculty } from "../../utils/admin_api";
 import { useToast } from "../../hooks/use-toast";
+import { useTheme } from "../../context/ThemeContext";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 const REQUIRED_HEADERS = ["name", "email"]; // Updated to match backend
@@ -21,6 +21,7 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
   const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { theme } = useTheme();
 
   const REQUIRED_HEADERS = ["name", "email"];
 
@@ -91,8 +92,6 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
     });
   };
 
-
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setFile(e.target.files[0]);
@@ -160,11 +159,11 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
   };
 
   return (
-    <div className="px-4 py-8 max-w-4xl mx-auto">
-      <Card className="bg-text-gray-800 shadow-md border border-gray-700 text-gray-100">
+    <div className={`px-4 py-8 max-w-4xl mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+      <Card className={theme === 'dark' ? 'bg-card shadow-md border border-border text-foreground' : 'bg-white shadow-md border border-gray-200 text-gray-900'}>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold ">Upload User Data</CardTitle>
-          <CardDescription className="text-sm text-gray-400">
+          <CardTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Upload User Data</CardTitle>
+          <CardDescription className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
             Upload CSV or Excel files to bulk enroll users
           </CardDescription>
         </CardHeader>
@@ -181,33 +180,35 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
             className={clsx(
               "border-2 border-dashed rounded-md px-6 py-10 text-center cursor-pointer transition-all duration-200 relative",
               dragActive
-                ? "border-blue-400 bg-blue-50 ring-2 ring-blue-200"
-                : "border-gray-400"
+                ? (theme === 'dark' ? "border-primary bg-primary/10 ring-2 ring-primary/20" : "border-blue-400 bg-blue-50 ring-2 ring-blue-200")
+                : (theme === 'dark' ? "border-border" : "border-gray-400")
             )}
           >
-            <Upload className="mx-auto mb-2 text-gray-400" size={28} />
-            <p className="text-gray-400">Drag & drop file here</p>
-            <p className="text-xs text-gray-400">Supports CSV, XLS, XLSX (max 5MB)</p>
+            <Upload className={`mx-auto mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-400'}`} size={28} />
+            <p className={theme === 'dark' ? 'text-foreground' : 'text-gray-400'}>Drag & drop file here</p>
+            <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`}>Supports CSV, XLS, XLSX (max 5MB)</p>
             <div className="mt-3">
               <Button
                 variant="outline"
                 size="sm"
                 type="button"
-                className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                className={theme === 'dark' 
+                  ? 'text-foreground bg-card border border-border hover:bg-accent' 
+                  : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
               >
                 Select File
               </Button>
             </div>
             {file && (
               <div className="mt-4 flex items-center justify-center gap-2">
-                <span className="text-sm text-gray-400">{file.name}</span>
+                <span className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-400'}`}>{file.name}</span>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setFile(null);
                     if (inputRef.current) inputRef.current.value = "";
                   }}
-                  className="text-gray-500 hover:text-red-500"
+                  className={theme === 'dark' ? 'text-muted-foreground hover:text-destructive' : 'text-gray-500 hover:text-red-500'}
                 >
                   <X size={16} />
                 </button>
@@ -224,7 +225,9 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
           </div>
 
           <Button
-            className="w-full text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+            className={theme === 'dark' 
+              ? 'w-full text-foreground bg-card border border-border hover:bg-accent' 
+              : 'w-full text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
             onClick={handleUpload}
             disabled={loading || !file}
           >
@@ -232,8 +235,8 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
           </Button>
 
           <div>
-            <p className="font-medium mb-2">Upload Instructions</p>
-            <ul className="list-disc pl-5 text-sm text-gray-400 space-y-1 ">
+            <p className={`font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Upload Instructions</p>
+            <ul className={`list-disc pl-5 text-sm space-y-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               <li>Use the provided template for proper data formatting</li>
               <li>Required columns: name, email</li>
               <li>role not required, defaults to teacher</li>
@@ -241,7 +244,7 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
               <li>
                 <button
                   onClick={handleDownloadTemplate}
-                  className="text-blue-600 hover:underline"
+                  className={theme === 'dark' ? 'text-primary hover:underline' : 'text-blue-600 hover:underline'}
                 >
                   Download Template
                 </button>

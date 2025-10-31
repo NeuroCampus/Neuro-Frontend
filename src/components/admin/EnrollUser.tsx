@@ -1,4 +1,3 @@
-
 import { useState,useRef } from "react";
 import {
   Card,
@@ -18,8 +17,7 @@ import {
 } from "../ui/select";
 import { enrollUser } from "../../utils/admin_api";
 import { useToast } from "../../hooks/use-toast";
-
-
+import { useTheme } from "../../context/ThemeContext";
 
 interface EnrollUserProps {
   setError: (error: string | null) => void;
@@ -36,7 +34,7 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
+  const { theme } = useTheme();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -64,7 +62,6 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
       }
     }, 500); // 500ms delay
   };
-
 
   const handleRoleChange = (value: string) => {
     setFormData((prev) => ({ ...prev, role: value }));
@@ -138,21 +135,20 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
     }
   };
 
-
   return (
-    <div className="min-h-screen bg-black-50 px-4 py-10 overflow-y-hidden">
-      <div className="max-w-2xl mx-auto ">
-        <Card className="w-full bg-text-gray-800 border border-gray-700 shadow-lg rounded-lg p-6 over">
-          <CardHeader className="pb-4 ">
-            <CardTitle className="text-lg text-gray-100">User Enrollment Form</CardTitle>
-            <CardDescription className="text-sm text-gray-400">
+    <div className={`min-h-screen px-4 py-10 overflow-y-hidden ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+      <div className="max-w-2xl mx-auto">
+        <Card className={theme === 'dark' ? 'w-full bg-card border border-border shadow-lg rounded-lg p-6' : 'w-full bg-white border border-gray-200 shadow-lg rounded-lg p-6'}>
+          <CardHeader className="pb-4">
+            <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>User Enrollment Form</CardTitle>
+            <CardDescription className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               Add a new user to the system
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-5">
               <div>
-                <label htmlFor="email" className="text-sm font-medium text-gray-400">
+                <label htmlFor="email" className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                   Email
                 </label>
                 <Input
@@ -160,7 +156,7 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
                   name="email"
                   type="email"
                   placeholder="user@example.com"
-                  className="mt-1 bg-[#232326] text-gray-200"
+                  className={theme === 'dark' ? 'mt-1 bg-card text-foreground border border-border' : 'mt-1 bg-white text-gray-900 border border-gray-300'}
                   value={formData.email}
                   onChange={handleInputChange}
                 />
@@ -170,48 +166,50 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
               </div>
               <div className="flex gap-4">
                 <div className="w-1/2">
-                  <label htmlFor="first_name" className="text-sm font-medium text-gray-400">
+                  <label htmlFor="first_name" className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                     First Name
                   </label>
                   <Input
                     id="first_name"
                     name="first_name"
                     placeholder="HOD/Faculty name"
-                    className="mt-1 bg-[#232326] text-gray-200"
+                    className={theme === 'dark' ? 'mt-1 bg-card text-foreground border border-border' : 'mt-1 bg-white text-gray-900 border border-gray-300'}
                     value={formData.first_name}
                     onChange={handleInputChange}
                   />
                 </div>
                 <div className="w-1/2">
-                  <label htmlFor="last_name" className="text-sm font-medium text-gray-400">
+                  <label htmlFor="last_name" className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                     Last Name
                   </label>
                   <Input
                     id="last_name"
                     name="last_name"
                     placeholder="initials"
-                    className="mt-1 bg-[#232326] text-gray-200"
+                    className={theme === 'dark' ? 'mt-1 bg-card text-foreground border border-border' : 'mt-1 bg-white text-gray-900 border border-gray-300'}
                     value={formData.last_name}
                     onChange={handleInputChange}
                   />
                 </div>
               </div>
               <div>
-                <label htmlFor="role" className="text-sm font-medium text-gray-400">
+                <label htmlFor="role" className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                   Role
                 </label>
                 <Select value={formData.role} onValueChange={handleRoleChange}>
-                  <SelectTrigger className="w-full mt-1 bg-[#232326] text-gray-200 border-gray-300">
+                  <SelectTrigger className={theme === 'dark' ? 'w-full mt-1 bg-card text-foreground border border-border' : 'w-full mt-1 bg-white text-gray-900 border border-gray-300'}>
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#232326] text-gray-200">
+                  <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-300'}>
                     <SelectItem value="hod">HOD</SelectItem>
                     <SelectItem value="teacher">Faculty/Teacher</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <Button
-                className="w-full text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                className={theme === 'dark' 
+                  ? 'w-full text-foreground bg-card border border-border hover:bg-accent' 
+                  : 'w-full text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
                 onClick={handleSubmit}
                 disabled={loading}
               >

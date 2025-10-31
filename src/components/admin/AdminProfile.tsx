@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { manageAdminProfile } from "../../utils/admin_api";
 import { useToast } from "../../hooks/use-toast";
 import { Textarea } from "../ui/textarea";
-
+import { useTheme } from "../../context/ThemeContext";
 
 interface AdminProfileProps {
   user: any;
@@ -38,6 +38,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const [fetchedUser, setFetchedUser] = useState<any>(null);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -266,17 +267,17 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
   };
 
   if (loading) {
-    return <div className="text-center py-6">Loading...</div>;
+    return <div className={`text-center py-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-black-50 flex justify-center items-start py-12 px-4">
-      <Card className="w-full max-w-2xl bg-black-50 border-gray-500 shadow-md">
+    <div className={`min-h-screen flex justify-center items-start py-12 px-4 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+      <Card className={theme === 'dark' ? 'w-full max-w-2xl bg-card border border-border shadow-md' : 'w-full max-w-2xl bg-white border border-gray-200 shadow-md'}>
         <CardHeader className="flex flex-col items-start gap-2 px-6 pt-6 pb-4">
           <div className="flex w-full justify-between items-center">
             <div>
-              <CardTitle className="text-lg text-gray-200">Profile Information</CardTitle>
-              <p className="text-sm text-gray-400">View and update your personal information</p>
+              <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Profile Information</CardTitle>
+              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>View and update your personal information</p>
             </div>
             <Button
               size="sm"
@@ -285,7 +286,9 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
               else setEditing(true);
               }}
               variant="outline"
-              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+              className={theme === 'dark' 
+                ? 'text-foreground bg-card border border-border hover:bg-accent' 
+                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
               disabled={loading}
             >
               {editing ? (loading ? "Saving..." : "Save") : "Edit Profile"}
@@ -298,25 +301,25 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
 
           {/* Profile Avatar + Name */}
           <div className="flex flex-col items-center">
-            <div className="w-20 h-20 rounded-full bg-blue-500 text-white flex items-center justify-center text-2xl font-semibold">
+            <div className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-semibold bg-[#a259ff] text-white">
               {profile.first_name[0]}
               {profile.last_name[0]}
             </div>
             <div className="text-center mt-2">
-              <div className="text-lg font-semibold text-gray-200">
+              <div className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                 {profile.first_name} {profile.last_name}
               </div>
-              <div className="text-sm text-gray-400">Administrator</div>
+              <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Administrator</div>
             </div>
           </div>
 
-          <hr className="border-gray-500" />
+          <hr className={theme === 'dark' ? 'border-border' : 'border-gray-200'} />
 
           {/* Form Inputs */}
           <div className="space-y-6">
             {/* First Name */}
             <div>
-              <Label htmlFor="first_name" className="text-xs text-gray-200 mb-1 block">
+              <Label htmlFor="first_name" className={`text-xs mb-1 block ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
                 First Name
               </Label>
               <Input
@@ -325,7 +328,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 value={profile.first_name}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className="w-full bg-[#232326] text-gray-200"
+                className={theme === 'dark' ? 'w-full bg-card text-foreground border border-border' : 'w-full bg-white text-gray-900 border border-gray-300'}
                 placeholder="Enter your first name"
               />
               {localErrors.first_name && (
@@ -335,7 +338,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
 
             {/* Last Name */}
             <div>
-              <Label htmlFor="last_name" className="text-xs text-gray-200 mb-1 block">
+              <Label htmlFor="last_name" className={`text-xs mb-1 block ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
                 Last Name
               </Label>
               <Input
@@ -344,7 +347,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 value={profile.last_name}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className="w-full bg-[#232326] text-gray-200"
+                className={theme === 'dark' ? 'w-full bg-card text-foreground border border-border' : 'w-full bg-white text-gray-900 border border-gray-300'}
                 placeholder="Enter your last name"
               />
               {localErrors.last_name && (
@@ -354,7 +357,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
 
             {/* Email */}
             <div>
-              <Label htmlFor="email" className="text-xs text-gray-200 mb-1 block">
+              <Label htmlFor="email" className={`text-xs mb-1 block ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
                 Email Address
               </Label>
               <Input
@@ -363,7 +366,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 value={profile.email}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className="w-full bg-[#232326] text-gray-200"
+                className={theme === 'dark' ? 'w-full bg-card text-foreground border border-border' : 'w-full bg-white text-gray-900 border border-gray-300'}
                 placeholder="Enter a valid email"
               />
               {localErrors.email && (
@@ -373,7 +376,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
 
             {/* Mobile */}
             <div>
-              <Label htmlFor="mobile_number" className="text-xs text-gray-200 mb-1 block">
+              <Label htmlFor="mobile_number" className={`text-xs mb-1 block ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
                 Mobile Number
               </Label>
               <Input
@@ -383,7 +386,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 onChange={handleChange}
                 maxLength={10}
                 disabled={!editing || loading}
-                className="w-full bg-[#232326] text-gray-200"
+                className={theme === 'dark' ? 'w-full bg-card text-foreground border border-border' : 'w-full bg-white text-gray-900 border border-gray-300'}
                 placeholder="Enter 10-digit mobile number"
               />
               {localErrors.mobile_number && (
@@ -393,7 +396,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
 
             {/* Address */}
             <div>
-              <Label htmlFor="address" className="text-xs text-gray-200 mb-1 block">
+              <Label htmlFor="address" className={`text-xs mb-1 block ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
                 Address
               </Label>
               <Input
@@ -402,7 +405,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 value={profile.address}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className="w-full bg-[#232326] text-gray-200"
+                className={theme === 'dark' ? 'w-full bg-card text-foreground border border-border' : 'w-full bg-white text-gray-900 border border-gray-300'}
                 placeholder="Enter your address (5–200 characters)"
               />
               {localErrors.address && (
@@ -412,7 +415,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
 
             {/* Bio */}
           <div>
-            <Label htmlFor="bio" className="text-xs text-gray-200 mb-1 block">
+            <Label htmlFor="bio" className={`text-xs mb-1 block ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
               Bio
             </Label>
             <Textarea
@@ -421,7 +424,11 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
               value={profile.bio}
               onChange={handleChange}
               disabled={!editing || loading}
-              className="w-full bg-[#232326] text-gray-200 resize-none overflow-y-auto thin-scrollbar"
+              className={`resize-none overflow-y-auto thin-scrollbar ${
+                theme === 'dark' 
+                  ? 'bg-card text-foreground border border-border' 
+                  : 'bg-white text-gray-900 border border-gray-300'
+              }`}
               placeholder="Tell us about yourself (10–300 characters)"
               rows={1} // start small
               style={{
