@@ -62,6 +62,10 @@ interface ManageBranchesResponse {
   message?: string;
   branches?: Branch[];
   branch?: Branch;
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
+  results?: Branch[];
 }
 
 interface Batch {
@@ -78,11 +82,17 @@ interface ManageBatchesResponse {
   message?: string;
   batches?: Batch[];
   batch?: Batch;
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
+  results?: Batch[];
 }
 
 interface ManageBatchesRequest {
   start_year?: number;
   end_year?: number;
+  page?: number;
+  page_size?: number;
 }
 
 interface Notification {
@@ -98,6 +108,10 @@ interface ManageNotificationsResponse {
   success: boolean;
   message?: string;
   notifications?: Notification[];
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
+  results?: Notification[];
 }
 
 interface HODLeave {
@@ -135,6 +149,10 @@ interface ManageUsersResponse {
   success: boolean;
   message?: string;
   users?: User[];
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
+  results?: User[];
 }
 
 interface ManageAdminProfileRequest {
@@ -230,21 +248,30 @@ export const bulkUploadFaculty = async (file: File): Promise<BulkUploadFacultyRe
 };
 
 export const manageBranches = async (
-  data?: any,
+  data?: { page?: number; page_size?: number; name?: string; hod_id?: string },
   branch_id?: number,
   method: "GET" | "POST" | "PUT" | "DELETE" = "GET"
 ): Promise<ManageBranchesResponse> => {
   try {
-    const url = branch_id
+    let url = branch_id
       ? `${API_BASE_URL}/admin/branches/${branch_id}/`
       : `${API_BASE_URL}/admin/branches/`;
+    
+    // Add pagination parameters for GET requests
+    if (method === "GET" && data && !branch_id) {
+      const params = new URLSearchParams();
+      if (data.page) params.append('page', data.page.toString());
+      if (data.page_size) params.append('page_size', data.page_size.toString());
+      if (params.toString()) url += `?${params.toString()}`;
+    }
+    
     const response = await fetchWithTokenRefresh(url, {
       method,
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         "Content-Type": "application/json",
       },
-      body: data ? JSON.stringify(data) : undefined,
+      body: (method !== "GET" && data) ? JSON.stringify(data) : undefined,
     });
     const result = await response.json();
     if (!response.ok) {
@@ -258,22 +285,85 @@ export const manageBranches = async (
   }
 };
 
+interface HODUser {
+  id: number;
+  username: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+}
+
+interface BranchesWithHODsResponse {
+  success: boolean;
+  message?: string;
+  branches?: Branch[];
+  hods?: HODUser[];
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
+  results?: Branch[];
+}
+
+export const getBranchesWithHODs = async (
+  data?: { page?: number; page_size?: number }
+): Promise<BranchesWithHODsResponse> => {
+  try {
+    let url = `${API_BASE_URL}/admin/branches-with-hods/`;
+
+    // Add pagination parameters for GET requests
+    if (data) {
+      const params = new URLSearchParams();
+      if (data.page) params.append('page', data.page.toString());
+      if (data.page_size) params.append('page_size', data.page_size.toString());
+      if (params.toString()) url += `?${params.toString()}`;
+    }
+
+    const response = await fetchWithTokenRefresh(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      console.error("Get Branches with HODs Failed:", { status: response.status, result });
+      return { success: false, message: result.message || `HTTP ${response.status}` };
+    }
+    return result;
+  } catch (error) {
+    console.error("Get Branches with HODs Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
 export const manageBatches = async (
   data?: ManageBatchesRequest,
   batch_id?: number,
   method: "GET" | "POST" | "PUT" | "DELETE" = "GET"
 ): Promise<ManageBatchesResponse> => {
   try {
-    const url = batch_id
+    let url = batch_id
       ? `${API_BASE_URL}/admin/batches/${batch_id}/`
       : `${API_BASE_URL}/admin/batches/`;
+    
+    // Add pagination and filter parameters for GET requests
+    if (method === "GET" && data && !batch_id) {
+      const params = new URLSearchParams();
+      if (data.page) params.append('page', data.page.toString());
+      if (data.page_size) params.append('page_size', data.page_size.toString());
+      if (data.start_year) params.append('start_year', data.start_year.toString());
+      if (data.end_year) params.append('end_year', data.end_year.toString());
+      if (params.toString()) url += `?${params.toString()}`;
+    }
+    
     const response = await fetchWithTokenRefresh(url, {
       method,
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         "Content-Type": "application/json",
       },
-      body: data ? JSON.stringify(data) : undefined,
+      body: (method !== "GET" && data) ? JSON.stringify(data) : undefined,
     });
     const result = await response.json();
     if (!response.ok) {
@@ -288,17 +378,27 @@ export const manageBatches = async (
 };
 
 export const manageNotifications = async (
-  data?: any,
+  data?: { page?: number; page_size?: number },
   method: "GET" | "POST" = "GET"
 ): Promise<ManageNotificationsResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/admin/notifications/`, {
+    let url = `${API_BASE_URL}/admin/notifications/`;
+    
+    // Add pagination parameters for GET requests
+    if (method === "GET" && data) {
+      const params = new URLSearchParams();
+      if (data.page) params.append('page', data.page.toString());
+      if (data.page_size) params.append('page_size', data.page_size.toString());
+      if (params.toString()) url += `?${params.toString()}`;
+    }
+    
+    const response = await fetchWithTokenRefresh(url, {
       method,
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         "Content-Type": "application/json",
       },
-      body: data ? JSON.stringify(data) : undefined,
+      body: (method === "POST" && data) ? JSON.stringify(data) : undefined,
     });
     const result = await response.json();
     if (!response.ok) {
@@ -338,17 +438,29 @@ export const manageHODLeaves = async (
 };
 
 export const manageUsers = async (
-  data?: any,
+  data?: { page?: number; page_size?: number; role?: string; is_active?: boolean },
   method: "GET" | "POST" = "GET"
 ): Promise<ManageUsersResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/admin/users/`, {
+    let url = `${API_BASE_URL}/admin/users/`;
+    
+    // Add pagination and filter parameters for GET requests
+    if (method === "GET" && data) {
+      const params = new URLSearchParams();
+      if (data.page) params.append('page', data.page.toString());
+      if (data.page_size) params.append('page_size', data.page_size.toString());
+      if (data.role) params.append('role', data.role);
+      if (data.is_active !== undefined) params.append('is_active', data.is_active.toString());
+      if (params.toString()) url += `?${params.toString()}`;
+    }
+    
+    const response = await fetchWithTokenRefresh(url, {
       method,
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         "Content-Type": "application/json",
       },
-      body: data ? JSON.stringify(data) : undefined,
+      body: (method === "POST" && data) ? JSON.stringify(data) : undefined,
     });
     const result = await response.json();
     if (!response.ok) {
@@ -358,6 +470,44 @@ export const manageUsers = async (
     return result;
   } catch (error) {
     console.error("Manage Users Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+interface ManageUserActionRequest {
+  user_id: string;
+  action: 'edit' | 'deactivate' | 'delete';
+  updates?: {
+    username?: string;
+    email?: string;
+    first_name?: string;
+    last_name?: string;
+  };
+}
+
+interface ManageUserActionResponse {
+  success: boolean;
+  message?: string;
+}
+
+export const manageUserAction = async (data: ManageUserActionRequest): Promise<ManageUserActionResponse> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/admin/users/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      console.error("Manage User Action Failed:", { status: response.status, result });
+      return { success: false, message: result.message || `HTTP ${response.status}` };
+    }
+    return result;
+  } catch (error) {
+    console.error("Manage User Action Error:", error);
     return { success: false, message: "Network error" };
   }
 };
@@ -383,6 +533,154 @@ export const manageAdminProfile = async (
     return result;
   } catch (error) {
     console.error("Manage Admin Profile Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+interface BulkUserAction {
+  user_id: string;
+  action: 'edit' | 'deactivate' | 'delete';
+  updates?: {
+    username?: string;
+    email?: string;
+    first_name?: string;
+    last_name?: string;
+  };
+}
+
+interface BulkUserActionsRequest {
+  actions: BulkUserAction[];
+}
+
+interface BulkUserActionsResponse {
+  success: boolean;
+  message?: string;
+  results?: Array<{
+    user_id: string;
+    action: string;
+    success: boolean;
+    message: string;
+  }>;
+  summary?: {
+    total_actions: number;
+    successful: number;
+    errors: number;
+  };
+}
+
+export const bulkUserActions = async (data: BulkUserActionsRequest): Promise<BulkUserActionsResponse> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/admin/users/bulk-actions/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      console.error("Bulk User Actions Failed:", { status: response.status, result });
+      return { success: false, message: result.message || `HTTP ${response.status}` };
+    }
+    return result;
+  } catch (error) {
+    console.error("Bulk User Actions Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+interface BulkHODLeaveAction {
+  leave_id: number;
+  action: 'APPROVED' | 'REJECTED';
+}
+
+interface BulkHODLeaveActionsRequest {
+  actions: BulkHODLeaveAction[];
+}
+
+interface BulkHODLeaveActionsResponse {
+  success: boolean;
+  message?: string;
+  results?: Array<{
+    leave_id: number;
+    action: string;
+    success: boolean;
+    message: string;
+  }>;
+  summary?: {
+    total_actions: number;
+    successful: number;
+    errors: number;
+  };
+}
+
+export const bulkProcessHODLeaves = async (data: BulkHODLeaveActionsRequest): Promise<BulkHODLeaveActionsResponse> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/admin/hod-leaves/bulk-process/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      console.error("Bulk HOD Leave Processing Failed:", { status: response.status, result });
+      return { success: false, message: result.message || `HTTP ${response.status}` };
+    }
+    return result;
+  } catch (error) {
+    console.error("Bulk HOD Leave Processing Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+interface ManageAdminProfilePatchRequest {
+  user_id: string;
+  updates: {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    mobile_number?: string;
+    address?: string;
+    bio?: string;
+  };
+}
+
+interface ManageAdminProfilePatchResponse {
+  success: boolean;
+  message?: string;
+  profile?: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    mobile_number: string;
+    address: string;
+    bio: string;
+  };
+  changes?: Record<string, any>;
+}
+
+export const manageAdminProfilePatch = async (data: ManageAdminProfilePatchRequest): Promise<ManageAdminProfilePatchResponse> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/admin/profile/${data.user_id}/`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      console.error("Manage Admin Profile PATCH Failed:", { status: response.status, result });
+      return { success: false, message: result.message || `HTTP ${response.status}` };
+    }
+    return result;
+  } catch (error) {
+    console.error("Manage Admin Profile PATCH Error:", error);
     return { success: false, message: "Network error" };
   }
 };

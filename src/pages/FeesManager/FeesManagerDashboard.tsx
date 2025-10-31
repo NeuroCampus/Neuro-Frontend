@@ -16,7 +16,8 @@ import {
   UserCheck,
   Receipt,
   DollarSign,
-  Plus
+  Plus,
+  LogOut
 } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import FeeTemplates from './FeeTemplates';
@@ -30,9 +31,10 @@ import Reports from './Reports';
 
 interface FeesManagerDashboardProps {
   user: any;
+  setPage: (page: string) => void;
 }
 
-const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user }) => {
+const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPage }) => {
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +57,7 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user }) => 
       if (response.status === 401) {
         // Token expired or invalid, redirect to login
         localStorage.clear();
-        window.location.href = '/';
+        setPage("login");
         return;
       }
 
@@ -70,6 +72,11 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user }) => 
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    setPage("login");
   };
 
   const formatCurrency = (amount: number) => {
@@ -118,9 +125,15 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user }) => 
                 {dashboardData?.profile?.designation} • {dashboardData?.profile?.department}
               </p>
             </div>
-            <Badge variant="outline" className="px-3 py-1">
-              Fees Manager
-            </Badge>
+            <div className="flex items-center gap-3">
+              <Badge variant="outline" className="px-3 py-1">
+                Fees Manager
+              </Badge>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
