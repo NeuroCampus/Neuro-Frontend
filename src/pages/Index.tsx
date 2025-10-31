@@ -65,12 +65,26 @@ const Index = () => {
       <AdminDashboard user={user} setPage={setPage} />
     </ThemeProvider>
   );
-  if (role === "hod") return <HODDashboard user={user} setPage={setPage} />;
-  if (role === "fees_manager") return <FeesManagerDashboard user={user} setPage={setPage} />;
-  if (role === "teacher") return (
-    <FacultyDashboard user={user} setPage={setPage} />
+  if (role === "hod") return (
+    <ThemeProvider>
+      <HODDashboard user={user} setPage={setPage} />
+    </ThemeProvider>
   );
-  if (role === "student") return <StudentDashboard user={user} setPage={setPage} />;
+  if (role === "fees_manager") return (
+    <ThemeProvider>
+      <FeesManagerDashboard user={user} setPage={setPage} />
+    </ThemeProvider>
+  );
+  if (role === "teacher") return (
+    <ThemeProvider>
+      <FacultyDashboard user={user} setPage={setPage} />
+    </ThemeProvider>
+  );
+  if (role === "student") return (
+    <ThemeProvider>
+      <StudentDashboard user={user} setPage={setPage} />
+    </ThemeProvider>
+  );
 
   // Default fallback
   return <Login setRole={setRole} setPage={setPage} setUser={setUser} />;

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Loader2, Download, ArrowLeft } from 'lucide-react';
+import { useTheme } from '@/context/ThemeContext';
 
 interface PaymentSuccessProps {
   setPage?: (page: string) => void;
@@ -10,6 +11,7 @@ interface PaymentSuccessProps {
 const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ setPage }) => {
   const [paymentStatus, setPaymentStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [paymentDetails, setPaymentDetails] = useState<any>(null);
+  const { theme } = useTheme();
 
   // Get URL parameters from window.location
   const urlParams = new URLSearchParams(window.location.search);
@@ -74,12 +76,12 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ setPage }) => {
 
   if (paymentStatus === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Card className="w-full max-w-md">
+      <div className={`min-h-screen flex items-center justify-center ${theme === 'dark' ? 'bg-[#1c1c1e]' : 'bg-gray-50'}`}>
+        <Card className={theme === 'dark' ? 'w-full max-w-md bg-[#1c1c1e] text-gray-200 border-gray-700' : 'w-full max-w-md bg-white text-gray-900 border-gray-200'}>
           <CardContent className="p-6 text-center">
-            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-blue-600" />
-            <h2 className="text-xl font-semibold mb-2">Verifying Payment</h2>
-            <p className="text-gray-600">Please wait while we confirm your payment...</p>
+            <Loader2 className={`h-12 w-12 animate-spin mx-auto mb-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+            <h2 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Verifying Payment</h2>
+            <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>Please wait while we confirm your payment...</p>
           </CardContent>
         </Card>
       </div>
@@ -88,27 +90,27 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ setPage }) => {
 
   if (paymentStatus === 'error') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Card className="w-full max-w-md">
+      <div className={`min-h-screen flex items-center justify-center ${theme === 'dark' ? 'bg-[#1c1c1e]' : 'bg-gray-50'}`}>
+        <Card className={theme === 'dark' ? 'w-full max-w-md bg-[#1c1c1e] text-gray-200 border-gray-700' : 'w-full max-w-md bg-white text-gray-900 border-gray-200'}>
           <CardHeader className="text-center">
-            <XCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
-            <CardTitle className="text-red-600">Payment Failed</CardTitle>
+            <XCircle className={`h-12 w-12 mx-auto mb-4 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`} />
+            <CardTitle className={theme === 'dark' ? 'text-red-400' : 'text-red-600'}>Payment Failed</CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <p className="text-gray-600 mb-6">
+            <p className={theme === 'dark' ? 'text-gray-300 mb-6' : 'text-gray-600 mb-6'}>
               We couldn't verify your payment. Please contact support if you were charged.
             </p>
             <div className="space-y-3">
               <Button
                 onClick={handleNavigateBack}
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                className={theme === 'dark' ? 'w-full bg-blue-600 hover:bg-blue-700 text-white' : 'w-full bg-blue-600 hover:bg-blue-700 text-white'}
               >
                 Return to Fees Page
               </Button>
               <Button
                 variant="outline"
                 onClick={() => window.location.reload()}
-                className="w-full"
+                className={theme === 'dark' ? 'w-full border-gray-600 text-gray-200 hover:bg-gray-800' : 'w-full border-gray-300 text-gray-700 hover:bg-gray-100'}
               >
                 Try Again
               </Button>
@@ -120,21 +122,21 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ setPage }) => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md">
+    <div className={`min-h-screen flex items-center justify-center ${theme === 'dark' ? 'bg-[#1c1c1e]' : 'bg-gray-50'}`}>
+      <Card className={theme === 'dark' ? 'w-full max-w-md bg-[#1c1c1e] text-gray-200 border-gray-700' : 'w-full max-w-md bg-white text-gray-900 border-gray-200'}>
         <CardHeader className="text-center">
-          <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
-          <CardTitle className="text-green-600">Payment Successful!</CardTitle>
+          <CheckCircle className={`h-12 w-12 mx-auto mb-4 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
+          <CardTitle className={theme === 'dark' ? 'text-green-400' : 'text-green-600'}>Payment Successful!</CardTitle>
         </CardHeader>
         <CardContent className="text-center">
-          <div className="bg-green-50 p-4 rounded-lg mb-6">
-            <p className="text-sm text-green-800 font-medium">Payment Confirmed</p>
-            <p className="text-2xl font-bold text-green-900 mt-1">
+          <div className={`p-4 rounded-lg mb-6 ${theme === 'dark' ? 'bg-green-900/30' : 'bg-green-50'}`}>
+            <p className={`text-sm font-medium ${theme === 'dark' ? 'text-green-400' : 'text-green-800'}`}>Payment Confirmed</p>
+            <p className={`text-2xl font-bold mt-1 ${theme === 'dark' ? 'text-green-300' : 'text-green-900'}`}>
               {formatCurrency(paymentDetails?.amount_total / 100 || 0)}
             </p>
           </div>
 
-          <div className="space-y-2 text-sm text-gray-600 mb-6">
+          <div className={`space-y-2 text-sm mb-6 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
             <p><strong>Transaction ID:</strong> {paymentDetails?.session_id}</p>
             <p><strong>Invoice ID:</strong> {invoiceId}</p>
             <p><strong>Status:</strong> {paymentDetails?.payment_status}</p>
@@ -143,7 +145,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ setPage }) => {
           <div className="space-y-3">
             <Button
               onClick={handleNavigateBack}
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              className={theme === 'dark' ? 'w-full bg-blue-600 hover:bg-blue-700 text-white' : 'w-full bg-blue-600 hover:bg-blue-700 text-white'}
             >
               View Fee Details
             </Button>
@@ -173,7 +175,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ setPage }) => {
                     alert('Failed to download receipt. Please try from the fees page.');
                   });
                 }}
-                className="w-full"
+                className={theme === 'dark' ? 'w-full border-gray-600 text-gray-200 hover:bg-gray-800' : 'w-full border-gray-300 text-gray-700 hover:bg-gray-100'}
               >
                 Download Receipt
               </Button>

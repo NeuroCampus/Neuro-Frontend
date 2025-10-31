@@ -9,6 +9,7 @@ import {
 import { Badge } from "../ui/badge";
 import { Megaphone, Bell } from "lucide-react";
 import { getNotifications } from "@/utils/student_api";
+import { useTheme } from "@/context/ThemeContext";
 
 interface Notification {
   id: string;
@@ -38,6 +39,7 @@ const sampleNotifications: Notification[] = [
 const StudentNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -60,13 +62,13 @@ const StudentNotifications = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
           <div className="flex items-center gap-2">
             <Megaphone className="h-5 w-5" />
-            <CardTitle>Notifications</CardTitle>
+            <CardTitle className={theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}>Notifications</CardTitle>
           </div>
-          <CardDescription>
+          <CardDescription className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>
             View all recent updates from your institution
           </CardDescription>
         </CardHeader>
@@ -75,16 +77,16 @@ const StudentNotifications = () => {
             {notifications.map((item) => (
               <div
                 key={item.id}
-                className="rounded-lg border p-4 hover:bg-accent transition-colors"
+                className={`rounded-lg border p-4 transition-colors ${theme === 'dark' ? 'border-gray-700 hover:bg-gray-800' : 'border-gray-200 hover:bg-gray-50'}`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
-                    <h3 className="font-medium">{item.title}</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <h3 className={`font-medium ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>{item.title}</h3>
+                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                       {item.message}
                     </p>
                   </div>
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className={`text-xs ${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'}`}>
                     New
                   </Badge>
                 </div>
@@ -92,7 +94,7 @@ const StudentNotifications = () => {
             ))}
 
             {notifications.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className={`text-center py-8 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                 <Bell className="mx-auto h-8 w-8 mb-2" />
                 <p>No notifications available</p>
               </div>

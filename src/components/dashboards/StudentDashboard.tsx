@@ -19,6 +19,7 @@ import StudentFees from "../../pages/StudentFees";
 import PaymentSuccess from "../../pages/PaymentSuccess";
 import PaymentCancel from "../../pages/PaymentCancel";
 import { logoutUser } from "../../utils/authService";
+import { useTheme } from "../../context/ThemeContext";
 
 interface StudentDashboardProps {
   user: any;
@@ -28,6 +29,8 @@ interface StudentDashboardProps {
 const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
   const [activePage, setActivePage] = useState("dashboard");
   const [error, setError] = useState<string | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { theme } = useTheme();
 
   // Check URL path on mount to handle direct navigation (e.g., from Stripe redirects)
   useEffect(() => {
@@ -65,6 +68,10 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
     setActivePage("announcements");
   };
 
+  const toggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+
   const renderContent = () => {
     switch (activePage) {
       case "dashboard":
@@ -86,11 +93,11 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
       case "payment-cancel":
         return <PaymentCancel setPage={handlePageChange} />;
       case "profile":
-        return <StudentProfile user={user} />;
+        return <StudentProfile />;
       case "announcements":
         return <StudentAnnouncements />;
       case "chat":
-        return <Chat role="student" />;
+        return <Chat />;
       case "notifications":
         return <StudentNotifications />;
       case "face-recognition":
@@ -105,19 +112,21 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
   };
 
   return (
-   <div className="flex min-h-screen bg-[#1c1c1e] text-foreground">
+   <div className={`flex min-h-screen ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
   {/* Sidebar (fixed left) */}
   <Sidebar
     role="student"
     setPage={handlePageChange}
     activePage={activePage}
     logout={handleLogout}
+    collapsed={sidebarCollapsed}
+    toggleCollapse={toggleSidebar}
   />
 
   {/* Main Content */}
-  <div className="flex-1 flex flex-col pl-64">
+  <div className={`flex-1 flex flex-col ${sidebarCollapsed ? 'pl-16' : 'pl-64'}`}>
     {/* Navbar (fixed) */}
-    <div className="fixed top-0 left-64 right-0 z-10 bg-card shadow-sm">
+    <div className={`fixed top-0 ${sidebarCollapsed ? 'left-16' : 'left-64'} right-0 z-10 shadow-sm`}>
       <Navbar
         role="student"
         user={user}
@@ -126,26 +135,26 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
       />
     </div>
 
-    {/* Main Page Content (no margin-left, uses pl-64 instead) */}
-    <main className="flex-1 mt-16 p-6 overflow-y-auto bg-[#1c1c1e] text-gray-200">
+    {/* Main Page Content */}
+    <main className={`flex-1 mt-16 p-6 overflow-y-auto ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
       {/* Page Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <h1 className="text-2xl font-bold tracking-tight text-white">
+        <h1 className={`text-2xl font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
           Student Dashboard – Overview
         </h1>
 
-        <div className="text-base text-gray-100">
-          <span className="text-lg font-semibold text-blue-400">
+        <div className={`text-base ${theme === 'dark' ? 'text-gray-100' : 'text-gray-700'}`}>
+          <span className={`text-lg font-semibold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
             Welcome, {user?.username || "Student"}
           </span>
           {user?.branch && (
-            <span className="ml-2 text-gray-300">| {user.branch}</span>
+            <span className={`ml-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>| {user.branch}</span>
           )}
           {user?.semester && (
-            <span className="ml-2 text-gray-300">| Semester: {user.semester}</span>
+            <span className={`ml-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>| Semester: {user.semester}</span>
           )}
           {user?.section && (
-            <span className="ml-2 text-gray-300">| Section: {user.section}</span>
+            <span className={`ml-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>| Section: {user.section}</span>
           )}
         </div>
       </div>
@@ -153,7 +162,7 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
 
       {/* Error Message */}
       {error && (
-        <div className="bg-destructive text-destructive-foreground p-3 rounded-lg mb-4 shadow">
+        <div className={`p-3 rounded-lg mb-4 shadow ${theme === 'dark' ? 'bg-destructive text-destructive-foreground' : 'bg-red-100 text-red-700 border border-red-200'}`}>
           {error}
         </div>
       )}

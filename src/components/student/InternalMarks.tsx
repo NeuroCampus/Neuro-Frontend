@@ -28,6 +28,7 @@ import {
 import { useEffect, useState } from "react";
 import { Filter } from "lucide-react";
 import { getInternalMarks } from "@/utils/student_api";
+import { useTheme } from "@/context/ThemeContext";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -43,6 +44,7 @@ const InternalMarks = () => {
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilter, setShowFilter] = useState(false);
+  const { theme } = useTheme();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -93,10 +95,32 @@ const InternalMarks = () => {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: "bottom" as const },
+      legend: { 
+        position: "bottom" as const,
+        labels: {
+          color: theme === 'dark' ? "#9ca3af" : "#6b7280",
+        },
+      },
     },
     scales: {
-      y: { beginAtZero: true, max: 100 },
+      y: { 
+        beginAtZero: true, 
+        max: 100,
+        ticks: { 
+          color: theme === 'dark' ? "#9ca3af" : "#6b7280" 
+        },
+        grid: {
+          color: theme === 'dark' ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.1)",
+        },
+      },
+      x: {
+        ticks: { 
+          color: theme === 'dark' ? "#9ca3af" : "#6b7280" 
+        },
+        grid: {
+          color: theme === 'dark' ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.1)",
+        },
+      },
     },
   };
 
@@ -109,51 +133,20 @@ const InternalMarks = () => {
   }
 
   return (
-    <div className="space-y-4 bg-[#1c1c1e] text-gray-200">
-      <h2 className="text-xl font-semibold">Internal Marks</h2>
+    <div className={`space-y-4 ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
+      <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Internal Marks</h2>
 
       {/* Chart Section */}
-     <Card className="bg-[#1c1c1e] text-gray-200 rounded-2xl border border-gray-200 shadow-lg">
-        <CardHeader className="bg-[#1c1c1e] text-gray-200 rounded-t-2xl border-b border-gray-200">
-          <CardTitle className="text-base">📊 Performance Overview</CardTitle>
+     <Card className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-300' : 'bg-white text-gray-900 border-gray-200'}>
+        <CardHeader className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-b border-gray-300' : 'bg-white text-gray-900 border-b border-gray-200'}>
+          <CardTitle className={theme === 'dark' ? 'text-base text-gray-200' : 'text-base text-gray-900'}>📊 Performance Overview</CardTitle>
         </CardHeader>
-        <CardContent className="bg-[#1c1c1e] text-gray-200 rounded-b-2xl p-4">
+        <CardContent className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200' : 'bg-white text-gray-900'}>
           <div className="flex items-center justify-center h-[300px]">
             <div className="w-full max-w-[600px] h-[250px]">
               <Bar
                 data={chartData}
-                options={{
-                  ...chartOptions,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      labels: {
-                        color: "#9ca3af", // text-gray-400
-                      },
-                    },
-                    tooltip: {
-                      backgroundColor: "#1f1f21", // dark tooltip
-                      titleColor: "#e5e7eb",
-                      bodyColor: "#d1d5db",
-                      borderColor: "#27272a",
-                      borderWidth: 1,
-                    },
-                  },
-                  scales: {
-                    x: {
-                      ticks: { color: "#9ca3af" },
-                      grid: {
-                        color: "rgba(255, 255, 255, 0.05)",
-                      },
-                    },
-                    y: {
-                      ticks: { color: "#9ca3af" },
-                      grid: {
-                        color: "rgba(255, 255, 255, 0.05)",
-                      },
-                    },
-                  },
-                }}
+                options={chartOptions}
               />
             </div>
           </div>
@@ -168,14 +161,13 @@ const InternalMarks = () => {
           placeholder="Search subjects..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-72 bg-[#232326] text-gray-200 border border-gray-600 focus:border-gray-400 focus:ring-0 rounded-md placeholder:text-gray-200"
+          className={theme === 'dark' ? 'w-72 bg-[#232326] text-gray-200 border-gray-600 focus:border-gray-400 focus:ring-0 rounded-md placeholder:text-gray-400' : 'w-72 bg-white text-gray-900 border-gray-300 focus:border-gray-500 focus:ring-0 rounded-md placeholder:text-gray-500'}
         />
 
         {/* Filter Button */}
         <Button
           variant="outline"
-          className="text-gray-200 bg-gray-800 hover:bg-gray-700 border border-gray-600"
-          onClick={() => setShowFilter(true)}
+          className={theme === 'dark' ? 'text-gray-200 bg-gray-800 hover:bg-gray-700 border-gray-600' : 'text-gray-700 bg-white hover:bg-gray-100 border-gray-300'}
         >
           <Filter className="w-4 h-4 mr-2" />
           Filter
@@ -183,8 +175,8 @@ const InternalMarks = () => {
       </div>
 
       {/* Table */}
-      <div className="rounded-md border border-gray-300 overflow-hidden bg-[#1c1c1e] text-gray-200">
-        <div className="grid grid-cols-4 p-3 bg-[#1c1c1e] text-gray-200 font-medium text-sm">
+      <div className={`rounded-md overflow-hidden ${theme === 'dark' ? 'border-gray-300 bg-[#1c1c1e] text-gray-200' : 'border-gray-200 bg-white text-gray-900'}`}>
+        <div className={`grid grid-cols-4 p-3 font-medium text-sm ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200' : 'bg-white text-gray-900'}`}>
           <div>Subject</div>
           <div className="text-center">Test 1</div>
           <div className="text-center">Test 2</div>
@@ -204,7 +196,7 @@ const InternalMarks = () => {
           return (
             <div
               key={index}
-              className="grid grid-cols-4 p-3 text-sm text-gray-200 hover:bg-gray-800"
+              className={`grid grid-cols-4 p-3 text-sm ${theme === 'dark' ? 'text-gray-200 hover:bg-gray-800' : 'text-gray-900 hover:bg-gray-100'}`}
             >
               <div>{subject}</div>
               <div className="text-center">{t1 !== null ? t1 : "-"}</div>
@@ -219,9 +211,9 @@ const InternalMarks = () => {
 
       {/* Filter Dialog */}
       <Dialog open={showFilter} onOpenChange={setShowFilter}>
-        <DialogContent className="bg-[#1c1c1e] text-gray-200 rounded-xl w-80 border border-gray-700">
+        <DialogContent className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}>
           <DialogHeader>
-            <DialogTitle className="text-lg font-semibold">
+            <DialogTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
               Filter by Subject
             </DialogTitle>
           </DialogHeader>
@@ -237,14 +229,14 @@ const InternalMarks = () => {
               }
             }}
           >
-            <SelectTrigger className="w-full bg-[#232326] text-gray-200 rounded-md">
+            <SelectTrigger className={theme === 'dark' ? 'w-full bg-[#232326] text-gray-200 border-gray-600' : 'w-full bg-white text-gray-900 border-gray-300'}>
               <SelectValue placeholder="Choose a Subject" />
             </SelectTrigger>
-            <SelectContent className="bg-[#1c1c1e] text-gray-200 border border-gray-700 rounded-md shadow-lg">
+            <SelectContent className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}>
               {/* "All" Option */}
               <SelectItem
                 value="All"
-                className="hover:bg-[#2c2c2e] cursor-pointer font-semibold"
+                className={theme === 'dark' ? 'hover:bg-[#2c2c2e] cursor-pointer font-semibold' : 'hover:bg-gray-100 cursor-pointer font-semibold'}
               >
                 All Subjects
               </SelectItem>
@@ -254,7 +246,7 @@ const InternalMarks = () => {
                 <SelectItem
                   key={subject}
                   value={subject}
-                  className="hover:bg-[#2c2c2e] cursor-pointer"
+                  className={theme === 'dark' ? 'hover:bg-[#2c2c2e] cursor-pointer' : 'hover:bg-gray-100 cursor-pointer'}
                 >
                   {subject}
                 </SelectItem>
@@ -266,7 +258,7 @@ const InternalMarks = () => {
           <div className="flex justify-end gap-2 pt-4">
             <Button
               variant="secondary"
-              className="bg-gray-200 hover:bg-gray-600 border border-gray-500 text-gray-800"
+              className={theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 border-gray-300 text-gray-700'}
               onClick={() => {
                 setSelectedSubjects([]);
                 setSearchQuery("");
@@ -275,7 +267,10 @@ const InternalMarks = () => {
             >
               Clear
             </Button>
-            <Button className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={() => setShowFilter(false)}>
+            <Button 
+              className={theme === 'dark' ? 'text-gray-200 bg-gray-800 hover:bg-gray-700 border-gray-600' : 'text-gray-900 bg-gray-200 hover:bg-gray-300 border-gray-300'} 
+              onClick={() => setShowFilter(false)}
+            >
               Apply
             </Button>
           </div>
