@@ -7,7 +7,7 @@ import AdminDashboard from "../components/dashboards/AdminDashboard";
 import HODDashboard from "../components/dashboards/HODDashboard";
 import FacultyDashboard from "../components/dashboards/FacultyDashboard";
 import StudentDashboard from "../components/dashboards/StudentDashboard";
-import FeesManagerDashboard from "../components/dashboards/FeesManagerDashboard";
+import FeesManagerDashboard from "../pages/FeesManager/FeesManagerDashboard";
 import { startTokenRefresh, stopTokenRefresh } from "../utils/authService";
 
 const Index = () => {
@@ -41,6 +41,8 @@ const Index = () => {
       setIsLoading(false);
     }
   }, []);
+
+
 
   if (isLoading) {
     return (

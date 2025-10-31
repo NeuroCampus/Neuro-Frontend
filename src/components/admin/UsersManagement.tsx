@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import { manageUsers } from "../../utils/admin_api";
+import { manageUsers, manageUserAction } from "../../utils/admin_api";
 import { useToast } from "../../hooks/use-toast";
 
 interface User {
@@ -64,6 +64,10 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
   const [editData, setEditData] = useState<User | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [pageSize] = useState(10); // Fixed page size for consistency
   const normalize = (str: string) => str.toLowerCase().trim();
 
 
@@ -72,25 +76,51 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
       setLoading(true);
       setError(null);
       try {
-        const response = await manageUsers();
-        if (response.success && response.users) {
-          const userData = Array.isArray(response.users)
-            ? response.users.map((user: any) => ({
-                id: user.id,
-                name: `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username || "N/A",
-                email: user.email || "N/A",
-                role: user.role || "N/A",
-                status: user.is_active ? "Active" : "Inactive",
-                username: user.username || "", // Store original username
-              }))
-            : [];
-          setUsers(userData);
+        // Prepare filter parameters
+        const filterParams: any = {
+          page: currentPage,
+          page_size: pageSize,
+        };
+        
+        // Add role filter if not "All"
+        if (roleFilter !== "All") {
+          filterParams.role = roleMap[roleFilter];
+        }
+        
+        // Add status filter if not "All"
+        if (statusFilter !== "All") {
+          filterParams.is_active = statusFilter === "Active";
+        }
+
+        const response = await manageUsers(filterParams);
+        // Check if the response has the expected structure
+        const hasResults = response && typeof response === 'object' && 'results' in response;
+        const dataSource = hasResults ? (response as any).results : (response as any);
+        
+        if (dataSource && dataSource.success) {
+          // Handle paginated response format where data is nested under results
+          const usersData = dataSource.users || [];
+          const paginationData = hasResults ? (response as any) : dataSource;
+          
+          // Transform backend user data to frontend format
+          const transformedUsers = Array.isArray(usersData) ? usersData.map((user: any) => ({
+            id: user.id,
+            name: `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username || "N/A",
+            email: user.email || "N/A",
+            role: user.role || "N/A",
+            status: user.is_active ? "Active" : "Inactive",
+            username: user.username || "",
+          })) : [];
+          
+          setUsers(transformedUsers);
+          setTotalUsers(paginationData.count || 0);
+          setTotalPages(Math.ceil((paginationData.count || 0) / pageSize));
         } else {
-          setError(response.message || "Failed to fetch users");
+          setError(dataSource?.message || "Failed to fetch users");
           toast({
             variant: "destructive",
             title: "Error",
-            description: response.message || "Failed to fetch users",
+            description: dataSource?.message || "Failed to fetch users",
           });
         }
       } catch (err) {
@@ -106,25 +136,19 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
       }
     };
     fetchUsers();
-  }, [setError, toast]);
+  }, [setError, toast, currentPage, roleFilter, statusFilter, pageSize]);
 
 const filteredUsers = Array.isArray(users)
   ? users
       .filter((user) => {
-        const filterRole =
-          roleFilter === "All" ? user.role : roleMap[roleFilter];
-        const roleMatch =
-          roleFilter === "All" ||
-          user.role.toLowerCase() === filterRole.toLowerCase();
-        const statusMatch =
-          statusFilter === "All" || user.status === statusFilter;
+        // Client-side search filtering (since search is not implemented server-side)
         const searchMatch =
           (user.name &&
             normalize(user.name).includes(normalize(searchQuery))) ||
           (user.email &&
             normalize(user.email).includes(normalize(searchQuery)));
 
-        return roleMatch && statusMatch && searchMatch;
+        return searchMatch;
       })
       .sort((a, b) => {
         const s = normalize(searchQuery);
@@ -177,13 +201,41 @@ const filteredUsers = Array.isArray(users)
           first_name: firstName || "",
           last_name: lastName || "",
         };
-        const response = await manageUsers({ user_id: editData.id, action: "edit", updates }, "POST");
+        const response = await manageUserAction({
+          user_id: editData.id.toString(),
+          action: "edit",
+          updates
+        });
         if (response.success) {
-          setUsers(
-            users.map((u) =>
-              u.id === editData.id ? { ...u, ...updates, name: editData.name } : u
-            )
-          );
+          // Refresh the current page data
+          const refreshResponse = await manageUsers({
+            page: currentPage,
+            page_size: pageSize,
+            role: roleFilter !== "All" ? roleMap[roleFilter] : undefined,
+            is_active: statusFilter !== "All" ? statusFilter === "Active" : undefined,
+          });
+          const hasRefreshResults = refreshResponse && typeof refreshResponse === 'object' && 'results' in refreshResponse;
+          const refreshDataSource = hasRefreshResults ? (refreshResponse as any).results : (refreshResponse as any);
+          
+          if (refreshDataSource && refreshDataSource.success) {
+            // Handle paginated response format
+            const usersArray = refreshDataSource.users || [];
+            const paginationInfo = hasRefreshResults ? (refreshResponse as any) : refreshDataSource;
+            
+            const refreshedUserData = Array.isArray(usersArray)
+              ? usersArray.map((user: any) => ({
+                  id: user.id,
+                  name: `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username || "N/A",
+                  email: user.email || "N/A",
+                  role: user.role || "N/A",
+                  status: user.is_active ? "Active" : "Inactive",
+                  username: user.username || "",
+                }))
+              : [];
+            setUsers(refreshedUserData);
+            setTotalUsers(paginationInfo.count || refreshedUserData.length);
+            setTotalPages(Math.ceil((paginationInfo.count || refreshedUserData.length) / pageSize));
+          }
           setEditingId(null);
           setEditData(null);
           toast({ title: "Success", description: "User updated successfully" });
@@ -218,9 +270,45 @@ const filteredUsers = Array.isArray(users)
       setLoading(true);
       setError(null);
       try {
-        const response = await manageUsers({ user_id: deleteId, action: "delete" }, "POST");
+        const response = await manageUserAction({
+          user_id: deleteId.toString(),
+          action: "delete"
+        });
         if (response.success) {
-          setUsers(users.filter((user) => user.id !== deleteId));
+          // Refresh the current page data
+          const refreshResponse = await manageUsers({
+            page: currentPage,
+            page_size: pageSize,
+            role: roleFilter !== "All" ? roleMap[roleFilter] : undefined,
+            is_active: statusFilter !== "All" ? statusFilter === "Active" : undefined,
+          });
+          const hasRefreshResults = refreshResponse && typeof refreshResponse === 'object' && 'results' in refreshResponse;
+          const refreshDataSource = hasRefreshResults ? (refreshResponse as any).results : (refreshResponse as any);
+          
+          if (refreshDataSource && refreshDataSource.success) {
+            // Handle paginated response format
+            const usersArray = refreshDataSource.users || [];
+            const paginationInfo = hasRefreshResults ? (refreshResponse as any) : refreshDataSource;
+            
+            const refreshedUserData = Array.isArray(usersArray)
+              ? usersArray.map((user: any) => ({
+                  id: user.id,
+                  name: `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username || "N/A",
+                  email: user.email || "N/A",
+                  role: user.role || "N/A",
+                  status: user.is_active ? "Active" : "Inactive",
+                  username: user.username || "",
+                }))
+              : [];
+            setUsers(refreshedUserData);
+            setTotalUsers(paginationInfo.count || refreshedUserData.length);
+            setTotalPages(Math.ceil((paginationInfo.count || refreshedUserData.length) / pageSize));
+            
+            // If we deleted the last item on the page and it's not the first page, go to previous page
+            if (refreshedUserData.length === 0 && currentPage > 1) {
+              setCurrentPage(currentPage - 1);
+            }
+          }
           setDeleteId(null);
           toast({ title: "Success", description: "User deleted successfully" });
         } else {
@@ -259,7 +347,7 @@ const filteredUsers = Array.isArray(users)
     <div className="flex flex-col">
       <label className="text-sm text-gray-300 mb-1">{label}</label>
       <Select.Root value={value} onValueChange={onChange}>
-        <Select.Trigger className="inline-flex items-center justify-between px-3 py-2 rounded w-48 text-sm shadow-sm rounded bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white">
+        <Select.Trigger className="inline-flex items-center justify-between px-3 py-2 rounded w-48 text-sm shadow-sm bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white">
           <Select.Value />
           <Select.Icon>
             <ChevronDownIcon className="text-gray-400" />
@@ -425,6 +513,57 @@ const filteredUsers = Array.isArray(users)
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6">
+              <div className="text-sm text-gray-400">
+                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalUsers)} of {totalUsers} users
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1 || loading}
+                  className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                >
+                  Previous
+                </Button>
+                
+                {/* Page numbers */}
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                  if (pageNum > totalPages) return null;
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNum)}
+                      disabled={loading}
+                      className={currentPage === pageNum 
+                        ? "bg-blue-600 text-white" 
+                        : "text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                      }
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages || loading}
+                  className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

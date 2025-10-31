@@ -13,7 +13,7 @@ import { PencilIcon, TrashIcon, PlusIcon, UserPlus2Icon } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { FileDownIcon } from "lucide-react";
-import { manageBranches, manageUsers } from "../../utils/admin_api";
+import { manageBranches, manageUsers, getBranchesWithHODs } from "../../utils/admin_api";
 import { useToast } from "../../hooks/use-toast";
 
 interface Branch {
@@ -50,27 +50,38 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
       setLoading(true);
       setError(null);
       try {
-        const [branchResponse, userResponse] = await Promise.all([manageBranches(), manageUsers()]);
-        console.log("Branch Response:", branchResponse);
-        console.log("User Response:", userResponse);
-        if (branchResponse.success) {
-          const branchData = Array.isArray(branchResponse.branches)
-            ? branchResponse.branches.map((b: any) => ({
+        const response = await getBranchesWithHODs();
+        console.log("Combined Branch and HOD Response:", response);
+        // Check if the response has the expected structure
+        const hasResults = response && typeof response === 'object' && 'results' in response;
+        const dataSource = hasResults ? (response as any).results : (response as any);
+        
+        if (dataSource && dataSource.success) {
+          // Handle paginated response format
+          const branchData = Array.isArray(dataSource.branches)
+            ? dataSource.branches.map((b: any) => ({
                 id: b.id,
                 name: b.name || "",
                 hod: b.hod ? b.hod.username : null,
               }))
             : [];
           setBranches(branchData);
+
+          // Process HODs data
+          const hodData = Array.isArray(dataSource.hods)
+            ? dataSource.hods.map((u: any) => ({
+                id: u.id,
+                username: u.username,
+                email: u.email,
+                role: "hod",
+              }))
+            : [];
+          setUsers(hodData);
+
+          toast({ title: "Success", description: "Data loaded successfully" });
         } else {
-          setError(branchResponse.message || "Failed to fetch branches");
-          toast({ variant: "destructive", title: "Error", description: branchResponse.message || "Failed to fetch branches" });
-        }
-        if (userResponse.success) {
-          setUsers(Array.isArray(userResponse.users) ? userResponse.users.filter((u) => u.role === "hod") : []);
-        } else {
-          setError(userResponse.message || "Failed to fetch users");
-          toast({ variant: "destructive", title: "Error", description: userResponse.message || "Failed to fetch users" });
+          setError(dataSource?.message || "Failed to fetch branches and HODs");
+          toast({ variant: "destructive", title: "Error", description: dataSource?.message || "Failed to fetch branches and HODs" });
         }
       } catch (err) {
         console.error("Fetch error:", err);
@@ -125,7 +136,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
     setEditData(branch);
   };
 
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     if (editData) setEditData({ ...editData, [e.target.name]: e.target.value });
   };
 
@@ -160,13 +171,17 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
         const response = await manageBranches(
           { 
             name: trimmedName, 
-            hod_id: editData.hod ? users.find((u) => u.username === editData.hod)?.id : null 
+            hod_id: editData.hod ? users.find((u) => u.username === editData.hod)?.id?.toString() : null 
           },
           editData.id,
           "PUT"
         );
 
-        if (response.success) {
+        // Check if the response has the expected structure
+        const hasResults = response && typeof response === 'object' && 'results' in response;
+        const dataSource = hasResults ? (response as any).results : (response as any);
+
+        if (dataSource && dataSource.success) {
           setBranches(branches.map((b) => (b.id === editData.id ? { ...editData, name: trimmedName } : b)));
           setEditingId(null);
           setEditData(null);
@@ -190,7 +205,11 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
     setLoading(true);
     try {
       const response = await manageBranches(undefined, deleteId, "DELETE");
-      if (response.success) {
+      // Check if the response has the expected structure
+      const hasResults = response && typeof response === 'object' && 'results' in response;
+      const dataSource = hasResults ? (response as any).results : (response as any);
+      
+      if (dataSource && dataSource.success) {
         setBranches(branches.filter((b) => b.id !== deleteId));
         setDeleteId(null);
         toast({ title: "Success", description: "Branch deleted successfully" });
@@ -238,11 +257,18 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
       );
       console.log("Add Branch Response:", response);
 
-      if (response.success) {
+      // Check if the response has the expected structure
+      const hasResults = response && typeof response === 'object' && 'results' in response;
+      const dataSource = hasResults ? (response as any).results : (response as any);
+
+      if (dataSource && dataSource.success) {
         const updatedBranchResponse = await manageBranches();
-        if (updatedBranchResponse.success) {
-          const branchData = Array.isArray(updatedBranchResponse.branches)
-            ? updatedBranchResponse.branches.map((b: any) => ({
+        const hasUpdatedResults = updatedBranchResponse && typeof updatedBranchResponse === 'object' && 'results' in updatedBranchResponse;
+        const updatedDataSource = hasUpdatedResults ? (updatedBranchResponse as any).results : (updatedBranchResponse as any);
+        
+        if (updatedDataSource && updatedDataSource.success) {
+          const branchData = Array.isArray(updatedDataSource.branches)
+            ? updatedDataSource.branches.map((b: any) => ({
                 id: b.id,
                 name: b.name || "",
                 hod: b.hod ? b.hod.username : null,
@@ -284,7 +310,11 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
         selectedBranchId,
         "PUT"
       );
-      if (response.success) {
+      // Check if the response has the expected structure
+      const hasResults = response && typeof response === 'object' && 'results' in response;
+      const dataSource = hasResults ? (response as any).results : (response as any);
+      
+      if (dataSource && dataSource.success) {
         setBranches(branches.map((b) => (b.id === selectedBranchId ? { ...b, hod: users.find((u) => u.id === Number(newHodId))?.username } : b)));
         setIsAssignDialogOpen(false);
         setNewHodId("");

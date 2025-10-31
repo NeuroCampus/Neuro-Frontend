@@ -42,10 +42,20 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
     if (setError) setError(null);
     try {
       const res = await manageBatches();
-      if (res.success && res.batches) {
-        setBatches(res.batches);
+      // Check if the response has the expected structure
+      const hasResults = res && typeof res === 'object' && 'results' in res;
+      const dataSource = hasResults ? (res as any).results : (res as any);
+      
+      if (dataSource && dataSource.success) {
+        // Handle paginated response format
+        const batchesArray = dataSource.batches || [];
+        if (Array.isArray(batchesArray)) {
+          setBatches(batchesArray);
+        } else {
+          if (setError) setError("Invalid response format");
+        }
       } else {
-        if (setError) setError(res.message || "Failed to fetch batches");
+        if (setError) setError(dataSource?.message || "Failed to fetch batches");
       }
     } catch (err) {
       if (setError) setError("Network error");
@@ -77,7 +87,11 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
         undefined,
         "POST"
       );
-      if (res.success) {
+      // Check if the response has the expected structure
+      const hasResults = res && typeof res === 'object' && 'results' in res;
+      const dataSource = hasResults ? (res as any).results : (res as any);
+      
+      if (dataSource && dataSource.success) {
         fetchBatches();
         setNewBatch({ name: "", start_year: "", end_year: "" });
         if (toast) {
@@ -87,7 +101,7 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
           });
         }
       } else {
-        if (setError) setError(res.message || "Failed to add batch");
+        if (setError) setError(dataSource?.message || "Failed to add batch");
       }
     } catch (err) {
       if (setError) setError("Network error");
@@ -117,7 +131,11 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
         editingBatch.id,
         "PUT"
       );
-      if (res.success) {
+      // Check if the response has the expected structure
+      const hasResults = res && typeof res === 'object' && 'results' in res;
+      const dataSource = hasResults ? (res as any).results : (res as any);
+      
+      if (dataSource && dataSource.success) {
         fetchBatches();
         setEditingBatch(null);
         setEditForm({ start_year: "", end_year: "" });
@@ -128,7 +146,7 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
           });
         }
       } else {
-        if (setError) setError(res.message || "Failed to update batch");
+        if (setError) setError(dataSource?.message || "Failed to update batch");
       }
     } catch (err) {
       if (setError) setError("Network error");
@@ -148,7 +166,11 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
     if (setError) setError(null);
     try {
       const res = await manageBatches(undefined, batchToDelete.id, "DELETE");
-      if (res.success) {
+      // Check if the response has the expected structure
+      const hasResults = res && typeof res === 'object' && 'results' in res;
+      const dataSource = hasResults ? (res as any).results : (res as any);
+      
+      if (dataSource && dataSource.success) {
         fetchBatches();
         setDeleteDialogOpen(false);
         setBatchToDelete(null);
@@ -159,7 +181,7 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
           });
         }
       } else {
-        if (setError) setError(res.message || "Failed to delete batch");
+        if (setError) setError(dataSource?.message || "Failed to delete batch");
       }
     } catch (err) {
       if (setError) setError("Network error");
