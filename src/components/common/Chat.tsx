@@ -75,12 +75,12 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to upload file');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error uploading file:', error);
       toast({
         variant: 'destructive',
         title: 'Upload Failed',
-        description: error.message || 'An error occurred while uploading the PDF.',
+        description: error instanceof Error ? error.message : 'An error occurred while uploading the PDF.',
       });
     } finally {
       setLoading(false);
@@ -129,17 +129,17 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to fetch response');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error fetching response:', error);
       const errorMessage: Message = {
         role: 'bot',
-        text: `**Error:** ${error.message || "Sorry, I couldn't fetch the answer."}`,
+        text: `**Error:** ${error instanceof Error ? error.message : "Sorry, I couldn't fetch the answer."}`,
       };
       setMessages((prev) => [...prev, errorMessage]);
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'An error occurred while fetching the answer.',
+        description: error instanceof Error ? error.message : 'An error occurred while fetching the answer.',
       });
     } finally {
       setLoading(false);
@@ -245,11 +245,7 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
           <Button
             onClick={handleUpload}
             disabled={!file || loading}
-            className={`w-full mt-6 font-semibold py-3 rounded-lg transition disabled:opacity-50 ${
-              theme === 'dark' 
-                ? 'text-foreground bg-muted hover:bg-accent border-border' 
-                : 'text-gray-900 bg-gray-200 hover:bg-gray-300 border-gray-300'
-            }`}
+            className={`w-full mt-6 font-semibold py-3 rounded-lg transition disabled:opacity-50 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}
           >
             {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Start Revision'}
           </Button>

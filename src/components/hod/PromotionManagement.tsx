@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   Card,
@@ -42,6 +41,7 @@ import {
   bulkDemoteStudents,
   manageStudents,
 } from "../../utils/hod_api";
+import { useTheme } from "../../context/ThemeContext";
 
 interface Semester {
   id: string;
@@ -64,30 +64,31 @@ interface Student {
 }
 
 const PromotionManagement = () => {
+  const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState<"overview" | "promote" | "demote">("overview");
 
   const renderContent = () => {
     switch (activeTab) {
       case "overview":
-        return <PromotionOverview onTabChange={setActiveTab} />;
+        return <PromotionOverview onTabChange={setActiveTab} theme={theme} />;
       case "promote":
-        return <PromotionPage />;
+        return <PromotionPage theme={theme} />;
       case "demote":
-        return <DemotionPage />;
+        return <DemotionPage theme={theme} />;
       default:
-        return <PromotionOverview onTabChange={setActiveTab} />;
+        return <PromotionOverview onTabChange={setActiveTab} theme={theme} />;
     }
   };
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-100">Student Promotion & Demotion Management</h1>
+        <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Student Promotion & Demotion Management</h1>
         {activeTab !== "overview" && (
           <Button
             onClick={() => setActiveTab("overview")}
             variant="outline"
-            className=" text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+            className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
           >
             Back to Overview
           </Button>
@@ -99,35 +100,35 @@ const PromotionManagement = () => {
   );
 };
 
-const PromotionOverview = ({ onTabChange }: { onTabChange: (tab: "overview" | "promote" | "demote") => void }) => {
+const PromotionOverview = ({ onTabChange, theme }: { onTabChange: (tab: "overview" | "promote" | "demote") => void; theme: string }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Promotion Card */}
-      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-700 hover:border-green-500 transition-colors cursor-pointer">
+      <Card className={theme === 'dark' ? 'bg-card text-foreground border-border hover:border-green-500' : 'bg-white text-gray-900 border-gray-200 hover:border-green-500'}>
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-green-600 rounded-lg">
               <UserCheck className="h-6 w-6 text-white" />
             </div>
             <div>
-              <CardTitle className="text-gray-100">Student Promotion</CardTitle>
-              <p className="text-sm text-gray-400">Promote eligible students to next semester</p>
+              <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Student Promotion</CardTitle>
+              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Promote eligible students to next semester</p>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-400">Bulk promote students</span>
-              <ArrowRight className="h-4 w-4 text-gray-500" />
+              <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Bulk promote students</span>
+              <ArrowRight className={`h-4 w-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`} />
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-400">Promote selected students</span>
-              <ArrowRight className="h-4 w-4 text-gray-500" />
+              <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Promote selected students</span>
+              <ArrowRight className={`h-4 w-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`} />
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-400">View promotion history</span>
-              <ArrowRight className="h-4 w-4 text-gray-500" />
+              <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>View promotion history</span>
+              <ArrowRight className={`h-4 w-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`} />
             </div>
           </div>
           <Button onClick={() => onTabChange("promote")} className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white">
@@ -137,31 +138,31 @@ const PromotionOverview = ({ onTabChange }: { onTabChange: (tab: "overview" | "p
       </Card>
 
       {/* Demotion Card */}
-      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-700 hover:border-red-500 transition-colors cursor-pointer">
+      <Card className={theme === 'dark' ? 'bg-card text-foreground border-border hover:border-red-500' : 'bg-white text-gray-900 border-gray-200 hover:border-red-500'}>
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-red-600 rounded-lg">
               <UserX className="h-6 w-6 text-white" />
             </div>
             <div>
-              <CardTitle className="text-gray-100">Student Demotion</CardTitle>
-              <p className="text-sm text-gray-400">Demote students to previous semester</p>
+              <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Student Demotion</CardTitle>
+              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Demote students to previous semester</p>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-400">Individual demotion</span>
-              <ArrowRight className="h-4 w-4 text-gray-500" />
+              <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Individual demotion</span>
+              <ArrowRight className={`h-4 w-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`} />
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-400">Bulk demotion</span>
-              <ArrowRight className="h-4 w-4 text-gray-500" />
+              <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Bulk demotion</span>
+              <ArrowRight className={`h-4 w-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`} />
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-400">Track demotion reasons</span>
-              <ArrowRight className="h-4 w-4 text-gray-500" />
+              <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Track demotion reasons</span>
+              <ArrowRight className={`h-4 w-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`} />
             </div>
           </div>
           <Button onClick={() => onTabChange("demote")} className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white">
@@ -171,26 +172,26 @@ const PromotionOverview = ({ onTabChange }: { onTabChange: (tab: "overview" | "p
       </Card>
 
       {/* Quick Stats */}
-      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-700 md:col-span-2">
+      <Card className={theme === 'dark' ? 'bg-card text-foreground border-border md:col-span-2' : 'bg-white text-gray-900 border-gray-200 md:col-span-2'}>
         <CardHeader>
-          <CardTitle className="text-gray-100 flex items-center gap-2">
+          <CardTitle className={`flex items-center gap-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
             <Users className="h-5 w-5" />
             Quick Statistics
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-gray-800 rounded-lg">
+            <div className={`text-center p-4 rounded-lg ${theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}`}>
               <div className="text-2xl font-bold text-green-400">0</div>
-              <div className="text-sm text-gray-400">Students Promoted This Month</div>
+              <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Students Promoted This Month</div>
             </div>
-            <div className="text-center p-4 bg-gray-800 rounded-lg">
+            <div className={`text-center p-4 rounded-lg ${theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}`}>
               <div className="text-2xl font-bold text-red-400">0</div>
-              <div className="text-sm text-gray-400">Students Demoted This Month</div>
+              <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Students Demoted This Month</div>
             </div>
-            <div className="text-center p-4 bg-gray-800 rounded-lg">
+            <div className={`text-center p-4 rounded-lg ${theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}`}>
               <div className="text-2xl font-bold text-blue-400">0</div>
-              <div className="text-sm text-gray-400">Active Operations</div>
+              <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Active Operations</div>
             </div>
           </div>
         </CardContent>
@@ -199,7 +200,7 @@ const PromotionOverview = ({ onTabChange }: { onTabChange: (tab: "overview" | "p
   );
 };
 
-const PromotionPage = () => {
+const PromotionPage = ({ theme }: { theme: string }) => {
   const [state, setState] = useState({
     semesters: [] as Semester[],
     sections: [] as Section[],
@@ -462,9 +463,9 @@ const PromotionPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-700">
+      <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
-          <CardTitle className="text-gray-100 flex items-center gap-2">
+          <CardTitle className={`flex items-center gap-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
             <UserCheck className="h-5 w-5 text-green-400" />
             Student Promotion
           </CardTitle>
@@ -473,9 +474,9 @@ const PromotionPage = () => {
 
       {/* Error Messages */}
       {state.errors.length > 0 && (
-        <Card className="bg-red-900/20 border-red-500">
+        <Card className={theme === 'dark' ? 'bg-destructive/10 border-destructive' : 'bg-red-50 border-red-200'}>
           <CardContent className="pt-6">
-            <ul className="text-sm text-red-400 list-disc list-inside">
+            <ul className={`text-sm list-disc list-inside ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>
               {state.errors.map((err, idx) => (
                 <li key={idx}>{err}</li>
               ))}
@@ -486,16 +487,16 @@ const PromotionPage = () => {
 
       {/* Success Messages */}
       {state.promotionResults && (
-        <Card className="bg-green-900/20 border-green-500">
+        <Card className={theme === 'dark' ? 'bg-green-900/20 border-green-500' : 'bg-green-50 border-green-200'}>
           <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-green-400">
+            <div className={`flex items-center gap-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
               <CheckCircle className="h-5 w-5" />
               <span>{state.promotionResults.message}</span>
             </div>
             {state.promotionResults.promoted && (
               <div className="mt-2">
-                <p className="text-sm text-green-300">Promoted students:</p>
-                <ul className="text-xs text-green-400 list-disc list-inside ml-4">
+                <p className={`text-sm ${theme === 'dark' ? 'text-green-300' : 'text-green-700'}`}>Promoted students:</p>
+                <ul className={`text-xs list-disc list-inside ml-4 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
                   {state.promotionResults.promoted.map((student: any, idx: number) => (
                     <li key={idx}>{student.name} ({student.usn}) - Semester {student.to_semester}</li>
                   ))}
@@ -507,9 +508,9 @@ const PromotionPage = () => {
       )}
 
       {/* Promotion Controls */}
-      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-700">
+      <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
-          <CardTitle className="text-lg text-gray-100">Promote Students to Next Semester</CardTitle>
+          <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Promote Students to Next Semester</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
@@ -518,12 +519,12 @@ const PromotionPage = () => {
               onValueChange={(value) => updateState({ selectedSemester: value, selectedSection: "all-sections" })}
               disabled={state.isLoading}
             >
-              <SelectTrigger className="w-48 bg-[#232326] text-gray-200 border border-gray-700">
+              <SelectTrigger className={theme === 'dark' ? 'w-48 bg-background text-foreground border-border' : 'w-48 bg-white text-gray-900 border-gray-300'}>
                 <SelectValue placeholder="Select Semester" />
               </SelectTrigger>
-              <SelectContent className="bg-[#232326] text-gray-200 border border-gray-700">
+              <SelectContent className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
                 {state.semesters.map((semester) => (
-                  <SelectItem key={semester.id} value={`${semester.number}th Semester`}>
+                  <SelectItem key={semester.id} value={`${semester.number}th Semester`} className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>
                     Semester {semester.number}
                   </SelectItem>
                 ))}
@@ -535,13 +536,13 @@ const PromotionPage = () => {
               onValueChange={(value) => updateState({ selectedSection: value })}
               disabled={state.isLoading || !state.selectedSemester || state.sections.length === 0}
             >
-              <SelectTrigger className="w-48 bg-[#232326] text-gray-200 border border-gray-700">
+              <SelectTrigger className={theme === 'dark' ? 'w-48 bg-background text-foreground border-border' : 'w-48 bg-white text-gray-900 border-gray-300'}>
                 <SelectValue placeholder="All Sections" />
               </SelectTrigger>
-              <SelectContent className="bg-[#232326] text-gray-200 border border-gray-700">
-                <SelectItem value="all-sections">All Sections</SelectItem>
+              <SelectContent className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+                <SelectItem value="all-sections" className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>All Sections</SelectItem>
                 {state.sections.map((section) => (
-                  <SelectItem key={section.id} value={section.name}>
+                  <SelectItem key={section.id} value={section.name} className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>
                     Section {section.name}
                   </SelectItem>
                 ))}
@@ -562,9 +563,9 @@ const PromotionPage = () => {
 
       {/* Student List */}
       {state.students.length > 0 && (
-        <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-700">
+        <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
           <CardHeader>
-            <CardTitle className="text-gray-100 flex items-center justify-between">
+            <CardTitle className={`flex items-center justify-between ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               <span className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-blue-400" />
                 Students in {state.selectedSemester} - {state.selectedSection}
@@ -573,9 +574,9 @@ const PromotionPage = () => {
                 <Checkbox
                   checked={state.selectedStudents.length === state.students.length && state.students.length > 0}
                   onCheckedChange={handleSelectAll}
-                  className="border-gray-600"
+                  className={theme === 'dark' ? 'border-border' : 'border-gray-300'}
                 />
-                <span className="text-sm text-gray-400">Select All</span>
+                <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Select All</span>
                 <Button
                   onClick={handlePromoteSelectedStudents}
                   disabled={state.isPromoting || state.selectedStudents.length === 0}
@@ -592,30 +593,30 @@ const PromotionPage = () => {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-gray-700">
-                    <TableHead className="text-gray-300">Select</TableHead>
-                    <TableHead className="text-gray-300">USN</TableHead>
-                    <TableHead className="text-gray-300">Name</TableHead>
-                    <TableHead className="text-gray-300">Batch</TableHead>
-                    <TableHead className="text-gray-300">Section</TableHead>
-                    <TableHead className="text-gray-300">Proctor</TableHead>
+                  <TableRow className={theme === 'dark' ? 'border-border' : 'border-gray-200'}>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Select</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>USN</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Name</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Batch</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Section</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Proctor</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {state.students.map((student) => (
-                    <TableRow key={student.usn} className="border-gray-700">
+                    <TableRow key={student.usn} className={theme === 'dark' ? 'border-border' : 'border-gray-200'}>
                       <TableCell>
                         <Checkbox
                           checked={state.selectedStudents.includes(student.usn)}
                           onCheckedChange={(checked) => handleStudentSelect(student.usn, checked as boolean)}
-                          className="border-gray-600"
+                          className={theme === 'dark' ? 'border-border' : 'border-gray-300'}
                         />
                       </TableCell>
-                      <TableCell className="text-gray-300">{student.usn}</TableCell>
-                      <TableCell className="text-gray-300">{student.name}</TableCell>
-                      <TableCell className="text-gray-300">{student.batch}</TableCell>
-                      <TableCell className="text-gray-300">{student.section || 'N/A'}</TableCell>
-                      <TableCell className="text-gray-300">{student.proctor || 'N/A'}</TableCell>
+                      <TableCell className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{student.usn}</TableCell>
+                      <TableCell className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{student.name}</TableCell>
+                      <TableCell className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{student.batch}</TableCell>
+                      <TableCell className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{student.section || 'N/A'}</TableCell>
+                      <TableCell className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{student.proctor || 'N/A'}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -628,7 +629,7 @@ const PromotionPage = () => {
   );
 };
 
-const DemotionPage = () => {
+const DemotionPage = ({ theme }: { theme: string }) => {
   const [state, setState] = useState({
     semesters: [] as Semester[],
     sections: [] as Section[],
@@ -839,9 +840,9 @@ const DemotionPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-700">
+      <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
-          <CardTitle className="text-gray-100 flex items-center gap-2">
+          <CardTitle className={`flex items-center gap-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
             <UserX className="h-5 w-5 text-red-400" />
             Student Demotion
           </CardTitle>
@@ -850,9 +851,9 @@ const DemotionPage = () => {
 
       {/* Error Messages */}
       {state.errors.length > 0 && (
-        <Card className="bg-red-900/20 border-red-500">
+        <Card className={theme === 'dark' ? 'bg-destructive/10 border-destructive' : 'bg-red-50 border-red-200'}>
           <CardContent className="pt-6">
-            <ul className="text-sm text-red-400 list-disc list-inside">
+            <ul className={`text-sm list-disc list-inside ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>
               {state.errors.map((err, idx) => (
                 <li key={idx}>{err}</li>
               ))}
@@ -863,16 +864,16 @@ const DemotionPage = () => {
 
       {/* Success Messages */}
       {state.demotionResults && (
-        <Card className="bg-red-900/20 border-red-500">
+        <Card className={theme === 'dark' ? 'bg-red-900/20 border-red-500' : 'bg-red-50 border-red-200'}>
           <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-red-400">
+            <div className={`flex items-center gap-2 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
               <UserX className="h-5 w-5" />
               <span>{state.demotionResults.message}</span>
             </div>
             {state.demotionResults.demoted && (
               <div className="mt-2">
-                <p className="text-sm text-red-300">Demoted students:</p>
-                <ul className="text-xs text-red-400 list-disc list-inside ml-4">
+                <p className={`text-sm ${theme === 'dark' ? 'text-red-300' : 'text-red-700'}`}>Demoted students:</p>
+                <ul className={`text-xs list-disc list-inside ml-4 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
                   {state.demotionResults.demoted.map((student: any, idx: number) => (
                     <li key={idx}>{student.name} ({student.usn}) - Semester {student.to_semester}</li>
                   ))}
@@ -881,8 +882,8 @@ const DemotionPage = () => {
             )}
             {state.demotionResults.failed && state.demotionResults.failed.length > 0 && (
               <div className="mt-2">
-                <p className="text-sm text-yellow-300">Failed to demote:</p>
-                <ul className="text-xs text-yellow-400 list-disc list-inside ml-4">
+                <p className={`text-sm ${theme === 'dark' ? 'text-yellow-300' : 'text-yellow-700'}`}>Failed to demote:</p>
+                <ul className={`text-xs list-disc list-inside ml-4 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'}`}>
                   {state.demotionResults.failed.map((student: any, idx: number) => (
                     <li key={idx}>{student.name} ({student.usn}) - {student.reason}</li>
                   ))}
@@ -894,9 +895,9 @@ const DemotionPage = () => {
       )}
 
       {/* Demotion Controls */}
-      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-700">
+      <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
-          <CardTitle className="text-lg text-gray-100">Demote Students to Previous Semester</CardTitle>
+          <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Demote Students to Previous Semester</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
@@ -905,12 +906,12 @@ const DemotionPage = () => {
               onValueChange={(value) => updateState({ selectedSemester: value, selectedSection: "all-sections" })}
               disabled={state.isLoading}
             >
-              <SelectTrigger className="w-48 bg-[#232326] text-gray-200 border border-gray-700">
+              <SelectTrigger className={theme === 'dark' ? 'w-48 bg-background text-foreground border-border' : 'w-48 bg-white text-gray-900 border-gray-300'}>
                 <SelectValue placeholder="Select Semester" />
               </SelectTrigger>
-              <SelectContent className="bg-[#232326] text-gray-200 border border-gray-700">
+              <SelectContent className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
                 {state.semesters.map((semester) => (
-                  <SelectItem key={semester.id} value={`${semester.number}th Semester`}>
+                  <SelectItem key={semester.id} value={`${semester.number}th Semester`} className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>
                     Semester {semester.number}
                   </SelectItem>
                 ))}
@@ -922,13 +923,13 @@ const DemotionPage = () => {
               onValueChange={(value) => updateState({ selectedSection: value })}
               disabled={state.isLoading || !state.selectedSemester || state.sections.length === 0}
             >
-              <SelectTrigger className="w-48 bg-[#232326] text-gray-200 border border-gray-700">
+              <SelectTrigger className={theme === 'dark' ? 'w-48 bg-background text-foreground border-border' : 'w-48 bg-white text-gray-900 border-gray-300'}>
                 <SelectValue placeholder="All Sections" />
               </SelectTrigger>
-              <SelectContent className="bg-[#232326] text-gray-200 border border-gray-700">
-                <SelectItem value="all-sections">All Sections</SelectItem>
+              <SelectContent className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+                <SelectItem value="all-sections" className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>All Sections</SelectItem>
                 {state.sections.map((section) => (
-                  <SelectItem key={section.id} value={section.name}>
+                  <SelectItem key={section.id} value={section.name} className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>
                     Section {section.name}
                   </SelectItem>
                 ))}
@@ -949,9 +950,9 @@ const DemotionPage = () => {
 
       {/* Student List */}
       {state.students.length > 0 && (
-        <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-700">
+        <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
           <CardHeader>
-            <CardTitle className="text-gray-100 flex items-center justify-between">
+            <CardTitle className={`flex items-center justify-between ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               <span className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-red-400" />
                 Students in {state.selectedSemester} - {state.selectedSection}
@@ -960,9 +961,9 @@ const DemotionPage = () => {
                 <Checkbox
                   checked={state.selectedStudents.length === state.students.length && state.students.length > 0}
                   onCheckedChange={handleSelectAll}
-                  className="border-gray-600"
+                  className={theme === 'dark' ? 'border-border' : 'border-gray-300'}
                 />
-                <span className="text-sm text-gray-400">Select All</span>
+                <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Select All</span>
                 <Button
                   onClick={() => updateState({ showBulkDemoteDialog: true })}
                   disabled={state.selectedStudents.length === 0}
@@ -979,30 +980,30 @@ const DemotionPage = () => {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-gray-700">
-                    <TableHead className="text-gray-300">Select</TableHead>
-                    <TableHead className="text-gray-300">USN</TableHead>
-                    <TableHead className="text-gray-300">Name</TableHead>
-                    <TableHead className="text-gray-300">Batch</TableHead>
-                    <TableHead className="text-gray-300">Section</TableHead>
-                    <TableHead className="text-gray-300">Proctor</TableHead>
+                  <TableRow className={theme === 'dark' ? 'border-border' : 'border-gray-200'}>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Select</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>USN</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Name</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Batch</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Section</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Proctor</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {state.students.map((student) => (
-                    <TableRow key={student.usn} className="border-gray-700">
+                    <TableRow key={student.usn} className={theme === 'dark' ? 'border-border' : 'border-gray-200'}>
                       <TableCell>
                         <Checkbox
                           checked={state.selectedStudents.includes(student.usn)}
                           onCheckedChange={(checked) => handleStudentSelect(student.usn, checked as boolean)}
-                          className="border-gray-600"
+                          className={theme === 'dark' ? 'border-border' : 'border-gray-300'}
                         />
                       </TableCell>
-                      <TableCell className="text-gray-300">{student.usn}</TableCell>
-                      <TableCell className="text-gray-300">{student.name}</TableCell>
-                      <TableCell className="text-gray-300">{student.batch}</TableCell>
-                      <TableCell className="text-gray-300">{student.section || 'N/A'}</TableCell>
-                      <TableCell className="text-gray-300">{student.proctor || 'N/A'}</TableCell>
+                      <TableCell className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{student.usn}</TableCell>
+                      <TableCell className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{student.name}</TableCell>
+                      <TableCell className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{student.batch}</TableCell>
+                      <TableCell className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{student.section || 'N/A'}</TableCell>
+                      <TableCell className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{student.proctor || 'N/A'}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -1014,29 +1015,29 @@ const DemotionPage = () => {
 
       {/* Bulk Demote Dialog */}
       <Dialog open={state.showBulkDemoteDialog} onOpenChange={(open) => updateState({ showBulkDemoteDialog: open, bulkDemoteReason: "" })}>
-        <DialogContent className="bg-[#1c1c1e] text-gray-200 border border-gray-700">
+        <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
           <DialogHeader>
-            <DialogTitle className="text-gray-100">
+            <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
               {state.selectedStudents.length > 0 ? `Demote Selected Students (${state.selectedStudents.length})` : 'Bulk Demote Students'}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="text-sm text-gray-300">
+            <div className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               <p><strong>Semester:</strong> {state.selectedSemester}</p>
               <p><strong>Section:</strong> {state.selectedSection === "all-sections" ? "All Sections" : state.selectedSection}</p>
-              <p className="text-yellow-400 mt-2">
+              <p className={`mt-2 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'}`}>
                 ⚠️ This will demote {state.selectedStudents.length > 0 ? `the ${state.selectedStudents.length} selected students` : 'ALL students'} in the selected semester/section to the previous semester.
               </p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                 Reason for Demotion *
               </label>
               <Input
                 value={state.bulkDemoteReason}
                 onChange={(e) => updateState({ bulkDemoteReason: e.target.value })}
                 placeholder="Enter reason for demotion"
-                className="bg-[#232326] text-gray-200 border border-gray-700"
+                className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
               />
             </div>
           </div>
@@ -1044,7 +1045,7 @@ const DemotionPage = () => {
             <Button
               onClick={() => updateState({ showBulkDemoteDialog: false, bulkDemoteReason: "" })}
               variant="outline"
-              className="border-gray-600 text-gray-900"
+              className={theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-900 hover:bg-gray-100'}
             >
               Cancel
             </Button>

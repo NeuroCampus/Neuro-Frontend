@@ -14,6 +14,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { getLowAttendance, getSemesters, manageSections, manageSubjects, manageProfile, sendNotification, getAttendanceBootstrap } from "../../utils/hod_api";
 import { Component } from "react";
+import { useTheme } from "../../context/ThemeContext";
 
 // Interfaces
 interface LowAttendanceProps {
@@ -100,6 +101,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
     return percentage;
   };
   const { toast } = useToast();
+  const { theme } = useTheme();
   const [state, setState] = useState({
     searchTerm: "",
     subjectFilter: "All",
@@ -146,33 +148,31 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
           throw new Error(response.message || "Failed to fetch data");
         }
 
-        const data = response.data;
-
         // Set branchId
-        updateState({ branchId: data.profile.branch_id });
+        updateState({ branchId: response.data.profile.branch_id });
 
         // Set semesters
-        const semestersData = data.semesters.map((s: any) => ({
+        const semestersData = response.data.semesters.map((s) => ({
           id: s.id,
           number: s.number,
         }));
 
         // Set sections
-        const sectionsData = data.sections.map((s: any) => ({
+        const sectionsData = response.data.sections.map((s) => ({
           id: s.id,
           name: s.name,
           semester_id: s.semester_id,
         }));
 
         // Set subjects
-        const subjectsData = data.subjects.map((s: any) => ({
+        const subjectsData = response.data.subjects.map((s) => ({
           id: s.id,
           name: s.name,
           semester_id: s.semester_id,
         }));
 
         // Set low attendance students
-        const studentsData = data.low_attendance.students.map((student: any) => ({
+        const studentsData = response.data.low_attendance.students.map((student) => ({
           student_id: student.student_id,
           usn: student.usn,
           name: student.name,
@@ -189,8 +189,8 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
           students: studentsData,
           loading: false,
         });
-      } catch (err: any) {
-        const errorMessage = err.message || "Failed to fetch data";
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to fetch data";
         toast({ variant: "destructive", title: "Error", description: errorMessage });
         setError(errorMessage);
         updateState({ loading: false });
@@ -284,8 +284,6 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
         toast({
           title: "Success",
           description: `Notified ${studentIds.length} students!`,
-          className: "bg-green-100 text-green-800",
-          icon: <CheckCircle className="w-5 h-5" />,
         });
 
         updateState({
@@ -298,15 +296,13 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
       } else {
         throw new Error(response.message || "Failed to send notifications");
       }
-    } catch (err: any) {
-      const errorMessage = err.message || "Network error";
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Network error";
       toast({ variant: "destructive", title: "Error", description: errorMessage });
     } finally {
       updateState({ isNotifyingAll: false });
     }
   };
-
-
 
   const notifyStudent = async (student: Student) => {
     try {
@@ -328,8 +324,6 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
         toast({
           title: "Success",
           description: `Notification sent to ${student.name}`,
-          className: "bg-green-100 text-gray-800",
-          icon: <CheckCircle className="w-5 h-5" />,
         });
 
         // ✅ mark as notified
@@ -339,8 +333,8 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
       } else {
         throw new Error(response.message || "Failed to send notification");
       }
-    } catch (err: any) {
-      const errorMessage = err.message || "Network error";
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Network error";
       toast({ variant: "destructive", title: "Error", description: errorMessage });
     } finally {
       updateState({
@@ -349,29 +343,45 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
     }
   };
 
+  // Helper function to determine attendance color
+  const getAttendanceColorClass = (attendance: number | string): string => {
+    if (attendance === "NA" || attendance === null || attendance === undefined) {
+      return "text-gray-400";
+    }
+    if (typeof attendance === "string") {
+      return "text-gray-400";
+    }
+    if (attendance < 40) {
+      return "text-red-500";
+    }
+    if (attendance <= 60) {
+      return "text-orange-500";
+    }
+    return "text-green-500";
+  };
 
   return (
     <ErrorBoundary>
-      <div className="p-6 bg-[#1c1c1e] min-h-screen text-gray-900">
-        <h1 className="text-2xl font-semibold mb-6 text-gray-200">Low Attendance Students</h1>
+      <div className={`p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+        <h1 className={`text-2xl font-semibold mb-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Low Attendance Students</h1>
         <div className="flex flex-wrap items-center gap-4 mb-6">
           <Select
             value={state.semesterFilter}
             onValueChange={(value) => updateState({ semesterFilter: value, subjectFilter: "All", sectionFilter: "All" })}
             disabled={state.loading || state.semesters.length === 0}
           >
-            <SelectTrigger className="w-48 bg-[#232326] border border-gray-700 text-gray-200">
+            <SelectTrigger className={`w-48 ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`}>
               <SelectValue
           placeholder={state.semesters.length === 0 ? "No semesters available" : "Select Semester"}
-          className="text-gray-300"
+          className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}
               />
             </SelectTrigger>
-            <SelectContent className="bg-[#232326] border border-gray-700 text-gray-200">
-              <SelectItem key="all-semesters" value="All" className="text-gray-200 hover:bg-[#2a2a2e]">
+            <SelectContent className={theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}>
+              <SelectItem key="all-semesters" value="All" className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>
           All
               </SelectItem>
               {state.semesters.map((semester) => (
-          <SelectItem key={semester.id} value={semester.id} className="text-gray-200 hover:bg-[#2a2a2e]">
+          <SelectItem key={semester.id} value={semester.id} className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>
             Semester {semester.number}
           </SelectItem>
               ))}
@@ -382,20 +392,20 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
             onValueChange={(value) => updateState({ subjectFilter: value })}
             disabled={state.loading || !state.semesterFilter || state.semesterFilter === "All" || state.subjects.length === 0}
           >
-            <SelectTrigger className="w-48 bg-[#232326] border border-gray-700 text-gray-200">
+            <SelectTrigger className={`w-48 ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`}>
               <SelectValue
           placeholder={state.subjects.length === 0 ? "No subjects available" : "Select Subject"}
-          className="text-gray-300"
+          className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}
               />
             </SelectTrigger>
-            <SelectContent className="bg-[#232326] border border-gray-700 text-gray-200">
-              <SelectItem key="all-subjects" value="All" className="text-gray-200 hover:bg-[#2a2a2e]">
+            <SelectContent className={theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}>
+              <SelectItem key="all-subjects" value="All" className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>
           All
               </SelectItem>
               {state.subjects
           .filter((subject) => state.semesterFilter === "All" || subject.semester_id === state.semesterFilter)
           .map((subject) => (
-            <SelectItem key={subject.id} value={subject.id} className="text-gray-200 hover:bg-[#2a2a2e]">
+            <SelectItem key={subject.id} value={subject.id} className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>
               {subject.name}
             </SelectItem>
           ))}
@@ -406,20 +416,20 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
             onValueChange={(value) => updateState({ sectionFilter: value })}
             disabled={state.loading || !state.semesterFilter || state.semesterFilter === "All" || state.sections.length === 0}
           >
-            <SelectTrigger className="w-48 bg-[#232326] border border-gray-700 text-gray-200">
+            <SelectTrigger className={`w-48 ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`}>
               <SelectValue
           placeholder={state.sections.length === 0 ? "No sections available" : "Select Section"}
-          className="text-gray-300"
+          className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}
               />
             </SelectTrigger>
-            <SelectContent className="bg-[#232326] border border-gray-700 text-gray-200">
-              <SelectItem key="all-sections" value="All" className="text-gray-200 hover:bg-[#2a2a2e]">
+            <SelectContent className={theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}>
+              <SelectItem key="all-sections" value="All" className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>
           All
               </SelectItem>
               {state.sections
           .filter((section) => state.semesterFilter === "All" || section.semester_id === state.semesterFilter)
           .map((section) => (
-            <SelectItem key={section.id} value={section.id} className="text-gray-200 hover:bg-[#2a2a2e]">
+            <SelectItem key={section.id} value={section.id} className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>
               {section.name}
             </SelectItem>
           ))}
@@ -428,7 +438,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
           <div className="ml-auto flex gap-4">
             <Button
               onClick={exportPDF}
-              className="flex items-center gap-2  text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 rounded-md px-4 py-2 shadow-sm"
+              className="flex items-center gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md rounded-md px-4 py-2"
               disabled={state.loading || filteredStudents.length === 0}
             >
               <FileDown className="w-4 h-4" />
@@ -436,11 +446,11 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
             </Button>
             <Button
               onClick={notifyAll}
-              className={`flex items-center gap-2 rounded-md px-4 py-2 shadow-sm border transition-colors
+              className={`flex items-center gap-2 rounded-md px-4 py-2 shadow-sm border transition-all duration-200 ease-in-out transform hover:scale-105
                 ${
                   state.hasNotifiedAll
                     ? "bg-green-800 border-green-600 text-white cursor-default"
-                    : "bg-gray-800 hover:bg-gray-600 border-gray-500 text-gray-200"
+                    : "bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
                 }`}
               disabled={
                 state.loading ||
@@ -468,14 +478,14 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
             placeholder="Search students..."
             value={state.searchTerm}
             onChange={(e) => updateState({ searchTerm: e.target.value })}
-            className="pl-10 bg-[#232326] text-gray-200 border border-gray-700 placeholder-gray-400 focus:ring-2 focus:ring-[#232326] focus:border-gray-600"
+            className={`pl-10 ${theme === 'dark' ? 'bg-card border-border text-foreground placeholder:text-muted-foreground' : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-500'}`}
             disabled={state.loading}
           />
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+          <Search className={`absolute left-3 top-2.5 h-4 w-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`} />
         </div>
-        <div className="overflow-auto border rounded-lg ">
-          <table className="min-w-full text-sm text-left ">
-            <thead className="bg-[#1c1c1e] border-b text-gray-200">
+        <div className={`overflow-auto border rounded-lg ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}>
+          <table className="min-w-full text-sm text-left">
+            <thead className={`${theme === 'dark' ? 'bg-card border-b border-border text-foreground' : 'bg-gray-100 border-b border-gray-300 text-gray-900'}`}>
               <tr>
                 <th className="px-4 py-2">USN</th>
                 <th className="px-4 py-2">Name</th>
@@ -486,7 +496,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
                 <th className="px-4 py-2">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-[#1c1c1e] text-gray-400">
+            <tbody className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>
               {state.loading ? (
                 <tr>
                   <td colSpan={7} className="text-center py-4">Loading...</td>
@@ -497,22 +507,14 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
                 </tr>
               ) : (
                 currentStudents.map((student) => (
-                  <tr key={student.student_id} className="border-b hover:bg-gray-800">
+                  <tr key={student.student_id} className={`border-b hover:${theme === 'dark' ? 'bg-accent' : 'bg-gray-50'}`}>
                     <td className="px-4 py-2">{student.usn}</td>
                     <td className="px-4 py-2">{student.name}</td>
                     <td className="px-4 py-2">{student.subject}</td>
                     <td className="px-4 py-2">{student.section}</td>
                     <td className="px-4 py-2">{student.semester}</td>
                     <td
-                      className={`px-4 py-2 font-medium ${
-                        student.attendance_percentage === "NA" || student.attendance_percentage === null
-                          ? "text-gray-400"
-                          : student.attendance_percentage < 40
-                          ? "text-red-500"
-                          : student.attendance_percentage <= 60
-                          ? "text-orange-500"
-                          : "text-green-500"
-                      }`}
+                      className={`px-4 py-2 font-medium ${getAttendanceColorClass(student.attendance_percentage)}`}
                     >
                       {formatAttendancePercentage(student.attendance_percentage)}
                     </td>
@@ -520,11 +522,11 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
                      <Button
                         size="sm"
                         onClick={() => notifyStudent(student)}
-                        className={`px-4 py-2 flex items-center gap-2 rounded-md shadow-sm border transition-colors
+                        className={`px-4 py-2 flex items-center gap-2 rounded-md shadow-sm border transition-all duration-200 ease-in-out transform hover:scale-105
                           ${
                             state.notifiedStudents?.[student.student_id]
                               ? "bg-green-700 border-green-600 text-white cursor-default"
-                              : "bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-300"
+                              : "bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
                           }`}
                         disabled={
                           state.loading ||
@@ -550,9 +552,9 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
             </tbody>
           </table>
         </div>
-        <div className="mt-4 flex justify-between items-center text-sm text-gray-200">
+        <div className={`mt-4 flex justify-between items-center text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
           <div className="flex items-center space-x-4">
-            <div className="text-sm text-gray-200">
+            <div className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Showing {indexOfFirstStudent + 1} to {Math.min(indexOfLastStudent, filteredStudents.length)} of {filteredStudents.length} students
             </div>
           </div>
@@ -562,11 +564,11 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
               variant="outline"
               disabled={state.currentPage === 1 || state.loading}
               onClick={() => updateState({ currentPage: state.currentPage - 1 })}
-              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 rounded-md px-4 py-2 flex items-center gap-2 shadow-sm"
+              className="flex items-center gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md rounded-md px-4 py-2"
             >
               Previous
             </Button>
-            <span className="text-gray-200">
+            <span className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
               Page {state.currentPage} of {totalPages}
             </span>
             <Button
@@ -574,7 +576,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
               variant="outline"
               disabled={state.currentPage === totalPages || state.loading}
               onClick={() => updateState({ currentPage: state.currentPage + 1 })}
-              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 rounded-md px-4 py-2 flex items-center gap-2 shadow-sm"
+              className="flex items-center gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md rounded-md px-4 py-2"
             >
               Next
             </Button>

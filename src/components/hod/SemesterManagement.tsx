@@ -8,6 +8,7 @@ import { Pencil, Trash2, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogFooter } from "../ui/dialog";
 import { getSemesters, manageSemesters, manageSections, manageProfile } from "../../utils/hod_api";
 import { useHODBootstrap } from "../../context/HODBootstrapContext";
+import { useTheme } from "../../context/ThemeContext";
 
 interface Semester {
   id: string;
@@ -30,6 +31,7 @@ interface SectionFormState {
 
 const SemesterManagement = () => {
   const { toast } = useToast();
+  const { theme } = useTheme();
   const [semesters, setSemesters] = useState<Semester[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -336,39 +338,39 @@ const SemesterManagement = () => {
   );
 
   return (
-    <div className="p-6 space-y-6 ">
-      <h1 className="text-xl font-semibold text-gray-200">Manage Semesters</h1>
+    <div className={`p-6 space-y-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <h1 className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Manage Semesters</h1>
 
-      <Card className="bg-[#1c1c1e] text-gray-200">
+      <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
-          <CardTitle>Semester List</CardTitle>
+          <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Semester List</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 ">
+        <CardContent className="space-y-4">
           <div className="flex justify-between items-center">
             <Input
               placeholder="Search by semester number..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="max-w-sm bg-[#232326] text-gray-200 border border-gray-700 placeholder:text-gray-400 focus:border-gray-500 focus:ring-0"
+              className={`max-w-sm ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'}`}
             />
             <Button
               onClick={() => openModal()}
               disabled={loading || !branchId}
-              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+              className="text-foreground bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
             >
               + Add Semester
             </Button>
           </div>
 
           {loading ? (
-            <div className="text-center py-4">Loading...</div>
+            <div className={`text-center py-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading...</div>
           ) : filteredSemesters.length === 0 ? (
-            <div className="text-center py-4">No semesters found.</div>
+            <div className={`text-center py-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>No semesters found.</div>
           ) : (
             <div className="rounded-md border overflow-hidden">
-              <div className="overflow-y-auto max-h-96 custom-scrollbar"> {/* scrollable wrapper */}
+              <div className="overflow-y-auto max-h-96 custom-scrollbar">
                 <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-[#1c1c1e] text-gray-200 z-10">
+                  <thead className={`sticky top-0 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-gray-100 text-gray-900 border-gray-300'} z-10`}>
                     <tr className="border-b">
                       <th className="p-2 text-left">NAME</th>
                       <th className="p-2 text-left">YEAR</th>
@@ -383,12 +385,12 @@ const SemesterManagement = () => {
                         .sort((a, b) => a.name.localeCompare(b.name));
 
                       return (
-                        <tr key={sem.id} className="border-b text-center">
+                        <tr key={sem.id} className={`border-b text-center ${theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-50'}`}>
                           {/* Semester Name */}
-                          <td className="p-2 text-left">{getSemesterName(sem.number)}</td>
+                          <td className={`p-2 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{getSemesterName(sem.number)}</td>
 
                           {/* Year */}
-                          <td className="p-2 text-left">{getYear(sem.number)}</td>
+                          <td className={`p-2 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{getYear(sem.number)}</td>
 
                           {/* Sections */}
                           <td className="p-2 text-left">
@@ -397,7 +399,7 @@ const SemesterManagement = () => {
                                 {semesterSections.map((section) => (
                                   <div
                                     key={section.id}
-                                    className="flex items-center gap-1 px-2 py-1 border rounded-md bg-[#232326] text-gray-200"
+                                    className={`flex items-center gap-1 px-2 py-1 border rounded-md ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}
                                   >
                                     <span>{section.name}</span>
                                     <Button
@@ -413,7 +415,7 @@ const SemesterManagement = () => {
                                 ))}
                               </div>
                             ) : (
-                              <span className="text-gray-400">None</span>
+                              <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>None</span>
                             )}
                           </td>
 
@@ -462,15 +464,15 @@ const SemesterManagement = () => {
 
       {/* Add/Edit Semester Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="bg-[#1c1c1e] text-gray-200">
+        <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
           <DialogHeader>
-        <h2 className="text-lg font-semibold">
+        <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
           {editingSemester ? "Edit Semester" : "Add Semester"}
         </h2>
           </DialogHeader>
           <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Semester Number</label>
+          <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Semester Number</label>
           <Input
             type="number"
             name="number"
@@ -480,7 +482,7 @@ const SemesterManagement = () => {
             min="1"
             max="8"
             disabled={loading}
-            className="bg-[#232326] text-gray-200 border-gray-700"
+            className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
           />
         </div>
           </div>
@@ -489,11 +491,11 @@ const SemesterManagement = () => {
           variant="outline"
           onClick={closeModal}
           disabled={loading}
-          className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 bg-transparent"
+          className={`text-foreground ${theme === 'dark' ? 'bg-card border-border hover:bg-accent' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
         >
           Cancel
         </Button>
-        <Button onClick={handleSave} disabled={loading} className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500">
+        <Button onClick={handleSave} disabled={loading} className={`text-foreground ${theme === 'dark' ? 'bg-card border-border hover:bg-accent' : 'bg-white border-gray-300 hover:bg-gray-100'}`}>
           {editingSemester ? "Save Changes" : "Add Semester"}
         </Button>
           </DialogFooter>
@@ -502,26 +504,26 @@ const SemesterManagement = () => {
 
       {/* Add Section Modal */}
       <Dialog open={isSectionModalOpen} onOpenChange={setIsSectionModalOpen}>
-        <DialogContent className="bg-[#1c1c1e] dark:bg-[#1c1c1e] text-gray-200">
+        <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
           <DialogHeader>
-        <h2 className="text-lg font-semibold">
+        <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
           Add Section for Semester {managingSemester?.number}
         </h2>
           </DialogHeader>
           <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Section Name</label>
+          <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Section Name</label>
           <Select
             value={sectionForm.name}
             onValueChange={handleSectionChange}
             disabled={loading}
           >
-            <SelectTrigger className="bg-[#232326] dark:bg-[#232326] text-gray-200 border-gray-700">
+            <SelectTrigger className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
           <SelectValue placeholder="Select Section" />
             </SelectTrigger>
-            <SelectContent className="bg-[#232326] dark:bg-[#232326] text-gray-200">
+            <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
           {["A", "B", "C", "D", "E", "F", "G"].map((section) => (
-            <SelectItem key={section} value={section}>
+            <SelectItem key={section} value={section} className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>
               Section {section}
             </SelectItem>
           ))}
@@ -530,10 +532,10 @@ const SemesterManagement = () => {
         </div>
           </div>
           <DialogFooter className="mt-4">
-        <Button variant="outline" onClick={closeSectionModal} disabled={loading} className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 bg-transparent">
+        <Button variant="outline" onClick={closeSectionModal} disabled={loading} className={`text-foreground ${theme === 'dark' ? 'bg-card border-border hover:bg-accent' : 'bg-white border-gray-300 hover:bg-gray-100'}`}>
           Cancel
         </Button>
-        <Button  onClick={handleSaveSection} disabled={loading} className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500">
+        <Button  onClick={handleSaveSection} disabled={loading} className={`text-foreground ${theme === 'dark' ? 'bg-card border-border hover:bg-accent' : 'bg-white border-gray-300 hover:bg-gray-100'}`}>
           Add Section
         </Button>
           </DialogFooter>
@@ -542,15 +544,15 @@ const SemesterManagement = () => {
 
       {/* Delete Semester Confirmation Modal */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-        <DialogContent className="bg-[#1c1c1e] text-gray-200">
+        <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
           <DialogHeader>
-        <h2 className="text-lg font-semibold">Delete Semester?</h2>
-        <p className="text-sm text-gray-500">
+        <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Delete Semester?</h2>
+        <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
           Are you sure you want to delete {getSemesterName(deletingSemester?.number || 0)}?
         </p>
           </DialogHeader>
           <DialogFooter className="mt-4">
-        <Button variant="outline" onClick={closeDeleteModal} disabled={loading} className="text-gray-200 bg-transparent">
+        <Button variant="outline" onClick={closeDeleteModal} disabled={loading} className={`text-foreground ${theme === 'dark' ? 'bg-card border-border hover:bg-accent' : 'bg-white border-gray-300 hover:bg-gray-100'}`}>
           Cancel
         </Button>
         <Button variant="destructive" onClick={handleDelete} disabled={loading}>
@@ -562,15 +564,15 @@ const SemesterManagement = () => {
 
       {/* Delete Section Confirmation Modal */}
       <Dialog open={isDeleteSectionModalOpen} onOpenChange={setIsDeleteSectionModalOpen}>
-        <DialogContent className="bg-[#1c1c1e] text-gray-200">
+        <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
           <DialogHeader>
-        <h2 className="text-lg font-semibold">Delete Section?</h2>
-        <p className="text-sm text-gray-500">
+        <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Delete Section?</h2>
+        <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
           Are you sure you want to delete Section {deletingSection?.name} from Semester {semesters.find(s => s.id === deletingSection?.semester_id)?.number}?
         </p>
           </DialogHeader>
           <DialogFooter className="mt-4">
-        <Button variant="outline" onClick={closeDeleteSectionModal} disabled={loading} className="text-gray-200 bg-transparent">
+        <Button variant="outline" onClick={closeDeleteSectionModal} disabled={loading} className={`text-foreground ${theme === 'dark' ? 'bg-card border-border hover:bg-accent' : 'bg-white border-gray-300 hover:bg-gray-100'}`}>
           Cancel
         </Button>
         <Button variant="destructive" onClick={handleDeleteSection} disabled={loading}>

@@ -6,6 +6,7 @@ import { Button } from "../ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { useToast } from "../ui/use-toast";
 import { sendNotification, getNotifications, manageProfile, getSentNotifications } from "../../utils/hod_api";
+import { useTheme } from "../../context/ThemeContext";
 
 interface Notification {
   id: string;
@@ -18,6 +19,7 @@ interface Notification {
 
 const NotificationsManagement = () => {
   const { toast } = useToast();
+  const { theme } = useTheme();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [sentNotifications, setSentNotifications] = useState<Notification[]>([]);
   const [newNotification, setNewNotification] = useState({
@@ -167,68 +169,69 @@ const NotificationsManagement = () => {
   const getBadgeColor = (role: string) => {
     switch (role.toLowerCase()) {
       case "all":
-        return "bg-blue-100 text-blue-600"; // Matches light blue badge
+        return theme === 'dark' ? "bg-blue-900 text-blue-200" : "bg-blue-100 text-blue-600";
       case "student":
-        return "bg-rose-100 text-rose-600"; // Matches light red/pink badge
+        return theme === 'dark' ? "bg-rose-900 text-rose-200" : "bg-rose-100 text-rose-600";
       case "teacher":
-        return "bg-violet-100 text-violet-600"; // Matches light violet badge
+        return theme === 'dark' ? "bg-violet-900 text-violet-200" : "bg-violet-100 text-violet-600";
       case "hod":
-        return "bg-green-100 text-green-600"; // Matches light green badge
+        return theme === 'dark' ? "bg-green-900 text-green-200" : "bg-green-100 text-green-600";
       default:
-        return "bg-gray-100 text-gray-600";
+        return theme === 'dark' ? "bg-gray-700 text-gray-200" : "bg-gray-100 text-gray-600";
     }
   };
 
   const getSenderBadgeColor = (createdBy: string) => {
     switch (createdBy.toLowerCase()) {
       case "all":
-        return "bg-blue-100 text-blue-600";
+        return theme === 'dark' ? "bg-blue-900 text-blue-200" : "bg-blue-100 text-blue-600";
       case "student":
-        return "bg-rose-100 text-rose-600";
+        return theme === 'dark' ? "bg-rose-900 text-rose-200" : "bg-rose-100 text-rose-600";
       case "teacher":
-        return "bg-violet-100 text-violet-600";
+        return theme === 'dark' ? "bg-violet-900 text-violet-200" : "bg-violet-100 text-violet-600";
       default:
-        return "bg-gray-100 text-gray-600";
+        return theme === 'dark' ? "bg-gray-700 text-gray-200" : "bg-gray-100 text-gray-600";
     }
   };
+  
   if (loading && !notifications.length && !sentNotifications.length) {
-    return <div className="text-center py-6">Loading...</div>;
+    return <div className={`text-center py-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading...</div>;
   }
 
   if (error) {
-    return <div className="text-center py-6 text-red-500">{error}</div>;
+    return <div className={`text-center py-6 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{error}</div>;
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-[#1c1c1e] text-gray-200 min-h-screen">
-      <Card className="md:col-span-2 bg-[#1c1c1e] text-gray-200 border border-gray-200 shadow-sm">
+    <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <Card className={`md:col-span-2 shadow-sm ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
         <CardHeader>
-          <CardTitle className="text-xl text-gray-200">Received Notifications</CardTitle>
-          <p className="text-sm text-gray-400">Notifications sent to you</p>
+          <CardTitle className={`text-xl ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Received Notifications</CardTitle>
+          <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Notifications sent to you</p>
         </CardHeader>
         <CardContent className="overflow-auto max-h-[400px] md:max-h-[500px] thin-scrollbar">
           <div>
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-gray-300 sticky top-0 bg-[#1c1c1e] z-10">
+              <thead className={`border-b sticky top-0 z-10 ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
                 <tr>
-                  <th className="pb-2 text-gray-200">Message</th>
-                  <th className="pb-2 text-gray-200">Target</th>
-                  <th className="pb-2 text-gray-200">Sender</th>
+                  <th className={`pb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Message</th>
+                  <th className={`pb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Target</th>
+                  <th className={`pb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Sender</th>
                 </tr>
               </thead>
               <tbody>
                 {notifications.map((note) => (
-                  <tr key={note.id} className="border-b border-gray-200 hover:bg-gray-500 transition">
+                  <tr key={note.id} className={`border-b ${theme === 'dark' ? 'border-border hover:bg-accent' : 'border-gray-200 hover:bg-gray-100'}`}>
                     <td className="py-3">
-                      <div className="font-medium text-gray-200">{note.title}</div>
-                      <div className="text-gray-400 text-sm">{note.message}</div>
+                      <div className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{note.title}</div>
+                      <div className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>{note.message}</div>
                     </td>
                     <td className="py-3">
                       <span className={`px-3 py-1 text-xs rounded-full ${getBadgeColor(note.role)}`}>
                         {note.role.charAt(0).toUpperCase() + note.role.slice(1).replace("_", " ")}
                       </span>
                     </td>
-                    <td className="py-3 text-gray-200">
+                    <td className="py-3">
                       <span className={`px-3 py-1 text-xs rounded-full ${getSenderBadgeColor(note.created_by || 'Unknown')}`}>
                         {note.created_by || 'Unknown'}
                       </span>
@@ -241,33 +244,33 @@ const NotificationsManagement = () => {
         </CardContent>
       </Card>
 
-      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-200 shadow-sm max-h-[650px]">
+      <Card className={`max-h-[650px] shadow-sm ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
         <CardHeader>
-          <CardTitle className="text-xl text-gray-200">Create Notification</CardTitle>
-          <p className="text-sm text-gray-400">Send a new group notification</p>
+          <CardTitle className={`text-xl ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Create Notification</CardTitle>
+          <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Send a new group notification</p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm mb-1 text-gray-400">Target Role</label>
+            <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Target Role</label>
             <Select
               value={newNotification.target}
               onValueChange={(value) => setNewNotification({ ...newNotification, target: value })}
             >
-              <SelectTrigger className="bg-[#232326] text-gray-400 border-gray-300">
+              <SelectTrigger className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
                 <SelectValue placeholder="Select a target role" />
               </SelectTrigger>
-              <SelectContent className="bg-[#232326] text-gray-400 border-gray-200">
-                <SelectItem value="All">All</SelectItem>
-                <SelectItem value="Students">Students</SelectItem>
-                <SelectItem value="Teachers">Teachers</SelectItem>
+              <SelectContent className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
+                <SelectItem value="All" className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>All</SelectItem>
+                <SelectItem value="Students" className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>Students</SelectItem>
+                <SelectItem value="Teachers" className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>Teachers</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div>
-            <label className="block text-sm mb-1 text-gray-400">Title</label>
+            <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Title</label>
             <Input
-              className="bg-[#232326] text-gray-200 border-gray-300"
+              className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
               placeholder="Notification Title"
               value={newNotification.title}
               onChange={(e) => setNewNotification({ ...newNotification, title: e.target.value })}
@@ -275,9 +278,9 @@ const NotificationsManagement = () => {
           </div>
 
           <div>
-            <label className="block text-sm mb-1 text-gray-400">Message</label>
+            <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Message</label>
             <Textarea
-              className="bg-[#232326] text-gray-200 border-gray-300"
+              className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
               rows={4}
               placeholder="Write your message here..."
               value={newNotification.message}
@@ -286,11 +289,11 @@ const NotificationsManagement = () => {
           </div>
 
           {validationError && (
-            <div className="text-red-600 text-sm font-medium">{validationError}</div>
+            <div className={theme === 'dark' ? 'text-destructive' : 'text-red-600'}>{validationError}</div>
           )}
 
           <Button
-            className="w-full text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+            className={`w-full bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}
             onClick={handleSendNotification}
             disabled={loading}
           >
@@ -299,34 +302,34 @@ const NotificationsManagement = () => {
         </CardContent>
       </Card>
 
-      <Card className="md:col-span-3 bg-[#1c1c1e] text-gray-200 border border-gray-200 shadow-sm">
+      <Card className={`md:col-span-3 shadow-sm ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
         <CardHeader>
-          <CardTitle className="text-xl text-gray-200">Sent Notifications</CardTitle>
-          <p className="text-sm text-gray-400">Notifications you created</p>
+          <CardTitle className={`text-xl ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Sent Notifications</CardTitle>
+          <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Notifications you created</p>
         </CardHeader>
         <CardContent className="overflow-auto max-h-[400px] md:max-h-[500px] thin-scrollbar">
           <div>
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-gray-300 sticky top-0 bg-[#1c1c1e] z-10">
+              <thead className={`border-b sticky top-0 z-10 ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
                 <tr>
-                  <th className="pb-2 text-gray-200">Message</th>
-                  <th className="pb-2 text-gray-200">Target</th>
-                  <th className="pb-2 text-gray-200">Sender</th>
+                  <th className={`pb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Message</th>
+                  <th className={`pb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Target</th>
+                  <th className={`pb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Sender</th>
                 </tr>
               </thead>
               <tbody>
                 {sentNotifications.map((note) => (
-                  <tr key={note.id} className="border-b border-gray-200 transition">
+                  <tr key={note.id} className={`border-b ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
                     <td className="py-3">
-                      <div className="font-medium text-gray-200">{note.title}</div>
-                      <div className="text-gray-400 text-sm">{note.message}</div>
+                      <div className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{note.title}</div>
+                      <div className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>{note.message}</div>
                     </td>
                     <td className="py-3">
                       <span className={`px-3 py-1 text-xs rounded-full ${getBadgeColor(note.role)}`}>
                         {note.role.charAt(0).toUpperCase() + note.role.slice(1).replace("_", " ")}
                       </span>
                     </td>
-                    <td className="py-3 text-gray-600">
+                    <td className="py-3">
                       <span className={`px-3 py-1 text-xs rounded-full ${getSenderBadgeColor(note.created_by || 'You')}`}>
                         {note.created_by || 'You'}
                       </span>

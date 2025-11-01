@@ -4,6 +4,7 @@ import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { manageSubjects, getSemesters, manageProfile, getHODSubjectBootstrap } from "../../utils/hod_api";
+import { useTheme } from "../../context/ThemeContext";
 
 interface Subject {
   id: string;
@@ -26,28 +27,60 @@ interface ManageSubjectsRequest {
   subject_id?: string;
 }
 
+// Define error type for catch blocks
+interface ErrorWithMessage {
+  message: string;
+}
+
+// Type guard to check if an object has a message property
+function isErrorWithMessage(error: unknown): error is ErrorWithMessage {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as Record<string, unknown>).message === 'string'
+  );
+}
+
+// Define the state type to include all properties
+interface SubjectManagementState {
+  subjects: Subject[];
+  semesters: Semester[];
+  deleteConfirmation: string | null;
+  showModal: "add" | "edit" | null;
+  currentSubject: Subject | null;
+  newSubject: { code: string; name: string; semester_id: string };
+  error: string | null;
+  success: string | null;
+  loading: boolean;
+  branchId: string;
+  currentPage: number;
+  pageSize: number;
+  modalError: string | null;
+}
+
 const SubjectManagement = () => {
-  const [state, setState] = useState({
-    subjects: [] as Subject[],
-    semesters: [] as Semester[],
-    deleteConfirmation: null as string | null,
-    showModal: null as "add" | "edit" | null,
-    currentSubject: null as Subject | null,
+  const { theme } = useTheme();
+  const [state, setState] = useState<SubjectManagementState>({
+    subjects: [],
+    semesters: [],
+    deleteConfirmation: null,
+    showModal: null,
+    currentSubject: null,
     newSubject: { code: "", name: "", semester_id: "" },
-    error: null as string | null,
-    success: null as string | null,
+    error: null,
+    success: null,
     loading: false,
     branchId: "",
-    subjects: [],
     currentPage: 1,
     pageSize: 10,
+    modalError: null,
   });
 
   const totalPages = Math.ceil(state.subjects.length / state.pageSize);
 
-
   // Helper to update state
-  const updateState = (newState: Partial<typeof state>) => {
+  const updateState = (newState: Partial<SubjectManagementState>) => {
     setState((prev) => ({ ...prev, ...newState }));
   };
 
@@ -94,8 +127,12 @@ const SubjectManagement = () => {
         const subjectsRes = await manageSubjects({ branch_id: branchId }, "GET");
         if (subjectsRes.success) updateState({ subjects: subjectsRes.data || [] }); else updateState({ error: subjectsRes.message || "Failed to fetch subjects" });
       }
-    } catch (err: any) {
-      updateState({ error: err.message || "Failed to fetch data" });
+    } catch (err) {
+      if (isErrorWithMessage(err)) {
+        updateState({ error: err.message || "Failed to fetch data" });
+      } else {
+        updateState({ error: "Failed to fetch data" });
+      }
     } finally {
       updateState({ loading: false });
     }
@@ -136,7 +173,11 @@ const SubjectManagement = () => {
         updateState({ error: response.message });
       }
     } catch (err) {
-      updateState({ error: "Failed to save subject" });
+      if (isErrorWithMessage(err)) {
+        updateState({ error: err.message || "Failed to save subject" });
+      } else {
+        updateState({ error: "Failed to save subject" });
+      }
     } finally {
       updateState({ loading: false });
     }
@@ -178,7 +219,11 @@ const SubjectManagement = () => {
           updateState({ error: response.message });
         }
       } catch (err) {
-        updateState({ error: "Failed to delete subject" });
+        if (isErrorWithMessage(err)) {
+          updateState({ error: err.message || "Failed to delete subject" });
+        } else {
+          updateState({ error: "Failed to delete subject" });
+        }
       } finally {
         updateState({ loading: false });
       }
@@ -193,9 +238,9 @@ const SubjectManagement = () => {
   };
 
   return (
-    <div className="p-6 bg-[#1c1c1e] min-h-screen">
-      <div className="flex justify-between items-center mb-4 text-gray-200">
-        <h2 className="text-lg font-semibold ">Manage Subjects</h2>
+    <div className={`p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Manage Subjects</h2>
         <Button
           onClick={() => {
             updateState({
@@ -204,25 +249,25 @@ const SubjectManagement = () => {
               currentSubject: null,
             });
           }}
-          className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+          className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
           disabled={state.loading || !state.branchId}
         >
           + Add Subject
         </Button>
       </div>
 
-      {state.error && <div className="text-red-500 mb-4">{state.error}</div>}
-      {state.success && <div className="text-green-500 mb-4">{state.success}</div>}
-      {state.loading && <div className="text-blue-500 mb-4">Loading...</div>}
+      {state.error && <div className={`mb-4 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{state.error}</div>}
+      {state.success && <div className={`mb-4 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{state.success}</div>}
+      {state.loading && <div className={`mb-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>Loading...</div>}
 
-      <Card className="bg-[#1c1c1e] shadow-lg text-gray-200">
+      <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
-          <CardTitle className="text-md font-semibold">Manage Subjects</CardTitle>
+          <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Manage Subjects</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full table-auto text-sm">
-              <thead className="bg-[#1c1c1e] text-gray-200">
+              <thead className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-gray-100 text-gray-900'}>
                 <tr>
                   <th className="px-4 py-3 text-left">SUBJECT CODE</th>
                   <th className="px-4 py-3 text-left">SUBJECT NAME</th>
@@ -230,7 +275,7 @@ const SubjectManagement = () => {
                   <th className="px-4 py-3 text-left">ACTIONS</th>
                 </tr>
               </thead>
-              <tbody className="bg-[#1c1c1e]">
+              <tbody className={theme === 'dark' ? 'bg-background' : 'bg-white'}>
                 {state.subjects
                   .slice(
                     (state.currentPage - 1) * state.pageSize,
@@ -240,7 +285,7 @@ const SubjectManagement = () => {
                     <tr
                       key={subject.id}
                       className={
-                        index % 2 === 0 ? "bg-[#1c1c1e]" : "bg-[#1c1c1e]"
+                        index % 2 === 0 ? (theme === 'dark' ? 'bg-card' : 'bg-gray-50') : (theme === 'dark' ? 'bg-background' : 'bg-white')
                       }
                     >
                       <td className="px-4 py-3">{subject.subject_code}</td>
@@ -250,11 +295,11 @@ const SubjectManagement = () => {
                       </td>
                       <td className="px-4 py-3 flex gap-5">
                         <Pencil
-                          className="w-4 h-4 text-blue-500 hover:text-blue-700 cursor-pointer"
+                          className={`w-4 h-4 cursor-pointer ${theme === 'dark' ? 'text-primary hover:text-primary/80' : 'text-blue-600 hover:text-blue-800'}`}
                           onClick={() => handleEdit(subject)}
                         />
                         <Trash2
-                          className="w-4 h-4 text-red-500 hover:text-red-700 cursor-pointer"
+                          className={`w-4 h-4 cursor-pointer ${theme === 'dark' ? 'text-destructive hover:text-destructive/80' : 'text-red-600 hover:text-red-800'}`}
                           onClick={() => handleDelete(subject.id)}
                         />
                       </td>
@@ -271,7 +316,7 @@ const SubjectManagement = () => {
                         (state.currentPage - 1) * state.pageSize
                     ),
                 }).map((_, i) => (
-                  <tr key={`empty-${i}`} className="bg-[#1c1c1e] h-[48px]">
+                  <tr key={`empty-${i}`} className={theme === 'dark' ? 'bg-background h-[48px]' : 'bg-white h-[48px]'}>
                     <td colSpan={4}></td>
                   </tr>
                 ))}
@@ -282,7 +327,7 @@ const SubjectManagement = () => {
           {/* Info + Pagination */}
           <div className="flex justify-between items-center mt-4">
             {/* Showing count */}
-            <div className="text-sm text-gray-400">
+            <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               Showing{" "}
               {Math.min(
                 state.pageSize,
@@ -298,11 +343,11 @@ const SubjectManagement = () => {
                   updateState({ currentPage: Math.max(state.currentPage - 1, 1) })
                 }
                 disabled={state.currentPage === 1}
-                className="w-24 flex items-center justify-center gap-1 text-sm font-medium text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed py-1.5 rounded-md transition"
+                className="w-24 flex items-center justify-center gap-1 text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
               >
                 Previous
               </Button>
-              <div className="w-16 text-center text-sm font-medium text-gray-200 bg-gray-800 border border-gray-500 py-1.5 mx-2 rounded-md">
+              <div className={`w-16 text-center text-sm font-medium py-1.5 mx-2 rounded-md ${theme === 'dark' ? 'text-foreground bg-card border-border' : 'text-gray-900 bg-white border-gray-300'}`}>
                 {state.currentPage}
               </div>
               <Button
@@ -312,7 +357,7 @@ const SubjectManagement = () => {
                   })
                 }
                 disabled={state.currentPage === totalPages}
-                className="w-24 flex items-center justify-center gap-1 text-sm font-medium text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed py-1.5 rounded-md transition"
+                className="w-24 flex items-center justify-center gap-1 text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
               >
                 Next
               </Button>
@@ -324,14 +369,14 @@ const SubjectManagement = () => {
       {/* Delete Confirmation Modal */}
       {state.deleteConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <div className="bg-[#1c1c1e] p-6 rounded shadow-lg border border-gray-700">
-            <h3 className="text-xl font-semibold mb-4 text-gray-200">
+          <div className={`p-6 rounded shadow-lg ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
+            <h3 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Are you sure you want to delete this subject?
             </h3>
             <div className="flex justify-end gap-4">
               <Button
                 onClick={() => confirmDelete(false)}
-                className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                className={`text-foreground ${theme === 'dark' ? 'bg-card border-border hover:bg-accent' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
                 disabled={state.loading}
               >
                 Cancel
@@ -351,19 +396,19 @@ const SubjectManagement = () => {
       {/* Add/Edit Subject Modal */}
       {state.showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <div className="bg-[#1c1c1e] p-6 rounded-lg shadow-lg w-96 text-gray-200">
-            <h3 className="text-xl font-semibold mb-2">
+          <div className={`p-6 rounded-lg shadow-lg w-96 ${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-300'}`}>
+            <h3 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               {state.showModal === "add" ? "Add New Subject" : "Edit Subject"}
             </h3>
 
             {/* Display modal-level error below title */}
             {state.modalError && (
-              <p className="text-red-500 text-sm mb-4">{state.modalError}</p>
+              <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{state.modalError}</p>
             )}
 
             {/* Subject Code */}
             <div className="mb-4">
-              <label className="block mb-2 text-gray-300">Subject Code</label>
+              <label className={`block mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Subject Code</label>
               <Input
                 type="text"
                 value={state.newSubject.code}
@@ -379,14 +424,13 @@ const SubjectManagement = () => {
                 }}
                 placeholder="e.g., PH1L001, BCS601"
                 disabled={state.loading}
-                className={`bg-[#2c2c2e] border rounded text-gray-200 placeholder-gray-500 px-3 py-2
-                  ${state.modalError ? "border-red-500" : "border-gray-600"}`}
+                className={`${theme === 'dark' ? 'bg-card border-border text-foreground placeholder:text-muted-foreground' : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-500'} px-3 py-2 rounded`}
               />
             </div>
 
             {/* Subject Name */}
             <div className="mb-4">
-              <label className="block mb-2 text-gray-300">Subject Name</label>
+              <label className={`block mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Subject Name</label>
               <Input
                 type="text"
                 value={state.newSubject.name}
@@ -398,15 +442,15 @@ const SubjectManagement = () => {
                 }
                 placeholder="e.g., Mathematics"
                 disabled={state.loading}
-                className="bg-[#2c2c2e] border border-gray-600 text-gray-200 placeholder-gray-500 px-3 py-2 rounded"
+                className={`${theme === 'dark' ? 'bg-card border-border text-foreground placeholder:text-muted-foreground' : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-500'} px-3 py-2 rounded`}
               />
             </div>
 
             {/* Semester */}
             <div className="mb-4">
-              <label className="block mb-2 text-gray-300">Semester</label>
+              <label className={`block mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Semester</label>
               <select
-                className="w-full px-4 py-2 bg-[#2c2c2e] border border-gray-600 rounded text-gray-200"
+                className={`${theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-300 text-gray-900'} w-full px-4 py-2 rounded`}
                 value={state.newSubject.semester_id}
                 onChange={(e) =>
                   updateState({
@@ -436,7 +480,7 @@ const SubjectManagement = () => {
                     modalError: null,
                   });
                 }}
-                className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                className={`${theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-900 bg-white border-gray-300 hover:bg-gray-100'}`}
                 disabled={state.loading}
               >
                 Cancel
@@ -486,7 +530,7 @@ const SubjectManagement = () => {
                     updateState({ loading: false });
                   }
                 }}
-                className="bg-[#1c1c1e] hover:bg-[#2c2c2e] text-white border border-gray-600"
+                className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
                 disabled={state.loading}
               >
                 {state.showModal === "add" ? "Add Subject" : "Update Subject"}

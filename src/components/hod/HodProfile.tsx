@@ -6,11 +6,33 @@ import { Label } from "../ui/label";
 import { cn } from "@/lib/utils";
 import { manageProfile } from "../../utils/hod_api";
 import { useToast } from "../../hooks/use-toast";
+import { useTheme } from "../../context/ThemeContext";
 
-const HodProfile = ({ user: propUser, setError }) => {
+interface User {
+  user_id?: string;
+  username?: string;
+  email?: string;
+  role?: string;
+  first_name?: string;
+  last_name?: string;
+  mobile_number?: string;
+  address?: string;
+  bio?: string;
+}
+
+interface Profile {
+  first_name: string;
+  last_name: string;
+  email: string;
+  mobile_number: string;
+  address: string;
+  bio: string;
+}
+
+const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (error: string | null) => void }) => {
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState({
+  const [profile, setProfile] = useState<Profile>({
     first_name: "",
     last_name: "",
     email: "",
@@ -18,9 +40,10 @@ const HodProfile = ({ user: propUser, setError }) => {
     address: "",
     bio: "",
   });
-  const [error, setLocalError] = useState(null);
+  const [error, setLocalError] = useState<string | null>(null);
   const { toast } = useToast();
-  const [fetchedUser, setFetchedUser] = useState(null);
+  const { theme } = useTheme();
+  const [fetchedUser, setFetchedUser] = useState<User | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -66,7 +89,7 @@ const HodProfile = ({ user: propUser, setError }) => {
       try {
         const response = await manageProfile({}, "GET");
         if (response.success && response.data) {
-          const fetchedProfile = {
+          const fetchedProfile: Profile = {
             first_name: response.data.first_name || "",
             last_name: response.data.last_name || "",
             email: response.data.email || "",
@@ -85,9 +108,9 @@ const HodProfile = ({ user: propUser, setError }) => {
           if (response.message === "Profile not found") {
             setEditing(true);
             setProfile({
-              first_name: currentUser.username.split(" ")[0] || "",
-              last_name: currentUser.username.split(" ")[1] || "",
-              email: currentUser.email || "",
+              first_name: currentUser?.username?.split(" ")[0] || "",
+              last_name: currentUser?.username?.split(" ")[1] || "",
+              email: currentUser?.email || "",
               mobile_number: "",
               address: "",
               bio: "",
@@ -108,8 +131,9 @@ const HodProfile = ({ user: propUser, setError }) => {
     fetchProfile();
   }, [propUser, setError, toast]);
 
-  const handleChange = (e) => {
-    setProfile({ ...profile, [e.target.name]: e.target.value });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setProfile(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSaveProfile = async () => {
@@ -146,7 +170,14 @@ const HodProfile = ({ user: propUser, setError }) => {
         return;
       }
 
-      const updates = {};
+      const updates: { 
+        first_name?: string; 
+        last_name?: string; 
+        email?: string; 
+        mobile_number?: string; 
+        address?: string; 
+        bio?: string; 
+      } = {};
       if (profile.first_name !== (currentUser.first_name || "")) updates.first_name = profile.first_name;
       if (profile.last_name !== (currentUser.last_name || "")) updates.last_name = profile.last_name;
       if (profile.email !== (currentUser.email || "")) updates.email = profile.email;
@@ -163,14 +194,15 @@ const HodProfile = ({ user: propUser, setError }) => {
 
       const response = await manageProfile(updates, "PATCH");
       if (response.success && response.data) {
-        setProfile({
+        const updatedProfile: Profile = {
           first_name: response.data.first_name || "",
           last_name: response.data.last_name || "",
           email: response.data.email || "",
           mobile_number: response.data.mobile_number || "",
           address: response.data.address || "",
           bio: response.data.bio || "",
-        });
+        };
+        setProfile(updatedProfile);
         toast({ title: "Success", description: "Profile saved successfully" });
         localStorage.setItem("user", JSON.stringify({
           ...JSON.parse(localStorage.getItem("user") || "{}"),
@@ -186,7 +218,7 @@ const HodProfile = ({ user: propUser, setError }) => {
       }
     } catch (err) {
       console.error("Save Profile Error:", err);
-      const message = err.message || "Network error";
+      const message = err instanceof Error ? err.message : "Network error";
       if (setError) setError(message);
       setLocalError(message);
       toast({ variant: "destructive", title: "Error", description: message });
@@ -196,17 +228,17 @@ const HodProfile = ({ user: propUser, setError }) => {
   };
 
   if (loading) {
-    return <div className="text-center py-6">Loading...</div>;
+    return <div className={`text-center py-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading...</div>;
   }
 
   return (
     <div className="min-h-screen flex justify-center items-start py-12 px-4">
-      <Card className="w-full max-w-2xl border border-gray-200 shadow-md bg-[#1c1c1e] text-gray-200">
+      <Card className={`w-full max-w-2xl shadow-md ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
         <CardHeader className="flex flex-col items-start gap-2 px-6 pt-6 pb-4">
           <div className="flex w-full justify-between items-center">
             <div>
-              <CardTitle className="text-lg text-gray-200">Profile Information</CardTitle>
-              <p className="text-sm text-gray-400">View and update your personal information</p>
+              <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Profile Information</CardTitle>
+              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>View and update your personal information</p>
             </div>
             <Button
               size="sm"
@@ -214,8 +246,8 @@ const HodProfile = ({ user: propUser, setError }) => {
                 if (editing) handleSaveProfile();
                 else setEditing(true);
               }}
-              variant="outline"
-              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+              variant="default"
+              className={`bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}
               disabled={loading}
             >
               {editing ? (loading ? "Saving..." : "Save") : "Edit Profile"}
@@ -224,25 +256,25 @@ const HodProfile = ({ user: propUser, setError }) => {
         </CardHeader>
 
         <CardContent className="px-6 pb-6 pt-2 space-y-8">
-          {error && <div className="text-red-500 text-center">{error}</div>}
+          {error && <div className={`text-center ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{error}</div>}
           <div className="flex flex-col items-center">
-            <div className="w-20 h-20 rounded-full bg-blue-500 text-white flex items-center justify-center text-2xl font-semibold">
+            <div className={`w-20 h-20 rounded-full bg-[#a259ff] text-white flex items-center justify-center text-2xl font-semibold`}>
               {profile.first_name[0] || ""}
               {profile.last_name[0] || ""}
             </div>
             <div className="text-center mt-2">
-              <div className="text-lg font-semibold text-gray-200">
+              <div className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                 {profile.first_name} {profile.last_name}
               </div>
-              <div className="text-sm text-gray-200">Head of Department</div>
+              <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Head of Department</div>
             </div>
           </div>
 
-          <hr className="border-gray-200" />
+          <hr className={theme === 'dark' ? 'border-border' : 'border-gray-200'} />
 
           <div className="space-y-6">
             <div>
-              <Label htmlFor="first_name" className="text-xs text-gray-400 mb-1 block">
+              <Label htmlFor="first_name" className={`text-xs mb-1 block ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                 First Name
               </Label>
               <Input
@@ -251,11 +283,16 @@ const HodProfile = ({ user: propUser, setError }) => {
                 value={profile.first_name}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className={cn("w-full bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
+                className={cn(
+                  "w-full",
+                  theme === 'dark' 
+                    ? 'bg-background text-foreground border-border' 
+                    : 'bg-white text-gray-900 border-gray-300'
+                )}
               />
             </div>
             <div>
-              <Label htmlFor="last_name" className="text-xs text-gray-400 mb-1 block">
+              <Label htmlFor="last_name" className={`text-xs mb-1 block ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                 Last Name
               </Label>
               <Input
@@ -264,11 +301,16 @@ const HodProfile = ({ user: propUser, setError }) => {
                 value={profile.last_name}
                 onChange={handleChange}
                 disabled={!editing || loading}
-                className={cn("w-full bg-[#232326] text-gray-200", !editing && "bg-[#232326] text-gray-200")}
+                className={cn(
+                  "w-full",
+                  theme === 'dark' 
+                    ? 'bg-background text-foreground border-border' 
+                    : 'bg-white text-gray-900 border-gray-300'
+                )}
               />
             </div>
             <div>
-              <Label htmlFor="email" className="text-xs text-gray-400 mb-1 block">
+              <Label htmlFor="email" className={`text-xs mb-1 block ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                 Email Address
               </Label>
               <Input
@@ -285,11 +327,16 @@ const HodProfile = ({ user: propUser, setError }) => {
                   }
                 }}
                 disabled={!editing || loading}
-                className={cn("w-full bg-[#232326] text-gray-200", !editing && "cursor-not-allowed")}
+                className={cn(
+                  "w-full",
+                  theme === 'dark' 
+                    ? 'bg-background text-foreground border-border' 
+                    : 'bg-white text-gray-900 border-gray-300'
+                )}
               />
             </div>
             <div>
-              <Label htmlFor="mobile_number" className="text-xs text-gray-400 mb-1 block">
+              <Label htmlFor="mobile_number" className={`text-xs mb-1 block ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                 Mobile Number
               </Label>
               <Input
@@ -297,31 +344,37 @@ const HodProfile = ({ user: propUser, setError }) => {
                 name="mobile_number"
                 value={profile.mobile_number}
                 onChange={(e) => {
-                  let value = e.target.value.trim();
+                  const value = e.target.value.trim();
 
                   // Allow +91 optional
-                  if (value.startsWith("+91")) {
-                    value = value.replace("+91", "").trim();
+                  let processedValue = value;
+                  if (processedValue.startsWith("+91")) {
+                    processedValue = processedValue.replace("+91", "").trim();
                   }
 
                   // Remove spaces/dashes
-                  value = value.replace(/\s|-/g, "");
+                  processedValue = processedValue.replace(/\s|-/g, "");
 
                   // Allow only digits
-                  if (!/^\d*$/.test(value)) return;
+                  if (!/^\d*$/.test(processedValue)) return;
 
                   // Restrict to 10 digits
-                  if (value.length > 10) return;
+                  if (processedValue.length > 10) return;
 
-                  handleChange({ target: { name: "mobile_number", value } });
+                  handleChange({ target: { name: "mobile_number", value: processedValue } } as React.ChangeEvent<HTMLInputElement>);
                 }}
                 disabled={!editing || loading}
-                className={cn("w-full bg-[#232326] text-gray-200", !editing && "cursor-not-allowed resize-none")}
+                className={cn(
+                  "w-full",
+                  theme === 'dark' 
+                    ? 'bg-background text-foreground border-border' 
+                    : 'bg-white text-gray-900 border-gray-300'
+                )}
               />
 
             </div>
             <div>
-              <Label htmlFor="address" className="text-xs text-gray-400 mb-1 block">
+              <Label htmlFor="address" className={`text-xs mb-1 block ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                 Address
               </Label>
               <Input
@@ -329,7 +382,7 @@ const HodProfile = ({ user: propUser, setError }) => {
                 name="address"
                 value={profile.address}
                 onChange={(e) => {
-                  let value = e.target.value;
+                  const value = e.target.value;
 
                   // Restrict length
                   if (value.length > 200) return;
@@ -340,11 +393,16 @@ const HodProfile = ({ user: propUser, setError }) => {
                   handleChange(e);
                 }}
                 disabled={!editing || loading}
-                className={cn("w-full bg-[#232326] text-gray-200", !editing && "cursor-not-allowed")}
+                className={cn(
+                  "w-full",
+                  theme === 'dark' 
+                    ? 'bg-background text-foreground border-border' 
+                    : 'bg-white text-gray-900 border-gray-300'
+                )}
               />
             </div>
             <div>
-              <Label htmlFor="bio" className="text-xs text-gray-400 mb-1 block">
+              <Label htmlFor="bio" className={`text-xs mb-1 block ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                 Bio
               </Label>
               <textarea
@@ -352,7 +410,7 @@ const HodProfile = ({ user: propUser, setError }) => {
                 name="bio"
                 value={profile.bio}
                 onChange={(e) => {
-                  let value = e.target.value;
+                  const value = e.target.value;
 
                   // Limit to 50 words (example)
                   const words = value.trim().split(/\s+/);
@@ -365,11 +423,13 @@ const HodProfile = ({ user: propUser, setError }) => {
                 }}
                 disabled={!editing || loading}
                 className={cn(
-                  "w-full p-2 border rounded-md bg-[#232326] text-gray-200 resize-none thin-scrollbar",
-                  !editing && "cursor-not-allowed"
+                  "w-full p-2 border rounded-md resize-none thin-scrollbar",
+                  theme === 'dark' 
+                    ? 'bg-background text-foreground border-border' 
+                    : 'bg-white text-gray-900 border-gray-300'
                 )}
               />
-              <p className="text-xs text-gray-400 mt-1">
+              <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                 {profile.bio.trim().split(/\s+/).filter(Boolean).length}/50 words
               </p>
             </div>
