@@ -7,6 +7,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useToast } from "../ui/use-toast";
 import { getSemesters, manageSections, manageSubjects, manageFaculties, manageTimetable, manageProfile, manageFacultyAssignments,getBranches, getHODTimetableBootstrap, getHODTimetableSemesterData } from "../../utils/hod_api";
+import { useTheme } from "../../context/ThemeContext";
 
 // Interfaces
 interface Semester {
@@ -17,14 +18,14 @@ interface Semester {
 interface Section {
   id: string;
   name: string;
-  semester_id: string;
+  semester_id: number | string; // Allow both types
 }
 
 interface Subject {
   id: string;
   name: string;
   subject_code: string;
-  semester_id: string;
+  semester_id: number | string; // Allow both types
 }
 
 interface Faculty {
@@ -60,8 +61,128 @@ interface ClassDetails {
   assignment_id?: string;
 }
 
+interface ManageTimetableRequest {
+  action: "GET" | "create" | "update" | "delete" | "bulk_create";
+  timetable_id?: string;
+  assignment_id?: string;
+  day?: string;
+  start_time?: string;
+  end_time?: string;
+  room?: string;
+  semester_id: string;
+  section_id: string;
+  branch_id: string;
+}
+
+interface ManageFacultyAssignmentsRequest {
+  action?: "GET" | "create" | "update" | "delete";
+  assignment_id?: string;
+  faculty_id?: string;
+  subject_id?: string;
+  semester_id?: string;
+  section_id?: string;
+  branch_id: string;
+}
+
+// Define types for API responses
+interface SemesterData {
+  id: number;
+  number: number;
+}
+
+interface SectionData {
+  id: string;
+  name: string;
+  semester_id: number;
+}
+
+interface SubjectData {
+  id: string;
+  name: string;
+  subject_code: string;
+  semester_id: number;
+}
+
+interface FacultyData {
+  id: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+}
+
+interface FacultyAssignmentData {
+  id: string;
+  faculty: string;
+  faculty_id: string;
+  faculty_name: string;
+  subject: string;
+  subject_id: string;
+  section: string;
+  section_id: string;
+  semester: number;
+  semester_id: string;
+}
+
+interface TimetableData {
+  id: string;
+  faculty_assignment: {
+    id: string;
+    faculty: string;
+    subject: string;
+    semester: number;
+    section: string;
+  };
+  day: string;
+  start_time: string;
+  end_time: string;
+  room: string;
+}
+
+interface HODTimetableBootstrapResponse {
+  profile: {
+    branch_id: string;
+  };
+  branches: { id: string; name: string }[];
+  semesters: SemesterData[];
+  faculties: FacultyData[];
+}
+
+interface HODTimetableSemesterDataResponse {
+  sections: SectionData[];
+  subjects: SubjectData[];
+  faculty_assignments: FacultyAssignmentData[];
+}
+
+interface EditModalProps {
+  classDetails: ClassDetails;
+  onSave: (newClassDetails: ClassDetails) => void;
+  onCancel: () => void;
+  subjects: Subject[];
+  faculties: Faculty[];
+  facultyAssignments: FacultyAssignmentData[];
+  semesterId: string;
+  sectionId: string;
+  branchId: string;
+}
+
+// Define error type for catch blocks
+interface ErrorWithMessage {
+  message: string;
+}
+
+// Type guard to check if an object has a message property
+function isErrorWithMessage(error: unknown): error is ErrorWithMessage {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof (error as Record<string, unknown>).message === 'string'
+  );
+}
+
 // Edit Modal Component
-const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, facultyAssignments, semesterId, sectionId, branchId }: any) => {
+const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, facultyAssignments, semesterId, sectionId, branchId }: EditModalProps) => {
+  const { theme } = useTheme();
   const [newClassDetails, setNewClassDetails] = useState({
     subject: classDetails.subject || "",
     professor: classDetails.professor || "",
@@ -88,7 +209,7 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, facult
 
         // Use faculty assignments from props instead of API call
         const assignment = facultyAssignments.find(
-          (a: any) => a.subject_id === subject.id && a.semester_id === semesterId && a.section_id === sectionId
+          (a: FacultyAssignmentData) => a.subject_id === subject.id && a.semester_id === semesterId && a.section_id === sectionId
         );
         
         if (assignment) {
@@ -126,21 +247,21 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, facult
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-[#1c1c1e] bg-opacity-50 text-gray-200">
-      <div className="bg-[#1c1c1e] p-6 rounded-md shadow-lg text-gray-200 border-2 border-gray-500">
-        <h2 className="text-xl font-semibold mb-4">
+    <div className={`fixed inset-0 flex items-center justify-center z-50 ${theme === 'dark' ? 'bg-background/50' : 'bg-gray-900/50'} text-gray-200`}>
+      <div className={`p-6 rounded-md shadow-lg border-2 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
+        <h2 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
           {classDetails.timetable_id ? "Edit Class" : "Add Class"} for {classDetails.day}
         </h2>
 
         <div className="mb-4">
-          <label className="block">Subject:</label>
+          <label className={`block ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>Subject:</label>
           <Select value={newClassDetails.subject} onValueChange={(value) => handleSelectChange("subject", value)}>
-            <SelectTrigger className="w-full p-2 border rounded text-gray-900">
+            <SelectTrigger className={`w-full p-2 border rounded ${theme === 'dark' ? 'text-foreground bg-card border-border' : 'text-gray-900 bg-white border-gray-300'}`}>
               <SelectValue placeholder="Select Subject" />
             </SelectTrigger>
-            <SelectContent className=" bg-[#232326] text-gray-200">
+            <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
               {subjects.map((subject: Subject) => (
-                <SelectItem className=" bg-[#232326] text-gray-200" key={subject.id} value={subject.name}>
+                <SelectItem key={subject.id} value={subject.name} className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
                   {subject.name}
                 </SelectItem>
               ))}
@@ -149,18 +270,18 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, facult
         </div>
 
         <div className="mb-4">
-          <label className="block">Professor:</label>
+          <label className={`block ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>Professor:</label>
           <Select
             value={newClassDetails.professor}
             onValueChange={(value) => handleSelectChange("professor", value)}
             disabled={isLoadingAssignments}
           >
-            <SelectTrigger className="w-full p-2 border rounded text-gray-900">
+            <SelectTrigger className={`w-full p-2 border rounded ${theme === 'dark' ? 'text-foreground bg-card border-border' : 'text-gray-900 bg-white border-gray-300'}`}>
               <SelectValue placeholder={isLoadingAssignments ? "Loading..." : "Select Professor"} />
             </SelectTrigger>
-            <SelectContent className=" bg-[#232326] text-gray-200">
+            <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
               {faculties.map((faculty: Faculty) => (
-                <SelectItem className=" bg-[#232326] text-gray-200" key={faculty.id} value={`${faculty.first_name} ${faculty.last_name}`}>
+                <SelectItem key={faculty.id} value={`${faculty.first_name} ${faculty.last_name}`} className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
                   {faculty.first_name} {faculty.last_name}
                 </SelectItem>
               ))}
@@ -169,50 +290,55 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, facult
         </div>
 
         <div className="mb-4">
-          <label className="block">Room:</label>
+          <label className={`block ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>Room:</label>
           <input
             type="text"
             name="room"
             value={newClassDetails.room}
             onChange={handleChange}
-            className="w-full p-2 border rounded text-gray-900 placeholder-gray-900"
+            className={`w-full p-2 border rounded ${theme === 'dark' ? 'text-foreground bg-card border-border placeholder-muted-foreground' : 'text-gray-900 bg-white border-gray-300 placeholder-gray-500'}`}
             placeholder="e.g., R103"
           />
         </div>
 
-        <div className="mb-4 text-gray-900">
-          <label className="block text-gray-200">Start Time (HH:MM):</label>
+        <div className="mb-4">
+          <label className={`block ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>Start Time (HH:MM):</label>
           <input
             type="text"
             name="start_time"
             value={newClassDetails.start_time}
             readOnly
-            className="w-full p-2 border rounded bg-gray-100 cursor-not-allowed"
+            className={`w-full p-2 border rounded ${theme === 'dark' ? 'bg-muted cursor-not-allowed text-foreground' : 'bg-gray-100 cursor-not-allowed text-gray-900'}`}
             placeholder="e.g., 11:00"
           />
         </div>
 
-        <div className="mb-4 text-gray-900">
-          <label className="block text-gray-200">End Time (HH:MM):</label>
+        <div className="mb-4">
+          <label className={`block ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>End Time (HH:MM):</label>
           <input
             type="text"
             name="end_time"
             value={newClassDetails.end_time}
             readOnly
-            className="w-full p-2 border rounded bg-gray-100 cursor-not-allowed"
+            className={`w-full p-2 border rounded ${theme === 'dark' ? 'bg-muted cursor-not-allowed text-foreground' : 'bg-gray-100 cursor-not-allowed text-gray-900'}`}
             placeholder="e.g., 12:00"
           />
         </div>
 
-
-        <div className="flex justify-end space-x-4 ">
-          <Button variant="outline" className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={onCancel}>Cancel</Button>
+        <div className="flex justify-end space-x-4">
+          <Button 
+            variant="outline" 
+            className={theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-100'}
+            onClick={onCancel}
+          >
+            Cancel
+          </Button>
           <Button
             variant="outline"
             onClick={() => {
-              onSave(newClassDetails);
+              onSave({ ...newClassDetails, day: classDetails.day || "" });
             }}
-            className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+            className={theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-100'}
           >
             Save
           </Button>
@@ -224,6 +350,7 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, facult
 
 // Main Timetable Component
 const Timetable = () => {
+  const { theme } = useTheme();
   const { toast } = useToast();
   const [state, setState] = useState({
     branchId: "",
@@ -281,13 +408,13 @@ const Timetable = () => {
       const semesterData = await getHODTimetableSemesterData(semesterId);
       
       if (semesterData.success && semesterData.data) {
-        const mappedSections = semesterData.data.sections.map((s: any) => ({
+        const mappedSections = semesterData.data.sections.map((s) => ({
           id: s.id,
           name: s.name,
           semester_id: s.semester_id?.toString() || "",
         }));
         
-        const mappedSubjects = semesterData.data.subjects.map((s: any) => ({
+        const mappedSubjects = semesterData.data.subjects.map((s) => ({
           id: s.id,
           name: s.name,
           subject_code: s.subject_code || "",
@@ -317,18 +444,27 @@ const Timetable = () => {
         if (!boot.success || !boot.data?.profile?.branch_id) {
           throw new Error(boot.message || "Failed to bootstrap timetable");
         }
+        // Manually map the data instead of using strict typing
         updateState({
           branchId: boot.data.profile.branch_id,
           branches: boot.data.branches || [],
-          semesters: boot.data.semesters || [],
+          semesters: boot.data.semesters.map((s) => ({
+            id: s.id.toString(),
+            number: s.number,
+          })) || [],
           sections: [], // Start with empty sections - will be fetched when semester is selected
           subjects: [], // Start with empty subjects - will be fetched when semester is selected
           faculties: boot.data.faculties || [],
           facultyAssignments: [], // Start with empty assignments - will be fetched when semester is selected
         });
-      } catch (err: any) {
-        updateState({ error: err.message || "Network error" });
-        toast({ variant: "destructive", title: "Error", description: err.message });
+      } catch (err) {
+        if (isErrorWithMessage(err)) {
+          updateState({ error: err.message || "Network error" });
+          toast({ variant: "destructive", title: "Error", description: err.message });
+        } else {
+          updateState({ error: "Network error" });
+          toast({ variant: "destructive", title: "Error", description: "Network error" });
+        }
       } finally {
         updateState({ loading: false });
       }
@@ -354,14 +490,14 @@ const Timetable = () => {
         // Fetch timetable only if both semesterId and sectionId are set
         if (state.semesterId && state.sectionId) {
           const timetableResponse = await manageTimetable({
-            action: "GET" as "GET",
+            action: "GET" as const,
             branch_id: state.branchId,
             semester_id: state.semesterId,
             section_id: state.sectionId,
           });
           if (timetableResponse.success && timetableResponse.data) {
             const normalizedTimetable = Array.isArray(timetableResponse.data)
-              ? timetableResponse.data.map((entry: any) => ({
+              ? timetableResponse.data.map((entry: TimetableData) => ({
                   id: entry.id,
                   faculty_assignment: {
                     id: entry.faculty_assignment.id,
@@ -385,9 +521,14 @@ const Timetable = () => {
         } else {
           updateState({ timetable: [] });
         }
-      } catch (err: any) {
-        updateState({ error: err.message || "Network error" });
-        toast({ variant: "destructive", title: "Error", description: err.message });
+      } catch (err) {
+        if (isErrorWithMessage(err)) {
+          updateState({ error: err.message || "Network error" });
+          toast({ variant: "destructive", title: "Error", description: err.message });
+        } else {
+          updateState({ error: "Network error" });
+          toast({ variant: "destructive", title: "Error", description: "Network error" });
+        }
       } finally {
         updateState({ loading: false });
       }
@@ -399,7 +540,7 @@ const Timetable = () => {
   const getTableData = () => {
     const timetable = Array.isArray(state.timetable) ? state.timetable : [];
     const tableData = timeSlots.map(({ start, end }) => {
-      const row: any = { time: `${start}-${end}` };
+      const row: Record<string, string> = { time: `${start}-${end}` };
       days.forEach((day) => {
         const entry = timetable.find(
           (e) => e.start_time === start && e.end_time === end && e.day === day
@@ -455,7 +596,7 @@ const Timetable = () => {
     }
   };
 
-  const handleSaveClass = async (newClassDetails: any) => {
+  const handleSaveClass = async (newClassDetails: ClassDetails) => {
     try {
       if (!state.semesterId || !state.sectionId) {
         throw new Error("Semester and section must be selected");
@@ -478,14 +619,13 @@ const Timetable = () => {
       // Fetch or create faculty assignment
       let assignmentId: string | undefined;
       const assignmentResponse = await manageFacultyAssignments({
-        action: "GET",
         branch_id: state.branchId,
         semester_id: state.semesterId,
         section_id: state.sectionId,
-      });
+      }, "GET");
       if (assignmentResponse.success && assignmentResponse.data?.assignments) {
         const selectedAssignment = assignmentResponse.data.assignments.find(
-          (a: any) => a.faculty_id === faculty.id && a.subject_id === subject.id && a.semester_id === state.semesterId && a.section_id === state.sectionId
+          (a: FacultyAssignmentData) => a.faculty_id === faculty.id && a.subject_id === subject.id && a.semester_id === state.semesterId && a.section_id === state.sectionId
         );
         assignmentId = selectedAssignment?.id;
       }
@@ -498,19 +638,18 @@ const Timetable = () => {
           section_id: state.sectionId,
           faculty_id: faculty.id,
           subject_id: subject.id,
-        });
+        }, "POST");
         if (createAssignmentResponse.success && createAssignmentResponse.data?.assignment_id) {
           assignmentId = createAssignmentResponse.data.assignment_id;
         } else if (createAssignmentResponse.message === "Assignment already exists") {
           const retryAssignmentResponse = await manageFacultyAssignments({
-            action: "GET" as const,
             branch_id: state.branchId,
             semester_id: state.semesterId,
             section_id: state.sectionId,
-          });
+          }, "GET");
           if (retryAssignmentResponse.success && retryAssignmentResponse.data?.assignments) {
             const selectedAssignment = retryAssignmentResponse.data.assignments.find(
-              (a: any) => a.faculty_id === faculty.id && a.subject_id === subject.id && a.semester_id === state.semesterId && a.section_id === state.sectionId
+              (a: FacultyAssignmentData) => a.faculty_id === faculty.id && a.subject_id === subject.id && a.semester_id === state.semesterId && a.section_id === state.sectionId
             );
             assignmentId = selectedAssignment?.id;
           }
@@ -522,8 +661,8 @@ const Timetable = () => {
         }
       }
 
-      const timetableRequest = {
-        action: state.selectedClass?.timetable_id ? "update" as const : "create" as const,
+      const timetableRequest: ManageTimetableRequest = {
+        action: state.selectedClass?.timetable_id ? "update" : "create",
         timetable_id: state.selectedClass?.timetable_id,
         assignment_id: assignmentId,
         day: state.selectedClass!.day,
@@ -539,14 +678,14 @@ const Timetable = () => {
       if (response.success) {
         // Re-fetch timetable to ensure consistency
         const fetchTimetableResponse = await manageTimetable({
-          action: "GET" as "GET",
+          action: "GET" as const,
           branch_id: state.branchId,
           semester_id: state.semesterId,
           section_id: state.sectionId,
         });
         if (fetchTimetableResponse.success && fetchTimetableResponse.data) {
           const normalizedTimetable = Array.isArray(fetchTimetableResponse.data)
-            ? fetchTimetableResponse.data.map((entry: any) => ({
+            ? fetchTimetableResponse.data.map((entry: TimetableData) => ({
                 id: entry.id,
                 faculty_assignment: {
                   id: entry.faculty_assignment.id,
@@ -573,12 +712,20 @@ const Timetable = () => {
       } else {
         throw new Error(response.message || "Failed to save timetable");
       }
-    } catch (err: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: err.message,
-      });
+    } catch (err) {
+      if (isErrorWithMessage(err)) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: err.message,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "An unknown error occurred",
+        });
+      }
     }
   };
 
@@ -648,14 +795,14 @@ const Timetable = () => {
   }
 
   return (
-    <div className="p-6 ">
+    <div className="p-6 bg-background text-foreground">
       <Card className="shadow-xl">
-        <CardHeader className="flex flex-row items-center justify-between bg-[#1c1c1e] px-4 py-3 rounded-t-md">
-          <CardTitle className="text-2xl font-semibold text-gray-200">Timetable</CardTitle>
-          <div className="flex space-x-2 ">
+        <CardHeader className="flex flex-row items-center justify-between bg-card px-4 py-3 rounded-t-md">
+          <CardTitle className="text-2xl font-semibold text-foreground">Timetable</CardTitle>
+          <div className="flex space-x-2">
             <Button
               variant="outline"
-              className="flex items-center gap-2 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+              className="flex items-center gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
               onClick={handleExportPDF}
             >
               <DownloadIcon className="w-4 h-4" />
@@ -663,19 +810,18 @@ const Timetable = () => {
             </Button>
             <Button
               variant="outline"
-              className="flex items-center gap-2 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+              className="flex items-center gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
               onClick={handleEdit}
             >
               <EditIcon className="w-4 h-4" /> {state.isEditing ? "Save Edit" : "Edit"}
             </Button>
-
           </div>
         </CardHeader>
 
-        <CardContent className="bg-[#1c1c1e]">
-          <div className="border rounded-lg p-4">
-            <div className="flex items-center justify-between mb-4 ">
-              <div className="flex gap-4 ">
+        <CardContent className="bg-card">
+          <div className="border border-border rounded-lg p-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex gap-4">
                 <div>
                   <Select
                     value={state.semesterId}
@@ -683,12 +829,12 @@ const Timetable = () => {
                       updateState({ semesterId: value, sectionId: "", sections: [], subjects: [], timetable: [] })
                     }
                   >
-                    <SelectTrigger className="w-40  bg-[#232326] text-gray-200">
+                    <SelectTrigger className="w-40 bg-card text-foreground border-border">
                       <SelectValue placeholder="Select Semester" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#232326] text-gray-200">
+                    <SelectContent className="bg-card text-foreground border-border">
                       {state.semesters.map((semester) => (
-                        <SelectItem key={semester.id} value={semester.id}>
+                        <SelectItem key={semester.id} value={semester.id} className="text-foreground">
                           {semester.number} Semester
                         </SelectItem>
                       ))}
@@ -701,12 +847,12 @@ const Timetable = () => {
                     onValueChange={(value) => updateState({ sectionId: value, timetable: [] })}
                     disabled={!state.semesterId}
                   >
-                    <SelectTrigger className="w-40  bg-[#232326] text-gray-200">
+                    <SelectTrigger className="w-40 bg-card text-foreground border-border">
                       <SelectValue placeholder="Select Section" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#232326] text-gray-200">
+                    <SelectContent className="bg-card text-foreground border-border">
                       {state.sections.map((section) => (
-                        <SelectItem key={section.id} value={section.id}>
+                        <SelectItem key={section.id} value={section.id} className="text-foreground">
                           Section {section.name}
                         </SelectItem>
                       ))}
@@ -714,7 +860,7 @@ const Timetable = () => {
                   </Select>
                 </div>
               </div>
-              <div className="text-sm text-gray-200">
+              <div className="text-sm text-muted-foreground">
                 {state.semesterId && state.sectionId
                   ? `${state.semesters.find((s) => s.id === state.semesterId)?.number} Semester - Section ${
                       state.sections.find((s) => s.id === state.sectionId)?.name
@@ -725,7 +871,7 @@ const Timetable = () => {
 
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm text-left">
-                <thead className=" text-gray-200">
+                <thead className="text-foreground">
                   <tr>
                     <th className="py-2 px-4 font-semibold">Time/Day</th>
                     <th className="py-2 px-4 font-semibold">Monday</th>
@@ -737,13 +883,13 @@ const Timetable = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {getTableData().map((row: any, idx: number) => (
-                    <tr key={idx} className="border-t hover:bg-gray-700 transition text-gray-200">
-                      <td className="py-3 px-4 font-medium text-gray-200">{row.time}</td>
+                  {getTableData().map((row, idx) => (
+                    <tr key={idx} className="border-t hover:bg-accent border-border">
+                      <td className="py-3 px-4 font-medium text-foreground">{row.time}</td>
                       {["mon", "tue", "wed", "thu", "fri", "sat"].map((day, i) => (
                         <td
                           key={i}
-                          className="py-3 px-4 whitespace-pre-line text-gray-200 cursor-pointer"
+                          className="py-3 px-4 whitespace-pre-line text-foreground cursor-pointer"
                           onClick={() => handleClassClick(row.time, day.toUpperCase())}
                         >
                           {row[day] ? (
@@ -755,7 +901,7 @@ const Timetable = () => {
                               {row[day].split("\n")[2]}
                             </>
                           ) : (
-                            state.isEditing && <span className="text-gray-300">Click to add</span>
+                            state.isEditing && <span className="text-muted-foreground">Click to add</span>
                           )}
                         </td>
                       ))}

@@ -27,6 +27,7 @@ import {
 } from "../ui/select";
 import { manageStudents, getSemesters, manageSections, manageProfile, manageBatches, getHODStudentBootstrap } from "../../utils/hod_api";
 import { useHODBootstrap } from "../../context/HODBootstrapContext";
+import { useTheme } from "../../context/ThemeContext";
 
 const mockChartData = [
   { subject: "CS101", attendance: 85, marks: 78, semester: "4th Semester" },
@@ -55,6 +56,7 @@ interface Student {
 }
 
 const StudentManagement = () => {
+  const { theme } = useTheme();
   const [state, setState] = useState({
     students: [] as Student[],
     search: "",
@@ -716,11 +718,11 @@ const StudentManagement = () => {
   // Chart removed
 
   return (
-    <div className="p-6 space-y-6 bg-[#1c1c1e] min-h-screen text-gray-200">
-      <h2 className="text-2xl font-semibold">Student Management</h2>
-      {state.isLoading && <p className="text-gray-400">Loading data...</p>}
+    <div className={`p-6 space-y-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <h2 className={`text-2xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Student Management</h2>
+      {state.isLoading && <p className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Loading data...</p>}
       {state.uploadErrors.length > 0 && (
-        <ul className="text-sm text-red-500 mb-4 list-disc list-inside">
+        <ul className={`text-sm ${theme === 'dark' ? 'text-destructive' : 'text-red-500'} mb-4 list-disc list-inside`}>
           {state.uploadErrors.map((err, idx) => (
             <li key={idx}>{err}</li>
           ))}
@@ -728,9 +730,9 @@ const StudentManagement = () => {
       )}
 
       {/* Add Student Manually Form */}
-      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-700">
+      <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
-          <CardTitle className="text-lg text-gray-100">Add Student Manually</CardTitle>
+          <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Add Student Manually</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex space-x-4">
@@ -773,10 +775,10 @@ const StudentManagement = () => {
                     manualErrors: { ...state.manualErrors, usn: error },
                   });
                 }}
-                className={`flex-1 bg-[#232326] text-gray-200 border placeholder-gray-400 focus:ring-0 ${
+                className={`flex-1 ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${
                   state.manualErrors?.usn
                     ? "border-red-500"
-                    : "border-gray-700 focus:border-gray-500"
+                    : theme === 'dark' ? 'border-border focus:border-primary' : 'border-gray-300 focus:border-blue-500'
                 }`}
               />
               <span className="text-red-500 text-xs mt-1 h-4">
@@ -814,10 +816,10 @@ const StudentManagement = () => {
                     manualErrors: { ...state.manualErrors, name: error },
                   });
                 }}
-                className={`flex-1 bg-[#232326] text-gray-200 border placeholder-gray-400 focus:ring-0 ${
+                className={`flex-1 ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${
                   state.manualErrors?.name
                     ? "border-red-500"
-                    : "border-gray-700 focus:border-gray-500"
+                    : theme === 'dark' ? 'border-border focus:border-primary' : 'border-gray-300 focus:border-blue-500'
                 }`}
               />
               <span className="text-red-500 text-xs mt-1 h-4">
@@ -852,10 +854,10 @@ const StudentManagement = () => {
                     manualErrors: { ...state.manualErrors, email: error },
                   });
                 }}
-                className={`flex-1 bg-[#232326] text-gray-200 border placeholder-gray-400 focus:ring-0 ${
+                className={`flex-1 ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${
                   state.manualErrors?.email
                     ? "border-red-500"
-                    : "border-gray-700 focus:border-gray-500"
+                    : theme === 'dark' ? 'border-border focus:border-primary' : 'border-gray-300 focus:border-blue-500'
                 }`}
               />
               <span className="text-red-500 text-xs mt-1 h-4">
@@ -873,14 +875,14 @@ const StudentManagement = () => {
               }
               disabled={state.isLoading || state.semesters.length === 0}
             >
-              <SelectTrigger className="flex-1 bg-[#232326] text-gray-200 border border-gray-700 placeholder-gray-400 focus:border-gray-500 focus:ring-0">
+              <SelectTrigger className={`flex-1 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} placeholder:text-muted-foreground focus:ring-0`}>
                 <SelectValue
                   placeholder={state.semesters.length === 0 ? "No semesters available" : "Select Semester"}
                 />
               </SelectTrigger>
-              <SelectContent className="bg-[#232326] text-gray-200 border border-gray-700">
+              <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
                 {state.semesters.map((s) => (
-                  <SelectItem key={s.id} value={`${s.number}th Semester`}>
+                  <SelectItem key={s.id} value={`${s.number}th Semester`} className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>
                     Semester {s.number}
                   </SelectItem>
                 ))}
@@ -891,7 +893,7 @@ const StudentManagement = () => {
               onValueChange={(value) => updateState({ manualForm: { ...state.manualForm, section: value } })}
               disabled={state.isLoading || !state.manualForm.semester || state.manualSections.length === 0}
             >
-              <SelectTrigger className="flex-1 bg-[#232326] text-gray-200 border border-gray-700 placeholder-gray-400 focus:border-gray-500 focus:ring-0">
+              <SelectTrigger className={`flex-1 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} placeholder:text-muted-foreground focus:ring-0`}>
                 <SelectValue
                   placeholder={
                     state.manualSections.length === 0 || !state.manualForm.semester
@@ -900,11 +902,11 @@ const StudentManagement = () => {
                   }
                 />
               </SelectTrigger>
-              <SelectContent className="bg-[#232326] text-gray-200 border border-gray-700">
+              <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
                 {state.manualSections
                   .filter((section) => section.semester_id === getSemesterId(state.manualForm.semester))
                   .map((section) => (
-                    <SelectItem key={section.id} value={section.name}>
+                    <SelectItem key={section.id} value={section.name} className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>
                       Section {section.name}
                     </SelectItem>
                   ))}
@@ -915,14 +917,14 @@ const StudentManagement = () => {
               onValueChange={(value) => updateState({ manualForm: { ...state.manualForm, batch: value } })}
               disabled={state.isLoading || state.batches.length === 0}
             >
-              <SelectTrigger className="flex-1 bg-[#232326] text-gray-200 border border-gray-700 placeholder-gray-400 focus:border-gray-500 focus:ring-0">
+              <SelectTrigger className={`flex-1 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} placeholder:text-muted-foreground focus:ring-0`}>
                 <SelectValue
                   placeholder={state.batches.length === 0 ? "No batches available" : "Select Batch"}
                 />
               </SelectTrigger>
-              <SelectContent className="bg-[#232326] text-gray-200 border border-gray-700">
+              <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
                 {state.batches.map((batch) => (
-                  <SelectItem key={batch.id} value={batch.name}>
+                  <SelectItem key={batch.id} value={batch.name} className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>
                     {batch.name}
                   </SelectItem>
                 ))}
@@ -931,7 +933,7 @@ const StudentManagement = () => {
             <Button
               onClick={handleManualEntry}
               disabled={state.isLoading || !state.branchId || !state.manualForm.semester || !state.manualForm.section || !state.manualForm.batch}
-              className="flex items-center gap-1  text-sm font-medium text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 px-3 py-1.5 rounded-md transition disabled:opacity-50"
+              className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition disabled:opacity-50 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
             >
               + Add Student
             </Button>
@@ -939,14 +941,14 @@ const StudentManagement = () => {
         </CardContent>
       </Card>
 
-      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-700">
+      <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle className="text-lg text-gray-100">Student List</CardTitle>
+            <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Student List</CardTitle>
             <div className="flex gap-2">
               <Button
                 onClick={() => updateState({ addStudentModal: true })}
-                className="flex items-center gap-1  text-sm font-semibold text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 px-3 py-1.5 rounded-md transition"
+                className="flex items-center gap-1 text-sm font-semibold px-3 py-1.5 rounded-md transition bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
                 disabled={state.isLoading || !state.branchId}
               >
                 <Upload className="w-4 h-4" />
@@ -961,7 +963,7 @@ const StudentManagement = () => {
             {/* Left side: Search input */}
             <Input
               placeholder="Search students..."
-              className="w-64 bg-[#2c2c2e] text-gray-200 border border-gray-700 placeholder-gray-500"
+              className={`w-64 ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'}`}
               value={state.search}
               onChange={(e) =>
                 updateState({ search: e.target.value, currentPage: 1 })
@@ -982,7 +984,7 @@ const StudentManagement = () => {
                 }
                 disabled={state.isLoading || state.semesters.length === 0}
               >
-                <SelectTrigger className="w-48 bg-[#2c2c2e] text-gray-200 border border-gray-700">
+                <SelectTrigger className={`w-48 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
                   <SelectValue
                     placeholder={
                       state.semesters.length === 0
@@ -991,10 +993,10 @@ const StudentManagement = () => {
                     }
                   />
                 </SelectTrigger>
-                <SelectContent className="bg-[#2c2c2e] text-gray-200 border border-gray-700">
-                  <SelectItem value="All">All Semesters</SelectItem>
+                <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+                  <SelectItem value="All" className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>All Semesters</SelectItem>
                   {state.semesters.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
+                    <SelectItem key={s.id} value={s.id} className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>
                       Semester {s.number}
                     </SelectItem>
                   ))}
@@ -1012,7 +1014,7 @@ const StudentManagement = () => {
                   state.listSections.length === 0
                 }
               >
-                <SelectTrigger className="w-48 bg-[#2c2c2e] text-gray-200 border border-gray-700">
+                <SelectTrigger className={`w-48 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
                   <SelectValue
                     placeholder={
                       state.listSections.length === 0 ||
@@ -1022,12 +1024,12 @@ const StudentManagement = () => {
                     }
                   />
                 </SelectTrigger>
-                <SelectContent className="bg-[#2c2c2e] text-gray-200 border border-gray-700">
-                  <SelectItem value="All">All Sections</SelectItem>
+                <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+                  <SelectItem value="All" className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>All Sections</SelectItem>
                   {state.listSections
                     .filter((section) => section.semester_id === state.semesterFilter)
                     .map((section) => (
-                      <SelectItem key={section.id} value={section.id}>
+                      <SelectItem key={section.id} value={section.id} className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>
                         Section {section.name}
                       </SelectItem>
                     ))}
@@ -1038,8 +1040,8 @@ const StudentManagement = () => {
 
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-left">
-              <thead className="bg-[#2c2c2e] text-gray-400 border-b border-gray-700">
-                <tr>
+              <thead className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-gray-100 text-gray-900 border-gray-300'}>
+                <tr className="border-b">
                   <th className="py-2 px-4">USN</th>
                   <th className="py-2 px-4">Name</th>
                   <th className="py-2 px-4">Email</th>
@@ -1048,9 +1050,9 @@ const StudentManagement = () => {
                   <th className="py-2 px-4">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-700">
+              <tbody className={theme === 'dark' ? 'divide-y divide-border' : 'divide-y divide-gray-200'}>
                 {paginatedStudents.map((student) => (
-                  <tr key={student.usn}>
+                  <tr key={student.usn} className={theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-50'}>
                     <td className="py-2 px-4">{student.usn}</td>
                     <td className="py-2 px-4">{student.name}</td>
                     <td className="py-2 px-4">{student.email}</td>
@@ -1059,7 +1061,7 @@ const StudentManagement = () => {
                     <td className="py-2 px-4 flex gap-2">
                       <button
                         onClick={() => openEdit(student)}
-                        className="text-blue-400 hover:text-blue-300"
+                        className={theme === 'dark' ? 'text-primary hover:text-primary/80' : 'text-blue-600 hover:text-blue-800'}
                       >
                         <Pencil size={18} />
                       </button>
@@ -1070,7 +1072,7 @@ const StudentManagement = () => {
                             confirmDelete: true,
                           })
                         }
-                        className="text-red-400 hover:text-red-300"
+                        className={theme === 'dark' ? 'text-destructive hover:text-destructive/80' : 'text-red-600 hover:text-red-800'}
                       >
                         <Trash2 size={18} />
                       </button>
@@ -1081,7 +1083,7 @@ const StudentManagement = () => {
             </table>
 
             {filteredStudents.length === 0 && (
-              <p className="text-center text-gray-500 mt-4">No students found</p>
+              <p className={`text-center mt-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No students found</p>
             )}
 
             <div className="text-sm text-gray-500 mt-4">
@@ -1096,11 +1098,11 @@ const StudentManagement = () => {
                 updateState({ currentPage: Math.max(state.currentPage - 1, 1) })
               }
               disabled={state.currentPage === 1}
-              className="w-24 flex items-center justify-center gap-1 text-sm font-medium text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed py-1.5 rounded-md transition"
+              className="w-24 flex items-center justify-center gap-1 text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
             >
               Previous
             </Button>
-            <div className="w-16 text-center text-sm font-medium text-gray-200 bg-gray-800  border border-gray-500 py-1.5 mx-2 rounded-md">
+            <div className={`w-16 text-center text-sm font-medium py-1.5 mx-2 rounded-md ${theme === 'dark' ? 'text-foreground bg-card border-border' : 'text-gray-900 bg-white border-gray-300'}`}>
               {state.currentPage}
             </div>
             <Button
@@ -1110,7 +1112,7 @@ const StudentManagement = () => {
                 })
               }
               disabled={state.currentPage === totalPages}
-              className="w-24 flex items-center justify-center gap-1 text-sm font-medium text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed py-1.5 rounded-md transition"
+              className="w-24 flex items-center justify-center gap-1 text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
             >
               Next
             </Button>
@@ -1122,14 +1124,14 @@ const StudentManagement = () => {
 
 
       <Dialog open={state.addStudentModal} onOpenChange={closeModal}>
-        <DialogContent className="max-w-xl bg-[#1c1c1e] text-gray-200 border border-gray-800">
+        <DialogContent className={`max-w-xl ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
           <DialogHeader>
-            <DialogTitle className="text-gray-100">Upload Student Data</DialogTitle>
+            <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Upload Student Data</DialogTitle>
           </DialogHeader>
 
           {/* Semester & Section Select */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-300 mb-1">
+            <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Select Batch, Semester, and Section
             </label>
             <div className="flex gap-4">
@@ -1150,7 +1152,7 @@ const StudentManagement = () => {
                 }
                 disabled={state.isLoading || state.batches.length === 0}
               >
-                <SelectTrigger className="w-full bg-[#2c2c2e] border border-gray-700 text-gray-200">
+                <SelectTrigger className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
                   <SelectValue
                     placeholder={
                       state.batches.length === 0
@@ -1159,12 +1161,12 @@ const StudentManagement = () => {
                     }
                   />
                 </SelectTrigger>
-                <SelectContent className="bg-[#2c2c2e] text-gray-200 border border-gray-700">
+                <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
                   {state.batches.map((batch) => (
                     <SelectItem
                       key={batch.id}
                       value={batch.name}
-                      className="hover:bg-gray-700"
+                      className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}
                     >
                       Batch {batch.name}
                     </SelectItem>
@@ -1187,7 +1189,7 @@ const StudentManagement = () => {
                   state.semesters.length === 0
                 }
               >
-                <SelectTrigger className="w-full bg-[#2c2c2e] border border-gray-700 text-gray-200">
+                <SelectTrigger className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
                   <SelectValue
                     placeholder={
                       state.semesters.length === 0
@@ -1196,12 +1198,12 @@ const StudentManagement = () => {
                     }
                   />
                 </SelectTrigger>
-                <SelectContent className="bg-[#2c2c2e] text-gray-200 border border-gray-700">
+                <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
                   {state.semesters.map((s) => (
                     <SelectItem
                       key={s.id}
                       value={`${s.number}th Semester`}
-                      className="hover:bg-gray-700"
+                      className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}
                     >
                       Semester {s.number}
                     </SelectItem>
@@ -1221,7 +1223,7 @@ const StudentManagement = () => {
                   state.manualSections.length === 0
                 }
               >
-                <SelectTrigger className="w-full bg-[#2c2c2e] border border-gray-700 text-gray-200">
+                <SelectTrigger className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
                   <SelectValue
                     placeholder={
                       state.manualSections.length === 0 || !state.manualForm.semester
@@ -1230,7 +1232,7 @@ const StudentManagement = () => {
                     }
                   />
                 </SelectTrigger>
-                <SelectContent className="bg-[#2c2c2e] text-gray-200 border border-gray-700">
+                <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
                   {state.manualSections
                     .filter(
                       (section) =>
@@ -1241,7 +1243,7 @@ const StudentManagement = () => {
                       <SelectItem
                         key={section.id}
                         value={section.name}
-                        className="hover:bg-gray-700"
+                        className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}
                       >
                         Section {section.name}
                       </SelectItem>
@@ -1257,13 +1259,13 @@ const StudentManagement = () => {
             onDrop={handleDrop}
             onDragOver={(e) => e.preventDefault()}
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:bg-[#2c2c2e] transition-colors"
+            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${theme === 'dark' ? 'border-border hover:bg-accent' : 'border-gray-300 hover:bg-gray-100'}`}
           >
-            <UploadCloud size={36} className="mx-auto text-gray-400 mb-3" />
-            <p className="font-medium text-gray-200">
+            <UploadCloud size={36} className={`mx-auto mb-3 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`} />
+            <p className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Drag & drop file here or click to select
             </p>
-            <p className="text-sm text-gray-400">
+            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               Supports CSV, XLS, XLSX (max 5MB, 500 records)
             </p>
             <input
@@ -1280,8 +1282,8 @@ const StudentManagement = () => {
               style={{ display: "none" }}
             />
             {state.droppedFileName && (
-              <p className="text-sm text-gray-300 mt-2">
-                Selected file: <strong>{state.droppedFileName}</strong>
+              <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                Selected file: <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{state.droppedFileName}</strong>
               </p>
             )}
             {state.uploadErrors.length > 0 && (
@@ -1292,20 +1294,20 @@ const StudentManagement = () => {
               </ul>
             )}
             {state.uploadedCount > 0 && (
-              <p className="text-sm text-green-400 mt-2">
+              <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
                 {state.uploadedCount} students successfully added.
               </p>
             )}
           </div>
 
           {/* Upload Instructions */}
-          <div className="mt-6 text-sm text-gray-300">
-            <h4 className="font-medium mb-2">Upload Instructions</h4>
+          <div className={`mt-6 text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+            <h4 className={`font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Upload Instructions</h4>
             <ul className="list-disc pl-6 space-y-1">
               <li>Use the provided template for proper data formatting</li>
               <li>
-                Required columns: <strong>usn</strong>, <strong>name</strong>,{" "}
-                <strong>email</strong>
+                Required columns: <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>usn</strong>, <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>name</strong>,{" "}
+                <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>email</strong>
               </li>
               <li>USN format: e.g., 1AM22CI001 (10 characters, alphanumeric)</li>
               <li>Semester and Section are selected above, not in the file</li>
@@ -1313,7 +1315,7 @@ const StudentManagement = () => {
               <li>
                 <a
                   href="#"
-                  className="text-blue-400 underline"
+                  className={theme === 'dark' ? 'text-primary underline' : 'text-blue-600 underline'}
                   onClick={downloadTemplate}
                 >
                   Download Template
@@ -1327,11 +1329,11 @@ const StudentManagement = () => {
             <Button
               variant="outline"
               onClick={closeModal}
-              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+              className={`text-foreground ${theme === 'dark' ? 'bg-card border-border hover:bg-accent' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
             >
               Cancel
             </Button>
-            <Button className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500">
+            <Button className={`text-foreground ${theme === 'dark' ? 'bg-card border-border hover:bg-accent' : 'bg-white border-gray-300 hover:bg-gray-100'}`}>
               Done
             </Button>
           </DialogFooter>
@@ -1340,18 +1342,18 @@ const StudentManagement = () => {
 
 
       <Dialog open={state.confirmDelete} onOpenChange={() => updateState({ confirmDelete: false })}>
-        <DialogContent className="bg-[#1c1c1e] text-gray-200 border border-gray-700">
+        <DialogContent className={`bg-[#1c1c1e] ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
           <DialogHeader>
-            <DialogTitle className="text-gray-100">Delete Student</DialogTitle>
+            <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Delete Student</DialogTitle>
           </DialogHeader>
-          <div className="text-gray-300">
-            Are you sure you want to delete <strong className="text-white">{state.selectedStudent?.name}</strong>?
+          <div className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>
+            Are you sure you want to delete <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{state.selectedStudent?.name}</strong>?
           </div>
           <DialogFooter className="flex justify-end gap-2 mt-4">
             <Button
               variant="outline"
               onClick={() => updateState({ confirmDelete: false })}
-              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+              className={`text-foreground ${theme === 'dark' ? 'bg-card border-border hover:bg-accent' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
             >
               Cancel
             </Button>
@@ -1363,19 +1365,19 @@ const StudentManagement = () => {
       </Dialog>
 
       <Dialog open={state.editDialog} onOpenChange={() => updateState({ editDialog: false, editSections: [] })}>
-        <DialogContent className="bg-[#1c1c1e] text-gray-100 border border-gray-700">
+        <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
           <DialogHeader>
-            <DialogTitle className="text-gray-100">Edit Student</DialogTitle>
+            <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Edit Student</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <Input
-              className="bg-[#2c2c2e] border-gray-700 text-gray-100 placeholder-gray-400"
+              className={` ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'}`}
               placeholder="Name"
               value={state.editForm.name}
               onChange={(e) => updateState({ editForm: { ...state.editForm, name: e.target.value } })}
             />
             <Input
-              className="bg-[#2c2c2e] border-gray-700 text-gray-100 placeholder-gray-400"
+              className={` ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'}`}
               placeholder="Email"
               value={state.editForm.email}
               onChange={(e) => updateState({ editForm: { ...state.editForm, email: e.target.value } })}
@@ -1390,14 +1392,14 @@ const StudentManagement = () => {
               }
               disabled={state.isLoading || state.semesters.length === 0}
             >
-              <SelectTrigger className="bg-[#2c2c2e] border-gray-700 text-gray-100">
+              <SelectTrigger className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
                 <SelectValue
                   placeholder={state.semesters.length === 0 ? "No semesters available" : "Select Semester"}
                 />
               </SelectTrigger>
-              <SelectContent className="bg-[#2c2c2e] text-gray-100 border-gray-700">
+              <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
                 {state.semesters.map((s) => (
-                  <SelectItem key={s.id} value={`${s.number}th Semester`} className="hover:bg-gray-700">
+                  <SelectItem key={s.id} value={`${s.number}th Semester`} className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>
                     Semester {s.number}
                   </SelectItem>
                 ))}
@@ -1410,7 +1412,7 @@ const StudentManagement = () => {
                 state.isLoading || state.isEditSectionsLoading || !state.editForm.semester || state.editSections.length === 0
               }
             >
-              <SelectTrigger className="bg-[#2c2c2e] border-gray-700 text-gray-100">
+              <SelectTrigger className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
                 <SelectValue
                   placeholder={
                     state.editSections.length === 0 || !state.editForm.semester
@@ -1421,11 +1423,11 @@ const StudentManagement = () => {
                   }
                 />
               </SelectTrigger>
-              <SelectContent className="bg-[#2c2c2e] text-gray-100 border-gray-700">
+              <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
                 {state.editSections
                   .filter((section) => section.semester_id === getSemesterId(state.editForm.semester))
                   .map((section) => (
-                    <SelectItem key={section.id} value={section.name} className="hover:bg-gray-700">
+                    <SelectItem key={section.id} value={section.name} className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>
                       Section {section.name}
                     </SelectItem>
                   ))}
@@ -1435,12 +1437,12 @@ const StudentManagement = () => {
           <DialogFooter className="flex justify-end gap-2 mt-4">
             <Button
               variant="outline"
-              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+              className={`text-foreground ${theme === 'dark' ? 'bg-card border-border hover:bg-accent' : 'bg-white border-gray-300 hover:bg-gray-100'}`}
               onClick={() => updateState({ editDialog: false, editSections: [] })}
             >
               Cancel
             </Button>
-            <Button className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={handleEditSave}>
+            <Button className={`text-foreground ${theme === 'dark' ? 'bg-card border-border hover:bg-accent' : 'bg-white border-gray-300 hover:bg-gray-100'}`} onClick={handleEditSave}>
               Save
             </Button>
           </DialogFooter>

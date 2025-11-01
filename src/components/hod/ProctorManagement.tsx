@@ -8,6 +8,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useToast } from "@/components/ui/use-toast";
 import { getProctors, manageStudents, assignProctorsBulk, getSemesters, manageSections, manageProfile, getProctorBootstrap } from "../../utils/hod_api";
+import { useTheme } from "../../context/ThemeContext";
 
 interface Student {
   usn: string;
@@ -36,6 +37,7 @@ interface Section {
 
 const ProctorStudents = () => {
   const { toast } = useToast();
+  const { theme } = useTheme();
   const [state, setState] = useState({
     students: [] as Student[],
     proctors: [] as Proctor[],
@@ -298,27 +300,27 @@ const ProctorStudents = () => {
   };
 
   if (state.loading && !state.students.length) {
-    return <div className="text-center py-6">Loading...</div>;
+    return <div className={`text-center py-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading...</div>;
   }
 
   if (state.error) {
-    return <div className="text-center py-6 text-red-500">{state.error}</div>;
+    return <div className={`text-center py-6 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{state.error}</div>;
   }
 
   return (
-    <div className="bg-[#1c1c1e] text-gray-200 min-h-screen p-6 space-y-6">
+    <div className={`min-h-screen p-6 space-y-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <div className="grid grid-cols-3 gap-4 ">
-        <Card className="bg-[#1c1c1e] text-gray-200"><CardHeader><CardTitle>Total Students</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{total}</CardContent></Card>
-        <Card className="bg-[#1c1c1e] text-gray-200"><CardHeader><CardTitle className="text-green-600">Assigned</CardTitle></CardHeader><CardContent className="text-2xl font-bold text-green-600">{assigned}</CardContent></Card>
-        <Card className="bg-[#1c1c1e] text-gray-200"><CardHeader><CardTitle className="text-red-600">Unassigned</CardTitle></CardHeader><CardContent className="text-2xl font-bold text-red-600">{unassigned}</CardContent></Card>
+        <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}><CardHeader><CardTitle>Total Students</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{total}</CardContent></Card>
+        <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}><CardHeader><CardTitle className={theme === 'dark' ? 'text-green-400' : 'text-green-600'}>Assigned</CardTitle></CardHeader><CardContent className={`text-2xl font-bold ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{assigned}</CardContent></Card>
+        <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}><CardHeader><CardTitle className={theme === 'dark' ? 'text-red-400' : 'text-red-600'}>Unassigned</CardTitle></CardHeader><CardContent className={`text-2xl font-bold ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{unassigned}</CardContent></Card>
       </div>
 
-      <Card className="bg-[#1c1c1e] text-gray-200">
+      <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
         <CardHeader><CardTitle>Student-Proctor Management</CardTitle></CardHeader>
         <CardContent className="flex items-center gap-4">
           <Input
             placeholder="Search by name or USN"
-            className="w-64 bg-[#232326] text-gray-200"
+            className={theme === 'dark' ? 'w-64 bg-background text-foreground border-border' : 'w-64 bg-white text-gray-900 border-gray-300'}
             value={state.search}
             onChange={(e) => updateState({ search: e.target.value })}
             disabled={state.loading}
@@ -326,19 +328,19 @@ const ProctorStudents = () => {
           <div className="flex-1" />
           {state.editMode && (
             <Select onValueChange={(value) => updateState({ selectedProctor: value })} disabled={state.proctors.length === 0}>
-              <SelectTrigger className="w-64 bg-[#232326] text-gray-200">
+              <SelectTrigger className={theme === 'dark' ? 'w-64 bg-background text-foreground border-border' : 'w-64 bg-white text-gray-900 border-gray-300'}>
                 <SelectValue placeholder={state.proctors.length === 0 ? "No proctors available" : "Select Proctor"} />
               </SelectTrigger>
-              <SelectContent className="bg-[#232326] text-gray-200">
+              <SelectContent className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
                 {state.proctors.map((proctor) => (
-                  <SelectItem key={proctor.id} value={proctor.id}>{proctor.name}</SelectItem>
+                  <SelectItem key={proctor.id} value={proctor.id} className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>{proctor.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           )}
           <Button
             onClick={() => updateState({ editMode: true })}
-            className="min-w-fit text-sm font-medium px-4 py-2 rounded-md text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 transition-all duration-200 ease-in-out transform hover:scale-105"
+            className={`min-w-fit text-sm font-medium px-4 py-2 rounded-md transition-all duration-200 ease-in-out transform hover:scale-105 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}
             disabled={state.loading || state.editMode} // disable when already editing
           >
             Edit Proctors
@@ -347,7 +349,7 @@ const ProctorStudents = () => {
           {state.editMode && (
             <div className="flex gap-2">
               <Button
-              className="min-w-fit text-sm font-medium px-4 py-2 rounded-md text-gray-200 bg-green-600 hover:bg-green-700 transition-all duration-200 ease-in-out transform hover:scale-105 flex items-center gap-2"
+              className={`min-w-fit text-sm font-medium px-4 py-2 rounded-md transition-all duration-200 ease-in-out transform hover:scale-105 flex items-center gap-2 ${theme === 'dark' ? 'text-foreground bg-green-700 hover:bg-green-800' : 'text-gray-200 bg-green-600 hover:bg-green-700'}`}
                 onClick={async () => {
                   updateState({ saving: true });
                   await handleEditToggle(); // your save logic
@@ -358,7 +360,7 @@ const ProctorStudents = () => {
                 {state.saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : "Save Changes"}
               </Button>
               <Button
-              className="min-w-fit text-sm font-medium px-4 py-2 rounded-md text-gray-200 bg-gray-500 hover:bg-gray-600 transition-all duration-200 ease-in-out transform hover:scale-105 flex items-center gap-2"
+              className={`min-w-fit text-sm font-medium px-4 py-2 rounded-md transition-all duration-200 ease-in-out transform hover:scale-105 flex items-center gap-2 ${theme === 'dark' ? 'text-foreground bg-gray-700 hover:bg-gray-800' : 'text-gray-200 bg-gray-500 hover:bg-gray-600'}`}
                 onClick={async () => {
                   updateState({ cancelling: true });
                   await handleCancelEdit();
@@ -374,7 +376,7 @@ const ProctorStudents = () => {
 
           <Button
             variant="outline"
-            className="min-w-fit text-sm font-medium px-4 py-2 rounded-md text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500 flex items-center gap-2"
+            className={`min-w-fit text-sm font-medium px-4 py-2 rounded-md flex items-center gap-2 transition-all duration-200 ease-in-out transform hover:scale-105 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}
             onClick={handleExportPDF}
             disabled={state.loading || filteredStudents.length === 0}
           >
@@ -384,7 +386,7 @@ const ProctorStudents = () => {
         </CardContent>
       </Card>
 
-      <Card className="bg-[#1c1c1e] text-gray-200">
+      <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
         <CardHeader>
           <CardTitle>Proctor Assignment - {state.branchName.toUpperCase()}</CardTitle>
         </CardHeader>
@@ -395,13 +397,13 @@ const ProctorStudents = () => {
               onValueChange={(value) => handleFilterChange("semester_id", value)}
               disabled={state.loading || state.semesters.length === 0}
             >
-              <SelectTrigger className="bg-[#232326] text-gray-200">
+              <SelectTrigger className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
                 <SelectValue placeholder={state.semesters.length === 0 ? "No semesters available" : "All Semesters"} />
               </SelectTrigger>
-              <SelectContent className="bg-[#232326] text-gray-200">
-                <SelectItem value="all">All Semesters</SelectItem>
+              <SelectContent className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+                <SelectItem value="all" className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>All Semesters</SelectItem>
                 {state.semesters.map((semester) => (
-                  <SelectItem key={semester.id} value={semester.id}>
+                  <SelectItem key={semester.id} value={semester.id} className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>
                     Semester {semester.number}
                   </SelectItem>
                 ))}
@@ -412,15 +414,15 @@ const ProctorStudents = () => {
               onValueChange={(value) => handleFilterChange("section_id", value)}
               disabled={state.loading || state.sections.length === 0}
             >
-              <SelectTrigger className="bg-[#232326] text-gray-200">
+              <SelectTrigger className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
                 <SelectValue placeholder={state.sections.length === 0 ? "No sections available" : "All Sections"} />
               </SelectTrigger>
-              <SelectContent className="bg-[#232326] text-gray-200">
-                <SelectItem value="all">All Sections</SelectItem>
+              <SelectContent className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+                <SelectItem value="all" className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>All Sections</SelectItem>
                 {state.sections
                   .filter((section) => state.filters.semester_id === "all" || section.semester_id === state.filters.semester_id)
                   .map((section) => (
-                    <SelectItem key={section.id} value={section.id}>
+                    <SelectItem key={section.id} value={section.id} className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>
                       Section {section.name}
                     </SelectItem>
                   ))}
@@ -428,8 +430,8 @@ const ProctorStudents = () => {
             </Select>
           </div>
 
-          <table className="w-full mt-4 text-left text-sm border border-gray-200">
-            <thead className="bg-[#232326] text-gray-200">
+          <table className={`w-full mt-4 text-left text-sm ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}>
+            <thead className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-gray-100 text-gray-900'}>
               <tr>
                 {state.editMode && <th className="py-2 px-4">Select</th>}
                 <th className="py-2 px-4">USN</th>
@@ -442,13 +444,13 @@ const ProctorStudents = () => {
             <tbody>
               {currentStudents.length === 0 ? (
                 <tr>
-                  <td colSpan={state.editMode ? 6 : 5} className="text-center py-4">No students found</td>
+                  <td colSpan={state.editMode ? 6 : 5} className={`text-center py-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>No students found</td>
                 </tr>
               ) : (
                 currentStudents.map((student) => (
                   <tr
                     key={student.usn}
-                    className={`border-t ${state.editMode ? "cursor-pointer hover:bg-gray-500" : ""}`}
+                    className={`border-t ${state.editMode ? (theme === 'dark' ? 'cursor-pointer hover:bg-accent' : 'cursor-pointer hover:bg-gray-100') : ''} ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}
                     onClick={() => state.editMode && handleCheckboxToggle(student.usn)}
                   >
                     {state.editMode && (
@@ -461,15 +463,15 @@ const ProctorStudents = () => {
                         />
                       </td>
                     )}
-                    <td className="py-2 px-4">{student.usn}</td>
-                    <td className="py-2 px-4">{student.name}</td>
-                    <td className="py-2 px-4">{student.semester}</td>
-                    <td className="py-2 px-4">{student.section}</td>
+                    <td className={`py-2 px-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.usn}</td>
+                    <td className={`py-2 px-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.name}</td>
+                    <td className={`py-2 px-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.semester}</td>
+                    <td className={`py-2 px-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.section}</td>
                     <td className="py-2 px-4">
                       {student.proctor ? (
-                        <span className="text-blue-700">{student.proctor}</span>
+                        <span className={theme === 'dark' ? 'text-blue-400' : 'text-blue-700'}>{student.proctor}</span>
                       ) : (
-                        <span className="text-red-500">Not assigned</span>
+                        <span className={theme === 'dark' ? 'text-red-400' : 'text-red-500'}>Not assigned</span>
                       )}
                     </td>
                   </tr>
@@ -479,7 +481,7 @@ const ProctorStudents = () => {
           </table>
 
           <div className="flex justify-between items-center mt-4">
-            <div className="text-sm">
+            <div className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Showing {Math.min((state.currentPage - 1) * studentsPerPage + 1, total)} to{" "}
               {Math.min(state.currentPage * studentsPerPage, total)} of {total}
             </div>
@@ -488,16 +490,16 @@ const ProctorStudents = () => {
                 variant="outline"
                 disabled={state.currentPage === 1 || state.loading}
                 onClick={() => updateState({ currentPage: Math.max(state.currentPage - 1, 1) })}
-                className=" text-sm font-medium px-4 py-2 rounded-md text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                className={`text-sm font-medium px-4 py-2 rounded-md bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}
               >
                 Previous
               </Button>
-              <span className="px-4 text-lg font-medium">{state.currentPage}</span>
+              <span className={`px-4 text-lg font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{state.currentPage}</span>
               <Button
                 variant="outline"
                 disabled={state.currentPage === totalPages || state.loading}
                 onClick={() => updateState({ currentPage: Math.min(state.currentPage + 1, totalPages) })}
-                className="text-sm font-medium px-4 py-2 rounded-md text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                className={`text-sm font-medium px-4 py-2 rounded-md bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}
               >
                 Next
               </Button>

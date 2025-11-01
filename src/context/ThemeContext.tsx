@@ -12,7 +12,8 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   useEffect(() => {
     // Check localStorage for saved theme preference
-    const savedTheme = localStorage.getItem('admin-theme');
+    // First check for hod-theme, then admin-theme for backward compatibility
+    const savedTheme = localStorage.getItem('hod-theme') || localStorage.getItem('admin-theme');
     if (savedTheme) {
       setTheme(savedTheme);
     } else {
@@ -26,12 +27,27 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     // Apply theme to document
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
     } else {
       document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
     }
     
-    // Save theme preference
+    // Apply theme to root element for scrollbar styling
+    const rootElement = document.getElementById('root');
+    if (rootElement) {
+      if (theme === 'dark') {
+        rootElement.classList.add('dark');
+        rootElement.classList.remove('light');
+      } else {
+        rootElement.classList.remove('dark');
+        rootElement.classList.add('light');
+      }
+    }
+    
+    // Save theme preference for both admin and HOD
     localStorage.setItem('admin-theme', theme);
+    localStorage.setItem('hod-theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {

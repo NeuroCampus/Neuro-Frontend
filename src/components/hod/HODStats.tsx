@@ -22,7 +22,7 @@ import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { getHODStats, manageLeaves, manageProfile, getHODDashboard } from "../../utils/hod_api";
 import { motion } from "framer-motion";
-
+import { useTheme } from "../../context/ThemeContext";
 
 interface LeaveRequest {
   id: string;
@@ -45,9 +45,20 @@ interface StatsData {
     attendance_percentage: number | string;
   }>;
 }
+
 interface HODStatsProps {
   setError: (err: string | null) => void;
   setPage: (page: string) => void;
+}
+
+interface DashboardLeave {
+  id: number;
+  faculty_name: string;
+  department: string;
+  start_date: string;
+  end_date: string;
+  reason: string;
+  status: string;
 }
 
 export default function HODStats({ setError, setPage }: HODStatsProps) {
@@ -59,6 +70,7 @@ export default function HODStats({ setError, setPage }: HODStatsProps) {
   const [branchId, setBranchId] = useState<string | null>(null);
   const [hodName, setHodName] = useState("HOD");
   const [branchName, setBranchName] = useState("your");
+  const { theme } = useTheme();
 
   // Format date range to "MMM DD, YYYY to MMM DD, YYYY"
   const formatPeriod = (startDate: string, endDate: string): string => {
@@ -105,7 +117,7 @@ export default function HODStats({ setError, setPage }: HODStatsProps) {
           });
         }
         if (Array.isArray(res.data.leaves)) {
-          const requests = res.data.leaves.map((req: any) => ({
+          const requests = res.data.leaves.map((req: DashboardLeave) => ({
             id: req.id.toString(),
             name: req.faculty_name || "Unknown",
             dept: req.department || "Unknown",
@@ -132,7 +144,7 @@ export default function HODStats({ setError, setPage }: HODStatsProps) {
     }));
   };
 
-  const updateLeaveStatus = (index: number, status: "PENDING" | "APPROVED" | "REJECTED") => {
+  const updateLeaveStatus = (index: number, status: "Pending" | "Approved" | "Rejected") => {
     const updatedLeaves = [...leaveRequests];
     updatedLeaves[index] = { ...updatedLeaves[index], status };
     setLeaveRequests(updatedLeaves);
@@ -143,7 +155,7 @@ export default function HODStats({ setError, setPage }: HODStatsProps) {
 const handleApprove = async (index: number) => {
   const leave = leaveRequests[index];
 
-  updateLeaveStatus(index, "APPROVED"); // Optimistic UI
+  updateLeaveStatus(index, "Approved"); // Optimistic UI
 
   try {
     const res = await manageLeaves(
@@ -152,7 +164,7 @@ const handleApprove = async (index: number) => {
     );
 
     if (!res.success) {
-      updateLeaveStatus(index, leave.status as any); // rollback
+      updateLeaveStatus(index, leave.status); // rollback
       setErrors([res.message || "Failed to approve leave"]);
       Swal.fire("Error!", "Failed to approve the leave request.", "error");
     } else {
@@ -160,7 +172,7 @@ const handleApprove = async (index: number) => {
       await fetchDashboard(); // ✅ Refresh dashboard data
     }
   } catch (err) {
-    updateLeaveStatus(index, leave.status as any); // rollback
+    updateLeaveStatus(index, leave.status); // rollback
     setErrors(["Failed to approve leave"]);
     Swal.fire("Error!", "Failed to approve the leave request.", "error");
   }
@@ -177,13 +189,13 @@ const handleApprove = async (index: number) => {
       showCancelButton: true,
       confirmButtonText: "Yes, reject it!",
       cancelButtonText: "No, keep it",
-      background: "#23232a",
-      color: "#e5e7eb",
+      background: theme === 'dark' ? '#23232a' : '#fff',
+      color: theme === 'dark' ? '#e5e7eb' : '#000',
     });
 
     if (!result.isConfirmed) return;
 
-    updateLeaveStatus(index, "REJECTED");
+    updateLeaveStatus(index, "Rejected");
 
     try {
       const res = await manageLeaves(
@@ -192,7 +204,7 @@ const handleApprove = async (index: number) => {
       );
 
       if (!res.success) {
-        updateLeaveStatus(index, leave.status as any);
+        updateLeaveStatus(index, leave.status);
         setErrors([res.message || "Failed to reject leave"]);
         Swal.fire("Error!", "Failed to reject the leave request.", "error");
       } else {
@@ -200,13 +212,11 @@ const handleApprove = async (index: number) => {
         await fetchDashboard(); // ✅ Refresh dashboard data
       }
     } catch (err) {
-      updateLeaveStatus(index, leave.status as any);
+      updateLeaveStatus(index, leave.status);
       setErrors(["Failed to reject leave"]);
       Swal.fire("Error!", "Failed to reject the leave request.", "error");
     }
   };
-
-
 
   // Initial data fetch
   useEffect(() => {
@@ -241,16 +251,16 @@ const handleApprove = async (index: number) => {
   ];
 
   return (
-    <div className="text-gray-200 p-8 space-y-6 font-sans min-h-screen bg-[#1c1c1e] py-0">
+    <div className={`p-8 space-y-6 font-sans min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Welcome Message */}
-      <h1 className="text-2xl font-semibold text-gray-200 ">
+      <h1 className={`text-2xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
         Welcome back, {hodName}, Here's what's happening in your {branchName} department.
       </h1>
 
       {/* Loading and Errors */}
-      {isLoading && <p className="bg-[#1c1c1e] text-gray-600 mb-4 animate-pulse">Loading data...</p>}
+      {isLoading && <p className={`${theme === 'dark' ? 'bg-background text-muted-foreground' : 'bg-gray-50 text-gray-600'} mb-4 animate-pulse`}>Loading data...</p>}
       {errors.length > 0 && (
-        <ul className="text-sm text-red-500 mb-4 list-disc list-inside bg-red-50 p-4 rounded-lg">
+        <ul className={`text-sm ${theme === 'dark' ? 'text-destructive' : 'text-red-500'} mb-4 list-disc list-inside ${theme === 'dark' ? 'bg-destructive/10 border border-destructive/20' : 'bg-red-50'} p-4 rounded-lg`}>
           {errors.map((err, idx) => (
             <li key={idx}>{err}</li>
           ))}
@@ -258,13 +268,13 @@ const handleApprove = async (index: number) => {
       )}
 
       {/* Stats Cards */}
-      <div className="bg-[#1c1c1e] grid grid-cols-1 md:grid-cols-4 gap-6 ">
+      <div className={`grid grid-cols-1 md:grid-cols-4 gap-6 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
         {[
           {
             title: "Total Faculty",
             className: "text-gray-600",
             value: stats?.faculty_count.toString() || "0",
-            icon: <Users className="text-gray-600 " />,
+            icon: <Users className="text-gray-600" />,
             change: "+2.5% since last month",
             color: "text-gray-600",
           },
@@ -292,42 +302,42 @@ const handleApprove = async (index: number) => {
         ].map((item, i) => (
             <div
               key={i}
-              className="bg-[#232326] p-4 rounded-lg shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow border text-gray-200 outline-none focus:ring-2 focus:ring-white"
+              className={`p-4 rounded-lg shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow border ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'} text-gray-900 outline-none focus:ring-2 focus:ring-white`}
             >
-              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gray-200">
+              <div className={`flex items-center justify-center w-12 h-12 rounded-full ${theme === 'dark' ? 'bg-accent' : 'bg-gray-200'}`}>
               {item.icon && (
                 // Make icon large and blue for visibility
                 <span className="text-blue-600 text-3xl">{item.icon}</span>
               )}
               </div>
               <div>
-              <p className="text-sm font-medium text-gray-200">{item.title}</p>
-              <p className="text-xl font-bold text-gray-200">{item.value}</p>
-              <p className={`text-xs text-gray-50 ${item.color}`}>{item.change}</p>
+              <p className={`text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{item.title}</p>
+              <p className={`text-xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{item.value}</p>
+              <p className={`text-xs ${item.color}`}>{item.change}</p>
               </div>
             </div>
         ))}
       </div>
 
       {/* Charts: Attendance Trends and Member Distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 bg-[#1c1c1e]">
+      <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
         {/* Attendance Chart */}
-        <div className="bg-[#1c1c1e] border border-gray-200 p-6 rounded-lg shadow-sm">
+        <div className={`p-6 rounded-lg shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
           <div className="flex justify-between items-center mb-2">
-            <h3 className="text-lg font-semibold text-gray-200">Attendance Trends</h3>
+            <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Attendance Trends</h3>
           </div>
-          <p className="text-sm text-gray-400 mb-4">Weekly attendance percentage</p>
-          <div className="min-h-[250px] text-gray-500">
+          <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Weekly attendance percentage</p>
+          <div className={`min-h-[250px] ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
             {chartData.length === 1 && chartData[0].week === "No Data" ? (
-              <p className="text-sm text-gray-400 text-center italic">No attendance data available</p>
+              <p className={`text-sm text-center italic ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`}>No attendance data available</p>
             ) : (
               <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={chartData} isAnimationActive={true} animationDuration={800}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="week" stroke="#6b7280" fontSize={12} />
-                  <YAxis domain={[0, 100]} stroke="#6b7280" fontSize={12} />
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#3f3f46' : '#e5e7eb'} />
+                  <XAxis dataKey="week" stroke={theme === 'dark' ? '#9ca3af' : '#6b7280'} fontSize={12} />
+                  <YAxis domain={[0, 100]} stroke={theme === 'dark' ? '#9ca3af' : '#6b7280'} fontSize={12} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: "#fff", borderRadius: "8px", border: "1px solid #e5e7eb" }}
+                    contentStyle={{ backgroundColor: theme === 'dark' ? '#1c1c1e' : '#fff', borderRadius: "8px", border: theme === 'dark' ? '1px solid #3f3f46' : '1px solid #e5e7eb' }}
                   />
                   <Line
                     type="monotone"
@@ -344,11 +354,11 @@ const handleApprove = async (index: number) => {
         </div>
 
         {/* Member Distribution Pie Chart */}
-        <div className="bg-[#1c1c1e] border border-gray-200 p-6 rounded-lg shadow-sm">
+        <div className={`p-6 rounded-lg shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
           <div className="flex justify-between items-center mb-2">
-            <h3 className="text-lg font-semibold text-gray-200">Member Distribution</h3>
+            <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Member Distribution</h3>
           </div>
-          <p className="text-sm text-gray-400 mb-4">Faculty, Students, and Total Members</p>
+          <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Faculty, Students, and Total Members</p>
           <div className="min-h-[250px] focus:outline-none">
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
@@ -360,19 +370,23 @@ const handleApprove = async (index: number) => {
                   cy="50%"
                   outerRadius={80}
                   label
-                  isAnimationActive={true}
-                  animationDuration={800}
-                  activeIndex={-1}
-                  onClick={() => {}}
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#fff",
+                    backgroundColor: theme === 'dark' ? '#1c1c1e' : '#fff',
                     borderRadius: "8px",
-                    border: "1px solid #e5e7eb",
+                    border: theme === 'dark' ? '1px solid #3f3f46' : '1px solid #e5e7eb',
                   }}
                 />
-                <Legend verticalAlign="bottom" height={36} />
+                <Legend 
+                  verticalAlign="bottom" 
+                  height={36}
+                  formatter={(value) => (
+                    <span className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
+                      {value}
+                    </span>
+                  )}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -380,11 +394,11 @@ const handleApprove = async (index: number) => {
       </div>
 
       {/* Leave Requests */}
-      <div className="bg-[#1c1c1e] p-6 rounded-lg shadow-sm text-sm text-gray-200 border border-gray-200">
+      <div className={`p-6 rounded-lg shadow-sm text-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-200">Leave Requests</h3>
+          <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Requests</h3>
           <button
-            className="flex items-center gap-1 border border-gray-300 text-sm font-medium text-gray-200 bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-md transition"
+            className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
             onClick={() => setPage("leaves")}
           >
             View All
@@ -393,8 +407,8 @@ const handleApprove = async (index: number) => {
 
         <div className="max-h-64 overflow-y-auto custom-scrollbar scroll-smooth"> 
           <table className="w-full">
-            <thead className="sticky top-0 bg-[#1c1c1e] z-10">
-              <tr className="text-center border-b text-gray-200 text-xs">
+            <thead className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-card' : 'bg-white'}`}>
+              <tr className={`text-center border-b ${theme === 'dark' ? 'border-border text-foreground' : 'border-gray-200 text-gray-900'} text-xs`}>
                 <th className="pb-2">Faculty</th>
                 <th>Period</th>
                 <th>Reason</th>
@@ -405,7 +419,7 @@ const handleApprove = async (index: number) => {
             <tbody>
               {leaveRequests.length === 0 && !isLoading ? (
                 <tr>
-                  <td colSpan={5} className="py-3 text-center text-gray-200">
+                  <td colSpan={5} className={`py-3 text-center ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                     No leave requests found
                   </td>
                 </tr>
@@ -413,12 +427,12 @@ const handleApprove = async (index: number) => {
                 leaveRequests.slice(0, 20).map((row, index) => (   // limit to first 20 rows for example
                   <tr
                     key={row.id}
-                    className="border-b last:border-none text-sm hover:bg-gray-800 text-center"
+                    className={`border-b last:border-none text-sm hover:${theme === 'dark' ? 'bg-accent' : 'bg-gray-50'} text-center`}
                   >
                     <td className="py-3">
                       <div>
-                        <p className="font-medium text-gray-200">{row.name}</p>
-                        <p className="text-xs text-gray-400">{row.dept}</p>
+                        <p className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{row.name}</p>
+                        <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{row.dept}</p>
                       </div>
                     </td>
                     <td>{row.period}</td>
@@ -441,23 +455,23 @@ const handleApprove = async (index: number) => {
                         <div className="flex gap-2 align-middle text-center px-1 justify-center">
                           <button
                             onClick={() => handleApprove(index)}
-                            className="flex items-center gap-1 bg-green-700 text-gray-100 hover:bg-green-800 text-sm font-medium px-3 py-1.5 rounded-md transition"
+                            className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-green-500 text-green-400 bg-green-500/10 hover:bg-green-500/20' : 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100'}`}
                             disabled={isLoading}
                           >
-                            <CheckCircle className="w-4 h-4" />
+                            <CheckCircle className={`w-4 h-4 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
                             Approve
                           </button>
                           <button
                             onClick={() => handleReject(index)}
-                            className="flex items-center gap-1 bg-red-700 text-gray-100 hover:bg-red-800 text-sm font-medium px-3 py-1.5 rounded-md transition"
+                            className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-red-500 text-red-400 bg-red-500/10 hover:bg-red-500/20' : 'border-red-500 text-red-700 bg-red-50 hover:bg-red-100'}`}
                             disabled={isLoading}
                           >
-                            <XCircle className="w-4 h-4" />
+                            <XCircle className={`w-4 h-4 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`} />
                             Reject
                           </button>
                         </div>
                       ) : (
-                        <span className="text-xs text-gray-500">No action needed</span>
+                        <span className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No action needed</span>
                       )}
                     </td>
                   </tr>
