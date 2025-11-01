@@ -18,11 +18,10 @@ const PaymentCancel: React.FC<PaymentCancelProps> = ({ setPage }) => {
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     const role = localStorage.getItem('role');
-    
+
     if (!token || role !== 'student') {
-      // Redirect to login if not authenticated or not a student
-      window.location.href = '/';
-      return;
+      // Don't redirect immediately, just note that user needs to login
+      console.warn('User not authenticated for payment cancel page');
     }
   }, []);
 
@@ -46,7 +45,7 @@ const PaymentCancel: React.FC<PaymentCancelProps> = ({ setPage }) => {
   };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center ${theme === 'dark' ? 'bg-[#1c1c1e]' : 'bg-gray-50'}`}>
+    <div className={`flex items-center justify-center ${setPage ? 'min-h-[400px]' : 'min-h-screen'} ${theme === 'dark' ? 'bg-[#1c1c1e]' : 'bg-gray-50'}`}>
       <Card className={theme === 'dark' ? 'w-full max-w-md bg-[#1c1c1e] text-gray-200 border-gray-700' : 'w-full max-w-md bg-white text-gray-900 border-gray-200'}>
         <CardHeader className="text-center">
           <XCircle className={`h-12 w-12 mx-auto mb-4 ${theme === 'dark' ? 'text-orange-400' : 'text-orange-600'}`} />

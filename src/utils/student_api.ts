@@ -172,7 +172,7 @@ interface GetLeaveRequestsResponse {
 }
 
 // Export the interface so it can be imported in components
-export type { GetLeaveRequestsResponse };
+export type { GetLeaveRequestsResponse, GetStudentAttendanceResponse, GetInternalMarksResponse, SubmitLeaveRequestRequest, UpdateProfileRequest, UploadCertificateRequest, GetCertificatesResponse, DeleteCertificateRequest, GetNotificationsResponse };
 
 interface UploadCertificateRequest {
   file: File;

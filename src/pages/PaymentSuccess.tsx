@@ -22,10 +22,10 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ setPage }) => {
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     const role = localStorage.getItem('role');
-    
+
     if (!token || role !== 'student') {
-      // Redirect to login if not authenticated or not a student
-      window.location.href = '/';
+      // Don't redirect immediately, show error state instead
+      setPaymentStatus('error');
       return;
     }
   }, []);
@@ -43,6 +43,9 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ setPage }) => {
   useEffect(() => {
     if (sessionId) {
       checkPaymentStatus();
+    } else {
+      // No session ID found, show error
+      setPaymentStatus('error');
     }
   }, [sessionId]);
 
@@ -76,7 +79,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ setPage }) => {
 
   if (paymentStatus === 'loading') {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${theme === 'dark' ? 'bg-[#1c1c1e]' : 'bg-gray-50'}`}>
+      <div className={`flex items-center justify-center ${setPage ? 'min-h-[400px]' : 'min-h-screen'} ${theme === 'dark' ? 'bg-[#1c1c1e]' : 'bg-gray-50'}`}>
         <Card className={theme === 'dark' ? 'w-full max-w-md bg-[#1c1c1e] text-gray-200 border-gray-700' : 'w-full max-w-md bg-white text-gray-900 border-gray-200'}>
           <CardContent className="p-6 text-center">
             <Loader2 className={`h-12 w-12 animate-spin mx-auto mb-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
@@ -90,7 +93,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ setPage }) => {
 
   if (paymentStatus === 'error') {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${theme === 'dark' ? 'bg-[#1c1c1e]' : 'bg-gray-50'}`}>
+      <div className={`flex items-center justify-center ${setPage ? 'min-h-[400px]' : 'min-h-screen'} ${theme === 'dark' ? 'bg-[#1c1c1e]' : 'bg-gray-50'}`}>
         <Card className={theme === 'dark' ? 'w-full max-w-md bg-[#1c1c1e] text-gray-200 border-gray-700' : 'w-full max-w-md bg-white text-gray-900 border-gray-200'}>
           <CardHeader className="text-center">
             <XCircle className={`h-12 w-12 mx-auto mb-4 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`} />
@@ -98,14 +101,17 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ setPage }) => {
           </CardHeader>
           <CardContent className="text-center">
             <p className={theme === 'dark' ? 'text-gray-300 mb-6' : 'text-gray-600 mb-6'}>
-              We couldn't verify your payment. Please contact support if you were charged.
+              {!sessionId
+                ? "Payment session not found. Please try your payment again."
+                : "We couldn't verify your payment or you may not be properly logged in. Please log in and check your payment status from the fees page."
+              }
             </p>
             <div className="space-y-3">
               <Button
-                onClick={handleNavigateBack}
+                onClick={() => window.location.href = '/'}
                 className={theme === 'dark' ? 'w-full bg-blue-600 hover:bg-blue-700 text-white' : 'w-full bg-blue-600 hover:bg-blue-700 text-white'}
               >
-                Return to Fees Page
+                Go to Login
               </Button>
               <Button
                 variant="outline"
@@ -122,7 +128,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ setPage }) => {
   }
 
   return (
-    <div className={`min-h-screen flex items-center justify-center ${theme === 'dark' ? 'bg-[#1c1c1e]' : 'bg-gray-50'}`}>
+    <div className={`flex items-center justify-center ${setPage ? 'min-h-[400px]' : 'min-h-screen'} ${theme === 'dark' ? 'bg-[#1c1c1e]' : 'bg-gray-50'}`}>
       <Card className={theme === 'dark' ? 'w-full max-w-md bg-[#1c1c1e] text-gray-200 border-gray-700' : 'w-full max-w-md bg-white text-gray-900 border-gray-200'}>
         <CardHeader className="text-center">
           <CheckCircle className={`h-12 w-12 mx-auto mb-4 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />

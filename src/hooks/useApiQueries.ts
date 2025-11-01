@@ -27,6 +27,31 @@ import {
   InternalMarkStudent
 } from '../utils/faculty_api';
 
+// Student API imports
+import {
+  getStudentAttendance,
+  getInternalMarks,
+  getNotifications,
+  submitLeaveRequest,
+  updateProfile,
+  uploadCertificate,
+  getCertificates,
+  deleteCertificate,
+  getStudentStudyMaterials,
+  getStudentAssignments,
+  GetStudentAttendanceResponse,
+  GetInternalMarksResponse,
+  GetNotificationsResponse,
+  SubmitLeaveRequestRequest,
+  UpdateProfileRequest,
+  UploadCertificateRequest,
+  GetCertificatesResponse,
+  DeleteCertificateRequest,
+} from '../utils/student_api';
+
+// Import optimization hooks
+import { usePagination, useInfiniteScroll, useOptimisticUpdate } from './useOptimizations';
+
 // Custom hooks for data fetching
 export const useProctorStudentsQuery = () => {
   return useQuery({
@@ -56,6 +81,123 @@ export const useFacultyAssignmentsQuery = () => {
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 15 * 60 * 1000, // 15 minutes
   });
+};
+
+// Student-specific optimized hooks
+
+// Student Attendance with Pagination
+export const useStudentAttendanceQuery = () => {
+  const pagination = usePagination({
+    queryKey: ['studentAttendance'],
+    pageSize: 50,
+  });
+
+  return {
+    ...useQuery({
+      queryKey: pagination.queryKey,
+      queryFn: async (): Promise<GetStudentAttendanceResponse> => {
+        const response = await getStudentAttendance();
+        pagination.updatePagination(response);
+        return response;
+      },
+      staleTime: 2 * 60 * 1000, // 2 minutes
+      gcTime: 5 * 60 * 1000, // 5 minutes
+    }),
+    pagination,
+  };
+};
+
+// Student Internal Marks with Pagination
+export const useStudentInternalMarksQuery = () => {
+  const pagination = usePagination({
+    queryKey: ['studentInternalMarks'],
+    pageSize: 50,
+  });
+
+  return {
+    ...useQuery({
+      queryKey: pagination.queryKey,
+      queryFn: async (): Promise<GetInternalMarksResponse> => {
+        const response = await getInternalMarks();
+        pagination.updatePagination(response);
+        return response;
+      },
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+    }),
+    pagination,
+  };
+};
+
+// Student Notifications with Infinite Scroll
+export const useStudentNotificationsQuery = () => {
+  const infiniteScroll = useInfiniteScroll(['studentNotifications'], async () => {
+    // This would be implemented with pagination parameters
+    // For now, we'll keep it simple
+  });
+
+  return {
+    ...useQuery({
+      queryKey: ['studentNotifications'],
+      queryFn: async (): Promise<GetNotificationsResponse> => {
+        const response = await getNotifications();
+        return response;
+      },
+      staleTime: 1 * 60 * 1000, // 1 minute
+      gcTime: 5 * 60 * 1000, // 5 minutes
+    }),
+    infiniteScroll,
+  };
+};
+
+// Student Study Materials with Lazy Loading
+export const useStudentStudyMaterialsQuery = (enabled: boolean = false) => {
+  return useQuery({
+    queryKey: ['studentStudyMaterials'],
+    queryFn: async () => {
+      const response = await getStudentStudyMaterials();
+      return response;
+    },
+    enabled, // Only fetch when explicitly enabled (lazy loading)
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+  });
+};
+
+// Historical Student Data with Lazy Loading
+export const useHistoricalStudentDataQuery = (enabled: boolean = false) => {
+  return useQuery({
+    queryKey: ['historicalStudentData'],
+    queryFn: async () => {
+      const response = await getStudentAssignments();
+      return response;
+    },
+    enabled, // Only fetch when explicitly enabled (lazy loading)
+    staleTime: 15 * 60 * 1000, // 15 minutes
+    gcTime: 60 * 60 * 1000, // 1 hour
+  });
+};
+
+// Student Certificates with Pagination
+export const useStudentCertificatesQuery = () => {
+  const pagination = usePagination({
+    queryKey: ['studentCertificates'],
+    pageSize: 20,
+  });
+
+  return {
+    ...useQuery({
+      queryKey: pagination.queryKey,
+      queryFn: async (): Promise<GetCertificatesResponse> => {
+        const response = await getCertificates();
+        pagination.updatePagination(response);
+        return response;
+      },
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 15 * 60 * 1000, // 15 minutes
+    }),
+    pagination,
+  };
 };
 
 // Custom hooks for mutations (if needed in the future)
@@ -154,6 +296,94 @@ export const useManageStudentLeaveMutation = () => {
       // Invalidate leave-related queries
       queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
       queryClient.invalidateQueries({ queryKey: ['studentLeaves'] });
+    },
+  });
+};
+
+// Student-specific mutations with optimistic updates
+
+// Optimistic Profile Update
+export const useStudentProfileUpdateMutation = () => {
+  return useOptimisticUpdate(
+    async (data: UpdateProfileRequest) => {
+      const response = await updateProfile(data);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to update profile');
+      }
+      return response;
+    },
+    ['studentProfile'],
+    (oldData, newData) => {
+      // Optimistically update the profile data
+      return { ...oldData, ...newData };
+    }
+  );
+};
+
+// Optimistic Leave Request Submission
+export const useStudentLeaveRequestMutation = () => {
+  return useOptimisticUpdate(
+    async (data: SubmitLeaveRequestRequest) => {
+      const response = await submitLeaveRequest(data);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to submit leave request');
+      }
+      return response;
+    },
+    ['studentLeaveRequests'],
+    (oldData, newData) => {
+      // Optimistically add the new leave request
+      const optimisticLeave = {
+        id: `temp-${Date.now()}`,
+        start_date: newData.start_date,
+        end_date: newData.end_date,
+        reason: newData.reason,
+        status: 'PENDING',
+        submitted_at: new Date().toISOString(),
+      };
+      return oldData ? [...oldData, optimisticLeave] : [optimisticLeave];
+    }
+  );
+};
+
+// Optimistic Certificate Upload
+export const useStudentCertificateUploadMutation = () => {
+  return useOptimisticUpdate(
+    async (data: UploadCertificateRequest) => {
+      const response = await uploadCertificate(data);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to upload certificate');
+      }
+      return response;
+    },
+    ['studentCertificates'],
+    (oldData, newData) => {
+      // Optimistically add the new certificate
+      const optimisticCert = {
+        id: `temp-${Date.now()}`,
+        description: newData.description || 'New Certificate',
+        file_url: '#', // Placeholder URL
+        uploaded_at: new Date().toISOString(),
+      };
+      return oldData ? [...oldData, optimisticCert] : [optimisticCert];
+    }
+  );
+};
+
+// Certificate Delete Mutation
+export const useStudentCertificateDeleteMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: DeleteCertificateRequest) => {
+      const response = await deleteCertificate(data);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to delete certificate');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['studentCertificates'] });
     },
   });
 };

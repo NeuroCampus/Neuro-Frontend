@@ -13,38 +13,19 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <Index />
-          </TooltipProvider>
-        } />
-        <Route path="/payment/success" element={
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <PaymentSuccess />
-          </TooltipProvider>
-        } />
-        <Route path="/payment/cancel" element={
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <PaymentCancel />
-          </TooltipProvider>
-        } />
-        <Route path="*" element={
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <NotFound />
-          </TooltipProvider>
-        } />
-      </Routes>
-    </BrowserRouter>
+    <TooltipProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/*" element={
+            <>
+              <Toaster />
+              <Sonner />
+              <Index />
+            </>
+          } />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
   </QueryClientProvider>
 );
 

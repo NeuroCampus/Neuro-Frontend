@@ -6,7 +6,12 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { getFullStudentProfile } from "@/utils/student_api";
+import { useStudentProfileUpdateMutation } from "@/hooks/useApiQueries";
 import { useTheme } from "@/context/ThemeContext";
+import { useFileUpload, useFormValidation } from "../../hooks/useOptimizations";
+import { Progress } from "../ui/progress";
+import { Upload, Camera } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const StudentProfile = () => {
   const [form, setForm] = useState({
@@ -39,8 +44,26 @@ const StudentProfile = () => {
       email: ""
     }
   });
-  
+
+  const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
   const { theme } = useTheme();
+  const { toast } = useToast();
+  const updateProfileMutation = useStudentProfileUpdateMutation();
+
+  // Profile picture upload hook
+  const {
+    uploadFile: uploadProfilePicture,
+    uploadProgress,
+    isUploading: isUploadingPicture,
+    error: uploadError,
+    reset: resetUpload
+  } = useFileUpload({
+    maxSizeMB: 0.5, // Compress profile pictures to 500KB max
+    maxWidthOrHeight: 400,
+    compressImages: true,
+    allowedTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'],
+    maxFileSize: 2 * 1024 * 1024, // 2MB max
+  });
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -62,9 +85,59 @@ const StudentProfile = () => {
     fetchProfile();
   }, []);
 
-  const handleChange = (e: any) => {
+  const handleProfilePictureUpload = async () => {
+    if (!profilePictureFile) return;
+
+    try {
+      const result = await uploadProfilePicture(
+        profilePictureFile,
+        '/api/profile/upload-picture',
+        {}
+      );
+
+      // Update the profile picture URL in the form
+      if (result.success && result.url) {
+        setForm(prev => ({ ...prev, profile_picture: result.url }));
+      }
+
+      setProfilePictureFile(null);
+      resetUpload();
+    } catch (error) {
+      console.error('Profile picture upload failed:', error);
+    }
+  };
+
+  const handleProfilePictureSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setProfilePictureFile(file);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
+  };
+
+  const handleSave = async () => {
+    try {
+      await updateProfileMutation.mutateAsync({
+        first_name: form.first_name,
+        last_name: form.last_name,
+        email: form.email,
+        mobile_number: form.phone,
+        address: form.address,
+        bio: form.about,
+      });
+      // Show success toast notification
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been successfully updated.",
+      });
+      // The optimistic update will handle the UI updates
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+    }
   };
 
   return (
@@ -76,11 +149,61 @@ const StudentProfile = () => {
         <Card className={`${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
           <div className="p-6 flex flex-col md:flex-row gap-6">
             <div className="w-full md:w-1/4 flex flex-col items-center text-center">
-              <img
-                src={form.profile_picture || "/default-avatar.png"}
-                alt="Profile"
-                className="w-24 h-24 rounded-full object-cover mb-2"
-              />
+              <div className="relative mb-2">
+                <img
+                  src={form.profile_picture || "/default-avatar.png"}
+                  alt="Profile"
+                  className="w-24 h-24 rounded-full object-cover"
+                />
+                <label htmlFor="profile-picture-upload" className="absolute bottom-0 right-0 bg-blue-600 text-white p-1 rounded-full cursor-pointer hover:bg-blue-700 transition-colors">
+                  <Camera className="h-3 w-3" />
+                </label>
+                <input
+                  id="profile-picture-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfilePictureSelect}
+                  className="hidden"
+                />
+              </div>
+
+              {profilePictureFile && (
+                <div className="mb-2 text-center">
+                  <p className="text-sm text-gray-600 mb-2">Selected: {profilePictureFile.name}</p>
+                  {isUploadingPicture && (
+                    <div className="space-y-1">
+                      <Progress value={uploadProgress} className="w-full h-2" />
+                      <p className="text-xs text-gray-500">Uploading... {uploadProgress}%</p>
+                    </div>
+                  )}
+                  {uploadError && (
+                    <p className="text-xs text-red-500">{uploadError}</p>
+                  )}
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      size="sm"
+                      onClick={handleProfilePictureUpload}
+                      disabled={isUploadingPicture}
+                      className="text-xs"
+                    >
+                      <Upload className="h-3 w-3 mr-1" />
+                      Upload
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setProfilePictureFile(null);
+                        resetUpload();
+                      }}
+                      className="text-xs"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <p className={`font-medium ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
                 {form.first_name} {form.last_name ? form.last_name : ''}
               </p>
@@ -257,8 +380,12 @@ const StudentProfile = () => {
         </Card>
 
         <div className="flex justify-end">
-          <Button className={`mt-4 ${theme === 'dark' ? 'text-foreground bg-muted hover:bg-accent border-border' : 'text-gray-900 bg-gray-200 hover:bg-gray-300 border-gray-300'}`}>
-            Save Changes
+          <Button 
+            className={`mt-4 ${theme === 'dark' ? 'text-foreground bg-muted hover:bg-accent border-border' : 'text-gray-900 bg-gray-200 hover:bg-gray-300 border-gray-300'}`}
+            onClick={handleSave}
+            disabled={updateProfileMutation.isPending}
+          >
+            {updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
       </Tabs>

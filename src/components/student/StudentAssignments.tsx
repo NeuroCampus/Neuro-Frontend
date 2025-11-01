@@ -4,7 +4,7 @@ import { Badge } from "../ui/badge";
 import { format, isBefore } from "date-fns";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { getStudentAssignments } from "@/utils/student_api";
+import { useHistoricalStudentDataQuery } from "@/hooks/useApiQueries";
 import { useTheme } from "@/context/ThemeContext";
 
 const getStatusBadge = (status: string, dueDate: string, theme: string) => {
@@ -21,17 +21,22 @@ const getStatusBadge = (status: string, dueDate: string, theme: string) => {
 const StudentAssignment = () => {
   const [assignments, setAssignments] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  const [isAssignmentsLoaded, setIsAssignmentsLoaded] = useState(false);
   const { theme } = useTheme();
 
+  // Lazy load historical assignments data only when user clicks "Load Assignments"
+  const { data: assignmentsResponse, isLoading, refetch } = useHistoricalStudentDataQuery(false);
+
   useEffect(() => {
-    const fetchAssignments = async () => {
-      const data = await getStudentAssignments();
-      if (data.success && Array.isArray(data.data)) {
-        setAssignments(data.data);
-      }
-    };
-    fetchAssignments();
-  }, []);
+    if (assignmentsResponse?.success && Array.isArray(assignmentsResponse.data)) {
+      setAssignments(assignmentsResponse.data);
+      setIsAssignmentsLoaded(true);
+    }
+  }, [assignmentsResponse]);
+
+  const loadAssignments = async () => {
+    await refetch();
+  };
 
   const filtered = useMemo(() => {
     return assignments.filter((a) =>
@@ -62,7 +67,18 @@ const StudentAssignment = () => {
   return (
     <div className={`p-6 space-y-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Heading */}
-      <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Assignments</h2>
+      <div className="flex justify-between items-center">
+        <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Assignments</h2>
+        {!isAssignmentsLoaded && (
+          <Button
+            onClick={loadAssignments}
+            disabled={isLoading}
+            className={theme === 'dark' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-blue-600 text-white hover:bg-blue-700'}
+          >
+            {isLoading ? 'Loading...' : 'Load Assignments'}
+          </Button>
+        )}
+      </div>
 
       {/* Summary Row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">

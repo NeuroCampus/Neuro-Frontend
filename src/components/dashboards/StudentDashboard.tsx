@@ -1,25 +1,37 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import Sidebar from "../common/Sidebar";
 import Navbar from "../common/Navbar";
-import StudentStats from "../student/StudentStats";
-import StudentTimetable from "../student/StudentTimetable";
-import StudentAttendance from "../student/StudentAttendance";
-import InternalMarks from "../student/InternalMarks";
-import SubmitLeaveRequest from "../student/SubmitLeaveRequest";
-import LeaveStatus from "../student/LeaveStatus";
-import StudentProfile from "../student/StudentProfile";
-import StudentAnnouncements from "../student/StudentAnnouncements";
 import Chat from "../common/Chat";
-import StudentNotifications from "../student/StudentNotifications";
-import FaceRecognition from "../student/FaceRecognition";
-import StudentDashboardOverview from "../student/StudentDashboardOverview";
-import StudentStudyMaterial from "../student/StudentStudyMaterial";
-import StudentAssignments from "../student/StudentAssignments";
-import StudentFees from "../../pages/StudentFees";
-import PaymentSuccess from "../../pages/PaymentSuccess";
-import PaymentCancel from "../../pages/PaymentCancel";
 import { logoutUser } from "../../utils/authService";
 import { useTheme } from "../../context/ThemeContext";
+import { SkeletonCard } from "../ui/skeleton";
+
+// Lazy load student components for code splitting
+const StudentStats = lazy(() => import("../student/StudentStats"));
+const StudentTimetable = lazy(() => import("../student/StudentTimetable"));
+const StudentAttendance = lazy(() => import("../student/StudentAttendance"));
+const InternalMarks = lazy(() => import("../student/InternalMarks"));
+const SubmitLeaveRequest = lazy(() => import("../student/SubmitLeaveRequest"));
+const LeaveStatus = lazy(() => import("../student/LeaveStatus"));
+const StudentProfile = lazy(() => import("../student/StudentProfile"));
+const StudentAnnouncements = lazy(() => import("../student/StudentAnnouncements"));
+const StudentNotifications = lazy(() => import("../student/StudentNotifications"));
+const FaceRecognition = lazy(() => import("../student/FaceRecognition"));
+const StudentDashboardOverview = lazy(() => import("../student/StudentDashboardOverview"));
+const StudentStudyMaterial = lazy(() => import("../student/StudentStudyMaterial"));
+const StudentAssignments = lazy(() => import("../student/StudentAssignments"));
+const StudentFees = lazy(() => import("../../pages/StudentFees"));
+const PaymentSuccess = lazy(() => import("../../pages/PaymentSuccess"));
+const PaymentCancel = lazy(() => import("../../pages/PaymentCancel"));
+
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="p-6 space-y-6">
+    <SkeletonCard />
+    <SkeletonCard />
+    <SkeletonCard />
+  </div>
+);
 
 interface StudentDashboardProps {
   user: any;
@@ -35,14 +47,15 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
   // Check URL path on mount to handle direct navigation (e.g., from Stripe redirects)
   useEffect(() => {
     const path = window.location.pathname;
-    if (path === '/payment/success') {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasPaymentParams = urlParams.has('session_id') || urlParams.has('invoice_id');
+
+    if (path === '/payment/success' || (path === '/' && hasPaymentParams)) {
       setActivePage('payment-success');
-      // Clean up URL to avoid confusion
-      window.history.replaceState({}, '', '/');
-    } else if (path === '/payment/cancel') {
+      // Keep the URL with query parameters so PaymentSuccess component can access them
+    } else if (path === '/payment/cancel' || (path === '/' && urlParams.has('cancel'))) {
       setActivePage('payment-cancel');
-      // Clean up URL to avoid confusion
-      window.history.replaceState({}, '', '/');
+      // Keep the URL with query parameters for PaymentCancel component
     }
   }, []);
 
@@ -165,7 +178,9 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
       )}
 
       {/* Dashboard Content */}
-      <div className="grid gap-6">{renderContent()}</div>
+      <Suspense fallback={<LoadingFallback />}>
+        <div className="grid gap-6">{renderContent()}</div>
+      </Suspense>
     </main>
   </div>
 </div>

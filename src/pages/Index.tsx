@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Login from "../components/auth/Login";
 import OTPPage from "../components/auth/OTPPage";
 import ForgotPasswordFlow from "../components/auth/ForgotPasswordFlow";
@@ -8,14 +9,44 @@ import HODDashboard from "../components/dashboards/HODDashboard";
 import FacultyDashboard from "../components/dashboards/FacultyDashboard";
 import StudentDashboard from "../components/dashboards/StudentDashboard";
 import FeesManagerDashboard from "../pages/FeesManager/FeesManagerDashboard";
+import PaymentSuccess from "./PaymentSuccess";
+import PaymentCancel from "./PaymentCancel";
+import NotFound from "./NotFound";
 import { startTokenRefresh, stopTokenRefresh } from "../utils/authService";
 import { ThemeProvider } from "../context/ThemeContext";
 
 const Index = () => {
+  const location = useLocation();
   const [role, setRole] = useState<string | null>(localStorage.getItem("role"));
   const [page, setPage] = useState<string>("login");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [user, setUser] = useState<any>(null);
+
+  // Check for payment routes first
+  if (location.pathname === '/payment/success') {
+    return (
+      <ThemeProvider>
+        <PaymentSuccess />
+      </ThemeProvider>
+    );
+  }
+
+  if (location.pathname === '/payment/cancel') {
+    return (
+      <ThemeProvider>
+        <PaymentCancel />
+      </ThemeProvider>
+    );
+  }
+
+  // Check for 404 routes
+  if (location.pathname !== '/') {
+    return (
+      <ThemeProvider>
+        <NotFound />
+      </ThemeProvider>
+    );
+  }
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");

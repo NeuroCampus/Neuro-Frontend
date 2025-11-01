@@ -14,7 +14,7 @@ import { Card, CardContent } from "../ui/card";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils"; // Optional, used to conditionally join classes
-import { getStudentStudyMaterials } from "@/utils/student_api";
+import { useStudentStudyMaterialsQuery } from "@/hooks/useApiQueries";
 import { useTheme } from "@/context/ThemeContext";
 
 const initialMaterials = [
@@ -113,17 +113,22 @@ const StudentStudyMaterial = () => {
   const [typeFilter, setTypeFilter] = useState("All Types");
   const [viewBookmarked, setViewBookmarked] = useState(false);
   const [materials, setMaterials] = useState<any[]>([]);
+  const [isMaterialsLoaded, setIsMaterialsLoaded] = useState(false);
   const { theme } = useTheme();
 
+  // Lazy load study materials only when user clicks "Load Materials"
+  const { data: materialsResponse, isLoading, refetch } = useStudentStudyMaterialsQuery(false);
+
   useEffect(() => {
-    const fetchMaterials = async () => {
-      const data = await getStudentStudyMaterials();
-      if (data.success && Array.isArray(data.data)) {
-        setMaterials(data.data);
-      }
-    };
-    fetchMaterials();
-  }, []);
+    if (materialsResponse?.success && Array.isArray(materialsResponse.data)) {
+      setMaterials(materialsResponse.data);
+      setIsMaterialsLoaded(true);
+    }
+  }, [materialsResponse]);
+
+  const loadMaterials = async () => {
+    await refetch();
+  };
 
   const toggleBookmark = (index: number) => {
     const updated = [...materials];
@@ -149,6 +154,15 @@ const StudentStudyMaterial = () => {
       <div className="flex justify-between items-center">
         <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Study Materials</h2>
         <div className="flex items-center space-x-4">
+          {!isMaterialsLoaded && (
+            <Button
+              onClick={loadMaterials}
+              disabled={isLoading}
+              className={theme === 'dark' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-blue-600 text-white hover:bg-blue-700'}
+            >
+              {isLoading ? 'Loading...' : 'Load Materials'}
+            </Button>
+          )}
           <Button
             variant="ghost"
             className={cn(

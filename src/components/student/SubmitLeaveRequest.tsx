@@ -8,7 +8,7 @@ import { PopoverTrigger, Popover, PopoverContent } from "../ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
-import { submitLeaveRequest } from "../../utils/student_api";
+import { useStudentLeaveRequestMutation } from "@/hooks/useApiQueries";
 import { useTheme } from "@/context/ThemeContext";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
@@ -18,9 +18,9 @@ const MySwal = withReactContent(Swal);
 const SubmitLeaveRequest = () => {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [reason, setReason] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { theme } = useTheme();
+  const leaveRequestMutation = useStudentLeaveRequestMutation();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -29,7 +29,6 @@ const SubmitLeaveRequest = () => {
       return;
     }
 
-    setLoading(true);
     setError(null);
 
     const requestData = {
@@ -41,40 +40,29 @@ const SubmitLeaveRequest = () => {
     console.log("Submitting leave request with data:", requestData); // Debug log
 
     try {
-      const response = await submitLeaveRequest(requestData);
+      await leaveRequestMutation.mutateAsync(requestData);
       
-      console.log("Leave request submission response:", response); // Debug log
+      // Show success alert with theme-aware styling
+      const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
       
-      if (response.success) {
-        // Add a small delay to allow the backend to process the request
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Show sweet alert message with theme-aware styling
-        // Get the current theme value directly when showing the alert
-        const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-        
-        await MySwal.fire({
-          title: 'Leave Request Submitted!',
-          text: 'Your leave request has been successfully submitted.',
-          icon: 'success',
-          confirmButtonText: 'OK',
-          confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
-          background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
-          color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-        });
-        
-        // Reset form
-        setDateRange(undefined);
-        setReason("");
-      } else {
-        throw new Error(response.message || "Failed to submit leave request.");
-      }
+      await MySwal.fire({
+        title: 'Leave Request Submitted!',
+        text: 'Your leave request has been successfully submitted.',
+        icon: 'success',
+        confirmButtonText: 'OK',
+        confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+        background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+      });
+      
+      // Reset form
+      setDateRange(undefined);
+      setReason("");
     } catch (error) {
       console.error("Failed to submit leave request:", error);
       setError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
       
       // Show error alert with theme-aware styling
-      // Get the current theme value directly when showing the alert
       const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
       
       await MySwal.fire({
@@ -86,8 +74,6 @@ const SubmitLeaveRequest = () => {
         background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
         color: currentTheme === 'dark' ? '#ffffff' : '#000000',
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -155,9 +141,9 @@ const SubmitLeaveRequest = () => {
           <Button 
             type="submit" 
             className={theme === 'dark' ? 'w-full text-foreground bg-muted hover:bg-accent border-border' : 'w-full text-gray-900 bg-gray-200 hover:bg-gray-300 border-gray-300'} 
-            disabled={loading}
+            disabled={leaveRequestMutation.isPending}
           >
-            {loading ? "Submitting..." : "Submit Request"}
+            {leaveRequestMutation.isPending ? "Submitting..." : "Submit Request"}
           </Button>
         </form>
       </CardContent>
