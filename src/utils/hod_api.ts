@@ -1962,3 +1962,130 @@ export const recordExamFailure = async (data: RecordExamFailureRequest): Promise
     return handleApiError(error, (error as any).response);
   }
 };
+
+// New combined bootstrap endpoints
+export const getFacultyAssignmentsBootstrap = async (): Promise<{
+  success: boolean;
+  message?: string;
+  data?: {
+    profile: {
+      first_name: string;
+      last_name: string;
+      email: string;
+      branch: string;
+      branch_id: string;
+    };
+    semesters: Array<{ id: string; number: number }>;
+    sections: Array<{ id: string; name: string; semester_id: string | null }>;
+    subjects: Array<{ id: string; name: string; subject_code: string; semester_id: string | null }>;
+    faculties: Array<{ id: string; username: string; first_name: string; last_name: string }>;
+    assignments: Array<{
+      id: string;
+      faculty: string;
+      subject: string;
+      section: string;
+      semester: number;
+      faculty_id: string;
+      subject_id: string;
+      section_id: string;
+      semester_id: string;
+    }>;
+  };
+}> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/faculty-assignments-bootstrap/`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
+export const getNotificationsBootstrap = async (): Promise<{
+  success: boolean;
+  message?: string;
+  data?: {
+    profile: {
+      first_name: string;
+      last_name: string;
+      email: string;
+      branch: string;
+      branch_id: string;
+    };
+    received_notifications: Array<{
+      id: string;
+      title: string;
+      message: string;
+      notification_type: string;
+      priority: string;
+      created_at: string;
+      read: boolean;
+    }>;
+    sent_notifications: Array<{
+      id: string;
+      title: string;
+      message: string;
+      notification_type: string;
+      priority: string;
+      created_at: string;
+      recipient_count: number;
+    }>;
+  };
+}> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/notifications-bootstrap/`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
+export const getPromotionBootstrap = async (): Promise<{
+  success: boolean;
+  message?: string;
+  data?: {
+    profile: {
+      first_name: string;
+      last_name: string;
+      email: string;
+      branch: string;
+      branch_id: string;
+    };
+    semesters: Array<{ id: string; number: number }>;
+    sections: Array<{ id: string; name: string; semester_id: string | null }>;
+    students: Array<{
+      usn: string;
+      name: string;
+      semester: string;
+      section: string;
+    }>;
+    eligibility: Array<{
+      semester_id: string;
+      semester_number: number;
+      eligible_count: number;
+      students: Array<{
+        student_id: string;
+        usn: string;
+        name: string;
+        is_eligible: boolean;
+        failed_subjects: string[];
+        attendance_percentage: number;
+      }>;
+    }>;
+  };
+}> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/promotion-bootstrap/`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};

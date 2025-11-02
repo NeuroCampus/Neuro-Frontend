@@ -5,15 +5,18 @@ import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { useToast } from "../ui/use-toast";
-import { sendNotification, getNotifications, manageProfile, getSentNotifications } from "../../utils/hod_api";
+import { sendNotification, getNotificationsBootstrap, manageProfile } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
 
 interface Notification {
   id: string;
   title: string;
   message: string;
-  role: string;
+  notification_type: string;
+  priority: string;
   created_at: string;
+  read?: boolean;
+  recipient_count?: number;
   created_by?: string; // Username of creator
 }
 
@@ -37,28 +40,18 @@ const NotificationsManagement = () => {
     const fetchInitialData = async () => {
       setLoading(true);
       try {
-        const profileResponse = await manageProfile({}, "GET");
-        if (profileResponse.success && profileResponse.data?.branch_id) {
-          const branchId = profileResponse.data.branch_id;
-          setNewNotification((prev) => ({ ...prev, branch_id: branchId }));
-
-          // Fetch received notifications
-          const receivedResponse = await getNotifications(branchId);
-          if (receivedResponse.success && receivedResponse.data) {
-            setNotifications(receivedResponse.data);
-          } else {
-            setError(receivedResponse.message || "Failed to fetch received notifications");
+        const bootstrapResponse = await getNotificationsBootstrap();
+        if (bootstrapResponse.success && bootstrapResponse.data) {
+          const { profile, received_notifications, sent_notifications } = bootstrapResponse.data;
+          
+          if (profile?.branch_id) {
+            setNewNotification((prev) => ({ ...prev, branch_id: profile.branch_id }));
           }
-
-          // Fetch sent notifications
-          const sentResponse = await getSentNotifications(branchId);
-          if (sentResponse.success && sentResponse.data) {
-            setSentNotifications(sentResponse.data);
-          } else {
-            setError(sentResponse.message || "Failed to fetch sent notifications");
-          }
+          
+          setNotifications(received_notifications || []);
+          setSentNotifications(sent_notifications || []);
         } else {
-          setError(profileResponse.message || "Failed to fetch profile");
+          setError(bootstrapResponse.message || "Failed to fetch notifications data");
         }
       } catch (err) {
         setError("Network error");
@@ -106,7 +99,6 @@ const NotificationsManagement = () => {
     }
 
     setValidationError("");
-    setLoading(true);
 
     const roleMap: { [key: string]: string } = {
       "All": "all",
@@ -122,31 +114,47 @@ const NotificationsManagement = () => {
       branch_id: newNotification.branch_id,
     };
 
+    // Optimistic update: immediately add to sent notifications
+    const optimisticNotification: Notification = {
+      id: `temp-${Date.now()}`, // Temporary ID
+      title,
+      message,
+      notification_type: payload.target,
+      priority: "normal",
+      created_at: new Date().toISOString(),
+      recipient_count: 0,
+      created_by: "You",
+    };
+
+    setSentNotifications(prev => [optimisticNotification, ...prev]);
+
+    // Clear form immediately
+    setNewNotification({
+      action: "notify_all",
+      title: "",
+      message: "",
+      target: "",
+      branch_id: newNotification.branch_id,
+    });
+
+    // Show success toast immediately
+    toast({ title: "Success", description: "Notification sent successfully" });
+
     try {
       const response = await sendNotification(payload);
       console.log("Notification response:", response);
+      
       if (response.success) {
-        // Refresh both received and sent notifications
-        const receivedResponse = await getNotifications(newNotification.branch_id);
-        if (receivedResponse.success && receivedResponse.data) {
-          setNotifications(receivedResponse.data);
+        // Refresh data using bootstrap endpoint to get real data
+        const bootstrapResponse = await getNotificationsBootstrap();
+        if (bootstrapResponse.success && bootstrapResponse.data) {
+          const { received_notifications, sent_notifications } = bootstrapResponse.data;
+          setNotifications(received_notifications || []);
+          setSentNotifications(sent_notifications || []);
         }
-
-        const sentResponse = await getSentNotifications(newNotification.branch_id);
-        if (sentResponse.success && sentResponse.data) {
-          setSentNotifications(sentResponse.data);
-        }
-
-        setNewNotification({
-          action: "notify_all",
-          title: "",
-          message: "",
-          target: "",
-          branch_id: newNotification.branch_id,
-        });
-
-        toast({ title: "Success", description: "Notification sent successfully" });
       } else {
+        // Revert optimistic update on failure
+        setSentNotifications(prev => prev.filter(note => note.id !== optimisticNotification.id));
         setError(response.message || "Failed to send notification");
         toast({
           variant: "destructive",
@@ -155,19 +163,19 @@ const NotificationsManagement = () => {
         });
       }
     } catch (err) {
+      // Revert optimistic update on error
+      setSentNotifications(prev => prev.filter(note => note.id !== optimisticNotification.id));
       setError("Network error");
       toast({
         variant: "destructive",
         title: "Error",
         description: "Network error",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
-  const getBadgeColor = (role: string) => {
-    switch (role.toLowerCase()) {
+  const getBadgeColor = (notificationType: string) => {
+    switch (notificationType.toLowerCase()) {
       case "all":
         return theme === 'dark' ? "bg-blue-900 text-blue-200" : "bg-blue-100 text-blue-600";
       case "student":
@@ -227,8 +235,8 @@ const NotificationsManagement = () => {
                       <div className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>{note.message}</div>
                     </td>
                     <td className="py-3">
-                      <span className={`px-3 py-1 text-xs rounded-full ${getBadgeColor(note.role)}`}>
-                        {note.role.charAt(0).toUpperCase() + note.role.slice(1).replace("_", " ")}
+                      <span className={`px-3 py-1 text-xs rounded-full ${getBadgeColor(note.notification_type)}`}>
+                        {note.notification_type.charAt(0).toUpperCase() + note.notification_type.slice(1).replace("_", " ")}
                       </span>
                     </td>
                     <td className="py-3">
@@ -325,8 +333,8 @@ const NotificationsManagement = () => {
                       <div className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>{note.message}</div>
                     </td>
                     <td className="py-3">
-                      <span className={`px-3 py-1 text-xs rounded-full ${getBadgeColor(note.role)}`}>
-                        {note.role.charAt(0).toUpperCase() + note.role.slice(1).replace("_", " ")}
+                      <span className={`px-3 py-1 text-xs rounded-full ${getBadgeColor(note.notification_type)}`}>
+                        {note.notification_type.charAt(0).toUpperCase() + note.notification_type.slice(1).replace("_", " ")}
                       </span>
                     </td>
                     <td className="py-3">

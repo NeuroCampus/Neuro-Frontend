@@ -40,6 +40,7 @@ import {
   demoteStudent,
   bulkDemoteStudents,
   manageStudents,
+  getPromotionBootstrap,
 } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
 
@@ -225,20 +226,19 @@ const PromotionPage = ({ theme }: { theme: string }) => {
     const fetchInitialData = async () => {
       updateState({ isLoading: true });
       try {
-        const profileRes = await manageProfile({}, "GET");
-        if (profileRes.success && profileRes.data?.branch_id) {
-          const branchId = profileRes.data.branch_id;
-          updateState({ branchId });
-
-          const semesterRes = await getSemesters(branchId);
-          if (semesterRes.success && semesterRes.data?.length > 0) {
-            updateState({
-              semesters: semesterRes.data.map((s: any) => ({
-                id: s.id.toString(),
-                number: s.number,
-              })),
+        const bootstrapResponse = await getPromotionBootstrap();
+        if (bootstrapResponse.success && bootstrapResponse.data) {
+          const { profile, semesters, sections } = bootstrapResponse.data;
+          
+          if (profile?.branch_id) {
+            updateState({ 
+              branchId: profile.branch_id,
+              semesters: semesters || [],
+              sections: sections || [],
             });
           }
+        } else {
+          updateState({ errors: [bootstrapResponse.message || "Failed to fetch promotion data"] });
         }
       } catch (err) {
         console.error("Error fetching initial data:", err);
@@ -362,16 +362,33 @@ const PromotionPage = ({ theme }: { theme: string }) => {
       return;
     }
 
-    updateState({ isPromoting: true, errors: [] });
+    const currentSemesterId = state.semesters.find(s => `${s.number}th Semester` === state.selectedSemester)?.id;
+    const nextSemester = state.semesters.find(s => s.number === (state.semesters.find(s => s.id === currentSemesterId)?.number || 0) + 1);
+
+    if (!currentSemesterId || !nextSemester) {
+      updateState({ errors: ["No next semester available"] });
+      return;
+    }
+
+    // Optimistic update: immediately remove promoted students from the list
+    const studentsToPromote = state.selectedStudents.length > 0 && state.selectedStudents.length < state.students.length
+      ? state.students.filter(student => state.selectedStudents.includes(student.usn))
+      : state.students;
+
+    updateState({
+      students: state.students.filter(student => !state.selectedStudents.includes(student.usn)),
+      selectedStudents: [],
+      promotionResults: {
+        message: `${studentsToPromote.length} students promoted successfully`,
+        promoted: studentsToPromote.map(student => ({
+          name: student.name,
+          usn: student.usn,
+          to_semester: nextSemester.number
+        })),
+      },
+    });
+
     try {
-      const currentSemesterId = state.semesters.find(s => `${s.number}th Semester` === state.selectedSemester)?.id;
-      const nextSemester = state.semesters.find(s => s.number === (state.semesters.find(s => s.id === currentSemesterId)?.number || 0) + 1);
-
-      if (!currentSemesterId || !nextSemester) {
-        updateState({ errors: ["No next semester available"] });
-        return;
-      }
-
       let res;
       if (state.selectedStudents.length > 0 && state.selectedStudents.length < state.students.length) {
         // Promote selected students
@@ -395,22 +412,24 @@ const PromotionPage = ({ theme }: { theme: string }) => {
         });
       }
 
-      if (res.success) {
+      if (!res.success) {
+        // Revert optimistic update on failure
         updateState({
-          promotionResults: {
-            message: `${res.promoted?.length || res.data?.promoted?.length || 'All'} students promoted successfully`,
-            promoted: res.promoted || res.data?.promoted,
-          },
-          selectedStudents: [],
+          students: [...state.students, ...studentsToPromote],
+          selectedStudents: state.selectedStudents.length > 0 ? state.selectedStudents : studentsToPromote.map(s => s.usn),
+          promotionResults: null,
+          errors: [res.message || "Failed to promote students"],
         });
-      } else {
-        updateState({ errors: [res.message || "Failed to promote students"] });
       }
     } catch (err) {
       console.error("Error promoting students:", err);
-      updateState({ errors: ["Failed to promote students"] });
-    } finally {
-      updateState({ isPromoting: false });
+      // Revert optimistic update on error
+      updateState({
+        students: [...state.students, ...studentsToPromote],
+        selectedStudents: state.selectedStudents.length > 0 ? state.selectedStudents : studentsToPromote.map(s => s.usn),
+        promotionResults: null,
+        errors: ["Failed to promote students"],
+      });
     }
   };
 
@@ -421,16 +440,30 @@ const PromotionPage = ({ theme }: { theme: string }) => {
       return;
     }
 
-    updateState({ isPromoting: true, errors: [] });
+    const currentSemesterId = state.semesters.find(s => `${s.number}th Semester` === state.selectedSemester)?.id;
+    const nextSemester = state.semesters.find(s => s.number === (state.semesters.find(s => s.id === currentSemesterId)?.number || 0) + 1);
+
+    if (!currentSemesterId || !nextSemester) {
+      updateState({ errors: ["No next semester available"] });
+      return;
+    }
+
+    // Optimistic update: immediately clear the student list and show success
+    const allStudents = [...state.students];
+    updateState({
+      students: [],
+      selectedStudents: [],
+      promotionResults: {
+        message: `${allStudents.length} students promoted successfully`,
+        promoted: allStudents.map(student => ({
+          name: student.name,
+          usn: student.usn,
+          to_semester: nextSemester.number
+        })),
+      },
+    });
+
     try {
-      const currentSemesterId = state.semesters.find(s => `${s.number}th Semester` === state.selectedSemester)?.id;
-      const nextSemester = state.semesters.find(s => s.number === (state.semesters.find(s => s.id === currentSemesterId)?.number || 0) + 1);
-
-      if (!currentSemesterId || !nextSemester) {
-        updateState({ errors: ["No next semester available"] });
-        return;
-      }
-
       const sectionId = state.selectedSection !== "all-sections"
         ? state.sections.find(s => s.name === state.selectedSection)?.id
         : undefined;
@@ -442,21 +475,24 @@ const PromotionPage = ({ theme }: { theme: string }) => {
         ...(sectionId && { section_id: sectionId }),
       });
 
-      if (res.success) {
+      if (!res.success) {
+        // Revert optimistic update on failure
         updateState({
-          promotionResults: {
-            message: `${res.data?.promoted?.length || 'All'} students promoted successfully`,
-            promoted: res.data?.promoted,
-          },
+          students: allStudents,
+          selectedStudents: [],
+          promotionResults: null,
+          errors: [res.message || "Failed to promote students"],
         });
-      } else {
-        updateState({ errors: [res.message || "Failed to promote students"] });
       }
     } catch (err) {
       console.error("Promotion error:", err);
-      updateState({ errors: ["Failed to promote students"] });
-    } finally {
-      updateState({ isPromoting: false });
+      // Revert optimistic update on error
+      updateState({
+        students: allStudents,
+        selectedStudents: [],
+        promotionResults: null,
+        errors: ["Failed to promote students"],
+      });
     }
   };
 
@@ -541,11 +577,16 @@ const PromotionPage = ({ theme }: { theme: string }) => {
               </SelectTrigger>
               <SelectContent className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
                 <SelectItem value="all-sections" className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>All Sections</SelectItem>
-                {state.sections.map((section) => (
-                  <SelectItem key={section.id} value={section.name} className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>
-                    Section {section.name}
-                  </SelectItem>
-                ))}
+                {(() => {
+                  const semesterId = state.semesters.find(s => `${s.number}th Semester` === state.selectedSemester)?.id;
+                  return state.sections
+                    .filter(section => semesterId ? section.semester_id === semesterId : false)
+                    .map((section) => (
+                      <SelectItem key={section.id} value={section.name} className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>
+                        Section {section.name}
+                      </SelectItem>
+                    ));
+                })()}
               </SelectContent>
             </Select>
 
@@ -656,20 +697,19 @@ const DemotionPage = ({ theme }: { theme: string }) => {
     const fetchInitialData = async () => {
       updateState({ isLoading: true });
       try {
-        const profileRes = await manageProfile({}, "GET");
-        if (profileRes.success && profileRes.data?.branch_id) {
-          const branchId = profileRes.data.branch_id;
-          updateState({ branchId });
-
-          const semesterRes = await getSemesters(branchId);
-          if (semesterRes.success && semesterRes.data?.length > 0) {
-            updateState({
-              semesters: semesterRes.data.map((s: any) => ({
-                id: s.id.toString(),
-                number: s.number,
-              })),
+        const bootstrapResponse = await getPromotionBootstrap();
+        if (bootstrapResponse.success && bootstrapResponse.data) {
+          const { profile, semesters, sections } = bootstrapResponse.data;
+          
+          if (profile?.branch_id) {
+            updateState({ 
+              branchId: profile.branch_id,
+              semesters: semesters || [],
+              sections: sections || [],
             });
           }
+        } else {
+          updateState({ errors: [bootstrapResponse.message || "Failed to fetch demotion data"] });
         }
       } catch (err) {
         console.error("Error fetching initial data:", err);
@@ -793,16 +833,34 @@ const DemotionPage = ({ theme }: { theme: string }) => {
       return;
     }
 
-    updateState({ isDemoting: true, errors: [] });
+    const currentSemesterId = state.semesters.find(s => `${s.number}th Semester` === state.selectedSemester)?.id;
+    const prevSemester = state.semesters.find(s => s.number === (state.semesters.find(s => s.id === currentSemesterId)?.number || 0) - 1);
+
+    if (!currentSemesterId || !prevSemester) {
+      updateState({ errors: ["No previous semester available"] });
+      return;
+    }
+
+    // Optimistic update: immediately remove demoted students from the list
+    const studentsToDemote = state.selectedStudents.length > 0 ? state.students.filter(student => state.selectedStudents.includes(student.usn)) : state.students;
+
+    updateState({
+      students: state.students.filter(student => !state.selectedStudents.includes(student.usn)),
+      selectedStudents: [],
+      showBulkDemoteDialog: false,
+      bulkDemoteReason: "",
+      demotionResults: {
+        message: `${studentsToDemote.length} students demoted successfully`,
+        demoted: studentsToDemote.map(student => ({
+          name: student.name,
+          usn: student.usn,
+          to_semester: prevSemester.number
+        })),
+        failed: [],
+      },
+    });
+
     try {
-      const currentSemesterId = state.semesters.find(s => `${s.number}th Semester` === state.selectedSemester)?.id;
-      const prevSemester = state.semesters.find(s => s.number === (state.semesters.find(s => s.id === currentSemesterId)?.number || 0) - 1);
-
-      if (!currentSemesterId || !prevSemester) {
-        updateState({ errors: ["No previous semester available"] });
-        return;
-      }
-
       const sectionId = state.selectedSection !== "all-sections"
         ? state.sections.find(s => s.name === state.selectedSection)?.id
         : undefined;
@@ -815,25 +873,28 @@ const DemotionPage = ({ theme }: { theme: string }) => {
         ...(sectionId && { section_id: sectionId }),
       });
 
-      if (res.success) {
+      if (!res.success) {
+        // Revert optimistic update on failure
         updateState({
-          demotionResults: {
-            message: `${res.data?.demoted_count || 'All'} students demoted successfully`,
-            demoted: res.data?.demoted_students,
-            failed: res.data?.failed_students,
-          },
-          showBulkDemoteDialog: false,
-          bulkDemoteReason: "",
-          selectedStudents: [],
+          students: [...state.students, ...studentsToDemote],
+          selectedStudents: state.selectedStudents.length > 0 ? state.selectedStudents : studentsToDemote.map(s => s.usn),
+          showBulkDemoteDialog: true,
+          bulkDemoteReason: state.bulkDemoteReason,
+          demotionResults: null,
+          errors: [res.message || "Failed to demote students"],
         });
-      } else {
-        updateState({ errors: [res.message || "Failed to demote students"] });
       }
     } catch (err) {
       console.error("Bulk demotion error:", err);
-      updateState({ errors: ["Failed to demote students"] });
-    } finally {
-      updateState({ isDemoting: false });
+      // Revert optimistic update on error
+      updateState({
+        students: [...state.students, ...studentsToDemote],
+        selectedStudents: state.selectedStudents.length > 0 ? state.selectedStudents : studentsToDemote.map(s => s.usn),
+        showBulkDemoteDialog: true,
+        bulkDemoteReason: state.bulkDemoteReason,
+        demotionResults: null,
+        errors: ["Failed to demote students"],
+      });
     }
   };
 
@@ -928,11 +989,16 @@ const DemotionPage = ({ theme }: { theme: string }) => {
               </SelectTrigger>
               <SelectContent className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
                 <SelectItem value="all-sections" className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>All Sections</SelectItem>
-                {state.sections.map((section) => (
-                  <SelectItem key={section.id} value={section.name} className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>
-                    Section {section.name}
-                  </SelectItem>
-                ))}
+                {(() => {
+                  const semesterId = state.semesters.find(s => `${s.number}th Semester` === state.selectedSemester)?.id;
+                  return state.sections
+                    .filter(section => semesterId ? section.semester_id === semesterId : false)
+                    .map((section) => (
+                      <SelectItem key={section.id} value={section.name} className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>
+                        Section {section.name}
+                      </SelectItem>
+                    ));
+                })()}
               </SelectContent>
             </Select>
 

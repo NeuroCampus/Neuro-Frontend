@@ -6,7 +6,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from ".
 import { useToast } from "../ui/use-toast";
 import { Pencil, Trash2, Loader2, CheckCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogFooter } from "../ui/dialog";
-import { manageFacultyAssignments, manageSubjects, manageSections, manageProfile, getSemesters, manageFaculties, getHODSubjectBootstrap } from "../../utils/hod_api";
+import { manageFacultyAssignments, manageSubjects, manageSections, manageProfile, getSemesters, manageFaculties, getFacultyAssignmentsBootstrap } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
 
 // Interfaces
@@ -189,20 +189,35 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
     const fetchInitialData = async () => {
       updateState({ loading: true });
       try {
-        const boot = await getHODSubjectBootstrap();
-        if (!boot.success || !boot.data?.profile?.branch_id) {
+        const boot = await getFacultyAssignmentsBootstrap();
+        if (!boot.success || !boot.data) {
           throw new Error(boot.message || "Failed to bootstrap faculty assignments");
         }
-        // We'll manually map the data instead of using the strict type
-        const semesters = (boot.data.semesters || []).map((s) => ({ 
+        
+        const profile = boot.data.profile;
+        const semesters = boot.data.semesters.map((s) => ({ 
           id: s.id.toString(), 
           number: s.number 
         }));
-        const faculties = boot.data.faculties || [];
-        const assignments = boot.data.assignments || [];
+        const sections = boot.data.sections.map((s) => ({
+          id: s.id,
+          name: s.name,
+          semester_id: s.semester_id?.toString() || '',
+        }));
+        const subjects = boot.data.subjects.map((s) => ({
+          id: s.id,
+          name: s.name,
+          subject_code: s.subject_code,
+          semester_id: s.semester_id?.toString() || '',
+        }));
+        const faculties = boot.data.faculties;
+        const assignments = boot.data.assignments;
+        
         updateState({ 
-          branchId: boot.data.profile.branch_id, 
+          branchId: profile.branch_id, 
           semesters, 
+          sections,
+          subjects,
           faculties, 
           assignments 
         });
@@ -223,47 +238,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
     fetchInitialData();
   }, [toast, setError]);
 
-  // Fetch subjects and sections when semester changes
-  useEffect(() => {
-    const fetchSemesterData = async () => {
-      if (!state.semesterId || !state.branchId) return;
-      updateState({ loading: true });
-      try {
-        const subjectsResponse = await manageSubjects({ branch_id: state.branchId, semester_id: state.semesterId }, "GET");
-        if (!subjectsResponse.success || !subjectsResponse.data) {
-          throw new Error(subjectsResponse.message || "Failed to fetch subjects");
-        }
-        const sectionsResponse = await manageSections({ branch_id: state.branchId, semester_id: state.semesterId }, "GET");
-        if (!sectionsResponse.success || !sectionsResponse.data) {
-          throw new Error(sectionsResponse.message || "Failed to fetch sections");
-        }
-        updateState({
-          subjects: subjectsResponse.data.map((s) => ({
-            id: s.id,
-            name: s.name,
-            subject_code: s.subject_code,
-            semester_id: s.semester_id.toString(),
-          })),
-          sections: sectionsResponse.data.map((s) => ({
-            id: s.id,
-            name: s.name,
-            semester_id: s.semester_id.toString(),
-          })),
-        });
-      } catch (err) {
-        if (isErrorWithMessage(err)) {
-          const errorMessage = err.message || "Network error";
-          toast({ variant: "destructive", title: "Error", description: errorMessage });
-        } else {
-          const errorMessage = "Network error";
-          toast({ variant: "destructive", title: "Error", description: errorMessage });
-        }
-      } finally {
-        updateState({ loading: false });
-      }
-    };
-    fetchSemesterData();
-  }, [state.semesterId, state.branchId, toast]);
+  // Fetch subjects and sections when semester changes - REMOVED: All data loaded in bootstrap
 
   const resetForm = () => {
     updateState({
@@ -288,12 +263,12 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
       toast({ title: "Error", description: "Invalid faculty selected", variant: "destructive" });
       return false;
     }
-    if (!state.subjects.find(s => s.id === state.subjectId && s.semester_id === state.semesterId)) {
-      toast({ title: "Error", description: "Invalid subject for selected semester", variant: "destructive" });
+    if (!state.subjects.find(s => s.id === state.subjectId)) {
+      toast({ title: "Error", description: "Invalid subject selected", variant: "destructive" });
       return false;
     }
-    if (!state.sections.find(s => s.id === state.sectionId && s.semester_id === state.semesterId)) {
-      toast({ title: "Error", description: "Invalid section for selected semester", variant: "destructive" });
+    if (!state.sections.find(s => s.id === state.sectionId)) {
+      toast({ title: "Error", description: "Invalid section selected", variant: "destructive" });
       return false;
     }
     if (!state.semesters.find(s => s.id === state.semesterId)) {
@@ -348,23 +323,80 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
     }
 
     // ✅ Proceed if no duplicates
+    const isEditing = !!state.editingId;
+    const originalAssignments = [...state.assignments];
+    const originalFormState = {
+      facultyId: state.facultyId,
+      subjectId: state.subjectId,
+      sectionId: state.sectionId,
+      semesterId: state.semesterId,
+      editingId: state.editingId,
+    };
+
+    // Optimistic update
+    if (isEditing) {
+      // Update existing assignment optimistically
+      const updatedAssignments = state.assignments.map(assignment =>
+        assignment.id === state.editingId
+          ? {
+              ...assignment,
+              faculty_id: state.facultyId,
+              subject_id: state.subjectId,
+              section_id: state.sectionId,
+              semester_id: state.semesterId,
+              faculty: `${state.faculties.find(f => f.id === state.facultyId)?.first_name} ${state.faculties.find(f => f.id === state.facultyId)?.last_name || ''}`.trim(),
+              subject: state.subjects.find(s => s.id === state.subjectId)?.name || '',
+              section: state.sections.find(s => s.id === state.sectionId)?.name || '',
+              semester: state.semesters.find(s => s.id === state.semesterId)?.number || 0,
+            }
+          : assignment
+      );
+      updateState({ assignments: updatedAssignments });
+    } else {
+      // Add new assignment optimistically
+      const newAssignment: Assignment = {
+        id: `temp-${Date.now()}`, // Temporary ID
+        faculty_id: state.facultyId,
+        subject_id: state.subjectId,
+        section_id: state.sectionId,
+        semester_id: state.semesterId,
+        faculty: `${state.faculties.find(f => f.id === state.facultyId)?.first_name} ${state.faculties.find(f => f.id === state.facultyId)?.last_name || ''}`.trim(),
+        subject: state.subjects.find(s => s.id === state.subjectId)?.name || '',
+        section: state.sections.find(s => s.id === state.sectionId)?.name || '',
+        semester: state.semesters.find(s => s.id === state.semesterId)?.number || 0,
+      };
+      updateState({ assignments: [...state.assignments, newAssignment] });
+    }
+
+    // Clear form optimistically
+    resetForm();
+
+    // Show success toast optimistically
+    toast({
+      title: isEditing ? "Updated" : "Success",
+      description: isEditing
+        ? "Assignment updated successfully"
+        : "Faculty assigned successfully",
+      className: "bg-green-100 text-green-800",
+    });
+
     updateState({ isAssigning: true });
 
     try {
       const data: ManageFacultyAssignmentsRequest = {
-        action: state.editingId ? "update" : "create",
+        action: isEditing ? "update" : "create",
         assignment_id: state.editingId,
-        faculty_id: state.facultyId,
-        subject_id: state.subjectId,
-        semester_id: state.semesterId,
-        section_id: state.sectionId,
+        faculty_id: originalFormState.facultyId,
+        subject_id: originalFormState.subjectId,
+        semester_id: originalFormState.semesterId,
+        section_id: originalFormState.sectionId,
         branch_id: state.branchId,
       };
 
       const response = await manageFacultyAssignments(data, "POST");
 
       if (response.success) {
-        // Refresh assignments list
+        // Refresh assignments list to get real data
         const assignmentsResponse = await manageFacultyAssignments(
           { branch_id: state.branchId },
           "GET"
@@ -373,20 +405,21 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
         if (assignmentsResponse.success && assignmentsResponse.data?.assignments) {
           updateState({ assignments: assignmentsResponse.data.assignments });
         }
-
-        toast({
-          title: state.editingId ? "Updated" : "Success",
-          description: state.editingId
-            ? "Assignment updated successfully"
-            : "Faculty assigned successfully",
-          className: "bg-green-100 text-green-800",
-        });
-
-        resetForm();
+        // Success toast already shown optimistically
       } else {
         throw new Error(response.message || "Failed to save assignment");
       }
     } catch (err) {
+      // Revert optimistic changes
+      updateState({
+        assignments: originalAssignments,
+        facultyId: originalFormState.facultyId,
+        subjectId: originalFormState.subjectId,
+        sectionId: originalFormState.sectionId,
+        semesterId: originalFormState.semesterId,
+        editingId: originalFormState.editingId,
+      });
+
       if (isErrorWithMessage(err)) {
         toast({
           variant: "destructive",
@@ -419,7 +452,27 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
 
   const handleConfirmDelete = async () => {
     if (!state.deleteId || !state.branchId) return;
+
+    // Store original state for potential reversion
+    const originalAssignments = [...state.assignments];
+    const assignmentToDelete = state.assignments.find(a => a.id === state.deleteId);
+
+    // Optimistic update: remove assignment from list
+    const updatedAssignments = state.assignments.filter(a => a.id !== state.deleteId);
+    updateState({ assignments: updatedAssignments });
+
+    // Close modal optimistically
+    updateState({ deleteId: null, openDeleteModal: false });
+
+    // Show success toast optimistically
+    toast({
+      title: "Deleted",
+      description: "Assignment deleted successfully",
+      className: "bg-green-100 text-green-800",
+    });
+
     updateState({ loading: true });
+
     try {
       const data: ManageFacultyAssignmentsRequest = {
         action: "delete",
@@ -428,19 +481,19 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
       };
       const response = await manageFacultyAssignments(data, "POST");
       if (response.success) {
+        // Refresh assignments list to get real data (in case there were any issues)
         const assignmentsResponse = await manageFacultyAssignments({ branch_id: state.branchId }, "GET");
         if (assignmentsResponse.success && assignmentsResponse.data?.assignments) {
           updateState({ assignments: assignmentsResponse.data.assignments });
         }
-        toast({
-          title: "Deleted",
-          description: "Assignment deleted successfully",
-          className: "bg-green-100 text-green-800",
-        });
+        // Success toast already shown optimistically
       } else {
         throw new Error(response.message || "Failed to delete assignment");
       }
     } catch (err) {
+      // Revert optimistic changes
+      updateState({ assignments: originalAssignments });
+
       if (isErrorWithMessage(err)) {
         const errorMessage = err.message || "Network error";
         toast({ variant: "destructive", title: "Error", description: errorMessage });
@@ -451,7 +504,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
         setError(errorMessage);
       }
     } finally {
-      updateState({ deleteId: null, openDeleteModal: false, loading: false });
+      updateState({ loading: false });
     }
   };
 
