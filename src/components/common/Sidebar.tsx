@@ -144,7 +144,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Timetable", page: "timetable" },
     
     // Attendance & Marks
-    { name: "Attendance", page: "attendance" },
+    // { name: "Attendance", page: "attendance" },
  
     { name: "Low Attendance", page: "low-attendance" },
     { name: "Promotion Management", page: "promotion-management" },

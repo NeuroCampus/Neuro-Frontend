@@ -231,6 +231,10 @@ interface ManageStudentsResponse {
     next: string | null;
     previous: string | null;
   };
+  // For paginated GET responses
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
 }
 
 interface ManageBatchesRequest {
@@ -1458,7 +1462,19 @@ export const manageStudents = async (
       body: method === "POST" ? JSON.stringify(data) : undefined,
 
     });
-    return await response.json();
+    const result = await response.json();
+    
+    // Handle paginated response
+    if (method === "GET" && result.results) {
+      return {
+        ...result.results,
+        count: result.count,
+        next: result.next,
+        previous: result.previous
+      };
+    }
+    
+    return result;
   } catch (error: unknown) {
     return handleApiError(error, (error as any).response);
   }
