@@ -14,6 +14,7 @@ import Chat from "../common/Chat";
 import FacultyProfile from "../faculty/facultyProfile";
 import GenerateStatistics from "../faculty/GenerateStatistics";
 import { logoutUser } from "../../utils/authService";
+import { useTheme } from "../../context/ThemeContext";
 
 interface FacultyDashboardProps {
   user: any;
@@ -26,6 +27,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
   );
   const [error, setError] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const { theme } = useTheme();
 
   useEffect(() => {
     localStorage.setItem("facultyActivePage", activePage);
@@ -61,7 +63,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
   const renderContent = () => {
     switch (activePage) {
       case "dashboard":
-        return <FacultyStats setActivePage={setActivePage} />;
+        return <FacultyStats setActivePage={setPage} />;
       case "take-attendance":
         return <TakeAttendance />;
       case "upload-marks":
@@ -85,12 +87,12 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       case "statistics":
         return <GenerateStatistics />;
       default:
-        return <FacultyStats setActivePage={setActivePage} />;
+        return <FacultyStats setActivePage={setPage} />;
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-[#1c1c1e] pt-16">
+    <div className={`flex min-h-screen pt-16 ${theme === 'dark' ? 'dark bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <Sidebar
         role="faculty"
         setPage={handlePageChange}
@@ -100,12 +102,12 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
         toggleCollapse={toggleSidebar}
       />
       <div
-        className={`flex-1 overflow-y-auto bg-[#1c1c1e] thin-scrollbar transition-all duration-300 scroll-smooth ${
+        className={`flex-1 overflow-y-auto transition-all duration-300 scroll-smooth ${
           isSidebarCollapsed ? "ml-16" : "ml-64"
-        }`}
+        } ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}
       >
         {/* Navbar same as HOD, but role="faculty" */}
-        <div className="sticky top-0 z-20 bg-[#1c1c1e] border-b border-gray-700 ">
+        <div className={`sticky top-0 z-20 ${theme === 'dark' ? 'bg-background border-b border-border' : 'bg-white border-b border-gray-200'}`}>
           <Navbar
             role="faculty"
             user={user}
@@ -115,16 +117,18 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
             setPage={handlePageChange}
           />
         </div>
-        <div className="p-6 w-full bg-[#1c1c1e]">
+        <div className={`p-6 w-full ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
           {activePage === "dashboard" && (
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-gray-200">
+              <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                 Dashboard Overview
               </h1>
             </div>
           )}
           {error && (
-            <div className="bg-red-500 text-white p-2 rounded mb-4">{error}</div>
+            <div className={`p-3 rounded-lg mb-4 ${theme === 'dark' ? 'bg-destructive/10 border border-destructive/20 text-destructive-foreground' : 'bg-red-100 border border-red-200 text-red-700'}`}>
+              {error}
+            </div>
           )}
           {renderContent()}
         </div>

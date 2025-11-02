@@ -4,6 +4,7 @@ import { Button } from "../ui/button";
 import { useState, useEffect } from "react";
 import { ProctorStudent } from "../../utils/faculty_api";
 import { useProctorStudentsQuery } from "../../hooks/useApiQueries";
+import { useTheme } from "@/context/ThemeContext";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -22,6 +23,7 @@ const ProctorStudents = () => {
   const [students, setStudents] = useState<ProctorStudent[]>([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const { theme } = useTheme();
 
   useEffect(() => {
     setStudents(proctorStudents);
@@ -48,14 +50,14 @@ const ProctorStudents = () => {
   };
 
   if (loading) {
-    return <div className="p-6 text-center text-gray-600">Loading students...</div>;
+    return <div className={`p-6 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading students...</div>;
   }
   if (error) {
-    return <div className="p-6 bg-red-100 text-red-700 rounded-lg">{error.message}</div>;
+    return <div className={`p-6 rounded-lg ${theme === 'dark' ? 'bg-destructive/20 text-destructive-foreground' : 'bg-red-100 text-red-700'}`}>{error.message}</div>;
   }
 
   return (
-    <Card className="bg-[#1c1c1e] text-gray-200 shadow-md">
+    <Card className={theme === 'dark' ? 'bg-card text-foreground shadow-md' : 'bg-white text-gray-900 shadow-md'}>
       <CardHeader>
         <CardTitle className="text-xl font-semibold">Proctor Students</CardTitle>
       </CardHeader>
@@ -67,29 +69,29 @@ const ProctorStudents = () => {
             setSearch(e.target.value);
             setPage(1);
           }}
-          className="w-full rounded bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white"
+          className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}
         />
         <div className="max-h-max overflow-y-auto overflow-x-auto">
-          <table className="min-w-full border border-gray-200 rounded-md">
-            <thead className="bg-[#1c1c1e] text-gray-200 sticky top-0 z-10">
+          <table className={`min-w-full rounded-md ${theme === 'dark' ? 'border border-border' : 'border border-gray-200'}`}>
+            <thead className={theme === 'dark' ? 'bg-muted text-foreground' : 'bg-gray-100 text-gray-900'}>
               <tr>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">USN</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Name</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Semester</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Attendance %</th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-200">Avg Mark</th>
+                <th className={`px-4 py-2 text-left text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>USN</th>
+                <th className={`px-4 py-2 text-left text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Name</th>
+                <th className={`px-4 py-2 text-left text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Semester</th>
+                <th className={`px-4 py-2 text-left text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Attendance %</th>
+                <th className={`px-4 py-2 text-left text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Avg Mark</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className={theme === 'dark' ? 'divide-border' : 'divide-gray-200'}>
               {paginatedStudents.map((student, index) => (
-                <tr key={index} className="hover:bg-gray-500">
-                  <td className="px-4 py-2 text-sm text-gray-200">{student.usn}</td>
-                  <td className="px-4 py-2 text-sm text-gray-200">{student.name}</td>
-                  <td className="px-4 py-2 text-sm text-gray-200">{student.semester}</td>
-                  <td className="px-4 py-2 text-sm text-gray-200">
+                <tr key={index} className={theme === 'dark' ? 'hover:bg-muted' : 'hover:bg-gray-100'}>
+                  <td className={`px-4 py-2 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.usn}</td>
+                  <td className={`px-4 py-2 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.name}</td>
+                  <td className={`px-4 py-2 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.semester}</td>
+                  <td className={`px-4 py-2 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                     {formatAttendancePercentage(student.attendance)}
                   </td>
-                  <td className="px-4 py-2 text-sm text-gray-200">
+                  <td className={`px-4 py-2 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                     {student.marks && student.marks.length > 0
                       ? (
                           student.marks.reduce((sum, m) => sum + (m.mark || 0), 0) /
@@ -101,7 +103,7 @@ const ProctorStudents = () => {
               ))}
               {paginatedStudents.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="text-center text-gray-200 py-4">
+                  <td colSpan={5} className={`text-center py-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                     No students found.
                   </td>
                 </tr>
@@ -110,13 +112,23 @@ const ProctorStudents = () => {
           </table>
         </div>
         <div className="flex justify-end gap-2 pt-4">
-          <Button variant="outline" onClick={handlePrevious} disabled={page === 1} className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500">
+          <Button 
+            variant="outline" 
+            onClick={handlePrevious} 
+            disabled={page === 1}
+            className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+          >
             Previous
           </Button>
-          <span className="text-sm text-gray-200 self-center">
+          <span className={`text-sm self-center ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
             Page {page} of {totalPages}
           </span>
-          <Button variant="outline" onClick={handleNext} disabled={page === totalPages} className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500">
+          <Button 
+            variant="outline" 
+            onClick={handleNext} 
+            disabled={page === totalPages}
+            className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+          >
             Next
           </Button>
         </div>

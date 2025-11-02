@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { manageStudentLeave, ProctorStudent, LeaveRow } from "@/utils/faculty_api";
 import { useProctorStudentsQuery } from "@/hooks/useApiQueries";
 import { Button } from "../ui/button";
+import { CheckCircle, XCircle } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
 
 const statusColors = {
   APPROVED: "bg-green-100 text-green-700",
@@ -20,6 +22,7 @@ const ManageStudentLeave = () => {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
+  const { theme } = useTheme();
 
   useEffect(() => {
     setStudents(proctorStudents);
@@ -74,13 +77,13 @@ const ManageStudentLeave = () => {
   });
 
   return (
-    <div className="p-6 bg-[#1c1c1e] text-gray-200 min-h-screen">
+    <div className={`p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <h2 className="text-2xl font-semibold mb-2">Leave Approvals</h2>
-      <p className="text-gray-300 mb-6">Review and manage student leave requests.</p>
+      <p className={`mb-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Review and manage student leave requests.</p>
 
       {/* Loading and Errors */}
-      {loading && <p className="text-gray-600 mb-4">Loading leave requests...</p>}
-      {error && <div className="text-red-600 mb-4">{error}</div>}
+      {loading && <p className={`mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading leave requests...</p>}
+      {error && <div className={`mb-4 ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>{error}</div>}
 
       {/* Search and Filter */}
       <div className="flex flex-wrap gap-4 mb-6 items-center">
@@ -93,15 +96,15 @@ const ManageStudentLeave = () => {
             const value = e.target.value.replace(/[^a-zA-Z0-9\s]/g, "");
             setSearch(value);
           }}
-          className="w-64 bg-[#232326] border text-gray-200 outline-none focus:ring-2 focus:ring-white rounded-md px-4 py-2 text-sm"
+          className={theme === 'dark' ? 'w-64 bg-background border border-input text-foreground rounded-md px-4 py-2 text-sm' : 'w-64 bg-white border border-gray-300 text-gray-900 rounded-md px-4 py-2 text-sm'}
         />
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="bg-[#232326] text-gray-200 rounded-md px-3 py-2 text-sm"
+          className={theme === 'dark' ? 'bg-background border border-input text-foreground rounded-md px-3 py-2 text-sm' : 'bg-white border border-gray-300 text-gray-900 rounded-md px-3 py-2 text-sm'}
         >
           {statusOptions.map((status) => (
-            <option key={status} value={status}>
+            <option key={status} value={status} className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>
               {status === "All"
                 ? "All Statuses"
                 : status.charAt(0) + status.slice(1).toLowerCase()}
@@ -111,13 +114,13 @@ const ManageStudentLeave = () => {
       </div>
 
       {/* Leave Requests Table */}
-      <div className="bg-[#1c1c1e] text-gray-200 p-4 rounded-md shadow text-sm border border-gray-200">
+      <div className={`p-4 rounded-md shadow text-sm ${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'}`}>
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-base font-semibold text-gray-200">Leave Requests</h3>
+          <h3 className={`text-base font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Requests</h3>
         </div>
         <table className="w-full">
           <thead>
-            <tr className="text-left border-b text-gray-200 text-xs">
+            <tr className={`text-left border-b text-xs ${theme === 'dark' ? 'border-border text-foreground' : 'border-gray-200 text-gray-900'}`}>
               <th className="pb-2">Student</th>
               <th>Period</th>
               <th>Reason</th>
@@ -128,17 +131,17 @@ const ManageStudentLeave = () => {
           <tbody>
             {filteredRows.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-3 text-center text-gray-200">
+                <td colSpan={5} className={`py-3 text-center ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                   No leave requests found
                 </td>
               </tr>
             ) : (
               filteredRows.map((row: LeaveRow) => (
-                <tr key={row.id} className="border-b last:border-none text-sm">
+                <tr key={row.id} className={`border-b last:border-none text-sm ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
                   <td className="py-3">
                     <div>
-                      <p className="font-medium text-gray-200">{row.student_name}</p>
-                      <p className="text-xs text-gray-200">{row.usn}</p>
+                      <p className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{row.student_name}</p>
+                      <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>{row.usn}</p>
                     </div>
                   </td>
                   <td>{row.start_date} to {row.end_date}</td>
@@ -151,23 +154,26 @@ const ManageStudentLeave = () => {
                   <td>
                     {row.status === "PENDING" ? (
                       <div className="flex gap-2">
-                        <Button
+                        <button
                           onClick={() => handleAction(row.id, "APPROVE")}
-                          className="flex items-center gap-1 border border-green-500 text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 px-3 py-1.5 rounded-md transition"
+                          className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-green-500 text-green-400 bg-green-500/10 hover:bg-green-500/20' : 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100'}`}
                           disabled={actionLoading === row.id + "APPROVE"}
                         >
+                          <CheckCircle className={`w-4 h-4 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
                           Approve
-                        </Button>
-                        <Button
+                        </button>
+
+                        <button
                           onClick={() => handleAction(row.id, "REJECT")}
-                          className="flex items-center gap-1 border border-red-500 text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-md transition"
+                          className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-red-500 text-red-400 bg-red-500/10 hover:bg-red-500/20' : 'border-red-500 text-red-700 bg-red-50 hover:bg-red-100'}`}
                           disabled={actionLoading === row.id + "REJECT"}
                         >
+                          <XCircle className={`w-4 h-4 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`} />
                           Reject
-                        </Button>
+                        </button>
                       </div>
                     ) : (
-                      <span className="text-xs text-gray-200">No action needed</span>
+                      <span className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>No action needed</span>
                     )}
                   </td>
                 </tr>

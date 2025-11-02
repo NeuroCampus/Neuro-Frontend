@@ -26,6 +26,7 @@ import {
   InternalMarkStudent
 } from "../../utils/faculty_api";
 import { useFacultyAssignmentsQuery } from "../../hooks/useApiQueries";
+import { useTheme } from "@/context/ThemeContext";
 
 const MySwal = withReactContent(Swal);
 
@@ -81,6 +82,7 @@ const UploadMarks = () => {
   const [tabValue, setTabValue] = useState("manual");
   const [dragActive, setDragActive] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const { theme } = useTheme();
 
   // Update dropdown data when assignments change
   useEffect(() => {
@@ -196,7 +198,7 @@ const UploadMarks = () => {
     setErrorMessage("");
     const reader = new FileReader();
     reader.onload = async (event) => {
-      let data: any[] = [];
+      let data: (string | number)[][] = [];
       if (isCSV) {
         const text = event.target?.result as string;
         const parsed = Papa.parse(text, { skipEmptyLines: true });
@@ -207,13 +209,13 @@ const UploadMarks = () => {
         const sheet = workbook.Sheets[sheetName];
         data = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
       }
-      const header = data[0]?.map((cell: any) => String(cell).trim().toLowerCase());
+      const header = data[0]?.map((cell: string | number) => String(cell).trim().toLowerCase());
       const expectedHeader = REQUIRED_HEADERS.map(h => h.toLowerCase());
       if (JSON.stringify(header) !== JSON.stringify(expectedHeader)) {
         setErrorMessage('Invalid header. Required: usn, name, marks');
         return;
       }
-      const firstRow = data[1]?.map((cell: any) => String(cell).trim());
+      const firstRow = data[1]?.map((cell: string | number) => String(cell).trim());
       if (!firstRow || firstRow.length < 3) {
         setErrorMessage("Invalid first row. It must contain at least 3 values: USN, Name, and Marks.");
         return;
@@ -223,7 +225,7 @@ const UploadMarks = () => {
         return;
       }
       const [usn, name, marksStr] = firstRow;
-      const [marks, total] = marksStr.split("/").map((s: string) => s.trim());
+      const [marks, total] = (marksStr as string).split("/").map((s: string) => s.trim());
       if (isNaN(parseInt(marks, 10)) || isNaN(parseInt(total, 10))) {
         setErrorMessage(`Invalid Marks or Total in first row. Expected: Numeric values`);
         return;
@@ -248,32 +250,39 @@ const UploadMarks = () => {
         studentsList.forEach((student: ClassStudent) => {
           usnToIdMap.set(student.usn.toUpperCase(), student.id);
         });
-        const studentsData = data.slice(1).map((row: any[]) => {
+        const studentsData = data.slice(1).map((row: (string | number)[]) => {
           const [usn, name, marksStr] = row;
-          const [marks, total] = marksStr.split("/").map((s: string) => s.trim());
+          const [marks, total] = (marksStr as string).split("/").map((s: string) => s.trim());
           const normalizedMarks = normalizeMarks(marks);
           if (!validateMarks(normalizedMarks, total)) {
             throw new Error(`Invalid marks or total for student ${name}`);
           }
-          const studentId = usnToIdMap.get(usn.toUpperCase());
+          const studentId = (usn as string).toUpperCase();
           if (!studentId) {
             throw new Error(`Student with USN ${usn} not found in the selected class.`);
           }
           return {
             id: studentId,
-            usn: usn.toUpperCase(),
+            usn: (usn as string).toUpperCase(),
             name,
             marks: normalizedMarks,
             total,
             isEditing: false,
           };
         });
-        setStudents(studentsData);
+        setStudents(studentsData.map(item => ({
+          id: typeof item.id === 'string' ? parseInt(item.id, 10) : item.id,
+          usn: item.usn as string,
+          name: item.name as string,
+          marks: item.marks,
+          total: item.total as string,
+          isEditing: item.isEditing
+        })));
         setCurrentPage(1);
         setTabValue("manual");
         setErrorMessage("");
-      } catch (err: any) {
-        setErrorMessage(err.message);
+      } catch (err: unknown) {
+        setErrorMessage((err as { message: string }).message);
         console.error("Error in handleFileChange:", err);
       }
     };
@@ -323,7 +332,7 @@ const UploadMarks = () => {
     setDragActive(false);
     const file = e.dataTransfer.files?.[0];
     if (file) {
-      const event = { target: { files: [file] } } as React.ChangeEvent<HTMLInputElement>;
+      const event = { target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>;
       handleFileChange(event);
     }
   };
@@ -402,26 +411,26 @@ const UploadMarks = () => {
           isEditing: false
         })));
         setCurrentPage(1);
-      } catch (err: any) {
+      } catch (err: unknown) {
         setStudents([]);
-        setErrorMessage(err?.message || "Failed to fetch students/marks");
+        setErrorMessage((err as { message?: string })?.message || "Failed to fetch students/marks");
       }
       setLoadingStudents(false);
     }
   };
 
   return (
-    <Card className="bg-[#1c1c1e] text-gray-200 shadow-md">
+    <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
       <CardHeader>
         <CardTitle className="text-xl font-bold">Upload Marks</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Select onValueChange={value => handleSelectChange('branch_id', Number(value))}>
-            <SelectTrigger className="bg-[#232326] text-gray-200">
+            <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               <SelectValue placeholder="Select Branch" />
             </SelectTrigger>
-            <SelectContent className="bg-[#232326] text-gray-200">
+            <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               {dropdownData.branch.map((item) => (
                 <SelectItem key={item.id} value={item.id.toString()}>
                   {item.name}
@@ -430,10 +439,10 @@ const UploadMarks = () => {
             </SelectContent>
           </Select>
           <Select onValueChange={value => handleSelectChange('semester_id', Number(value))}>
-            <SelectTrigger className="bg-[#232326] text-gray-200">
+            <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               <SelectValue placeholder="Select Semester" />
             </SelectTrigger>
-            <SelectContent className="bg-[#232326] text-gray-200">
+            <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               {dropdownData.semester.map((item) => (
                 <SelectItem key={item.id} value={item.id.toString()}>
                   {item.number}
@@ -442,10 +451,10 @@ const UploadMarks = () => {
             </SelectContent>
           </Select>
           <Select onValueChange={value => handleSelectChange('section_id', Number(value))}>
-            <SelectTrigger className="bg-[#232326] text-gray-200">
+            <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               <SelectValue placeholder="Select Section" />
             </SelectTrigger>
-            <SelectContent className="bg-[#232326] text-gray-200">
+            <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               {dropdownData.section.map((item) => (
                 <SelectItem key={item.id} value={item.id.toString()}>
                   {item.name}
@@ -454,10 +463,10 @@ const UploadMarks = () => {
             </SelectContent>
           </Select>
           <Select onValueChange={value => handleSelectChange('subject_id', Number(value))}>
-            <SelectTrigger className="bg-[#232326] text-gray-200">
+            <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               <SelectValue placeholder="Select Subject" />
             </SelectTrigger>
-            <SelectContent className="bg-[#232326] text-gray-200">
+            <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               {dropdownData.subject.map((item) => (
                 <SelectItem key={item.id} value={item.id.toString()}>
                   {item.name}
@@ -466,10 +475,10 @@ const UploadMarks = () => {
             </SelectContent>
           </Select>
           <Select onValueChange={value => handleSelectChange('testType', value)}>
-            <SelectTrigger className="bg-[#232326] text-gray-200">
+            <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               <SelectValue placeholder="Select TestType" />
             </SelectTrigger>
-            <SelectContent className="bg-[#232326] text-gray-200">
+            <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               {dropdownData.testType.map((item) => (
                 <SelectItem key={item} value={item}>
                   {item}
@@ -478,14 +487,24 @@ const UploadMarks = () => {
             </SelectContent>
           </Select>
         </div>
-        <Tabs value={tabValue} onValueChange={setTabValue} className="text-gray-200">
-          <TabsList className="mt-2 bg-[#232326] text-gray-200 rounded-md">
-            <TabsTrigger value="manual">Manual Entry</TabsTrigger>
-            <TabsTrigger value="file">File Upload</TabsTrigger>
+        <Tabs value={tabValue} onValueChange={setTabValue} className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
+          <TabsList className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-gray-100 border border-gray-300 text-gray-900'}>
+            <TabsTrigger 
+              value="manual" 
+              className={`data-[state=active]:bg-[#a259ff] data-[state=active]:text-white ${theme === 'dark' ? 'data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground' : 'data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
+            >
+              Manual Entry
+            </TabsTrigger>
+            <TabsTrigger 
+              value="file" 
+              className={`data-[state=active]:bg-[#a259ff] data-[state=active]:text-white ${theme === 'dark' ? 'data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground' : 'data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
+            >
+              File Upload
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="manual">
-            <div className="border border-[#2e2e30] rounded-lg overflow-hidden bg-[#1c1c1e]">
-              <div className="grid grid-cols-5 bg-[#1c1c1e] font-semibold text-sm p-2 border-b border-[#2e2e30]">
+            <div className={`border rounded-lg overflow-hidden ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
+              <div className={`grid grid-cols-5 font-semibold text-sm p-2 border-b ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}>
                 <div>#</div>
                 <div>USN</div>
                 <div>Name</div>
@@ -493,16 +512,16 @@ const UploadMarks = () => {
                 <div>Action</div>
               </div>
               {loadingStudents ? (
-                <div className="text-center text-gray-400 text-sm p-4">Loading students...</div>
+                <div className={`text-center text-sm p-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Loading students...</div>
               ) : currentStudents.length === 0 ? (
-                <div className="text-center text-gray-400 text-sm p-4">
+                <div className={`text-center text-sm p-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                   No students found for selected criteria.
                 </div>
               ) : (
                 currentStudents.map((student, index) => (
                   <div
                     key={student.id}
-                    className="grid grid-cols-5 items-center p-2 border-b border-[#2e2e30] text-sm"
+                    className={`grid grid-cols-5 items-center p-2 border-b text-sm ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}
                   >
                     <div>{indexOfFirstStudent + index + 1}</div>
                     <div>{student.usn}</div>
@@ -514,7 +533,7 @@ const UploadMarks = () => {
                             type="text"
                             value={student.marks}
                             onChange={(e) => handleMarksChange(index, "marks", e.target.value)}
-                            className="w-16 h-8 bg-[#1c1c1e] border border-[#2e2e30] text-gray-200"
+                            className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}
                             placeholder="Marks"
                           />
                           <span>/</span>
@@ -522,7 +541,7 @@ const UploadMarks = () => {
                             type="text"
                             value={student.total}
                             onChange={(e) => handleMarksChange(index, "total", e.target.value)}
-                            className="w-16 h-8 bg-[#1c1c1e] border border-[#2e2e30] text-gray-200"
+                            className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}
                             placeholder="Total"
                           />
                         </>
@@ -537,14 +556,13 @@ const UploadMarks = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="border border-[#3b82f6] text-blue-400 hover:bg-blue-500/20"
-                          onClick={() => saveRow(index)}
+                          className={theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}
                         >
                           Save
                         </Button>
                       ) : (
                         <Pencil
-                          className="w-4 h-4 cursor-pointer text-gray-400 hover:text-gray-200"
+                          className={`w-4 h-4 cursor-pointer ${theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-500 hover:text-gray-900'}`}
                           onClick={() => toggleEdit(index)}
                         />
                       )}
@@ -553,7 +571,7 @@ const UploadMarks = () => {
                 ))
               )}
             </div>
-            <div className="flex justify-between items-center mt-4 px-2 text-sm text-gray-300">
+            <div className={`flex justify-between items-center mt-4 px-2 text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               <span>
                 Page {currentPage} of {totalPages}
               </span>
@@ -561,7 +579,7 @@ const UploadMarks = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                  className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out"
                   onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
                 >
@@ -570,7 +588,7 @@ const UploadMarks = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                  className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out"
                   onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
                 >
@@ -580,10 +598,10 @@ const UploadMarks = () => {
             </div>
           </TabsContent>
           <TabsContent value="file">
-            <div className="bg-[#232326] border border-[#2e2e30] rounded-lg p-6 max-w-2xl mx-auto space-y-6">
+            <div className={`border rounded-lg p-6 max-w-2xl mx-auto space-y-6 ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
               <div>
                 <h2 className="text-lg font-semibold">Upload User Data</h2>
-                <p className="text-sm text-gray-400">Upload CSV or Excel files to bulk enroll users</p>
+                <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Upload CSV or Excel files to bulk enroll users</p>
               </div>
               <div
                 onDrop={handleDrop}
@@ -591,22 +609,24 @@ const UploadMarks = () => {
                 onDragLeave={handleDragLeave}
                 className={`border rounded-md p-6 text-center space-y-4 transition-all duration-300 ${
                   dragActive
-                    ? "border-blue-400 bg-blue-900/30"
-                    : "border-dashed border-[#2e2e30] bg-[#1c1c1e]"
+                    ? (theme === 'dark' ? "border-primary bg-primary/10" : "border-blue-400 bg-blue-50")
+                    : (theme === 'dark' ? "border-dashed border-border bg-muted" : "border-dashed border-gray-300 bg-gray-50")
                 }`}
               >
                 <UploadCloud
-                  className={`mx-auto h-8 w-8 text-gray-400 transition-transform duration-300 ${
-                    dragActive ? "scale-110 rotate-6 text-blue-400" : ""
+                  className={`mx-auto h-8 w-8 transition-transform duration-300 ${
+                    dragActive 
+                      ? (theme === 'dark' ? "scale-110 text-primary" : "scale-110 text-blue-400") 
+                      : (theme === 'dark' ? "text-muted-foreground" : "text-gray-400")
                   }`}
                 />
-                <p className="text-sm text-gray-300">Drag & drop file here</p>
-                <p className="text-xs text-gray-500">Supports CSV, XLS, XLSX (max 5MB)</p>
+                <p className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>Drag & drop file here</p>
+                <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Supports CSV, XLS, XLSX (max 5MB)</p>
                 {!selectedFile ? (
                   <div className="flex justify-center">
                     <button
                       onClick={() => document.getElementById("fileInput")?.click()}
-                      className="bg-transparent text-sm border border-[#2e2e30] px-4 py-2 rounded-md hover:bg-[#2c2c2e] transition"
+                      className={`px-4 py-2 rounded-md transition ${theme === 'dark' ? 'border border-border hover:bg-accent' : 'border border-gray-300 hover:bg-gray-100'}`}
                     >
                       Select File
                     </button>
@@ -620,21 +640,21 @@ const UploadMarks = () => {
                   </div>
                 ) : (
                   <div className="flex items-center justify-center gap-2 mt-2">
-                    <p className="text-sm text-green-400">{selectedFile.name}</p>
+                    <p className={`text-sm ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{selectedFile.name}</p>
                     <Button variant="ghost" size="sm" onClick={handleClearFile}>
-                      <X className="h-4 w-4 text-gray-400 hover:text-gray-200" />
+                      <X className={`h-4 w-4 ${theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-500 hover:text-gray-900'}`} />
                     </Button>
                   </div>
                 )}
               </div>
               {errorMessage && (
-                <div className="text-red-400 text-sm font-medium text-center bg-red-900/30 border border-red-800 p-2 rounded-md">
+                <div className={`text-sm font-medium text-center p-2 rounded-md ${theme === 'dark' ? 'text-destructive border border-destructive/30 bg-destructive/10' : 'text-red-600 border border-red-200 bg-red-50'}`}>
                   {errorMessage}
                 </div>
               )}
-              <div className="text-sm text-gray-300 space-y-1">
+              <div className={`text-sm space-y-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
                 <p className="font-semibold">Upload Instructions</p>
-                <ul className="list-disc list-inside text-gray-400">
+                <ul className={`list-disc list-inside ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                   <li>Use the provided template for proper data formatting</li>
                   <li>
                     Required columns: <strong>usn</strong>, <strong>name</strong>, <strong>marks</strong>
@@ -643,7 +663,7 @@ const UploadMarks = () => {
                 </ul>
                 <button
                   onClick={handleDownloadTemplate}
-                  className="text-blue-400 hover:underline text-sm"
+                  className={`text-sm ${theme === 'dark' ? 'text-primary hover:underline' : 'text-blue-600 hover:underline'}`}
                 >
                   Download Template
                 </button>
@@ -652,7 +672,11 @@ const UploadMarks = () => {
           </TabsContent>
         </Tabs>
         <div className="flex justify-end mt-4">
-          <Button className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" onClick={handleSubmit} disabled={savingMarks}>
+          <Button 
+            className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out shadow-md"
+            onClick={handleSubmit} 
+            disabled={savingMarks}
+          >
             {savingMarks ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

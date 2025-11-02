@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { getFacultyProfile, manageProfile } from "../../utils/faculty_api";
+import { useTheme } from "@/context/ThemeContext";
 
 const FacultyProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -22,6 +23,7 @@ const FacultyProfile = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
+  const { theme } = useTheme();
 
   useEffect(() => {
     setLoading(true);
@@ -116,10 +118,7 @@ const FacultyProfile = () => {
         first_name: formData.firstName,
         last_name: formData.lastName,
         email: formData.email,
-        mobile: formData.mobile,
-        address: formData.address,
-        bio: formData.bio,
-        // profile_picture: ...
+        // mobile, address, and bio are not part of the API request
       });
 
       if (res.success) {
@@ -134,24 +133,24 @@ const FacultyProfile = () => {
   };
 
   if (loading) {
-    return <div className="p-6 text-center text-gray-600">Loading profile...</div>;
+    return <div className={`p-6 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading profile...</div>;
   }
 
   return (
-    <Card className="max-w-2xl mx-auto mt-10 bg-[#1c1c1e] text-gray-200">
+    <Card className={theme === 'dark' ? 'max-w-2xl mx-auto mt-10 bg-card text-foreground' : 'max-w-2xl mx-auto mt-10 bg-white text-gray-900'}>
       <CardHeader className="flex flex-col items-start gap-2">
         <div className="flex justify-between items-center w-full">
           <div>
             <CardTitle className="text-xl font-semibold">
               Profile Information
             </CardTitle>
-            <p className="text-sm text-gray-300">
+            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               View and update your personal information
             </p>
           </div>
           <Button
             variant="outline"
-            className="text-sm px-4 py-1.5 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+            className="text-sm px-4 py-1.5 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out shadow-md"
             onClick={() => {
               if (isEditing) handleSave();
               else setIsEditing(true);
@@ -163,104 +162,105 @@ const FacultyProfile = () => {
       </CardHeader>
 
       <CardContent className="pt-2">
-        {error && <div className="text-red-600 mb-2">{error}</div>}
-        {success && <div className="text-green-600 mb-2">{success}</div>}
+        {error && <div className={`mb-2 ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>{error}</div>}
+        {success && <div className={`mb-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{success}</div>}
 
         <div className="flex flex-col items-center mb-6 mt-4">
-          <Avatar className="h-16 w-16 mb-2">
-            <AvatarFallback>FA</AvatarFallback>
-          </Avatar>
+          <div className={`w-16 h-16 rounded-full bg-[#a259ff] text-white flex items-center justify-center text-xl font-semibold mb-2`}>
+            {formData.firstName[0] || ""}
+            {formData.lastName[0] || ""}
+          </div>
           <div className="text-base font-medium">
             {formData.firstName} {formData.lastName}
           </div>
-          <div className="text-sm text-gray-300">Faculty</div>
+          <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Faculty</div>
         </div>
 
         <div className="space-y-4">
           {/* First Name */}
           <div>
-            <label className="block text-sm text-gray-200 mb-1">First Name</label>
+            <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>First Name</label>
             <Input
               value={formData.firstName}
               onChange={(e) => handleChange("firstName", e.target.value)}
               disabled={!isEditing}
-              className="w-full bg-[#232326] text-gray-200 border border-gray-600 focus:border-gray-400 focus:ring-0"
+              className={theme === 'dark' ? 'w-full bg-background border border-input text-foreground' : 'w-full bg-white border border-gray-300 text-gray-900'}
               placeholder="Enter your first name"
             />
             {localErrors.firstName && (
-              <p className="text-red-500 text-xs mt-1">{localErrors.firstName}</p>
+              <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.firstName}</p>
             )}
           </div>
 
           {/* Last Name */}
           <div>
-            <label className="block text-sm text-gray-200 mb-1">Last Name</label>
+            <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Last Name</label>
             <Input
               value={formData.lastName}
               onChange={(e) => handleChange("lastName", e.target.value)}
               disabled={!isEditing}
-              className="w-full bg-[#232326] text-gray-200 border border-gray-600 focus:border-gray-400 focus:ring-0"
+              className={theme === 'dark' ? 'w-full bg-background border border-input text-foreground' : 'w-full bg-white border border-gray-300 text-gray-900'}
               placeholder="Enter your last name"
             />
             {localErrors.lastName && (
-              <p className="text-red-500 text-xs mt-1">{localErrors.lastName}</p>
+              <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.lastName}</p>
             )}
           </div>
 
           {/* Email */}
           <div>
-            <label className="block text-sm text-gray-200 mb-1">Email Address</label>
+            <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Email Address</label>
             <Input
               value={formData.email}
               onChange={(e) => handleChange("email", e.target.value)}
               disabled={!isEditing}
-              className="w-full bg-[#232326] text-gray-200 border border-gray-600 focus:border-gray-400 focus:ring-0"
+              className={theme === 'dark' ? 'w-full bg-background border border-input text-foreground' : 'w-full bg-white border border-gray-300 text-gray-900'}
               placeholder="Enter a valid email"
             />
             {localErrors.email && (
-              <p className="text-red-500 text-xs mt-1">{localErrors.email}</p>
+              <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.email}</p>
             )}
           </div>
 
           {/* Mobile */}
           <div>
-            <label className="block text-sm text-gray-200 mb-1">Mobile Number</label>
+            <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Mobile Number</label>
             <Input
               value={formData.mobile}
               onChange={(e) => handleChange("mobile", e.target.value)}
               disabled={!isEditing}
               maxLength={10}
-              className="w-full bg-[#232326] text-gray-200 border border-gray-600 focus:border-gray-400 focus:ring-0"
+              className={theme === 'dark' ? 'w-full bg-background border border-input text-foreground' : 'w-full bg-white border border-gray-300 text-gray-900'}
               placeholder="Enter 10-digit mobile number"
             />
             {localErrors.mobile && (
-              <p className="text-red-500 text-xs mt-1">{localErrors.mobile}</p>
+              <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.mobile}</p>
             )}
           </div>
 
           {/* Address */}
           <div>
-            <label className="block text-sm text-gray-200 mb-1">Address</label>
+            <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Address</label>
             <Input
               value={formData.address}
               onChange={(e) => handleChange("address", e.target.value)}
               disabled={!isEditing}
-              className="w-full bg-[#232326] text-gray-200 border border-gray-600 focus:border-gray-400 focus:ring-0"
+              className={theme === 'dark' ? 'w-full bg-background border border-input text-foreground' : 'w-full bg-white border border-gray-300 text-gray-900'}
               placeholder="Enter your address (5–200 characters)"
             />
             {localErrors.address && (
-              <p className="text-red-500 text-xs mt-1">{localErrors.address}</p>
+              <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.address}</p>
             )}
           </div>
 
           {/* Bio */}
           <div>
-            <label className="block text-sm text-gray-200 mb-1">Bio</label>
+            <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Bio</label>
             <Textarea
               value={formData.bio}
               onChange={(e) => handleChange("bio", e.target.value)}
               disabled={!isEditing}
-              className="w-full bg-[#232326] text-gray-200 resize-none overflow-y-auto thin-scrollbar"
+              className={`w-full resize-none overflow-y-auto thin-scrollbar ${theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}`}
               placeholder="Tell us about yourself (10–300 characters)"
               rows={1}
               style={{ maxHeight: "200px" }}
@@ -271,7 +271,7 @@ const FacultyProfile = () => {
               }}
             />
             {localErrors.bio && (
-              <p className="text-red-500 text-xs mt-1">{localErrors.bio}</p>
+              <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.bio}</p>
             )}
           </div>
         </div>

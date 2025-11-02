@@ -4,10 +4,12 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Button } from '../ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Card, CardContent } from '../ui/card';
-import { Circle, CalendarCheck2, CalendarX2 } from 'lucide-react';
+import { Circle, CalendarCheck2, CalendarX2, Filter } from 'lucide-react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 import { applyLeave, getApplyLeaveBootstrap, FacultyLeaveRequest, FacultyAssignment } from '../../utils/faculty_api';
+import { useTheme } from "@/context/ThemeContext";
 
 const statusStyles = {
   Pending: 'text-yellow-700 bg-yellow-100',
@@ -34,10 +36,14 @@ const LeaveRequests = () => {
   const [endDate, setEndDate] = useState('');
   const [reason, setReason] = useState('');
   const [leaveList, setLeaveList] = useState<LeaveRequestDisplay[]>([]);
+  const [filteredLeaveList, setFilteredLeaveList] = useState<LeaveRequestDisplay[]>([]);
+  const [filterStatus, setFilterStatus] = useState<'All' | 'Pending' | 'Approved' | 'Rejected'>('All');
+  const [filterOpen, setFilterOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const { theme } = useTheme();
 
   // Fetch branches and leave history on mount
   useEffect(() => {
@@ -77,6 +83,15 @@ const LeaveRequests = () => {
       .catch(() => setError('Failed to load data'))
       .finally(() => setLoading(false));
   }, []);
+
+  // Update filtered leave list when leave list or filter changes
+  useEffect(() => {
+    if (filterStatus === 'All') {
+      setFilteredLeaveList(leaveList);
+    } else {
+      setFilteredLeaveList(leaveList.filter(leave => leave.status === filterStatus));
+    }
+  }, [leaveList, filterStatus]);
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -128,30 +143,30 @@ const LeaveRequests = () => {
     switch (status) {
       case 'Pending':
         return (
-          <div className={`${baseClass} bg-yellow-100 text-yellow-800`}>
-            <Circle className="w-3.5 h-3.5 text-yellow-500" fill="currentColor" />
+          <div className={`${baseClass} ${theme === 'dark' ? 'bg-yellow-900/30 text-yellow-500' : 'bg-yellow-100 text-yellow-800'}`}>
+            <Circle className={`w-3.5 h-3.5 ${theme === 'dark' ? 'text-yellow-500' : 'text-yellow-500'}`} fill="currentColor" />
             Pending
           </div>
         );
       case 'Approved':
         return (
-          <div className={`${baseClass} bg-green-100 text-green-700`}>
-            <CalendarCheck2 className="w-4 h-4 text-green-600" />
+          <div className={`${baseClass} ${theme === 'dark' ? 'bg-green-900/30 text-green-500' : 'bg-green-100 text-green-700'}`}>
+            <CalendarCheck2 className={`w-4 h-4 ${theme === 'dark' ? 'text-green-500' : 'text-green-600'}`} />
             Approved
           </div>
         );
       case 'Rejected':
         return (
-          <div className={`${baseClass} bg-red-100 text-red-700`}>
-            <CalendarX2 className="w-4 h-4 text-red-600" />
+          <div className={`${baseClass} ${theme === 'dark' ? 'bg-red-900/30 text-red-500' : 'bg-red-100 text-red-700'}`}>
+            <CalendarX2 className={`w-4 h-4 ${theme === 'dark' ? 'text-red-500' : 'text-red-600'}`} />
             Rejected
           </div>
         );
       default:
         console.log('Unknown status:', status);
         return (
-          <div className={`${baseClass} bg-gray-100 text-gray-800`}>
-            <Circle className="w-3.5 h-3.5 text-gray-500" fill="currentColor" />
+          <div className={`${baseClass} ${theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-800'}`}>
+            <Circle className={`w-3.5 h-3.5 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`} fill="currentColor" />
             {status || 'Unknown'}
           </div>
         );
@@ -159,112 +174,175 @@ const LeaveRequests = () => {
   };
 
   return (
-    <div className="p-6 bg-[#1c1c1e] text-gray-200 min-h-screen">
-      <div className="flex justify-between items-center mb-6">
+    <div className={`p-6 h-full ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h2 className="text-2xl font-bold">Leave Requests</h2>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="text-gray-200 bg-gray-800 hover:bg-gray-600 border border-gray-600">
-              Apply for Leave
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-[#1c1c1e] text-gray-200 max-w-md rounded-xl p-6 shadow-lg border border-gray-700">
-            <DialogHeader>
-              <DialogTitle className="text-lg font-bold">Leave Application Form</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 mt-4">
-              
-              {/* Branch */}
-              <div className="grid gap-2">
-                <Label htmlFor="branch">Branch</Label>
-                <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-                  <SelectTrigger 
-                    id="branch" 
-                    className="bg-[#232326] text-gray-200 border border-gray-700"
-                  >
-                    <SelectValue placeholder="Select branch" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#232326] text-gray-200 border border-gray-700">
-                    {branches.map((b) => (
-                      <SelectItem 
-                        key={b.id} 
-                        value={b.id.toString()} 
-                        className="hover:bg-gray-700"
-                      >
-                        {b.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Start Date */}
-              <div className="grid gap-2">
-                <Label htmlFor="start-date">Start Date</Label>
-                <Input 
-                  type="date" 
-                  id="start-date" 
-                  value={startDate} 
-                  onChange={(e) => setStartDate(e.target.value)} 
-                  className="bg-[#232326] text-gray-200 border border-gray-700"
-                />
-              </div>
-
-              {/* End Date */}
-              <div className="grid gap-2">
-                <Label htmlFor="end-date">End Date</Label>
-                <Input 
-                  type="date" 
-                  id="end-date" 
-                  value={endDate} 
-                  onChange={(e) => setEndDate(e.target.value)} 
-                  className="bg-[#232326] text-gray-200 border border-gray-700"
-                />
-              </div>
-
-              {/* Reason */}
-              <div className="grid gap-2">
-                <Label htmlFor="reason">Reason for Leave</Label>
-                <Textarea
-                  id="reason"
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="Please provide a detailed reason for your leave request"
-                  className="bg-[#232326] text-gray-200 border border-gray-700 placeholder-gray-400"
-                />
-              </div>
-
-              {/* Messages */}
-              {error && <div className="text-red-500 text-sm">{error}</div>}
-              {success && <div className="text-green-500 text-sm">{success}</div>}
-
-              {/* Submit Button */}
-              <Button 
-                onClick={handleSubmit} 
-                className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500" 
-                disabled={submitting}
+        <div className="flex gap-2">
+          <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md text-sm font-medium"
               >
-                {submitting ? 'Submitting...' : 'Submit Application'}
+                <Filter className="w-4 h-4" />
+                Filter
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </PopoverTrigger>
+            <PopoverContent className={`w-48 p-4 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
+              <div className="flex flex-col gap-2">
+                <h4 className={`text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Filter by Status</h4>
+                <Button
+                  variant={filterStatus === "All" ? "default" : "outline"}
+                  size="sm"
+                  className={`${theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-900 bg-white border-gray-300 hover:bg-gray-100'}`}
+                  onClick={() => {
+                    setFilterStatus("All");
+                    setFilterOpen(false);
+                  }}
+                >
+                  All
+                </Button>
+                <Button
+                  variant={filterStatus === "Pending" ? "default" : "outline"}
+                  size="sm"
+                  className={`${theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-900 bg-white border-gray-300 hover:bg-gray-100'}`}
+                  onClick={() => {
+                    setFilterStatus("Pending");
+                    setFilterOpen(false);
+                  }}
+                >
+                  Pending
+                </Button>
+                <Button
+                  variant={filterStatus === "Approved" ? "default" : "outline"}
+                  size="sm"
+                  className={`${theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-900 bg-white border-gray-300 hover:bg-gray-100'}`}
+                  onClick={() => {
+                    setFilterStatus("Approved");
+                    setFilterOpen(false);
+                  }}
+                >
+                  Approved
+                </Button>
+                <Button
+                  variant={filterStatus === "Rejected" ? "default" : "outline"}
+                  size="sm"
+                  className={`${theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-900 bg-white border-gray-300 hover:bg-gray-100'}`}
+                  onClick={() => {
+                    setFilterStatus("Rejected");
+                    setFilterOpen(false);
+                  }}
+                >
+                  Rejected
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out shadow-md whitespace-nowrap">
+                Apply for Leave
+              </Button>
+            </DialogTrigger>
+            <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+              <DialogHeader>
+                <DialogTitle className="text-lg font-bold">Leave Application Form</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 mt-4">
+                
+                {/* Branch */}
+                <div className="grid gap-2">
+                  <Label htmlFor="branch">Branch</Label>
+                  <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+                    <SelectTrigger 
+                      className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}
+                    >
+                      <SelectValue placeholder="Select branch" />
+                    </SelectTrigger>
+                    <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
+                      {branches.map((b) => (
+                        <SelectItem 
+                          key={b.id} 
+                          value={b.id.toString()} 
+                          className={theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-100'}
+                        >
+                          {b.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Start Date */}
+                <div className="grid gap-2">
+                  <Label htmlFor="start-date">Start Date</Label>
+                  <Input 
+                    type="date" 
+                    id="start-date" 
+                    value={startDate} 
+                    onChange={(e) => setStartDate(e.target.value)} 
+                    className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}
+                  />
+                </div>
+
+                {/* End Date */}
+                <div className="grid gap-2">
+                  <Label htmlFor="end-date">End Date</Label>
+                  <Input 
+                    type="date" 
+                    id="end-date" 
+                    value={endDate} 
+                    onChange={(e) => setEndDate(e.target.value)} 
+                    className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}
+                  />
+                </div>
+
+                {/* Reason */}
+                <div className="grid gap-2">
+                  <Label htmlFor="reason">Reason for Leave</Label>
+                  <Textarea
+                    id="reason"
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    placeholder="Please provide a detailed reason for your leave request"
+                    className={theme === 'dark' ? 'bg-background border border-input text-foreground placeholder:text-muted-foreground' : 'bg-white border border-gray-300 text-gray-900 placeholder:text-gray-500'}
+                  />
+                </div>
+
+                {/* Messages */}
+                {error && <div className={`text-sm ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>{error}</div>}
+                {success && <div className={`text-sm ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{success}</div>}
+
+                {/* Submit Button */}
+                <Button 
+                  onClick={handleSubmit} 
+                  className={theme === 'dark' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-blue-600 text-white hover:bg-blue-700'} 
+                  disabled={submitting}
+                >
+                  {submitting ? 'Submitting...' : 'Submit Application'}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
       {loading ? (
-        <div className="text-center text-gray-600">Loading...</div>
-      ) : leaveList.length === 0 ? (
-        <div className="text-center text-gray-500">No leave requests found.</div>
+        <div className={`text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading...</div>
+      ) : filteredLeaveList.length === 0 ? (
+        <div className={`text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+          {filterStatus === 'All' ? 'No leave requests found.' : `No ${filterStatus.toLowerCase()} leave requests found.`}
+        </div>
       ) : (
-        <div className="space-y-4">
-          {leaveList.map((leave) => {
+        <div className="max-h-[520px] overflow-y-auto custom-scrollbar">
+          {filteredLeaveList.map((leave) => {
             console.log('Rendering leave card with status:', leave.status);
             return (
-              <Card key={leave.id} className="bg-[#1c1c1e] text-gray-200">
+              <Card key={leave.id} className={`mb-4 ${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}`}>
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="text-lg font-semibold mb-2">{leave.title}</div>
-                      <div className="text-sm text-gray-200 mb-1">
+                      <div className={`text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                         {leave.from && leave.to ? (
                           <>
                             From: {leave.from} To: {leave.to}
@@ -273,8 +351,8 @@ const LeaveRequests = () => {
                           <>Date: {leave.date}</>
                         )}
                       </div>
-                      <div className="text-sm text-gray-200 mb-2">{leave.reason}</div>
-                      <div className="text-xs text-gray-200">Applied on: {leave.appliedOn}</div>
+                      <div className={`text-sm mb-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>{leave.reason}</div>
+                      <div className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Applied on: {leave.appliedOn}</div>
                     </div>
                     <div className="ml-4 flex-shrink-0">
                       {renderStatus(leave.status)}
