@@ -126,7 +126,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       { name: "Faculty Leaves", page: "leaves" },
       { name: "Apply Leaves", page: "apply-leaves" },
       { name: "Attendance", page: "attendance" },
-      { name: "Marks", page: "marks" },
+      
       { name: "Notifications", page: "notifications" },
       { name: "Study Material", page: "study-materials" },
       { name: "Proctors", page: "proctors" },

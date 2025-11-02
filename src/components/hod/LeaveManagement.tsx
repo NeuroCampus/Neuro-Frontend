@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -44,6 +44,7 @@ const LeaveManagement = () => {
   const [errors, setErrors] = useState<string[]>([]);
   const [branchId, setBranchId] = useState("");
   const { theme } = useTheme();
+  const hasFetchedRef = useRef(false);
 
   // Format date range to "MMM DD, YYYY to MMM DD, YYYY"
   const formatPeriod = (startDate: string, endDate: string): string => {
@@ -177,6 +178,12 @@ const LeaveManagement = () => {
   // Fetch all data using combined endpoint
   useEffect(() => {
     const fetchData = async () => {
+      // Prevent duplicate API calls (handles React StrictMode double execution)
+      if (hasFetchedRef.current) {
+        return;
+      }
+      hasFetchedRef.current = true;
+
       setIsLoading(true);
       try {
         const response = await getFacultyLeavesBootstrap();

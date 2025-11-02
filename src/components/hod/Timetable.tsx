@@ -378,6 +378,21 @@ const Timetable = () => {
     timetable: [] as TimetableEntry[],
     loading: true,
     error: null as string | null,
+    // Add cache for sections and subjects by semester
+    sectionsCache: {} as Record<string, Section[]>,
+    subjectsCache: {} as Record<string, Subject[]>,
+    facultyAssignmentsCache: {} as Record<string, Array<{
+      id: string;
+      faculty: string;
+      faculty_id: string;
+      faculty_name: string;
+      subject: string;
+      subject_id: string;
+      section: string;
+      section_id: string;
+      semester: number;
+      semester_id: string;
+    }>>,
   });
 
   const updateState = (newState: Partial<typeof state>) => {
@@ -397,43 +412,7 @@ const Timetable = () => {
   ];
   const days = ["MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
-  // Fetch sections, subjects, and faculty assignments for semester in one call
-  const fetchSemesterData = async (semesterId: string) => {
-    if (!state.branchId || !semesterId) {
-      updateState({ sections: [], subjects: [] });
-      return;
-    }
-    
-    try {
-      const semesterData = await getHODTimetableSemesterData(semesterId);
-      
-      if (semesterData.success && semesterData.data) {
-        const mappedSections = semesterData.data.sections.map((s) => ({
-          id: s.id,
-          name: s.name,
-          semester_id: s.semester_id?.toString() || "",
-        }));
-        
-        const mappedSubjects = semesterData.data.subjects.map((s) => ({
-          id: s.id,
-          name: s.name,
-          subject_code: s.subject_code || "",
-          semester_id: s.semester_id?.toString() || "",
-        }));
-        
-        updateState({ 
-          sections: mappedSections,
-          subjects: mappedSubjects,
-          facultyAssignments: semesterData.data.faculty_assignments || [],
-        });
-      } else {
-        updateState({ sections: [], subjects: [] });
-      }
-    } catch (err) {
-      console.error("Error fetching semester data:", err);
-      updateState({ sections: [], subjects: [] });
-    }
-  };
+
 
   // Fetch branch ID and initial data via bootstrap
   useEffect(() => {
@@ -444,6 +423,44 @@ const Timetable = () => {
         if (!boot.success || !boot.data?.profile?.branch_id) {
           throw new Error(boot.message || "Failed to bootstrap timetable");
         }
+
+        // Group sections and subjects by semester_id for caching
+        const sectionsCache: Record<string, Section[]> = {};
+        const subjectsCache: Record<string, Subject[]> = {};
+
+        if (boot.data.sections) {
+          boot.data.sections.forEach((section) => {
+            if (section.semester_id) {
+              const semesterId = section.semester_id.toString();
+              if (!sectionsCache[semesterId]) {
+                sectionsCache[semesterId] = [];
+              }
+              sectionsCache[semesterId].push({
+                id: section.id,
+                name: section.name,
+                semester_id: semesterId,
+              });
+            }
+          });
+        }
+
+        if (boot.data.subjects) {
+          boot.data.subjects.forEach((subject) => {
+            if (subject.semester_id) {
+              const semesterId = subject.semester_id.toString();
+              if (!subjectsCache[semesterId]) {
+                subjectsCache[semesterId] = [];
+              }
+              subjectsCache[semesterId].push({
+                id: subject.id,
+                name: subject.name,
+                subject_code: subject.subject_code,
+                semester_id: semesterId,
+              });
+            }
+          });
+        }
+
         // Manually map the data instead of using strict typing
         updateState({
           branchId: boot.data.profile.branch_id,
@@ -452,10 +469,12 @@ const Timetable = () => {
             id: s.id.toString(),
             number: s.number,
           })) || [],
-          sections: [], // Start with empty sections - will be fetched when semester is selected
-          subjects: [], // Start with empty subjects - will be fetched when semester is selected
+          sections: [], // Start with empty sections - will be populated from cache when semester is selected
+          subjects: [], // Start with empty subjects - will be populated from cache when semester is selected
           faculties: boot.data.faculties || [],
           facultyAssignments: [], // Start with empty assignments - will be fetched when semester is selected
+          sectionsCache,
+          subjectsCache,
         });
       } catch (err) {
         if (isErrorWithMessage(err)) {
@@ -472,54 +491,95 @@ const Timetable = () => {
     fetchProfileAndSemesters();
   }, [toast]);
 
-  // Fetch sections and subjects when semester changes
+  // Fetch sections and subjects when semester changes (from cache)
   useEffect(() => {
-    if (state.semesterId && state.branchId) {
-      fetchSemesterData(state.semesterId);
-    } else {
-      updateState({ sections: [], subjects: [] });
-    }
-  }, [state.semesterId, state.branchId]);
+    if (state.semesterId) {
+      const cachedSections = state.sectionsCache[state.semesterId] || [];
+      const cachedSubjects = state.subjectsCache[state.semesterId] || [];
+      const cachedFacultyAssignments = state.facultyAssignmentsCache[state.semesterId] || [];
 
-  // Fetch sections, subjects, faculties, and timetable when semesterId or sectionId changes
+      updateState({
+        sections: cachedSections,
+        subjects: cachedSubjects,
+        facultyAssignments: cachedFacultyAssignments,
+        sectionId: cachedSections.length > 0 ? cachedSections[0].id : "", // Auto-select first section
+      });
+    } else {
+      updateState({ sections: [], subjects: [], facultyAssignments: [], sectionId: "" });
+    }
+  }, [state.semesterId, state.sectionsCache, state.subjectsCache, state.facultyAssignmentsCache]);
+
+  // Fetch faculty assignments when semester changes
   useEffect(() => {
-    const fetchData = async () => {
-      if (!state.branchId) return;
+    const fetchFacultyAssignments = async () => {
+      if (!state.branchId || !state.semesterId) return;
+
+      if (!state.facultyAssignmentsCache[state.semesterId]) {
+        updateState({ loading: true });
+        try {
+          const semesterData = await getHODTimetableSemesterData(state.semesterId);
+          if (semesterData.success && semesterData.data) {
+            const newCache = { ...state.facultyAssignmentsCache };
+            newCache[state.semesterId] = semesterData.data.faculty_assignments || [];
+            updateState({
+              facultyAssignments: newCache[state.semesterId],
+              facultyAssignmentsCache: newCache,
+              loading: false
+            });
+          } else {
+            updateState({ facultyAssignments: [], loading: false });
+          }
+        } catch (err) {
+          console.error("Error fetching faculty assignments:", err);
+          updateState({ facultyAssignments: [], loading: false });
+        }
+      } else {
+        // Use cached faculty assignments
+        updateState({ facultyAssignments: state.facultyAssignmentsCache[state.semesterId] });
+      }
+    };
+
+    fetchFacultyAssignments();
+  }, [state.branchId, state.semesterId]);
+
+  // Fetch timetable when section changes
+  useEffect(() => {
+    const fetchTimetable = async () => {
+      if (!state.branchId || !state.semesterId || !state.sectionId) {
+        updateState({ timetable: [] });
+        return;
+      }
+
       updateState({ loading: true });
       try {
-        // Fetch timetable only if both semesterId and sectionId are set
-        if (state.semesterId && state.sectionId) {
-          const timetableResponse = await manageTimetable({
-            action: "GET" as const,
-            branch_id: state.branchId,
-            semester_id: state.semesterId,
-            section_id: state.sectionId,
-          });
-          if (timetableResponse.success && timetableResponse.data) {
-            const normalizedTimetable = Array.isArray(timetableResponse.data)
-              ? timetableResponse.data.map((entry: TimetableData) => ({
-                  id: entry.id,
-                  faculty_assignment: {
-                    id: entry.faculty_assignment.id,
-                    faculty: entry.faculty_assignment.faculty,
-                    subject: entry.faculty_assignment.subject,
-                    semester: entry.faculty_assignment.semester,
-                    section: entry.faculty_assignment.section,
-                  },
-                  day: entry.day.toUpperCase(),
-                  start_time: entry.start_time,
-                  end_time: entry.end_time,
-                  room: entry.room,
-                }))
-              : [];
-            updateState({ timetable: normalizedTimetable });
-            console.log("Fetched timetable:", normalizedTimetable);
-          } else {
-            updateState({ timetable: [] });
-            console.log("No timetable data received:", timetableResponse);
-          }
+        const timetableResponse = await manageTimetable({
+          action: "GET" as const,
+          branch_id: state.branchId,
+          semester_id: state.semesterId,
+          section_id: state.sectionId,
+        });
+        if (timetableResponse.success && timetableResponse.data) {
+          const normalizedTimetable = Array.isArray(timetableResponse.data)
+            ? timetableResponse.data.map((entry: TimetableData) => ({
+                id: entry.id,
+                faculty_assignment: {
+                  id: entry.faculty_assignment.id,
+                  faculty: entry.faculty_assignment.faculty,
+                  subject: entry.faculty_assignment.subject,
+                  semester: entry.faculty_assignment.semester,
+                  section: entry.faculty_assignment.section,
+                },
+                day: entry.day.toUpperCase(),
+                start_time: entry.start_time,
+                end_time: entry.end_time,
+                room: entry.room,
+              }))
+            : [];
+          updateState({ timetable: normalizedTimetable });
+          console.log("Fetched timetable:", normalizedTimetable);
         } else {
           updateState({ timetable: [] });
+          console.log("No timetable data received:", timetableResponse);
         }
       } catch (err) {
         if (isErrorWithMessage(err)) {
@@ -533,7 +593,8 @@ const Timetable = () => {
         updateState({ loading: false });
       }
     };
-    fetchData();
+
+    fetchTimetable();
   }, [state.branchId, state.semesterId, state.sectionId, toast]);
 
   // Generate table data for the grid
@@ -826,7 +887,7 @@ const Timetable = () => {
                   <Select
                     value={state.semesterId}
                     onValueChange={(value) =>
-                      updateState({ semesterId: value, sectionId: "", sections: [], subjects: [], timetable: [] })
+                      updateState({ semesterId: value, sectionId: "", timetable: [] })
                     }
                   >
                     <SelectTrigger className="w-40 bg-card text-foreground border-border">
