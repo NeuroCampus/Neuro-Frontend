@@ -177,7 +177,12 @@ const AttendanceView = () => {
               semester_id: s.semester_id.toString(),
             })),
             students: response.data.attendance.students,
-            pagination: response.data.pagination,
+            pagination: {
+              page: response.count ? Math.ceil(response.count / state.pagination.page_size) : 1,
+              page_size: state.pagination.page_size,
+              total_students: response.count || 0,
+              total_pages: response.count ? Math.ceil(response.count / state.pagination.page_size) : 1,
+            },
           });
         } else {
           throw new Error(response.message || "Failed to fetch data");

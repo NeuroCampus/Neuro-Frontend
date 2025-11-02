@@ -75,6 +75,9 @@ interface GetBranchesResponse {
 interface GetAttendanceBootstrapResponse {
   success: boolean;
   message?: string;
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
   data?: {
     profile: {
       username: string;
@@ -104,12 +107,6 @@ interface GetAttendanceBootstrapResponse {
         batch: string | null;
         subject: string;
       }>;
-    };
-    pagination: {
-      page: number;
-      page_size: number;
-      total_students: number;
-      total_pages: number;
     };
   };
 }
@@ -207,6 +204,8 @@ interface ManageStudentsRequest {
     blood_group?: string;
     date_of_admission?: string;
   }>;
+  page?: number;
+  page_size?: number;
 }
 
 interface ManageStudentsResponse {
@@ -220,7 +219,18 @@ interface ManageStudentsResponse {
     batch: string;
     subject?: string;
     proctor: string | null;
-  }> | { student_id: string } | { created_count: number };
+  }> | { student_id: string } | { created_count: number } | {
+    results: Array<{
+      usn: string;
+      name: string;
+      email: string;
+      section: string | null;
+      semester: string;
+    }>;
+    count: number;
+    next: string | null;
+    previous: string | null;
+  };
 }
 
 interface ManageBatchesRequest {
@@ -323,6 +333,9 @@ interface ManageTimetableRequest {
 interface ManageTimetableResponse {
   success: boolean;
   message?: string;
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
   data?: { timetable_id?: string; created_count?: number; errors?: string[] } | TimetableEntry[];
 }
 
@@ -824,6 +837,9 @@ export const getFacultyLeavesBootstrap = async (
 interface GetProctorBootstrapResponse {
   success: boolean;
   message?: string;
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
   data?: {
     profile: {
       username: string;
@@ -1014,6 +1030,9 @@ export const getLowAttendanceBootstrap = async (
 ): Promise<{
   success: boolean;
   message?: string;
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
   data?: {
     profile: {
       username: string;
@@ -1100,6 +1119,9 @@ export const getMarksBootstrap = async (
 ): Promise<{
   success: boolean;
   message?: string;
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
   data?: {
     profile: {
       username: string;
@@ -1303,6 +1325,9 @@ export const getHODBootstrap = async (): Promise<{
 export const getHODStudentBootstrap = async (): Promise<{
   success: boolean;
   message?: string;
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
   data?: {
     profile: { branch_id: string };
     semesters: Array<{ id: string; number: number }>;
@@ -1383,7 +1408,7 @@ export const getHODSubjectBootstrap = async (): Promise<{
   }
 };
 export const manageStudents = async (
-  data: ManageStudentsRequest | { branch_id: string; semester_id?: string; section_id?: string },
+  data: ManageStudentsRequest | { branch_id: string; semester_id?: string; section_id?: string; page?: number; page_size?: number },
   method: "GET" | "POST" = "GET"
 ): Promise<ManageStudentsResponse> => {
   try {
@@ -1394,6 +1419,8 @@ export const manageStudents = async (
       const params = new URLSearchParams({ branch_id });
       if ((data as any).semester_id) params.append("semester_id", (data as any).semester_id);
       if ((data as any).section_id) params.append("section_id", (data as any).section_id);
+      if ((data as any).page) params.append("page", (data as any).page.toString());
+      if ((data as any).page_size) params.append("page_size", (data as any).page_size.toString());
       url = `${API_BASE_URL}/hod/students/?${params.toString()}`;
     }
     if (method === "POST") {
@@ -2099,6 +2126,9 @@ export const getNotificationsBootstrap = async (): Promise<{
 export const getPromotionBootstrap = async (): Promise<{
   success: boolean;
   message?: string;
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
   data?: {
     profile: {
       first_name: string;

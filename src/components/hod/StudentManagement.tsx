@@ -90,6 +90,8 @@ const StudentManagement = () => {
     isEditSectionsLoading: false,
     manualErrors: {} as Record<string, string>,
     manualSemesters: [] as Semester[],
+    totalStudents: 0,
+    pageSize: 50,
   });
 
   const bootstrap = useHODBootstrap();
@@ -104,18 +106,29 @@ const StudentManagement = () => {
   };
 
   // Fetch students
-  const fetchStudents = async (branchId: string) => {
+  const fetchStudents = async (branchId: string, page: number = 1, pageSize: number = 50) => {
     try {
-      const studentRes = await manageStudents({ branch_id: branchId }, "GET");
+      const studentRes = await manageStudents({ 
+        branch_id: branchId,
+        page: page,
+        page_size: pageSize
+      }, "GET");
       if (studentRes.success && studentRes.data) {
-        const students = studentRes.data && Array.isArray(studentRes.data) ? studentRes.data.map((s: any) => ({
-          usn: s.usn,
-          name: s.name,
-          email: s.email,
-          section: s.section || "Unknown",
-          semester: s.semester || "Unknown",
-        })) : [];
-        updateState({ students });
+        // Handle paginated response - check if results exist (regular API) or students (bootstrap)
+        const students = studentRes.data.results && Array.isArray(studentRes.data.results) 
+          ? studentRes.data.results.map((s: any) => ({
+              usn: s.usn,
+              name: s.name,
+              email: s.email,
+              section: s.section || "Unknown",
+              semester: s.semester || "Unknown",
+            })) 
+          : [];
+        updateState({ 
+          students,
+          totalStudents: studentRes.data.count || 0,
+          currentPage: page
+        });
       } else {
         updateState({ uploadErrors: [...state.uploadErrors, `Students API: ${studentRes.message || "No students found"}`] });
       }
@@ -191,9 +204,14 @@ const StudentManagement = () => {
         }
 
         // Students
-        if (Array.isArray(boot.data.students)) {
+        if (Array.isArray(boot.data?.students)) {
           const students = boot.data.students.map((s: any) => ({ usn: s.usn, name: s.name, email: s.email, section: s.section || "Unknown", semester: s.semester || "Unknown" }));
-          updateState({ students });
+          updateState({ 
+            students,
+            totalStudents: boot.count || students.length,
+            currentPage: 1, // Bootstrap returns first page
+            pageSize: 50 // Default page size
+          });
         } else {
           await fetchStudents(branchId);
         }
@@ -644,11 +662,14 @@ const StudentManagement = () => {
   }
 
 
-  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
-  const paginatedStudents = filteredStudents.slice(
-    (state.currentPage - 1) * itemsPerPage,
-    state.currentPage * itemsPerPage
-  );
+  const totalPages = Math.ceil(state.totalStudents / state.pageSize);
+
+  // Handle page change
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      fetchStudents(state.branchId, newPage, state.pageSize);
+    }
+  };
 
   // Open edit dialog
   const openEdit = (student: Student) => {
@@ -1003,7 +1024,7 @@ const StudentManagement = () => {
                 </tr>
               </thead>
               <tbody className={theme === 'dark' ? 'divide-y divide-border' : 'divide-y divide-gray-200'}>
-                {paginatedStudents.map((student) => (
+                {state.students.map((student) => (
                   <tr key={student.usn} className={theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-50'}>
                     <td className="py-2 px-4">{student.usn}</td>
                     <td className="py-2 px-4">{student.name}</td>
@@ -1039,16 +1060,14 @@ const StudentManagement = () => {
             )}
 
             <div className="text-sm text-gray-500 mt-4">
-              Showing {paginatedStudents.length} out of {filteredStudents.length}{" "}
-              students
+              Showing {state.students.length} out of {state.totalStudents}{" "}
+              students (Page {state.currentPage} of {totalPages})
             </div>
           </div>
 
           <div className="flex justify-end items-center mt-4">
             <Button
-              onClick={() =>
-                updateState({ currentPage: Math.max(state.currentPage - 1, 1) })
-              }
+              onClick={() => handlePageChange(state.currentPage - 1)}
               disabled={state.currentPage === 1}
               className="w-24 flex items-center justify-center gap-1 text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
             >
@@ -1058,11 +1077,7 @@ const StudentManagement = () => {
               {state.currentPage}
             </div>
             <Button
-              onClick={() =>
-                updateState({
-                  currentPage: Math.min(state.currentPage + 1, totalPages),
-                })
-              }
+              onClick={() => handlePageChange(state.currentPage + 1)}
               disabled={state.currentPage === totalPages}
               className="w-24 flex items-center justify-center gap-1 text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
             >
