@@ -41,10 +41,16 @@ interface Semester {
 }
 
 interface Batch {
-  id: number;
+  id: string;
   name: string;
   start_year: number;
   end_year: number;
+}
+
+interface Section {
+  id: string;
+  name: string;
+  semester_id: string;
 }
 
 interface Student {
@@ -82,6 +88,8 @@ const StudentManagement = () => {
     chartData: mockChartData,
     isLoading: false,
     isEditSectionsLoading: false,
+    manualErrors: {} as Record<string, string>,
+    manualSemesters: [] as Semester[],
   });
 
   const bootstrap = useHODBootstrap();
@@ -100,13 +108,13 @@ const StudentManagement = () => {
     try {
       const studentRes = await manageStudents({ branch_id: branchId }, "GET");
       if (studentRes.success && studentRes.data) {
-        const students = studentRes.data.map((s: any) => ({
+        const students = studentRes.data && Array.isArray(studentRes.data) ? studentRes.data.map((s: any) => ({
           usn: s.usn,
           name: s.name,
           email: s.email,
           section: s.section || "Unknown",
           semester: s.semester || "Unknown",
-        }));
+        })) : [];
         updateState({ students });
       } else {
         updateState({ uploadErrors: [...state.uploadErrors, `Students API: ${studentRes.message || "No students found"}`] });
@@ -116,122 +124,14 @@ const StudentManagement = () => {
     }
   };
 
-  // Fetch sections for Add Student Manually
-  const fetchManualSections = async (branchId: string, semesterId: string) => {
-    try {
-      const cacheKey = semesterId || "ALL";
-      const cached = sectionsCache[cacheKey];
-      if (cached) {
-        updateState({
-          manualSections: cached,
-          manualForm: { ...state.manualForm, section: cached[0]?.name || "" },
-        });
-        return;
-      }
-      console.log("Fetching manual sections for branch:", branchId, "semester:", semesterId || "None");
-      const sectionRes = await manageSections({
-        branch_id: branchId,
-        ...(semesterId && { semester_id: semesterId }),
-      });
-      console.log("Manual section response:", sectionRes);
-      if (sectionRes.success && sectionRes.data?.length > 0) {
-        const mapped = sectionRes.data.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id.toString() }));
-        setSectionsCache((prev) => ({ ...prev, [cacheKey]: mapped }));
-        updateState({ manualSections: mapped, manualForm: { ...state.manualForm, section: mapped[0]?.name || "" } });
-      } else {
-        updateState({
-          manualSections: [],
-          manualForm: { ...state.manualForm, section: "" },
-          uploadErrors: [...state.uploadErrors, `No sections found for semester ${semesterId || "All"}`],
-        });
-      }
-    } catch (err) {
-      console.error("Fetch manual sections error:", err);
-      updateState({ uploadErrors: [...state.uploadErrors, "Failed to fetch sections"] });
-    }
-  };
-
-  // Fetch sections for Student List filter
-  const fetchListSections = async (branchId: string, semesterId: string) => {
-    try {
-      const cacheKey = semesterId || "ALL";
-      const cached = sectionsCache[cacheKey];
-      if (cached) {
-        updateState({ listSections: cached });
-        return;
-      }
-      console.log("Fetching list sections for branch:", branchId, "semester:", semesterId || "None");
-      const sectionRes = await manageSections({
-        branch_id: branchId,
-        ...(semesterId && { semester_id: semesterId }),
-      });
-      console.log("List section response:", sectionRes);
-      if (sectionRes.success && sectionRes.data?.length > 0) {
-        const mapped = sectionRes.data.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id.toString() }));
-        setSectionsCache((prev) => ({ ...prev, [cacheKey]: mapped }));
-        updateState({ listSections: mapped });
-      } else {
-        updateState({
-          listSections: [],
-          sectionFilter: "All",
-          uploadErrors: [...state.uploadErrors, `No sections found for semester ${semesterId || "All"}`],
-        });
-      }
-    } catch (err) {
-      console.error("Fetch list sections error:", err);
-      updateState({ uploadErrors: [...state.uploadErrors, "Failed to fetch sections"] });
-    }
-  };
-
-  // Fetch sections for Edit Dialog
-  const fetchEditSections = async (branchId: string, semesterId: string) => {
-    try {
-      updateState({ isEditSectionsLoading: true });
-      const cacheKey = semesterId || "ALL";
-      const cached = sectionsCache[cacheKey];
-      if (cached) {
-        updateState({
-          editSections: cached,
-          editForm: { ...state.editForm, section: cached.find((s: any) => s.name === state.editForm.section)?.name || cached[0]?.name || "" },
-        });
-        return;
-      }
-      console.log("Fetching edit sections for branch:", branchId, "semester:", semesterId || "None");
-      const sectionRes = await manageSections({
-        branch_id: branchId,
-        ...(semesterId && { semester_id: semesterId }),
-      });
-      console.log("Edit section response:", sectionRes);
-      if (sectionRes.success && sectionRes.data?.length > 0) {
-        const mapped = sectionRes.data.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id.toString() }));
-        setSectionsCache((prev) => ({ ...prev, [cacheKey]: mapped }));
-        updateState({
-          editSections: mapped,
-          editForm: { ...state.editForm, section: mapped.find((s: any) => s.name === state.editForm.section)?.name || mapped[0]?.name || "" },
-        });
-      } else {
-        updateState({
-          editSections: [],
-          editForm: { ...state.editForm, section: "" },
-          uploadErrors: [...state.uploadErrors, `No sections found for semester ${semesterId || "All"}`],
-        });
-      }
-    } catch (err) {
-      console.error("Fetch edit sections error:", err);
-      updateState({ uploadErrors: [...state.uploadErrors, "Failed to fetch sections"] });
-    } finally {
-      updateState({ isEditSectionsLoading: false });
-    }
-  };
-
   // Fetch batches
   const fetchBatches = async () => {
     try {
       const batchRes = await manageBatches();
-      if (batchRes.success && batchRes.data) {
-        const defaultBatch = batchRes.data[0]?.name || "";
+      if (batchRes.success && batchRes.batches) {
+        const defaultBatch = batchRes.batches[0]?.name || "";
         updateState({ 
-          batches: batchRes.data,
+          batches: batchRes.batches,
           manualForm: { ...state.manualForm, batch: defaultBatch }
         });
       } else {
@@ -256,8 +156,9 @@ const StudentManagement = () => {
 
         // Batches
         if (Array.isArray(boot.data.batches)) {
-          const defaultBatch = boot.data.batches[0]?.name || "";
-          updateState({ batches: boot.data.batches, manualForm: { ...state.manualForm, batch: defaultBatch } });
+          const batches = boot.data.batches.map((b: any) => ({ ...b, id: b.id.toString() }));
+          const defaultBatch = batches[0]?.name || "";
+          updateState({ batches, manualForm: { ...state.manualForm, batch: defaultBatch } });
         } else {
           await fetchBatches();
         }
@@ -267,10 +168,26 @@ const StudentManagement = () => {
           const semesters = boot.data.semesters.map((s: any) => ({ id: s.id.toString(), number: s.number }));
           const defaultSemester = `${semesters[0].number}th Semester`;
           updateState({ semesters, selectedSemester: defaultSemester, manualForm: { ...state.manualForm, semester: defaultSemester } });
-          // Manual sections default
-          await fetchManualSections(branchId, semesters[0].id);
+          // Manual sections will be populated by useEffect based on semester selection
         } else {
           updateState({ uploadErrors: [...state.uploadErrors, "No semesters found"] });
+        }
+
+        // Sections - populate cache with all sections from bootstrap
+        if (Array.isArray(boot.data.sections) && boot.data.sections.length > 0) {
+          const sectionsBySemester: Record<string, Section[]> = {};
+          boot.data.sections.forEach((sec: any) => {
+            const semesterId = sec.semester_id || "ALL";
+            if (!sectionsBySemester[semesterId]) {
+              sectionsBySemester[semesterId] = [];
+            }
+            sectionsBySemester[semesterId].push({
+              id: sec.id,
+              name: sec.name,
+              semester_id: sec.semester_id || "",
+            });
+          });
+          setSectionsCache(sectionsBySemester);
         }
 
         // Students
@@ -296,32 +213,69 @@ const StudentManagement = () => {
   useEffect(() => {
     if (state.branchId && state.manualForm.semester) {
       const semesterId = getSemesterId(state.manualForm.semester);
-      fetchManualSections(state.branchId, semesterId);
+      // Use cached sections instead of making API call
+      const cacheKey = semesterId || "ALL";
+      const cached = sectionsCache[cacheKey];
+      if (cached) {
+        updateState({
+          manualSections: cached,
+          manualForm: { ...state.manualForm, section: cached[0]?.name || "" },
+        });
+      } else {
+        updateState({
+          manualSections: [],
+          manualForm: { ...state.manualForm, section: "" },
+        });
+      }
     } else if (state.branchId) {
       updateState({ manualSections: [], manualForm: { ...state.manualForm, section: "" } });
     }
-  }, [state.branchId, state.manualForm.semester]);
+  }, [state.branchId, state.manualForm.semester, sectionsCache]);
 
   // Fetch sections when semester changes in Student List filter
   useEffect(() => {
     if (state.branchId && state.semesterFilter !== "All") {
-      fetchListSections(state.branchId, state.semesterFilter);
+      // Use cached sections instead of making API call
+      const cached = sectionsCache[state.semesterFilter];
+      if (cached) {
+        updateState({ listSections: cached });
+      } else {
+        updateState({ listSections: [] });
+      }
     } else if (state.branchId) {
-      updateState({ listSections: [], sectionFilter: "All" });
+      // For "All" semesters, show all sections
+      const allSections = Object.values(sectionsCache).flat();
+      const uniqueSections = allSections.filter((section, index, self) =>
+        index === self.findIndex(s => s.id === section.id)
+      );
+      updateState({ listSections: uniqueSections });
     }
-  }, [state.branchId, state.semesterFilter]);
+  }, [state.branchId, state.semesterFilter, sectionsCache]);
 
   // Fetch sections when semester changes in Edit Dialog
   useEffect(() => {
     if (state.editDialog && state.branchId && state.editForm.semester) {
       const semesterId = getSemesterId(state.editForm.semester);
       if (semesterId) {
-        fetchEditSections(state.branchId, semesterId);
+        // Use cached sections instead of making API call
+        const cacheKey = semesterId || "ALL";
+        const cached = sectionsCache[cacheKey];
+        if (cached) {
+          updateState({
+            editSections: cached,
+            editForm: { ...state.editForm, section: cached.find((s: any) => s.name === state.editForm.section)?.name || cached[0]?.name || "" },
+          });
+        } else {
+          updateState({
+            editSections: [],
+            editForm: { ...state.editForm, section: "" },
+          });
+        }
       } else {
         updateState({ editSections: [], editForm: { ...state.editForm, section: "" } });
       }
     }
-  }, [state.branchId, state.editForm.semester, state.editDialog]);
+  }, [state.branchId, state.editForm.semester, state.editDialog, sectionsCache]);
 
   // Map semester and section names to IDs
   const getSemesterId = (semesterName: string) =>
@@ -331,7 +285,7 @@ const StudentManagement = () => {
     sections.find((s) => s.name === sectionName)?.id || "";
 
   const getBatchId = (batchName: string) =>
-    state.batches.find((b) => b.name === batchName)?.id?.toString() || "";
+    state.batches.find((b) => b.name === batchName)?.id || "";
 
   // Handle file upload
   const handleFileUpload = async (file: File) => {
@@ -710,9 +664,7 @@ const StudentManagement = () => {
       editDialog: true,
       editSections: [],
     });
-    if (semesterId && state.branchId) {
-      fetchEditSections(state.branchId, semesterId);
-    }
+    // Sections will be populated by useEffect based on semester
   };
 
   // Chart removed
