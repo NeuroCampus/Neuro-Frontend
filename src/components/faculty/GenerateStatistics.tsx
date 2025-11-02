@@ -7,9 +7,11 @@ import { ProctorStudent } from '../../utils/faculty_api';
 import { useProctorStudentsQuery } from '../../hooks/useApiQueries';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { useTheme } from "@/context/ThemeContext";
 
 const GenerateStatistics = () => {
   const { data: proctorStudents = [], isLoading: loading, error } = useProctorStudentsQuery();
+  const { theme } = useTheme();
 
   // Helper function to format attendance percentage
   const formatAttendancePercentage = (percentage: number | string): string => {
@@ -70,40 +72,45 @@ const GenerateStatistics = () => {
   }));
 
   if (loading) {
-    return <div className="p-6 text-center text-gray-600">Loading statistics...</div>;
+    return <div className={`p-6 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading statistics...</div>;
   }
   if (error) {
-    return <div className="p-6 bg-red-100 text-red-700 rounded-lg">{error.message}</div>;
+    return <div className={`p-6 rounded-lg ${theme === 'dark' ? 'bg-destructive/20 text-destructive-foreground' : 'bg-red-100 text-red-700'}`}>{error.message}</div>;
   }
 
   return (
-    <div className="p-6 space-y-6 bg-[#1c1c1e] text-gray-200 min-h-screen">
+    <div className={`p-6 space-y-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+        <h2 className="text-2xl font-bold">Statistics</h2>
       {/* Charts */}
       <div className="grid md:grid-cols-2 gap-6">
         {/* Attendance Overview */}
-        <Card className="shadow-sm bg-[#1c1c1e] text-gray-200">
+        <Card className={theme === 'dark' ? 'shadow-sm bg-card text-foreground' : 'shadow-sm bg-white text-gray-900'}>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-200">
+            <CardTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Attendance Overview
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={attendanceData}>
-                <CartesianGrid stroke="rgba(255,255,255,0.1)" />
+                <CartesianGrid stroke={theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#e5e7eb'} />
                 <XAxis
                   dataKey="name"
-                  stroke="#d1d5db"
+                  stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'}
                   interval={0} // show all labels, but we’ll control them
                   tick={{ fontSize: 10 }} // smaller font
                   angle={-45} // rotate labels
                   textAnchor="end"
                   height={60} // extra space for rotated labels
                 />
-                <YAxis stroke="#d1d5db" />
+                <YAxis stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: "#2d2d30", border: "none", color: "#f3f4f6" }}
-                  itemStyle={{ color: "#f3f4f6" }}
+                  contentStyle={{ 
+                    backgroundColor: theme === 'dark' ? '#1c1c1e' : '#ffffff', 
+                    border: theme === 'dark' ? '1px solid #2e2e30' : '1px solid #e5e7eb', 
+                    color: theme === 'dark' ? '#f3f4f6' : '#1f2937' 
+                  }}
+                  itemStyle={{ color: theme === 'dark' ? '#f3f4f6' : '#1f2937' }}
                 />
                 <Line
                   type="monotone"
@@ -118,33 +125,37 @@ const GenerateStatistics = () => {
         </Card>
 
         {/* Average Marks */}
-        <Card className="shadow-sm bg-[#1c1c1e] text-gray-200">
+        <Card className={theme === 'dark' ? 'shadow-sm bg-card text-foreground' : 'shadow-sm bg-white text-gray-900'}>
           <CardHeader>
-            <CardTitle className="text-lg font-semibold text-gray-200">
+            <CardTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Average Marks
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={marksData}>
-                <CartesianGrid stroke="rgba(255,255,255,0.1)" />
+                <CartesianGrid stroke={theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#e5e7eb'} />
                 <XAxis
                   dataKey="name"
-                  stroke="#d1d5db"
+                  stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'}
                   interval={0}
                   tick={{ fontSize: 10 }}
                   angle={-45}
                   textAnchor="end"
                   height={60}
                 />
-                <YAxis stroke="#d1d5db" />
+                <YAxis stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: "#2d2d30", border: "none", color: "#f3f4f6" }}
-                  itemStyle={{ color: "#f3f4f6" }}
+                  contentStyle={{ 
+                    backgroundColor: theme === 'dark' ? '#1c1c1e' : '#ffffff', 
+                    border: theme === 'dark' ? '1px solid #2e2e30' : '1px solid #e5e7eb', 
+                    color: theme === 'dark' ? '#f3f4f6' : '#1f2937' 
+                  }}
+                  itemStyle={{ color: theme === 'dark' ? '#f3f4f6' : '#1f2937' }}
                 />
                 <Bar dataKey="avgMark" fill="#6366f1">
                   {/* 👇 Label inside each bar */}
-                  <LabelList dataKey="avgMark" position="insideTop" fill="#fff" fontSize={10} />
+                  <LabelList dataKey="avgMark" position="insideTop" fill={theme === 'dark' ? '#f3f4f6' : '#1f2937'} fontSize={10} />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -153,32 +164,37 @@ const GenerateStatistics = () => {
       </div>
 
       {/* Table */}
-      <Card className="shadow-sm bg-[#1c1c1e] text-gray-200">
+      <Card className={theme === 'dark' ? 'shadow-sm bg-card text-foreground' : 'shadow-sm bg-white text-gray-900'}>
         <CardHeader className="flex flex-row justify-between items-center">
-          <CardTitle className="text-lg font-semibold text-gray-200">Proctor Students Table</CardTitle>
-          <Button variant="outline" size="sm" onClick={handleExportPDF} className="flex items-center text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500">
-            <FileTextIcon className="mr-2 h-4 w-4 " />
+          <CardTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Proctor Students Table</CardTitle>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleExportPDF} 
+            className="flex items-center bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out shadow-md"
+          >
+            <FileTextIcon className="mr-2 h-4 w-4" />
             Export PDF
           </Button>
         </CardHeader>
         <CardContent>
           <div className="max-h-64 overflow-y-auto overflow-x-auto custom-scrollbar">
             <table className="w-full text-sm border-collapse">
-              <thead className="bg-[#232326] sticky top-0 z-10">
+              <thead className={theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}>
                 <tr>
-                  <th className="p-3 text-left">USN</th>
-                  <th className="p-3 text-left">Name</th>
-                  <th className="p-3 text-left">Attendance %</th>
-                  <th className="p-3 text-left">Avg Mark</th>
+                  <th className={`p-3 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>USN</th>
+                  <th className={`p-3 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Name</th>
+                  <th className={`p-3 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Attendance %</th>
+                  <th className={`p-3 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Avg Mark</th>
                 </tr>
               </thead>
               <tbody>
                 {proctorStudents.map((student, idx) => (
-                  <tr key={idx} className="border-t">
-                    <td className="p-3">{student.usn}</td>
-                    <td className="p-3">{student.name}</td>
-                    <td className="p-3">{formatAttendancePercentage(student.attendance)}</td>
-                    <td className="p-3">
+                  <tr key={idx} className={theme === 'dark' ? 'border-border' : 'border-gray-200'}>
+                    <td className={`p-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.usn}</td>
+                    <td className={`p-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.name}</td>
+                    <td className={`p-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{formatAttendancePercentage(student.attendance)}</td>
+                    <td className={`p-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                       {student.marks && student.marks.length > 0
                         ? (
                             student.marks.reduce((sum, m) => sum + (m.mark || 0), 0) /

@@ -20,6 +20,7 @@ import {
 import { useProctorStudentsQuery } from "@/hooks/useApiQueries";
 import type { CreateAnnouncementRequest } from "@/utils/faculty_api";
 import { Loader2 } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
 
 interface Notification {
   id: string;
@@ -51,6 +52,7 @@ const Announcements = () => {
   const [sending, setSending] = useState(false);
   const [sentNotifications, setSentNotifications] = useState<Notification[]>([]);
   const [loadingSent, setLoadingSent] = useState(false);
+  const { theme } = useTheme();
 
   // Fetch notifications
   useEffect(() => {
@@ -162,47 +164,47 @@ const Announcements = () => {
   const selectedWarning = useMemo(() => {
     if (!selectAll && selectedStudents.length > 0) {
       return (
-        <div className="bg-yellow-100 text-yellow-800 text-xs p-2 rounded mb-2">
+        <div className={`text-xs p-2 rounded mb-2 ${theme === 'dark' ? 'bg-yellow-900/30 text-yellow-500' : 'bg-yellow-100 text-yellow-800'}`}>
           Note: All students in the selected students' classes will receive this notification.
         </div>
       );
     }
     return null;
-  }, [selectAll, selectedStudents.length]);
+  }, [selectAll, selectedStudents.length, theme]);
 
   return (
-    <div className="p-8 bg-[#1c1c1e] text-gray-200 min-h-screen ">
+    <div className={`p-8 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <div className="grid grid-cols-3 gap-8">
         {/* Received Notifications */}
-        <Card className="col-span-2 shadow-sm bg-[#1c1c1e] text-gray-200">
+        <Card className={theme === 'dark' ? 'col-span-2 shadow-sm bg-card text-foreground' : 'col-span-2 shadow-sm bg-white text-gray-900'}>
           <CardHeader>
             <CardTitle className="text-lg">Received Notifications</CardTitle>
-            <p className="text-sm text-gray-400">Notifications from HOD and Admin</p>
+            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Notifications from HOD and Admin</p>
           </CardHeader>
           <CardContent className="space-y-6">
             {loadingNotifications ? (
-              <div>Loading...</div>
+              <div className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Loading...</div>
             ) : notifications.length === 0 ? (
-              <div className="text-gray-400">No notifications found.</div>
+              <div className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>No notifications found.</div>
             ) : (
               <div className="max-h-64 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
                 {notifications.map((item, index) => (
                   <div
                     key={item.id || index}
-                    className="border-b border-gray-700 pb-4"
+                    className={`border-b pb-4 ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}
                   >
                     <div className="flex justify-between items-center">
-                      <div className="font-semibold text-gray-100">{item.title}</div>
+                      <div className={`font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{item.title}</div>
                       <span
                         className={`text-xs font-medium rounded-full px-2 py-1 ${
-                          roleColors[item.role] || "bg-gray-700 text-gray-300"
+                          roleColors[item.role] || (theme === 'dark' ? "bg-gray-700 text-gray-300" : "bg-gray-200 text-gray-700")
                         }`}
                       >
                         {item.role}
                       </span>
                     </div>
-                    <div className="text-sm text-gray-300 mt-1">{item.message}</div>
-                    <div className="text-xs text-gray-500 mt-1">
+                    <div className={`text-sm mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>{item.message}</div>
+                    <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                       {item.created_by ? `From: ${item.created_by}` : ""} |{" "}
                       {new Date(item.created_at).toLocaleString()}
                     </div>
@@ -215,19 +217,19 @@ const Announcements = () => {
 
 
         {/* Create Notification */}
-        <Card className="col-span-1 shadow-sm bg-[#1c1c1e] text-gray-200">
+        <Card className={theme === 'dark' ? 'col-span-1 shadow-sm bg-card text-foreground' : 'col-span-1 shadow-sm bg-white text-gray-900'}>
           <CardHeader>
             <CardTitle className="text-lg">Send Notification to Proctor Students</CardTitle>
-            <p className="text-sm text-gray-200">Select students or send to all</p>
+            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Select students or send to all</p>
           </CardHeader>
           <CardContent className="space-y-4">
             {successMessage && (
-              <div className="bg-green-100 text-green-800 text-sm p-2 rounded">
+              <div className={`text-sm p-2 rounded ${theme === 'dark' ? 'bg-green-900/30 text-green-500' : 'bg-green-100 text-green-800'}`}>
                 {successMessage}
               </div>
             )}
             {errors.message && (
-              <div className="bg-red-100 text-red-800 text-sm p-2 rounded">
+              <div className={`text-sm p-2 rounded ${theme === 'dark' ? 'bg-destructive/20 text-destructive-foreground' : 'bg-red-100 text-red-800'}`}>
                 {errors.message}
               </div>
             )}
@@ -238,10 +240,10 @@ const Announcements = () => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 disabled={sending}
-                className="bg-[#232326] text-gray-200"
+                className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}
               />
               {errors.title && (
-                <p className="text-sm text-red-500 mt-1">{errors.title}</p>
+                <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>{errors.title}</p>
               )}
             </div>
             <div>
@@ -250,10 +252,10 @@ const Announcements = () => {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 disabled={sending}
-                className="bg-[#232326] text-gray-200"
+                className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}
               />
               {errors.message && (
-                <p className="text-sm text-red-500 mt-1">{errors.message}</p>
+                <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>{errors.message}</p>
               )}
             </div>
             <div>
@@ -263,39 +265,39 @@ const Announcements = () => {
                   checked={selectAll}
                   onCheckedChange={(checked) => setSelectAll(!!checked)}
                   id="select-all"
-                  className="cursor-pointer bg-gray-500"
+                  className={`border ${theme === 'dark' ? 'border-border bg-background' : 'border-gray-300 bg-white'}`}
                   disabled={sending}
                 />
                 <label
                   htmlFor="select-all"
-                  className="ml-2 text-sm font-medium text-gray-200"  // 👈 Added text color
+                  className={`ml-2 text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
                 >
                   Select All Proctor Students
                 </label>
               </div>
 
               {/* Scrollable Student List */}
-              <div className="max-h-52 overflow-y-auto border border-gray-700 rounded-lg p-2 bg-[#232326] text-gray-200 custom-scrollbar">
+              <div className={`max-h-52 overflow-y-auto border rounded-lg p-2 custom-scrollbar ${theme === 'dark' ? 'border-border bg-muted' : 'border-gray-300 bg-gray-50'}`}>
                 {proctorStudents.length === 0 ? (
-                  <div className="text-gray-500 text-sm text-center py-2">
+                  <div className={`text-sm text-center py-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                     No proctor students found.
                   </div>
                 ) : (
                   proctorStudents.map((student) => (
                     <div
                       key={student.usn}
-                      className="flex items-center mb-1 hover:bg-gray-700/30 rounded px-1"
+                      className={`flex items-center mb-1 rounded px-1 ${theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-100'}`}
                     >
                       <Checkbox
                         checked={selectedStudents.includes(student.usn) || selectAll}
                         onCheckedChange={() => handleStudentSelect(student.usn)}
                         id={`student-${student.usn}`}
                         disabled={selectAll || sending}
-                        className="cursor-pointer bg-gray-500"
+                        className={`border ${theme === 'dark' ? 'border-border bg-background' : 'border-gray-300 bg-white'}`}
                       />
                       <label
                         htmlFor={`student-${student.usn}`}
-                        className="ml-2 text-sm cursor-pointer text-gray-200" // 👈 ensure visibility
+                        className={`ml-2 text-sm cursor-pointer ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
                       >
                         {student.name} ({student.usn})
                       </label>
@@ -307,7 +309,7 @@ const Announcements = () => {
 
 
             <Button
-              className="w-full flex items-center justify-center text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+              className="w-full flex items-center justify-center bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out shadow-md"
               onClick={handleSubmit}
               disabled={sending}
             >
@@ -323,36 +325,36 @@ const Announcements = () => {
         </Card>
 
         {/* Sent Notifications Section */}
-        <Card className="col-span-3 shadow-sm bg-[#1c1c1e] text-gray-200">
+        <Card className={theme === 'dark' ? 'col-span-3 shadow-sm bg-card text-foreground' : 'col-span-3 shadow-sm bg-white text-gray-900'}>
           <CardHeader>
-            <CardTitle className="text-lg text-gray-100">Sent Notifications</CardTitle>
-            <p className="text-sm text-gray-400">Notifications you have sent</p>
+            <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Sent Notifications</CardTitle>
+            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Notifications you have sent</p>
           </CardHeader>
 
           {/* Scrollable Content */}
           <CardContent className="max-h-72 overflow-y-auto space-y-6 custom-scrollbar">
             {loadingSent ? (
-              <div className="text-gray-400">Loading...</div>
+              <div className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Loading...</div>
             ) : sentNotifications.length === 0 ? (
-              <div className="text-gray-500">No sent notifications found.</div>
+              <div className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>No sent notifications found.</div>
             ) : (
               sentNotifications.map((item, index) => (
                 <div
                   key={item.id || index}
-                  className="border-b border-gray-700 pb-4"
+                  className={`border-b pb-4 ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}
                 >
                   <div className="flex justify-between items-center">
-                    <div className="font-semibold text-gray-100">{item.title}</div>
+                    <div className={`font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{item.title}</div>
                     <span
                       className={`text-xs font-medium rounded-full px-2 py-1 ${
-                        roleColors[item.role] || "bg-gray-500 text-gray-200"
+                        roleColors[item.role] || (theme === 'dark' ? "bg-gray-700 text-gray-300" : "bg-gray-200 text-gray-700")
                       }`}
                     >
                       {item.role}
                     </span>
                   </div>
-                  <div className="text-sm text-gray-300 mt-1">{item.message}</div>
-                  <div className="text-xs text-gray-300 mt-1">
+                  <div className={`text-sm mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>{item.message}</div>
+                  <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                     {item.created_by ? `By: ${item.created_by}` : ""} |{" "}
                     {new Date(item.created_at).toLocaleString()}
                   </div>

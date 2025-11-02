@@ -34,6 +34,7 @@ import {
   LabelList,
 } from "recharts";
 import { getFacultyDashboardBootstrap, FacultyAssignment, ProctorStudent } from "@/utils/faculty_api";
+import { useTheme } from "@/context/ThemeContext";
 
 interface Stat {
   label: string;
@@ -55,6 +56,7 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
   const [selectedClass, setSelectedClass] = useState<string>("All");
   const [selectedSection, setSelectedSection] = useState<string>("All");
   const [selectedDate, setSelectedDate] = useState<string>("");
+  const { theme } = useTheme();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -126,22 +128,24 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
   });
 
   if (loading) {
-    return <div className="p-6 text-center text-gray-600">Loading dashboard...</div>;
+    return <div className={`p-6 text-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Loading dashboard...</div>;
   }
   if (error) {
-    return <div className="p-6 bg-red-100 text-red-700 rounded-lg">{error}</div>;
+    return <div className={`p-6 rounded-lg ${theme === 'dark' ? 'bg-destructive/20 text-destructive-foreground' : 'bg-red-100 text-red-700'}`}>{error}</div>;
   }
 
   return (
-    <div className="p-4 md:p-6 bg-[#1c1c1e] text-gray-200 space-y-6">
+    <div className={`p-4 md:p-6 space-y-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Top Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 ">
         {stats.map((stat, idx) => (
-          <Card key={idx} className="flex flex-col justify-center bg-[#1c1c1e] text-gray-200">
+          <Card key={idx} className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
             <CardContent className="p-4 flex items-center space-x-4">
-              <div className="p-2 bg-gray-200 rounded-full">{stat.icon}</div>
+              <div className={`p-2 rounded-full ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                {stat.icon}
+              </div>
               <div>
-                <p className="text-sm text-gray-200">{stat.label}</p>
+                <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{stat.label}</p>
                 <h2 className="text-2xl font-bold">{stat.value}</h2>
                 {stat.sub && (
                   <p className="text-xs text-green-600 mt-1">{stat.sub}</p>
@@ -155,35 +159,46 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
       {/* Courses (Assigned Subjects) + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Assigned Subjects */}
-        <Card className="lg:col-span-2 bg-[#1c1c1e] text-gray-200">
-          <CardHeader className="flex flex-row justify-between items-center text-gray-200">
-            <CardTitle>Assigned Subjects</CardTitle>
-            <Button variant="link" onClick={() => setActivePage("timetable")} className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500">View All</Button>
+        <Card className={`lg:col-span-2 ${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}`}>
+          <CardHeader className="flex flex-row justify-between items-center">
+            <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Assigned Subjects</CardTitle>
+            <Button 
+              variant="outline" 
+              onClick={() => setActivePage("timetable")}
+              className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+            >
+              View All
+            </Button>
           </CardHeader>
           <CardContent className="space-y-4">
-            {subjects.length > 0 ? (
-              subjects.map((subj, idx) => (
-                <div key={idx} className="p-4 bg-[#1c1c1e] text-gray-200 rounded-lg">
-                  <div className="flex justify-between items-center mb-1">
-                    <h3 className="font-semibold">{subj.subject_name} ({subj.subject_code})</h3>
-                    <span className="text-xs px-2 py-1 rounded-full font-medium bg-blue-100 text-blue-800">
-                      {subj.branch} - Sem {subj.semester} - Sec {subj.section}
-                    </span>
+            <div className="max-h-80 overflow-y-auto">
+              {subjects.length > 0 ? (
+                subjects.map((subj, idx) => (
+                  <div 
+                    key={idx} 
+                    className={`p-4 rounded-lg mb-2 ${theme === 'dark' ? 'bg-card' : 'bg-gray-50'}`}
+                  >
+                    <div className="flex justify-between items-center mb-1">
+                      <h3 className="font-semibold">{subj.subject_name} ({subj.subject_code})</h3>
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${theme === 'dark' ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-800'}`}>
+                        {subj.branch} - Sem {subj.semester} - Sec {subj.section}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-200">No assigned subjects</p>
-            )}
+                ))
+              ) : (
+                <p className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>No assigned subjects</p>
+              )}
+            </div>
           </CardContent>
         </Card>
 
         {/* Quick Actions */}
-        <Card className="h-full flex flex-col shadow-sm rounded-2xl border bg-[#1c1c1e] text-gray-200">
+        <Card className={`h-full flex flex-col shadow-sm rounded-2xl border ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
           <CardHeader className="pb-3 pt-4 px-4">
-            <CardTitle className="text-lg font-semibold text-gray-200">Quick Actions</CardTitle>
+            <CardTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Quick Actions</CardTitle>
           </CardHeader>
-          <div className="flex-grow grid grid-cols-2 grid-rows-2 gap-4 p-4 text-gray-200">
+          <div className="flex-grow grid grid-cols-2 grid-rows-2 gap-4 p-4">
             {[
               { label: "Take Attendance", icon: CheckSquare, page: "take-attendance" },
               { label: "Schedule Class", icon: PlusCircle, page: "timetable" },
@@ -192,12 +207,12 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
             ].map((action, idx) => (
               <div key={idx} className="flex flex-col items-center justify-center">
                 <button
-                  className="flex items-center justify-center w-12 h-12 bg-indigo-100 rounded-lg hover:bg-indigo-200 transition-colors"
+                  className={`flex items-center justify-center w-12 h-12 rounded-lg transition-colors ${theme === 'dark' ? 'bg-accent hover:bg-accent/80' : 'bg-indigo-100 hover:bg-indigo-200'}`}
                   onClick={() => setActivePage(action.page)}
                 >
-                  <action.icon className="w-6 h-6 text-indigo-600" />
+                  <action.icon className={`w-6 h-6 ${theme === 'dark' ? 'text-foreground' : 'text-indigo-600'}`} />
                 </button>
-                <span className="mt-2 text-sm font-semibold text-gray-300">{action.label}</span>
+                <span className={`mt-2 text-sm font-semibold ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>{action.label}</span>
               </div>
             ))}
           </div>
@@ -205,21 +220,21 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
       </div>
 
       {/* Performance Trends */}
-      <Card className="bg-[#1c1c1e] text-gray-200">
+      <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
         <CardHeader>
-          <CardTitle>Performance Trends</CardTitle>
+          <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Performance Trends</CardTitle>
         </CardHeader>
         <CardContent>
           {/* Filters */}
           <div className="flex flex-wrap gap-4 mb-4">
             {/* Class */}
             <div className="flex flex-col">
-              <label className="block text-sm font-medium mb-1 text-gray-200">Class</label>
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-700'}`}>Class</label>
               <Select value={selectedClass} onValueChange={setSelectedClass}>
-                <SelectTrigger className="bg-[#232326] text-gray-200 border border-gray-600 h-10 w-20 px-3 rounded focus:ring-0 focus:ring-white">
+                <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
                   <SelectValue placeholder="Select Class" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#232326] text-gray-200 border border-gray-600">
+                <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
                   {classOptions.map((opt) => (
                     <SelectItem key={opt} value={opt}>
                       {opt}
@@ -231,12 +246,12 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
 
             {/* Section */}
             <div className="flex flex-col">
-              <label className="block text-sm font-medium mb-1 text-gray-200">Section</label>
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-700'}`}>Section</label>
               <Select value={selectedSection} onValueChange={setSelectedSection}>
-                <SelectTrigger className="bg-[#232326] text-gray-200 border border-gray-600 h-10 w-20 px-3 rounded focus:ring-0 focus:ring-white">
+                <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
                   <SelectValue placeholder="Select Section" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#232326] text-gray-200 border border-gray-600">
+                <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
                   {sectionOptions.map((opt) => (
                     <SelectItem key={opt} value={opt}>
                       {opt}
@@ -250,27 +265,27 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
           <div className="w-full h-[250px] grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Attendance Line Chart */}
             <div className="relative">
-              <h3 className="font-semibold mb-2">Performance</h3>
+              <h3 className={`font-semibold mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Performance</h3>
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart
                   data={attendanceData}
                   margin={{ top: 5, right: 20, left: 0, bottom: 50 }}
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#2e2e30" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#2e2e30' : '#e5e7eb'} />
                   <XAxis
                     dataKey="name"
-                    stroke="#d1d5db"
+                    stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'}
                     interval={0}
                     angle={attendanceData.length > 10 ? -45 : 0}
                     textAnchor={attendanceData.length > 10 ? "end" : "middle"}
                     height={attendanceData.length > 10 ? 60 : 40}
                   />
-                  <YAxis stroke="#d1d5db" />
+                  <YAxis stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "#2c2c2e",
-                      border: "none",
-                      color: "#f3f4f6",
+                      backgroundColor: theme === 'dark' ? '#1c1c1e' : '#ffffff',
+                      border: theme === 'dark' ? '1px solid #2e2e30' : '1px solid #e5e7eb',
+                      color: theme === 'dark' ? '#f3f4f6' : '#1f2937',
                     }}
                   />
                   <Line
@@ -286,37 +301,37 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
 
             {/* Marks Bar Chart */}
             <div className="relative">
-              <h3 className="font-semibold mb-2">Average Marks</h3>
+              <h3 className={`font-semibold mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Average Marks</h3>
               {marksData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={250}>
                   <BarChart
                     data={marksData}
                     margin={{ top: 5, right: 20, left: 0, bottom: 50 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#2e2e30" />
+                    <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#2e2e30' : '#e5e7eb'} />
                     <XAxis
                       dataKey="name"
-                      stroke="#d1d5db"
+                      stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'}
                       interval={0}
                       angle={marksData.length > 10 ? -45 : 0}
                       textAnchor={marksData.length > 10 ? "end" : "middle"}
                       height={marksData.length > 10 ? 60 : 40}
                     />
-                    <YAxis stroke="#d1d5db" />
+                    <YAxis stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'} />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "#2c2c2e",
-                        border: "none",
-                        color: "#f3f4f6",
+                        backgroundColor: theme === 'dark' ? '#1c1c1e' : '#ffffff',
+                        border: theme === 'dark' ? '1px solid #2e2e30' : '1px solid #e5e7eb',
+                        color: theme === 'dark' ? '#f3f4f6' : '#1f2937',
                       }}
                     />
                     <Bar dataKey="avgMark" fill="#818cf8">
-                      <LabelList dataKey="avgMark" position="top" fill="#f3f4f6" fontSize={12} />
+                      <LabelList dataKey="avgMark" position="top" fill={theme === 'dark' ? '#f3f4f6' : '#1f2937'} fontSize={12} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <p className="text-gray-400 text-center">No marks data</p>
+                <p className={theme === 'dark' ? 'text-muted-foreground text-center' : 'text-gray-500 text-center'}>No marks data</p>
               )}
             </div>
           </div>

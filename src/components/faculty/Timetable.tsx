@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { FaDownload } from 'react-icons/fa';
 import { getTimetable, TimetableEntry } from '../../utils/faculty_api';
+import { useTheme } from "@/context/ThemeContext";
 
 interface TimetableProps {
   role: string;
@@ -40,6 +41,7 @@ const Timetable = ({ role }: TimetableProps) => {
   const [timetableData, setTimetableData] = useState<TimetableDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { theme } = useTheme();
 
   useEffect(() => {
     getTimetable()
@@ -131,51 +133,54 @@ const Timetable = ({ role }: TimetableProps) => {
   }, [filteredData, role]);
 
   return (
-    <Card className="bg-[#1c1c1e] text-gray-200">
+    <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
       <CardHeader>
         <CardTitle>Timetable - {role}</CardTitle>
       </CardHeader>
 
       <div className="flex justify-between items-center p-4">
         <h2 className="text-lg font-semibold ml-3">Timetable</h2>
-        <Button onClick={exportPDF} className="hidden md:flex items-center mr-3 text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500">
+        <Button 
+          onClick={exportPDF} 
+          className="hidden md:flex items-center mr-3 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out shadow-md"
+        >
           <FaDownload  />
           Export PDF
         </Button>
       </div>
       <CardContent>
         {loading ? (
-          <div className="text-center text-gray-200">Loading timetable...</div>
+          <div className={`text-center ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading timetable...</div>
         ) : error ? (
-          <div className="text-center text-red-600">{error}</div>
+          <div className={`text-center ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>{error}</div>
         ) : (
         <div className="overflow-x-auto">
-          <table className="min-w-full table-auto border-collapse text-sm border">
+          <table className={`min-w-full table-auto border-collapse text-sm ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}>
             <thead>
-              <tr className="bg-[#232326] text-gray-200">
-                <th className="border px-4 py-2 text-left">Time/Day</th>
+              <tr className={theme === 'dark' ? 'bg-muted text-foreground' : 'bg-gray-100 text-gray-900'}>
+                <th className={`border px-4 py-2 text-left ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}>Time/Day</th>
                 {filteredData.map((d) => (
-                  <th key={d.day} className="border px-4 py-2">{d.day}</th>
+                  <th key={d.day} className={`border px-4 py-2 ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}>{d.day}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {timeSlots.map((time) => (
                 <tr key={time}>
-                  <td className="border px-4 py-2 font-semibold">{time}</td>
+                  <td className={`border px-4 py-2 font-semibold ${theme === 'dark' ? 'border-border text-foreground' : 'border-gray-300 text-gray-900'}`}>{time}</td>
                   {filteredData.map((day) => {
                     const slot = day.slots.find((s) => s.time === time);
                     
                     return (
-                      <td key={day.day + time} className="border px-4 py-2 text-center">
+                      <td key={day.day + time} className={`border px-4 py-2 text-center ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}>
                         {slot ? (
                           <>
-                            <strong>{slot.subject}</strong><br />
-                            <span className="text-xs">{slot.faculty}</span><br />
-                            <span className="text-xs">Room {slot.room}</span>
+                            <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{slot.subject}</strong><br />
+                            <span className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>{slot.faculty}</span><br />
+                            <span className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Room {slot.room}</span>
                           </>
                         ) : (
-                          <span className="text-gray-400 italic">Break</span>
+                          <span className={theme === 'dark' ? 'text-muted-foreground italic' : 'text-gray-500 italic'}>Break</span>
                         )}
                       </td>
                     );

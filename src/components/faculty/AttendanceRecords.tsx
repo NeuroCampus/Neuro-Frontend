@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { getAttendanceRecordsWithSummary, getAttendanceRecordDetails } from "@/utils/faculty_api";
 import { API_BASE_URL } from "@/utils/config";
 import { fetchWithTokenRefresh } from "@/utils/authService";
+import { useTheme } from "@/context/ThemeContext";
 
 interface AttendanceRecord {
   id: number;
@@ -59,6 +60,7 @@ const AttendanceRecords = () => {
   const [detailsError, setDetailsError] = useState("");
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const { theme } = useTheme();
 
   useEffect(() => {
     setLoading(true);
@@ -133,45 +135,45 @@ const AttendanceRecords = () => {
   };
 
   return (
-    <div className="p-6 space-y-4 bg-[#1c1c1e] text-gray-200">
-      <Card className="bg-[#1c1c1e] text-gray-200 border border-gray-700">
+    <div className={`p-6 space-y-4 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
         <CardHeader>
-          <CardTitle className="text-gray-200">Attendance Records</CardTitle>
+          <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Attendance Records</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex items-center justify-center p-8 text-gray-400">
+            <div className={`flex items-center justify-center p-8 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               <Loader2 className="animate-spin mr-2" /> Loading records...
             </div>
           ) : error ? (
-            <div className="text-red-500 p-4">{error}</div>
+            <div className={`p-4 ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>{error}</div>
           ) : (
-            <ScrollArea className="rounded border border-gray-700">
+            <ScrollArea className={`rounded ${theme === 'dark' ? 'border border-border' : 'border border-gray-300'}`}>
               <Table>
-                <TableHeader className="bg-[#1c1c1e]">
+                <TableHeader className={theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}>
                   <TableRow>
-                    <TableHead className="text-gray-300">Date</TableHead>
-                    <TableHead className="text-gray-300">Subject</TableHead>
-                    <TableHead className="text-gray-300">Section</TableHead>
-                    <TableHead className="text-gray-300">Semester</TableHead>
-                    <TableHead className="text-gray-300">Branch</TableHead>
-                    <TableHead className="text-gray-300">Present</TableHead>
-                    <TableHead className="text-gray-300">Absent</TableHead>
-                    <TableHead className="text-gray-300">Attendance %</TableHead>
-                    <TableHead className="text-gray-300">Status</TableHead>
-                    <TableHead className="text-gray-300">Action</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Date</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Subject</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Section</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Semester</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Branch</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Present</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Absent</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Attendance %</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Status</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {records.map((record) => (
-                    <TableRow key={record.id} className="hover:bg-[#2e2e31]">
+                    <TableRow key={record.id} className={theme === 'dark' ? 'hover:bg-muted' : 'hover:bg-gray-50'}>
                       <TableCell>{record.date}</TableCell>
                       <TableCell>{record.subject}</TableCell>
                       <TableCell>{record.section}</TableCell>
                       <TableCell>{record.semester}</TableCell>
                       <TableCell>{record.branch}</TableCell>
-                      <TableCell className="text-green-400 font-semibold">{record.summary.present_count}</TableCell>
-                      <TableCell className="text-red-400 font-semibold">{record.summary.absent_count}</TableCell>
+                      <TableCell className={theme === 'dark' ? 'text-green-400 font-semibold' : 'text-green-600 font-semibold'}>{record.summary.present_count}</TableCell>
+                      <TableCell className={theme === 'dark' ? 'text-red-400 font-semibold' : 'text-red-600 font-semibold'}>{record.summary.absent_count}</TableCell>
                       <TableCell className="font-semibold">{record.summary.present_percentage}%</TableCell>
                       <TableCell>{record.status}</TableCell>
                       <TableCell>
@@ -179,66 +181,136 @@ const AttendanceRecords = () => {
                           <DialogTrigger asChild>
                             <Button
                               size="sm"
-                              className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                              className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
                               onClick={() => handleViewDetails(record)}
                             >
                               View Details
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="sm:max-w-[600px] bg-[#1c1c1e] text-gray-200 border border-gray-700">
+                          <DialogContent className={`sm:max-w-3xl max-w-[95vw] ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
                             <DialogHeader>
-                              <DialogTitle className="text-gray-200">
-                                Attendance Details for {selectedRecord?.date} - {selectedRecord?.subject} ({selectedRecord?.section})
-                                <div className="text-sm text-gray-400 mt-1">
-                                  Present: {selectedRecord?.summary.present_count} | Absent: {selectedRecord?.summary.absent_count} | Attendance: {selectedRecord?.summary.present_percentage}%
-                                </div>
+                              <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
+                                Attendance Details
                               </DialogTitle>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                              {loadingDetails ? (
-                                <div className="flex items-center justify-center p-8 text-gray-400">
-                                  <Loader2 className="animate-spin mr-2" /> Loading details...
-                                </div>
-                              ) : detailsError ? (
-                                <div className="text-red-500 p-4">{detailsError}</div>
-                              ) : (
-                                <div className="flex gap-8">
-                                  <div>
-                                    <h4 className="font-semibold text-green-400">Present Students</h4>
-                                    <ul className="list-disc ml-6 max-h-64 overflow-y-auto">
-                                      {presentList.map((s) => (
-                                        <li key={s.usn}>{s.name} ({s.usn})</li>
-                                      ))}
-                                    </ul>
+                              {selectedRecord && (
+                                <div className={`mt-2 p-3 rounded-lg ${theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}`}>
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div>
+                                      <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Date</p>
+                                      <p className={`font-medium text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{selectedRecord.date}</p>
+                                    </div>
+                                    <div>
+                                      <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Subject</p>
+                                      <p className={`font-medium text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{selectedRecord.subject} ({selectedRecord.section})</p>
+                                    </div>
+                                    <div>
+                                      <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Semester & Branch</p>
+                                      <p className={`font-medium text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Sem {selectedRecord.semester}, {selectedRecord.branch}</p>
+                                    </div>
                                   </div>
-                                  <div>
-                                    <h4 className="font-semibold text-red-400">Absent Students</h4>
-                                    <ul className="list-disc ml-6 max-h-64 overflow-y-auto">
-                                      {absentList.map((s) => (
-                                        <li key={s.usn}>{s.name} ({s.usn})</li>
-                                      ))}
-                                    </ul>
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-2">
+                                    <div>
+                                      <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Present</p>
+                                      <p className={`font-medium text-sm ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{selectedRecord.summary.present_count} Students</p>
+                                    </div>
+                                    <div>
+                                      <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Absent</p>
+                                      <p className={`font-medium text-sm ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{selectedRecord.summary.absent_count} Students</p>
+                                    </div>
+                                    <div>
+                                      <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Attendance %</p>
+                                      <p className={`font-medium text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{selectedRecord.summary.present_percentage}%</p>
+                                    </div>
                                   </div>
                                 </div>
                               )}
-                              <div className="mt-4 flex justify-end">
-                                <Button
-                                  className="text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
-                                  onClick={handleExportPdf}
-                                  disabled={exporting}
-                                >
-                                  {exporting ? "Exporting..." : "Export to PDF"}
-                                </Button>
-                                {pdfUrl && (
-                                  <a
-                                    href={pdfUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="ml-4 px-4 py-2 rounded-lg text-gray-200 bg-gray-800 hover:bg-gray-500 border border-gray-500"
+                            </DialogHeader>
+                            <div className="grid gap-3 py-3 max-h-[60vh] overflow-y-auto">
+                              {loadingDetails ? (
+                                <div className={`flex items-center justify-center p-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                                  <Loader2 className="animate-spin mr-2" size={16} /> Loading details...
+                                </div>
+                              ) : detailsError ? (
+                                <div className={`p-3 rounded-lg text-sm ${theme === 'dark' ? 'bg-destructive/10 text-destructive' : 'bg-red-100 text-red-600'}`}>
+                                  {detailsError}
+                                </div>
+                              ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-muted' : 'bg-gray-50'}`}>
+                                    <h4 className={`text-base font-semibold mb-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>Present Students</h4>
+                                    <div className="max-h-60 overflow-y-auto">
+                                      {presentList.length > 0 ? (
+                                        <ul className="space-y-2">
+                                          {presentList.map((s, index) => (
+                                            <li 
+                                              key={s.usn} 
+                                              className={`p-2 rounded-md text-sm ${theme === 'dark' ? 'bg-card hover:bg-accent' : 'bg-white hover:bg-gray-100'} border ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}
+                                            >
+                                              <div className="flex justify-between">
+                                                <span className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{s.name}</span>
+                                                <span className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{s.usn}</span>
+                                              </div>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      ) : (
+                                        <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No present students</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-muted' : 'bg-gray-50'}`}>
+                                    <h4 className={`text-base font-semibold mb-2 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>Absent Students</h4>
+                                    <div className="max-h-60 overflow-y-auto">
+                                      {absentList.length > 0 ? (
+                                        <ul className="space-y-2">
+                                          {absentList.map((s, index) => (
+                                            <li 
+                                              key={s.usn} 
+                                              className={`p-2 rounded-md text-sm ${theme === 'dark' ? 'bg-card hover:bg-accent' : 'bg-white hover:bg-gray-100'} border ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}
+                                            >
+                                              <div className="flex justify-between">
+                                                <span className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{s.name}</span>
+                                                <span className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{s.usn}</span>
+                                              </div>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      ) : (
+                                        <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No absent students</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 border-t border-gray-200 dark:border-border">
+                                <div className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                                  {presentList.length + absentList.length} students total
+                                </div>
+                                <div className="flex gap-2">
+                                  {pdfUrl && (
+                                    <a
+                                      href={pdfUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="px-3 py-1.5 rounded-md text-sm bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-muted dark:text-foreground dark:hover:bg-accent transition-colors"
+                                    >
+                                      Download PDF
+                                    </a>
+                                  )}
+                                  <Button
+                                    className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out text-sm px-3 py-1.5"
+                                    onClick={handleExportPdf}
+                                    disabled={exporting}
                                   >
-                                    Download PDF
-                                  </a>
-                                )}
+                                    {exporting ? (
+                                      <div className="flex items-center">
+                                        <Loader2 className="animate-spin mr-1 h-3 w-3" size={12} /> Exporting...
+                                      </div>
+                                    ) : (
+                                      "Export to PDF"
+                                    )}
+                                  </Button>
+                                </div>
                               </div>
                             </div>
                           </DialogContent>
