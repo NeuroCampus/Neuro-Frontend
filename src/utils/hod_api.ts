@@ -957,6 +957,57 @@ export const getHODDashboard = async (
   }
 };
 
+// Combined HOD dashboard bootstrap (profile + stats + leaves in one call)
+export const getHODDashboardBootstrap = async (): Promise<{
+  success: boolean;
+  message?: string;
+  data?: {
+    profile: {
+      username: string;
+      email: string;
+      first_name: string;
+      last_name: string;
+      mobile_number: string;
+      address: string;
+      bio: string;
+      branch: string;
+      branch_id: string;
+    };
+    semesters: Array<{ id: string; number: number }>;
+    sections: Array<{ id: string; name: string; semester_id: string }>;
+    overview: {
+      faculty_count: number;
+      student_count: number;
+      pending_leaves: number;
+    };
+    attendance_trend: Array<{
+      week: string;
+      start_date: string;
+      end_date: string;
+      attendance_percentage: number | string;
+    }>;
+    leaves: Array<{
+      id: number;
+      faculty_name: string;
+      department: string;
+      start_date: string;
+      end_date: string;
+      reason: string;
+      status: string;
+    }>;
+  };
+}> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/dashboard/`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response) as any;
+  }
+};
+
 export const getLowAttendanceBootstrap = async (
   branch_id?: string,
   filters: { semester_id?: string; section_id?: string; subject_id?: string; threshold?: number; page?: number; page_size?: number } = {}

@@ -20,7 +20,7 @@ import {
 } from "recharts";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
-import { getHODStats, manageLeaves, manageProfile, getHODDashboard } from "../../utils/hod_api";
+import { getHODStats, manageLeaves, manageProfile, getHODDashboard, getHODDashboardBootstrap } from "../../utils/hod_api";
 import { motion } from "framer-motion";
 import { useTheme } from "../../context/ThemeContext";
 
@@ -49,6 +49,11 @@ interface StatsData {
 interface HODStatsProps {
   setError: (err: string | null) => void;
   setPage: (page: string) => void;
+  onBootstrapData?: (data: {
+    branch_id: string;
+    semesters: Array<{ id: string; number: number }>;
+    sections: Array<{ id: string; name: string; semester_id: string }>;
+  }) => void;
 }
 
 interface DashboardLeave {
@@ -61,7 +66,7 @@ interface DashboardLeave {
   status: string;
 }
 
-export default function HODStats({ setError, setPage }: HODStatsProps) {
+export default function HODStats({ setError, setPage, onBootstrapData }: HODStatsProps) {
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [stats, setStats] = useState<StatsData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -84,29 +89,18 @@ export default function HODStats({ setError, setPage }: HODStatsProps) {
     }
   };
 
-  // Fetch branch_id, HOD name, and branch name from manageProfile
-  const fetchBranchId = async () => {
-    try {
-      const profileRes = await manageProfile({}, "GET");
-      if (profileRes.success && profileRes.data?.branch_id) {
-        setBranchId(profileRes.data.branch_id);
-        setHodName(profileRes.data.first_name || "HOD");
-        setBranchName(profileRes.data.branch || "your");
-      } else {
-        setErrors(["Failed to fetch branch ID: No branch assigned"]);
-      }
-    } catch (err) {
-      setErrors(["Failed to connect to backend for branch ID"]);
-    }
-  };
-
-  // Fetch combined dashboard (stats + leaves in one call)
-  const fetchDashboard = async () => {
-    if (!branchId) return;
+  // Fetch combined dashboard bootstrap (profile + stats + leaves in one call)
+  const fetchDashboardBootstrap = async () => {
     setIsLoading(true);
     try {
-      const res = await getHODDashboard(branchId);
+      const res = await getHODDashboardBootstrap();
       if (res.success && res.data) {
+        // Set profile data
+        setBranchId(res.data.profile.branch_id);
+        setHodName(res.data.profile.first_name || "HOD");
+        setBranchName(res.data.profile.branch || "your");
+
+        // Set stats data
         if (res.data.overview) {
           setStats({
             faculty_count: res.data.overview.faculty_count,
@@ -116,6 +110,8 @@ export default function HODStats({ setError, setPage }: HODStatsProps) {
             attendance_trend: res.data.attendance_trend || [],
           });
         }
+
+        // Set leave requests
         if (Array.isArray(res.data.leaves)) {
           const requests = res.data.leaves.map((req: DashboardLeave) => ({
             id: req.id.toString(),
@@ -127,11 +123,20 @@ export default function HODStats({ setError, setPage }: HODStatsProps) {
           })) as LeaveRequest[];
           setLeaveRequests(requests);
         }
+
+        // Pass bootstrap data to parent
+        if (onBootstrapData) {
+          onBootstrapData({
+            branch_id: res.data.profile.branch_id,
+            semesters: res.data.semesters,
+            sections: res.data.sections,
+          });
+        }
       } else {
-        setErrors((prev) => [...prev, res.message || "Failed to fetch dashboard"]);
+        setErrors([res.message || "Failed to fetch dashboard data"]);
       }
     } catch (err) {
-      setErrors((prev) => [...prev, "Failed to fetch dashboard"]);
+      setErrors(["Failed to fetch dashboard data"]);
     } finally {
       setIsLoading(false);
     }
@@ -169,7 +174,7 @@ const handleApprove = async (index: number) => {
       Swal.fire("Error!", "Failed to approve the leave request.", "error");
     } else {
       Swal.fire("Approved!", "The leave request has been approved.", "success");
-      await fetchDashboard(); // ✅ Refresh dashboard data
+      await fetchDashboardBootstrap(); // ✅ Refresh dashboard data
     }
   } catch (err) {
     updateLeaveStatus(index, leave.status); // rollback
@@ -208,8 +213,8 @@ const handleApprove = async (index: number) => {
         setErrors([res.message || "Failed to reject leave"]);
         Swal.fire("Error!", "Failed to reject the leave request.", "error");
       } else {
-        Swal.fire("Rejected!", "The leave request has been rejected.", "success");
-        await fetchDashboard(); // ✅ Refresh dashboard data
+      Swal.fire("Rejected!", "The leave request has been rejected.", "success");
+      await fetchDashboardBootstrap(); // ✅ Refresh dashboard data
       }
     } catch (err) {
       updateLeaveStatus(index, leave.status);
@@ -220,15 +225,8 @@ const handleApprove = async (index: number) => {
 
   // Initial data fetch
   useEffect(() => {
-    fetchBranchId();
+    fetchDashboardBootstrap();
   }, []);
-
-  // Fetch combined dashboard when branchId changes
-  useEffect(() => {
-    if (branchId) {
-      fetchDashboard();
-    }
-  }, [branchId]);
 
   // Transform attendance trend for chart
   const chartData = stats?.attendance_trend?.length

@@ -22,7 +22,6 @@ import HodProfile from "../hod/HodProfile";
 import { logoutUser } from "../../utils/authService";
 import StudyMaterial from "../hod/StudyMaterial";
 import PromotionManagement from "../hod/PromotionManagement";
-import { getHODBootstrap } from "../../utils/hod_api";
 import { HODBootstrapProvider } from "../../context/HODBootstrapContext";
 import { useTheme } from "../../context/ThemeContext";
 import { motion } from "framer-motion";
@@ -118,21 +117,13 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
 
   // Fetch combined profile + semesters + sections once
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await getHODBootstrap();
-        if (res.success && res.data) {
-          setBootstrap({
-            branch_id: res.data.profile?.branch_id,
-            semesters: res.data.semesters,
-            sections: res.data.sections,
-          });
-        }
-      } catch (e) {
-        // non-blocking; individual screens still handle errors
-      }
-    })();
+    // Bootstrap data will now come from HODStats component via onBootstrapData callback
+    // No separate API call needed here anymore
   }, []);
+
+  const handleBootstrapData = (data: BootstrapData) => {
+    setBootstrap(data);
+  };
 
   useEffect(() => {
     if (error) {
@@ -176,7 +167,7 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
   const renderContent = () => {
     switch (activePage) {
       case "dashboard":
-        return <HODStats setError={setError} setPage={handlePageChange}/>;
+        return <HODStats setError={setError} setPage={handlePageChange} onBootstrapData={handleBootstrapData} />;
       case "promotion-management":
         return <PromotionManagement />;
       case "low-attendance":
