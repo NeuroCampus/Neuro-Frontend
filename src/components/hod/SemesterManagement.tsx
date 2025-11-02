@@ -6,7 +6,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from ".
 import { useToast } from "../ui/use-toast";
 import { Pencil, Trash2, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogFooter } from "../ui/dialog";
-import { getSemesters, manageSemesters, manageSections, manageProfile } from "../../utils/hod_api";
+import { getSemesters, manageSemesters, manageSections, manageProfile, getSemesterBootstrap } from "../../utils/hod_api";
 import { useHODBootstrap } from "../../context/HODBootstrapContext";
 import { useTheme } from "../../context/ThemeContext";
 
@@ -67,35 +67,14 @@ const SemesterManagement = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const bId = bootstrap?.branch_id;
-        if (bId) {
-          setBranchId(bId);
-          if (bootstrap?.semesters) {
-            setSemesters((bootstrap.semesters as any[]).map((s: any) => ({ id: s.id.toString(), number: s.number })));
-          }
-          if (bootstrap?.sections) {
-            setSections((bootstrap.sections as any[]).map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id?.toString() })));
-          }
+        // Use the bootstrap endpoint for better performance
+        const bootstrapResponse = await getSemesterBootstrap();
+        if (bootstrapResponse.success && bootstrapResponse.data) {
+          setBranchId(bootstrapResponse.data.profile.branch_id);
+          setSemesters(bootstrapResponse.data.semesters.map((s: any) => ({ id: s.id.toString(), number: s.number })));
+          setSections(bootstrapResponse.data.sections.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id?.toString() })));
         } else {
-          // Fallback to existing separate calls if bootstrap not present yet
-          const profileResponse = await manageProfile({}, "GET");
-          if (!profileResponse.success || !profileResponse.data?.branch_id) {
-            throw new Error(profileResponse.message || "Failed to fetch HOD profile or missing branch ID");
-          }
-          const branchId = profileResponse.data.branch_id;
-          setBranchId(branchId);
-          const semestersResponse = await getSemesters(branchId);
-          if (semestersResponse.success && semestersResponse.data) {
-            setSemesters(semestersResponse.data.map((s: any) => ({ id: s.id.toString(), number: s.number })));
-          } else {
-            throw new Error(semestersResponse.message || "Failed to fetch semesters");
-          }
-          const sectionsResponse = await manageSections({ branch_id: branchId }, "GET");
-          if (sectionsResponse.success && sectionsResponse.data) {
-            setSections(sectionsResponse.data.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id.toString() })));
-          } else {
-            throw new Error(sectionsResponse.message || "Failed to fetch sections");
-          }
+          throw new Error(bootstrapResponse.message || "Failed to fetch data");
         }
       } catch (err: any) {
         const errorMessage = err.message || "Network error";
@@ -177,7 +156,7 @@ const SemesterManagement = () => {
 
     setLoading(true);
     try {
-      const data: ManageSemestersRequest = {
+      const data: any = {
         action: editingSemester ? "update" : "create",
         number: Number(form.number),
         branch_id: branchId,
@@ -187,13 +166,10 @@ const SemesterManagement = () => {
       }
       const response = await manageSemesters(data);
       if (response.success) {
-        // Refresh semesters
-        const semestersResponse = await getSemesters(branchId);
-        if (semestersResponse.success && semestersResponse.data) {
-          setSemesters(semestersResponse.data.map((s: any) => ({
-            id: s.id.toString(),
-            number: s.number,
-          })));
+        // Refresh data using bootstrap endpoint
+        const bootstrapResponse = await getSemesterBootstrap();
+        if (bootstrapResponse.success && bootstrapResponse.data) {
+          setSemesters(bootstrapResponse.data.semesters.map((s: any) => ({ id: s.id.toString(), number: s.number })));
         }
         toast({
           title: editingSemester ? "Updated" : "Created",
@@ -215,28 +191,18 @@ const SemesterManagement = () => {
     if (!deletingSemester || !branchId) return;
     setLoading(true);
     try {
-      const data: ManageSemestersRequest = {
+      const data: any = {
         action: "delete",
         semester_id: deletingSemester.id,
         branch_id: branchId,
       };
       const response = await manageSemesters(data);
       if (response.success) {
-        // Refresh semesters and sections
-        const semestersResponse = await getSemesters(branchId);
-        if (semestersResponse.success && semestersResponse.data) {
-          setSemesters(semestersResponse.data.map((s: any) => ({
-            id: s.id.toString(),
-            number: s.number,
-          })));
-        }
-        const sectionsResponse = await manageSections({ branch_id: branchId }, "GET");
-        if (sectionsResponse.success && sectionsResponse.data) {
-          setSections(sectionsResponse.data.map((s: any) => ({
-            id: s.id,
-            name: s.name,
-            semester_id: s.semester_id.toString(),
-          })));
+        // Refresh data using bootstrap endpoint
+        const bootstrapResponse = await getSemesterBootstrap();
+        if (bootstrapResponse.success && bootstrapResponse.data) {
+          setSemesters(bootstrapResponse.data.semesters.map((s: any) => ({ id: s.id.toString(), number: s.number })));
+          setSections(bootstrapResponse.data.sections.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id?.toString() })));
         }
         toast({ title: "Deleted", description: "Semester deleted successfully!" });
         closeDeleteModal();
@@ -267,7 +233,7 @@ const SemesterManagement = () => {
 
     setLoading(true);
     try {
-      const data: ManageSectionsRequest = {
+      const data: any = {
         action: "create",
         name: sectionForm.name,
         semester_id: managingSemester.id,
@@ -275,14 +241,10 @@ const SemesterManagement = () => {
       };
       const response = await manageSections(data, "POST");
       if (response.success && response.data) {
-        // Refresh sections
-        const sectionsResponse = await manageSections({ branch_id: branchId }, "GET");
-        if (sectionsResponse.success && sectionsResponse.data) {
-          setSections(sectionsResponse.data.map((s: any) => ({
-            id: s.id,
-            name: s.name,
-            semester_id: s.semester_id.toString(),
-          })));
+        // Refresh data using bootstrap endpoint
+        const bootstrapResponse = await getSemesterBootstrap();
+        if (bootstrapResponse.success && bootstrapResponse.data) {
+          setSections(bootstrapResponse.data.sections.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id?.toString() })));
         }
         toast({
           title: "Added",
@@ -304,21 +266,17 @@ const SemesterManagement = () => {
     if (!deletingSection || !branchId) return;
     setLoading(true);
     try {
-      const data: ManageSectionsRequest = {
+      const data: any = {
         action: "delete",
         section_id: deletingSection.id,
         branch_id: branchId,
       };
       const response = await manageSections(data, "POST");
       if (response.success) {
-        // Refresh sections
-        const sectionsResponse = await manageSections({ branch_id: branchId }, "GET");
-        if (sectionsResponse.success && sectionsResponse.data) {
-          setSections(sectionsResponse.data.map((s: any) => ({
-            id: s.id,
-            name: s.name,
-            semester_id: s.semester_id.toString(),
-          })));
+        // Refresh data using bootstrap endpoint
+        const bootstrapResponse = await getSemesterBootstrap();
+        if (bootstrapResponse.success && bootstrapResponse.data) {
+          setSections(bootstrapResponse.data.sections.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id?.toString() })));
         }
         toast({ title: "Deleted", description: `Section ${deletingSection.name} deleted successfully!` });
         closeDeleteSectionModal();

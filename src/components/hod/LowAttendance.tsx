@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { getLowAttendance, getSemesters, manageSections, manageSubjects, manageProfile, sendNotification, getAttendanceBootstrap } from "../../utils/hod_api";
+import { getAttendance, getSemesters, manageSections, manageSubjects, manageProfile, sendNotification, getLowAttendanceBootstrap } from "../../utils/hod_api";
 import { Component } from "react";
 import { useTheme } from "../../context/ThemeContext";
 
@@ -118,21 +118,28 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
     notifiedStudents: {} as Record<string, boolean>, 
     isNotifyingAll: false,
     hasNotifiedAll: false,
+    pagination: {
+      page: 1,
+      page_size: 50,
+      total_students: 0,
+      total_pages: 0,
+    },
   });
-
-  const studentsPerPage = 10;
 
   // Helper to update state
   const updateState = (newState: Partial<typeof state>) => {
     setState(prev => ({ ...prev, ...newState }));
   };
 
-  // Fetch all data using combined endpoint
+  // Fetch all data using combined endpoint with pagination
   useEffect(() => {
     const fetchData = async () => {
       updateState({ loading: true });
       try {
-        const filters: { semester_id?: string; section_id?: string; subject_id?: string } = {};
+        const filters: { semester_id?: string; section_id?: string; subject_id?: string; page?: number; page_size?: number } = {
+          page: state.pagination.page,
+          page_size: state.pagination.page_size,
+        };
         if (state.semesterFilter !== "All") {
           filters.semester_id = state.semesterFilter;
         }
@@ -143,7 +150,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
           filters.subject_id = state.subjectFilter;
         }
 
-        const response = await getAttendanceBootstrap("", filters);
+        const response = await getLowAttendanceBootstrap("", filters);
         if (!response.success || !response.data) {
           throw new Error(response.message || "Failed to fetch data");
         }
@@ -187,6 +194,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
           sections: sectionsData,
           subjects: subjectsData,
           students: studentsData,
+          pagination: response.data.pagination,
           loading: false,
         });
       } catch (err) {
@@ -197,38 +205,25 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
       }
     };
     fetchData();
-  }, [state.semesterFilter, state.subjectFilter, state.sectionFilter, toast, setError]);
+  }, [state.semesterFilter, state.subjectFilter, state.sectionFilter, state.pagination.page, state.pagination.page_size, toast, setError]);
 
-  const filteredStudents = state.students.filter((student) => {
-    const matchesSearch =
-      student.name.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
-      student.usn.toLowerCase().includes(state.searchTerm.toLowerCase());
-    const matchesSubject =
-      state.subjectFilter === "All" ||
-      student.subject === state.subjects.find(s => s.id === state.subjectFilter)?.name;
-    const matchesSection =
-      state.sectionFilter === "All" ||
-      student.section === state.sections.find(s => s.id === state.sectionFilter)?.name;
-    const matchesSemester =
-      state.semesterFilter === "All" ||
-      student.semester.toString() === state.semesters.find(s => s.id === state.semesterFilter)?.number.toString();
-    return matchesSearch && matchesSubject && matchesSection && matchesSemester;
-  });
+  const filteredStudents = state.students; // Server-side filtering now
 
-  const indexOfLastStudent = state.currentPage * studentsPerPage;
-  const indexOfFirstStudent = indexOfLastStudent - studentsPerPage;
-  const currentStudents = filteredStudents.slice(indexOfFirstStudent, indexOfLastStudent);
-  const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
+  const totalPages = state.pagination.total_pages;
+  const currentStudents = filteredStudents;
 
   const exportPDF = () => {
     const doc = new jsPDF();
     const pageHeight = doc.internal.pageSize.height;
     const margin = 14;
     let currentPageNumber = 1;
+    
+    // For server-side pagination, we export current page data
     const studentChunks = [];
-    for (let i = 0; i < filteredStudents.length; i += studentsPerPage) {
-      studentChunks.push(filteredStudents.slice(i, i + studentsPerPage));
+    for (let i = 0; i < filteredStudents.length; i += 50) { // Use 50 items per page for PDF
+      studentChunks.push(filteredStudents.slice(i, i + 50));
     }
+    
     studentChunks.forEach((chunk, index) => {
       if (index > 0) {
         doc.addPage();
@@ -367,7 +362,12 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
         <div className="flex flex-wrap items-center gap-4 mb-6">
           <Select
             value={state.semesterFilter}
-            onValueChange={(value) => updateState({ semesterFilter: value, subjectFilter: "All", sectionFilter: "All" })}
+            onValueChange={(value) => updateState({ 
+              semesterFilter: value, 
+              subjectFilter: "All", 
+              sectionFilter: "All",
+              pagination: { ...state.pagination, page: 1 }
+            })}
             disabled={state.loading || state.semesters.length === 0}
           >
             <SelectTrigger className={`w-48 ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`}>
@@ -389,7 +389,10 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
           </Select>
           <Select
             value={state.subjectFilter}
-            onValueChange={(value) => updateState({ subjectFilter: value })}
+            onValueChange={(value) => updateState({ 
+              subjectFilter: value,
+              pagination: { ...state.pagination, page: 1 }
+            })}
             disabled={state.loading || !state.semesterFilter || state.semesterFilter === "All" || state.subjects.length === 0}
           >
             <SelectTrigger className={`w-48 ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`}>
@@ -413,7 +416,10 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
           </Select>
           <Select
             value={state.sectionFilter}
-            onValueChange={(value) => updateState({ sectionFilter: value })}
+            onValueChange={(value) => updateState({ 
+              sectionFilter: value,
+              pagination: { ...state.pagination, page: 1 }
+            })}
             disabled={state.loading || !state.semesterFilter || state.semesterFilter === "All" || state.sections.length === 0}
           >
             <SelectTrigger className={`w-48 ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`}>
@@ -555,27 +561,33 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
         <div className={`mt-4 flex justify-between items-center text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
           <div className="flex items-center space-x-4">
             <div className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-              Showing {indexOfFirstStudent + 1} to {Math.min(indexOfLastStudent, filteredStudents.length)} of {filteredStudents.length} students
+              Showing {(state.pagination.page - 1) * state.pagination.page_size + 1} to {Math.min(state.pagination.page * state.pagination.page_size, state.pagination.total_students)} of {state.pagination.total_students} students
             </div>
           </div>
           <div className="flex items-center space-x-4">
             <Button
               size="sm"
               variant="outline"
-              disabled={state.currentPage === 1 || state.loading}
-              onClick={() => updateState({ currentPage: state.currentPage - 1 })}
+              disabled={state.pagination.page === 1 || state.loading}
+              onClick={() => updateState({
+                pagination: { ...state.pagination, page: state.pagination.page - 1 },
+                currentPage: state.pagination.page - 1
+              })}
               className="flex items-center gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md rounded-md px-4 py-2"
             >
               Previous
             </Button>
             <span className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
-              Page {state.currentPage} of {totalPages}
+              Page {state.pagination.page} of {state.pagination.total_pages}
             </span>
             <Button
               size="sm"
               variant="outline"
-              disabled={state.currentPage === totalPages || state.loading}
-              onClick={() => updateState({ currentPage: state.currentPage + 1 })}
+              disabled={state.pagination.page === state.pagination.total_pages || state.loading}
+              onClick={() => updateState({
+                pagination: { ...state.pagination, page: state.pagination.page + 1 },
+                currentPage: state.pagination.page + 1
+              })}
               className="flex items-center gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md rounded-md px-4 py-2"
             >
               Next

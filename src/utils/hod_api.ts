@@ -91,25 +91,6 @@ interface GetAttendanceBootstrapResponse {
     semesters: Array<{ id: string; number: number }>;
     sections: Array<{ id: string; name: string; semester_id: string }>;
     subjects: Array<{ id: string; name: string; subject_code: string; semester_id: string }>;
-    performance: Array<{
-      subject: string;
-      attendance: number;
-      marks: number;
-      semester: string;
-    }>;
-    marks: Array<{
-      student_id: string;
-      student: string;
-      usn: string;
-      subject: string;
-      subject_id: string;
-      average_mark: number;
-      test_marks: Array<{
-        test_number: number;
-        mark: number;
-        max_mark: number;
-      }>;
-    }>;
     attendance: {
       students: Array<{
         student_id: string;
@@ -124,29 +105,12 @@ interface GetAttendanceBootstrapResponse {
         subject: string;
       }>;
     };
-    low_attendance: {
-      students: Array<{
-        student_id: string;
-        name: string;
-        usn: string;
-        attendance_percentage: number | string;
-        total_sessions: number;
-        present_sessions: number;
-        semester: number | null;
-        section: string | null;
-        batch: string | null;
-        subject: string;
-      }>;
+    pagination: {
+      page: number;
+      page_size: number;
+      total_students: number;
+      total_pages: number;
     };
-    leaves: Array<{
-      id: number;
-      faculty_name: string;
-      department: string;
-      start_date: string;
-      end_date: string;
-      reason: string;
-      status: string;
-    }>;
   };
 }
 
@@ -788,7 +752,7 @@ export const getBranches = async (): Promise<GetBranchesResponse> => {
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/branches/`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -908,18 +872,34 @@ export const getProctorBootstrap = async (
   }
 };
 
-export const getAttendanceBootstrap = async (
-  branch_id?: string,
-  filters: { semester_id?: string; section_id?: string; subject_id?: string } = {}
-): Promise<GetAttendanceBootstrapResponse> => {
+export const getSemesterBootstrap = async (
+  branch_id?: string
+): Promise<{
+  success: boolean;
+  message?: string;
+  data?: {
+    profile: {
+      username: string;
+      email: string;
+      first_name: string;
+      last_name: string;
+      mobile_number: string;
+      address: string;
+      bio: string;
+      branch: string;
+      branch_id: string;
+    };
+    branches: Branch[];
+    semesters: Array<{ id: string; number: number }>;
+    sections: Array<{ id: string; name: string; semester_id: string }>;
+    subjects: Array<{ id: string; name: string; subject_code: string; semester_id: string }>;
+  };
+}> => {
   try {
     const params: Record<string, string> = {};
     if (branch_id) params.branch_id = branch_id;
-    if (filters.semester_id) params.semester_id = filters.semester_id;
-    if (filters.section_id) params.section_id = filters.section_id;
-    if (filters.subject_id) params.subject_id = filters.subject_id;
     const query = new URLSearchParams(params).toString();
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/attendance-bootstrap/${query ? '?' + query : ''}`, {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/semester-bootstrap/${query ? '?' + query : ''}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
@@ -935,7 +915,7 @@ export const getHODStats = async (branch_id: string): Promise<HODStatsResponse> 
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/dashboard-stats/?branch_id=${branch_id}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -969,7 +949,7 @@ export const getHODDashboard = async (
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/dashboard/?branch_id=${branch_id}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -977,22 +957,62 @@ export const getHODDashboard = async (
   }
 };
 
-export const getLowAttendance = async (
-  branch_id: string,
-  threshold: number = 75,
-  filters: { semester_id?: string; section_id?: string; subject_id?: string } = {}
-): Promise<LowAttendanceResponse> => {
+export const getLowAttendanceBootstrap = async (
+  branch_id?: string,
+  filters: { semester_id?: string; section_id?: string; subject_id?: string; threshold?: number; page?: number; page_size?: number } = {}
+): Promise<{
+  success: boolean;
+  message?: string;
+  data?: {
+    profile: {
+      username: string;
+      email: string;
+      first_name: string;
+      last_name: string;
+      mobile_number: string;
+      address: string;
+      bio: string;
+      branch: string;
+      branch_id: string;
+    };
+    semesters: Array<{ id: string; number: number }>;
+    sections: Array<{ id: string; name: string; semester_id: string }>;
+    subjects: Array<{ id: string; name: string; subject_code: string; semester_id: string }>;
+    low_attendance: {
+      students: Array<{
+        student_id: string;
+        usn: string;
+        name: string;
+        attendance_percentage: number;
+        total_sessions: number;
+        present_sessions: number;
+        semester: number | null;
+        section: string | null;
+        batch: string | null;
+        subject: string;
+      }>;
+    };
+    pagination: {
+      page: number;
+      page_size: number;
+      total_students: number;
+      total_pages: number;
+    };
+  };
+}> => {
   try {
-    if (!branch_id) throw new Error("Branch ID is required");
-    const params: Record<string, string> = { threshold: threshold.toString(), branch_id };
+    const params: Record<string, string> = {};
+    if (branch_id) params.branch_id = branch_id;
     if (filters.semester_id) params.semester_id = filters.semester_id;
     if (filters.section_id) params.section_id = filters.section_id;
     if (filters.subject_id) params.subject_id = filters.subject_id;
+    if (filters.threshold) params.threshold = filters.threshold.toString();
+    if (filters.page) params.page = filters.page.toString();
+    if (filters.page_size) params.page_size = filters.page_size.toString();
     const query = new URLSearchParams(params).toString();
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/low-attendance/?${query}`, {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/low-attendance-bootstrap/${query ? '?' + query : ''}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 10000,
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1000,21 +1020,89 @@ export const getLowAttendance = async (
   }
 };
 
-export const getAllAttendance = async (
-  branch_id: string,
-  filters: { semester_id?: string; section_id?: string; subject_id?: string } = {}
-): Promise<LowAttendanceResponse> => {
+export const getAttendanceBootstrap = async (
+  branch_id?: string,
+  filters: { semester_id?: string; section_id?: string; subject_id?: string; page?: number; page_size?: number } = {}
+): Promise<GetAttendanceBootstrapResponse> => {
   try {
-    if (!branch_id) throw new Error("Branch ID is required");
-    const params: Record<string, string> = { branch_id };
+    const params: Record<string, string> = {};
+    if (branch_id) params.branch_id = branch_id;
     if (filters.semester_id) params.semester_id = filters.semester_id;
     if (filters.section_id) params.section_id = filters.section_id;
     if (filters.subject_id) params.subject_id = filters.subject_id;
+    if (filters.page) params.page = filters.page.toString();
+    if (filters.page_size) params.page_size = filters.page_size.toString();
     const query = new URLSearchParams(params).toString();
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/all-attendance/?${query}`, {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/attendance-bootstrap/${query ? '?' + query : ''}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 10000,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
+export const getMarksBootstrap = async (
+  branch_id?: string,
+  filters: { semester_id?: string; section_id?: string; subject_id?: string; page?: number; page_size?: number } = {}
+): Promise<{
+  success: boolean;
+  message?: string;
+  data?: {
+    profile: {
+      username: string;
+      email: string;
+      first_name: string;
+      last_name: string;
+      mobile_number: string;
+      address: string;
+      bio: string;
+      branch: string;
+      branch_id: string;
+    };
+    semesters: Array<{ id: string; number: number }>;
+    sections: Array<{ id: string; name: string; semester_id: string }>;
+    subjects: Array<{ id: string; name: string; subject_code: string; semester_id: string }>;
+    performance: Array<{
+      subject: string;
+      marks: number;
+      attendance: number;
+      semester: string;
+    }>;
+    marks: Array<{
+      student_id: string;
+      student: string;
+      usn: string;
+      subject: string;
+      subject_id: string;
+      average_mark: number;
+      test_marks: Array<{
+        test_number: number;
+        mark: number;
+        max_mark: number;
+      }>;
+    }>;
+    pagination: {
+      page: number;
+      page_size: number;
+      total_students: number;
+      total_pages: number;
+    };
+  };
+}> => {
+  try {
+    const params: Record<string, string> = {};
+    if (branch_id) params.branch_id = branch_id;
+    if (filters.semester_id) params.semester_id = filters.semester_id;
+    if (filters.section_id) params.section_id = filters.section_id;
+    if (filters.subject_id) params.subject_id = filters.subject_id;
+    if (filters.page) params.page = filters.page.toString();
+    if (filters.page_size) params.page_size = filters.page_size.toString();
+    const query = new URLSearchParams(params).toString();
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/marks-bootstrap/${query ? '?' + query : ''}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1028,7 +1116,7 @@ export const getStudentOptions = async (branch_id: string): Promise<GetStudentOp
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/student-options/?branch_id=${branch_id}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1042,7 +1130,7 @@ export const getSemesters = async (branch_id: string): Promise<GetSemestersRespo
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/semesters/?branch_id=${branch_id}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1060,7 +1148,7 @@ export const manageSemesters = async (data: ManageSemestersRequest): Promise<Man
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1096,7 +1184,7 @@ export const manageSections = async (
       method,
       headers: { "Content-Type": "application/json" },
       body: method === "POST" ? JSON.stringify(data) : undefined,
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1130,7 +1218,7 @@ export const getHODTimetableSemesterData = async (semester_id: string): Promise<
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/timetable-semester-data/?semester_id=${semester_id}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1152,7 +1240,7 @@ export const getHODBootstrap = async (): Promise<{
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/bootstrap/`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1177,7 +1265,7 @@ export const getHODStudentBootstrap = async (): Promise<{
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/student-bootstrap/`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 15000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1212,7 +1300,7 @@ export const manageSubjects = async (
       method,
       headers: { "Content-Type": "application/json" },
       body: method === "POST" ? JSON.stringify(data) : undefined,
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1236,7 +1324,7 @@ export const getHODSubjectBootstrap = async (): Promise<{
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/subject-bootstrap/`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 15000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1290,7 +1378,7 @@ export const manageStudents = async (
       method,
       headers: { "Content-Type": "application/json" },
       body: method === "POST" ? JSON.stringify(data) : undefined,
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1315,7 +1403,7 @@ export const getHODTimetableBootstrap = async (): Promise<{
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/timetable-bootstrap/`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 15000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1343,7 +1431,7 @@ export const manageBatches = async (
       method,
       headers: { "Content-Type": "application/json" },
       body: data ? JSON.stringify(data) : undefined,
-      timeout: 10000,
+
     });
     const result = await response.json();
     if (!response.ok) {
@@ -1367,7 +1455,7 @@ export const getStudentPerformance = async (
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/performance/?${params.toString()}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1385,7 +1473,7 @@ export const manageFaculties = async (
     const response = await fetchWithTokenRefresh(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1399,7 +1487,7 @@ export const getProctors = async (branch_id: string): Promise<GetFacultiesRespon
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/proctors/list/?branch_id=${branch_id}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1436,7 +1524,7 @@ export const manageFacultyAssignments = async (
       method,
       headers: { "Content-Type": "application/json" },
       body: method === "POST" ? JSON.stringify(data) : undefined,
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1454,7 +1542,7 @@ export const manageTimetable = async (data: ManageTimetableRequest): Promise<Man
       const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/timetable/?${params.toString()}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
-        timeout: 10000,
+  
       });
       return await response.json();
     }
@@ -1495,7 +1583,7 @@ export const manageTimetable = async (data: ManageTimetableRequest): Promise<Man
       method: "POST",
       headers,
       body,
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1517,7 +1605,7 @@ export const manageHODLeaves = async (
       method,
       headers: { "Content-Type": "application/json" },
       body: method === "POST" ? JSON.stringify(data) : undefined,
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1539,7 +1627,7 @@ export const manageLeaves = async (
       method,
       headers: { "Content-Type": "application/json" },
       body: method === "PATCH" ? JSON.stringify(data) : undefined,
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1554,7 +1642,7 @@ export const getAttendance = async (params: GetAttendanceParams): Promise<GetAtt
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/attendance/?${query}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1569,7 +1657,7 @@ export const getMarks = async (params: GetMarksParams): Promise<GetMarksResponse
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/marks/?${query}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1586,7 +1674,7 @@ export const createAnnouncement = async (data: CreateAnnouncementRequest): Promi
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1606,7 +1694,7 @@ export const sendNotification = async (data: SendNotificationRequest): Promise<S
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1620,7 +1708,7 @@ export const getNotifications = async (branch_id: string): Promise<GetNotificati
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/notifications/history/?branch_id=${branch_id}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1634,7 +1722,7 @@ export const getSentNotifications = async (branch_id: string): Promise<GetNotifi
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/notifications/sent/?branch_id=${branch_id}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1651,7 +1739,7 @@ export const assignProctor = async (data: AssignProctorRequest): Promise<AssignP
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1668,7 +1756,7 @@ export const assignProctorsBulk = async (data: AssignProctorsBulkRequest): Promi
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1696,7 +1784,7 @@ export const manageChat = async (
       method,
       headers: { "Content-Type": "application/json" },
       body: method === "POST" ? JSON.stringify(data) : undefined,
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1713,7 +1801,7 @@ export const manageProfile = async (
       method,
       headers: { "Content-Type": "application/json" },
       body: method === "PATCH" ? JSON.stringify(data) : undefined,
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1736,7 +1824,7 @@ export const uploadStudyMaterial = async (data: UploadStudyMaterialRequest): Pro
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/study-materials/`, {
       method: "POST",
       body: formData,
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1750,7 +1838,7 @@ export const getStudyMaterials = async (branch_id: string): Promise<GetStudyMate
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/study-materials/?branch_id=${branch_id}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1767,7 +1855,7 @@ export const promoteStudentsToNextSemester = async (data: PromoteStudentsRequest
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1784,7 +1872,7 @@ export const promoteSelectedStudents = async (data: PromoteSelectedStudentsReque
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1801,7 +1889,7 @@ export const demoteStudent = async (data: DemoteStudentRequest): Promise<DemoteS
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1818,7 +1906,7 @@ export const bulkDemoteStudents = async (data: BulkDemoteStudentsRequest): Promi
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1835,7 +1923,7 @@ export const getPromotionEligibility = async (params: GetPromotionEligibilityPar
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/promotion-eligibility/?${query}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1850,7 +1938,7 @@ export const getExamFailures = async (params: GetExamFailuresParams): Promise<Ge
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/exam-failures/?${query}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {
@@ -1867,7 +1955,7 @@ export const recordExamFailure = async (data: RecordExamFailureRequest): Promise
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
-      timeout: 10000,
+
     });
     return await response.json();
   } catch (error: unknown) {

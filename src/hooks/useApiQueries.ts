@@ -63,8 +63,6 @@ export const useProctorStudentsQuery = () => {
       }
       throw new Error(response.message || 'Failed to fetch proctor students');
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 };
 
@@ -78,8 +76,6 @@ export const useFacultyAssignmentsQuery = () => {
       }
       throw new Error(response.message || 'Failed to fetch faculty assignments');
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
   });
 };
 
@@ -100,8 +96,6 @@ export const useStudentAttendanceQuery = () => {
         pagination.updatePagination(response);
         return response;
       },
-      staleTime: 2 * 60 * 1000, // 2 minutes
-      gcTime: 5 * 60 * 1000, // 5 minutes
     }),
     pagination,
   };
@@ -122,8 +116,6 @@ export const useStudentInternalMarksQuery = () => {
         pagination.updatePagination(response);
         return response;
       },
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
     }),
     pagination,
   };
@@ -143,8 +135,6 @@ export const useStudentNotificationsQuery = () => {
         const response = await getNotifications();
         return response;
       },
-      staleTime: 1 * 60 * 1000, // 1 minute
-      gcTime: 5 * 60 * 1000, // 5 minutes
     }),
     infiniteScroll,
   };
@@ -159,8 +149,6 @@ export const useStudentStudyMaterialsQuery = (enabled: boolean = false) => {
       return response;
     },
     enabled, // Only fetch when explicitly enabled (lazy loading)
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
   });
 };
 
@@ -173,8 +161,6 @@ export const useHistoricalStudentDataQuery = (enabled: boolean = false) => {
       return response;
     },
     enabled, // Only fetch when explicitly enabled (lazy loading)
-    staleTime: 15 * 60 * 1000, // 15 minutes
-    gcTime: 60 * 60 * 1000, // 1 hour
   });
 };
 
@@ -193,8 +179,6 @@ export const useStudentCertificatesQuery = () => {
         pagination.updatePagination(response);
         return response;
       },
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 15 * 60 * 1000, // 15 minutes
     }),
     pagination,
   };

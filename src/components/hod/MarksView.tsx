@@ -16,7 +16,7 @@ import { useToast } from "../ui/use-toast";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import autoTable from "jspdf-autotable";
 import jsPDF from "jspdf";
-import { manageProfile, getStudentPerformance, getSemesters, manageSections, manageSubjects, getMarks, getAttendanceBootstrap } from "../../utils/hod_api";
+import { manageProfile, getStudentPerformance, getSemesters, manageSections, manageSubjects, getMarks, getMarksBootstrap } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
 
 // Define types for chart components
@@ -87,6 +87,11 @@ const MarksView = () => {
     branchId: "",
     selectedStudent: null as Student | null,
     error: null as string | null,
+    // Pagination state
+    currentPage: 1,
+    pageSize: 100,
+    totalStudents: 0,
+    totalPages: 0,
   });
 
   const reportRef = useRef<HTMLDivElement>(null);
@@ -99,7 +104,15 @@ const MarksView = () => {
     const fetchData = async () => {
       updateState({ loading: true, error: null });
       try {
-        const filters: { semester_id?: string; section_id?: string; subject_id?: string } = {};
+        const filters: { 
+          semester_id?: string; 
+          section_id?: string; 
+          subject_id?: string;
+          search?: string;
+          page?: number;
+          page_size?: number;
+        } = {};
+        
         if (state.semesterFilter !== "all") {
           filters.semester_id = state.semesterFilter;
         }
@@ -109,8 +122,14 @@ const MarksView = () => {
         if (state.subjectFilter && state.subjectFilter !== "all") {
           filters.subject_id = state.subjectFilter;
         }
+        if (state.searchTerm.trim()) {
+          filters.search = state.searchTerm.trim();
+        }
+        
+        filters.page = state.currentPage;
+        filters.page_size = state.pageSize;
 
-        const response = await getAttendanceBootstrap("", filters);
+        const response = await getMarksBootstrap("", filters);
         if (!response.success || !response.data) {
           throw new Error(response.message || "Failed to fetch data");
         }
@@ -183,6 +202,7 @@ const MarksView = () => {
         });
         const studentsData = Array.from(studentsMap.values());
 
+        // Update pagination state
         updateState({
           semesters: semestersData,
           sections: sectionsData,
@@ -191,6 +211,8 @@ const MarksView = () => {
           students: studentsData,
           loading: false,
           error: null,
+          totalStudents: data.pagination.total_students,
+          totalPages: data.pagination.total_pages,
         });
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : "Failed to fetch data";
@@ -207,7 +229,7 @@ const MarksView = () => {
       }
     };
     fetchData();
-  }, [state.semesterFilter, state.sectionFilter, state.subjectFilter, toast]);
+  }, [state.semesterFilter, state.sectionFilter, state.subjectFilter, state.searchTerm, state.currentPage, state.pageSize, toast]);
 
   // Custom Tooltip for BarChart
   const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
@@ -258,12 +280,8 @@ const MarksView = () => {
   // Get subject keys for table columns
   const subjectKeys = state.subjects.map((s) => s.name);
 
-  // Filter students based on search term
-  const filteredStudents = state.students.filter(
-    (student) =>
-      student.name.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
-      student.rollNo.toLowerCase().includes(state.searchTerm.toLowerCase())
-  );
+  // Students are already filtered server-side
+  const filteredStudents = state.students;
 
   const handleExportPDF = (type: "marks" | "attendance") => {
     const doc = new jsPDF();
@@ -318,7 +336,7 @@ const MarksView = () => {
         <Select
           value={state.semesterFilter}
           onValueChange={(value) =>
-            updateState({ semesterFilter: value, sectionFilter: "all", subjectFilter: "all" })
+            updateState({ semesterFilter: value, sectionFilter: "all", subjectFilter: "all", currentPage: 1 })
           }
           disabled={state.loading || state.semesters.length === 0}
         >
@@ -337,7 +355,7 @@ const MarksView = () => {
 
         <Select
           value={state.sectionFilter}
-          onValueChange={(value) => updateState({ sectionFilter: value })}
+          onValueChange={(value) => updateState({ sectionFilter: value, currentPage: 1 })}
           disabled={
             state.loading ||
             state.sections.length === 0
@@ -360,7 +378,7 @@ const MarksView = () => {
 
         <Select
           value={state.subjectFilter}
-          onValueChange={(value) => updateState({ subjectFilter: value })}
+          onValueChange={(value) => updateState({ subjectFilter: value, currentPage: 1 })}
           disabled={
             state.loading ||
             state.subjects.length === 0
@@ -441,7 +459,7 @@ const MarksView = () => {
                 placeholder="Search by name or roll number..."
                 className={`w-1/3 ${theme === 'dark' ? 'bg-background text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'}`}
                 value={state.searchTerm}
-                onChange={(e) => updateState({ searchTerm: e.target.value })}
+                onChange={(e) => updateState({ searchTerm: e.target.value, currentPage: 1 })}
                 disabled={state.loading}
               />
               <Button
@@ -453,6 +471,38 @@ const MarksView = () => {
                 Export Marks to PDF
               </Button>
             </div>
+
+            {/* Pagination Controls */}
+            {state.totalPages > 1 && (
+              <div className="flex justify-between items-center mt-4">
+                <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                  Showing {((state.currentPage - 1) * state.pageSize) + 1} to {Math.min(state.currentPage * state.pageSize, state.totalStudents)} of {state.totalStudents} students
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateState({ currentPage: state.currentPage - 1 })}
+                    disabled={state.currentPage <= 1 || state.loading}
+                    className={theme === 'dark' ? 'bg-background text-foreground border-border hover:bg-accent' : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-100'}
+                  >
+                    Previous
+                  </Button>
+                  <span className={`text-sm px-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                    Page {state.currentPage} of {state.totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateState({ currentPage: state.currentPage + 1 })}
+                    disabled={state.currentPage >= state.totalPages || state.loading}
+                    className={theme === 'dark' ? 'bg-background text-foreground border-border hover:bg-accent' : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-100'}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
 
             <Card className={`mt-6 rounded-xl shadow-lg ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-300'}`}>
               <CardContent className="p-0 rounded-xl overflow-x-auto custom-scrollbar">
@@ -559,7 +609,7 @@ const MarksView = () => {
                 placeholder="Search by name or roll number..."
                 className={`w-1/3 ${theme === 'dark' ? 'bg-background text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'}`}
                 value={state.searchTerm}
-                onChange={(e) => updateState({ searchTerm: e.target.value })}
+                onChange={(e) => updateState({ searchTerm: e.target.value, currentPage: 1 })}
                 disabled={state.loading}
               />
               <Button
@@ -571,6 +621,38 @@ const MarksView = () => {
                 Export Attendance to PDF
               </Button>
             </div>
+
+            {/* Pagination Controls */}
+            {state.totalPages > 1 && (
+              <div className="flex justify-between items-center mt-4">
+                <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                  Showing {((state.currentPage - 1) * state.pageSize) + 1} to {Math.min(state.currentPage * state.pageSize, state.totalStudents)} of {state.totalStudents} students
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateState({ currentPage: state.currentPage - 1 })}
+                    disabled={state.currentPage <= 1 || state.loading}
+                    className={theme === 'dark' ? 'bg-background text-foreground border-border hover:bg-accent' : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-100'}
+                  >
+                    Previous
+                  </Button>
+                  <span className={`text-sm px-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                    Page {state.currentPage} of {state.totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => updateState({ currentPage: state.currentPage + 1 })}
+                    disabled={state.currentPage >= state.totalPages || state.loading}
+                    className={theme === 'dark' ? 'bg-background text-foreground border-border hover:bg-accent' : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-100'}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
 
             <Card className={`mt-4 ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-300'}`}>
               <CardContent className="overflow-x-auto">

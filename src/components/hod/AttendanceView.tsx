@@ -16,7 +16,7 @@ import {
   DialogClose,
 } from "../ui/dialog";
 import { useToast } from "../ui/use-toast";
-import { getAllAttendance, manageProfile, manageSections, manageSubjects, getBranches, getSemesters, getAttendanceBootstrap } from "../../utils/hod_api";
+import { manageProfile, manageSections, manageSubjects, getBranches, getSemesters, getAttendanceBootstrap } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
 
 interface Student {
@@ -132,22 +132,30 @@ const AttendanceView = () => {
     semesters: [] as Semester[],
     sections: [] as Section[],
     subjects: [] as Subject[],
+    pagination: {
+      page: 1,
+      page_size: 50,
+      total_students: 0,
+      total_pages: 0,
+    },
   });
 
-  const studentsPerPage = 10;
+  const studentsPerPage = 50;
 
   // Helper to update state
   const updateState = (newState: Partial<typeof state>) => {
     setState((prev) => ({ ...prev, ...newState }));
   };
 
-  // Fetch all data using combined endpoint
+  // Fetch all data using combined endpoint with pagination
   useEffect(() => {
     const fetchData = async () => {
       updateState({ loading: true, search: "", currentPage: 1 });
       try {
-        // Fetch all data in one call
+        // Fetch data with pagination support
         const response = await getAttendanceBootstrap("", {
+          page: state.pagination.page,
+          page_size: state.pagination.page_size,
           ...(state.filters.semester_id && { semester_id: state.filters.semester_id }),
           ...(state.filters.section_id && { section_id: state.filters.section_id }),
           ...(state.filters.subject_id && { subject_id: state.filters.subject_id }),
@@ -169,6 +177,7 @@ const AttendanceView = () => {
               semester_id: s.semester_id.toString(),
             })),
             students: response.data.attendance.students,
+            pagination: response.data.pagination,
           });
         } else {
           throw new Error(response.message || "Failed to fetch data");
@@ -182,15 +191,12 @@ const AttendanceView = () => {
       }
     };
     fetchData();
-  }, [state.filters.semester_id, state.filters.section_id, state.filters.subject_id, toast]);
+  }, [state.filters.semester_id, state.filters.section_id, state.filters.subject_id, state.pagination.page, state.pagination.page_size, toast]);
 
-  // Filter students for search
-  const normalizeText = (text: string) =>
-  text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-
+// Use fuzzy search on current page data
 const fuse = new Fuse(state.students, {
   keys: ["name", "usn", "semester", "section"],
-  threshold: 0.3,   // lower = stricter, higher = fuzzier
+  threshold: 0.3,
   includeScore: true,
 });
 
@@ -199,25 +205,30 @@ const filteredStudents = state.search
   ? fuse.search(state.search).map((result) => result.item)
   : state.students;
 
-  const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
-  const currentStudents = filteredStudents.slice(
-    (state.currentPage - 1) * studentsPerPage,
-    state.currentPage * studentsPerPage
-  );
-
-  const handlePrev = () => {
-    if (state.currentPage > 1) updateState({ currentPage: state.currentPage - 1 });
+const totalPages = state.pagination.total_pages;
+const currentStudents = filteredStudents;  const handlePrev = () => {
+    if (state.pagination.page > 1) {
+      updateState({
+        pagination: { ...state.pagination, page: state.pagination.page - 1 },
+        currentPage: state.pagination.page - 1
+      });
+    }
   };
 
   const handleNext = () => {
-    if (state.currentPage < totalPages) updateState({ currentPage: state.currentPage + 1 });
+    if (state.pagination.page < state.pagination.total_pages) {
+      updateState({
+        pagination: { ...state.pagination, page: state.pagination.page + 1 },
+        currentPage: state.pagination.page + 1
+      });
+    }
   };
 
   const handleExportPDF = () => {
     const doc = new jsPDF();
-    doc.text(`All Students Attendance Report - ${state.branch.toUpperCase()}`, 14, 16);
+    doc.text(`All Students Attendance Report - ${state.branch.toUpperCase()} - Page ${state.pagination.page}`, 14, 16);
     const tableColumn = ["Name", "USN", "Attendance", "Semester", "Section"];
-    const tableRows = filteredStudents.map((student) => [
+    const tableRows = currentStudents.map((student) => [
       student.name,
       student.usn,
       formatAttendancePercentage(student.attendance_percentage),
@@ -231,7 +242,7 @@ const filteredStudents = state.search
       startY: 20,
     });
 
-    doc.save(`all-students-attendance-report-${state.branch}.pdf`);
+    doc.save(`attendance-report-${state.branch}-page-${state.pagination.page}.pdf`);
   };
 
   // Helper to get display text for dropdowns
@@ -275,6 +286,7 @@ const filteredStudents = state.search
                 filters: { semester_id: value, section_id: "", subject_id: "" },
                 sections: [],
                 subjects: [],
+                pagination: { ...state.pagination, page: 1 },
               })
             }
             disabled={state.semesters.length === 0}
@@ -294,7 +306,10 @@ const filteredStudents = state.search
           </Select>
           <Select
             value={state.filters.section_id}
-            onValueChange={(value) => updateState({ filters: { ...state.filters, section_id: value } })}
+            onValueChange={(value) => updateState({
+              filters: { ...state.filters, section_id: value },
+              pagination: { ...state.pagination, page: 1 }
+            })}
             disabled={state.sections.length === 0 || !state.filters.semester_id}
           >
             <SelectTrigger className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
@@ -316,7 +331,10 @@ const filteredStudents = state.search
           </Select>
           <Select
             value={state.filters.subject_id}
-            onValueChange={(value) => updateState({ filters: { ...state.filters, subject_id: value } })}
+            onValueChange={(value) => updateState({
+              filters: { ...state.filters, subject_id: value },
+              pagination: { ...state.pagination, page: 1 }
+            })}
             disabled={state.subjects.length === 0 || !state.filters.semester_id}
           >
             <SelectTrigger className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
@@ -429,17 +447,17 @@ const filteredStudents = state.search
         <div className="flex justify-between items-center mt-6">
           <Button
             onClick={handlePrev}
-            disabled={state.currentPage === 1}
+            disabled={state.pagination.page === 1}
             className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
           >
             Previous
           </Button>
           <p className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
-            Page {state.currentPage} of {totalPages}
+            Page {state.pagination.page} of {state.pagination.total_pages} ({state.pagination.total_students} total students)
           </p>
           <Button
             onClick={handleNext}
-            disabled={state.currentPage === totalPages}
+            disabled={state.pagination.page === state.pagination.total_pages}
             className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
           >
             Next
