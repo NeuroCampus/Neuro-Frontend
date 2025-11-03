@@ -249,14 +249,14 @@ const BulkAssignment: React.FC = () => {
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Bulk Fee Assignment</h1>
-          <p className="text-gray-600 mt-2">Mass assign fee templates to students by admission mode and department</p>
+          <h1 className="text-3xl font-bold text-foreground">Bulk Fee Assignment</h1>
+          <p className="text-muted-foreground mt-2">Mass assign fee templates to students by admission mode and department</p>
         </div>
 
         <div className="flex gap-3">
           <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button className="bg-[#a259ff] hover:bg-[#8a4dde] text-white">
                 <UserCheck className="h-4 w-4 mr-2" />
                 Manual Bulk Assignment
               </Button>
@@ -358,7 +358,10 @@ const BulkAssignment: React.FC = () => {
                   <Button type="button" variant="outline" onClick={() => setIsBulkDialogOpen(false)}>
                     Cancel
                   </Button>
-                  <Button type="submit">
+                  <Button 
+                    type="submit"
+                    className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+                  >
                     <Play className="h-4 w-4 mr-2" />
                     {bulkForm.dry_run ? 'Preview Assignment' : 'Execute Assignment'}
                   </Button>
@@ -369,7 +372,7 @@ const BulkAssignment: React.FC = () => {
 
           <Dialog open={isAutoDialogOpen} onOpenChange={setIsAutoDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">
+              <Button variant="outline" className="bg-[#a259ff] hover:bg-[#8a4dde] text-white border-[#a259ff]">
                 <Settings className="h-4 w-4 mr-2" />
                 Auto Assignment
               </Button>
@@ -470,7 +473,10 @@ const BulkAssignment: React.FC = () => {
                   <Button type="button" variant="outline" onClick={() => setIsAutoDialogOpen(false)}>
                     Cancel
                   </Button>
-                  <Button type="submit">
+                  <Button 
+                    type="submit"
+                    className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+                  >
                     <Play className="h-4 w-4 mr-2" />
                     {autoForm.dry_run ? 'Preview Auto Assignment' : 'Execute Auto Assignment'}
                   </Button>
@@ -502,7 +508,7 @@ const BulkAssignment: React.FC = () => {
           </CardHeader>
           <CardContent>
             {stats.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No assignment statistics available</p>
               </div>
@@ -515,19 +521,19 @@ const BulkAssignment: React.FC = () => {
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start mb-3">
                           <div>
-                            <h3 className="font-semibold text-lg">{stat.admission_mode}</h3>
-                            <p className="text-sm text-gray-600">{stat.department}</p>
+                            <h3 className="font-semibold text-lg text-foreground">{stat.admission_mode}</h3>
+                            <p className="text-sm text-muted-foreground">{stat.department}</p>
                           </div>
                           <Badge variant="outline">{stat.total_students} students</Badge>
                         </div>
 
                         <div className="space-y-2 mb-4">
                           <div className="flex justify-between text-sm">
-                            <span>Assigned:</span>
+                            <span className="text-foreground">Assigned:</span>
                             <span className="font-medium text-green-600">{stat.assigned_students}</span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span>Unassigned:</span>
+                            <span className="text-foreground">Unassigned:</span>
                             <span className="font-medium text-red-600">{stat.unassigned_students}</span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
@@ -540,7 +546,7 @@ const BulkAssignment: React.FC = () => {
                         </div>
 
                         <div>
-                          <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                          <Label className="text-sm font-medium text-foreground mb-2 block">
                             Available Templates:
                           </Label>
                           <div className="flex flex-wrap gap-1">
@@ -567,8 +573,8 @@ const BulkAssignment: React.FC = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Students</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-muted-foreground">Total Students</p>
+                <p className="text-2xl font-bold text-foreground">
                   {stats.reduce((sum, stat) => sum + stat.total_students, 0)}
                 </p>
               </div>
@@ -581,7 +587,7 @@ const BulkAssignment: React.FC = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Students Assigned</p>
+                <p className="text-sm font-medium text-muted-foreground">Students Assigned</p>
                 <p className="text-2xl font-bold text-green-600">
                   {stats.reduce((sum, stat) => sum + stat.assigned_students, 0)}
                 </p>
@@ -595,7 +601,7 @@ const BulkAssignment: React.FC = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Students Unassigned</p>
+                <p className="text-sm font-medium text-muted-foreground">Students Unassigned</p>
                 <p className="text-2xl font-bold text-orange-600">
                   {stats.reduce((sum, stat) => sum + stat.unassigned_students, 0)}
                 </p>
