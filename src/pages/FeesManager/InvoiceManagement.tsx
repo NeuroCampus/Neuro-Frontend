@@ -243,8 +243,8 @@ const InvoiceManagement: React.FC = () => {
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Invoice Management</h1>
-          <p className="text-gray-600 mt-2">Manage student fee invoices and payment tracking</p>
+          <h1 className="text-3xl font-bold text-foreground">Invoice Management</h1>
+          <p className="text-muted-foreground mt-2">Manage student fee invoices and payment tracking</p>
         </div>
       </div>
 
@@ -261,8 +261,8 @@ const InvoiceManagement: React.FC = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Invoices</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
+                <p className="text-sm font-medium text-muted-foreground">Total Invoices</p>
+                <p className="text-2xl font-bold text-foreground">{stats.total}</p>
               </div>
               <FileText className="h-8 w-8 text-blue-600" />
             </div>
@@ -273,7 +273,7 @@ const InvoiceManagement: React.FC = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Paid</p>
+                <p className="text-sm font-medium text-muted-foreground">Paid</p>
                 <p className="text-2xl font-bold text-green-600">{stats.paid}</p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-600" />
@@ -285,7 +285,7 @@ const InvoiceManagement: React.FC = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Unpaid</p>
+                <p className="text-sm font-medium text-muted-foreground">Unpaid</p>
                 <p className="text-2xl font-bold text-red-600">{stats.unpaid}</p>
               </div>
               <Clock className="h-8 w-8 text-red-600" />
@@ -297,7 +297,7 @@ const InvoiceManagement: React.FC = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Partial</p>
+                <p className="text-sm font-medium text-muted-foreground">Partial</p>
                 <p className="text-2xl font-bold text-yellow-600">{stats.partially_paid}</p>
               </div>
               <AlertTriangle className="h-8 w-8 text-yellow-600" />
@@ -309,7 +309,7 @@ const InvoiceManagement: React.FC = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Overdue</p>
+                <p className="text-sm font-medium text-muted-foreground">Overdue</p>
                 <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
               </div>
               <AlertTriangle className="h-8 w-8 text-red-600" />
@@ -377,8 +377,8 @@ const InvoiceManagement: React.FC = () => {
           {filteredInvoices.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-semibold mb-2">No Invoices Found</h3>
-              <p className="text-gray-600">
+              <h3 className="text-lg font-semibold mb-2 text-foreground">No Invoices Found</h3>
+              <p className="text-muted-foreground">
                 {invoices.length === 0
                   ? "No invoices have been generated yet"
                   : "No invoices match your search criteria"
@@ -408,14 +408,14 @@ const InvoiceManagement: React.FC = () => {
                       <TableCell className="font-medium">
                         {invoice.invoice_number}
                       </TableCell>
-                      <TableCell>{invoice.student.name}</TableCell>
-                      <TableCell>{invoice.student.usn}</TableCell>
+                      <TableCell className="text-muted-foreground">{invoice.student.name}</TableCell>
+                      <TableCell className="text-muted-foreground">{invoice.student.usn}</TableCell>
                       <TableCell>
                         <div>
-                          <p className="font-medium">
+                          <p className="font-medium text-foreground">
                             {invoice.fee_assignment?.template?.name || 'N/A'}
                           </p>
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-muted-foreground">
                             {invoice.fee_assignment?.template?.fee_type || 'N/A'}
                           </p>
                         </div>
@@ -482,20 +482,20 @@ const InvoiceManagement: React.FC = () => {
           {selectedInvoice && (
             <div className="space-y-6">
               {/* Invoice Header */}
-              <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+              <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <div>
-                  <h3 className="font-semibold mb-2">Student Information</h3>
-                  <p><strong>Name:</strong> {selectedInvoice.student.name}</p>
-                  <p><strong>USN:</strong> {selectedInvoice.student.usn}</p>
-                  <p><strong>Department:</strong> {selectedInvoice.student.department}</p>
-                  <p><strong>Semester:</strong> {selectedInvoice.student.semester}</p>
+                  <h3 className="font-semibold mb-2 text-foreground">Student Information</h3>
+                  <p className="text-foreground"><strong>Name:</strong> {selectedInvoice.student.name}</p>
+                  <p className="text-foreground"><strong>USN:</strong> {selectedInvoice.student.usn}</p>
+                  <p className="text-foreground"><strong>Department:</strong> {selectedInvoice.student.department}</p>
+                  <p className="text-foreground"><strong>Semester:</strong> {selectedInvoice.student.semester}</p>
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-2">Invoice Information</h3>
-                  <p><strong>Invoice #:</strong> {selectedInvoice.invoice_number}</p>
-                  <p><strong>Fee Type:</strong> {selectedInvoice.fee_assignment?.template?.name || 'N/A'}</p>
-                  <p><strong>Academic Year:</strong> {selectedInvoice.fee_assignment?.academic_year || selectedInvoice.academic_year || 'N/A'}</p>
-                  <p><strong>Created:</strong> {new Date(selectedInvoice.created_at).toLocaleDateString()}</p>
+                  <h3 className="font-semibold mb-2 text-foreground">Invoice Information</h3>
+                  <p className="text-foreground"><strong>Invoice #:</strong> {selectedInvoice.invoice_number}</p>
+                  <p className="text-foreground"><strong>Fee Type:</strong> {selectedInvoice.fee_assignment?.template?.name || 'N/A'}</p>
+                  <p className="text-foreground"><strong>Academic Year:</strong> {selectedInvoice.fee_assignment?.academic_year || selectedInvoice.academic_year || 'N/A'}</p>
+                  <p className="text-foreground"><strong>Created:</strong> {new Date(selectedInvoice.created_at).toLocaleDateString()}</p>
                 </div>
               </div>
 
@@ -503,25 +503,25 @@ const InvoiceManagement: React.FC = () => {
               <div className="grid grid-cols-4 gap-4">
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <p className="text-sm text-gray-600">Total Amount</p>
-                    <p className="text-xl font-bold">{formatCurrency(selectedInvoice.total_amount)}</p>
+                    <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
+                    <p className="text-xl font-bold text-foreground">{formatCurrency(selectedInvoice.total_amount)}</p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <p className="text-sm text-gray-600">Paid Amount</p>
+                    <p className="text-sm font-medium text-muted-foreground">Paid Amount</p>
                     <p className="text-xl font-bold text-green-600">{formatCurrency(selectedInvoice.paid_amount)}</p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <p className="text-sm text-gray-600">Pending Amount</p>
+                    <p className="text-sm font-medium text-muted-foreground">Pending Amount</p>
                     <p className="text-xl font-bold text-red-600">{formatCurrency(selectedInvoice.pending_amount)}</p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <p className="text-sm text-gray-600">Status</p>
+                    <p className="text-sm font-medium text-muted-foreground">Status</p>
                     <div className="mt-1">{getStatusBadge(selectedInvoice.status)}</div>
                   </CardContent>
                 </Card>
@@ -529,9 +529,9 @@ const InvoiceManagement: React.FC = () => {
 
               {/* Payment History */}
               <div>
-                <h3 className="font-semibold mb-4">Payment History</h3>
+                <h3 className="font-semibold mb-4 text-foreground">Payment History</h3>
                 {payments.length === 0 ? (
-                  <p className="text-gray-600">No payments recorded yet.</p>
+                  <p className="text-muted-foreground">No payments recorded yet.</p>
                 ) : (
                   <Table>
                     <TableHeader>

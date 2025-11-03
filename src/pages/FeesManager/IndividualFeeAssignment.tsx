@@ -16,7 +16,8 @@ import {
   AlertTriangle,
   IndianRupee,
   DollarSign,
-  Users
+  Users,
+  ArrowLeft,
 } from 'lucide-react';
 
 interface Student {
@@ -52,6 +53,7 @@ const IndividualFeeAssignment: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // Assignment form states
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -59,6 +61,10 @@ const IndividualFeeAssignment: React.FC = () => {
 
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const studentsPerPage = 10;
 
   useEffect(() => {
     fetchData();
@@ -216,6 +222,16 @@ const IndividualFeeAssignment: React.FC = () => {
     return assignments.find(assignment => assignment.student.id === studentId);
   };
 
+  // Calculate pagination values
+  const indexOfLastStudent = currentPage * studentsPerPage;
+  const indexOfFirstStudent = indexOfLastStudent - studentsPerPage;
+  const currentStudents = filteredStudents.slice(indexOfFirstStudent, indexOfLastStudent);
+  const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
+
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -229,116 +245,293 @@ const IndividualFeeAssignment: React.FC = () => {
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Individual Fee Assignment</h1>
-          <p className="text-gray-600 mt-2">Assign custom fee structures to individual students</p>
+          <h1 className="text-3xl font-bold text-foreground">Individual Fee Assignment</h1>
+          <p className="text-muted-foreground mt-2">Assign custom fee structures to individual students</p>
         </div>
 
+        {/* Assign Dialog for All Students */}
         <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => { resetForm(); setIsAssignDialogOpen(true); }}>
-              <Plus className="h-4 w-4 mr-2" />
-              Assign Individual Fees
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Assign Custom Fees to Student</DialogTitle>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar p-6">
+            <DialogHeader className="mb-4">
+              <DialogTitle className="text-2xl font-bold">Assign Custom Fees to Student</DialogTitle>
             </DialogHeader>
 
             <div className="space-y-6">
-              {/* Student Selection */}
-              <div className="space-y-2">
-                <Label>Select Student *</Label>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-40 overflow-y-auto border rounded-lg p-3">
-                  {students.map((student) => (
-                    <div
-                      key={student.id}
-                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                        selectedStudent?.id === student.id
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                      onClick={() => setSelectedStudent(student)}
-                    >
-                      <div className="font-medium">{student.name}</div>
-                      <div className="text-sm text-gray-600">{student.usn}</div>
-                      <div className="text-xs text-gray-500">
-                        {student.department} • Sem {student.semester}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Custom Fee Components */}
-              {selectedStudent && (
+              {!selectedStudent ? (
+                // Student Selection View
                 <div className="space-y-4">
-                  <Label>Custom Fee Amounts</Label>
-                  <div className="max-h-80 overflow-y-auto border rounded-lg p-4 space-y-3">
-                    {availableComponents.map((component) => (
-                      <div key={component.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div className="flex-1">
-                          <div className="font-medium">{component.name}</div>
-                          {component.description && (
-                            <div className="text-sm text-gray-600">{component.description}</div>
-                          )}
-                          <div className="text-sm text-gray-500">Default: {formatCurrency(component.amount)}</div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <IndianRupee className="h-4 w-4 text-gray-400" />
-                          <Input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            placeholder="0.00"
-                            className="w-32"
-                            value={customFees[component.id] || ''}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              setCustomFees({
-                                ...customFees,
-                                [component.id]: value ? parseFloat(value) : 0,
-                              });
-                            }}
-                          />
+                  <h3 className="text-lg font-semibold">Select Student</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-80 overflow-y-auto border rounded-lg p-4 custom-scrollbar bg-gray-50 dark:bg-card">
+                    {students.map((student) => (
+                      <div
+                        key={student.id}
+                        className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
+                          selectedStudent?.id === student.id
+                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-md'
+                            : 'border-gray-200 hover:border-blue-300 hover:shadow-sm dark:border-border dark:hover:border-blue-500'
+                        }`}
+                        onClick={() => setSelectedStudent(student)}
+                      >
+                        <div className="font-medium text-foreground">{student.name}</div>
+                        <div className="text-sm text-muted-foreground mt-1">{student.usn}</div>
+                        <div className="text-xs text-muted-foreground mt-2">
+                          {student.department} • Sem {student.semester}
                         </div>
                       </div>
                     ))}
                   </div>
-
-                  {/* Summary */}
-                  <div className="border-t pt-4">
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold">Total Custom Amount:</span>
-                      <span className="text-lg font-bold text-green-600">
-                        {formatCurrency(
-                          Object.values(customFees).reduce((sum, amount) => sum + (amount || 0), 0)
-                        )}
-                      </span>
+                </div>
+              ) : (
+                // Selected Student View with Custom Fee Components
+                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                  {/* Selected Student Header with Back Button */}
+                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-card rounded-lg border">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex flex-col">
+                        <div className="font-medium text-foreground text-lg">{selectedStudent.name}</div>
+                        <div className="text-sm text-muted-foreground">{selectedStudent.usn}</div>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {selectedStudent.department} • Sem {selectedStudent.semester}
+                      </div>
                     </div>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setSelectedStudent(null)}
+                      className="flex items-center"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Back to Students
+                    </Button>
                   </div>
 
-                  <Alert>
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      Set custom amounts for each fee component. Components with amount 0 or empty will not be included.
-                      This will override any template-based fees for this student.
-                    </AlertDescription>
-                  </Alert>
+                  {/* Custom Fee Components */}
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-semibold">Custom Fee Amounts</h3>
+                      <div className="text-sm text-muted-foreground">
+                        Setting fees for: {selectedStudent.name}
+                      </div>
+                    </div>
+                    <div className="border rounded-lg p-4 space-y-4 bg-gray-50 dark:bg-card">
+                      {availableComponents.map((component) => (
+                        <div 
+                          key={component.id} 
+                          className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-white dark:bg-background rounded-lg border border-gray-200 dark:border-border shadow-sm"
+                        >
+                          <div className="flex-1 mb-3 md:mb-0">
+                            <div className="font-medium text-foreground">{component.name}</div>
+                            {component.description && (
+                              <div className="text-sm text-muted-foreground mt-1">{component.description}</div>
+                            )}
+                            <div className="text-sm text-muted-foreground mt-1">Default: {formatCurrency(component.amount)}</div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <IndianRupee className="h-4 w-4 text-muted-foreground" />
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              placeholder="0.00"
+                              className="w-32"
+                              value={customFees[component.id] !== undefined ? customFees[component.id] : ''}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (value === '') {
+                                  // Remove the key if value is empty
+                                  const newFees = { ...customFees };
+                                  delete newFees[component.id];
+                                  setCustomFees(newFees);
+                                } else {
+                                  setCustomFees({
+                                    ...customFees,
+                                    [component.id]: parseFloat(value),
+                                  });
+                                }
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Summary */}
+                    <Card className="border border-gray-200 dark:border-border">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold text-foreground">Total Custom Amount:</span>
+                          <span className="text-lg font-bold text-green-600">
+                            {formatCurrency(
+                              Object.values(customFees).reduce((sum, amount) => sum + (amount || 0), 0)
+                            )}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Alert variant="default" className="border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-800">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        Set custom amounts for each fee component. Components with amount 0 or empty will not be included.
+                        This will override any template-based fees for this student.
+                      </AlertDescription>
+                    </Alert>
+                  </div>
                 </div>
               )}
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button variant="outline" onClick={() => setIsAssignDialogOpen(false)}>
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-border">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsAssignDialogOpen(false);
+                    resetForm();
+                  }}
+                  className="px-4 py-2"
+                >
+                  Cancel
+                </Button>
+                {selectedStudent && (
+                  <Button
+                    onClick={() => {
+                      handleAssignIndividualFees();
+                      resetForm();
+                    }}
+                    disabled={!selectedStudent || Object.keys(customFees).length === 0}
+                    className="bg-[#a259ff] hover:bg-[#8a4dde] text-white px-4 py-2"
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Assign Custom Fees
+                  </Button>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog for Students with Custom Fees */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar p-6">
+            <DialogHeader className="mb-4">
+              <DialogTitle className="text-2xl font-bold">Edit Custom Fees for Student</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              {selectedStudent && (
+                <div className="space-y-4">
+                  {/* Student Info */}
+                  <div className="p-4 bg-gray-50 dark:bg-card rounded-lg border">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex flex-col">
+                        <div className="font-medium text-foreground text-lg">{selectedStudent.name}</div>
+                        <div className="text-sm text-muted-foreground">{selectedStudent.usn}</div>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {selectedStudent.department} • Sem {selectedStudent.semester}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Custom Fee Components */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Custom Fee Amounts</h3>
+                    <div className="border rounded-lg p-4 space-y-4 bg-gray-50 dark:bg-card">
+                      {availableComponents.map((component) => {
+                        // Get existing custom fee amount for this component if it exists
+                        const existingAssignment = getStudentCustomFees(selectedStudent.id);
+                        const existingAmount = existingAssignment?.custom_fee_structure[component.name] || 0;
+                        const currentAmount = customFees[component.id] !== undefined ? customFees[component.id] : existingAmount;
+
+                        return (
+                          <div 
+                            key={component.id} 
+                            className="flex flex-col md:flex-row md:items-center justify-between p-4 bg-white dark:bg-background rounded-lg border border-gray-200 dark:border-border shadow-sm"
+                          >
+                            <div className="flex-1 mb-3 md:mb-0">
+                              <div className="font-medium text-foreground">{component.name}</div>
+                              {component.description && (
+                                <div className="text-sm text-muted-foreground mt-1">{component.description}</div>
+                              )}
+                              <div className="text-sm text-muted-foreground mt-1">Default: {formatCurrency(component.amount)}</div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <IndianRupee className="h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder="0.00"
+                                className="w-32"
+                                value={currentAmount !== 0 ? currentAmount : ''}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  if (value === '') {
+                                    // Remove the key if value is empty
+                                    const newFees = { ...customFees };
+                                    delete newFees[component.id];
+                                    setCustomFees(newFees);
+                                  } else {
+                                    setCustomFees({
+                                      ...customFees,
+                                      [component.id]: parseFloat(value),
+                                    });
+                                  }
+                                }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Summary */}
+                    <Card className="border border-gray-200 dark:border-border">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold text-foreground">Total Custom Amount:</span>
+                          <span className="text-lg font-bold text-green-600">
+                            {formatCurrency(
+                              Object.values(customFees).reduce((sum, amount) => sum + (amount || 0), 0)
+                            )}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Alert variant="default" className="border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-800">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>
+                        Edit custom amounts for each fee component. Components with amount 0 or empty will not be included.
+                        This will update the existing custom fee structure for this student.
+                      </AlertDescription>
+                    </Alert>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-border">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsEditDialogOpen(false);
+                    resetForm();
+                  }}
+                  className="px-4 py-2"
+                >
                   Cancel
                 </Button>
                 <Button
-                  onClick={handleAssignIndividualFees}
-                  disabled={!selectedStudent || Object.keys(customFees).length === 0}
+                  onClick={() => {
+                    handleAssignIndividualFees();
+                    resetForm();
+                  }}
+                  disabled={!selectedStudent}
+                  className="bg-[#a259ff] hover:bg-[#8a4dde] text-white px-4 py-2"
                 >
                   <User className="h-4 w-4 mr-2" />
-                  Assign Custom Fees
+                  Update Custom Fees
                 </Button>
               </div>
             </div>
@@ -361,7 +554,10 @@ const IndividualFeeAssignment: React.FC = () => {
             <Input
               placeholder="Search students by name or USN..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1); // Reset to first page when searching
+              }}
               className="pl-10"
             />
           </div>
@@ -371,8 +567,18 @@ const IndividualFeeAssignment: React.FC = () => {
       {/* Students with Individual Fees */}
       <Tabs defaultValue="with-custom" className="space-y-6">
         <TabsList>
-          <TabsTrigger value="with-custom">Students with Custom Fees ({assignments.length})</TabsTrigger>
-          <TabsTrigger value="all-students">All Students ({filteredStudents.length})</TabsTrigger>
+          <TabsTrigger 
+            value="with-custom" 
+            className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white"
+          >
+            Students with Custom Fees ({assignments.length})
+          </TabsTrigger>
+          <TabsTrigger 
+            value="all-students" 
+            className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white"
+          >
+            All Students ({filteredStudents.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="with-custom">
@@ -391,7 +597,10 @@ const IndividualFeeAssignment: React.FC = () => {
                   <p className="text-gray-600 mb-4">
                     No students have custom fee structures assigned yet.
                   </p>
-                  <Button onClick={() => setIsAssignDialogOpen(true)}>
+                  <Button 
+                    onClick={() => setIsAssignDialogOpen(true)}
+                    className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Assign Custom Fees
                   </Button>
@@ -479,7 +688,7 @@ const IndividualFeeAssignment: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredStudents.map((student) => {
+                    {currentStudents.map((student) => {
                       const customAssignment = getStudentCustomFees(student.id);
                       return (
                         <TableRow key={student.id}>
@@ -511,8 +720,21 @@ const IndividualFeeAssignment: React.FC = () => {
                               size="sm"
                               onClick={() => {
                                 setSelectedStudent(student);
-                                setIsAssignDialogOpen(true);
+                                // Pre-populate custom fees with existing values
+                                const existingAssignment = getStudentCustomFees(student.id);
+                                if (existingAssignment) {
+                                  const fees: Record<number, number> = {};
+                                  availableComponents.forEach(component => {
+                                    const amount = existingAssignment.custom_fee_structure[component.name];
+                                    if (amount) {
+                                      fees[component.id] = amount;
+                                    }
+                                  });
+                                  setCustomFees(fees);
+                                }
+                                setIsEditDialogOpen(true);
                               }}
+                              className="bg-[#a259ff] hover:bg-[#8a4dde] text-white border-[#a259ff]"
                             >
                               <Edit className="h-4 w-4 mr-2" />
                               {customAssignment ? 'Edit Custom Fees' : 'Assign Custom Fees'}
@@ -523,6 +745,38 @@ const IndividualFeeAssignment: React.FC = () => {
                     })}
                   </TableBody>
                 </Table>
+
+                {/* Pagination */}
+                {filteredStudents.length > studentsPerPage && (
+                  <div className="flex justify-between items-center mt-4">
+                    <div className="text-sm text-gray-600">
+                      Showing {indexOfFirstStudent + 1} to {Math.min(indexOfLastStudent, filteredStudents.length)} of {filteredStudents.length} students
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                      >
+                        Previous
+                      </Button>
+                      <span className="px-3 py-1 text-sm">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

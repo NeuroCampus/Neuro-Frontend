@@ -183,21 +183,25 @@ const Reports: React.FC = () => {
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Fee Reports & Analytics</h1>
-          <p className="text-gray-600 mt-2">Comprehensive insights into fee collection and payment trends</p>
+          <h1 className="text-3xl font-bold text-foreground">Fee Reports & Analytics</h1>
+          <p className="text-muted-foreground mt-2">Comprehensive insights into fee collection and payment trends</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => downloadReport('pdf')}>
+          <Button 
+            variant="outline" 
+            onClick={() => downloadReport('pdf')}
+            className="bg-[#a259ff] hover:bg-[#8a4dde] text-white border-[#a259ff]"
+          >
             <Download className="h-4 w-4 mr-2" />
             PDF
           </Button>
-          <Button variant="outline" onClick={() => downloadReport('excel')}>
+          <Button 
+            variant="outline" 
+            onClick={() => downloadReport('excel')}
+            className="bg-[#a259ff] hover:bg-[#8a4dde] text-white border-[#a259ff]"
+          >
             <Download className="h-4 w-4 mr-2" />
             Excel
-          </Button>
-          <Button variant="outline" onClick={() => downloadReport('csv')}>
-            <Download className="h-4 w-4 mr-2" />
-            CSV
           </Button>
         </div>
       </div>
@@ -287,7 +291,7 @@ const Reports: React.FC = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+                      <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
                       <p className="text-3xl font-bold text-green-600">
                         {formatCurrency(reportData.summary?.total_revenue || 0)}
                       </p>
@@ -301,7 +305,7 @@ const Reports: React.FC = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Pending Amount</p>
+                      <p className="text-sm font-medium text-muted-foreground">Pending Amount</p>
                       <p className="text-3xl font-bold text-yellow-600">
                         {formatCurrency(reportData.summary?.pending_amount || 0)}
                       </p>
@@ -331,8 +335,8 @@ const Reports: React.FC = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Total Students</p>
-                      <p className="text-3xl font-bold">{reportData.summary?.total_students || 0}</p>
+                      <p className="text-sm font-medium text-muted-foreground">Total Students</p>
+                      <p className="text-3xl font-bold text-foreground">{reportData.summary?.total_students || 0}</p>
                     </div>
                     <Users className="h-12 w-12 text-blue-600" />
                   </div>
@@ -343,8 +347,8 @@ const Reports: React.FC = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Total Invoices</p>
-                      <p className="text-3xl font-bold">{reportData.summary?.total_invoices || 0}</p>
+                      <p className="text-sm font-medium text-muted-foreground">Total Invoices</p>
+                      <p className="text-3xl font-bold text-foreground">{reportData.summary?.total_invoices || 0}</p>
                     </div>
                     <FileText className="h-12 w-12 text-purple-600" />
                   </div>
@@ -355,8 +359,8 @@ const Reports: React.FC = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Total Payments</p>
-                      <p className="text-3xl font-bold">{reportData.summary?.total_payments || 0}</p>
+                      <p className="text-sm font-medium text-muted-foreground">Total Payments</p>
+                      <p className="text-3xl font-bold text-foreground">{reportData.summary?.total_payments || 0}</p>
                     </div>
                     <CheckCircle className="h-12 w-12 text-green-600" />
                   </div>
@@ -510,8 +514,8 @@ const Reports: React.FC = () => {
                 {reportData.overdue_invoices && reportData.overdue_invoices.length === 0 ? (
                   <div className="text-center py-12">
                     <CheckCircle className="h-16 w-16 mx-auto mb-4 text-green-600" />
-                    <h3 className="text-lg font-semibold mb-2">No Overdue Invoices</h3>
-                    <p className="text-gray-600">All invoices are up to date!</p>
+                    <h3 className="text-lg font-semibold mb-2 text-foreground">No Overdue Invoices</h3>
+                    <p className="text-muted-foreground">All invoices are up to date!</p>
                   </div>
                 ) : (
                   <Table>

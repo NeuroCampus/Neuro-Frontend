@@ -12,8 +12,11 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   useEffect(() => {
     // Check localStorage for saved theme preference
-    // First check for hod-theme, then admin-theme for backward compatibility
-    const savedTheme = localStorage.getItem('hod-theme') || localStorage.getItem('admin-theme');
+    // Check for role-specific theme first, then general theme keys for backward compatibility
+    const savedTheme = localStorage.getItem('fees-manager-theme') || 
+                      localStorage.getItem('hod-theme') || 
+                      localStorage.getItem('admin-theme') ||
+                      localStorage.getItem('theme');
     if (savedTheme) {
       setTheme(savedTheme);
     } else {
@@ -45,9 +48,11 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }
     }
     
-    // Save theme preference for both admin and HOD
+    // Save theme preference for all roles
+    localStorage.setItem('theme', theme);
     localStorage.setItem('admin-theme', theme);
     localStorage.setItem('hod-theme', theme);
+    localStorage.setItem('fees-manager-theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {

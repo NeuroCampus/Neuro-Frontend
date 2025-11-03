@@ -207,7 +207,7 @@ const FeeAssignments: React.FC = () => {
     }).format(amount);
   };
 
-  const getUniqueValues = (array: any[], key: string) => {
+  const getUniqueValues = <T,>(array: T[], key: keyof T): T[keyof T][] => {
     return [...new Set(array.map(item => item[key]))];
   };
 
@@ -224,13 +224,16 @@ const FeeAssignments: React.FC = () => {
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Fee Assignments</h1>
-          <p className="text-gray-600 mt-2">Assign fee templates to individual students or entire batches</p>
+          <h1 className="text-3xl font-bold text-foreground">Fee Assignments</h1>
+          <p className="text-muted-foreground mt-2">Assign fee templates to individual students or entire batches</p>
         </div>
 
         <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => { resetForm(); setIsAssignDialogOpen(true); }}>
+            <Button 
+              onClick={() => { resetForm(); setIsAssignDialogOpen(true); }}
+              className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+            >
               <Plus className="h-4 w-4 mr-2" />
               Assign Fees
             </Button>
@@ -241,9 +244,19 @@ const FeeAssignments: React.FC = () => {
             </DialogHeader>
 
             <Tabs defaultValue="individual" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="individual">Individual Student</TabsTrigger>
-                <TabsTrigger value="batch">Batch Assignment</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-2 bg-muted border border-border">
+                <TabsTrigger 
+                  value="individual" 
+                  className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white border border-border"
+                >
+                  Individual Student
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="batch" 
+                  className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white border border-border"
+                >
+                  Batch Assignment
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="individual" className="space-y-4">
@@ -297,6 +310,7 @@ const FeeAssignments: React.FC = () => {
                     <Button
                       onClick={handleIndividualAssignment}
                       disabled={!selectedStudent || !selectedTemplate}
+                      className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
                     >
                       <UserCheck className="h-4 w-4 mr-2" />
                       Assign to Student
@@ -316,8 +330,8 @@ const FeeAssignments: React.FC = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {getUniqueValues(students, 'batch').map((batch) => (
-                            <SelectItem key={batch} value={batch}>
-                              {batch}
+                            <SelectItem key={String(batch)} value={String(batch)}>
+                              {String(batch)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -332,8 +346,8 @@ const FeeAssignments: React.FC = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {getUniqueValues(students, 'department').map((dept) => (
-                            <SelectItem key={dept} value={dept}>
-                              {dept}
+                            <SelectItem key={String(dept)} value={String(dept)}>
+                              {String(dept)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -400,6 +414,7 @@ const FeeAssignments: React.FC = () => {
                     <Button
                       onClick={handleBatchAssignment}
                       disabled={!selectedBatch || !selectedTemplate}
+                      className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
                     >
                       <Users className="h-4 w-4 mr-2" />
                       Assign to Batch
@@ -470,7 +485,10 @@ const FeeAssignments: React.FC = () => {
                 }
               </p>
               {assignments.length === 0 && (
-                <Button onClick={() => setIsAssignDialogOpen(true)}>
+                <Button 
+                  onClick={() => setIsAssignDialogOpen(true)}
+                  className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+                >
                   <Plus className="h-4 w-4 mr-2" />
                   Create Assignment
                 </Button>

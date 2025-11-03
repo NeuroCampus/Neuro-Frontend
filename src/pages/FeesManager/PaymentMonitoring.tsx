@@ -262,10 +262,10 @@ const PaymentMonitoring: React.FC = () => {
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Payment Monitoring</h1>
-          <p className="text-gray-600 mt-2">Track and manage all fee payments and transactions</p>
+          <h1 className="text-3xl font-bold text-foreground">Payment Monitoring</h1>
+          <p className="text-muted-foreground mt-2">Track and manage all fee payments and transactions</p>
         </div>
-        <Button onClick={fetchData} variant="outline">
+        <Button onClick={fetchData} className="bg-[#a259ff] hover:bg-[#8a4dde] text-white">
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
@@ -285,8 +285,8 @@ const PaymentMonitoring: React.FC = () => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Payments</p>
-                  <p className="text-2xl font-bold">{stats.total_payments}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Total Payments</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.total_payments}</p>
                   <p className="text-sm text-green-600 font-semibold">{formatCurrency(stats.total_amount)}</p>
                 </div>
                 <DollarSign className="h-8 w-8 text-blue-600" />
@@ -298,9 +298,9 @@ const PaymentMonitoring: React.FC = () => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Successful</p>
+                  <p className="text-sm font-medium text-muted-foreground">Successful</p>
                   <p className="text-2xl font-bold text-green-600">{stats.successful_payments}</p>
-                  <p className="text-sm text-gray-600">payments completed</p>
+                  <p className="text-sm text-muted-foreground">payments completed</p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
@@ -312,8 +312,8 @@ const PaymentMonitoring: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Today's Revenue</p>
-                  <p className="text-2xl font-bold">{formatCurrency(stats.today_amount)}</p>
-                  <p className="text-sm text-gray-600">{stats.today_payments} payments</p>
+                  <p className="text-2xl font-bold text-foreground">{formatCurrency(stats.today_amount)}</p>
+                  <p className="text-sm text-muted-foreground">{stats.today_payments} payments</p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-green-600" />
               </div>
@@ -325,8 +325,8 @@ const PaymentMonitoring: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
-                  <p className="text-2xl font-bold">{formatCurrency(stats.monthly_amount)}</p>
-                  <p className="text-sm text-gray-600">{stats.monthly_payments} payments</p>
+                  <p className="text-2xl font-bold text-foreground">{formatCurrency(stats.monthly_amount)}</p>
+                  <p className="text-sm text-muted-foreground">{stats.monthly_payments} payments</p>
                 </div>
                 <Calendar className="h-8 w-8 text-blue-600" />
               </div>
@@ -342,7 +342,7 @@ const PaymentMonitoring: React.FC = () => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Pending Payments</p>
+                  <p className="text-sm font-medium text-muted-foreground">Pending Payments</p>
                   <p className="text-2xl font-bold text-yellow-600">{stats.pending_payments}</p>
                 </div>
                 <Clock className="h-8 w-8 text-yellow-600" />
@@ -354,7 +354,7 @@ const PaymentMonitoring: React.FC = () => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Failed Payments</p>
+                  <p className="text-sm font-medium text-muted-foreground">Failed Payments</p>
                   <p className="text-2xl font-bold text-red-600">{stats.failed_payments}</p>
                 </div>
                 <AlertTriangle className="h-8 w-8 text-red-600" />
@@ -366,8 +366,8 @@ const PaymentMonitoring: React.FC = () => {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Refunded Amount</p>
-                  <p className="text-2xl font-bold text-gray-600">{formatCurrency(stats.refunded_amount)}</p>
+                  <p className="text-sm font-medium text-muted-foreground">Refunded Amount</p>
+                  <p className="text-2xl font-bold text-foreground">{formatCurrency(stats.refunded_amount)}</p>
                 </div>
                 <TrendingDown className="h-8 w-8 text-gray-600" />
               </div>
@@ -440,8 +440,8 @@ const PaymentMonitoring: React.FC = () => {
           {filteredPayments.length === 0 ? (
             <div className="text-center py-12">
               <CreditCard className="h-16 w-16 mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-semibold mb-2">No Payments Found</h3>
-              <p className="text-gray-600">
+              <h3 className="text-lg font-semibold mb-2 text-foreground">No Payments Found</h3>
+              <p className="text-muted-foreground">
                 {payments.length === 0
                   ? "No payments have been recorded yet"
                   : "No payments match your search criteria"
@@ -470,8 +470,8 @@ const PaymentMonitoring: React.FC = () => {
                       <TableCell className="font-medium">
                         {payment.invoice.invoice_number}
                       </TableCell>
-                      <TableCell>{payment.invoice.student.name}</TableCell>
-                      <TableCell>{payment.invoice.student.usn}</TableCell>
+                      <TableCell className="text-muted-foreground">{payment.invoice.student.name}</TableCell>
+                      <TableCell className="text-muted-foreground">{payment.invoice.student.usn}</TableCell>
                       <TableCell className="font-semibold text-green-600">
                         {formatCurrency(payment.amount)}
                       </TableCell>
@@ -535,20 +535,20 @@ const PaymentMonitoring: React.FC = () => {
           {selectedPayment && (
             <div className="space-y-6">
               {/* Payment Header */}
-              <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+              <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <div>
-                  <h3 className="font-semibold mb-2">Student Information</h3>
-                  <p><strong>Name:</strong> {selectedPayment.invoice.student.name}</p>
-                  <p><strong>USN:</strong> {selectedPayment.invoice.student.usn}</p>
-                  <p><strong>Department:</strong> {selectedPayment.invoice.student.department}</p>
-                  <p><strong>Semester:</strong> {selectedPayment.invoice.student.semester}</p>
+                  <h3 className="font-semibold mb-2 text-foreground">Student Information</h3>
+                  <p className="text-foreground"><strong>Name:</strong> {selectedPayment.invoice.student.name}</p>
+                  <p className="text-foreground"><strong>USN:</strong> {selectedPayment.invoice.student.usn}</p>
+                  <p className="text-foreground"><strong>Department:</strong> {selectedPayment.invoice.student.department}</p>
+                  <p className="text-foreground"><strong>Semester:</strong> {selectedPayment.invoice.student.semester}</p>
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-2">Payment Information</h3>
-                  <p><strong>Invoice:</strong> {selectedPayment.invoice.invoice_number}</p>
-                  <p><strong>Fee Type:</strong> {selectedPayment.invoice.fee_assignment.template.name}</p>
-                  <p><strong>Amount:</strong> {formatCurrency(selectedPayment.amount)}</p>
-                  <p><strong>Status:</strong> {getStatusBadge(selectedPayment.status)}</p>
+                  <h3 className="font-semibold mb-2 text-foreground">Payment Information</h3>
+                  <p className="text-foreground"><strong>Invoice:</strong> {selectedPayment.invoice.invoice_number}</p>
+                  <p className="text-foreground"><strong>Fee Type:</strong> {selectedPayment.invoice.fee_assignment.template.name}</p>
+                  <p className="text-foreground"><strong>Amount:</strong> {formatCurrency(selectedPayment.amount)}</p>
+                  <p className="text-foreground"><strong>Status:</strong> {getStatusBadge(selectedPayment.status)}</p>
                 </div>
               </div>
 
@@ -556,37 +556,37 @@ const PaymentMonitoring: React.FC = () => {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Payment Method</Label>
+                    <Label className="text-foreground">Payment Method</Label>
                     <div className="mt-1">{getMethodBadge(selectedPayment.payment_method)}</div>
                   </div>
                   <div>
-                    <Label>Payment Date</Label>
-                    <p className="mt-1">{new Date(selectedPayment.payment_date).toLocaleString()}</p>
+                    <Label className="text-foreground">Payment Date</Label>
+                    <p className="mt-1 text-foreground">{new Date(selectedPayment.payment_date).toLocaleString()}</p>
                   </div>
                 </div>
 
                 {selectedPayment.transaction_id && (
                   <div>
-                    <Label>Transaction ID</Label>
-                    <p className="mt-1 font-mono text-sm">{selectedPayment.transaction_id}</p>
+                    <Label className="text-foreground">Transaction ID</Label>
+                    <p className="mt-1 font-mono text-sm text-foreground">{selectedPayment.transaction_id}</p>
                   </div>
                 )}
 
                 {selectedPayment.stripe_payment_intent_id && (
                   <div>
-                    <Label>Stripe Payment Intent ID</Label>
-                    <p className="mt-1 font-mono text-sm">{selectedPayment.stripe_payment_intent_id}</p>
+                    <Label className="text-foreground">Stripe Payment Intent ID</Label>
+                    <p className="mt-1 font-mono text-sm text-foreground">{selectedPayment.stripe_payment_intent_id}</p>
                   </div>
                 )}
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Created At</Label>
-                    <p className="mt-1">{new Date(selectedPayment.created_at).toLocaleString()}</p>
+                    <Label className="text-foreground">Created At</Label>
+                    <p className="mt-1 text-foreground">{new Date(selectedPayment.created_at).toLocaleString()}</p>
                   </div>
                   <div>
-                    <Label>Last Updated</Label>
-                    <p className="mt-1">{new Date(selectedPayment.updated_at).toLocaleString()}</p>
+                    <Label className="text-foreground">Last Updated</Label>
+                    <p className="mt-1 text-foreground">{new Date(selectedPayment.updated_at).toLocaleString()}</p>
                   </div>
                 </div>
               </div>

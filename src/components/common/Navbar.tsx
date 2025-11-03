@@ -15,7 +15,7 @@ interface User {
 }
 
 interface NavbarProps {
-  role: "admin" | "hod" | "faculty" | "student";
+  role: "admin" | "hod" | "faculty" | "student" | "fees_manager";
   user?: User;
   onNotificationClick?: () => void;
   setPage: (page: string) => void;
@@ -46,6 +46,9 @@ const handleProfileClick = () => {
       setPage("hod-profile");
     } else if (role === "admin") {
       setPage("profile");
+    } else if (role === "fees_manager") {
+      // For fees manager, we can use the same profile page as admin for now
+      setPage("profile");
     } else {
       setPage("profile");
     }
@@ -55,7 +58,7 @@ const handleProfileClick = () => {
 
   return (
     <motion.div 
-      className={`fixed top-0 mr-60 w-[calc(100%-16rem)] z-50 flex items-center justify-between px-6 py-3 backdrop-blur-sm ${
+      className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-3 backdrop-blur-sm ${
         theme === 'dark' 
           ? 'bg-background border-b border-border' 
           : 'bg-white border-b border-gray-200'
@@ -88,7 +91,17 @@ const handleProfileClick = () => {
                   : user?.username || "User!"}
               </span>
             </motion.div>
-            <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Academic Management System</p>
+            <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+              {role === "admin"
+                ? "Principal"
+                : role === "hod"
+                ? "Head of Department"
+                : role === "faculty"
+                ? "Faculty Member"
+                : role === "fees_manager"
+                ? "Fees Manager"
+                : "Student"} - Academic Management System
+            </p>
           </div>
 
 
@@ -167,6 +180,8 @@ const handleProfileClick = () => {
                 ? "Head of Department"
                 : role === "faculty"
                 ? "Faculty Member"
+                : role === "fees_manager"
+                ? "Fees Manager"
                 : "Student"}
             </div>
           </div>
