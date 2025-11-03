@@ -118,7 +118,9 @@ const FacultyProfile = () => {
         first_name: formData.firstName,
         last_name: formData.lastName,
         email: formData.email,
-        // mobile, address, and bio are not part of the API request
+        mobile: formData.mobile,
+        address: formData.address,
+        bio: formData.bio,
       });
 
       if (res.success) {

@@ -49,7 +49,7 @@ interface UploadMarksResponse {
 }
 
 export interface ApplyLeaveRequest {
-  branch_ids: string[];
+  branch_ids: number[];
   start_date: string;
   end_date: string;
   reason: string;
@@ -140,6 +140,14 @@ export interface GetProctorStudentsResponse {
   success: boolean;
   message?: string;
   data?: ProctorStudent[];
+  pagination?: {
+    page: number;
+    page_size: number;
+    total_students: number;
+    total_pages: number;
+    has_next: boolean;
+    has_previous: boolean;
+  };
 }
 
 export interface TimetableEntry {
@@ -207,6 +215,14 @@ interface GetAttendanceRecordsWithSummaryResponse {
   success: boolean;
   message?: string;
   data?: AttendanceRecordSummary[];
+  pagination?: {
+    page: number;
+    page_size: number;
+    total_records: number;
+    total_pages: number;
+    has_next: boolean;
+    has_previous: boolean;
+  };
 }
 
 interface GetApplyLeaveBootstrapResponse {
@@ -253,6 +269,9 @@ export interface ManageProfileRequest {
   first_name?: string;
   last_name?: string;
   email?: string;
+  mobile?: string;
+  address?: string;
+  bio?: string;
   profile_picture?: File;
 }
 
@@ -264,6 +283,9 @@ interface ManageProfileResponse {
     email: string;
     first_name: string;
     last_name: string;
+    mobile: string;
+    address: string;
+    bio: string;
     profile_picture: string | null;
   };
 }
@@ -457,9 +479,20 @@ export const createAnnouncement = async (
   }
 };
 
-export const getProctorStudents = async (): Promise<GetProctorStudentsResponse> => {
+export const getProctorStudents = async (params?: {
+  page?: number;
+  page_size?: number;
+}): Promise<GetProctorStudentsResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/proctor-students/`, {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    
+    const url = queryParams.toString() 
+      ? `${API_BASE_URL}/faculty/proctor-students/?${queryParams.toString()}`
+      : `${API_BASE_URL}/faculty/proctor-students/`;
+      
+    const response = await fetchWithTokenRefresh(url, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -505,9 +538,20 @@ export const getFacultyDashboardBootstrap = async (): Promise<GetFacultyDashboar
   }
 };
 
-export const getAttendanceRecordsWithSummary = async (): Promise<GetAttendanceRecordsWithSummaryResponse> => {
+export const getAttendanceRecordsWithSummary = async (params?: {
+  page?: number;
+  page_size?: number;
+}): Promise<GetAttendanceRecordsWithSummaryResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/attendance-records/summary/`, {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    
+    const url = queryParams.toString() 
+      ? `${API_BASE_URL}/faculty/attendance-records/summary/?${queryParams.toString()}`
+      : `${API_BASE_URL}/faculty/attendance-records/summary/`;
+      
+    const response = await fetchWithTokenRefresh(url, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -581,6 +625,9 @@ export const manageProfile = async (
     if (data.first_name) formData.append("first_name", data.first_name);
     if (data.last_name) formData.append("last_name", data.last_name);
     if (data.email) formData.append("email", data.email);
+    if (data.mobile) formData.append("mobile", data.mobile);
+    if (data.address) formData.append("address", data.address);
+    if (data.bio) formData.append("bio", data.bio);
     if (data.profile_picture) formData.append("profile_picture", data.profile_picture);
     const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/profile/`, {
       method: "POST",
@@ -803,3 +850,96 @@ export interface LeaveRow {
   reason: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
 }
+
+// Bootstrap endpoints for optimized data fetching
+export interface GetTakeAttendanceBootstrapResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    students: Array<{
+      id: number;
+      name: string;
+      usn: string;
+      user_id: number | null;
+    }>;
+    recent_records: Array<{
+      id: number;
+      date: string;
+      present_count: number;
+      total_count: number;
+      percentage: number;
+    }>;
+  };
+}
+
+export interface GetUploadMarksBootstrapResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    students: Array<{
+      id: number;
+      name: string;
+      usn: string;
+      user_id: number | null;
+      existing_mark: {
+        id: number;
+        mark: number;
+        max_mark: number;
+        uploaded_at: string;
+      } | null;
+    }>;
+    subject_info: {
+      name: string;
+      code: string;
+      test_number: number;
+    };
+  };
+}
+
+export const getTakeAttendanceBootstrap = async (params: {
+  branch_id: string;
+  semester_id: string;
+  section_id: string;
+  subject_id: string;
+}): Promise<GetTakeAttendanceBootstrapResponse> => {
+  try {
+    const query = new URLSearchParams(params).toString();
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/take-attendance/bootstrap/?${query}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Take Attendance Bootstrap Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const getUploadMarksBootstrap = async (params: {
+  branch_id: string;
+  semester_id: string;
+  section_id: string;
+  subject_id: string;
+  test_number: number;
+}): Promise<GetUploadMarksBootstrapResponse> => {
+  try {
+    const query = new URLSearchParams({
+      ...params,
+      test_number: params.test_number.toString(),
+    }).toString();
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/upload-marks/bootstrap/?${query}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Upload Marks Bootstrap Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};

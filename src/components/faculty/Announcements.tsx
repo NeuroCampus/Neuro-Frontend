@@ -17,7 +17,6 @@ import {
   ProctorStudent,
   getFacultySentNotifications,
 } from "@/utils/faculty_api";
-import { useProctorStudentsQuery } from "@/hooks/useApiQueries";
 import type { CreateAnnouncementRequest } from "@/utils/faculty_api";
 import { Loader2 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
@@ -39,10 +38,15 @@ const roleColors: Record<string, string> = {
   Admin: "bg-orange-100 text-orange-800",
 };
 
-const Announcements = () => {
+interface AnnouncementsProps {
+  role?: string;
+  proctorStudents: ProctorStudent[];
+  proctorStudentsLoading: boolean;
+}
+
+const Announcements = ({ role, proctorStudents, proctorStudentsLoading }: AnnouncementsProps) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
-  const { data: proctorStudents = [] } = useProctorStudentsQuery();
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [title, setTitle] = useState("");

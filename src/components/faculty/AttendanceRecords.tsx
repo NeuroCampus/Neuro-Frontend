@@ -9,6 +9,7 @@ import { getAttendanceRecordsWithSummary, getAttendanceRecordDetails } from "@/u
 import { API_BASE_URL } from "@/utils/config";
 import { fetchWithTokenRefresh } from "@/utils/authService";
 import { useTheme } from "@/context/ThemeContext";
+import { usePagination } from "@/hooks/useOptimizations";
 
 interface AttendanceRecord {
   id: number;
@@ -50,6 +51,11 @@ const AttendanceRecords = () => {
     return `${percentage}%`;
   };
 
+  const pagination = usePagination({
+    queryKey: ['attendanceRecords'],
+    pageSize: 20,
+  });
+
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -63,15 +69,28 @@ const AttendanceRecords = () => {
   const { theme } = useTheme();
 
   useEffect(() => {
-    setLoading(true);
-    getAttendanceRecordsWithSummary()
-      .then((res) => {
-        if (res.success && res.data) setRecords(res.data);
-        else setError(res.message || "Failed to fetch records");
-      })
-      .catch((e) => setError(e.message || "Failed to fetch records"))
-      .finally(() => setLoading(false));
-  }, []);
+    const fetchRecords = async () => {
+      setLoading(true);
+      try {
+        const res = await getAttendanceRecordsWithSummary({
+          page: pagination.page,
+          page_size: pagination.pageSize,
+        });
+        if (res.success && res.data) {
+          setRecords(res.data);
+          pagination.updatePagination(res);
+        } else {
+          setError(res.message || "Failed to fetch records");
+        }
+      } catch (e: any) {
+        setError(e.message || "Failed to fetch records");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecords();
+  }, [pagination.page, pagination.pageSize]);
 
   const handleViewDetails = (record: AttendanceRecord) => {
     setSelectedRecord(record);
@@ -324,6 +343,40 @@ const AttendanceRecords = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination Controls */}
+      {pagination.paginationState.totalPages > 1 && (
+        <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+          <CardContent className="pt-6">
+            <div className="flex justify-between items-center">
+              <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                Showing {records.length} of {pagination.paginationState.totalItems} records
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => pagination.goToPage(pagination.page - 1)}
+                  disabled={!pagination.paginationState.hasPrev}
+                  className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+                >
+                  Previous
+                </Button>
+                <span className={`text-sm px-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                  Page {pagination.page} of {pagination.paginationState.totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  onClick={() => pagination.goToPage(pagination.page + 1)}
+                  disabled={!pagination.paginationState.hasNext}
+                  className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

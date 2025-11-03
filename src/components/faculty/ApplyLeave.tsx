@@ -104,7 +104,7 @@ const LeaveRequests = () => {
     }
     try {
       const res = await applyLeave({
-        branch_ids: [selectedBranch],
+        branch_ids: [parseInt(selectedBranch)],
         start_date: startDate,
         end_date: endDate,
         reason,

@@ -54,16 +54,28 @@ import { usePagination, useInfiniteScroll, useOptimisticUpdate } from './useOpti
 
 // Custom hooks for data fetching
 export const useProctorStudentsQuery = () => {
-  return useQuery({
+  const pagination = usePagination({
     queryKey: ['proctorStudents'],
-    queryFn: async (): Promise<ProctorStudent[]> => {
-      const response = await getProctorStudents();
-      if (response.success && response.data) {
-        return response.data;
-      }
-      throw new Error(response.message || 'Failed to fetch proctor students');
-    },
+    pageSize: 20,
   });
+
+  return {
+    ...useQuery({
+      queryKey: pagination.queryKey,
+      queryFn: async (): Promise<{ data: ProctorStudent[]; pagination: any }> => {
+        const response = await getProctorStudents({
+          page: pagination.page,
+          page_size: pagination.pageSize,
+        });
+        if (response.success && response.data) {
+          pagination.updatePagination(response);
+          return { data: response.data, pagination: response.pagination };
+        }
+        throw new Error(response.message || 'Failed to fetch proctor students');
+      },
+    }),
+    pagination,
+  };
 };
 
 export const useFacultyAssignmentsQuery = () => {

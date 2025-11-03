@@ -15,6 +15,7 @@ import FacultyProfile from "../faculty/facultyProfile";
 import GenerateStatistics from "../faculty/GenerateStatistics";
 import { logoutUser } from "../../utils/authService";
 import { useTheme } from "../../context/ThemeContext";
+import { useProctorStudentsQuery } from "../../hooks/useApiQueries";
 
 interface FacultyDashboardProps {
   user: any;
@@ -28,6 +29,10 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
   const [error, setError] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { theme } = useTheme();
+
+  // Fetch proctor students data at dashboard level to avoid duplicate API calls
+  const { data: proctorStudentsData, isLoading: proctorStudentsLoading } = useProctorStudentsQuery();
+  const proctorStudents = proctorStudentsData?.data || [];
 
   useEffect(() => {
     localStorage.setItem("facultyActivePage", activePage);
@@ -73,11 +78,11 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       case "attendance-records":
         return <AttendanceRecords />;
       case "announcements":
-        return <Announcements role="faculty" />;
+        return <Announcements role="faculty" proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} />;
       case "proctor-students":
-        return <ProctorStudents />;
+        return <ProctorStudents proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} />;
       case "student-leave":
-        return <ManageStudentLeave />;
+        return <ManageStudentLeave proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} />;
       case "timetable":
         return <Timetable role="faculty" />;
       case "chat":
@@ -85,7 +90,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       case "faculty-profile":
         return <FacultyProfile role="faculty" user={user} />;
       case "statistics":
-        return <GenerateStatistics />;
+        return <GenerateStatistics proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} />;
       default:
         return <FacultyStats setActivePage={setPage} />;
     }

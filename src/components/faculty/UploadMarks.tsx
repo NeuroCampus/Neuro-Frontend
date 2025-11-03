@@ -22,8 +22,8 @@ import {
   ClassStudent,
   uploadInternalMarks,
   FacultyAssignment,
-  getInternalMarksForClass,
-  InternalMarkStudent
+  getUploadMarksBootstrap,
+  GetUploadMarksBootstrapResponse
 } from "../../utils/faculty_api";
 import { useFacultyAssignmentsQuery } from "../../hooks/useApiQueries";
 import { useTheme } from "@/context/ThemeContext";
@@ -395,22 +395,26 @@ const UploadMarks = () => {
         if (!assignment) throw new Error("Assignment not found");
         const testMap: Record<string, number> = { IA1: 1, IA2: 2, IA3: 3, SEE: 4 };
         const test_number = testMap[testType] || 1;
-        const marksList: InternalMarkStudent[] = await getInternalMarksForClass(
-          branch_id,
-          semester_id,
-          section_id,
-          subject_id,
+        const response: GetUploadMarksBootstrapResponse = await getUploadMarksBootstrap({
+          branch_id: branch_id.toString(),
+          semester_id: semester_id.toString(),
+          section_id: section_id.toString(),
+          subject_id: subject_id.toString(),
           test_number
-        );
-        setStudents(marksList.map(s => ({
-          id: s.id,
-          name: s.name,
-          usn: s.usn,
-          marks: s.mark !== '' ? normalizeMarks(s.mark.toString()) : '',
-          total: s.max_mark.toString(),
-          isEditing: false
-        })));
-        setCurrentPage(1);
+        });
+        if (response.success && response.data) {
+          setStudents(response.data.students.map(s => ({
+            id: s.id,
+            name: s.name,
+            usn: s.usn,
+            marks: s.existing_mark ? s.existing_mark.mark.toString() : '',
+            total: s.existing_mark ? s.existing_mark.max_mark.toString() : '40',
+            isEditing: false
+          })));
+          setCurrentPage(1);
+        } else {
+          throw new Error(response.message || "Failed to fetch students/marks");
+        }
       } catch (err: unknown) {
         setStudents([]);
         setErrorMessage((err as { message?: string })?.message || "Failed to fetch students/marks");

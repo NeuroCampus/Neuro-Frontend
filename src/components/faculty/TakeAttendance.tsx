@@ -23,7 +23,7 @@ import { Button } from "../ui/button";
 import { Check, X, UploadCloud } from "lucide-react";
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
-import { getStudentsForClass, takeAttendance, FacultyAssignment, ClassStudent } from "@/utils/faculty_api";
+import { getTakeAttendanceBootstrap, takeAttendance, FacultyAssignment, ClassStudent, GetTakeAttendanceBootstrapResponse } from "@/utils/faculty_api";
 import { useFacultyAssignmentsQuery } from "@/hooks/useApiQueries";
 import { useTheme } from "@/context/ThemeContext";
 
@@ -39,6 +39,7 @@ const TakeAttendance = () => {
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [recentRecords, setRecentRecords] = useState<GetTakeAttendanceBootstrapResponse['data']['recent_records']>([]);
   const { theme } = useTheme();
 
   // Assignments are now loaded via context
@@ -47,13 +48,26 @@ const TakeAttendance = () => {
   useEffect(() => {
     setStudents([]);
     setAttendance({});
+    setRecentRecords([]);
     setSuccessMsg("");
     setErrorMsg("");
     if (branchId && semesterId && sectionId && subjectId) {
       setLoadingStudents(true);
-      getStudentsForClass(branchId, semesterId, sectionId, subjectId)
-        .then(stu => setStudents(stu))
-        .catch(e => setErrorMsg(e.message))
+      getTakeAttendanceBootstrap({
+        branch_id: branchId.toString(),
+        semester_id: semesterId.toString(),
+        section_id: sectionId.toString(),
+        subject_id: subjectId.toString(),
+      })
+        .then(response => {
+          if (response.success && response.data) {
+            setStudents(response.data.students);
+            setRecentRecords(response.data.recent_records || []);
+          } else {
+            setErrorMsg(response.message || "Failed to load data");
+          }
+        })
+        .catch(e => setErrorMsg(e.message || "Failed to load data"))
         .finally(() => setLoadingStudents(false));
     }
   }, [branchId, semesterId, sectionId, subjectId]);

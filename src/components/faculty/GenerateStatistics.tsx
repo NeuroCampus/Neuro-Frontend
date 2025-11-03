@@ -4,13 +4,16 @@ import { Button } from "@/components/ui/button";
 import { FileTextIcon } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, LineChart, Line, CartesianGrid, ResponsiveContainer,LabelList  } from "recharts";
 import { ProctorStudent } from '../../utils/faculty_api';
-import { useProctorStudentsQuery } from '../../hooks/useApiQueries';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useTheme } from "@/context/ThemeContext";
 
-const GenerateStatistics = () => {
-  const { data: proctorStudents = [], isLoading: loading, error } = useProctorStudentsQuery();
+interface GenerateStatisticsProps {
+  proctorStudents: ProctorStudent[];
+  proctorStudentsLoading: boolean;
+}
+
+const GenerateStatistics: React.FC<GenerateStatisticsProps> = ({ proctorStudents, proctorStudentsLoading }) => {
   const { theme } = useTheme();
 
   // Helper function to format attendance percentage
@@ -71,11 +74,8 @@ const GenerateStatistics = () => {
         : 0,
   }));
 
-  if (loading) {
+  if (proctorStudentsLoading) {
     return <div className={`p-6 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading statistics...</div>;
-  }
-  if (error) {
-    return <div className={`p-6 rounded-lg ${theme === 'dark' ? 'bg-destructive/20 text-destructive-foreground' : 'bg-red-100 text-red-700'}`}>{error.message}</div>;
   }
 
   return (

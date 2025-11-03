@@ -1,20 +1,22 @@
 import { useEffect, useState } from "react";
 import { manageStudentLeave, ProctorStudent, LeaveRow } from "@/utils/faculty_api";
-import { useProctorStudentsQuery } from "@/hooks/useApiQueries";
 import { Button } from "../ui/button";
 import { CheckCircle, XCircle } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 
-const statusColors = {
-  APPROVED: "bg-green-100 text-green-700",
-  REJECTED: "bg-red-100 text-red-700",
-  PENDING: "bg-yellow-100 text-yellow-800",
-};
+interface ManageStudentLeaveProps {
+  proctorStudents: ProctorStudent[];
+  proctorStudentsLoading: boolean;
+}
 
-const statusOptions = ["All", "PENDING", "APPROVED", "REJECTED"];
+const ManageStudentLeave: React.FC<ManageStudentLeaveProps> = ({ proctorStudents, proctorStudentsLoading }) => {
+  const statusColors = {
+    APPROVED: "bg-green-100 text-green-700",
+    REJECTED: "bg-red-100 text-red-700",
+    PENDING: "bg-yellow-100 text-yellow-800",
+  };
 
-const ManageStudentLeave = () => {
-  const { data: proctorStudents = [], isLoading: contextLoading, error: contextError } = useProctorStudentsQuery();
+  const statusOptions = ["All", "PENDING", "APPROVED", "REJECTED"];
   const [students, setStudents] = useState<ProctorStudent[]>([]);
   const [leaveRows, setLeaveRows] = useState<LeaveRow[]>([]);
   const [loading, setLoading] = useState(false);
