@@ -157,7 +157,7 @@ const CertificatesManagement = () => {
                 'data-[state=active]:bg-white data-[state=active]:text-gray-900 text-gray-500'
               }
             >
-              View Certificates
+              View Certificate
             </TabsTrigger>
             <TabsTrigger 
               value="upload" 
