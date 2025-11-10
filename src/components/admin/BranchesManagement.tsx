@@ -28,6 +28,8 @@ interface User {
   username: string;
   email: string;
   role: string;
+  first_name: string;
+  last_name: string;
 }
 
 const BranchesManagement = ({ setError, toast }: { setError: (error: string | null) => void; toast: (options: any) => void }) => {
@@ -63,7 +65,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
             ? dataSource.branches.map((b: any) => ({
                 id: b.id,
                 name: b.name || "",
-                hod: b.hod ? b.hod.username : null,
+                hod: b.hod ? `${b.hod.first_name} ${b.hod.last_name}`.trim() : null,
               }))
             : [];
           setBranches(branchData);
@@ -75,6 +77,8 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                 username: u.username,
                 email: u.email,
                 role: "hod",
+                first_name: u.first_name,
+                last_name: u.last_name,
               }))
             : [];
           setUsers(hodData);
@@ -126,7 +130,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
     : [];
 
   const unassignedHods = users.filter(
-    (user) => !branches.some((b) => b.hod === user.username)
+    (user) => !branches.some((b) => b.hod === `${user.first_name} ${user.last_name}`.trim())
   );
 
   const unassignedBranches = branches.filter((b) => !b.hod);
@@ -171,7 +175,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
         const response = await manageBranches(
           { 
             name: trimmedName, 
-            hod_id: editData.hod ? users.find((u) => u.username === editData.hod)?.id?.toString() : null 
+            hod_id: editData.hod ? users.find((u) => `${u.first_name} ${u.last_name}`.trim() === editData.hod)?.id?.toString() : null 
           },
           editData.id,
           "PUT"
@@ -313,7 +317,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
       const dataSource = hasResults ? (response as any).results : (response as any);
       
       if (dataSource && dataSource.success) {
-        setBranches(branches.map((b) => (b.id === selectedBranchId ? { ...b, hod: users.find((u) => u.id === Number(newHodId))?.username } : b)));
+        setBranches(branches.map((b) => (b.id === selectedBranchId ? { ...b, hod: users.find((u) => u.id === Number(newHodId)) ? `${users.find((u) => u.id === Number(newHodId))!.first_name} ${users.find((u) => u.id === Number(newHodId))!.last_name}`.trim() : null } : b)));
         setIsAssignDialogOpen(false);
         setNewHodId("");
         setSelectedBranchId(null);
@@ -467,8 +471,8 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                         >
                           <option value="" className={theme === 'dark' ? 'text-foreground bg-card' : 'text-gray-900 bg-white'}>-- Select HOD --</option>
                           {users.map((u) => (
-                            <option className={theme === 'dark' ? 'text-foreground bg-card' : 'text-gray-900 bg-white'} key={u.id} value={u.username}>
-                              {u.username}
+                            <option className={theme === 'dark' ? 'text-foreground bg-card' : 'text-gray-900 bg-white'} key={u.id} value={`${u.first_name} ${u.last_name}`.trim()}>
+                              {`${u.first_name} ${u.last_name}`.trim()}
                             </option>
                           ))}
                         </select>
@@ -636,7 +640,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                   key={user.id}
                   value={user.id}
                 >
-                  {user.username}
+                  {`${user.first_name} ${user.last_name}`.trim()}
                 </option>
               ))}
             </select>

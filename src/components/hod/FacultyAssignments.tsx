@@ -5,7 +5,7 @@ import { Button } from "../ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";
 import { useToast } from "../ui/use-toast";
 import { Pencil, Trash2, Loader2, CheckCircle } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogFooter } from "../ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "../ui/dialog";
 import { manageFacultyAssignments, manageSubjects, manageSections, manageProfile, getSemesters, manageFaculties, getFacultyAssignmentsBootstrap } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
 
@@ -724,8 +724,8 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
         <Dialog open={state.openDeleteModal} onOpenChange={(open) => updateState({ openDeleteModal: open })}>
           <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
             <DialogHeader>
-              <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Delete Assignment?</h2>
-              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Are you sure you want to delete this assignment?</p>
+              <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Delete Assignment?</DialogTitle>
+              <DialogDescription className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Are you sure you want to delete this assignment?</DialogDescription>
             </DialogHeader>
             <DialogFooter className="mt-4">
               <Button

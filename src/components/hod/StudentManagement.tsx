@@ -605,6 +605,21 @@ const StudentManagement = () => {
     }
   };
 
+  function levenshteinDistance(a: string, b: string): number {
+    const dp: number[][] = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+
+    for (let i = 0; i <= a.length; i++) dp[i][0] = i;
+    for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+
+    for (let i = 1; i <= a.length; i++) {
+      for (let j = 1; j <= b.length; j++) {
+        if (a[i - 1] === b[j - 1]) dp[i][j] = dp[i - 1][j - 1];
+        else dp[i][j] = Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]) + 1;
+      }
+    }
+    return dp[a.length][b.length];
+  }
+
   // Filter students for table
   const filteredStudents = state.students
     .map((student) => {
@@ -646,28 +661,18 @@ const StudentManagement = () => {
     .sort((a, b) => b.score - a.score) // Sort by relevance
     .map((entry) => entry!.student);
 
-    function levenshteinDistance(a: string, b: string): number {
-    const dp: number[][] = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+  // Paginate the filtered students
+  const paginatedFilteredStudents = filteredStudents.slice(
+    (state.currentPage - 1) * itemsPerPage,
+    state.currentPage * itemsPerPage
+  );
 
-    for (let i = 0; i <= a.length; i++) dp[i][0] = i;
-    for (let j = 0; j <= b.length; j++) dp[0][j] = j;
-
-    for (let i = 1; i <= a.length; i++) {
-      for (let j = 1; j <= b.length; j++) {
-        if (a[i - 1] === b[j - 1]) dp[i][j] = dp[i - 1][j - 1];
-        else dp[i][j] = Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]) + 1;
-      }
-    }
-    return dp[a.length][b.length];
-  }
-
-
-  const totalPages = Math.ceil(state.totalStudents / state.pageSize);
+  const totalFilteredPages = Math.ceil(filteredStudents.length / itemsPerPage);
 
   // Handle page change
   const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      fetchStudents(state.branchId, newPage, state.pageSize);
+    if (newPage >= 1 && newPage <= totalFilteredPages) {
+      updateState({ currentPage: newPage });
     }
   };
 
@@ -1024,7 +1029,7 @@ const StudentManagement = () => {
                 </tr>
               </thead>
               <tbody className={theme === 'dark' ? 'divide-y divide-border' : 'divide-y divide-gray-200'}>
-                {state.students.map((student) => (
+                {paginatedFilteredStudents.map((student) => (
                   <tr key={student.usn} className={theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-50'}>
                     <td className="py-2 px-4">{student.usn}</td>
                     <td className="py-2 px-4">{student.name}</td>
@@ -1055,13 +1060,13 @@ const StudentManagement = () => {
               </tbody>
             </table>
 
-            {filteredStudents.length === 0 && (
+            {paginatedFilteredStudents.length === 0 && (
               <p className={`text-center mt-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No students found</p>
             )}
 
             <div className="text-sm text-gray-500 mt-4">
-              Showing {state.students.length} out of {state.totalStudents}{" "}
-              students (Page {state.currentPage} of {totalPages})
+              Showing {paginatedFilteredStudents.length} out of {filteredStudents.length}{" "}
+              students (Page {state.currentPage} of {totalFilteredPages})
             </div>
           </div>
 
@@ -1078,7 +1083,7 @@ const StudentManagement = () => {
             </div>
             <Button
               onClick={() => handlePageChange(state.currentPage + 1)}
-              disabled={state.currentPage === totalPages}
+              disabled={state.currentPage === totalFilteredPages}
               className="w-24 flex items-center justify-center gap-1 text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
             >
               Next
