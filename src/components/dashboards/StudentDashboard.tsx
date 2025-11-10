@@ -1,4 +1,5 @@
 import { useState, useEffect, Suspense, lazy } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "../common/Sidebar";
 import Navbar from "../common/Navbar";
 import Chat from "../common/Chat";
@@ -39,35 +40,32 @@ interface StudentDashboardProps {
 }
 
 const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
-  const [activePage, setActivePage] = useState("dashboard");
+  const navigate = useNavigate();
+  const location = useLocation();
   const [error, setError] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { theme } = useTheme();
 
-  // Check URL path on mount to handle direct navigation (e.g., from Stripe redirects)
-  useEffect(() => {
-    const path = window.location.pathname;
-    const urlParams = new URLSearchParams(window.location.search);
-    const hasPaymentParams = urlParams.has('session_id') || urlParams.has('invoice_id');
+  // Get active page from URL path
+  const getActivePageFromPath = (pathname: string) => {
+    const path = pathname.replace('/', '');
+    if (path === '' || path === 'dashboard') return 'dashboard';
+    return path;
+  };
 
-    if (path === '/payment/success' || (path === '/' && hasPaymentParams)) {
-      setActivePage('payment-success');
-      // Keep the URL with query parameters so PaymentSuccess component can access them
-    } else if (path === '/payment/cancel' || (path === '/' && urlParams.has('cancel'))) {
-      setActivePage('payment-cancel');
-      // Keep the URL with query parameters for PaymentCancel component
-    }
-  }, []);
+  const activePage = getActivePageFromPath(location.pathname);
 
+  // Handle page changes by updating URL
   const handlePageChange = (page: string) => {
     console.log("Changing page to:", page); // Debug log
-    setActivePage(page);
+    const path = page === 'dashboard' ? '/dashboard' : `/${page}`;
+    navigate(path);
   };
 
   const handleLogout = async () => {
     try {
       await logoutUser();
-      setPage("login");
+      navigate("/", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);
       setError("Failed to log out. Please try again.");
@@ -75,7 +73,7 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
   };
 
   const handleNotificationClick = () => {
-    setActivePage("announcements");
+    navigate('/announcements');
   };
 
   const toggleSidebar = () => {

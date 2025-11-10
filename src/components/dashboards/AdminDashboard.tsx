@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "../common/Sidebar";
 import Navbar from "../common/Navbar";
 import AdminStats from "../admin/AdminStats";
@@ -33,38 +33,40 @@ interface AdminDashboardProps {
 }
 
 const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
-  const [activePage, setActivePage] = useState<string>(() => {
-  return localStorage.getItem("adminActivePage") || "dashboard";
-});
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [error, setError] = useState<string | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { toast } = useToast();
+  const { theme } = useTheme();
 
-const [error, setError] = useState<string | null>(null);
-const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-const { toast } = useToast();
-const navigate = useNavigate();
-const { theme } = useTheme();
+  // Get active page from URL path
+  const getActivePageFromPath = (pathname: string) => {
+    const path = pathname.replace('/admin', '').replace('/', '');
+    return path || 'dashboard';
+  };
 
-const handlePageChange = (page: string) => {
-  setActivePage(page);
-  setError(null);
+  const activePage = getActivePageFromPath(location.pathname);
 
-  // persist page in localStorage
-  localStorage.setItem("adminActivePage", page);
-
-  window.scrollTo({ top: 0, behavior: "smooth" });
-};
+  const handlePageChange = (page: string) => {
+    const path = page === 'dashboard' ? '/admin' : `/admin/${page}`;
+    navigate(path);
+    setError(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
   };
 
   const handleNotificationClick = () => {
-    setActivePage("notifications");
+    navigate('/admin/notifications');
   };
 
   const handleLogout = async () => {
     try {
       await logoutUser();
-      setPage("login");
+      navigate("/", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);
       setError("Failed to log out. Please try again.");

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { verifyOTP, resendOTP } from "../../utils/authService";
 import { Button } from "../ui/button";
@@ -12,6 +13,7 @@ interface OTPPageProps {
 }
 
 const OTPPage = ({ setRole, setPage, setUser }: OTPPageProps) => {
+  const navigate = useNavigate();
   const [otp, setOtp] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -56,11 +58,29 @@ const OTPPage = ({ setRole, setPage, setUser }: OTPPageProps) => {
       if (response.success) {
         setSuccess("OTP verified successfully");
         setIsVerified(true);
-        setRole(response.role || "");
-        setUser(response.profile || {});
+        // Navigate directly to appropriate dashboard
+        const userRole = response.role;
         setTimeout(() => {
-          setPage(response.role || "student");
-        }, 1000);
+          switch (userRole) {
+            case "admin":
+              navigate("/admin", { replace: true });
+              break;
+            case "hod":
+              navigate("/hod", { replace: true });
+              break;
+            case "fees_manager":
+              navigate("/fees-manager", { replace: true });
+              break;
+            case "teacher":
+              navigate("/faculty", { replace: true });
+              break;
+            case "student":
+              navigate("/dashboard", { replace: true });
+              break;
+            default:
+              navigate("/", { replace: true });
+          }
+        }, 100);
       } else {
         setError(response.message || "Verification failed");
       }

@@ -7,7 +7,7 @@ interface AuthResponse {
   user_id?: string;
   username?: string;
   email?: string;
-  role?: "admin" | "hod" | "teacher" | "student";
+  role?: "admin" | "hod" | "teacher" | "student" | "fees_manager";
   department?: string | null;
   profile_image?: string | null;
 }

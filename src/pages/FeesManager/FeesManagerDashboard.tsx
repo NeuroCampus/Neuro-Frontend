@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from '@/components/ui/badge';
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,7 @@ interface FeesManagerDashboardProps {
 }
 
 const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPage }) => {
+  const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +109,7 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
 
   const handleLogout = () => {
     localStorage.clear();
-    setPage("login");
+    navigate("/", { replace: true });
   };
 
   const formatCurrency = (amount: number) => {

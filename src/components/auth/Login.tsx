@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { loginUser } from "../../utils/authService";
 import { Button } from "../ui/button";
@@ -14,6 +15,7 @@ interface LoginProps {
 }
 
 const Login = ({ setRole, setPage, setUser }: LoginProps) => {
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -40,9 +42,27 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
           localStorage.setItem("temp_user_id", response.user_id || "");
           setPage("otp");
         } else {
-          setRole(response.role || "");
-          setUser(response.profile || {});
-          setPage(response.role || "");
+          // Authentication successful - navigate directly to appropriate dashboard
+          const userRole = response.role;
+          switch (userRole) {
+            case "admin":
+              navigate("/admin", { replace: true });
+              break;
+            case "hod":
+              navigate("/hod", { replace: true });
+              break;
+            case "fees_manager":
+              navigate("/fees-manager", { replace: true });
+              break;
+            case "teacher":
+              navigate("/faculty", { replace: true });
+              break;
+            case "student":
+              navigate("/dashboard", { replace: true });
+              break;
+            default:
+              navigate("/", { replace: true });
+          }
         }
       } else {
         setError(response.message || "Login failed");

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "../common/Sidebar";
 import Navbar from "../common/Navbar";
 import FacultyStats from "../faculty/FacultyStats";
@@ -23,9 +24,33 @@ interface FacultyDashboardProps {
 }
 
 const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
-  const [activePage, setActivePage] = useState(
-    localStorage.getItem("facultyActivePage") || "dashboard"
-  );
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const getActivePageFromPath = (pathname: string): string => {
+    const pathParts = pathname.split('/');
+    const lastPart = pathParts[pathParts.length - 1];
+    
+    // Map URL paths to page names
+    const pathMap: { [key: string]: string } = {
+      'dashboard': 'dashboard',
+      'take-attendance': 'take-attendance',
+      'upload-marks': 'upload-marks',
+      'apply-leave': 'apply-leave',
+      'attendance-records': 'attendance-records',
+      'announcements': 'announcements',
+      'proctor-students': 'proctor-students',
+      'student-leave': 'student-leave',
+      'timetable': 'timetable',
+      'chat': 'chat',
+      'faculty-profile': 'faculty-profile',
+      'statistics': 'statistics'
+    };
+    
+    return pathMap[lastPart] || 'dashboard';
+  };
+
+  const [activePage, setActivePage] = useState(getActivePageFromPath(location.pathname));
   const [error, setError] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { theme } = useTheme();
@@ -34,13 +59,33 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
   const { data: proctorStudentsData, isLoading: proctorStudentsLoading } = useProctorStudentsQuery();
   const proctorStudents = proctorStudentsData?.data || [];
 
+  // Update active page when location changes
   useEffect(() => {
-    localStorage.setItem("facultyActivePage", activePage);
-  }, [activePage]);
+    setActivePage(getActivePageFromPath(location.pathname));
+  }, [location.pathname]);
 
-    const handlePageChange = (page: string) => {
+  const handlePageChange = (page: string) => {
     setActivePage(page);
     setError(null);
+    
+    // Navigate to the corresponding URL path
+    const pathMap: { [key: string]: string } = {
+      'dashboard': '/faculty/dashboard',
+      'take-attendance': '/faculty/take-attendance',
+      'upload-marks': '/faculty/upload-marks',
+      'apply-leave': '/faculty/apply-leave',
+      'attendance-records': '/faculty/attendance-records',
+      'announcements': '/faculty/announcements',
+      'proctor-students': '/faculty/proctor-students',
+      'student-leave': '/faculty/student-leave',
+      'timetable': '/faculty/timetable',
+      'chat': '/faculty/chat',
+      'faculty-profile': '/faculty/faculty-profile',
+      'statistics': '/faculty/statistics'
+    };
+    
+    const path = pathMap[page] || '/faculty/dashboard';
+    navigate(path);
 
     // scroll window to top just in case
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -54,7 +99,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
     try {
       await logoutUser();
       localStorage.clear();
-      setPage("login");
+      navigate("/", { replace: true });
     } catch (error) {
       console.error("Logout error:", error);
       setError("Failed to log out. Please try again.");

@@ -1,7 +1,7 @@
 //HODDashboard.tsx
  
 import { useState, useEffect, Component, ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "../common/Sidebar";
 import Navbar from "../common/Navbar";
 import HODStats from "../hod/HODStats";
@@ -94,26 +94,46 @@ const validateUser = (user: HODUser): boolean => {
 
 const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
   const navigate = useNavigate();
-  const [activePage, setActivePage] = useState<string>(
-    localStorage.getItem("hodActivePage") || "dashboard"
-  );
+  const location = useLocation();
+  
+  const getActivePageFromPath = (pathname: string): string => {
+    const pathParts = pathname.split('/');
+    const lastPart = pathParts[pathParts.length - 1];
+    
+    // Map URL paths to page names
+    const pathMap: { [key: string]: string } = {
+      'dashboard': 'dashboard',
+      'promotion-management': 'promotion-management',
+      'low-attendance': 'low-attendance',
+      'semesters': 'semesters',
+      'students': 'students',
+      'subjects': 'subjects',
+      'faculty-assignments': 'faculty-assignments',
+      'timetable': 'timetable',
+      'leaves': 'leaves',
+      'apply-leaves': 'apply-leaves',
+      'attendance': 'attendance',
+      'marks': 'marks',
+      'notifications': 'notifications',
+      'proctors': 'proctors',
+      'chat': 'chat',
+      'study-materials': 'study-materials',
+      'hod-profile': 'hod-profile'
+    };
+    
+    return pathMap[lastPart] || 'dashboard';
+  };
+
+  const [activePage, setActivePage] = useState<string>(getActivePageFromPath(location.pathname));
   const [error, setError] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [bootstrap, setBootstrap] = useState<BootstrapData | null>(null);
   const { theme } = useTheme();
 
+  // Update active page when location changes
   useEffect(() => {
-    if (!validateUser(user)) {
-      setError("Invalid user data. Please log in again.");
-      setTimeout(() => {
-        handleLogout();
-      }, 3000);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    localStorage.setItem("hodActivePage", activePage);
-  }, [activePage]);
+    setActivePage(getActivePageFromPath(location.pathname));
+  }, [location.pathname]);
 
   // Fetch combined profile + semesters + sections once
   useEffect(() => {
@@ -135,6 +155,30 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
   const handlePageChange = (page: string) => {
     setActivePage(page);
     setError(null);
+    
+    // Navigate to the corresponding URL path
+    const pathMap: { [key: string]: string } = {
+      'dashboard': '/hod/dashboard',
+      'promotion-management': '/hod/promotion-management',
+      'low-attendance': '/hod/low-attendance',
+      'semesters': '/hod/semesters',
+      'students': '/hod/students',
+      'subjects': '/hod/subjects',
+      'faculty-assignments': '/hod/faculty-assignments',
+      'timetable': '/hod/timetable',
+      'leaves': '/hod/leaves',
+      'apply-leaves': '/hod/apply-leaves',
+      'attendance': '/hod/attendance',
+      'marks': '/hod/marks',
+      'notifications': '/hod/notifications',
+      'proctors': '/hod/proctors',
+      'chat': '/hod/chat',
+      'study-materials': '/hod/study-materials',
+      'hod-profile': '/hod/hod-profile'
+    };
+    
+    const path = pathMap[page] || '/hod/dashboard';
+    navigate(path);
 
     // scroll window to top just in case
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -149,7 +193,6 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
       const response = await logoutUser();
       if (response.success) {
         localStorage.clear();
-        setPage("login");
         navigate("/", { replace: true }); // Redirect to home
       } else {
         setError(response.message || "Failed to log out. Please try again.");

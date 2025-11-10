@@ -78,7 +78,7 @@ interface DashboardOverviewResponse {
 }
 
 // Export the interface so it can be imported in components
-export type { DashboardOverviewResponse };
+export type { DashboardOverviewResponse, TimetableEntry };
 
 interface TimetableEntry {
   id: string;
@@ -93,7 +93,7 @@ interface TimetableEntry {
 interface GetTimetableResponse {
   success: boolean;
   message?: string;
-  timetable?: TimetableEntry[];
+  data?: TimetableEntry[];
 }
 
 interface AttendanceRecord {

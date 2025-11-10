@@ -1,80 +1,95 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Login from "../components/auth/Login";
 import OTPPage from "../components/auth/OTPPage";
 import ForgotPasswordFlow from "../components/auth/ForgotPasswordFlow";
 import ResetPassword from "../components/auth/ResetPassword";
-import AdminDashboard from "../components/dashboards/AdminDashboard";
-import HODDashboard from "../components/dashboards/HODDashboard";
-import FacultyDashboard from "../components/dashboards/FacultyDashboard";
-import StudentDashboard from "../components/dashboards/StudentDashboard";
-import FeesManagerDashboard from "../pages/FeesManager/FeesManagerDashboard";
-import PaymentSuccess from "./PaymentSuccess";
-import PaymentCancel from "./PaymentCancel";
-import NotFound from "./NotFound";
 import { startTokenRefresh, stopTokenRefresh } from "../utils/authService";
 import { ThemeProvider } from "../context/ThemeContext";
 
 const Index = () => {
-  const location = useLocation();
+  const navigate = useNavigate();
   const [role, setRole] = useState<string | null>(localStorage.getItem("role"));
   const [page, setPage] = useState<string>("login");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [user, setUser] = useState<any>(null);
 
-  // Check for payment routes first
-  if (location.pathname === '/payment/success') {
-    return (
-      <ThemeProvider>
-        <PaymentSuccess />
-      </ThemeProvider>
-    );
-  }
-
-  if (location.pathname === '/payment/cancel') {
-    return (
-      <ThemeProvider>
-        <PaymentCancel />
-      </ThemeProvider>
-    );
-  }
-
-  // Check for 404 routes
-  if (location.pathname !== '/') {
-    return (
-      <ThemeProvider>
-        <NotFound />
-      </ThemeProvider>
-    );
-  }
-
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    const storedUser = localStorage.getItem("user");
-    if (token && storedUser) {
-      setIsLoading(true);
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        setRole(parsedUser.role);
-        setPage(parsedUser.role);
-        startTokenRefresh(); // Start proactive token refresh
-      } catch (error) {
-        console.error("Error parsing user data:", error);
+    const checkAuthAndRedirect = () => {
+      const token = localStorage.getItem("access_token");
+      const storedUser = localStorage.getItem("user");
+      
+      if (token && storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          setRole(parsedUser.role);
+          
+          // Only redirect if we're not already on a dashboard route
+          const currentPath = window.location.pathname;
+          const isOnDashboard = currentPath.startsWith('/admin') || 
+                               currentPath.startsWith('/hod') || 
+                               currentPath.startsWith('/faculty') || 
+                               currentPath.startsWith('/fees-manager') ||
+                               currentPath.startsWith('/dashboard') ||
+                               currentPath.startsWith('/timetable') ||
+                               currentPath.startsWith('/attendance') ||
+                               currentPath.startsWith('/marks') ||
+                               currentPath.startsWith('/leave-request') ||
+                               currentPath.startsWith('/leave-status') ||
+                               currentPath.startsWith('/fees') ||
+                               currentPath.startsWith('/profile') ||
+                               currentPath.startsWith('/announcements') ||
+                               currentPath.startsWith('/chat') ||
+                               currentPath.startsWith('/notifications') ||
+                               currentPath.startsWith('/face-recognition') ||
+                               currentPath.startsWith('/student-study-material') ||
+                               currentPath.startsWith('/student-assignment');
+          
+          if (!isOnDashboard) {
+            // Redirect to appropriate dashboard based on role
+            switch (parsedUser.role) {
+              case "admin":
+                navigate("/admin", { replace: true });
+                break;
+              case "hod":
+                navigate("/hod", { replace: true });
+                break;
+              case "fees_manager":
+                navigate("/fees-manager", { replace: true });
+                break;
+              case "teacher":
+                navigate("/faculty", { replace: true });
+                break;
+              case "student":
+                navigate("/dashboard", { replace: true });
+                break;
+              default:
+                setPage("login");
+                setIsLoading(false);
+            }
+          } else {
+            // Already on dashboard, just start token refresh
+            startTokenRefresh();
+            setIsLoading(false);
+          }
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+          localStorage.clear();
+          stopTokenRefresh();
+          setPage("login");
+          setIsLoading(false);
+        }
+      } else {
         localStorage.clear();
         stopTokenRefresh();
         setPage("login");
-      } finally {
         setIsLoading(false);
       }
-    } else {
-      localStorage.clear();
-      stopTokenRefresh();
-      setIsLoading(false);
-    }
-  }, []);
+    };
 
-
+    checkAuthAndRedirect();
+  }, [navigate]);
 
   if (isLoading) {
     return (
@@ -90,35 +105,12 @@ const Index = () => {
   if (page === "forgot-password") return <ForgotPasswordFlow setPage={setPage} />;
   if (page === "reset-password") return <ResetPassword setPage={setPage} />;
 
-  // Role-based dashboard pages
-  if (role === "admin") return (
-    <ThemeProvider>
-      <AdminDashboard user={user} setPage={setPage} />
-    </ThemeProvider>
+  // If still loading or redirecting, show loading
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="text-2xl font-semibold">Loading...</div>
+    </div>
   );
-  if (role === "hod") return (
-    <ThemeProvider>
-      <HODDashboard user={user} setPage={setPage} />
-    </ThemeProvider>
-  );
-  if (role === "fees_manager") return (
-    <ThemeProvider>
-      <FeesManagerDashboard user={user} setPage={setPage} />
-    </ThemeProvider>
-  );
-  if (role === "teacher") return (
-    <ThemeProvider>
-      <FacultyDashboard user={user} setPage={setPage} />
-    </ThemeProvider>
-  );
-  if (role === "student") return (
-    <ThemeProvider>
-      <StudentDashboard user={user} setPage={setPage} />
-    </ThemeProvider>
-  );
-
-  // Default fallback
-  return <Login setRole={setRole} setPage={setPage} setUser={setUser} />;
 };
 
 export default Index;
