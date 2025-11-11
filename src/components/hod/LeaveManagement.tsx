@@ -77,31 +77,51 @@ const LeaveManagement = () => {
 
   // Fetch leave requests
   const fetchLeaveRequests = async () => {
-    if (!branchId) return;
+    // Wait for branchId to be set if it's not available yet
+    if (!branchId) {
+      // Try to fetch branchId first
+      try {
+        const profileRes = await manageProfile({}, "GET");
+        if (profileRes.success && profileRes.data?.branch_id) {
+          setBranchId(profileRes.data.branch_id);
+        } else {
+          setErrors(["Failed to fetch branch ID: No branch assigned"]);
+          setLeaveRequests([]);
+          return;
+        }
+      } catch (err) {
+        console.error("Error fetching branch ID:", err);
+        setErrors(["Failed to connect to backend for branch ID"]);
+        setLeaveRequests([]);
+        return;
+      }
+    }
+    
     setIsLoading(true);
     try {
-      const res = await manageLeaves({ branch_id: branchId }, "GET");
-      console.log("manage_leaves response:", res);
-      if (res.success && Array.isArray(res.data)) {
-        const requests = res.data.map((req: FacultyLeaveData) => ({
-          id: req.id.toString(),
-          name: req.faculty_name || "Unknown",
-          dept: req.department || "Unknown",
-          period: formatPeriod(req.start_date, req.end_date),
-          reason: req.reason || "No reason provided",
-          status: req.status === "APPROVED" ? "Approved" : req.status === "REJECTED" ? "Rejected" : "Pending",
-        })) as LeaveRequest[];
-        setLeaveRequests(requests);
-        setErrors([]);
-        console.log("Processed leave requests:", requests);
-      } else {
-        console.warn("manage_leaves failed:", res.message);
-        setErrors([res.message || "No leave requests found"]);
-        setLeaveRequests([]);
+      const response = await getFacultyLeavesBootstrap(branchId);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || "Failed to fetch data");
       }
-    } catch (err) {
-      console.error("Error fetching leave requests:", err);
-      setErrors(["Failed to fetch leave requests: Invalid response format"]);
+
+      const data: FacultyLeavesBootstrapResponse = response.data;
+
+      // Set leave requests
+      const requests = data.leaves.map((req: FacultyLeaveData) => ({
+        id: req.id.toString(),
+        name: req.faculty_name || "Unknown",
+        dept: req.department || "Unknown",
+        period: formatPeriod(req.start_date, req.end_date),
+        reason: req.reason || "No reason provided",
+        status: req.status === "APPROVED" ? "Approved" : req.status === "REJECTED" ? "Rejected" : "Pending",
+      })) as LeaveRequest[];
+      setLeaveRequests(requests);
+      setErrors([]);
+      console.log("Processed leave requests:", requests);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch data";
+      console.error("Error fetching data:", err);
+      setErrors([errorMessage]);
       setLeaveRequests([]);
     } finally {
       setIsLoading(false);
@@ -186,7 +206,7 @@ const LeaveManagement = () => {
 
       setIsLoading(true);
       try {
-        const response = await getFacultyLeavesBootstrap();
+        const response = await getFacultyLeavesBootstrap(branchId);
         if (!response.success || !response.data) {
           throw new Error(response.message || "Failed to fetch data");
         }

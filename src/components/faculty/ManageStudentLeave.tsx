@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { manageStudentLeave, ProctorStudent, LeaveRow } from "@/utils/faculty_api";
 import { Button } from "../ui/button";
 import { CheckCircle, XCircle } from "lucide-react";
+import Swal from 'sweetalert2';
 import { useTheme } from "@/context/ThemeContext";
 
 interface ManageStudentLeaveProps {
@@ -47,22 +48,58 @@ const ManageStudentLeave: React.FC<ManageStudentLeaveProps> = ({ proctorStudents
       action === "APPROVE"
         ? "Are you sure you want to approve this leave request?"
         : "Are you sure you want to reject this leave request?";
-    if (!window.confirm(confirmMsg)) return;
+        
+    const result = await Swal.fire({
+      title: 'Confirm Action',
+      text: confirmMsg,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: action === "APPROVE" ? 'Approve' : 'Reject',
+      cancelButtonText: 'Cancel',
+      customClass: {
+        confirmButton: action === "APPROVE" 
+          ? 'bg-green-600 text-white hover:bg-green-700' 
+          : 'bg-red-600 text-white hover:bg-red-700',
+        cancelButton: 'bg-gray-300 text-black hover:bg-gray-400'
+      },
+    });
+    
+    if (!result.isConfirmed) return;
+    
     setActionLoading(leaveId + action);
     try {
       const res = await manageStudentLeave({ leave_id: leaveId, action });
       if (res.success) {
-        // The context will automatically update the data
-        alert("Action completed successfully");
+        // Update local state to reflect the change immediately
+        setLeaveRows(prevRows => 
+          prevRows.map(row => 
+            row.id === leaveId 
+              ? { ...row, status: action === "APPROVE" ? "APPROVED" : "REJECTED" } 
+              : row
+          )
+        );
+        
+        Swal.fire({
+          title: 'Success!',
+          text: `Leave request ${action === "APPROVE" ? 'approved' : 'rejected'} successfully.`,
+          icon: 'success',
+          confirmButtonText: 'OK'
+        });
       } else {
-        alert(res.message || "Action failed");
+        Swal.fire({
+          title: 'Error!',
+          text: res.message || "Action failed",
+          icon: 'error',
+          confirmButtonText: 'OK'
+        });
       }
     } catch (e: unknown) {
-      if (e instanceof Error) {
-        alert(e.message || "Action failed");
-      } else {
-        alert("Action failed");
-      }
+      Swal.fire({
+        title: 'Error!',
+        text: e instanceof Error ? e.message : "Action failed",
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
     } finally {
       setActionLoading(null);
     }
