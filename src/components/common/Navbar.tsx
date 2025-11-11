@@ -58,7 +58,7 @@ const handleProfileClick = () => {
 
   return (
     <motion.div 
-      className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-3 backdrop-blur-sm ${
+      className={`fixed top-0 left-64 right-0 z-50 flex items-center justify-between px-6 py-3 backdrop-blur-sm ${
         theme === 'dark' 
           ? 'bg-background border-b border-border' 
           : 'bg-white border-b border-gray-200'
