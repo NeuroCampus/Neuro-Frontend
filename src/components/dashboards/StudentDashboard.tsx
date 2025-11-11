@@ -104,8 +104,6 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
         return <StudentProfile />;
       case "announcements":
         return <StudentAnnouncements />;
-      case "chat":
-        return <Chat />;
       case "notifications":
         return <StudentNotifications />;
       case "face-recognition":
