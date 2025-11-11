@@ -807,6 +807,8 @@ export async function getFacultySentNotifications() {
   return await response.json();
 }
 
+
+
 export async function getAttendanceRecordsList() {
   const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/attendance-records/list/`, {
     method: "GET",
@@ -825,18 +827,6 @@ export async function getAttendanceRecordDetails(recordId: number) {
       Authorization: `Bearer ${localStorage.getItem("access_token")}`,
       "Content-Type": "application/json",
     },
-  });
-  return await response.json();
-}
-
-export async function manageStudentLeave({ leave_id, action }: { leave_id: string; action: 'APPROVE' | 'REJECT' }) {
-  const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/manage-student-leave/`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ leave_id, action }),
   });
   return await response.json();
 }
@@ -940,6 +930,35 @@ export const getUploadMarksBootstrap = async (params: {
     return await response.json();
   } catch (error) {
     console.error("Get Upload Marks Bootstrap Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+interface ManageStudentLeaveRequest {
+  leave_id: string;
+  action: "APPROVE" | "REJECT";
+}
+
+interface ManageStudentLeaveResponse {
+  success: boolean;
+  message?: string;
+}
+
+export const manageStudentLeave = async (
+  data: ManageStudentLeaveRequest
+): Promise<ManageStudentLeaveResponse> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/manage-student-leave/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Manage Student Leave Error:", error);
     return { success: false, message: "Network error" };
   }
 };
