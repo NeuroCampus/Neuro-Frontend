@@ -15,7 +15,7 @@ import {
   BarChart2,
   Settings,
   LogOut,
-  MessageSquare,
+
   GitBranch,
   UserCheck,
   ClipboardList,
@@ -93,7 +93,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       marks: <BarChart2 size={20} />,
       "study-materials": <BookOpen size={20} />,
       proctors: <UserCheck size={20} />,
-      chat: <MessageSquare size={20} />,
+
       "take-attendance": <BarChart2 size={20} />,
       "upload-marks": <Upload size={20} />,
       "apply-leave": <FileText size={20} />,
@@ -157,7 +157,6 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Study Material", page: "study-materials" },
     { name: "Proctors", page: "proctors" },
     { name: "Notifications", page: "notifications" },
-    { name: "Chat", page: "chat" },
     
     // Profile
     { name: "Profile", page: "hod-profile" },
@@ -183,7 +182,6 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     
     // Communication
     { name: "Announcements", page: "announcements" },
-    { name: "Chat", page: "chat" },
     
     // Profile
     { name: "Profile", page: "faculty-profile" },
@@ -205,7 +203,6 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     
     // Communication
     { name: "Announcements", page: "announcements" },
-    { name: "Chat", page: "chat" },
     
     // Profile
     { name: "Profile", page: "profile" },
