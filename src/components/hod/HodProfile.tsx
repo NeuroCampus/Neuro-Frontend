@@ -5,8 +5,8 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { cn } from "@/lib/utils";
 import { manageProfile } from "../../utils/hod_api";
-import { useToast } from "../../hooks/use-toast";
 import { useTheme } from "../../context/ThemeContext";
+import { showSuccessAlert, showErrorAlert, showInfoAlert } from "../../utils/sweetalert";
 
 interface User {
   user_id?: string;
@@ -41,7 +41,6 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
     bio: "",
   });
   const [error, setLocalError] = useState<string | null>(null);
-  const { toast } = useToast();
   const { theme } = useTheme();
   const [fetchedUser, setFetchedUser] = useState<User | null>(null);
 
@@ -76,7 +75,7 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
           const message = "Authentication failed. Please log in again.";
           if (setError) setError(message);
           setLocalError(message);
-          toast({ variant: "destructive", title: "Error", description: message });
+          showErrorAlert("Error", message);
           setTimeout(() => (window.location.href = "/login"), 2000);
           setLoading(false);
           return;
@@ -100,11 +99,7 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
           setProfile(fetchedProfile);
         } else {
           setLocalError(response.message || "Failed to fetch profile");
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: response.message || "Failed to fetch profile",
-          });
+          showErrorAlert("Error", response.message || "Failed to fetch profile");
           if (response.message === "Profile not found") {
             setEditing(true);
             setProfile({
@@ -122,14 +117,14 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
         const message = "Network error";
         if (setError) setError(message);
         setLocalError(message);
-        toast({ variant: "destructive", title: "Error", description: message });
+        showErrorAlert("Error", message);
       } finally {
         setLoading(false);
       }
     };
 
     fetchProfile();
-  }, [propUser, setError, toast]);
+  }, [propUser, setError]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -144,20 +139,20 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
       const currentUser = fetchedUser || propUser;
       if (!currentUser || !currentUser.user_id) {
         setLocalError("User data unavailable for update");
-        toast({ variant: "destructive", title: "Error", description: "User data unavailable for update" });
+        showErrorAlert("Error", "User data unavailable for update");
         setLoading(false);
         return;
       }
 
       if (!profile.first_name.trim()) {
         setLocalError("First name is required");
-        toast({ variant: "destructive", title: "Error", description: "First name is required" });
+        showErrorAlert("Error", "First name is required");
         setLoading(false);
         return;
       }
       if (!profile.email.trim()) {
         setLocalError("Email is required");
-        toast({ variant: "destructive", title: "Error", description: "Email is required" });
+        showErrorAlert("Error", "Email is required");
         setLoading(false);
         return;
       }
@@ -165,7 +160,7 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(profile.email)) {
         setLocalError("Invalid email format");
-        toast({ variant: "destructive", title: "Error", description: "Invalid email format" });
+        showErrorAlert("Error", "Invalid email format");
         setLoading(false);
         return;
       }
@@ -186,7 +181,7 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
       if (profile.bio !== (currentUser.bio || "")) updates.bio = profile.bio;
 
       if (Object.keys(updates).length === 0) {
-        toast({ title: "Info", description: "No changes to save" });
+        showInfoAlert("Info", "No changes to save");
         setEditing(false);
         setLoading(false);
         return;
@@ -203,7 +198,7 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
           bio: response.data.bio || "",
         };
         setProfile(updatedProfile);
-        toast({ title: "Success", description: "Profile saved successfully" });
+        showSuccessAlert("Success", "Profile saved successfully");
         localStorage.setItem("user", JSON.stringify({
           ...JSON.parse(localStorage.getItem("user") || "{}"),
           ...response.data,
@@ -214,14 +209,14 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
         const message = response.message || "Failed to save profile";
         if (setError) setError(message);
         setLocalError(message);
-        toast({ variant: "destructive", title: "Error", description: message });
+        showErrorAlert("Error", message);
       }
     } catch (err) {
       console.error("Save Profile Error:", err);
       const message = err instanceof Error ? err.message : "Network error";
       if (setError) setError(message);
       setLocalError(message);
-      toast({ variant: "destructive", title: "Error", description: message });
+      showErrorAlert("Error", message);
     } finally {
       setLoading(false);
     }

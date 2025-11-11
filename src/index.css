@@ -278,33 +278,131 @@ html, body, #root {
   scrollbar-color: #555 #1c1c1e;
 }
 
+/* SweetAlert2 Theme Styles */
+/* Light theme for SweetAlert2 */
+.light .swal2-popup {
+  background: #ffffff !important;
+  color: #374151 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.1) !important;
+}
+
+.light .swal2-title {
+  color: #1f2937 !important;
+  font-size: 1.25rem !important;
+}
+
+.light .swal2-html-container {
+  color: #4b5563 !important;
+}
+
+.light .swal2-confirm {
+  background-color: #a259ff !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  border: none !important;
+}
+
+.light .swal2-cancel {
+  background-color: #f3f4f6 !important;
+  color: #4b5563 !important;
+  border-radius: 8px !important;
+  border: 1px solid #e5e7eb !important;
+}
+
 /* Dark theme for SweetAlert2 */
-.swal2-popup {
+.dark .swal2-popup {
   background: #1c1c1e !important;
   color: #f0f0f0 !important;
   border-radius: 12px !important;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.3) !important;
 }
 
-.swal2-title {
+.dark .swal2-title {
   color: #ffffff !important;
   font-size: 1.25rem !important;
 }
 
-.swal2-html-container {
+.dark .swal2-html-container {
   color: #cccccc !important;
 }
 
-.swal2-confirm {
-  background-color: #2563eb !important; /* Blue */
+.dark .swal2-confirm {
+  background-color: #a259ff !important;
   color: #fff !important;
   border-radius: 8px !important;
   padding: 8px 16px !important;
+  border: none !important;
 }
 
-.swal2-cancel {
+.dark .swal2-cancel {
   background-color: #374151 !important;
   color: #e5e7eb !important;
   border-radius: 8px !important;
+  border: 1px solid #4b5563 !important;
+}
+
+/* SweetAlert2 backdrop */
+.swal2-backdrop-show {
+  background: rgba(0, 0, 0, 0.4) !important;
+  opacity: 1 !important;
+}
+
+.swal2-backdrop-hide {
+  opacity: 0 !important;
+}
+
+/* General SweetAlert2 styles */
+.swal2-popup {
+  font-family: inherit !important;
+}
+
+.swal2-icon {
+  margin: 1rem auto !important;
+}
+
+.swal2-actions {
+  margin: 1.25rem auto 0 !important;
+}
+
+.swal2-styled.swal2-confirm:focus,
+.swal2-styled.swal2-cancel:focus {
+  box-shadow: none !important;
+}
+
+/* Prevent page shifting when SweetAlert is shown */
+.swal2-shown {
+  overflow: hidden !important;
+}
+
+/* Prevent body scrolling when modal is open */
+body.swal2-shown {
+  overflow: hidden !important;
+  padding-right: 0 !important;
+}
+
+/* Maintain consistent scrollbar width */
+html {
+  margin-left: calc(100vw - 100%);
+}
+
+/* Prevent layout shifts */
+.swal2-backdrop-show,
+.swal2-hide {
+  animation: swal2-backdrop-animation 0.1s forwards !important;
+}
+
+@keyframes swal2-backdrop-animation {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Ensure modal is centered */
+.swal2-container {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 /* Recharts Pie Chart Styling for Both Themes */

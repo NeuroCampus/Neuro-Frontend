@@ -245,12 +245,13 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
 
   return (
     <motion.div 
-      className={`flex min-h-screen pt-16 thin-scrollbar ${theme === 'dark' ? 'dark bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}
+      className={`flex min-h-screen ${theme === 'dark' ? 'dark bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <div className={`fixed top-0 left-0 h-full z-10 transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
+      {/* Sidebar (fixed left) */}
+      <div className={`fixed top-0 left-0 h-full z-30 transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
         <Sidebar 
           role="admin" 
           setPage={handlePageChange} 
@@ -260,9 +261,9 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
           toggleCollapse={toggleSidebar}
         />
       </div>
-      <div className={`flex-1 flex flex-col min-h-screen overflow-hidden transition-all duration-300 ${sidebarCollapsed ? 'ml-16' : 'ml-64'}`}>
-        {/* Navbar */}
-        <div className="sticky top-0 z-20 flex-shrink-0">
+      <div className={`flex-1 flex flex-col ${sidebarCollapsed ? 'pl-16' : 'pl-64'}`}>
+        {/* Navbar (fixed) */}
+        <div className={`fixed top-0 ${sidebarCollapsed ? 'left-16' : 'left-64'} right-0 z-10 shadow-sm`}>
           <Navbar
             role="admin"
             user={user}
@@ -271,8 +272,7 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
           />
         </div>
         <motion.main 
-          className={`flex-1 p-6 overflow-y-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}
-          style={{ height: 'calc(100vh - 64px)' }} // 64px = navbar height
+          className={`flex-1 mt-16 p-6 overflow-y-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}

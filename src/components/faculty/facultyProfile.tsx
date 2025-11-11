@@ -7,6 +7,7 @@ import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { getFacultyProfile, manageProfile } from "../../utils/faculty_api";
 import { useTheme } from "@/context/ThemeContext";
+import { showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
 
 const FacultyProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -21,7 +22,6 @@ const FacultyProfile = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
   const { theme } = useTheme();
 
@@ -104,7 +104,6 @@ const FacultyProfile = () => {
 
   const handleSave = async () => {
     setError(null);
-    setSuccess(null);
 
     // Prevent save if validation errors exist
     const hasErrors = Object.values(localErrors).some((msg) => msg);
@@ -124,10 +123,11 @@ const FacultyProfile = () => {
       });
 
       if (res.success) {
-        setSuccess("Profile updated successfully!");
+        showSuccessAlert("Success", "Profile updated successfully!");
         setIsEditing(false);
       } else {
         setError(res.message || "Failed to update profile");
+        showErrorAlert("Error", res.message || "Failed to update profile");
       }
     } catch (err) {
       setError("Network error");
@@ -165,7 +165,6 @@ const FacultyProfile = () => {
 
       <CardContent className="pt-2">
         {error && <div className={`mb-2 ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>{error}</div>}
-        {success && <div className={`mb-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{success}</div>}
 
         <div className="flex flex-col items-center mb-6 mt-4">
           <div className={`w-16 h-16 rounded-full bg-[#a259ff] text-white flex items-center justify-center text-xl font-semibold mb-2`}>

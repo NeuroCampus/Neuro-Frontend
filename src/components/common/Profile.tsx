@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { useToast } from "../../hooks/use-toast";
+import { showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
 
 const API_BASE_URL = "http://127.0.0.1:8000/api/";
 
@@ -24,7 +24,6 @@ const Profile = ({ role, user }: ProfileProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -75,7 +74,7 @@ const Profile = ({ role, user }: ProfileProps) => {
 
       if (data.success) {
         setSuccess("Profile updated successfully");
-        toast({ title: "Success", description: "Profile updated successfully" });
+        showSuccessAlert("Success", "Profile updated successfully");
         const updatedUser = { ...user, ...formData };
         if (data.data?.profile_image) {
           updatedUser.profile_image = data.data.profile_image;
@@ -83,11 +82,11 @@ const Profile = ({ role, user }: ProfileProps) => {
         localStorage.setItem("user", JSON.stringify(updatedUser));
       } else {
         setError(data.message || "Failed to update profile");
-        toast({ variant: "destructive", title: "Error", description: data.message || "Failed to update profile" });
+        showErrorAlert("Error", data.message || "Failed to update profile");
       }
     } catch (err) {
       setError("Error updating profile");
-      toast({ variant: "destructive", title: "Error", description: "Error updating profile" });
+      showErrorAlert("Error", "Error updating profile");
     } finally {
       setLoading(false);
     }

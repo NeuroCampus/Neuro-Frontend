@@ -5,9 +5,9 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { cn } from "@/lib/utils";
 import { manageAdminProfile } from "../../utils/admin_api";
-import { useToast } from "../../hooks/use-toast";
 import { Textarea } from "../ui/textarea";
 import { useTheme } from "../../context/ThemeContext";
+import { showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
 
 interface AdminProfileProps {
   user: any;
@@ -36,7 +36,6 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
   });
   const [localError, setLocalError] = useState<string | null>(null);
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
-  const { toast } = useToast();
   const [fetchedUser, setFetchedUser] = useState<any>(null);
   const { theme } = useTheme();
 
@@ -72,7 +71,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
           const message = "Authentication failed. Please log in again.";
           if (setError) setError(message);
           setLocalError(message);
-          toast({ variant: "destructive", title: "Error", description: message });
+          showErrorAlert("Error", message);
           setTimeout(() => (window.location.href = "/login"), 2000);
           setLoading(false);
           return;
@@ -98,11 +97,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
           setProfile(fetchedProfile);
         } else {
           setLocalError(response.message || "Failed to fetch profile");
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: response.message || "Failed to fetch profile",
-          });
+          showErrorAlert("Error", response.message || "Failed to fetch profile");
           if (response.message === "Admin profile not found. Please create a profile.") {
             setEditing(true);
             setProfile({
@@ -120,14 +115,14 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
         const message = "Network error";
         if (setError) setError(message);
         setLocalError(message);
-        toast({ variant: "destructive", title: "Error", description: message });
+        showErrorAlert("Error", message);
       } finally {
         setLoading(false);
       }
     };
 
     fetchProfile();
-  }, [propUser, setError, toast]);
+  }, [propUser, setError]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -198,20 +193,20 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
       const currentUser = fetchedUser || propUser;
       if (!currentUser || !currentUser.user_id) {
         setLocalError("User data unavailable for update");
-        toast({ variant: "destructive", title: "Error", description: "User data unavailable for update" });
+        showErrorAlert("Error", "User data unavailable for update");
         setLoading(false);
         return;
       }
 
       if (!profile.first_name.trim()) {
         setLocalError("First name is required");
-        toast({ variant: "destructive", title: "Error", description: "First name is required" });
+        showErrorAlert("Error", "First name is required");
         setLoading(false);
         return;
       }
       if (!profile.email.trim()) {
         setLocalError("Email is required");
-        toast({ variant: "destructive", title: "Error", description: "Email is required" });
+        showErrorAlert("Error", "Email is required");
         setLoading(false);
         return;
       }
@@ -231,7 +226,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
 
       console.log("Save Profile Response:", response);
       if (response.success) {
-        toast({ title: "Success", description: "Profile saved successfully" });
+        showSuccessAlert("Success", "Profile saved successfully");
         if (response.profile) {
           setProfile({
             first_name: response.profile.first_name || "",
@@ -253,14 +248,14 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
         const message = response.message || "Failed to save profile";
         if (setError) setError(message);
         setLocalError(message);
-        toast({ variant: "destructive", title: "Error", description: message });
+        showErrorAlert("Error", message);
       }
     } catch (err) {
       console.error("Save Profile Error:", err);
       const message = err.message || "Network error";
       if (setError) setError(message);
       setLocalError(message);
-      toast({ variant: "destructive", title: "Error", description: message });
+      showErrorAlert("Error", message);
     } finally {
       setLoading(false);
     }
