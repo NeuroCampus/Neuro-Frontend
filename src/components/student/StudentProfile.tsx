@@ -11,7 +11,7 @@ import { useTheme } from "@/context/ThemeContext";
 import { useFileUpload, useFormValidation } from "../../hooks/useOptimizations";
 import { Progress } from "../ui/progress";
 import { Upload, Camera } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
 
 const StudentProfile = () => {
   const [form, setForm] = useState({
@@ -47,7 +47,6 @@ const StudentProfile = () => {
 
   const [profilePictureFile, setProfilePictureFile] = useState<File | null>(null);
   const { theme } = useTheme();
-  const { toast } = useToast();
   const updateProfileMutation = useStudentProfileUpdateMutation();
 
   // Profile picture upload hook
@@ -129,14 +128,12 @@ const StudentProfile = () => {
         address: form.address,
         bio: form.about,
       });
-      // Show success toast notification
-      toast({
-        title: "Profile Updated",
-        description: "Your profile has been successfully updated.",
-      });
+      // Show success SweetAlert notification
+      showSuccessAlert("Profile Updated", "Your profile has been successfully updated.");
       // The optimistic update will handle the UI updates
     } catch (error) {
       console.error('Failed to update profile:', error);
+      showErrorAlert("Error", "Failed to update profile");
     }
   };
 
