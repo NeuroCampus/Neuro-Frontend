@@ -239,62 +239,49 @@ const FloatingAssistant: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const { user_id, user_role, user_name } = getUserInfo();
-      
-      // Get current page/route information
-      const currentPage = window.location.pathname.split('/').pop() || 'dashboard';
-      const currentRoute = window.location.pathname;
-      
-      // Get viewport dimensions
-      const viewport = {
-        width: window.innerWidth,
-        height: window.innerHeight
-      };
-
-      const payload: ChatPayload = {
-        session_id: sessionId,
-        user_id,
-        user_role,
-        user_name,
-        ui_locale: 'en-IN',
-        query: inputValue,
-        client_metadata: {
-          page: currentPage,
-          route: currentRoute,
-          viewport,
-          app_version: '1.0.0' // TODO: Get actual app version
-        },
-        ui_state: {
-          widget_open: true,
-          widget_variant: 'floating',
-          theme,
-          prefers_compact: false
-        },
-        attachments: []
-      };
-
-      const response = await fetchWithTokenRefresh(`${API_BASE_URL}/chatassistant/query`, {
+      const response = await fetchWithTokenRefresh(`${API_BASE_URL}/ai-chatbot/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          message: inputValue
+        }),
       });
 
+      console.log('Response received, status:', response.status, 'ok:', response.ok);
+
       if (response.ok) {
-        const data = await response.json();
+        const responseText = await response.text();
+        console.log('Raw response text:', responseText);
         
-        const botMessage: ChatMessage = {
-          role: 'assistant',
-          content: data.reply_text || "I'm not sure how to help with that.",
-          timestamp: new Date(),
-          ui_cards: data.ui_cards || [],
-          suggested_actions: data.suggested_actions || []
-        };
-        
-        setMessages(prev => [...prev, botMessage]);
+        try {
+          const data = JSON.parse(responseText);
+          console.log('Parsed data:', data);
+          
+          const botMessage: ChatMessage = {
+            role: 'assistant',
+            content: data.response || "I'm not sure how to help with that.",
+            timestamp: new Date(),
+            ui_cards: data.ui_cards || [],
+            suggested_actions: data.suggested_actions || []
+          };
+          
+          setMessages(prev => [...prev, botMessage]);
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError);
+          // If JSON parsing fails, treat the response as plain text
+          const botMessage: ChatMessage = {
+            role: 'assistant',
+            content: responseText || "I'm not sure how to help with that.",
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, botMessage]);
+        }
       } else {
-        throw new Error('Failed to get response from AI');
+        const errorText = await response.text();
+        console.error('Response error:', response.status, response.statusText, errorText);
+        throw new Error(`AI request failed: ${response.status} ${response.statusText}`);
       }
     } catch (error) {
       console.error('Error sending message:', error);
