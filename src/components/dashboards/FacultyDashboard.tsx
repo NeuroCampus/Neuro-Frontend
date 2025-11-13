@@ -14,6 +14,7 @@ import Timetable from "../faculty/Timetable";
 import Chat from "../common/Chat";
 import FacultyProfile from "../faculty/facultyProfile";
 import GenerateStatistics from "../faculty/GenerateStatistics";
+import FacultyAttendance from "../faculty/FacultyAttendance";
 import { logoutUser } from "../../utils/authService";
 import { useTheme } from "../../context/ThemeContext";
 import { useProctorStudentsQuery } from "../../hooks/useApiQueries";
@@ -38,6 +39,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'upload-marks': 'upload-marks',
       'apply-leave': 'apply-leave',
       'attendance-records': 'attendance-records',
+      'faculty-attendance': 'faculty-attendance',
       'announcements': 'announcements',
       'proctor-students': 'proctor-students',
       'student-leave': 'student-leave',
@@ -75,6 +77,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'upload-marks': '/faculty/upload-marks',
       'apply-leave': '/faculty/apply-leave',
       'attendance-records': '/faculty/attendance-records',
+      'faculty-attendance': '/faculty/faculty-attendance',
       'announcements': '/faculty/announcements',
       'proctor-students': '/faculty/proctor-students',
       'student-leave': '/faculty/student-leave',
@@ -122,6 +125,8 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
         return <ApplyLeave />;
       case "attendance-records":
         return <AttendanceRecords />;
+      case "faculty-attendance":
+        return <FacultyAttendance />;
       case "announcements":
         return <Announcements role="faculty" proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} />;
       case "proctor-students":

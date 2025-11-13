@@ -21,6 +21,7 @@ import {
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { getHODStats, manageLeaves, manageProfile, getHODDashboard, getHODDashboardBootstrap } from "../../utils/hod_api";
+import { getFacultyAttendanceToday } from "../../utils/hod_api";
 import { motion } from "framer-motion";
 import { useTheme } from "../../context/ThemeContext";
 
@@ -44,6 +45,12 @@ interface StatsData {
     end_date: string;
     attendance_percentage: number | string;
   }>;
+  faculty_attendance_today?: {
+    total_faculty: number;
+    present: number;
+    absent: number;
+    not_marked: number;
+  };
 }
 
 interface HODStatsProps {
@@ -122,6 +129,19 @@ export default function HODStats({ setError, setPage, onBootstrapData }: HODStat
             status: req.status === "APPROVED" ? "Approved" : req.status === "REJECTED" ? "Rejected" : "Pending",
           })) as LeaveRequest[];
           setLeaveRequests(requests);
+        }
+
+        // Fetch faculty attendance data
+        try {
+          const facultyAttendanceRes = await getFacultyAttendanceToday();
+          if (facultyAttendanceRes.success && facultyAttendanceRes.summary) {
+            setStats(prev => prev ? {
+              ...prev,
+              faculty_attendance_today: facultyAttendanceRes.summary
+            } : null);
+          }
+        } catch (facultyError) {
+          console.error("Failed to fetch faculty attendance:", facultyError);
         }
 
         // Pass bootstrap data to parent
@@ -266,7 +286,7 @@ const handleApprove = async (index: number) => {
       )}
 
       {/* Stats Cards */}
-      <div className={`grid grid-cols-1 md:grid-cols-4 gap-6 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
         {[
           {
             title: "Total Faculty",
@@ -284,23 +304,19 @@ const handleApprove = async (index: number) => {
             color: "text-gray-600",
           },
           {
-            title: "Total Members",
-            value: stats ? (stats.faculty_count + stats.student_count).toString() : "0",
-            icon: <UserPlus className="text-gray-600" />,
-            change: "Faculty + Students",
-            color: "text-gray-600",
-          },
-          {
-            title: "Pending Leaves",
-            value: pendingLeavesCount.toString(),
-            icon: <Calendar className="text-gray-600" />,
-            change: "-12.4% since last month",
-            color: "text-gray-600",
+            title: "Faculty Present Today",
+            value: stats?.faculty_attendance_today?.present.toString() || "0",
+            icon: <CheckCircle className="text-green-600" />,
+            change: `${stats?.faculty_attendance_today ? Math.round((stats.faculty_attendance_today.present / stats.faculty_attendance_today.total_faculty) * 100) : 0}% attendance`,
+            color: "text-green-600",
+            clickable: true,
+            onClick: () => setPage("faculty-attendance"),
           },
         ].map((item, i) => (
             <div
               key={i}
-              className={`p-4 rounded-lg shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow border ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'} text-gray-900 outline-none focus:ring-2 focus:ring-white`}
+              className={`p-4 rounded-lg shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow border ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'} text-gray-900 outline-none focus:ring-2 focus:ring-white ${item.clickable ? `cursor-pointer ${theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-50'}` : ''}`}
+              onClick={item.onClick}
             >
               <div className={`flex items-center justify-center w-12 h-12 rounded-full ${theme === 'dark' ? 'bg-accent' : 'bg-gray-200'}`}>
               {item.icon && (

@@ -962,3 +962,84 @@ export const manageStudentLeave = async (
     return { success: false, message: "Network error" };
   }
 };
+
+// Faculty Attendance API functions
+export interface MarkFacultyAttendanceRequest {
+  status: "present" | "absent";
+  notes?: string;
+}
+
+export interface MarkFacultyAttendanceResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    id: string;
+    date: string;
+    status: string;
+    marked_at: string;
+    updated?: boolean;
+  };
+}
+
+export interface FacultyAttendanceRecord {
+  id: string;
+  date: string;
+  status: string;
+  marked_at: string;
+  notes: string;
+}
+
+export interface GetFacultyAttendanceRecordsResponse {
+  success: boolean;
+  message?: string;
+  data?: FacultyAttendanceRecord[];
+  summary?: {
+    total_days: number;
+    present_days: number;
+    absent_days: number;
+    attendance_percentage: number;
+  };
+}
+
+export const markFacultyAttendance = async (
+  data: MarkFacultyAttendanceRequest
+): Promise<MarkFacultyAttendanceResponse> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/mark-attendance/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Mark Faculty Attendance Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const getFacultyAttendanceRecords = async (params?: {
+  start_date?: string;
+  end_date?: string;
+}): Promise<GetFacultyAttendanceRecordsResponse> => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params?.start_date) queryParams.append("start_date", params.start_date);
+    if (params?.end_date) queryParams.append("end_date", params.end_date);
+
+    const url = `/api/faculty/my-attendance-records/${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+    
+    const response = await fetchWithTokenRefresh(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Faculty Attendance Records Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};

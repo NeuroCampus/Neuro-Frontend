@@ -22,6 +22,7 @@ import HodProfile from "../hod/HodProfile";
 import { logoutUser } from "../../utils/authService";
 import StudyMaterial from "../hod/StudyMaterial";
 import PromotionManagement from "../hod/PromotionManagement";
+import FacultyAttendanceView from "../hod/FacultyAttendanceView";
 import { HODBootstrapProvider } from "../../context/HODBootstrapContext";
 import { useTheme } from "../../context/ThemeContext";
 import { motion } from "framer-motion";
@@ -113,6 +114,7 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
       'leaves': 'leaves',
       'apply-leaves': 'apply-leaves',
       'attendance': 'attendance',
+      'faculty-attendance': 'faculty-attendance',
       'marks': 'marks',
       'notifications': 'notifications',
       'proctors': 'proctors',
@@ -169,6 +171,7 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
       'leaves': '/hod/leaves',
       'apply-leaves': '/hod/apply-leaves',
       'attendance': '/hod/attendance',
+      'faculty-attendance': '/hod/faculty-attendance',
       'marks': '/hod/marks',
       'notifications': '/hod/notifications',
       'proctors': '/hod/proctors',
@@ -231,6 +234,8 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
         return <ApplyLeave />;
       case "attendance":
         return <AttendanceView />;
+      case "faculty-attendance":
+        return <FacultyAttendanceView />;
       case "marks":
         return <MarksView />;
       case "notifications":

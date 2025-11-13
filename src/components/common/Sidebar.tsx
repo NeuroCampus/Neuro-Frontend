@@ -98,6 +98,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       "upload-marks": <Upload size={20} />,
       "apply-leave": <FileText size={20} />,
       "attendance-records": <BarChart2 size={20} />,
+      "faculty-attendance": <UserCheck size={20} />,
       announcements: <Bell size={20} />,
       "proctor-students": <UserCheck size={20} />,
       "student-leave": <FileText size={20} />,
@@ -147,6 +148,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // { name: "Attendance", page: "attendance" },
  
     { name: "Low Attendance", page: "low-attendance" },
+    { name: "Faculty Attendance", page: "faculty-attendance" },
     { name: "Promotion Management", page: "promotion-management" },
     
     // Leaves
@@ -169,6 +171,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // Attendance & Marks
     { name: "Take Attendance", page: "take-attendance" },
     { name: "Attendance Records", page: "attendance-records" },
+    { name: "My Attendance", page: "faculty-attendance" },
     { name: "Upload Marks", page: "upload-marks" },
     { name: "Generate Statistics", page: "statistics" },
     
@@ -256,7 +259,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
  
       {/* Menu Items */}
       <motion.div 
-        className="flex-1 overflow-y-auto py-4 overflow-y-auto py-4 thin-scrollbar"
+        className="flex-1 overflow-y-auto py-4 thin-scrollbar"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, delay: 0.2 }}

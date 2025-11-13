@@ -2186,3 +2186,89 @@ export const getPromotionBootstrap = async (): Promise<{
     return handleApiError(error, (error as any).response);
   }
 };
+
+// Faculty Attendance API functions for HOD
+export interface FacultyAttendanceTodayRecord {
+  id: string;
+  faculty_name: string;
+  faculty_id: string;
+  status: string;
+  marked_at: string | null;
+  notes: string | null;
+}
+
+export interface GetFacultyAttendanceTodayResponse {
+  success: boolean;
+  message?: string;
+  data?: FacultyAttendanceTodayRecord[];
+  summary?: {
+    total_faculty: number;
+    present: number;
+    absent: number;
+    not_marked: number;
+  };
+}
+
+export interface FacultyAttendanceRecord {
+  id: string;
+  faculty_name: string;
+  faculty_id: string;
+  date: string;
+  status: string;
+  marked_at: string;
+  notes: string;
+}
+
+export interface GetFacultyAttendanceRecordsResponse {
+  success: boolean;
+  message?: string;
+  data?: FacultyAttendanceRecord[];
+  faculty_summary?: Array<{
+    name: string;
+    total_days: number;
+    present_days: number;
+    absent_days: number;
+    attendance_percentage: number;
+  }>;
+}
+
+export const getFacultyAttendanceToday = async (): Promise<GetFacultyAttendanceTodayResponse> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/hod/faculty-attendance-today/`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Faculty Attendance Today Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const getFacultyAttendanceRecords = async (params?: {
+  start_date?: string;
+  end_date?: string;
+  faculty_id?: string;
+}): Promise<GetFacultyAttendanceRecordsResponse> => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params?.start_date) queryParams.append("start_date", params.start_date);
+    if (params?.end_date) queryParams.append("end_date", params.end_date);
+    if (params?.faculty_id) queryParams.append("faculty_id", params.faculty_id);
+
+    const url = `${API_BASE_URL}/hod/faculty-attendance-records/${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+    
+    const response = await fetchWithTokenRefresh(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Faculty Attendance Records Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
