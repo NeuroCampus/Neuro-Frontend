@@ -5,6 +5,7 @@ import Navbar from "../common/Navbar";
 import FacultyStats from "../faculty/FacultyStats";
 import TakeAttendance from "../faculty/TakeAttendance";
 import UploadMarks from "../faculty/UploadMarks";
+import COAttainment from "../faculty/COAttainment";
 import ApplyLeave from "../faculty/ApplyLeave";
 import AttendanceRecords from "../faculty/AttendanceRecords";
 import Announcements from "../faculty/Announcements";
@@ -20,7 +21,15 @@ import { useTheme } from "../../context/ThemeContext";
 import { useProctorStudentsQuery } from "../../hooks/useApiQueries";
 
 interface FacultyDashboardProps {
-  user: any;
+  user: {
+    username: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+    role: string;
+    profile_picture?: string | null;
+    branch?: string;
+  };
   setPage: (page: string) => void;
 }
 
@@ -37,6 +46,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'dashboard': 'dashboard',
       'take-attendance': 'take-attendance',
       'upload-marks': 'upload-marks',
+      'co-attainment': 'co-attainment',
       'apply-leave': 'apply-leave',
       'attendance-records': 'attendance-records',
       'faculty-attendance': 'faculty-attendance',
@@ -75,6 +85,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'dashboard': '/faculty/dashboard',
       'take-attendance': '/faculty/take-attendance',
       'upload-marks': '/faculty/upload-marks',
+      'co-attainment': '/faculty/co-attainment',
       'apply-leave': '/faculty/apply-leave',
       'attendance-records': '/faculty/attendance-records',
       'faculty-attendance': '/faculty/faculty-attendance',
@@ -121,6 +132,8 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
         return <TakeAttendance />;
       case "upload-marks":
         return <UploadMarks />;
+      case "co-attainment":
+        return <COAttainment />;
       case "apply-leave":
         return <ApplyLeave />;
       case "attendance-records":
@@ -138,7 +151,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       case "chat":
         return <Chat role="faculty" />;
       case "faculty-profile":
-        return <FacultyProfile role="faculty" user={user} />;
+        return <FacultyProfile />;
       case "statistics":
         return <GenerateStatistics proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} />;
       default:
@@ -166,8 +179,6 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
           <Navbar
             role="faculty"
             user={user}
-            toggleSidebar={toggleSidebar}
-            isSidebarCollapsed={isSidebarCollapsed}
             onNotificationClick={handleNotificationClick}
             setPage={handlePageChange}
           />

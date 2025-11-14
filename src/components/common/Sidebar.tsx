@@ -96,6 +96,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
 
       "take-attendance": <BarChart2 size={20} />,
       "upload-marks": <Upload size={20} />,
+      "co-attainment": <BarChart2 size={20} />,
       "apply-leave": <FileText size={20} />,
       "attendance-records": <BarChart2 size={20} />,
       "faculty-attendance": <UserCheck size={20} />,
@@ -173,6 +174,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Attendance Records", page: "attendance-records" },
     { name: "My Attendance", page: "faculty-attendance" },
     { name: "Upload Marks", page: "upload-marks" },
+    { name: "CO Attainment", page: "co-attainment" },
     { name: "Generate Statistics", page: "statistics" },
     
     // Leave Management
