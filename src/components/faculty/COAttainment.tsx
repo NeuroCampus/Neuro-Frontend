@@ -13,6 +13,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useFacultyAssignmentsQuery } from "../../hooks/useApiQueries";
 import { getUploadMarksBootstrap, GetUploadMarksBootstrapResponse } from "../../utils/faculty_api";
 import { useTheme } from "@/context/ThemeContext";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 // Type for question format (copied from UploadMarks.tsx)
 interface Question {
@@ -369,14 +371,103 @@ const COAttainment = () => {
     calculateCOAttainment(questions, studentMarks);
   };
 
-
-
   const handleTargetThresholdChange = (value: string) => {
     const numValue = parseFloat(value) || 60;
     // Validate target threshold (should be 0-100)
     if (numValue >= 0 && numValue <= 100) {
       setTargetThreshold(numValue);
     }
+  };
+
+  // PDF Export Function
+  const handleExportPDF = () => {
+    const doc = new jsPDF('p', 'mm', 'a4') as jsPDF & { lastAutoTable?: { finalY: number } };
+    
+    // Add title
+    doc.setFontSize(18);
+    doc.text("CO Attainment Report", 14, 20);
+    
+    // Add selected filters information
+    doc.setFontSize(12);
+    doc.text(`Branch: ${selected.branch}`, 14, 30);
+    doc.text(`Semester: ${selected.semester}`, 14, 37);
+    doc.text(`Section: ${selected.section}`, 14, 44);
+    doc.text(`Subject: ${selected.subject}`, 14, 51);
+    doc.text(`Test Type: ${selected.testType}`, 14, 58);
+    doc.text(`Target Threshold: ${targetThreshold}%`, 14, 65);
+    
+    // Add CO Attainment Results table
+    autoTable(doc, {
+      startY: 70,
+      head: [['CO', 'Max Marks', 'Target Marks', 'Avg Marks', 'Students ≥ Target', 'Method 1 %', 'Method 1 Level', 'Method 2 %', 'Method 2 Level', 'Indirect', 'Final', 'Level']],
+      body: Object.values(coAttainment).map(co => [
+        co.co,
+        co.maxMarks,
+        co.targetMarks.toFixed(1),
+        co.avgMarks.toFixed(2),
+        `${co.studentsAboveTarget}/${co.totalStudents} (${co.totalStudents > 0 ? ((co.studentsAboveTarget / co.totalStudents) * 100).toFixed(1) : 0}%)`,
+        `${co.percentage.toFixed(1)}%`,
+        `Level ${co.attainmentLevel}`,
+        `${co.method2Percentage.toFixed(1)}%`,
+        `Level ${co.method2Level}`,
+        indirectAttainment[co.co] || 0,
+        finalAttainment[co.co] ? finalAttainment[co.co].final.toFixed(2) : "N/A",
+        finalAttainment[co.co] ? `Level ${finalAttainment[co.co].level}` : "N/A"
+      ]),
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [162, 89, 255] }, // Purple color to match theme
+    });
+    
+    // Add Overall Course Attainment with highlighting
+    let finalY = doc.lastAutoTable?.finalY || 70;
+    doc.setFontSize(16);
+    doc.setTextColor(162, 89, 255); // Purple color
+    doc.text("Overall Course Attainment", 14, finalY + 15);
+    
+    // Highlight the attainment level with a colored box
+    const attainmentLevel = overallAttainment >= 2.7 ? 3 : overallAttainment >= 2.0 ? 2 : 1;
+    const attainmentText = `${overallAttainment.toFixed(2)} (Level ${attainmentLevel})`;
+    
+    doc.setFillColor(162, 89, 255); // Purple background
+    doc.setTextColor(255, 255, 255); // White text
+    doc.setFontSize(14);
+    doc.rect(14, finalY + 20, 60, 10, 'F'); // Filled rectangle
+    doc.text(attainmentText, 44, finalY + 27, { align: 'center' });
+    
+    // Reset colors
+    doc.setTextColor(0, 0, 0);
+    
+    // Add Student Marks table
+    finalY = finalY + 40;
+    if (finalY > 250) { // If we're near the bottom of the page, add a new page
+      doc.addPage();
+      finalY = 20;
+    }
+    
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text("Student Marks", 14, finalY);
+    
+    // Prepare student marks data for the table
+    const studentMarksHeaders = ['#', 'USN', 'Name', ...questions.map(q => `Q${q.number} (${q.co})`), 'Total'];
+    const studentMarksData = studentMarks.map((student, index) => [
+      index + 1,
+      student.usn,
+      student.name,
+      ...questions.map(q => `${student.marks[q.id] || 0}/${q.maxMarks}`),
+      student.total
+    ]);
+    
+    autoTable(doc, {
+      startY: finalY + 5,
+      head: [studentMarksHeaders],
+      body: studentMarksData,
+      styles: { fontSize: 6 },
+      headStyles: { fillColor: [162, 89, 255] }, // Purple color to match theme
+    });
+    
+    // Save the PDF
+    doc.save(`CO_Attainment_Report_${selected.branch}_${selected.subject}_${selected.testType}.pdf`);
   };
 
   // Check if all dropdowns are selected
@@ -467,6 +558,16 @@ const COAttainment = () => {
         
         {areAllDropdownsSelected() && (
           <div className="space-y-6">
+            {/* PDF Export Button - Added above Configuration div */}
+            <div className="flex justify-end">
+              <Button 
+                onClick={handleExportPDF} 
+                className="bg-[#a259ff] text-white hover:bg-[#8a4dde]"
+              >
+                Download PDF Report
+              </Button>
+            </div>
+            
             {/* Target Threshold Configuration */}
             <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-300'}>
               <CardHeader>
