@@ -24,7 +24,15 @@ import {
   uploadInternalMarks,
   FacultyAssignment,
   getUploadMarksBootstrap,
-  GetUploadMarksBootstrapResponse
+  GetUploadMarksBootstrapResponse,
+  createQuestionPaper,
+  getStudentsForMarks,
+  uploadIAMarks,
+  CreateQPRequest,
+  StudentsForMarksResponse,
+  UploadIAMarksRequest,
+  updateQuestionPaper,
+  getQuestionPapers
 } from "../../utils/faculty_api";
 import { useFacultyAssignmentsQuery } from "../../hooks/useApiQueries";
 import { useTheme } from "@/context/ThemeContext";
@@ -74,6 +82,17 @@ const validateMaxMarks = (maxMarks: string): boolean => {
   );
 };
 
+// (Removed duplicate helper) calculateTotal logic lives inside the component
+
+// Format test type for display
+const formatTestType = (testType: string): string => {
+  if (testType.startsWith('IA')) {
+    const num = testType.replace('IA', '');
+    return `IA Test ${num}`;
+  }
+  return `${testType} Test`;
+};
+
 const UploadMarks = () => {
   const { data: assignments = [], isLoading: assignmentsLoading, error: assignmentsError } = useFacultyAssignmentsQuery();
   const [dropdownData, setDropdownData] = useState({
@@ -98,6 +117,67 @@ const UploadMarks = () => {
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [savingMarks, setSavingMarks] = useState(false);
+
+  const calculateTotal = (marks: Record<string, string>) => {
+    // Group marks by main question number and SUM subpart marks per main question
+    const mainMarks: Record<string, number> = {};
+    Object.keys(marks).forEach(key => {
+      const mainQ = key.charAt(0);
+      const mark = parseFloat(marks[key]) || 0;
+      mainMarks[mainQ] = (mainMarks[mainQ] || 0) + mark;
+    });
+
+    // Attended main questions
+    const attended = Object.keys(mainMarks).filter(q => mainMarks[q] > 0);
+
+    // If no questions attempted, return 0
+    if (attended.length === 0) return '0';
+
+    // If only one question attempted, return its summed marks
+    if (attended.length === 1) {
+      return mainMarks[attended[0]].toString();
+    }
+
+    // If two questions attempted:
+    // - if the pair is an allowed combo (1+3,1+4,2+3,2+4) return sum
+    // - otherwise (e.g., 1 and 2 only) return the maximum of the two main marks
+    if (attended.length === 2) {
+      const a = attended[0];
+      const b = attended[1];
+      const pairAllowed = (
+        (a === '1' && (b === '3' || b === '4')) ||
+        (a === '2' && (b === '3' || b === '4')) ||
+        (b === '1' && (a === '3' || a === '4')) ||
+        (b === '2' && (a === '3' || a === '4'))
+      );
+      if (pairAllowed) {
+        return (mainMarks[a] + mainMarks[b]).toString();
+      }
+      return Math.max(mainMarks[a], mainMarks[b]).toString();
+    }
+
+    // For three or more questions, use combination logic to find best valid combination
+    // Possible combos: 1+3, 1+4, 2+3, 2+4
+    const combos: number[] = [];
+    const has1 = attended.includes('1');
+    const has2 = attended.includes('2');
+    const has3 = attended.includes('3');
+    const has4 = attended.includes('4');
+
+    if (has1 && has3) combos.push(mainMarks['1'] + mainMarks['3']);
+    if (has1 && has4) combos.push(mainMarks['1'] + mainMarks['4']);
+    if (has2 && has3) combos.push(mainMarks['2'] + mainMarks['3']);
+    if (has2 && has4) combos.push(mainMarks['2'] + mainMarks['4']);
+
+    if (combos.length > 0) {
+      // If student attempted 1,2,3 then combos include 1+3 and 2+3; pick max
+      return Math.max(...combos).toString();
+    }
+
+    // If no valid combos but multiple questions attempted, sum all attempted main question marks
+    const total = attended.reduce((sum, q) => sum + mainMarks[q], 0);
+    return total.toString();
+  };
   const studentsPerPage = 10;
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [tabValue, setTabValue] = useState("manual");
@@ -107,13 +187,25 @@ const UploadMarks = () => {
   
   // New state for question paper format
   const [questions, setQuestions] = useState<Question[]>([
-    { id: Date.now().toString(), number: "1a", content: "", maxMarks: "", co: "", bloomsLevel: "" }
+    { id: "1a", number: "1a", content: "Question 1a", maxMarks: "7", co: "CO2", bloomsLevel: "Apply" },
+    { id: "1b", number: "1b", content: "Question 1b", maxMarks: "7", co: "CO2", bloomsLevel: "Apply" },
+    { id: "1c", number: "1c", content: "Question 1c", maxMarks: "6", co: "CO1", bloomsLevel: "Remember" },
+    { id: "2a", number: "2a", content: "Question 2a", maxMarks: "7", co: "CO2", bloomsLevel: "Apply" },
+    { id: "2b", number: "2b", content: "Question 2b", maxMarks: "7", co: "CO2", bloomsLevel: "Apply" },
+    { id: "2c", number: "2c", content: "Question 2c", maxMarks: "6", co: "CO1", bloomsLevel: "Remember" },
+    { id: "3a", number: "3a", content: "Question 3a", maxMarks: "7", co: "CO2", bloomsLevel: "Apply" },
+    { id: "3b", number: "3b", content: "Question 3b", maxMarks: "7", co: "CO2", bloomsLevel: "Apply" },
+    { id: "3c", number: "3c", content: "Question 3c", maxMarks: "6", co: "CO1", bloomsLevel: "Remember" },
+    { id: "4a", number: "4a", content: "Question 4a", maxMarks: "7", co: "CO2", bloomsLevel: "Apply" },
+    { id: "4b", number: "4b", content: "Question 4b", maxMarks: "7", co: "CO2", bloomsLevel: "Apply" },
+    { id: "4c", number: "4c", content: "Question 4c", maxMarks: "6", co: "CO1", bloomsLevel: "Remember" },
   ]);
   const [showQuestionForm, setShowQuestionForm] = useState(false);
   const [totalMarks, setTotalMarks] = useState(0);
   const [questionFormatSaved, setQuestionFormatSaved] = useState(false);
 
-  // New state for student marks
+  // New state for QP ID
+  const [qpId, setQpId] = useState<number | null>(null);
   const [studentMarks, setStudentMarks] = useState<Record<string, Record<string, string>>>({});
 
   // New state for action button modes
@@ -135,6 +227,13 @@ const UploadMarks = () => {
     }, 0);
     setTotalMarks(total);
   }, [questions]);
+
+  // Load existing QP when all dropdowns are selected
+  useEffect(() => {
+    if (areAllDropdownsSelected()) {
+      loadExistingQP();
+    }
+  }, [selected.branch_id, selected.semester_id, selected.section_id, selected.subject_id, selected.testType]);
 
   const handleMarksChange = (index: number, field: "marks" | "total", value: string) => {
     if (/^\d*$/.test(value)) {
@@ -178,23 +277,42 @@ const UploadMarks = () => {
     // Parse the last question number to determine next
     const match = lastNumber.match(/(\d+)([a-z]*)/);
     let newNumber = "1a";
+    let newContent = "";
+    let newMaxMarks = "7";
+    let newCo = "CO2";
+    let newBlooms = "Apply";
     
     if (match) {
       const [, numPart, letterPart] = match;
+      const num = parseInt(numPart);
+      
       if (letterPart) {
         // If it has a letter part (like 1a, 1b), increment the letter
         const nextChar = String.fromCharCode(letterPart.charCodeAt(0) + 1);
         newNumber = `${numPart}${nextChar}`;
+        newContent = `Question ${numPart}${nextChar}`;
+        
+        // Set marks and CO based on subpart
+        if (nextChar === 'c') {
+          newMaxMarks = "6";
+          newCo = "CO1";
+          newBlooms = "Remember";
+        }
       } else {
-        // If no letter part (like 1), add 'a'
-        newNumber = `${numPart}a`;
+        // If no letter part, add 'a'
+        newNumber = `${num}a`;
+        newContent = `Question ${num}a`;
       }
     }
     
     setQuestions([
       ...questions,
-      { id: Date.now().toString(), number: newNumber, content: "", maxMarks: "", co: "", bloomsLevel: "" }
+      { id: Date.now().toString(), number: newNumber, content: newContent, maxMarks: newMaxMarks, co: newCo, bloomsLevel: newBlooms }
     ]);
+  };
+
+  const removeQuestion = (id: string) => {
+    setQuestions(questions.filter(q => q.id !== id));
   };
 
   const updateQuestion = (id: string, field: "number" | "content" | "maxMarks" | "co" | "bloomsLevel", value: string) => {
@@ -219,13 +337,66 @@ const UploadMarks = () => {
     ));
   };
 
-  const removeQuestion = (id: string) => {
-    if (questions.length > 1) {
-      setQuestions(questions.filter(q => q.id !== id));
+  // Load existing QP if available
+  const loadExistingQP = async () => {
+    if (!areAllDropdownsSelected()) return;
+    
+    try {
+      const qpResponse = await getQuestionPapers();
+      if (qpResponse.success && qpResponse.data) {
+        const existingQp = qpResponse.data.find((q: any) => 
+          q.branch === selected.branch_id && q.semester === selected.semester_id && q.section === selected.section_id && 
+          q.subject === selected.subject_id && q.test_type === selected.testType
+        );
+        
+        if (existingQp) {
+          setQpId(existingQp.id);
+          setQuestionFormatSaved(true);
+          
+          // Load questions from existing QP
+          const loadedQuestions: Question[] = [];
+          existingQp.questions.forEach((q: any) => {
+            q.subparts.forEach((sub: any, index: number) => {
+              loadedQuestions.push({
+                id: `${q.question_number}${sub.subpart_label}`,
+                number: `${q.question_number}${sub.subpart_label}`,
+                content: sub.content,
+                maxMarks: sub.max_marks.toString(),
+                co: q.co,
+                bloomsLevel: q.blooms_level
+              });
+            });
+          });
+          
+          if (loadedQuestions.length > 0) {
+            setQuestions(loadedQuestions);
+          }
+        } else {
+          // Reset to default if no existing QP
+          setQpId(null);
+          setQuestionFormatSaved(false);
+          setQuestions([
+            { id: "1a", number: "1a", content: "Question 1a", maxMarks: "7", co: "CO2", bloomsLevel: "Apply" },
+            { id: "1b", number: "1b", content: "Question 1b", maxMarks: "7", co: "CO2", bloomsLevel: "Apply" },
+            { id: "1c", number: "1c", content: "Question 1c", maxMarks: "6", co: "CO1", bloomsLevel: "Remember" },
+            { id: "2a", number: "2a", content: "Question 2a", maxMarks: "7", co: "CO2", bloomsLevel: "Apply" },
+            { id: "2b", number: "2b", content: "Question 2b", maxMarks: "7", co: "CO2", bloomsLevel: "Apply" },
+            { id: "2c", number: "2c", content: "Question 2c", maxMarks: "6", co: "CO1", bloomsLevel: "Remember" },
+            { id: "3a", number: "3a", content: "Question 3a", maxMarks: "7", co: "CO2", bloomsLevel: "Apply" },
+            { id: "3b", number: "3b", content: "Question 3b", maxMarks: "7", co: "CO2", bloomsLevel: "Apply" },
+            { id: "3c", number: "3c", content: "Question 3c", maxMarks: "6", co: "CO1", bloomsLevel: "Remember" },
+            { id: "4a", number: "4a", content: "Question 4a", maxMarks: "7", co: "CO2", bloomsLevel: "Apply" },
+            { id: "4b", number: "4b", content: "Question 4b", maxMarks: "7", co: "CO2", bloomsLevel: "Apply" },
+            { id: "4c", number: "4c", content: "Question 4c", maxMarks: "6", co: "CO1", bloomsLevel: "Remember" },
+          ]);
+        }
+      }
+    } catch (error) {
+      console.error("Error loading existing QP:", error);
     }
   };
 
-  const saveQuestionFormat = () => {
+  const saveQuestionFormat = async () => {
     // Validate that all questions have max marks
     const isValid = questions.every(q => 
       q.number.trim() !== "" && 
@@ -243,25 +414,75 @@ const UploadMarks = () => {
     // Clear any previous error messages
     setErrorMessage("");
     
-    // Set the total marks for all students
-    setStudents(prev => prev.map(student => ({
-      ...student,
-      total: totalMarks.toString()
-    })));
+    // Check if QP already exists
+    const qpResponse = await getQuestionPapers();
+    let existingQp = null;
+    if (qpResponse.success && qpResponse.data) {
+      existingQp = qpResponse.data.find((q: any) => 
+        q.branch === selected.branch_id && q.semester === selected.semester_id && q.section === selected.section_id && 
+        q.subject === selected.subject_id && q.test_type === selected.testType
+      );
+    }
     
-    // Set flag to indicate question format is saved
-    setQuestionFormatSaved(true);
-    
-    // Show success popup message
-    MySwal.fire({
-      title: "Question Format Saved!",
-      text: "The question paper format has been successfully saved.",
-      icon: "success",
-      confirmButtonText: "OK",
-    }).then(() => {
-      // Switch to the Question Paper tab to show the saved format
-      setTabValue("questionPaper");
+    // Prepare QP data - group by main question
+    const groupedQuestions: Record<string, { co: string; blooms_level: string; subparts: any[] }> = {};
+    questions.forEach(q => {
+      const mainQ = q.number.charAt(0);
+      if (!groupedQuestions[mainQ]) {
+        groupedQuestions[mainQ] = { co: q.co, blooms_level: q.bloomsLevel, subparts: [] };
+      }
+      groupedQuestions[mainQ].subparts.push({
+        subpart_label: q.number.slice(1),
+        content: q.content,
+        max_marks: parseInt(q.maxMarks)
+      });
     });
+
+    const qpData: CreateQPRequest = {
+      branch: selected.branch_id!,
+      semester: selected.semester_id!,
+      section: selected.section_id!,
+      subject: selected.subject_id!,
+      test_type: selected.testType,
+      questions_data: Object.keys(groupedQuestions).map(mainQ => ({
+        question_number: mainQ,
+        co: groupedQuestions[mainQ].co,
+        blooms_level: groupedQuestions[mainQ].blooms_level,
+        subparts_data: groupedQuestions[mainQ].subparts
+      }))
+    };
+
+    try {
+      let response;
+      if (existingQp) {
+        // Update existing QP
+        response = await updateQuestionPaper(existingQp.id, qpData);
+        setQpId(existingQp.id);
+      } else {
+        // Create new QP
+        response = await createQuestionPaper(qpData);
+        if (response.success && response.data) {
+          setQpId(response.data.id);
+        }
+      }
+      
+      if (response.success) {
+        setQuestionFormatSaved(true);
+        await loadExistingQP(); // Reload QP data to reflect changes immediately
+        MySwal.fire({
+          title: existingQp ? "Question Format Updated!" : "Question Format Saved!",
+          text: existingQp ? "The question paper format has been successfully updated." : "The question paper format has been successfully saved.",
+          icon: "success",
+          confirmButtonText: "OK",
+        }).then(() => {
+          setTabValue("questionPaper");
+        });
+      } else {
+        setErrorMessage("Failed to save question format");
+      }
+    } catch (error) {
+      setErrorMessage("Network error while saving question format");
+    }
   };
 
   const handleSubmit = async () => {
@@ -275,20 +496,43 @@ const UploadMarks = () => {
       });
       return;
     }
-    const testMap: Record<string, number> = { IA1: 1, IA2: 2, IA3: 3, SEE: 4 };
-    const test_number = testMap[testType] || 1;
-    try {
-      const res = await uploadInternalMarks({
-        branch_id: branch_id.toString(),
-        semester_id: semester_id.toString(),
-        section_id: section_id.toString(),
-        subject_id: subject_id.toString(),
-        test_number,
-        marks: students.map((s) => ({
-          student_id: s.id.toString(),
-          mark: parseInt(s.marks || "0"),
-        })),
+
+    // Find QP
+    const qpResponse = await getQuestionPapers();
+    if (!qpResponse.success || !qpResponse.data) {
+      MySwal.fire({
+        title: "Question Paper not found",
+        icon: "error",
+        confirmButtonText: "OK",
       });
+      return;
+    }
+    const qp = qpResponse.data.find((q: any) => 
+      q.branch === branch_id && q.semester === semester_id && q.section === section_id && 
+      q.subject === subject_id && q.test_type === testType
+    );
+    if (!qp) {
+      MySwal.fire({
+        title: "Question Paper not found",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
+
+    // Prepare marks data
+    const marksData: UploadIAMarksRequest = {
+      question_paper_id: qp.id,
+      marks_data: students.map(s => ({
+        student_id: s.id,
+        marks_detail: Object.fromEntries(
+          Object.entries(studentMarks[s.id.toString()] || {}).map(([key, value]) => [key, parseFloat(value) || 0])
+        )
+      }))
+    };
+
+    try {
+      const res = await uploadIAMarks(marksData);
       if (res.success) {
         MySwal.fire({
           title: "Marks uploaded!",
@@ -531,49 +775,63 @@ const UploadMarks = () => {
     }
     const { branch_id, semester_id, section_id, subject_id, testType } = { ...updated };
     if (branch_id && semester_id && section_id && subject_id && testType) {
+      // Reset QP related states when selections change
+      setQpId(null);
+      setQuestionFormatSaved(false);
+      setStudents([]);
+      setStudentMarks({});
+      setActionModes({});
+      
+      // Load existing QP
+      loadExistingQP();
+      
       setLoadingStudents(true);
       try {
-        const assignment = assignments.find(a =>
-          a.branch_id === branch_id &&
-          a.semester_id === semester_id &&
-          a.section_id === section_id &&
-          a.subject_id === subject_id
-        );
-        if (!assignment) throw new Error("Assignment not found");
-        const testMap: Record<string, number> = { IA1: 1, IA2: 2, IA3: 3, SEE: 4 };
-        const test_number = testMap[testType] || 1;
-        const response: GetUploadMarksBootstrapResponse = await getUploadMarksBootstrap({
+        const response: StudentsForMarksResponse = await getStudentsForMarks({
           branch_id: branch_id.toString(),
           semester_id: semester_id.toString(),
           section_id: section_id.toString(),
           subject_id: subject_id.toString(),
-          test_number
+          test_type: testType
         });
         if (response.success && response.data) {
-          const newStudents = response.data.students.map(s => ({
+          const newStudents = response.data.map(s => ({
             id: s.id,
             name: s.name,
             usn: s.usn,
-            marks: s.existing_mark ? s.existing_mark.mark.toString() : '',
-            total: s.existing_mark ? s.existing_mark.max_mark.toString() : '40',
+            marks: s.existing_mark ? s.existing_mark.total_obtained.toString() : '',
+            total: totalMarks.toString(),
             isEditing: false
           }));
           
           setStudents(newStudents);
           setCurrentPage(1);
           
-          // Initialize action modes for all students to 'view' by default
+          // Initialize student marks with existing data
+          const initialMarks: Record<string, Record<string, string>> = {};
+          response.data.forEach(s => {
+            if (s.existing_mark) {
+              initialMarks[s.id.toString()] = {};
+              Object.keys(s.existing_mark.marks_detail).forEach(key => {
+                initialMarks[s.id.toString()][key] = s.existing_mark!.marks_detail[key].toString();
+              });
+            }
+          });
+          setStudentMarks(initialMarks);
+          
+          // Initialize action modes
           const initialActionModes: Record<string, 'edit' | 'save' | 'view'> = {};
           newStudents.forEach(student => {
             initialActionModes[student.id] = 'view';
           });
           setActionModes(initialActionModes);
         } else {
-          throw new Error(response.message || "Failed to fetch students/marks");
+          throw new Error("Failed to fetch students/marks");
         }
       } catch (err: unknown) {
         setStudents([]);
-        setActionModes({}); // Reset action modes when students are cleared
+        setActionModes({});
+        setStudentMarks({});
         setErrorMessage((err as { message?: string })?.message || "Failed to fetch students/marks");
       }
       setLoadingStudents(false);
@@ -758,7 +1016,7 @@ const UploadMarks = () => {
               value="manual" 
               className={`data-[state=active]:bg-[#a259ff] data-[state=active]:text-white ${theme === 'dark' ? 'data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground' : 'data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
             >
-              Manual Entry
+              Marks Entry
             </TabsTrigger>
             <TabsTrigger 
               value="questionFormat" 
@@ -772,12 +1030,12 @@ const UploadMarks = () => {
             >
               Question Paper
             </TabsTrigger>
-            <TabsTrigger 
+            {/* <TabsTrigger 
               value="file" 
               className={`data-[state=active]:bg-[#a259ff] data-[state=active]:text-white ${theme === 'dark' ? 'data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground' : 'data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
             >
               File Upload
-            </TabsTrigger>
+            </TabsTrigger> */}
           </TabsList>
           
           <TabsContent value="manual">
@@ -813,9 +1071,9 @@ const UploadMarks = () => {
                         {/* Sub-columns for each question */}
                         {questions.map((question) => (
                           <Fragment key={`sub-${question.id}`}>
-                            <th className="px-2 py-1 text-center text-xs font-medium uppercase tracking-wider">{question.number}</th>
-                            <th className="px-2 py-1 text-center text-xs font-medium uppercase tracking-wider">{question.number}</th>
-                            <th className="px-2 py-1 text-center text-xs font-medium uppercase tracking-wider">{question.number}</th>
+                            <th className="px-2 py-1 text-center text-xs font-medium uppercase tracking-wider">CO</th>
+                            <th className="px-2 py-1 text-center text-xs font-medium uppercase tracking-wider">Max Marks</th>
+                            <th className="px-2 py-1 text-center text-xs font-medium uppercase tracking-wider">Marks</th>
                           </Fragment>
                         ))}
                       </tr>
@@ -825,7 +1083,7 @@ const UploadMarks = () => {
                           <Fragment key={`row-${question.id}`}>
                             <td className="px-2 py-1 text-center text-xs italic">CO</td>
                             <td className="px-2 py-1 text-center text-xs italic">Max marks</td>
-                            <td className="px-2 py-1 text-center text-xs italic">IA Test 1</td>
+                            <td className="px-2 py-1 text-center text-xs italic">{formatTestType(selected.testType)}</td>
                           </Fragment>
                         ))}
                       </tr>
@@ -873,22 +1131,29 @@ const UploadMarks = () => {
                                 </td>
                                 <td className="px-2 py-1 text-center">
                                   <Input 
-                                    type="text" 
+                                    type="number" 
                                     className="w-16 text-center mx-auto" 
                                     placeholder="Marks" 
-                                    value={studentMarks[student.id]?.[question.id] || ""}
+                                    value={studentMarks[student.id]?.[question.number] || ""}
+                                    min="0"
+                                    max={question.maxMarks}
                                     onChange={(e) => {
                                       const value = e.target.value;
-                                      // Only allow numeric input
-                                      if (/^\d*\.?\d*$/.test(value) || value === "") {
-                                        setStudentMarks(prev => ({
-                                          ...prev,
-                                          [student.id]: {
-                                            ...prev[student.id],
-                                            [question.id]: value
-                                          }
-                                        }));
+                                      const maxMarks = parseInt(question.maxMarks);
+                                      const numValue = parseInt(value);
+                                      
+                                      // Validate that the entered value doesn't exceed max marks
+                                      if (value !== "" && (isNaN(numValue) || numValue < 0 || numValue > maxMarks)) {
+                                        // If invalid, don't update the state
+                                        return;
                                       }
+                                      
+                                      setStudentMarks(prev => {
+                                        const updated = { ...prev };
+                                        if (!updated[student.id]) updated[student.id] = {};
+                                        updated[student.id][question.number] = value;
+                                        return updated;
+                                      });
                                     }}
                                   />
                                 </td>
@@ -901,10 +1166,7 @@ const UploadMarks = () => {
                                 type="text" 
                                 className="w-20 text-center mx-auto" 
                                 placeholder="Total" 
-                                value={questions.reduce((sum, question) => {
-                                  const marks = parseFloat(studentMarks[student.id]?.[question.id]) || 0;
-                                  return sum + marks;
-                                }, 0).toString()}
+                                value={calculateTotal(studentMarks[student.id] || {})}
                                 readOnly
                               />
                             </td>
@@ -1186,7 +1448,7 @@ const UploadMarks = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="file">
+          {/* <TabsContent value="file">
             <div className={`border rounded-lg p-6 max-w-2xl mx-auto space-y-6 ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
               <div>
                 <h2 className="text-lg font-semibold">Upload User Data</h2>
@@ -1258,7 +1520,7 @@ const UploadMarks = () => {
                 </button>
               </div>
             </div>
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
         <div className="flex justify-end mt-4">
           <Button 

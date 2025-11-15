@@ -1043,3 +1043,138 @@ export const getFacultyAttendanceRecords = async (params?: {
     return { success: false, message: "Network error" };
   }
 };
+
+// IA Marks APIs
+export interface CreateQPRequest {
+  branch: number;
+  semester: number;
+  section: number;
+  subject: number;
+  test_type: string;
+  questions_data: Array<{
+    question_number: string;
+    co: string;
+    blooms_level: string;
+    subparts_data: Array<{
+      subpart_label: string;
+      content: string;
+      max_marks: number;
+    }>;
+  }>;
+}
+
+export interface QPResponse {
+  success: boolean;
+  data?: any;
+  errors?: any;
+}
+
+export interface StudentsForMarksResponse {
+  success: boolean;
+  data?: Array<{
+    id: number;
+    name: string;
+    usn: string;
+    existing_mark?: {
+      marks_detail: Record<string, number>;
+      total_obtained: number;
+    };
+  }>;
+  question_paper?: number;
+}
+
+export interface UploadIAMarksRequest {
+  question_paper_id: number;
+  marks_data: Array<{
+    student_id: number;
+    marks_detail: Record<string, number>;
+  }>;
+}
+
+export const createQuestionPaper = async (data: CreateQPRequest): Promise<QPResponse> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/qps/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Create QP Error:", error);
+    return { success: false };
+  }
+};
+
+export const getQuestionPapers = async (): Promise<any> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/qps/`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get QPs Error:", error);
+    return { success: false };
+  }
+};
+
+export const getStudentsForMarks = async (params: {
+  branch_id: string;
+  semester_id: string;
+  section_id: string;
+  subject_id: string;
+  test_type: string;
+}): Promise<StudentsForMarksResponse> => {
+  try {
+    const query = new URLSearchParams(params).toString();
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/students-for-marks/?${query}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Students for Marks Error:", error);
+    return { success: false };
+  }
+};
+
+export const uploadIAMarks = async (data: UploadIAMarksRequest): Promise<any> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/upload-ia-marks/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Upload IA Marks Error:", error);
+    return { success: false };
+  }
+};
+
+export const updateQuestionPaper = async (id: number, data: CreateQPRequest): Promise<QPResponse> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/qps/${id}/`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Update QP Error:", error);
+    return { success: false };
+  }
+};
