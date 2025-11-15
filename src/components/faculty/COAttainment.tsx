@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useFacultyAssignmentsQuery } from "../../hooks/useApiQueries";
-import { getUploadMarksBootstrap, GetUploadMarksBootstrapResponse } from "../../utils/faculty_api";
+import { getUploadMarksBootstrap, GetUploadMarksBootstrapResponse, getStudentsForMarks, getQuestionPapers } from "../../utils/faculty_api";
 import { useTheme } from "@/context/ThemeContext";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -151,7 +151,7 @@ const COAttainment = () => {
       setSelected(prev => ({ ...prev, subject: "", subject_id: undefined }));
     }
     const { branch_id, semester_id, section_id, subject_id, testType } = { ...updated };
-    if (branch_id && semester_id && section_id && subject_id && testType) {
+        if (branch_id && semester_id && section_id && subject_id && testType) {
       setLoadingStudents(true);
       try {
         const assignment = assignments.find(a =>
@@ -161,75 +161,93 @@ const COAttainment = () => {
           a.subject_id === subject_id
         );
         if (!assignment) throw new Error("Assignment not found");
-        const testMap: Record<string, number> = { IA1: 1, IA2: 2, IA3: 3, SEE: 4 };
-        const test_number = testMap[testType] || 1;
-        const response: GetUploadMarksBootstrapResponse = await getUploadMarksBootstrap({
+        // Map test type to expected value for API
+        const testMap: Record<string, string> = { IA1: 'IA1', IA2: 'IA2', IA3: 'IA3', SEE: 'SEE' };
+        // Use students-for-marks endpoint which returns existing marks and question_paper id
+        const studentsRes = await getStudentsForMarks({
           branch_id: branch_id.toString(),
           semester_id: semester_id.toString(),
           section_id: section_id.toString(),
           subject_id: subject_id.toString(),
-          test_number
+          test_type: testMap[testType] || 'IA1'
         });
-        if (response.success && response.data) {
-          // In a full implementation, this would fetch the actual question format from UploadMarks
-          // For now, we'll create a sample format based on typical exam structure
-          // This should be replaced with actual data from UploadMarks question format
-          const realisticQuestions: Question[] = [
-            { id: "1", number: "1a", content: "Short answer question on basic concepts", maxMarks: "2", co: "CO1", bloomsLevel: "Remember" },
-            { id: "2", number: "1b", content: "Explain the significance of key principles", maxMarks: "3", co: "CO1", bloomsLevel: "Understand" },
-            { id: "3", number: "2", content: "Apply theoretical concepts to practical problems", maxMarks: "5", co: "CO2", bloomsLevel: "Apply" },
-            { id: "4", number: "3", content: "Analyze and compare different approaches", maxMarks: "10", co: "CO3", bloomsLevel: "Analyze" },
-            { id: "5", number: "4", content: "Evaluate and justify solutions", maxMarks: "10", co: "CO4", bloomsLevel: "Evaluate" },
-            { id: "6", number: "5", content: "Design a solution based on learned concepts", maxMarks: "10", co: "CO5", bloomsLevel: "Create" },
-          ];
-          setQuestions(realisticQuestions);
-          
-          // Process student data using actual marks from response
-          const processedStudents = response.data.students.map(student => {
-            const marks: Record<string, string> = {};
-            realisticQuestions.forEach(q => {
-              // Use existing marks if available, otherwise generate realistic mock data
-              if (student.existing_mark) {
-                // Distribute the total mark across questions with some variation
-                const totalMark = student.existing_mark.mark;
-                const maxMark = parseInt(q.maxMarks);
-                // Generate a realistic mark (usually 60-90% of max for average students)
-                const minMark = Math.max(0, Math.floor(maxMark * 0.6));
-                const maxPossible = Math.min(maxMark, totalMark);
-                const mark = Math.floor(Math.random() * (maxPossible - minMark + 1)) + minMark;
-                marks[q.id] = mark.toString();
-              } else {
-                // Generate realistic mock marks
-                const maxMark = parseInt(q.maxMarks);
-                const mark = Math.floor(Math.random() * (maxMark + 1));
-                marks[q.id] = mark.toString();
-              }
-            });
-            const total = Object.values(marks).reduce((sum, mark) => sum + parseInt(mark || "0"), 0);
-            return {
-              studentId: student.id,
-              name: student.name,
-              usn: student.usn,
-              marks,
-              total
-            };
-          });
-          setStudentMarks(processedStudents);
-          
-          // Initialize indirect attainment values
-          const initialIndirect: Record<string, number> = {};
-          realisticQuestions.forEach(q => {
-            if (q.co && !initialIndirect[q.co]) {
-              initialIndirect[q.co] = 0;
+
+        if (!studentsRes.success) throw new Error((studentsRes as any).message || 'Failed to fetch students for marks');
+
+        // If backend provides question_paper id, fetch QP details
+        let qpId: number | undefined = (studentsRes as any).question_paper;
+        let qpDetails: any = null;
+        if (qpId) {
+          const qps = await getQuestionPapers();
+          if (qps && qps.data) {
+            qpDetails = qps.data.find((q: any) => q.id === qpId) || null;
+          }
+        }
+
+        // Build questions list from qpDetails if available, otherwise fallback to subject_info-like structure
+        let realQuestions: Question[] = [];
+        if (qpDetails && qpDetails.questions) {
+          // qpDetails.questions expected to be array with question_number, subparts etc.
+          qpDetails.questions.forEach((q: any, idx: number) => {
+            // Flatten subparts as separate question entries using combined id
+            if (q.subparts && q.subparts.length > 0) {
+              q.subparts.forEach((sp: any, si: number) => {
+                realQuestions.push({
+                  id: `${q.question_number}${sp.subpart_label}`,
+                  number: `${q.question_number}${sp.subpart_label}`,
+                  content: sp.content || '',
+                  maxMarks: String(sp.max_marks || 0),
+                  co: q.co || 'UNMAPPED',
+                  bloomsLevel: q.blooms_level || ''
+                });
+              });
+            } else {
+              realQuestions.push({
+                id: `${q.question_number}`,
+                number: `${q.question_number}`,
+                content: q.content || '',
+                maxMarks: String(q.max_marks || 0),
+                co: q.co || 'UNMAPPED',
+                bloomsLevel: q.blooms_level || ''
+              });
             }
           });
-          setIndirectAttainment(initialIndirect);
-          
-          // Calculate CO attainment
-          calculateCOAttainment(realisticQuestions, processedStudents);
         } else {
-          throw new Error(response.message || "Failed to fetch students/marks");
+          // Fallback: create a simple mapping from studentsRes.data.existing_mark if available
+          // Use the first student's existing_mark keys as question ids
+          const sample = (studentsRes.data && studentsRes.data[0] && studentsRes.data[0].existing_mark && studentsRes.data[0].existing_mark.marks_detail) || {};
+          Object.keys(sample).forEach((k, idx) => {
+            realQuestions.push({ id: k, number: k, content: k, maxMarks: '0', co: 'UNMAPPED', bloomsLevel: '' });
+          });
         }
+
+        setQuestions(realQuestions);
+
+        // Process student data
+        const processedStudents: StudentMark[] = (studentsRes.data || []).map((student: any) => {
+          const marks: Record<string, string> = {};
+          realQuestions.forEach(q => {
+            // student.existing_mark.marks_detail may have numeric values
+            const existing = student.existing_mark && student.existing_mark.marks_detail && student.existing_mark.marks_detail[q.id];
+            marks[q.id] = existing !== undefined ? String(existing) : '0';
+          });
+          const total = Object.values(marks).reduce((sum, mark) => sum + parseInt(mark || '0'), 0);
+          return { studentId: student.id, name: student.name, usn: student.usn, marks, total };
+        });
+
+        setStudentMarks(processedStudents);
+
+        // Initialize indirect attainment values
+        const initialIndirect: Record<string, number> = {};
+        realQuestions.forEach(q => {
+          if (q.co && !initialIndirect[q.co]) {
+            initialIndirect[q.co] = 0;
+          }
+        });
+        setIndirectAttainment(initialIndirect);
+
+        // Calculate CO attainment
+        calculateCOAttainment(realQuestions, processedStudents);
       } catch (err: unknown) {
         setStudentMarks([]);
         setErrorMessage((err as { message?: string })?.message || "Failed to fetch students/marks");

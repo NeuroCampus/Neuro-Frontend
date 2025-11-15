@@ -14,7 +14,9 @@ import HODDashboard from "./components/dashboards/HODDashboard";
 import FacultyDashboard from "./components/dashboards/FacultyDashboard";
 import FeesManagerDashboard from "./pages/FeesManager/FeesManagerDashboard";
 import { ThemeProvider } from "./context/ThemeContext";
-import FloatingAssistant from "./components/common/FloatingAssistant";
+// Floating assistant (chatbot) temporarily disabled per request.
+// To re-enable, uncomment the import below and the JSX tags where used.
+// import FloatingAssistant from "./components/common/FloatingAssistant";
 
 const queryClient = new QueryClient();
 
@@ -49,13 +51,13 @@ const App = () => (
           <Route path="/payment/success" element={
             <ThemeProvider>
               <PaymentSuccess />
-              <FloatingAssistant />
+              {/* <FloatingAssistant /> */}
             </ThemeProvider>
           } />
           <Route path="/payment/cancel" element={
             <ThemeProvider>
               <PaymentCancel />
-              <FloatingAssistant />
+              {/* <FloatingAssistant /> */}
             </ThemeProvider>
           } />
 
@@ -64,7 +66,7 @@ const App = () => (
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
-                <FloatingAssistant />
+                {/* <FloatingAssistant /> */}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -72,7 +74,7 @@ const App = () => (
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
-                <FloatingAssistant />
+                {/* <FloatingAssistant /> */}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -80,7 +82,7 @@ const App = () => (
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
-                <FloatingAssistant />
+                {/* <FloatingAssistant /> */}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -88,7 +90,7 @@ const App = () => (
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
-                <FloatingAssistant />
+                {/* <FloatingAssistant /> */}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -96,7 +98,7 @@ const App = () => (
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
-                <FloatingAssistant />
+                {/* <FloatingAssistant /> */}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -104,7 +106,7 @@ const App = () => (
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
-                <FloatingAssistant />
+                {/* <FloatingAssistant /> */}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -112,7 +114,7 @@ const App = () => (
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
-                <FloatingAssistant />
+                {/* <FloatingAssistant /> */}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -120,7 +122,7 @@ const App = () => (
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
-                <FloatingAssistant />
+                {/* <FloatingAssistant /> */}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -128,7 +130,7 @@ const App = () => (
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
-                <FloatingAssistant />
+                {/* <FloatingAssistant /> */}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -136,7 +138,7 @@ const App = () => (
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
-                <FloatingAssistant />
+                {/* <FloatingAssistant /> */}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -144,7 +146,7 @@ const App = () => (
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
-                <FloatingAssistant />
+                {/* <FloatingAssistant /> */}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -152,7 +154,7 @@ const App = () => (
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
-                <FloatingAssistant />
+                {/* <FloatingAssistant /> */}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -160,7 +162,7 @@ const App = () => (
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
-                <FloatingAssistant />
+                {/* <FloatingAssistant /> */}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -168,7 +170,7 @@ const App = () => (
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
-                <FloatingAssistant />
+                {/* <FloatingAssistant /> */}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -178,7 +180,7 @@ const App = () => (
             <ProtectedRoute allowedRoles={["admin"]}>
               <ThemeProvider>
                 <AdminDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
-                <FloatingAssistant />
+                {/* <FloatingAssistant /> */}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -188,7 +190,7 @@ const App = () => (
             <ProtectedRoute allowedRoles={["hod"]}>
               <ThemeProvider>
                 <HODDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
-                <FloatingAssistant />
+                {/* <FloatingAssistant /> */}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -198,7 +200,7 @@ const App = () => (
             <ProtectedRoute allowedRoles={["teacher"]}>
               <ThemeProvider>
                 <FacultyDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
-                <FloatingAssistant />
+                {/* <FloatingAssistant /> */}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -208,7 +210,7 @@ const App = () => (
             <ProtectedRoute allowedRoles={["fees_manager"]}>
               <ThemeProvider>
                 <FeesManagerDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
-                <FloatingAssistant />
+                {/* <FloatingAssistant /> */}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -217,7 +219,7 @@ const App = () => (
           <Route path="*" element={
             <ThemeProvider>
               <NotFound />
-              <FloatingAssistant />
+              {/* <FloatingAssistant /> */}
             </ThemeProvider>
           } />
         </Routes>
