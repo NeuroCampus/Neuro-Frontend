@@ -60,6 +60,7 @@ const COAttainment = () => {
     semester: "",
     semester_id: undefined as number | undefined,
     testType: "",
+    question_paper_id: undefined as number | undefined,
   });
   const [questions, setQuestions] = useState<Question[]>([]);
   const [studentMarks, setStudentMarks] = useState<StudentMark[]>([]);
@@ -176,6 +177,7 @@ const COAttainment = () => {
 
         // If backend provides question_paper id, fetch QP details
         let qpId: number | undefined = (studentsRes as any).question_paper;
+        setSelected(prev => ({ ...prev, question_paper_id: qpId }));
         let qpDetails: any = null;
         if (qpId) {
           const qps = await getQuestionPapers();
@@ -385,8 +387,52 @@ const COAttainment = () => {
     }
   };
 
-  const handleCalculateFinalAttainment = () => {
-    calculateCOAttainment(questions, studentMarks);
+  const handleCalculateFinalAttainment = async () => {
+    if (!selected.subject_id) return;
+
+    try {
+      // Call backend API with indirect attainment
+      const indirectJson = JSON.stringify(indirectAttainment);
+      const response = await fetch(`/api/co-attainment/?question_paper=${selected.question_paper_id}&indirect_attainment=${encodeURIComponent(indirectJson)}`);
+      if (!response.ok) throw new Error('Failed to fetch CO attainment');
+      const data = await response.json();
+
+      // Update state with backend results
+      const attainmentData: Record<string, any> = {};
+      data.results.forEach((result: any) => {
+        attainmentData[result.co] = {
+          co: result.co,
+          maxMarks: result.max_marks,
+          targetMarks: result.max_marks * (targetThreshold / 100),
+          avgMarks: result.avg_marks,
+          percentage: result.avg_pct,
+          studentsAboveTarget: result.students_above_target,
+          totalStudents: result.total_students,
+          attainmentLevel: result.direct_attainment_level,
+          method2Percentage: result.pct_students_above_target,
+          method2Level: result.direct_attainment_level, // Using direct for both methods for now
+        };
+      });
+      setCoAttainment(attainmentData);
+
+      // Update final attainment from backend
+      const finalAttainmentData: Record<string, any> = {};
+      data.results.forEach((result: any) => {
+        finalAttainmentData[result.co] = {
+          direct: result.direct_attainment_level,
+          indirect: result.indirect_attainment_level,
+          final: result.final_attainment_level,
+          level: result.final_attainment_level,
+        };
+      });
+      setFinalAttainment(finalAttainmentData);
+
+      // Update overall attainment
+      setOverallAttainment(data.course_attainment_level);
+    } catch (error) {
+      console.error('Error calculating final attainment:', error);
+      setErrorMessage('Failed to calculate final attainment');
+    }
   };
 
   const handleTargetThresholdChange = (value: string) => {
@@ -397,6 +443,38 @@ const COAttainment = () => {
     }
   };
 
+  // CSV Export Function
+  const handleExportCSV = () => {
+    const csvData = [
+      ['CO', 'Max Marks', 'Target Marks', 'Avg Marks', 'Students ≥ Target', 'Method 1 %', 'Method 1 Level', 'Method 2 %', 'Method 2 Level', 'Indirect', 'Final', 'Level'],
+      ...Object.values(coAttainment).map(co => [
+        co.co,
+        co.maxMarks,
+        co.targetMarks.toFixed(1),
+        co.avgMarks.toFixed(2),
+        `${co.studentsAboveTarget}/${co.totalStudents} (${co.totalStudents > 0 ? ((co.studentsAboveTarget / co.totalStudents) * 100).toFixed(1) : 0}%)`,
+        `${co.percentage.toFixed(1)}%`,
+        `Level ${co.attainmentLevel}`,
+        `${co.method2Percentage.toFixed(1)}%`,
+        `Level ${co.method2Level}`,
+        indirectAttainment[co.co] || 0,
+        finalAttainment[co.co] ? finalAttainment[co.co].final.toFixed(2) : "N/A",
+        finalAttainment[co.co] ? `Level ${finalAttainment[co.co].level}` : "N/A"
+      ])
+    ];
+
+    const csvContent = csvData.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `CO_Attainment_Report_${selected.branch}_${selected.subject}_${selected.testType}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
   // PDF Export Function
   const handleExportPDF = () => {
     const doc = new jsPDF('p', 'mm', 'a4') as jsPDF & { lastAutoTable?: { finalY: number } };
@@ -577,7 +655,14 @@ const COAttainment = () => {
         {areAllDropdownsSelected() && (
           <div className="space-y-6">
             {/* PDF Export Button - Added above Configuration div */}
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              <Button 
+                onClick={handleExportCSV} 
+                variant="outline"
+                className="border-[#a259ff] text-[#a259ff] hover:bg-[#a259ff] hover:text-white"
+              >
+                Download CSV Report
+              </Button>
               <Button 
                 onClick={handleExportPDF} 
                 className="bg-[#a259ff] text-white hover:bg-[#8a4dde]"
