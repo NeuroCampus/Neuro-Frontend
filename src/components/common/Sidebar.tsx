@@ -23,6 +23,7 @@ import {
   BookOpen,
   Upload,
   CreditCard,
+  Search,
 } from "lucide-react";
 import { useIsMobile } from "../../hooks/use-mobile";
 import {
@@ -92,6 +93,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       attendance: <BarChart2 size={20} />,
       marks: <BarChart2 size={20} />,
       "study-materials": <BookOpen size={20} />,
+      "scan-student-info": <Search size={20} />,
       proctors: <UserCheck size={20} />,
 
       "take-attendance": <BarChart2 size={20} />,
@@ -158,6 +160,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     
     // Resources & Communication
     { name: "Study Material", page: "study-materials" },
+    { name: "Scan for Student Info", page: "scan-student-info" },
     { name: "Proctors", page: "proctors" },
     { name: "Notifications", page: "notifications" },
     

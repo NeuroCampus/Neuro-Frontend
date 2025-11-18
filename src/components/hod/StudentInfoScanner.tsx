@@ -1,0 +1,680 @@
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { useTheme } from "@/context/ThemeContext";
+import { Search, User, Calendar, BookOpen, TrendingUp, CreditCard, Users, Clock, MapPin, Phone, Mail, Heart } from "lucide-react";
+import { showErrorAlert, showSuccessAlert } from "../../utils/sweetalert";
+
+interface StudentInfo {
+  name: string;
+  usn: string;
+  semester: number;
+  section: string;
+  branch: string;
+  batch: string;
+  course: string;
+  mode_of_admission: string;
+  date_of_admission: string;
+  parent_name: string;
+  parent_contact: string;
+  emergency_contact: string;
+  blood_group: string;
+  email: string;
+  mobile_number: string;
+  proctor: {
+    name: string;
+    email: string;
+  };
+}
+
+interface AttendanceData {
+  overall_percentage: number;
+  total_classes: number;
+  present_classes: number;
+  by_subject: { [key: string]: { present: number; total: number; percentage: number } };
+}
+
+interface CurrentClass {
+  subject: string;
+  subject_code: string;
+  teacher: string;
+  room: string;
+  start_time: string;
+  end_time: string;
+  day: string;
+}
+
+interface StudentData {
+  success: boolean;
+  student_info: StudentInfo;
+  current_class: CurrentClass | null;
+  next_class: CurrentClass | null;
+  attendance: AttendanceData;
+  internal_marks: { [key: string]: any[] };
+  subjects_registered: any[];
+  fee_summary: any;
+}
+
+const StudentInfoScanner = () => {
+  const [usn, setUsn] = useState("");
+  const [studentData, setStudentData] = useState<StudentData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { theme } = useTheme();
+
+  const fetchStudentData = async () => {
+    if (!usn.trim()) {
+      showErrorAlert("Error", "Please enter a USN");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/public/student-data/?usn=${usn.trim().toUpperCase()}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setStudentData(data);
+        showSuccessAlert("Success", "Student data retrieved successfully");
+      } else {
+        setError(data.message || "Student not found");
+        showErrorAlert("Error", data.message || "Student not found");
+      }
+    } catch (err) {
+      setError("Network error occurred");
+      showErrorAlert("Error", "Network error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      fetchStudentData();
+    }
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.6,
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: { duration: 0.5 }
+    }
+  };
+
+  return (
+    <motion.div
+      className={`space-y-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {/* Header */}
+      <motion.div
+        className="text-center space-y-2"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+          Student Information Scanner
+        </h1>
+        <p className={`text-lg ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+          Enter USN to retrieve comprehensive student details
+        </p>
+      </motion.div>
+
+      {/* Search Section */}
+      <motion.div
+        className="flex flex-col sm:flex-row gap-4 items-center justify-center max-w-md mx-auto"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            type="text"
+            placeholder="Enter USN (e.g., 1NT21CS001)"
+            value={usn}
+            onChange={(e) => setUsn(e.target.value.toUpperCase())}
+            onKeyPress={handleKeyPress}
+            className={`pl-10 h-12 text-lg font-mono ${theme === 'dark' ? 'bg-background border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`}
+          />
+        </div>
+        <Button
+          onClick={fetchStudentData}
+          disabled={loading}
+          className="h-12 px-8 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white"
+        >
+          {loading ? (
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            >
+              <Search className="h-4 w-4" />
+            </motion.div>
+          ) : (
+            "Scan"
+          )}
+        </Button>
+      </motion.div>
+
+      {/* Error Message */}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className={`p-4 rounded-lg border text-center max-w-md mx-auto ${
+              theme === 'dark'
+                ? 'bg-destructive/10 border-destructive/20 text-destructive-foreground'
+                : 'bg-red-50 border-red-200 text-red-700'
+            }`}
+          >
+            {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Student Data Display */}
+      <AnimatePresence>
+        {studentData && studentData.success && (
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            exit={{ opacity: 0, y: 20 }}
+            className="space-y-6"
+          >
+            {/* Basic Information */}
+            <motion.div variants={cardVariants}>
+              <Card className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-[#a259ff]" />
+                    Basic Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-gray-500" />
+                        <span className="font-medium">Name:</span>
+                        <span>{studentData.student_info.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">USN:</span>
+                        <Badge variant="secondary" className="font-mono">{studentData.student_info.usn}</Badge>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-gray-500" />
+                        <span className="font-medium">Email:</span>
+                        {studentData.student_info.email ? (
+                          <a
+                            href={`mailto:${studentData.student_info.email}`}
+                            className="text-blue-600 hover:text-blue-800 underline text-sm hover:underline"
+                          >
+                            {studentData.student_info.email}
+                          </a>
+                        ) : (
+                          <span className="text-sm text-gray-500">Not provided</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-gray-500" />
+                        <span className="font-medium">Mobile:</span>
+                        {studentData.student_info.mobile_number ? (
+                          <a
+                            href={`tel:${studentData.student_info.mobile_number}`}
+                            className="text-blue-600 hover:text-blue-800 underline text-sm hover:underline"
+                          >
+                            {studentData.student_info.mobile_number}
+                          </a>
+                        ) : (
+                          <span className="text-sm text-gray-500">Not provided</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="h-4 w-4 text-gray-500" />
+                        <span className="font-medium">Branch:</span>
+                        <span>{studentData.student_info.branch}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-gray-500" />
+                        <span className="font-medium">Semester:</span>
+                        <Badge>{studentData.student_info.semester}</Badge>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-gray-500" />
+                        <span className="font-medium">Section:</span>
+                        <Badge variant="outline">{studentData.student_info.section}</Badge>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Batch:</span>
+                        <span>{studentData.student_info.batch}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Separator />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Course:</span>
+                        <span>{studentData.student_info.course}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Mode of Admission:</span>
+                        <span>{studentData.student_info.mode_of_admission}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-gray-500" />
+                        <span className="font-medium">Date of Admission:</span>
+                        <span>{studentData.student_info.date_of_admission}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Heart className="h-4 w-4 text-gray-500" />
+                        <span className="font-medium">Blood Group:</span>
+                        <Badge variant="destructive">{studentData.student_info.blood_group}</Badge>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-gray-500" />
+                        <span className="font-medium">Proctor:</span>
+                        <div className="flex flex-col">
+                          <span>{studentData.student_info.proctor?.name || 'Not assigned'}</span>
+                          {studentData.student_info.proctor?.email && (
+                            <a
+                              href={`mailto:${studentData.student_info.proctor.email}`}
+                              className="text-blue-600 hover:text-blue-800 underline text-xs hover:underline"
+                            >
+                              {studentData.student_info.proctor.email}
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Contact Information */}
+            <motion.div variants={cardVariants}>
+              <Card className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Phone className="h-5 w-5 text-[#a259ff]" />
+                    Emergency Contacts
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-gray-500" />
+                        <span className="font-medium">Parent Name:</span>
+                        <span>{studentData.student_info.parent_name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-gray-500" />
+                        <span className="font-medium">Parent Contact:</span>
+                        {studentData.student_info.parent_contact ? (
+                          <a
+                            href={`tel:${studentData.student_info.parent_contact}`}
+                            className="text-blue-600 hover:text-blue-800 underline text-sm hover:underline"
+                          >
+                            {studentData.student_info.parent_contact}
+                          </a>
+                        ) : (
+                          <span className="text-sm text-gray-500">Not provided</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-red-500" />
+                        <span className="font-medium">Emergency Contact:</span>
+                        {studentData.student_info.emergency_contact ? (
+                          <a
+                            href={`tel:${studentData.student_info.emergency_contact}`}
+                            className="text-red-600 hover:text-red-800 underline text-sm hover:underline"
+                          >
+                            {studentData.student_info.emergency_contact}
+                          </a>
+                        ) : (
+                          <span className="text-sm text-gray-500">Not provided</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Class Schedule */}
+            <motion.div variants={cardVariants}>
+              <Card className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-[#a259ff]" />
+                    Class Schedule
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Current Class */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <h3 className="font-semibold text-green-600">Current Class</h3>
+                      </div>
+                      {studentData.current_class ? (
+                        <div className="space-y-2 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-green-700 dark:text-green-300">{studentData.current_class.subject}</span>
+                            <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                              {studentData.current_class.subject_code}
+                            </Badge>
+                          </div>
+                          <div className="text-sm space-y-1">
+                            <div className="flex items-center gap-2">
+                              <User className="h-3 w-3 text-gray-500" />
+                              <span>{studentData.current_class.teacher}</span>
+                              {studentData.current_class.faculty_email && (
+                                <a
+                                  href={`mailto:${studentData.current_class.faculty_email}`}
+                                  className="text-blue-600 hover:text-blue-800 underline text-xs"
+                                >
+                                  ✉
+                                </a>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-4 text-gray-600 dark:text-gray-400">
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                <span className="font-mono">{studentData.current_class.room}</span>
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                <span className="font-semibold">{studentData.current_class.start_time} - {studentData.current_class.end_time}</span>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-4 px-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                          <Clock className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm text-gray-500">No ongoing class</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Next Class */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <h3 className="font-semibold text-blue-600">Next Class</h3>
+                      </div>
+                      {studentData.next_class ? (
+                        <div className="space-y-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-blue-700 dark:text-blue-300">{studentData.next_class.subject}</span>
+                            <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300">
+                              {studentData.next_class.subject_code}
+                            </Badge>
+                          </div>
+                          <div className="text-sm space-y-1">
+                            <div className="flex items-center gap-2">
+                              <User className="h-3 w-3 text-gray-500" />
+                              <span>{studentData.next_class.teacher}</span>
+                              {studentData.next_class.faculty_email && (
+                                <a
+                                  href={`mailto:${studentData.next_class.faculty_email}`}
+                                  className="text-blue-600 hover:text-blue-800 underline text-xs"
+                                >
+                                  ✉
+                                </a>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-4 text-gray-600 dark:text-gray-400">
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                <span className="font-mono">{studentData.next_class.room}</span>
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                <span className="font-semibold">{studentData.next_class.start_time} - {studentData.next_class.end_time}</span>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-4 px-3 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                          <Clock className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm text-gray-500">No upcoming class</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Schedule Info */}
+                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+                      <Calendar className="h-4 w-4" />
+                      <span>Classes typically scheduled between 9 AM - 5 PM</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Attendance Overview */}
+            <motion.div variants={cardVariants}>
+              <Card className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-[#a259ff]" />
+                    Attendance Overview
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="text-center">
+                      <div className={`text-3xl font-bold ${
+                        studentData.attendance.overall_percentage >= 75 ? 'text-green-500' :
+                        studentData.attendance.overall_percentage >= 60 ? 'text-yellow-500' : 'text-red-500'
+                      }`}>
+                        {studentData.attendance.overall_percentage}%
+                      </div>
+                      <div className="text-sm text-gray-500">Overall</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-500">
+                        {studentData.attendance.present_classes}
+                      </div>
+                      <div className="text-sm text-gray-500">Present</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-gray-500">
+                        {studentData.attendance.total_classes}
+                      </div>
+                      <div className="text-sm text-gray-500">Total Classes</div>
+                    </div>
+                  </div>
+                  <Separator />
+                  <div className="mt-4">
+                    <h4 className="font-medium mb-3">Subject-wise Attendance</h4>
+                    <div className="space-y-2">
+                      {Object.entries(studentData.attendance.by_subject).map(([subject, data]) => (
+                        <div key={subject} className="flex items-center justify-between p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
+                          <span className="font-medium">{subject}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">{data.present}/{data.total}</span>
+                            <Badge
+                              variant={data.percentage >= 75 ? "default" : data.percentage >= 60 ? "secondary" : "destructive"}
+                              className="text-xs"
+                            >
+                              {data.percentage}%
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Fee Summary */}
+            <motion.div variants={cardVariants}>
+              <Card className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5 text-[#a259ff]" />
+                    Fee Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {studentData.fee_summary && !studentData.fee_summary.error ? (
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="text-center">
+                        <div className="text-xl font-bold text-blue-500">
+                          ₹{studentData.fee_summary.total_fees?.toLocaleString() || 'N/A'}
+                        </div>
+                        <div className="text-sm text-gray-500">Total Fees</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xl font-bold text-green-500">
+                          ₹{studentData.fee_summary.amount_paid?.toLocaleString() || 'N/A'}
+                        </div>
+                        <div className="text-sm text-gray-500">Paid</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xl font-bold text-red-500">
+                          ₹{studentData.fee_summary.remaining_fees?.toLocaleString() || 'N/A'}
+                        </div>
+                        <div className="text-sm text-gray-500">Remaining</div>
+                      </div>
+                      <div className="text-center">
+                        <Badge
+                          variant={
+                            studentData.fee_summary.payment_status === 'paid' ? 'default' :
+                            studentData.fee_summary.payment_status === 'partial' ? 'secondary' : 'destructive'
+                          }
+                          className="text-sm px-3 py-1"
+                        >
+                          {studentData.fee_summary.payment_status?.toUpperCase() || 'UNKNOWN'}
+                        </Badge>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center text-gray-500">
+                      Fee data not available
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Internal Marks */}
+            {Object.keys(studentData.internal_marks).length > 0 && (
+              <motion.div variants={cardVariants}>
+                <Card className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BookOpen className="h-5 w-5 text-[#a259ff]" />
+                      Internal Marks
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {Object.entries(studentData.internal_marks).map(([subject, marks]) => (
+                        <div key={subject} className="space-y-2">
+                          <h4 className="font-medium text-lg">{subject}</h4>
+                          <div className="space-y-2">
+                            {marks.map((mark: any, index: number) => (
+                              <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+                                <div className="flex items-center gap-4">
+                                  <Badge variant="outline">Test {mark.test_number}</Badge>
+                                  <span className="font-medium">{mark.mark}/{mark.max_mark}</span>
+                                  <Badge variant="secondary">{mark.percentage}%</Badge>
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {mark.faculty}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+
+            {/* Registered Subjects */}
+            {studentData.subjects_registered.length > 0 && (
+              <motion.div variants={cardVariants}>
+                <Card className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BookOpen className="h-5 w-5 text-[#a259ff]" />
+                      Registered Subjects
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {studentData.subjects_registered.map((subject, index) => (
+                        <div key={index} className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">{subject.subject_name}</span>
+                            <Badge variant="outline">{subject.subject_code}</Badge>
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                            <span>Credits: {subject.credits}</span>
+                            <span>Type: {subject.subject_type}</span>
+                          </div>
+                          <Badge variant={subject.status === 'active' ? 'default' : 'secondary'} className="text-xs">
+                            {subject.status}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
+export default StudentInfoScanner;

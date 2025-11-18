@@ -23,6 +23,7 @@ import { logoutUser } from "../../utils/authService";
 import StudyMaterial from "../hod/StudyMaterial";
 import PromotionManagement from "../hod/PromotionManagement";
 import FacultyAttendanceView from "../hod/FacultyAttendanceView";
+import StudentInfoScanner from "../hod/StudentInfoScanner";
 import { HODBootstrapProvider } from "../../context/HODBootstrapContext";
 import { useTheme } from "../../context/ThemeContext";
 import { motion } from "framer-motion";
@@ -120,6 +121,7 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
       'proctors': 'proctors',
       'chat': 'chat',
       'study-materials': 'study-materials',
+      'scan-student-info': 'scan-student-info',
       'hod-profile': 'hod-profile'
     };
     
@@ -177,6 +179,7 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
       'proctors': '/hod/proctors',
       'chat': '/hod/chat',
       'study-materials': '/hod/study-materials',
+      'scan-student-info': '/hod/scan-student-info',
       'hod-profile': '/hod/hod-profile'
     };
     
@@ -246,6 +249,8 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
         return <Chat role="hod" />;
       case "study-materials":
         return <StudyMaterial />;
+      case "scan-student-info":
+        return <StudentInfoScanner />;
       case "hod-profile":
         return <HodProfile user={user} setError={setError} />;
       default:

@@ -36,6 +36,14 @@ const StudentProfile = () => {
     expected_graduation: "",
     student_status: "",
     mode_of_admission: "",
+    name: "",
+    batch: "",
+    course: "",
+    date_of_admission: "",
+    parent_name: "",
+    parent_contact: "",
+    emergency_contact: "",
+    blood_group: "",
     proctor: {
       id: "",
       username: "",
@@ -281,6 +289,15 @@ const StudentProfile = () => {
                     onChange={handleChange}
                   />
                 </div>
+                <div>
+                  <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Blood Group</Label>
+                  <Input
+                    name="blood_group"
+                    className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                    value={form.blood_group}
+                    onChange={handleChange}
+                  />
+                </div>
               </div>
 
               <div>
@@ -301,6 +318,36 @@ const StudentProfile = () => {
                   value={form.about}
                   onChange={handleChange}
                 />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Parent Name</Label>
+                  <Input
+                    name="parent_name"
+                    className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                    value={form.parent_name}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div>
+                  <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Parent Contact</Label>
+                  <Input
+                    name="parent_contact"
+                    className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                    value={form.parent_contact}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div>
+                  <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Emergency Contact</Label>
+                  <Input
+                    name="emergency_contact"
+                    className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                    value={form.emergency_contact}
+                    onChange={handleChange}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -371,6 +418,34 @@ const StudentProfile = () => {
                 className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
                 onChange={handleChange}
                 name="mode_of_admission"
+              />
+            </div>
+            <div>
+              <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Batch</Label>
+              <Input
+                value={form.batch}
+                className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                onChange={handleChange}
+                name="batch"
+              />
+            </div>
+            <div>
+              <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Course</Label>
+              <Input
+                value={form.course}
+                className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                onChange={handleChange}
+                name="course"
+              />
+            </div>
+            <div>
+              <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Date of Admission</Label>
+              <Input
+                type="date"
+                value={form.date_of_admission}
+                className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                onChange={handleChange}
+                name="date_of_admission"
               />
             </div>
           </div>
