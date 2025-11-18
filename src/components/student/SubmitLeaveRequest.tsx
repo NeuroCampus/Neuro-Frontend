@@ -21,6 +21,7 @@ const SubmitLeaveRequest = () => {
   const [error, setError] = useState<string | null>(null);
   const { theme } = useTheme();
   const leaveRequestMutation = useStudentLeaveRequestMutation();
+  const today = new Date();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -120,8 +121,9 @@ const SubmitLeaveRequest = () => {
                 mode="range"
                 selected={dateRange}
                 onSelect={setDateRange}
+                disabled={(date) => date < today} // Disable dates before today
                 initialFocus
-                className={theme === 'dark' ? 'rounded-md bg-background text-foreground [&_.rdp-day:hover]:bg-accent [&_.rdp-day_selected]:bg-primary [&_.rdp-day_selected]:text-primary-foreground' : 'rounded-md bg-white text-gray-900 [&_.rdp-day:hover]:bg-gray-100 [&_.rdp-day_selected]:bg-blue-600 [&_.rdp-day_selected]:text-white'}
+                className={theme === 'dark' ? 'rounded-md bg-background text-foreground [&_.rdp-day:hover]:bg-accent [&_.rdp-day_selected]:bg-primary [&_.rdp-day_selected]:text-primary-foreground [&_.rdp-day_disabled]:opacity-50 [&_.rdp-day_disabled]:cursor-not-allowed' : 'rounded-md bg-white text-gray-900 [&_.rdp-day:hover]:bg-gray-100 [&_.rdp-day_selected]:bg-blue-600 [&_.rdp-day_selected]:text-white [&_.rdp-day_disabled]:opacity-50 [&_.rdp-day_disabled]:cursor-not-allowed'}
               />
             </PopoverContent>
           </Popover>
