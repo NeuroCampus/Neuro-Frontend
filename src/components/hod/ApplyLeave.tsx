@@ -3,15 +3,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
+import { Label } from "../ui/label";
 import { CalendarIcon, Filter as FilterIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { manageHODLeaves, getLeaveBootstrap } from "../../utils/hod_api";
-import { toast } from "react-toastify";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Calendar } from "../ui/calendar";
 import { useTheme } from "../../context/ThemeContext";
+import { format } from "date-fns";
+import { DateRange } from "react-day-picker";
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
 
 // Define error type for catch blocks
 interface ErrorWithMessage {
@@ -39,7 +44,8 @@ interface ManageHODLeavesRequest {
 interface Leave {
   id: string;
   title: string;
-  date: string;
+  start_date: string;
+  end_date: string;
   reason: string;
   status: string;
 }
@@ -91,8 +97,7 @@ const ApplyLeave = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [branchId, setBranchId] = useState("");
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const today = new Date();
 
@@ -116,7 +121,8 @@ const ApplyLeave = () => {
         const leavesData = data.leaves.map((leave: LeaveData) => ({
           id: leave.id.toString(),
           title: leave.title || leave.faculty_name || "Leave Application",
-          date: leave.start_date,
+          start_date: leave.start_date,
+          end_date: leave.end_date,
           reason: leave.reason,
           status: leave.status
         })) as Leave[];
@@ -127,12 +133,10 @@ const ApplyLeave = () => {
           const errorMessage = err.message || "Failed to fetch data";
           console.error("Error fetching data:", err);
           setError(errorMessage);
-          toast.error(errorMessage);
         } else {
           const errorMessage = "Failed to fetch data";
           console.error("Error fetching data:", err);
           setError(errorMessage);
-          toast.error(errorMessage);
         }
         setLeaves([]);
       } finally {
@@ -160,10 +164,9 @@ const ApplyLeave = () => {
   }, [showFilter]);
 
   const handleSubmit = async () => {
-    if (!leaveTitle || !startDate || !reason) {
+    if (!leaveTitle || !dateRange?.from || !reason.trim()) {
       setError("Please fill in all required fields.");
       setSuccessMessage("");
-      toast.error("Please fill in all required fields.");
       return;
     }
 
@@ -172,28 +175,70 @@ const ApplyLeave = () => {
       const request: ManageHODLeavesRequest = {
         branch_id: branchId,
         title: leaveTitle,
-        start_date: format(startDate, "yyyy-MM-dd"),
-        end_date: endDate ? format(endDate, "yyyy-MM-dd") : format(startDate, "yyyy-MM-dd"),
-        reason,
+        start_date: format(dateRange.from, "yyyy-MM-dd"),
+        end_date: dateRange.to ? format(dateRange.to, "yyyy-MM-dd") : format(dateRange.from, "yyyy-MM-dd"),
+        reason: reason.trim(),
       };
       const response = await manageHODLeaves(request, "POST");
       if (response.success && response.data) {
-        setLeaves([response.data as Leave, ...leaves]);
-        setSuccessMessage("Leave application submitted successfully.");
+        setLeaves([{
+          id: response.data.id.toString(),
+          title: leaveTitle,
+          start_date: format(dateRange.from, "yyyy-MM-dd"),
+          end_date: dateRange.to ? format(dateRange.to, "yyyy-MM-dd") : format(dateRange.from, "yyyy-MM-dd"),
+          reason: reason.trim(),
+          status: "PENDING"
+        } as Leave, ...leaves]);
+        
+        // Show success alert with theme-aware styling
+        const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+        
+        await MySwal.fire({
+          title: 'Leave Request Submitted!',
+          text: 'Your leave request has been successfully submitted.',
+          icon: 'success',
+          confirmButtonText: 'OK',
+          confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+          background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+          color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+        });
+        
         setError("");
         setLeaveTitle("");
-        setStartDate(null);
-        setEndDate(null);
+        setDateRange(undefined);
         setReason("");
-        toast.success("Leave application submitted!");
       } else {
         setError(response.message || "Failed to submit leave");
-        toast.error(response.message || "Failed to submit leave");
+        
+        // Show error alert
+        const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+        
+        await MySwal.fire({
+          title: 'Error!',
+          text: response.message || 'Failed to submit leave',
+          icon: 'error',
+          confirmButtonText: 'OK',
+          confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+          background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+          color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+        });
       }
     } catch (err) {
       const errorMessage = "Network error occurred";
       setError(errorMessage);
-      toast.error(errorMessage);
+      
+      // Show error alert
+      const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+      
+      await MySwal.fire({
+        title: 'Error!',
+        text: 'Network error occurred',
+        icon: 'error',
+        confirmButtonText: 'OK',
+        confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+        background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+      });
     } finally {
       setLoading(false);
     }
@@ -217,83 +262,84 @@ const ApplyLeave = () => {
           <CardTitle className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Application Form</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Error Message */}
+          {error && (
+            <div className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-destructive/20 text-destructive-foreground border border-destructive' : 'bg-red-100 text-red-700 border border-red-200'}`}>
+              {error}
+            </div>
+          )}
+          
           {/* Leave Title */}
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Title for Leave *</label>
+          <div className="space-y-2">
+            <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Title for Leave *</Label>
             <Input
               value={leaveTitle}
               onChange={(e) => setLeaveTitle(e.target.value)}
               placeholder="Enter a title for your leave"
               disabled={loading}
-              className={theme === 'dark' ? 'w-full bg-card text-foreground border-border rounded p-2 placeholder:text-muted-foreground' : 'w-full bg-white text-gray-900 border-gray-300 rounded p-2 placeholder:text-gray-500'}
+              className={theme === 'dark' ? 'w-full bg-background text-foreground border-border' : 'w-full bg-white text-gray-900 border-gray-300'}
             />
           </div>
 
-         {/* Start and End Date */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-4">
-            {/* Start Date */}
-            <div>
-              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Start Date *</label>
-              <div className={`relative flex items-center rounded w-full border ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-300'}`}>
-                <DatePicker
-                  selected={startDate}
-                  onChange={(date: Date | null) => setStartDate(date)}
-                  minDate={today}   // ✅ only today & future
-                  dateFormat="dd/MM/yyyy"
-                  disabled={loading}
-                  placeholderText="Select start date"
-                  className={`w-full p-2 bg-transparent border-none rounded focus:outline-none ${theme === 'dark' ? 'text-foreground placeholder:text-muted-foreground' : 'text-gray-900 placeholder:text-gray-500'}`}
-                />
-                <CalendarIcon className={`absolute right-3 h-5 w-5 pointer-events-none ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`} />
-              </div>
-            </div>
+          {/* Date Range */}
+          <div className="space-y-2">
+            <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Date Range *</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={theme === 'dark' ? 'w-full justify-start text-left font-normal bg-background text-foreground border-border hover:bg-accent hover:text-foreground' : 'w-full justify-start text-left font-normal bg-white text-gray-900 border-gray-300 hover:bg-gray-100 hover:text-gray-900'}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateRange?.from ? (
+                    dateRange.to ? (
+                      <>
+                        {format(dateRange.from, "PPP")} - {format(dateRange.to, "PPP")}
+                      </>
+                    ) : (
+                      format(dateRange.from, "PPP")
+                    )
+                  ) : (
+                    <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Pick a date range</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
 
-            {/* End Date */}
-            <div>
-              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>End Date</label>
-              <div className={`relative flex items-center rounded w-full border ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-300'}`}>
-                <DatePicker
-                  selected={endDate}
-                  onChange={(date: Date | null) => setEndDate(date)}
-                  minDate={startDate || today}   // ✅ must be ≥ start date
-                  dateFormat="dd/MM/yyyy"
-                  disabled={loading}
-                  placeholderText="Select end date"
-                  className={`w-full p-2 bg-transparent border-none rounded focus:outline-none ${theme === 'dark' ? 'text-foreground placeholder:text-muted-foreground' : 'text-gray-900 placeholder:text-gray-500'}`}
+              {/* Calendar with theme support and disabled past dates */}
+              <PopoverContent className={theme === 'dark' ? 'w-auto p-0 bg-background text-foreground border-border shadow-lg' : 'w-auto p-0 bg-white text-gray-900 border-gray-200 shadow-lg'}>
+                <Calendar
+                  mode="range"
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  disabled={(date) => date < today} // Disable dates before today
+                  initialFocus
+                  className={theme === 'dark' ? 'rounded-md bg-background text-foreground [&_.rdp-day:hover]:bg-accent [&_.rdp-day_selected]:bg-primary [&_.rdp-day_selected]:text-primary-foreground [&_.rdp-day_disabled]:opacity-50 [&_.rdp-day_disabled]:cursor-not-allowed' : 'rounded-md bg-white text-gray-900 [&_.rdp-day:hover]:bg-gray-100 [&_.rdp-day_selected]:bg-blue-600 [&_.rdp-day_selected]:text-white [&_.rdp-day_disabled]:opacity-50 [&_.rdp-day_disabled]:cursor-not-allowed'}
                 />
-                <CalendarIcon className={`absolute right-3 h-5 w-5 pointer-events-none ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`} />
-              </div>
-            </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Reason for Leave */}
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Reason for Leave *</label>
+          <div className="space-y-2">
+            <Label htmlFor="reason" className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Reason for Leave *</Label>
             <Textarea
+              id="reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="Please provide a detailed reason for your leave request"
-              rows={4}
-              draggable={false}
-              className={`w-full resize-none rounded p-2 thin-scrollbar ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'}`}
+              className={theme === 'dark' ? 'min-h-[100px] bg-background text-foreground border-border' : 'min-h-[100px] bg-white text-gray-900 border-gray-300'}
               disabled={loading}
             />
           </div>
 
-          {/* Error/Success Messages */}
-          {error && <p className={`text-sm ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>{error}</p>}
-          {successMessage && <p className={`text-sm ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{successMessage}</p>}
-
           {/* Submit Button */}
-          <div className="flex justify-end">
-            <Button
-              onClick={handleSubmit}
-              disabled={loading || !branchId}
-              className={`bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}
-            >
-              {loading ? "Submitting..." : "Submit Application"}
-            </Button>
-          </div>
+          <Button 
+            onClick={handleSubmit} 
+            className={theme === 'dark' ? 'w-full text-foreground bg-muted hover:bg-accent border-border' : 'w-full text-gray-900 bg-gray-200 hover:bg-gray-300 border-gray-300'} 
+            disabled={loading || !branchId}
+          >
+            {loading ? "Submitting..." : "Submit Request"}
+          </Button>
         </CardContent>
       </Card>
 
@@ -345,8 +391,10 @@ const ApplyLeave = () => {
                   {/* Title / Subject */}
                   <p className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>📌 {leave.title}</p>
 
-                  {/* Date */}
-                  <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>🗓 {leave.date}</p>
+                  {/* Date Range */}
+                  <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                    🗓 {leave.start_date} to {leave.end_date}
+                  </p>
 
                   {/* Reason Button */}
                   <button
