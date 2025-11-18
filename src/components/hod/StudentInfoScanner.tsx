@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useTheme } from "@/context/ThemeContext";
-import { Search, User, Calendar, BookOpen, TrendingUp, CreditCard, Users, Clock, MapPin, Phone, Mail, Heart } from "lucide-react";
+import { Search, User, Calendar, BookOpen, TrendingUp, CreditCard, Users, Clock, MapPin, Phone, Mail, Heart, Lock, Shield } from "lucide-react";
 import { showErrorAlert, showSuccessAlert } from "../../utils/sweetalert";
 
 interface StudentInfo {
@@ -64,7 +64,36 @@ const StudentInfoScanner = () => {
   const [studentData, setStudentData] = useState<StudentData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const { theme } = useTheme();
+
+  // Check if page is already unlocked on component mount
+  useEffect(() => {
+    const unlockedStatus = localStorage.getItem('hod_student_scanner_unlocked');
+    if (unlockedStatus === 'true') {
+      setIsUnlocked(true);
+    }
+  }, []);
+
+  const verifyPassword = () => {
+    if (password === 'hod@cseaiml') {
+      setIsUnlocked(true);
+      setPasswordError(null);
+      localStorage.setItem('hod_student_scanner_unlocked', 'true');
+      showSuccessAlert("Access Granted", "Student Information Scanner unlocked successfully");
+    } else {
+      setPasswordError("Incorrect password. Please try again.");
+      showErrorAlert("Access Denied", "Incorrect password");
+    }
+  };
+
+  const handlePasswordKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      verifyPassword();
+    }
+  };
 
   const fetchStudentData = async () => {
     if (!usn.trim()) {
@@ -128,20 +157,73 @@ const StudentInfoScanner = () => {
       initial="hidden"
       animate="visible"
     >
-      {/* Header */}
-      <motion.div
-        className="text-center space-y-2"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-          Student Information Scanner
-        </h1>
-        <p className={`text-lg ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-          Enter USN to retrieve comprehensive student details
-        </p>
-      </motion.div>
+      {!isUnlocked ? (
+        // Password Protection Screen
+        <motion.div
+          className="min-h-[60vh] flex items-center justify-center"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card className={`w-full max-w-md ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <div className="p-3 rounded-full bg-[#a259ff]/10">
+                  <Shield className="h-8 w-8 text-[#a259ff]" />
+                </div>
+              </div>
+              <CardTitle className="text-2xl font-bold">Access Restricted</CardTitle>
+              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                Enter password to access Student Information Scanner
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    type="password"
+                    placeholder="Enter password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyPress={handlePasswordKeyPress}
+                    className={`pl-10 h-12 ${theme === 'dark' ? 'bg-background border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`}
+                  />
+                </div>
+                {passwordError && (
+                  <p className="text-sm text-red-500">{passwordError}</p>
+                )}
+              </div>
+              <Button
+                onClick={verifyPassword}
+                className="w-full h-12 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white"
+              >
+                Unlock Scanner
+              </Button>
+              <div className="text-center">
+                <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                  This page requires HOD authorization
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      ) : (
+        <>
+          {/* Header */}
+          <motion.div
+            className="text-center space-y-2"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+              Student Information Scanner
+            </h1>
+            <p className={`text-lg ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+              Enter USN to retrieve comprehensive student details
+            </p>
+          </motion.div>
 
       {/* Search Section */}
       <motion.div
@@ -154,7 +236,7 @@ const StudentInfoScanner = () => {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
             type="text"
-            placeholder="Enter USN (e.g., 1NT21CS001)"
+            placeholder="Enter USN (e.g.,1AM22CI079 )"
             value={usn}
             onChange={(e) => setUsn(e.target.value.toUpperCase())}
             onKeyPress={handleKeyPress}
@@ -673,6 +755,8 @@ const StudentInfoScanner = () => {
           </motion.div>
         )}
       </AnimatePresence>
+        </>
+      )}
     </motion.div>
   );
 };
