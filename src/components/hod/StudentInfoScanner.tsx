@@ -75,6 +75,13 @@ const StudentInfoScanner = () => {
   const codeReader = useRef<BrowserMultiFormatReader | null>(null);
   const { theme } = useTheme();
 
+  // Face scanning state
+  const [showFaceScanner, setShowFaceScanner] = useState(false);
+  const [faceScanning, setFaceScanning] = useState(false);
+  const [faceScanError, setFaceScanError] = useState<string | null>(null);
+  const faceVideoRef = useRef<HTMLVideoElement>(null);
+  const faceCanvasRef = useRef<HTMLCanvasElement>(null);
+
   // Initialize code reader
   useEffect(() => {
     codeReader.current = new BrowserMultiFormatReader();
@@ -193,6 +200,84 @@ const StudentInfoScanner = () => {
     if (e.key === 'Enter') {
       fetchStudentData();
     }
+  };
+
+  // Face scanning functions
+  const startFaceScanning = async () => {
+    setFaceScanning(true);
+    setFaceScanError(null);
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (faceVideoRef.current) {
+        faceVideoRef.current.srcObject = stream;
+        faceVideoRef.current.play();
+      }
+    } catch (error) {
+      setFaceScanError('Unable to access camera');
+      setFaceScanning(false);
+    }
+  };
+
+  const stopFaceScanning = () => {
+    setFaceScanning(false);
+    setFaceScanError(null);
+    if (faceVideoRef.current && faceVideoRef.current.srcObject) {
+      const stream = faceVideoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+    }
+  };
+
+  const captureAndRecognizeFace = async () => {
+    if (!faceVideoRef.current || !faceCanvasRef.current) return;
+
+    const canvas = faceCanvasRef.current;
+    const video = faceVideoRef.current;
+    const context = canvas.getContext('2d');
+
+    if (!context) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+
+      const formData = new FormData();
+      formData.append('image', blob, 'face.jpg');
+
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/recognize-face/`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          setUsn(data.usn);
+          setShowFaceScanner(false);
+          stopFaceScanning();
+          showSuccessAlert("Face Recognized", `USN: ${data.usn}`);
+          // Automatically fetch data after recognition
+          await fetchStudentData(data.usn);
+        } else {
+          setFaceScanError(data.message || 'Face not recognized');
+        }
+      } catch (error) {
+        setFaceScanError('Recognition failed');
+      }
+    }, 'image/jpeg');
+  };
+
+  const toggleFaceScanner = () => {
+    if (showFaceScanner) {
+      stopFaceScanning();
+    } else {
+      startFaceScanning();
+    }
+    setShowFaceScanner(!showFaceScanner);
   };
 
   const containerVariants = {
@@ -316,6 +401,13 @@ const StudentInfoScanner = () => {
             className={`h-12 px-4 ${theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
           >
             <QrCode className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={toggleFaceScanner}
+            variant="outline"
+            className={`h-12 px-4 ${theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+          >
+            <Camera className="h-4 w-4" />
           </Button>
           <Button
             onClick={fetchStudentData}
@@ -917,6 +1009,99 @@ const StudentInfoScanner = () => {
                 </Card>
               </motion.div>
             )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Face Scanner Modal */}
+      <AnimatePresence>
+        {showFaceScanner && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowFaceScanner(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className={`relative ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'} rounded-lg shadow-xl max-w-md w-full p-6`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                  Face Recognition Scan
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowFaceScanner(false)}
+                  className="h-8 w-8 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="space-y-4">
+                <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+                  Position your face in the camera view and click "Capture & Recognize"
+                </div>
+                <div className="relative bg-black rounded-lg overflow-hidden">
+                  <video
+                    ref={faceVideoRef}
+                    className="w-full h-64 object-cover"
+                    playsInline
+                    muted
+                  />
+                  <canvas
+                    ref={faceCanvasRef}
+                    className="hidden"
+                  />
+                  {!faceScanning && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                      <div className="text-center text-white">
+                        <Camera className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">Click "Start Scanning" to begin</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {faceScanError && (
+                  <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+                    <p className="text-sm text-red-700 dark:text-red-300">{faceScanError}</p>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  {!faceScanning ? (
+                    <Button
+                      onClick={startFaceScanning}
+                      className="flex-1 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white"
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      Start Scanning
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={captureAndRecognizeFace}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                    >
+                      Capture & Recognize
+                    </Button>
+                  )}
+                  <Button
+                    onClick={() => setShowFaceScanner(false)}
+                    variant="outline"
+                  >
+                    Close
+                  </Button>
+                </div>
+                <div className="text-center text-xs text-gray-500">
+                  Ensure good lighting and clear face visibility for best results
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
