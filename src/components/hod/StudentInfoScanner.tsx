@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useTheme } from "@/context/ThemeContext";
-import { Search, User, Calendar, BookOpen, TrendingUp, CreditCard, Users, Clock, MapPin, Phone, Mail, Heart, Lock, Shield } from "lucide-react";
+import { Search, User, Calendar, BookOpen, TrendingUp, CreditCard, Users, Clock, MapPin, Phone, Mail, Heart, Lock, Shield, QrCode, X, Camera, AlertCircle } from "lucide-react";
 import { showErrorAlert, showSuccessAlert } from "../../utils/sweetalert";
+import { BrowserMultiFormatReader, NotFoundException, ChecksumException, FormatException } from '@zxing/library';
 
 interface StudentInfo {
   name: string;
@@ -67,15 +68,31 @@ const StudentInfoScanner = () => {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [showScanner, setShowScanner] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const codeReader = useRef<BrowserMultiFormatReader | null>(null);
   const { theme } = useTheme();
 
-  // Check if page is already unlocked on component mount
+  // Initialize code reader
   useEffect(() => {
-    const unlockedStatus = localStorage.getItem('hod_student_scanner_unlocked');
-    if (unlockedStatus === 'true') {
-      setIsUnlocked(true);
-    }
+    codeReader.current = new BrowserMultiFormatReader();
+    return () => {
+      if (codeReader.current) {
+        codeReader.current.reset();
+      }
+    };
   }, []);
+
+  // Clean up scanner when modal closes
+  useEffect(() => {
+    if (!showScanner && codeReader.current) {
+      codeReader.current.reset();
+      setScanning(false);
+      setScanError(null);
+    }
+  }, [showScanner]);
 
   const verifyPassword = () => {
     if (password === 'hod@cseaiml') {
@@ -95,8 +112,9 @@ const StudentInfoScanner = () => {
     }
   };
 
-  const fetchStudentData = async () => {
-    if (!usn.trim()) {
+  const fetchStudentData = async (usnToFetch?: string) => {
+    const usnValue = usnToFetch || usn.trim();
+    if (!usnValue) {
       showErrorAlert("Error", "Please enter a USN");
       return;
     }
@@ -105,7 +123,7 @@ const StudentInfoScanner = () => {
     setError(null);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/public/student-data/?usn=${usn.trim().toUpperCase()}`);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/public/student-data/?usn=${usnValue.toUpperCase()}`);
       const data = await response.json();
 
       if (data.success) {
@@ -121,6 +139,54 @@ const StudentInfoScanner = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const startScanning = async () => {
+    if (!codeReader.current || !videoRef.current) return;
+
+    setScanning(true);
+    setScanError(null);
+
+    try {
+      const result = await codeReader.current.decodeOnceFromVideoDevice(undefined, videoRef.current);
+      if (result) {
+        const scannedText = result.getText();
+        const scannedUsn = scannedText.toUpperCase();
+        setUsn(scannedUsn);
+        setShowScanner(false);
+        showSuccessAlert("Barcode Scanned", `USN: ${scannedUsn}`);
+        // Automatically fetch data after scanning with the scanned USN
+        await fetchStudentData(scannedUsn);
+      }
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        setScanError("No barcode detected. Please ensure the barcode is clearly visible and well-lit.");
+      } else if (err instanceof ChecksumException) {
+        setScanError("Barcode checksum error. The barcode may be damaged or incomplete.");
+      } else if (err instanceof FormatException) {
+        setScanError("Invalid barcode format. Please try a different barcode.");
+      } else {
+        setScanError("Scanning failed. Please try again.");
+      }
+      console.error("Barcode scan error:", err);
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const stopScanning = () => {
+    if (codeReader.current) {
+      codeReader.current.reset();
+    }
+    setScanning(false);
+    setScanError(null);
+  };
+
+  const toggleScanner = () => {
+    if (showScanner) {
+      stopScanning();
+    }
+    setShowScanner(!showScanner);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -243,22 +309,31 @@ const StudentInfoScanner = () => {
             className={`pl-10 h-12 text-lg font-mono ${theme === 'dark' ? 'bg-background border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`}
           />
         </div>
-        <Button
-          onClick={fetchStudentData}
-          disabled={loading}
-          className="h-12 px-8 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white"
-        >
-          {loading ? (
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            >
-              <Search className="h-4 w-4" />
-            </motion.div>
-          ) : (
-            "Scan"
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={toggleScanner}
+            variant="outline"
+            className={`h-12 px-4 ${theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+          >
+            <QrCode className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={fetchStudentData}
+            disabled={loading}
+            className="h-12 px-8 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white"
+          >
+            {loading ? (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              >
+                <Search className="h-4 w-4" />
+              </motion.div>
+            ) : (
+              "Scan"
+            )}
+          </Button>
+        </div>
       </motion.div>
 
       {/* Error Message */}
@@ -275,6 +350,96 @@ const StudentInfoScanner = () => {
             }`}
           >
             {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Barcode Scanner Modal */}
+      <AnimatePresence>
+        {showScanner && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={() => setShowScanner(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className={`relative ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'} rounded-lg shadow-xl max-w-md w-full p-6`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                  Scan Student Barcode
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowScanner(false)}
+                  className="h-8 w-8 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="space-y-4">
+                <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+                  Position the barcode within the camera view and click "Start Scanning"
+                </div>
+                <div className="relative bg-black rounded-lg overflow-hidden">
+                  <video
+                    ref={videoRef}
+                    className="w-full h-64 object-cover"
+                    playsInline
+                    muted
+                  />
+                  {!scanning && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+                      <div className="text-center text-white">
+                        <Camera className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">Click "Start Scanning" to begin</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {scanError && (
+                  <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <AlertCircle className="h-4 w-4 text-red-500 flex-shrink-0" />
+                    <p className="text-sm text-red-700 dark:text-red-300">{scanError}</p>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  {!scanning ? (
+                    <Button
+                      onClick={startScanning}
+                      className="flex-1 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white"
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      Start Scanning
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={stopScanning}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      Stop Scanning
+                    </Button>
+                  )}
+                  <Button
+                    onClick={() => setShowScanner(false)}
+                    variant="outline"
+                  >
+                    Close
+                  </Button>
+                </div>
+                <div className="text-center text-xs text-gray-500">
+                  Supported formats: Code 128, Code 39, EAN-13, QR Code, and more
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
