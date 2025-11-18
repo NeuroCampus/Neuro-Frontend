@@ -71,16 +71,33 @@ const StudentInfoScanner = () => {
   const [showScanner, setShowScanner] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const codeReader = useRef<BrowserMultiFormatReader | null>(null);
-  const { theme } = useTheme();
-
-  // Face scanning state
   const [showFaceScanner, setShowFaceScanner] = useState(false);
   const [faceScanning, setFaceScanning] = useState(false);
   const [faceScanError, setFaceScanError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const faceVideoRef = useRef<HTMLVideoElement>(null);
   const faceCanvasRef = useRef<HTMLCanvasElement>(null);
+  const codeReader = useRef<BrowserMultiFormatReader | null>(null);
+  const { theme } = useTheme();
+
+  // Cleanup effects
+  useEffect(() => {
+    if (!showFaceScanner && faceScanning) {
+      stopFaceScanning();
+    }
+  }, [showFaceScanner]);
+
+  useEffect(() => {
+    return () => {
+      // Cleanup on component unmount
+      if (faceScanning) {
+        stopFaceScanning();
+      }
+      if (scanning) {
+        stopScanning();
+      }
+    };
+  }, []);
 
   // Initialize code reader
   useEffect(() => {
@@ -1021,7 +1038,10 @@ const StudentInfoScanner = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-            onClick={() => setShowFaceScanner(false)}
+            onClick={() => {
+              setShowFaceScanner(false);
+              stopFaceScanning();
+            }}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
@@ -1037,7 +1057,10 @@ const StudentInfoScanner = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setShowFaceScanner(false)}
+                  onClick={() => {
+                    setShowFaceScanner(false);
+                    stopFaceScanning();
+                  }}
                   className="h-8 w-8 p-0"
                 >
                   <X className="h-4 w-4" />
@@ -1091,7 +1114,10 @@ const StudentInfoScanner = () => {
                     </Button>
                   )}
                   <Button
-                    onClick={() => setShowFaceScanner(false)}
+                    onClick={() => {
+                      setShowFaceScanner(false);
+                      stopFaceScanning();
+                    }}
                     variant="outline"
                   >
                     Close
