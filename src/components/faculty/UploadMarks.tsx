@@ -45,6 +45,13 @@ const REQUIRED_HEADERS = ['usn', 'name', 'marks'];
 const MAX_RECORDS = 500;
 const SAMPLE_ROW = ['1AM22CI064', 'Amit Kumar', '85/100'];
 
+// Add new constants for Excel template
+const EXCEL_TEMPLATE_HEADERS = [
+  'SL No', 'USN', '1a', '1b', '1c', 'T1', '2a', '2b', '2c', 'T2', 'P-A TOT',
+  '3a', '3b', '3c', 'T3', '4a', '4b', '4c', 'T4', 'P-B TOT', '5a', '5b', 'T5',
+  '6a', '6b', 'T6', 'P-C TOT', 'TOT', 'IA1 (25)'
+];
+
 // Type for question format
 interface Question {
   id: string;
@@ -117,6 +124,7 @@ const UploadMarks = () => {
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [savingMarks, setSavingMarks] = useState(false);
+  const [bulkUploadCompleted, setBulkUploadCompleted] = useState(false);
 
   const calculateTotal = (marks: Record<string, string>) => {
     // Group marks by main question number and SUM subpart marks per main question
@@ -180,8 +188,10 @@ const UploadMarks = () => {
   };
   const studentsPerPage = 10;
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [bulkUploadFile, setBulkUploadFile] = useState<File | null>(null); // New state for bulk upload
   const [tabValue, setTabValue] = useState("manual");
   const [dragActive, setDragActive] = useState(false);
+  const [bulkDragActive, setBulkDragActive] = useState(false); // New state for bulk upload drag
   const [errorMessage, setErrorMessage] = useState("");
   const { theme } = useTheme();
   
@@ -234,6 +244,8 @@ const UploadMarks = () => {
       loadExistingQP();
     }
   }, [selected.branch_id, selected.semester_id, selected.section_id, selected.subject_id, selected.testType]);
+
+
 
   const handleMarksChange = (index: number, field: "marks" | "total", value: string) => {
     if (/^\d*$/.test(value)) {
@@ -344,7 +356,7 @@ const UploadMarks = () => {
     try {
       const qpResponse = await getQuestionPapers();
       if (qpResponse.success && qpResponse.data) {
-        const existingQp = qpResponse.data.find((q: any) => 
+        const existingQp = qpResponse.data.find((q: { branch: number; semester: number; section: number; subject: number; test_type: string; id: number; questions: Array<{ question_number: string; co: string; blooms_level: string; subparts: Array<{ subpart_label: string; content: string; max_marks: number }> }> }) => 
           q.branch === selected.branch_id && q.semester === selected.semester_id && q.section === selected.section_id && 
           q.subject === selected.subject_id && q.test_type === selected.testType
         );
@@ -355,8 +367,8 @@ const UploadMarks = () => {
           
           // Load questions from existing QP
           const loadedQuestions: Question[] = [];
-          existingQp.questions.forEach((q: any) => {
-            q.subparts.forEach((sub: any, index: number) => {
+          existingQp.questions.forEach((q: { question_number: string; co: string; blooms_level: string; subparts: Array<{ subpart_label: string; content: string; max_marks: number }> }) => {
+            q.subparts.forEach((sub: { subpart_label: string; content: string; max_marks: number }, index: number) => {
               loadedQuestions.push({
                 id: `${q.question_number}${sub.subpart_label}`,
                 number: `${q.question_number}${sub.subpart_label}`,
@@ -418,14 +430,14 @@ const UploadMarks = () => {
     const qpResponse = await getQuestionPapers();
     let existingQp = null;
     if (qpResponse.success && qpResponse.data) {
-      existingQp = qpResponse.data.find((q: any) => 
+      existingQp = qpResponse.data.find((q: { branch: number; semester: number; section: number; subject: number; test_type: string; id: number; questions: Array<{ question_number: string; co: string; blooms_level: string; subparts: Array<{ subpart_label: string; content: string; max_marks: number }> }> }) => 
         q.branch === selected.branch_id && q.semester === selected.semester_id && q.section === selected.section_id && 
         q.subject === selected.subject_id && q.test_type === selected.testType
       );
     }
     
     // Prepare QP data - group by main question
-    const groupedQuestions: Record<string, { co: string; blooms_level: string; subparts: any[] }> = {};
+    const groupedQuestions: Record<string, { co: string; blooms_level: string; subparts: Array<{ subpart_label: string; content: string; max_marks: number }> }> = {};
     questions.forEach(q => {
       const mainQ = q.number.charAt(0);
       if (!groupedQuestions[mainQ]) {
@@ -507,7 +519,7 @@ const UploadMarks = () => {
       });
       return;
     }
-    const qp = qpResponse.data.find((q: any) => 
+    const qp = qpResponse.data.find((q: { branch: number; semester: number; section: number; subject: number; test_type: string; id: number; questions: Array<{ question_number: string; co: string; blooms_level: string; subparts: Array<{ subpart_label: string; content: string; max_marks: number }> }> }) => 
       q.branch === branch_id && q.semester === semester_id && q.section === section_id && 
       q.subject === subject_id && q.test_type === testType
     );
@@ -628,59 +640,202 @@ const UploadMarks = () => {
           setErrorMessage("Failed to fetch student list.");
           return;
         }
-        const usnToIdMap = new Map<string, number>();
-        studentsList.forEach((student: ClassStudent) => {
-          usnToIdMap.set(student.usn.toUpperCase(), student.id);
-        });
-        const studentsData = data.slice(1).map((row: (string | number)[]) => {
-          const [usn, name, marksStr] = row;
-          const [marks, total] = (marksStr as string).split("/").map((s: string) => s.trim());
-          const normalizedMarks = normalizeMarks(marks);
-          if (!validateMarks(normalizedMarks, total)) {
-            throw new Error(`Invalid marks or total for student ${name}`);
+        const studentMap = new Map(studentsList.map(s => [s.usn, s]));
+        const studentData: (ClassStudent & { marks: string; total: string; isEditing: boolean })[] = [];
+        for (let i = 1; i < data.length; i++) {
+          const row = data[i];
+          const usn = row[0]?.toString().trim();
+          const name = row[1]?.toString().trim();
+          const marksStr = row[2]?.toString().trim();
+          if (!usn || !name || !marksStr) {
+            setErrorMessage(`Row ${i + 1} is incomplete. Please provide USN, Name, and Marks.`);
+            return;
           }
-          const studentId = (usn as string).toUpperCase();
-          if (!studentId) {
-            throw new Error(`Student with USN ${usn} not found in the selected class.`);
+          const student = studentMap.get(usn);
+          if (!student) {
+            setErrorMessage(`Student with USN ${usn} not found.`);
+            return;
           }
-          return {
-            id: studentId,
-            usn: (usn as string).toUpperCase(),
-            name,
-            marks: normalizedMarks,
+          const [marks, total] = marksStr.split("/").map((s: string) => s.trim());
+          if (isNaN(parseInt(marks, 10)) || isNaN(parseInt(total, 10))) {
+            setErrorMessage(`Invalid Marks or Total in row ${i + 1}. Expected: Numeric values`);
+            return;
+          }
+          studentData.push({
+            ...student,
+            marks,
             total,
             isEditing: false,
-          };
-        });
-        setStudents(studentsData.map(item => ({
-          id: typeof item.id === 'string' ? parseInt(item.id, 10) : item.id,
-          usn: item.usn as string,
-          name: item.name as string,
-          marks: item.marks,
-          total: item.total as string,
-          isEditing: item.isEditing
-        })));
-        setCurrentPage(1);
-        setTabValue("manual");
+          });
+        }
+        setStudents(studentData);
         setErrorMessage("");
-        
-        // Initialize action modes for all students to 'view' by default
-        const initialActionModes: Record<string, 'edit' | 'save' | 'view'> = {};
-        studentsData.forEach(student => {
-          initialActionModes[student.id] = 'view';
-        });
-        setActionModes(initialActionModes);
-      } catch (err: unknown) {
-        setStudents([]); // Clear students on error
-        setActionModes({}); // Reset action modes on error
-        setErrorMessage((err as { message: string }).message);
-        console.error("Error in handleFileChange:", err);
+      } catch (error) {
+        console.error("Error fetching students:", error);
+        setErrorMessage("Failed to fetch students.");
       }
     };
-    if (isCSV) {
-      reader.readAsText(file);
-    } else {
-      reader.readAsBinaryString(file);
+    reader.readAsBinaryString(file);
+  };
+
+  // New function to handle bulk upload file change
+  const handleBulkFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.size > MAX_FILE_SIZE) {
+      setErrorMessage('File size exceeds the 5MB limit.');
+      return;
+    }
+    
+    const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
+    if (!isExcel) {
+      setErrorMessage('Unsupported file type. Please upload Excel file (.xlsx or .xls).');
+      return;
+    }
+    
+    setBulkUploadFile(file);
+    setErrorMessage("");
+  };
+
+  // New function to handle bulk upload drag events
+  const handleBulkDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setBulkDragActive(true);
+  };
+
+  const handleBulkDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setBulkDragActive(false);
+  };
+
+  const handleBulkDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setBulkDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      const event = { target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>;
+      handleBulkFileChange(event);
+    }
+  };
+
+  // New function to clear bulk upload file
+  const handleClearBulkFile = () => {
+    setBulkUploadFile(null);
+    setErrorMessage("");
+  };
+
+  const handleProcessBulkUpload = async () => {
+    if (bulkUploadFile) {
+      await processBulkUpload(bulkUploadFile);
+    }
+  };
+  
+  const processBulkUpload = async (file: File) => {
+    try {
+      setErrorMessage("");
+      
+      // Read the Excel file
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const firstSheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheetName];
+      
+      // Convert to JSON
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      
+      // Skip header rows (first 8 rows based on template)
+      const dataRows = jsonData.slice(8) as (string | number)[][];
+      
+      // Process each row and update student marks
+      const updatedStudentMarks: Record<string, Record<string, string>> = {};
+      
+      // Get student list for the selected class
+      const { branch_id, semester_id, section_id, subject_id } = selected;
+      const studentsList = await getStudentsForClass(
+        branch_id!, 
+        semester_id!, 
+        section_id!, 
+        subject_id!
+      );
+      
+      if (!studentsList) {
+        setErrorMessage("Failed to fetch student list.");
+        return;
+      }
+      
+      // Create USN to student ID mapping
+      const usnToIdMap = new Map<string, number>();
+      studentsList.forEach((student: ClassStudent) => {
+        usnToIdMap.set(student.usn.toUpperCase(), student.id);
+      });
+      
+      console.log('USN to ID mapping:', usnToIdMap);
+      
+      // Process each row
+      for (const row of dataRows) {
+        if (row.length < 2) continue;
+        
+        const usn = String(row[1]).trim().toUpperCase(); // USN is in column B (index 1)
+        const studentId = usnToIdMap.get(usn);
+        
+        console.log(`Processing USN: ${usn}, Found student ID: ${studentId}`);
+        
+        if (!studentId) {
+          console.warn(`Student with USN ${usn} not found in the selected class.`);
+          continue;
+        }
+        
+        // Initialize marks for this student
+        updatedStudentMarks[studentId.toString()] = {};
+        
+        // Map Excel columns to question numbers
+        // Column mapping based on the template:
+        // C(2): 1a, D(3): 1b, E(4): 1c, F(5): 2a, G(6): 2b, H(7): 2c
+        // I(8): 3a, J(9): 3b, K(10): 3c, L(11): 4a, M(12): 4b, N(13): 4c
+        
+        const columnMapping: Record<number, string> = {
+          2: '1a', 3: '1b', 4: '1c',
+          5: '2a', 6: '2b', 7: '2c',
+          8: '3a', 9: '3b', 10: '3c',
+          11: '4a', 12: '4b', 13: '4c'
+        };
+        
+        // Extract marks from columns
+        Object.entries(columnMapping).forEach(([colIndex, questionNumber]) => {
+          const colIdx = parseInt(colIndex);
+          if (colIdx < row.length) {
+            const value = row[colIdx];
+            const marks = value !== null && value !== undefined ? String(value).trim() : '';
+            console.log(`Extracted marks for student ${studentId}, question ${questionNumber}: ${marks}`);
+            if (marks !== '' && !isNaN(Number(marks))) {
+              updatedStudentMarks[studentId.toString()][questionNumber] = marks;
+            }
+          }
+        });
+      }
+      
+      // Update student marks state
+      console.log('Updating student marks:', updatedStudentMarks);
+      setStudentMarks(updatedStudentMarks);
+      setBulkUploadCompleted(true);
+      
+      // Switch to manual tab to show the results
+      console.log('Switching to manual tab with marks:', updatedStudentMarks);
+      setTabValue("manual");
+      
+      MySwal.fire({
+        title: "Bulk Upload Successful!",
+        text: "Marks have been imported successfully. Please review and save.",
+        icon: "success",
+        confirmButtonText: "OK",
+      });
+    } catch (error) {
+      console.error("Error processing bulk upload:", error);
+      setErrorMessage("Failed to process the Excel file. Please check the format and try again.");
     }
   };
 
@@ -726,6 +881,95 @@ const UploadMarks = () => {
       const event = { target: { files: [file] } } as unknown as React.ChangeEvent<HTMLInputElement>;
       handleFileChange(event);
     }
+  };
+
+  // New function to download Excel template
+  const downloadExcelTemplate = () => {
+    // Create a new workbook
+    const wb = XLSX.utils.book_new();
+    
+    // Create worksheet data
+    const ws_data = [
+      // Header rows
+      ["Department of Computer Science & Engineering (AIML)"],
+      ["FIRST SEMESTER"],
+      [""],
+      ["FIRST INTERNAL ASSESSMENT – NOVEMBER 2025"],
+      [""],
+      ["Subject Code: 1BEIT105", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "Subject Name: PROGRAMMING IN C"],
+      [""],
+      // Column headers
+      EXCEL_TEMPLATE_HEADERS
+    ];
+    
+    // Add sample data row
+    const sampleRow = [
+      "1", "1AM25C001", "7", "6", "7", "20", "3", "2", "5", "16", "20",
+      "3", "0", "7", "10", "5", "6", "7", "18", "18", "7", "2", "9", "3", "2", "5", "9", "23.5", ""
+    ];
+    
+    ws_data.push(sampleRow);
+    
+    // Add empty rows
+    for (let i = 2; i <= 18; i++) {
+      ws_data.push([i.toString(), `1AM25C${String(i).padStart(3, '0')}`, ...Array(26).fill("")]);
+    }
+    
+    // Create worksheet
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+    
+    // Merge cells for header
+    if (!ws['!merges']) ws['!merges'] = [];
+    
+    // Merge cells for title
+    ws['!merges'].push(
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 28 } }, // Department title
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 28 } }, // Semester
+      { s: { r: 3, c: 0 }, e: { r: 3, c: 28 } }, // Assessment
+      { s: { r: 5, c: 0 }, e: { r: 5, c: 10 } }, // Subject code
+      { s: { r: 5, c: 28 }, e: { r: 5, c: 28 } } // Subject name
+    );
+    
+    // Set column widths
+    const columnWidths = [
+      { wch: 8 },   // SL No
+      { wch: 12 },  // USN
+      { wch: 5 },   // 1a
+      { wch: 5 },   // 1b
+      { wch: 5 },   // 1c
+      { wch: 5 },   // T1
+      { wch: 5 },   // 2a
+      { wch: 5 },   // 2b
+      { wch: 5 },   // 2c
+      { wch: 5 },   // T2
+      { wch: 8 },   // P-A TOT
+      { wch: 5 },   // 3a
+      { wch: 5 },   // 3b
+      { wch: 5 },   // 3c
+      { wch: 5 },   // T3
+      { wch: 5 },   // 4a
+      { wch: 5 },   // 4b
+      { wch: 5 },   // 4c
+      { wch: 5 },   // T4
+      { wch: 8 },   // P-B TOT
+      { wch: 5 },   // 5a
+      { wch: 5 },   // 5b
+      { wch: 5 },   // T5
+      { wch: 5 },   // 6a
+      { wch: 5 },   // 6b
+      { wch: 5 },   // T6
+      { wch: 8 },   // P-C TOT
+      { wch: 8 },   // TOT
+      { wch: 10 }   // IA1 (25)
+    ];
+    
+    ws['!cols'] = columnWidths;
+    
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(wb, ws, "Marks Entry");
+    
+    // Export the workbook
+    XLSX.writeFile(wb, "Marks_Entry_Template.xlsx");
   };
 
   const handleSelectChange = async (field: string, value: string | number) => {
@@ -775,66 +1019,74 @@ const UploadMarks = () => {
     }
     const { branch_id, semester_id, section_id, subject_id, testType } = { ...updated };
     if (branch_id && semester_id && section_id && subject_id && testType) {
-      // Reset QP related states when selections change
-      setQpId(null);
-      setQuestionFormatSaved(false);
-      setStudents([]);
-      setStudentMarks({});
-      setActionModes({});
-      
-      // Load existing QP
-      loadExistingQP();
-      
-      setLoadingStudents(true);
-      try {
-        const response: StudentsForMarksResponse = await getStudentsForMarks({
-          branch_id: branch_id.toString(),
-          semester_id: semester_id.toString(),
-          section_id: section_id.toString(),
-          subject_id: subject_id.toString(),
-          test_type: testType
-        });
-        if (response.success && response.data) {
-          const newStudents = response.data.map(s => ({
-            id: s.id,
-            name: s.name,
-            usn: s.usn,
-            marks: s.existing_mark ? s.existing_mark.total_obtained.toString() : '',
-            total: totalMarks.toString(),
-            isEditing: false
-          }));
-          
-          setStudents(newStudents);
-          setCurrentPage(1);
-          
-          // Initialize student marks with existing data
-          const initialMarks: Record<string, Record<string, string>> = {};
-          response.data.forEach(s => {
-            if (s.existing_mark) {
-              initialMarks[s.id.toString()] = {};
-              Object.keys(s.existing_mark.marks_detail).forEach(key => {
-                initialMarks[s.id.toString()][key] = s.existing_mark!.marks_detail[key].toString();
-              });
-            }
-          });
-          setStudentMarks(initialMarks);
-          
-          // Initialize action modes
-          const initialActionModes: Record<string, 'edit' | 'save' | 'view'> = {};
-          newStudents.forEach(student => {
-            initialActionModes[student.id] = 'view';
-          });
-          setActionModes(initialActionModes);
-        } else {
-          throw new Error("Failed to fetch students/marks");
-        }
-      } catch (err: unknown) {
+      // Only reset QP related states and reload students if bulk upload hasn't just completed
+      if (!bulkUploadCompleted) {
+        // Reset QP related states when selections change
+        setQpId(null);
+        setQuestionFormatSaved(false);
         setStudents([]);
-        setActionModes({});
         setStudentMarks({});
-        setErrorMessage((err as { message?: string })?.message || "Failed to fetch students/marks");
+        setActionModes({});
+        
+        // Load existing QP
+        loadExistingQP();
+        
+        setLoadingStudents(true);
+        try {
+          const response: StudentsForMarksResponse = await getStudentsForMarks({
+            branch_id: branch_id.toString(),
+            semester_id: semester_id.toString(),
+            section_id: section_id.toString(),
+            subject_id: subject_id.toString(),
+            test_type: testType
+          });
+          if (response.success && response.data) {
+            const newStudents = response.data.map(s => ({
+              id: s.id,
+              name: s.name,
+              usn: s.usn,
+              marks: s.existing_mark ? s.existing_mark.total_obtained.toString() : '',
+              total: totalMarks.toString(),
+              isEditing: false
+            }));
+            
+            console.log('Loaded students:', newStudents);
+            setStudents(newStudents);
+            setCurrentPage(1);
+            
+            // Initialize student marks with existing data
+            const initialMarks: Record<string, Record<string, string>> = {};
+            response.data.forEach(s => {
+              if (s.existing_mark) {
+                initialMarks[s.id.toString()] = {};
+                Object.keys(s.existing_mark.marks_detail).forEach(key => {
+                  initialMarks[s.id.toString()][key] = s.existing_mark!.marks_detail[key].toString();
+                });
+              }
+            });
+            console.log('Setting initial marks:', initialMarks);
+            setStudentMarks(initialMarks);
+            
+            // Initialize action modes
+            const initialActionModes: Record<string, 'edit' | 'save' | 'view'> = {};
+            newStudents.forEach(student => {
+              initialActionModes[student.id] = 'view';
+            });
+            setActionModes(initialActionModes);
+          } else {
+            throw new Error("Failed to fetch students/marks");
+          }
+        } catch (err: unknown) {
+          setStudents([]);
+          setActionModes({});
+          setStudentMarks({});
+          setErrorMessage((err as { message?: string })?.message || "Failed to fetch students/marks");
+        }
+        setLoadingStudents(false);
+      } else {
+        // Reset the bulk upload completed flag after handling the selection change
+        setBulkUploadCompleted(false);
       }
-      setLoadingStudents(false);
     }
   };
 
@@ -1030,12 +1282,12 @@ const UploadMarks = () => {
             >
               Question Paper
             </TabsTrigger>
-            {/* <TabsTrigger 
-              value="file" 
+            <TabsTrigger 
+              value="bulkUpload" 
               className={`data-[state=active]:bg-[#a259ff] data-[state=active]:text-white ${theme === 'dark' ? 'data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground' : 'data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
             >
-              File Upload
-            </TabsTrigger> */}
+              Bulk Upload
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="manual">
@@ -1107,6 +1359,13 @@ const UploadMarks = () => {
                             <td className="px-4 py-2 text-sm">{indexOfFirstStudent + index + 1}</td>
                             <td className="px-4 py-2 text-sm">{student.usn}</td>
                             <td className="px-4 py-2 text-sm">{student.name}</td>
+                            
+                            {/* Debug information */}
+                            {/* <td colSpan={questions.length * 3}>
+                              <div className="text-xs">
+                                Student ID: {student.id}, Marks: {JSON.stringify(studentMarks[student.id] || {})}
+                              </div>
+                            </td> */}
                             
                             {/* Dynamic question inputs based on question format */}
                             {questions.map((question, qIndex) => (
@@ -1448,79 +1707,109 @@ const UploadMarks = () => {
             )}
           </TabsContent>
 
-          {/* <TabsContent value="file">
+          {/* Bulk Upload Tab */}
+          <TabsContent value="bulkUpload">
             <div className={`border rounded-lg p-6 max-w-2xl mx-auto space-y-6 ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
               <div>
-                <h2 className="text-lg font-semibold">Upload User Data</h2>
-                <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Upload CSV or Excel files to bulk enroll users</p>
+                <h2 className="text-lg font-semibold">Bulk Upload Marks</h2>
+                <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                  Upload Excel file with student marks
+                </p>
               </div>
-              <div
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                className={`border rounded-md p-6 text-center space-y-4 transition-all duration-300 ${
-                  dragActive
-                    ? (theme === 'dark' ? "border-primary bg-primary/10" : "border-blue-400 bg-blue-50")
-                    : (theme === 'dark' ? "border-dashed border-border bg-muted" : "border-dashed border-gray-300 bg-gray-50")
-                }`}
-              >
-                <UploadCloud
-                  className={`mx-auto h-8 w-8 transition-transform duration-300 ${
-                    dragActive 
-                      ? (theme === 'dark' ? "scale-110 text-primary" : "scale-110 text-blue-400") 
-                      : (theme === 'dark' ? "text-muted-foreground" : "text-gray-400")
-                  }`}
-                />
-                <p className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>Drag & drop file here</p>
-                <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Supports CSV, XLS, XLSX (max 5MB)</p>
-                {!selectedFile ? (
-                  <div className="flex justify-center">
-                    <button
-                      onClick={() => document.getElementById("fileInput")?.click()}
-                      className={`px-4 py-2 rounded-md transition ${theme === 'dark' ? 'border border-border hover:bg-accent' : 'border border-gray-300 hover:bg-gray-100'}`}
-                    >
-                      Select File
-                    </button>
-                    <input
-                      id="fileInput"
-                      type="file"
-                      accept=".csv,.xls,.xlsx"
-                      onChange={handleFileChange}
-                      className="hidden"
+              
+              {areAllDropdownsSelected() ? (
+                <>
+                  <div
+                    onDrop={handleBulkDrop}
+                    onDragOver={handleBulkDragOver}
+                    onDragLeave={handleBulkDragLeave}
+                    className={`border rounded-md p-6 text-center space-y-4 transition-all duration-300 ${
+                      bulkDragActive
+                        ? (theme === 'dark' ? "border-primary bg-primary/10" : "border-blue-400 bg-blue-50")
+                        : (theme === 'dark' ? "border-dashed border-border bg-muted" : "border-dashed border-gray-300 bg-gray-50")
+                    }`}
+                  >
+                    <UploadCloud
+                      className={`mx-auto h-8 w-8 transition-transform duration-300 ${
+                        bulkDragActive 
+                          ? (theme === 'dark' ? "scale-110 text-primary" : "scale-110 text-blue-400") 
+                          : (theme === 'dark' ? "text-muted-foreground" : "text-gray-400")
+                      }`}
                     />
+                    <p className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
+                      Drag & drop Excel file here
+                    </p>
+                    <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                      Supports .xlsx, .xls (max 5MB)
+                    </p>
+                    {!bulkUploadFile ? (
+                      <div className="flex justify-center">
+                        <button
+                          onClick={() => document.getElementById("bulkFileInput")?.click()}
+                          className={`px-4 py-2 rounded-md transition ${theme === 'dark' ? 'border border-border hover:bg-accent' : 'border border-gray-300 hover:bg-gray-100'}`}
+                        >
+                          Select File
+                        </button>
+                        <input
+                          id="bulkFileInput"
+                          type="file"
+                          accept=".xlsx,.xls"
+                          onChange={handleBulkFileChange}
+                          className="hidden"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center gap-2 mt-2">
+                        <p className={`text-sm ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+                          {bulkUploadFile.name}
+                        </p>
+                        <Button variant="ghost" size="sm" onClick={handleClearBulkFile}>
+                          <X className={`h-4 w-4 ${theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-500 hover:text-gray-900'}`} />
+                        </Button>
+                      </div>
+                   )}
                   </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-2 mt-2">
-                    <p className={`text-sm ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{selectedFile.name}</p>
-                    <Button variant="ghost" size="sm" onClick={handleClearFile}>
-                      <X className={`h-4 w-4 ${theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-500 hover:text-gray-900'}`} />
+                  
+                  {errorMessage && (
+                    <div className={`text-sm font-medium text-center p-2 rounded-md ${theme === 'dark' ? 'text-destructive border border-destructive/30 bg-destructive/10' : 'text-red-600 border border-red-200 bg-red-50'}`}>
+                      {errorMessage}
+                    </div>
+                  )}
+                  
+                  <div className={`text-sm space-y-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
+                    <p className="font-semibold">Upload Instructions</p>
+                    <ul className={`list-disc list-inside ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                      <li>Use the provided Excel template for proper data formatting</li>
+                      <li>File must contain all required columns as per the template</li>
+                      <li>Maximum 500 records per file</li>
+                    </ul>
+                    <button
+                      onClick={downloadExcelTemplate}
+                      className={`text-sm ${theme === 'dark' ? 'text-primary hover:underline' : 'text-blue-600 hover:underline'}`}
+                    >
+                      Download Excel Template
+                    </button>
+                  </div>
+                  
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      onClick={handleProcessBulkUpload}
+                      disabled={!bulkUploadFile}
+                      className="bg-[#a259ff] text-white hover:bg-[#8a4dde]"
+                    >
+                      Process Upload
                     </Button>
                   </div>
-                )}
-              </div>
-              {errorMessage && (
-                <div className={`text-sm font-medium text-center p-2 rounded-md ${theme === 'dark' ? 'text-destructive border border-destructive/30 bg-destructive/10' : 'text-red-600 border border-red-200 bg-red-50'}`}>
-                  {errorMessage}
+                </>
+              ) : (
+                <div className={`p-6 text-center rounded-lg ${theme === 'dark' ? 'bg-card border border-border' : 'bg-gray-50 border border-gray-200'}`}>
+                  <p className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
+                    Please select all the dropdown options first to enable bulk upload.
+                  </p>
                 </div>
               )}
-              <div className={`text-sm space-y-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
-                <p className="font-semibold">Upload Instructions</p>
-                <ul className={`list-disc list-inside ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                  <li>Use the provided template for proper data formatting</li>
-                  <li>
-                    Required columns: <strong>usn</strong>, <strong>name</strong>, <strong>marks</strong>
-                  </li>
-                  <li>Maximum 500 records per file</li>
-                </ul>
-                <button
-                  onClick={handleDownloadTemplate}
-                  className={`text-sm ${theme === 'dark' ? 'text-primary hover:underline' : 'text-blue-600 hover:underline'}`}
-                >
-                  Download Template
-                </button>
-              </div>
             </div>
-          </TabsContent> */}
+          </TabsContent>
         </Tabs>
         <div className="flex justify-end mt-4">
           <Button 
