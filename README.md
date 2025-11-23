@@ -1,7 +1,5 @@
 <!-- PROJECT BANNER -->
-<p align="center">
-  <img src="public/placeholder.svg" alt="Neuro Campus Banner" width="400"/>
-</p>
+
 
 <h1 align="center"> NEURO CAMPUS: Academic Management System</h1>
 <p align="center"><b>Starlight Technology</b> | <i>Futuristic, AI-powered campus automation</i></p>
