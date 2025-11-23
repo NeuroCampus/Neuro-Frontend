@@ -685,3 +685,81 @@ export const manageAdminProfilePatch = async (data: ManageAdminProfilePatchReque
     return { success: false, message: "Network error" };
   }
 };
+
+interface CampusLocation {
+  id: number;
+  name: string;
+  description: string;
+  is_active: boolean;
+  center_latitude: number;
+  center_longitude: number;
+  radius_meters: number;
+  min_latitude?: number;
+  max_latitude?: number;
+  min_longitude?: number;
+  max_longitude?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface ManageCampusLocationResponse {
+  success: boolean;
+  message?: string;
+  location?: CampusLocation;
+  locations?: CampusLocation[];
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
+  results?: CampusLocation[];
+}
+
+export const manageCampusLocation = async (
+  data?: {
+    name?: string;
+    description?: string;
+    is_active?: boolean;
+    center_latitude?: number;
+    center_longitude?: number;
+    radius_meters?: number;
+    min_latitude?: number;
+    max_latitude?: number;
+    min_longitude?: number;
+    max_longitude?: number;
+    page?: number;
+    page_size?: number;
+  },
+  location_id?: number,
+  method: "GET" | "POST" | "PUT" | "DELETE" = "GET"
+): Promise<ManageCampusLocationResponse> => {
+  try {
+    let url = location_id
+      ? `${API_BASE_URL}/admin/campus-locations/${location_id}/`
+      : `${API_BASE_URL}/admin/campus-locations/`;
+
+    // Add pagination parameters for GET requests
+    if (method === "GET" && data && !location_id) {
+      const params = new URLSearchParams();
+      if (data.page) params.append('page', data.page.toString());
+      if (data.page_size) params.append('page_size', data.page_size.toString());
+      if (params.toString()) url += `?${params.toString()}`;
+    }
+
+    const response = await fetchWithTokenRefresh(url, {
+      method,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+      body: (method !== "GET" && data) ? JSON.stringify(data) : undefined,
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      console.error("Manage Campus Location Failed:", { status: response.status, result });
+      return { success: false, message: result.message || `HTTP ${response.status}` };
+    }
+    return result;
+  } catch (error) {
+    console.error("Manage Campus Location Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};

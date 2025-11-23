@@ -12,6 +12,7 @@ import NotificationsManagement from "../admin/NotificationsManagement";
 import HODLeavesManagement from "../admin/HODLeavesManagement";
 import UsersManagement from "../admin/UsersManagement";
 import AdminProfile from "../admin/AdminProfile";
+import CampusLocationManager from "../admin/CampusLocationManager";
 import DashboardCard from "../common/DashboardCard";
 import { useToast } from "../../hooks/use-toast";
 import {
@@ -21,6 +22,7 @@ import {
   Bell,
   GitBranch,
   UserCheck,
+  MapPin,
 } from "lucide-react";
 import { logoutUser } from "../../utils/authService";
 import { useRef, useEffect } from "react";
@@ -147,6 +149,12 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
                 icon={<Users size={20} />}
                 onClick={() => handlePageChange("users")}
               />
+              <DashboardCard
+                title="Campus Locations"
+                description="Set campus boundaries for attendance"
+                icon={<MapPin size={20} />}
+                onClick={() => handlePageChange("campus-locations")}
+              />
             </motion.div>
           </motion.div>
         );
@@ -225,6 +233,17 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
             transition={{ duration: 0.3 }}
           >
             <UsersManagement setError={setError} toast={toast} />
+          </motion.div>
+        );
+      case "campus-locations":
+        return (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <CampusLocationManager />
           </motion.div>
         );
       case "profile":

@@ -64,15 +64,48 @@ const FacultyAttendance = () => {
     setIsAnimating(true);
 
     try {
+      // Get user's current location
+      let latitude: number | undefined;
+      let longitude: number | undefined;
+
+      if (navigator.geolocation) {
+        try {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 300000 // 5 minutes
+            });
+          });
+          latitude = position.coords.latitude;
+          longitude = position.coords.longitude;
+        } catch (geoError) {
+          console.warn("Could not get location:", geoError);
+          toast.warning("Location access denied or unavailable. Attendance will be marked without location.");
+        }
+      } else {
+        toast.warning("Geolocation is not supported by this browser.");
+      }
+
       const requestData: MarkFacultyAttendanceRequest = {
         status,
-        notes: notes.trim() || undefined
+        notes: notes.trim() || undefined,
+        latitude,
+        longitude
       };
 
       const response = await markFacultyAttendance(requestData);
 
       if (response.success) {
         const isUpdate = response.data?.updated || false;
+        
+        // Handle location validation feedback
+        if (response.data?.location_valid === false) {
+          toast.warning(response.data.location_message || "Location verification failed");
+        } else if (response.data?.location_valid === true) {
+          toast.success(response.data.location_message || "Location verified successfully");
+        }
+        
         toast.success(isUpdate ? `Attendance updated to ${status}` : `Attendance marked as ${status}`);
         setAttendanceStatus(status);
         await fetchAttendanceData(); // Refresh data
@@ -279,6 +312,11 @@ const FacultyAttendance = () => {
                     <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                       Marked at {new Date(todayRecord.marked_at).toLocaleTimeString()}
                     </p>
+                    {todayRecord.latitude && todayRecord.longitude && (
+                      <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                        Location: {todayRecord.latitude.toFixed(6)}, {todayRecord.longitude.toFixed(6)}
+                      </p>
+                    )}
                     {todayRecord.notes && (
                       <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                         Notes: {todayRecord.notes}
@@ -329,6 +367,14 @@ const FacultyAttendance = () => {
                       <FileText className="w-4 h-4 mt-0.5 text-gray-500" />
                       <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                         {record.notes}
+                      </p>
+                    </div>
+                  )}
+                  {record.latitude && record.longitude && (
+                    <div className="mt-2 flex items-start space-x-2">
+                      <div className="w-4 h-4 mt-0.5 text-gray-500">📍</div>
+                      <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                        {record.latitude.toFixed(6)}, {record.longitude.toFixed(6)}
                       </p>
                     </div>
                   )}

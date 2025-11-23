@@ -967,6 +967,8 @@ export const manageStudentLeave = async (
 export interface MarkFacultyAttendanceRequest {
   status: "present" | "absent";
   notes?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface MarkFacultyAttendanceResponse {
@@ -977,7 +979,11 @@ export interface MarkFacultyAttendanceResponse {
     date: string;
     status: string;
     marked_at: string;
+    latitude?: number;
+    longitude?: number;
     updated?: boolean;
+    location_valid?: boolean;
+    location_message?: string;
   };
 }
 
@@ -987,6 +993,8 @@ export interface FacultyAttendanceRecord {
   status: string;
   marked_at: string;
   notes: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface GetFacultyAttendanceRecordsResponse {
