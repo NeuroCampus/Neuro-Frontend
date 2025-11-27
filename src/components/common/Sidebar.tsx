@@ -187,6 +187,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // Academic
     { name: "Timetable", page: "timetable" },
     { name: "Proctor Students", page: "proctor-students" },
+    { name: "Scan for Student Info", page: "scan-student-info" },
     
     // Communication
     { name: "Announcements", page: "announcements" },

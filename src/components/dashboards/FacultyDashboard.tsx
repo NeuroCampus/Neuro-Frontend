@@ -16,6 +16,7 @@ import Chat from "../common/Chat";
 import FacultyProfile from "../faculty/facultyProfile";
 import GenerateStatistics from "../faculty/GenerateStatistics";
 import FacultyAttendance from "../faculty/FacultyAttendance";
+import StudentInfoScanner from "../hod/StudentInfoScanner";
 import { logoutUser } from "../../utils/authService";
 import { useTheme } from "../../context/ThemeContext";
 import { useProctorStudentsQuery } from "../../hooks/useApiQueries";
@@ -56,7 +57,8 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'timetable': 'timetable',
       'chat': 'chat',
       'faculty-profile': 'faculty-profile',
-      'statistics': 'statistics'
+      'statistics': 'statistics',
+      'scan-student-info': 'scan-student-info'
     };
     
     return pathMap[lastPart] || 'dashboard';
@@ -95,7 +97,8 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'timetable': '/faculty/timetable',
       'chat': '/faculty/chat',
       'faculty-profile': '/faculty/faculty-profile',
-      'statistics': '/faculty/statistics'
+      'statistics': '/faculty/statistics',
+      'scan-student-info': '/faculty/scan-student-info'
     };
     
     const path = pathMap[page] || '/faculty/dashboard';
@@ -154,6 +157,8 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
         return <FacultyProfile />;
       case "statistics":
         return <GenerateStatistics proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} />;
+      case "scan-student-info":
+        return <StudentInfoScanner />;
       default:
         return <FacultyStats setActivePage={setPage} />;
     }
