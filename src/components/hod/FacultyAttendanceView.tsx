@@ -193,7 +193,7 @@ const FacultyAttendanceView: React.FC = () => {
         {activeTab === 'records' && (
           <button
             onClick={exportToCSV}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-[#a259ff] text-white rounded-lg hover:bg-[#8a4dde] transition-colors"
           >
             <Download className="w-4 h-4" />
             Export CSV
@@ -207,7 +207,7 @@ const FacultyAttendanceView: React.FC = () => {
           onClick={() => setActiveTab('today')}
           className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
             activeTab === 'today'
-              ? 'bg-blue-600 text-white'
+              ? 'bg-[#a259ff] text-white'
               : theme === 'dark'
                 ? 'text-muted-foreground hover:text-foreground'
                 : 'text-gray-600 hover:text-gray-900'
@@ -219,7 +219,7 @@ const FacultyAttendanceView: React.FC = () => {
           onClick={() => setActiveTab('records')}
           className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
             activeTab === 'records'
-              ? 'bg-blue-600 text-white'
+              ? 'bg-[#a259ff] text-white'
               : theme === 'dark'
                 ? 'text-muted-foreground hover:text-foreground'
                 : 'text-gray-600 hover:text-gray-900'

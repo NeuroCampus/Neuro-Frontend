@@ -544,9 +544,7 @@ const filteredUsers = Array.isArray(users) ? users : [];
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1 || loading}
-                  className={theme === 'dark' 
-                    ? 'text-foreground bg-card border border-border hover:bg-accent' 
-                    : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
+                  className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
                 >
                   Previous
                 </Button>
@@ -581,9 +579,7 @@ const filteredUsers = Array.isArray(users) ? users : [];
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages || loading}
-                  className={theme === 'dark' 
-                    ? 'text-foreground bg-card border border-border hover:bg-accent' 
-                    : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
+                  className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
                 >
                   Next
                 </Button>

@@ -259,11 +259,7 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
           </div>
           <button
             onClick={handleExportPDF}
-            className={`flex items-center gap-2 text-sm font-medium px-5 py-2.5 rounded-lg shadow-md transition duration-200 ${
-              theme === 'dark' 
-                ? 'text-foreground bg-card border border-border hover:bg-accent' 
-                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-            }`}
+            className="flex items-center gap-2 text-sm font-medium px-5 py-2.5 rounded-lg shadow-md transition duration-200 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
           >
             <FiDownload />
             Export PDF

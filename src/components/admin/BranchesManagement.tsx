@@ -370,11 +370,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
           <div className="flex flex-col lg:flex-row gap-2 w-full lg:w-auto">
             <Button
               size="sm"
-              className={`flex items-center justify-center gap-1 ${
-                theme === 'dark' 
-                  ? 'text-foreground bg-card border border-border hover:bg-accent' 
-                  : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-              } shadow-sm w-full lg:w-auto`}
+              className="flex items-center justify-center gap-1 text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-sm w-full lg:w-auto"
               onClick={() => setIsAddDialogOpen(true)}
               disabled={loading}
             >
@@ -383,11 +379,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
 
             <Button
               size="sm"
-              className={`flex items-center justify-center gap-1 ${
-                theme === 'dark' 
-                  ? 'text-foreground bg-card border border-border hover:bg-accent' 
-                  : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-              } shadow-sm w-full lg:w-auto`}
+              className="flex items-center justify-center gap-1 text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-sm w-full lg:w-auto"
               onClick={() => setIsAssignDialogOpen(true)}
               disabled={loading}
             >
@@ -396,11 +388,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
 
             <Button
               size="sm"
-              className={`flex items-center justify-center gap-1 ${
-                theme === 'dark' 
-                  ? 'text-foreground bg-card border border-border hover:bg-accent' 
-                  : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-              } shadow-sm w-full lg:w-auto`}
+              className="flex items-center justify-center gap-1 text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-sm w-full lg:w-auto"
               onClick={exportToPDF}
               disabled={loading}
             >
@@ -487,9 +475,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                         <>
                           <Button
                             size="sm"
-                            className={theme === 'dark' 
-                              ? 'text-foreground bg-card border border-border hover:bg-accent' 
-                              : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
+                            className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
                             onClick={saveEdit}
                             disabled={loading}
                           >
@@ -588,9 +574,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
               Cancel
             </Button>
             <Button 
-              className={theme === 'dark' 
-                ? 'text-foreground bg-card border border-border hover:bg-accent' 
-                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'} 
+              className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white" 
               onClick={handleAddBranch} 
               disabled={loading}
             >
@@ -659,9 +643,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
             </Button>
             <Button
               onClick={handleAssignHod}
-              className={theme === 'dark' 
-                ? 'text-foreground bg-card border border-border hover:bg-accent' 
-                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
+              className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
               disabled={loading || !selectedBranchId || !newHodId}
             >
               {loading ? "Assigning..." : "Assign"}
