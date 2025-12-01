@@ -281,9 +281,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
               else setEditing(true);
               }}
               variant="outline"
-              className={theme === 'dark' 
-                ? 'text-foreground bg-card border border-border hover:bg-accent' 
-                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
+              className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
               disabled={loading}
             >
               {editing ? (loading ? "Saving..." : "Save") : "Edit Profile"}
