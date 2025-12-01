@@ -23,7 +23,7 @@ import { Button } from "../ui/button";
 import { Check, X, UploadCloud } from "lucide-react";
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
-import { getTakeAttendanceBootstrap, takeAttendance, FacultyAssignment, ClassStudent, GetTakeAttendanceBootstrapResponse } from "@/utils/faculty_api";
+import { getTakeAttendanceBootstrap, takeAttendance, aiAttendance, FacultyAssignment, ClassStudent, GetTakeAttendanceBootstrapResponse } from "@/utils/faculty_api";
 import { useFacultyAssignmentsQuery } from "@/hooks/useApiQueries";
 import { useTheme } from "@/context/ThemeContext";
 
@@ -40,6 +40,9 @@ const TakeAttendance = () => {
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [recentRecords, setRecentRecords] = useState<GetTakeAttendanceBootstrapResponse['data']['recent_records']>([]);
+  const [aiPhoto, setAiPhoto] = useState<File | null>(null);
+  const [aiResults, setAiResults] = useState<any>(null);
+  const [processingAI, setProcessingAI] = useState(false);
   const { theme } = useTheme();
 
   // Assignments are now loaded via context
@@ -110,6 +113,45 @@ const TakeAttendance = () => {
       }
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setAiPhoto(file);
+      setAiResults(null);
+      setErrorMsg("");
+    }
+  };
+
+  const handleAIProcess = async () => {
+    if (!branchId || !semesterId || !sectionId || !subjectId || !aiPhoto) return;
+    setProcessingAI(true);
+    setSuccessMsg("");
+    setErrorMsg("");
+    try {
+      const res = await aiAttendance({
+        branch_id: branchId.toString(),
+        semester_id: semesterId.toString(),
+        section_id: sectionId.toString(),
+        subject_id: subjectId.toString(),
+        photo: aiPhoto,
+      });
+      if (res.success) {
+        setAiResults(res.data);
+        setSuccessMsg("AI attendance processed successfully!");
+      } else {
+        setErrorMsg(res.message || "Failed to process AI attendance");
+      }
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setErrorMsg(e.message || "Failed to process AI attendance");
+      } else {
+        setErrorMsg("Failed to process AI attendance");
+      }
+    } finally {
+      setProcessingAI(false);
     }
   };
 
@@ -301,20 +343,92 @@ const TakeAttendance = () => {
                           Upload a class photo for automatic attendance marking using facial recognition technology.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-                          <Button 
-                            variant="outline" 
-                            className={`flex-1 ${theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handlePhotoUpload}
+                            className="hidden"
+                            id="photo-upload"
+                          />
+                          <label
+                            htmlFor="photo-upload"
+                            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer text-center transition ${
+                              theme === 'dark'
+                                ? 'border-border text-foreground hover:bg-accent'
+                                : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                            }`}
                           >
-                            Upload Photo
-                          </Button>
-                          <Button 
+                            {aiPhoto ? aiPhoto.name : 'Upload Photo'}
+                          </label>
+                          <Button
+                            onClick={handleAIProcess}
+                            disabled={processingAI || !aiPhoto}
                             className="flex-1 flex items-center gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
                           >
-                            Process Attendance
+                            {processingAI ? (
+                              <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                Processing...
+                              </>
+                            ) : (
+                              "Process Attendance"
+                            )}
                           </Button>
                         </div>
                       </div>
-                      
+
+                      {aiResults && (
+                        <div className={`mt-8 p-4 rounded-lg ${theme === 'dark' ? 'bg-muted' : 'bg-gray-50'}`}>
+                          <h4 className={`font-medium mb-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>AI Processing Results:</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div className={`p-3 rounded ${theme === 'dark' ? 'bg-background' : 'bg-white'}`}>
+                              <div className="text-2xl font-bold text-green-600">{aiResults.present_count}</div>
+                              <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Present</div>
+                            </div>
+                            <div className={`p-3 rounded ${theme === 'dark' ? 'bg-background' : 'bg-white'}`}>
+                              <div className="text-2xl font-bold text-red-600">{aiResults.absent_count}</div>
+                              <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Absent</div>
+                            </div>
+                            <div className={`p-3 rounded ${theme === 'dark' ? 'bg-background' : 'bg-white'}`}>
+                              <div className="text-2xl font-bold text-blue-600">{aiResults.total_students}</div>
+                              <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Total Students</div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div>
+                              <h5 className={`font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Present Students:</h5>
+                              <div className={`max-h-32 overflow-y-auto p-2 rounded ${theme === 'dark' ? 'bg-background' : 'bg-white'}`}>
+                                {aiResults.present_students.length > 0 ? (
+                                  aiResults.present_students.map((student: any) => (
+                                    <div key={student.id} className="text-sm">
+                                      {student.name} ({student.usn})
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No students detected as present</div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div>
+                              <h5 className={`font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Absent Students:</h5>
+                              <div className={`max-h-32 overflow-y-auto p-2 rounded ${theme === 'dark' ? 'bg-background' : 'bg-white'}`}>
+                                {aiResults.absent_students.length > 0 ? (
+                                  aiResults.absent_students.map((student: any) => (
+                                    <div key={student.id} className="text-sm">
+                                      {student.name} ({student.usn})
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>All students detected as present</div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       <div className={`mt-8 p-4 rounded-lg ${theme === 'dark' ? 'bg-muted' : 'bg-gray-50'}`}>
                         <h4 className={`font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>How it works:</h4>
                         <ul className={`text-sm space-y-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
@@ -325,6 +439,8 @@ const TakeAttendance = () => {
                         </ul>
                       </div>
                     </div>
+                    {successMsg && <div className={`text-green-400 text-sm p-4 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{successMsg}</div>}
+                    {errorMsg && <div className={`text-red-400 text-sm p-4 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{errorMsg}</div>}
                   </div>
                 ) : (
                   <div className={`border rounded-md mt-4 p-8 text-center ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>

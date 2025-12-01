@@ -392,6 +392,60 @@ export const takeAttendance = async (
   }
 };
 
+export interface AIAttendanceRequest {
+  branch_id: string;
+  subject_id: string;
+  section_id: string;
+  semester_id: string;
+  photo: File;
+}
+
+interface AIAttendanceResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    attendance_record_id: number;
+    total_students: number;
+    present_count: number;
+    absent_count: number;
+    present_students: Array<{
+      id: number;
+      name: string;
+      usn: string;
+    }>;
+    absent_students: Array<{
+      id: number;
+      name: string;
+      usn: string;
+    }>;
+  };
+}
+
+export const aiAttendance = async (
+  data: AIAttendanceRequest
+): Promise<AIAttendanceResponse> => {
+  try {
+    const formData = new FormData();
+    formData.append("branch_id", data.branch_id);
+    formData.append("subject_id", data.subject_id);
+    formData.append("section_id", data.section_id);
+    formData.append("semester_id", data.semester_id);
+    formData.append("photo", data.photo);
+
+    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/ai-attendance/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      },
+      body: formData,
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("AI Attendance Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
 export const uploadInternalMarks = async (
   data: UploadMarksRequest
 ): Promise<UploadMarksResponse> => {
