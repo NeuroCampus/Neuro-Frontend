@@ -227,9 +227,7 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
             <Button
               onClick={handleAddBatch}
               disabled={loading}
-              className={theme === 'dark' 
-                ? 'text-foreground bg-card border border-border hover:bg-accent shadow-sm' 
-                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 shadow-sm'}
+              className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-sm"
             >
               Add Batch
             </Button>
@@ -359,9 +357,7 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
             <Button
               onClick={handleUpdateBatch}
               disabled={loading}
-              className={theme === 'dark' 
-                ? 'text-foreground bg-card border border-border hover:bg-accent' 
-                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
+              className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
             >
               {loading ? "Updating..." : "Update Batch"}
             </Button>
