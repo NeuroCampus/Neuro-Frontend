@@ -105,13 +105,16 @@ interface Notification {
 }
 
 interface ManageNotificationsResponse {
-  success: boolean;
+  success?: boolean;
   message?: string;
   notifications?: Notification[];
   count?: number;
   next?: string | null;
   previous?: string | null;
-  results?: Notification[];
+  results?: {
+    success: boolean;
+    notifications: Notification[];
+  };
 }
 
 interface HODLeave {

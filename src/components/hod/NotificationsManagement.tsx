@@ -107,7 +107,7 @@ const NotificationsManagement = () => {
     };
 
     const payload = {
-      action: (target === "all" ? "notify_all" : "notify") as "notify" | "notify_all" | "notify_low_attendance",
+      action: "notify_all" as "notify" | "notify_all" | "notify_low_attendance",
       title,
       message,
       target: (roleMap[target] || target) as "all" | "student" | "teacher",

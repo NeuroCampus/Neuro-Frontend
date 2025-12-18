@@ -65,12 +65,17 @@ const ProctorStudents = ({ proctorStudents, proctorStudentsLoading }: ProctorStu
                     {formatAttendancePercentage(student.attendance)}
                   </td>
                   <td className={`px-4 py-2 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                    {student.marks && student.marks.length > 0
-                      ? (
-                          student.marks.reduce((sum, m) => sum + (m.mark || 0), 0) /
-                          student.marks.length
-                        ).toFixed(2)
-                      : 0}
+                    {(() => {
+                      const internalMarks = student.marks || [];
+                      const iaMarks = student.ia_marks || [];
+                      const allMarks = [
+                        ...internalMarks.map(m => m.mark),
+                        ...iaMarks.map(m => m.total_obtained)
+                      ];
+                      return allMarks.length > 0
+                        ? (allMarks.reduce((sum, mark) => sum + (mark || 0), 0) / allMarks.length).toFixed(2)
+                        : 0;
+                    })()}
                   </td>
                 </tr>
               ))}

@@ -44,11 +44,11 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
       try {
         const response = await manageNotifications();
         console.log("Fetch Notifications Response:", response); // Debug log
-        if (response.success) {
+        if (response.results && response.results.success) {
           setNotifications(
-            response.notifications.map((note: any) => ({
+            response.results.notifications.map((note: any) => ({
               ...note,
-              color: getBadgeColor(note.target_role),
+              color: getBadgeColor(note.notification_type, theme),
             }))
           );
         } else {
@@ -110,11 +110,11 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
       if (response.success) {
         // Refetch notifications to get the new notification with its ID
         const updatedResponse = await manageNotifications();
-        if (updatedResponse.success) {
+        if (updatedResponse.results && updatedResponse.results.success) {
           setNotifications(
-            updatedResponse.notifications.map((note: any) => ({
+            updatedResponse.results.notifications.map((note: any) => ({
               ...note,
-              color: getBadgeColor(note.target_role),
+              color: getBadgeColor(note.notification_type, theme),
             }))
           );
         }
@@ -147,6 +147,7 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
     switch (role) {
       case "all":
       case "All Users":
+      case "announcement":
         return theme === 'dark' ? "bg-blue-900 text-blue-200" : "bg-blue-100 text-blue-800";
       case "teacher":
       case "Teacher":
@@ -192,8 +193,8 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
                       <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{note.message}</div>
                     </td>
                     <td className="py-3">
-                      <span className={`px-3 py-1 text-xs rounded-full ${getBadgeColor(note.target_role, theme)}`}>
-                        {note.target_role.charAt(0).toUpperCase() + note.target_role.slice(1).replace("_", " ")}
+                      <span className={`px-3 py-1 text-xs rounded-full ${getBadgeColor(note.notification_type, theme)}`}>
+                        {note.notification_type.charAt(0).toUpperCase() + note.notification_type.slice(1)}
                       </span>
                     </td>
                   </tr>

@@ -535,12 +535,16 @@ const UploadMarks = () => {
     // Prepare marks data
     const marksData: UploadIAMarksRequest = {
       question_paper_id: qp.id,
-      marks_data: students.map(s => ({
-        student_id: s.id,
-        marks_detail: Object.fromEntries(
+      marks_data: students.map(s => {
+        const marksDetail = Object.fromEntries(
           Object.entries(studentMarks[s.id.toString()] || {}).map(([key, value]) => [key, parseFloat(value) || 0])
-        )
-      }))
+        );
+        return {
+          student_id: s.id,
+          marks_detail: marksDetail,
+          total_obtained: parseFloat(calculateTotal(studentMarks[s.id.toString()] || {})) || 0
+        };
+      })
     };
 
     try {

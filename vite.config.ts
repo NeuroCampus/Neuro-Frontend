@@ -26,6 +26,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
+    include: ['react', 'react-dom'],
     exclude: ['@zxing/library', '@zxing/browser']
   }
 }));

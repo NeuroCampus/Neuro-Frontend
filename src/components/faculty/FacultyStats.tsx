@@ -101,13 +101,17 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
   }));
   const marksData = proctorStudents.map((s) => ({
     name: s.name,
-    avgMark:
-      s.marks && s.marks.length > 0
-        ? (
-            s.marks.reduce((sum, m) => sum + (m.mark || 0), 0) /
-            s.marks.length
-          ).toFixed(2)
-        : 0,
+    avgMark: (() => {
+      const internalMarks = s.marks || [];
+      const iaMarks = s.ia_marks || [];
+      const allMarks = [
+        ...internalMarks.map(m => m.mark),
+        ...iaMarks.map(m => m.total_obtained)
+      ];
+      return allMarks.length > 0
+        ? (allMarks.reduce((sum, mark) => sum + (mark || 0), 0) / allMarks.length).toFixed(2)
+        : 0;
+    })(),
   }));
 
   // Get unique classes and sections from proctorStudents
@@ -126,6 +130,26 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
     const sectionMatch = selectedSection === "All" || s.section === selectedSection;
     return classMatch && sectionMatch;
   });
+
+  // Use filtered data for charts
+  const filteredAttendanceData = filteredStudents.map((s) => ({
+    name: s.name,
+    attendance: s.attendance === "NA" || s.attendance === null || s.attendance === undefined ? 0 : typeof s.attendance === "string" ? 0 : s.attendance,
+  }));
+  const filteredMarksData = filteredStudents.map((s) => ({
+    name: s.name,
+    avgMark: (() => {
+      const internalMarks = s.marks || [];
+      const iaMarks = s.ia_marks || [];
+      const allMarks = [
+        ...internalMarks.map(m => m.mark),
+        ...iaMarks.map(m => m.total_obtained)
+      ];
+      return allMarks.length > 0
+        ? (allMarks.reduce((sum, mark) => sum + (mark || 0), 0) / allMarks.length).toFixed(2)
+        : 0;
+    })(),
+  }));
 
   if (loading) {
     return <div className={`p-6 text-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Loading dashboard...</div>;
@@ -268,7 +292,7 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
               <h3 className={`font-semibold mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Performance</h3>
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart
-                  data={attendanceData}
+                  data={filteredAttendanceData}
                   margin={{ top: 5, right: 20, left: 0, bottom: 50 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#2e2e30' : '#e5e7eb'} />
@@ -276,9 +300,9 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
                     dataKey="name"
                     stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'}
                     interval={0}
-                    angle={attendanceData.length > 10 ? -45 : 0}
-                    textAnchor={attendanceData.length > 10 ? "end" : "middle"}
-                    height={attendanceData.length > 10 ? 60 : 40}
+                    angle={filteredAttendanceData.length > 10 ? -45 : 0}
+                    textAnchor={filteredAttendanceData.length > 10 ? "end" : "middle"}
+                    height={filteredAttendanceData.length > 10 ? 60 : 40}
                   />
                   <YAxis stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'} />
                   <Tooltip
@@ -302,10 +326,10 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
             {/* Marks Bar Chart */}
             <div className="relative">
               <h3 className={`font-semibold mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Average Marks</h3>
-              {marksData.length > 0 ? (
+              {filteredMarksData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={250}>
                   <BarChart
-                    data={marksData}
+                    data={filteredMarksData}
                     margin={{ top: 5, right: 20, left: 0, bottom: 50 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#2e2e30' : '#e5e7eb'} />
@@ -313,9 +337,9 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
                       dataKey="name"
                       stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'}
                       interval={0}
-                      angle={marksData.length > 10 ? -45 : 0}
-                      textAnchor={marksData.length > 10 ? "end" : "middle"}
-                      height={marksData.length > 10 ? 60 : 40}
+                      angle={filteredMarksData.length > 10 ? -45 : 0}
+                      textAnchor={filteredMarksData.length > 10 ? "end" : "middle"}
+                      height={filteredMarksData.length > 10 ? 60 : 40}
                     />
                     <YAxis stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'} />
                     <Tooltip

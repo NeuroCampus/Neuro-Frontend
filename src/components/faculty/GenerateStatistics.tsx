@@ -46,12 +46,17 @@ const GenerateStatistics: React.FC<GenerateStatisticsProps> = ({ proctorStudents
       student.usn,
       student.name,
       formatAttendancePercentage(student.attendance),
-      student.marks && student.marks.length > 0
-        ? (
-            student.marks.reduce((sum, m) => sum + (m.mark || 0), 0) /
-            student.marks.length
-          ).toFixed(2)
-        : '0',
+      (() => {
+        const internalMarks = student.marks || [];
+        const iaMarks = student.ia_marks || [];
+        const allMarks = [
+          ...internalMarks.map(m => m.mark),
+          ...iaMarks.map(m => m.total_obtained)
+        ];
+        return allMarks.length > 0
+          ? (allMarks.reduce((sum, mark) => sum + (mark || 0), 0) / allMarks.length).toFixed(2)
+          : '0';
+      })(),
     ]);
     autoTable(doc, {
       startY: 20,
@@ -65,13 +70,17 @@ const GenerateStatistics: React.FC<GenerateStatisticsProps> = ({ proctorStudents
   const attendanceData = proctorStudents.map(s => ({ name: s.name, attendance: getNumericAttendance(s.attendance) }));
   const marksData = proctorStudents.map(s => ({
     name: s.name,
-    avgMark:
-      s.marks && s.marks.length > 0
-        ? (
-            s.marks.reduce((sum, m) => sum + (m.mark || 0), 0) /
-            s.marks.length
-          ).toFixed(2)
-        : 0,
+    avgMark: (() => {
+      const internalMarks = s.marks || [];
+      const iaMarks = s.ia_marks || [];
+      const allMarks = [
+        ...internalMarks.map(m => m.mark),
+        ...iaMarks.map(m => m.total_obtained)
+      ];
+      return allMarks.length > 0
+        ? (allMarks.reduce((sum, mark) => sum + (mark || 0), 0) / allMarks.length).toFixed(2)
+        : 0;
+    })(),
   }));
 
   if (proctorStudentsLoading) {
@@ -195,12 +204,17 @@ const GenerateStatistics: React.FC<GenerateStatisticsProps> = ({ proctorStudents
                     <td className={`p-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.name}</td>
                     <td className={`p-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{formatAttendancePercentage(student.attendance)}</td>
                     <td className={`p-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                      {student.marks && student.marks.length > 0
-                        ? (
-                            student.marks.reduce((sum, m) => sum + (m.mark || 0), 0) /
-                            student.marks.length
-                          ).toFixed(2)
-                        : 0}
+                      {(() => {
+                        const internalMarks = student.marks || [];
+                        const iaMarks = student.ia_marks || [];
+                        const allMarks = [
+                          ...internalMarks.map(m => m.mark),
+                          ...iaMarks.map(m => m.total_obtained)
+                        ];
+                        return allMarks.length > 0
+                          ? (allMarks.reduce((sum, mark) => sum + (mark || 0), 0) / allMarks.length).toFixed(2)
+                          : 0;
+                      })()}
                     </td>
                   </tr>
                 ))}

@@ -106,6 +106,12 @@ export interface ProctorStudent {
     mark: number;
     max_mark: number;
   }>;
+  ia_marks: Array<{
+    subject: string;
+    subject_code: string | null;
+    total_obtained: number;
+    max_marks: number;
+  }>;
   certificates: Array<{
     title: string;
     file: string | null;
@@ -1150,6 +1156,7 @@ export interface UploadIAMarksRequest {
   marks_data: Array<{
     student_id: number;
     marks_detail: Record<string, number>;
+    total_obtained: number;
   }>;
 }
 
