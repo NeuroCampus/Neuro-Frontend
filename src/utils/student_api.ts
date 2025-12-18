@@ -139,6 +139,17 @@ interface InternalMark {
   recorded_at: string;
 }
 
+interface IAMark {
+  subject: string;
+  subject_code: string;
+  test_type: string;
+  total_obtained: number;
+  max_marks: number;
+  percentage: number;
+  faculty: string;
+  recorded_at: string;
+}
+
 interface GetInternalMarksResponse {
   success: boolean;
   message?: string;

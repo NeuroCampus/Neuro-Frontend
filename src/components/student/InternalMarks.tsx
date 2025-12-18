@@ -50,22 +50,28 @@ const MemoizedTableRow = React.memo(({
 }) => {
   const t1 = tests.find((t) => t.test_number === 1)?.mark ?? null;
   const t2 = tests.find((t) => t.test_number === 2)?.mark ?? null;
+  const ia1 = tests.find((t) => t.test_number === 3)?.mark ?? null;
+  const ia2 = tests.find((t) => t.test_number === 4)?.mark ?? null;
+  const ia3 = tests.find((t) => t.test_number === 5)?.mark ?? null;
   
   // Calculate average using memoized calculation
   const avg = useMemoizedCalculation(() => {
-    const availableMarks = [t1, t2].filter(mark => mark !== null && mark !== undefined);
+    const availableMarks = [t1, t2, ia1, ia2, ia3].filter(mark => mark !== null && mark !== undefined);
     return availableMarks.length > 0 
       ? availableMarks.reduce((sum, mark) => sum + mark, 0) / availableMarks.length 
       : 0;
-  }, [t1, t2]);
+  }, [t1, t2, ia1, ia2, ia3]);
 
   return (
     <div
-      className={`grid grid-cols-4 p-3 text-sm ${theme === 'dark' ? 'text-card-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}`}
+      className={`grid grid-cols-7 p-3 text-sm ${theme === 'dark' ? 'text-card-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}`}
     >
       <div>{subject}</div>
       <div className="text-center">{t1 !== null ? t1 : "-"}</div>
       <div className="text-center">{t2 !== null ? t2 : "-"}</div>
+      <div className="text-center">{ia1 !== null ? ia1 : "-"}</div>
+      <div className="text-center">{ia2 !== null ? ia2 : "-"}</div>
+      <div className="text-center">{ia3 !== null ? ia3 : "-"}</div>
       <div className="text-center font-semibold">
         {avg > 0 ? avg.toFixed(1) : "-"}
       </div>
@@ -98,10 +104,11 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
     
     filteredSubjects.forEach(subject => {
       const tests = marksData[subject] || [];
-      const t1 = tests.find((t) => t.test_number === 1)?.mark ?? null;
-      const t2 = tests.find((t) => t.test_number === 2)?.mark ?? null;
+      const ia1 = tests.find((t) => t.test_number === 1)?.mark ?? null;
+      const ia2 = tests.find((t) => t.test_number === 2)?.mark ?? null;
+      const ia3 = tests.find((t) => t.test_number === 3)?.mark ?? null;
       
-      const availableMarks = [t1, t2].filter(mark => mark !== null && mark !== undefined);
+      const availableMarks = [ia1, ia2, ia3].filter(mark => mark !== null && mark !== undefined);
       averages[subject] = availableMarks.length > 0 
         ? availableMarks.reduce((sum, mark) => sum + mark, 0) / availableMarks.length 
         : 0;
@@ -127,8 +134,9 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
       <div className={`sticky top-0 z-10 border-b ${theme === 'dark' ? 'border-gray-300 bg-card' : 'border-gray-200 bg-white'}`}>
         <div className={`grid grid-cols-4 p-3 font-medium text-sm ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
           <div>Subject</div>
-          <div className="text-center">Test 1</div>
-          <div className="text-center">Test 2</div>
+          <div className="text-center">IA 1</div>
+          <div className="text-center">IA 2</div>
+          <div className="text-center">IA 3</div>
           <div className="text-center">Average</div>
         </div>
       </div>
@@ -144,8 +152,9 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
           const subject = filteredSubjects[virtualItem.index];
           const tests = marksData[subject] || [];
           
-          const t1 = tests.find((t) => t.test_number === 1)?.mark ?? null;
-          const t2 = tests.find((t) => t.test_number === 2)?.mark ?? null;
+          const ia1 = tests.find((t) => t.test_number === 1)?.mark ?? null;
+          const ia2 = tests.find((t) => t.test_number === 2)?.mark ?? null;
+          const ia3 = tests.find((t) => t.test_number === 3)?.mark ?? null;
           
           // Use pre-calculated average
           const avg = subjectAverages[subject] || 0;
@@ -164,8 +173,9 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
               }}
             >
               <div className="truncate">{subject}</div>
-              <div className="text-center">{t1 !== null ? t1 : "-"}</div>
-              <div className="text-center">{t2 !== null ? t2 : "-"}</div>
+              <div className="text-center">{ia1 !== null ? ia1 : "-"}</div>
+              <div className="text-center">{ia2 !== null ? ia2 : "-"}</div>
+              <div className="text-center">{ia3 !== null ? ia3 : "-"}</div>
               <div className="text-center font-semibold">
                 {avg > 0 ? avg.toFixed(1) : "-"}
               </div>
@@ -190,8 +200,9 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
 
     const groupedData: { [subject: string]: SubjectMarks[] } = {};
 
-    marksResponse.data.forEach(mark => {
-      const subjectName = mark.subject; // subject is already a string
+    // Process all marks (internal and IA are now combined)
+    marksResponse.data?.forEach(mark => {
+      const subjectName = mark.subject;
       if (!groupedData[subjectName]) {
         groupedData[subjectName] = [];
       }
@@ -212,15 +223,43 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
       subject.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
   );
 
+  const parentRef = useRef<HTMLDivElement>(null);
+  
+  const virtualizer = useVirtualizer({
+    count: filteredSubjects.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 48,
+    overscan: 5,
+  });
+
+  // Pre-calculate all averages to avoid hooks in map
+  const subjectAverages = useMemo(() => {
+    const averages: { [subject: string]: number } = {};
+    
+    filteredSubjects.forEach(subject => {
+      const tests = marksData[subject] || [];
+      const ia1 = tests.find((t) => t.test_number === 1)?.mark ?? null;
+      const ia2 = tests.find((t) => t.test_number === 2)?.mark ?? null;
+      const ia3 = tests.find((t) => t.test_number === 3)?.mark ?? null;
+      
+      const availableMarks = [ia1, ia2, ia3].filter(mark => mark !== null && mark !== undefined);
+      averages[subject] = availableMarks.length > 0 
+        ? availableMarks.reduce((sum, mark) => sum + mark, 0) / availableMarks.length 
+        : 0;
+    });
+    
+    return averages;
+  }, [filteredSubjects, marksData]);
+
   const chartData = useMemo(() => ({
     labels: filteredSubjects,
-    datasets: [1, 2].map((testNum) => ({
-      label: `Test ${testNum}`,
+    datasets: [1, 2, 3].map((testNum) => ({
+      label: `IA ${testNum}`,
       data: filteredSubjects.map(
         (subj) =>
           marksData[subj].find((t) => t.test_number === testNum)?.mark ?? 0
       ),
-      backgroundColor: testNum === 1 ? "#3b82f6" : "#06b6d4",
+      backgroundColor: testNum === 1 ? "#3b82f6" : testNum === 2 ? "#06b6d4" : "#10b981",
     })),
   }), [filteredSubjects, marksData]);
 
@@ -265,7 +304,7 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
         {/* Chart Section */}
         <Card className={theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
           <CardHeader className={theme === 'dark' ? 'bg-card text-card-foreground border-b border-border' : 'bg-white text-gray-900 border-b border-gray-200'}>
-            <CardTitle className={theme === 'dark' ? 'text-base text-card-foreground' : 'text-base text-gray-900'}>📊 Performance Overview</CardTitle>
+            <CardTitle className={theme === 'dark' ? 'text-base text-card-foreground' : 'text-base text-gray-900'}> Performance Overview</CardTitle>
           </CardHeader>
           <CardContent className={theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}>
             <div className="flex items-center justify-center h-[300px]">
@@ -284,7 +323,7 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
 
         {/* Table */}
         <div className={`rounded-md overflow-hidden ${theme === 'dark' ? 'border-border bg-card text-card-foreground' : 'border-gray-200 bg-white text-gray-900'}`}>
-          <SkeletonTable rows={8} cols={4} />
+          <SkeletonTable rows={8} cols={5} />
         </div>
       </div>
     );
@@ -305,7 +344,7 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
       {/* Chart Section */}
      <Card className={theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader className={theme === 'dark' ? 'bg-card text-card-foreground border-b border-border' : 'bg-white text-gray-900 border-b border-gray-200'}>
-          <CardTitle className={theme === 'dark' ? 'text-base text-card-foreground' : 'text-base text-gray-900'}>📊 Performance Overview</CardTitle>
+          <CardTitle className={theme === 'dark' ? 'text-base text-card-foreground' : 'text-base text-gray-900'}> Performance Overview</CardTitle>
         </CardHeader>
         <CardContent className={theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}>
           <div className="flex items-center justify-center h-[300px]">
@@ -346,7 +385,65 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
 
       {/* Table */}
       <div className={`rounded-md overflow-hidden ${theme === 'dark' ? 'border-border bg-card text-card-foreground' : 'border-gray-200 bg-white text-gray-900'}`}>
-        <VirtualizedMarksTable filteredSubjects={filteredSubjects} marksData={marksData} theme={theme} />
+        <div
+          ref={parentRef}
+          className={`h-96 overflow-auto ${theme === 'dark' ? 'bg-card' : 'bg-white'}`}
+          style={{ contain: 'strict' }}
+        >
+          {/* Fixed Header */}
+          <div className={`sticky top-0 z-10 border-b ${theme === 'dark' ? 'border-gray-300 bg-card' : 'border-gray-200 bg-white'}`}>
+            <div className={`grid grid-cols-5 p-3 font-medium text-sm ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
+              <div>Subject</div>
+              <div className="text-center">IA 1</div>
+              <div className="text-center">IA 2</div>
+              <div className="text-center">IA 3</div>
+              <div className="text-center">Average</div>
+            </div>
+          </div>
+
+          {/* Virtualized Rows */}
+          <div 
+            style={{ 
+              height: `${virtualizer.getTotalSize()}px`,
+              position: 'relative',
+            }}
+          >
+            {virtualizer.getVirtualItems().map((virtualItem) => {
+              const subject = filteredSubjects[virtualItem.index];
+              const tests = marksData[subject] || [];
+              
+              const ia1 = tests.find((t) => t.test_number === 1)?.mark ?? null;
+              const ia2 = tests.find((t) => t.test_number === 2)?.mark ?? null;
+              const ia3 = tests.find((t) => t.test_number === 3)?.mark ?? null;
+              
+              // Use pre-calculated average
+              const avg = subjectAverages[subject] || 0;
+
+              return (
+                <div
+                  key={virtualItem.key}
+                  className={`grid grid-cols-5 p-3 text-sm border-b ${theme === 'dark' ? 'border-gray-300 text-card-foreground hover:bg-accent' : 'border-gray-200 text-gray-900 hover:bg-gray-50'}`}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: `${virtualItem.size}px`,
+                    transform: `translateY(${virtualItem.start}px)`,
+                  }}
+                >
+                  <div className="truncate">{subject}</div>
+                  <div className="text-center">{ia1 !== null ? ia1 : "-"}</div>
+                  <div className="text-center">{ia2 !== null ? ia2 : "-"}</div>
+                  <div className="text-center">{ia3 !== null ? ia3 : "-"}</div>
+                  <div className="text-center font-semibold">
+                    {avg > 0 ? avg.toFixed(1) : "-"}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Filter Dialog */}
