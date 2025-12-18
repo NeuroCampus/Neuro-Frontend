@@ -325,7 +325,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
           variant="ghost"
           className={`w-full justify-start gap-3 h-10 transition-all duration-200 ${collapsed ? "px-2" : "px-3"} ${
             theme === 'dark' 
-              ? "text-destructive hover:text-destructive-foreground hover:bg-destructive/20" 
+              ? "text-red-400 hover:text-red-100 hover:bg-red-900/50" 
               : "text-red-700 hover:text-red-800 hover:bg-red-200"
           }`}
           onClick={handleLogoutClick}

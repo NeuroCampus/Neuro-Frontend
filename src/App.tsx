@@ -31,6 +31,20 @@ const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode;
   return <>{children}</>;
 };
 
+// Helper function to safely parse user data
+const getUserData = () => {
+  try {
+    const userData = localStorage.getItem("user");
+    return userData ? JSON.parse(userData) : {};
+  } catch (error) {
+    console.error("Error parsing user data:", error);
+    localStorage.removeItem("user");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("role");
+    return {};
+  }
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -63,7 +77,7 @@ const App = () => (
           <Route path="/dashboard" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
+                <StudentDashboard user={getUserData()} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -71,7 +85,7 @@ const App = () => (
           <Route path="/timetable" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
+                <StudentDashboard user={getUserData()} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -79,7 +93,7 @@ const App = () => (
           <Route path="/attendance" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
+                <StudentDashboard user={getUserData()} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -111,7 +125,7 @@ const App = () => (
           <Route path="/fees" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
+                <StudentDashboard user={getUserData()} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -127,7 +141,7 @@ const App = () => (
           <Route path="/announcements" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
+                <StudentDashboard user={getUserData()} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -135,7 +149,7 @@ const App = () => (
           <Route path="/chat" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
+                <StudentDashboard user={getUserData()} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -143,7 +157,7 @@ const App = () => (
           <Route path="/notifications" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
+                <StudentDashboard user={getUserData()} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -151,7 +165,7 @@ const App = () => (
           <Route path="/face-recognition" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
+                <StudentDashboard user={getUserData()} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -159,7 +173,7 @@ const App = () => (
           <Route path="/student-study-material" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
+                <StudentDashboard user={getUserData()} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -167,7 +181,7 @@ const App = () => (
           <Route path="/student-assignment" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
+                <StudentDashboard user={getUserData()} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -177,7 +191,7 @@ const App = () => (
           <Route path="/admin/*" element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <ThemeProvider>
-                <AdminDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
+                <AdminDashboard user={getUserData()} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -187,7 +201,7 @@ const App = () => (
           <Route path="/hod/*" element={
             <ProtectedRoute allowedRoles={["hod"]}>
               <ThemeProvider>
-                <HODDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
+                <HODDashboard user={getUserData()} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -197,7 +211,7 @@ const App = () => (
           <Route path="/faculty/*" element={
             <ProtectedRoute allowedRoles={["teacher"]}>
               <ThemeProvider>
-                <FacultyDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
+                <FacultyDashboard user={getUserData()} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -207,7 +221,7 @@ const App = () => (
           <Route path="/fees-manager/*" element={
             <ProtectedRoute allowedRoles={["fees_manager"]}>
               <ThemeProvider>
-                <FeesManagerDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
+                <FeesManagerDashboard user={getUserData()} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
