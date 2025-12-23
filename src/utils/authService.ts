@@ -1,4 +1,4 @@
-import { API_BASE_URL, TOKEN_REFRESH_TIMEOUT } from "./config";
+import { API_ENDPOINT, TOKEN_REFRESH_TIMEOUT } from "./config";
 
 // Type definitions for request and response data
 interface AuthResponse {
@@ -124,7 +124,7 @@ export const refreshToken = async (): Promise<RefreshTokenResponse> => {
     }
 
     console.log("Sending token refresh request:", { refresh });
-    const response = await fetch(`${API_BASE_URL}/token/refresh/`, {
+    const response = await fetch(`${API_ENDPOINT}/token/refresh/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -188,7 +188,7 @@ export const loginUser = async ({ username, password }: LoginRequest): Promise<L
   }
   try {
     console.log("Sending login request:", { username });
-    const response = await fetch(`${API_BASE_URL}/login/`, {
+    const response = await fetch(`${API_ENDPOINT}/login/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -221,7 +221,7 @@ export const verifyOTP = async ({ user_id, otp }: VerifyOTPRequest): Promise<Log
   }
   try {
     console.log("Sending OTP verification request:", { user_id, otp });
-    const response = await fetch(`${API_BASE_URL}/verify-otp/`, {
+    const response = await fetch(`${API_ENDPOINT}/verify-otp/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -251,7 +251,7 @@ export const resendOTP = async ({ user_id }: ResendOTPRequest): Promise<GenericR
   }
   try {
     console.log("Sending resend OTP request:", { user_id });
-    const response = await fetch(`${API_BASE_URL}/resend-otp/`, {
+    const response = await fetch(`${API_ENDPOINT}/resend-otp/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -274,7 +274,7 @@ export const forgotPassword = async ({ email }: ForgotPasswordRequest): Promise<
   }
   try {
     console.log("Sending forgot password request:", { email });
-    const response = await fetch(`${API_BASE_URL}/forgot-password/`, {
+    const response = await fetch(`${API_ENDPOINT}/forgot-password/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -302,7 +302,7 @@ export const resetPassword = async ({
   }
   try {
     console.log("Sending reset password request:", { user_id, otp });
-    const response = await fetch(`${API_BASE_URL}/reset-password/`, {
+    const response = await fetch(`${API_ENDPOINT}/reset-password/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -334,7 +334,7 @@ export const logoutUser = async (): Promise<GenericResponse> => {
       return { success: true, message: "Logged out successfully (no refresh token)" };
     }
     console.log("Sending logout request:", { refresh });
-    const response = await fetch(`${API_BASE_URL}/logout/`, {
+    const response = await fetch(`${API_ENDPOINT}/logout/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken || ""}`,

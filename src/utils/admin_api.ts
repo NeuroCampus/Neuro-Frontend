@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "./config";
+import { API_ENDPOINT } from "./config";
 import { fetchWithTokenRefresh } from "./authService";
 
 // Type definitions for request and response data
@@ -186,7 +186,7 @@ interface ManageAdminProfileResponse {
 
 export const getAdminStats = async (): Promise<AdminStatsResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/admin/stats-overview/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/stats-overview/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -207,7 +207,7 @@ export const getAdminStats = async (): Promise<AdminStatsResponse> => {
 
 export const enrollUser = async (data: EnrollUserRequest): Promise<EnrollUserResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/admin/enroll-user/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/enroll-user/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -231,7 +231,7 @@ export const bulkUploadFaculty = async (file: File): Promise<BulkUploadFacultyRe
   try {
     const formData = new FormData();
     formData.append("file", file);
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/admin/bulk-upload-faculty/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/bulk-upload-faculty/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -257,8 +257,8 @@ export const manageBranches = async (
 ): Promise<ManageBranchesResponse> => {
   try {
     let url = branch_id
-      ? `${API_BASE_URL}/admin/branches/${branch_id}/`
-      : `${API_BASE_URL}/admin/branches/`;
+      ? `${API_ENDPOINT}/admin/branches/${branch_id}/`
+      : `${API_ENDPOINT}/admin/branches/`;
     
     // Add pagination parameters for GET requests
     if (method === "GET" && data && !branch_id) {
@@ -311,7 +311,7 @@ export const getBranchesWithHODs = async (
   data?: { page?: number; page_size?: number }
 ): Promise<BranchesWithHODsResponse> => {
   try {
-    let url = `${API_BASE_URL}/admin/branches-with-hods/`;
+    let url = `${API_ENDPOINT}/admin/branches-with-hods/`;
 
     // Add pagination parameters for GET requests
     if (data) {
@@ -347,8 +347,8 @@ export const manageBatches = async (
 ): Promise<ManageBatchesResponse> => {
   try {
     let url = batch_id
-      ? `${API_BASE_URL}/admin/batches/${batch_id}/`
-      : `${API_BASE_URL}/admin/batches/`;
+      ? `${API_ENDPOINT}/admin/batches/${batch_id}/`
+      : `${API_ENDPOINT}/admin/batches/`;
     
     // Add pagination and filter parameters for GET requests
     if (method === "GET" && data && !batch_id) {
@@ -385,7 +385,7 @@ export const manageNotifications = async (
   method: "GET" | "POST" = "GET"
 ): Promise<ManageNotificationsResponse> => {
   try {
-    let url = `${API_BASE_URL}/admin/notifications/`;
+    let url = `${API_ENDPOINT}/admin/notifications/`;
     
     // Add pagination parameters for GET requests
     if (method === "GET" && data) {
@@ -420,7 +420,7 @@ export const manageHODLeaves = async (
   method: "GET" | "POST" = "GET"
 ): Promise<ManageHODLeavesResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/admin/hod-leaves/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/hod-leaves/`, {
       method,
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -445,7 +445,7 @@ export const manageUsers = async (
   method: "GET" | "POST" = "GET"
 ): Promise<ManageUsersResponse> => {
   try {
-    let url = `${API_BASE_URL}/admin/users/`;
+    let url = `${API_ENDPOINT}/admin/users/`;
     
     // Add pagination and filter parameters for GET requests
     if (method === "GET" && data) {
@@ -496,7 +496,7 @@ interface ManageUserActionResponse {
 
 export const manageUserAction = async (data: ManageUserActionRequest): Promise<ManageUserActionResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/admin/users/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/users/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -521,7 +521,7 @@ export const manageAdminProfile = async (
   method: "GET" | "POST" = "POST"
 ): Promise<ManageAdminProfileResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/admin/profile/${data.user_id}/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/profile/${data.user_id}/`, {
       method,
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -574,7 +574,7 @@ interface BulkUserActionsResponse {
 
 export const bulkUserActions = async (data: BulkUserActionsRequest): Promise<BulkUserActionsResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/admin/users/bulk-actions/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/users/bulk-actions/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -621,7 +621,7 @@ interface BulkHODLeaveActionsResponse {
 
 export const bulkProcessHODLeaves = async (data: BulkHODLeaveActionsRequest): Promise<BulkHODLeaveActionsResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/admin/hod-leaves/bulk-process/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/hod-leaves/bulk-process/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -669,7 +669,7 @@ interface ManageAdminProfilePatchResponse {
 
 export const manageAdminProfilePatch = async (data: ManageAdminProfilePatchRequest): Promise<ManageAdminProfilePatchResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/admin/profile/${data.user_id}/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/profile/${data.user_id}/`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -736,8 +736,8 @@ export const manageCampusLocation = async (
 ): Promise<ManageCampusLocationResponse> => {
   try {
     let url = location_id
-      ? `${API_BASE_URL}/admin/campus-locations/${location_id}/`
-      : `${API_BASE_URL}/admin/campus-locations/`;
+      ? `${API_ENDPOINT}/admin/campus-locations/${location_id}/`
+      : `${API_ENDPOINT}/admin/campus-locations/`;
 
     // Add pagination parameters for GET requests
     if (method === "GET" && data && !location_id) {

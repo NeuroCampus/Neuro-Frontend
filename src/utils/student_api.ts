@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "./config";
+import { API_ENDPOINT } from "./config";
 import { fetchWithTokenRefresh } from "./authService";
 
 // Type definitions for request and response data
@@ -292,7 +292,7 @@ interface UploadFaceEncodingsResponse {
 // Student-specific API functions
 export const getDashboardOverview = async (): Promise<DashboardOverviewResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/student/dashboard/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/dashboard/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -314,7 +314,7 @@ export const getDashboardOverview = async (): Promise<DashboardOverviewResponse>
 
 export const getTimetable = async (): Promise<GetTimetableResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/student/timetable/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/timetable/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -330,7 +330,7 @@ export const getTimetable = async (): Promise<GetTimetableResponse> => {
 
 export const getStudentAttendance = async (): Promise<GetStudentAttendanceResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/student/attendance/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/attendance/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -352,7 +352,7 @@ export const getStudentAttendance = async (): Promise<GetStudentAttendanceRespon
 
 export const getInternalMarks = async (): Promise<GetInternalMarksResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/student/internal-marks/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/internal-marks/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -372,7 +372,7 @@ export const submitLeaveRequest = async (
   try {
     console.log("=== SUBMIT LEAVE REQUEST START ==="); // Debug log
     console.log("Submitting leave request with data:", data); // Debug log
-    console.log("API Base URL:", API_BASE_URL); // Debug log
+    console.log("API Base URL:", API_ENDPOINT); // Debug log
     console.log("Auth token exists:", !!localStorage.getItem("access_token")); // Debug log
     
     const token = localStorage.getItem("access_token");
@@ -381,7 +381,7 @@ export const submitLeaveRequest = async (
       return { success: false, message: "No authentication token found" };
     }
     
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/student/submit-leave-request/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/submit-leave-request/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -429,7 +429,7 @@ export const submitLeaveRequest = async (
 export const getLeaveRequests = async (): Promise<GetLeaveRequestsResponse> => {
   try {
     console.log("=== GET LEAVE REQUESTS START ==="); // Debug log
-    console.log("API Base URL:", API_BASE_URL); // Debug log
+    console.log("API Base URL:", API_ENDPOINT); // Debug log
     console.log("Auth token exists:", !!localStorage.getItem("access_token")); // Debug log
     
     const token = localStorage.getItem("access_token");
@@ -439,7 +439,7 @@ export const getLeaveRequests = async (): Promise<GetLeaveRequestsResponse> => {
     }
     
     console.log("Fetching leave requests from API..."); // Debug log
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/student/leave-requests/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/leave-requests/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -516,7 +516,7 @@ export const uploadCertificate = async (
     const formData = new FormData();
     formData.append("file", data.file);
     formData.append("description", data.description);
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/student/upload-certificate/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/upload-certificate/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -532,7 +532,7 @@ export const uploadCertificate = async (
 
 export const getCertificates = async (): Promise<GetCertificatesResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/student/certificates/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/certificates/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -550,7 +550,7 @@ export const deleteCertificate = async (
   data: DeleteCertificateRequest
 ): Promise<DeleteCertificateResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/student/delete-certificate/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/delete-certificate/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -569,7 +569,7 @@ export const updateProfile = async (
   data: UpdateProfileRequest
 ): Promise<UpdateProfileResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/student/update-profile/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/update-profile/`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -586,7 +586,7 @@ export const updateProfile = async (
 
 export const getAnnouncements = async (): Promise<GetAnnouncementsResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/student/announcements/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/announcements/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -605,7 +605,7 @@ export const manageChat = async (
   method: "GET" | "POST" = "GET"
 ): Promise<ManageChatResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/student/chat/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/chat/`, {
       method,
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -622,7 +622,7 @@ export const manageChat = async (
 
 export const getNotifications = async (): Promise<GetNotificationsResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/student/notifications/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/notifications/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -640,7 +640,7 @@ export const uploadFaceEncodings = async (
   data: UploadFaceEncodingsRequest
 ): Promise<UploadFaceEncodingsResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/student/upload-face-encodings/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/upload-face-encodings/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -657,7 +657,7 @@ export const uploadFaceEncodings = async (
 
 export const getFullStudentProfile = async () => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/student/full-profile/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/full-profile/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -673,7 +673,7 @@ export const getFullStudentProfile = async () => {
 
 export const getStudentAssignments = async () => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/student/assignments/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/assignments/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -689,7 +689,7 @@ export const getStudentAssignments = async () => {
 
 export const getStudentStudyMaterials = async () => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/student/study-materials/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/study-materials/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,

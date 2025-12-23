@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "./config";
+import { API_ENDPOINT } from "./config";
 import { fetchWithTokenRefresh } from "./authService";
 
 // Type definitions for request and response data
@@ -352,7 +352,7 @@ export interface FacultyLeaveRequest {
 // Faculty-specific API functions
 export const getDashboardOverview = async (): Promise<DashboardOverviewResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/dashboard/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/dashboard/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -384,7 +384,7 @@ export const takeAttendance = async (
     if (data.method === "manual" && data.attendance) {
       formData.append("attendance", JSON.stringify(data.attendance));
     }
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/take-attendance/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/take-attendance/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -438,7 +438,7 @@ export const aiAttendance = async (
     formData.append("semester_id", data.semester_id);
     formData.append("photo", data.photo);
 
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/ai-attendance/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/ai-attendance/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -468,7 +468,7 @@ export const uploadInternalMarks = async (
     if (data.file) {
       formData.append("file", data.file);
     }
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/upload-marks/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/upload-marks/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -486,7 +486,7 @@ export const applyLeave = async (
   data: ApplyLeaveRequest
 ): Promise<ApplyLeaveResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/apply-leave/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/apply-leave/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -506,7 +506,7 @@ export const viewAttendanceRecords = async (
 ): Promise<ViewAttendanceRecordsResponse> => {
   try {
     const query = new URLSearchParams(params).toString();
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/attendance-records/?${query}`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/attendance-records/?${query}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -524,7 +524,7 @@ export const createAnnouncement = async (
   data: CreateAnnouncementRequest
 ): Promise<CreateAnnouncementResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/announcements/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/announcements/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -549,8 +549,8 @@ export const getProctorStudents = async (params?: {
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     
     const url = queryParams.toString() 
-      ? `${API_BASE_URL}/faculty/proctor-students/?${queryParams.toString()}`
-      : `${API_BASE_URL}/faculty/proctor-students/`;
+      ? `${API_ENDPOINT}/faculty/proctor-students/?${queryParams.toString()}`
+      : `${API_ENDPOINT}/faculty/proctor-students/`;
       
     const response = await fetchWithTokenRefresh(url, {
       method: "GET",
@@ -568,7 +568,7 @@ export const getProctorStudents = async (params?: {
 
 export const getFacultyAssignments = async (): Promise<GetFacultyAssignmentsResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/assignments/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/assignments/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -584,7 +584,7 @@ export const getFacultyAssignments = async (): Promise<GetFacultyAssignmentsResp
 
 export const getFacultyDashboardBootstrap = async (): Promise<GetFacultyDashboardBootstrapResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/dashboard/bootstrap/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/dashboard/bootstrap/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -608,8 +608,8 @@ export const getAttendanceRecordsWithSummary = async (params?: {
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     
     const url = queryParams.toString() 
-      ? `${API_BASE_URL}/faculty/attendance-records/summary/?${queryParams.toString()}`
-      : `${API_BASE_URL}/faculty/attendance-records/summary/`;
+      ? `${API_ENDPOINT}/faculty/attendance-records/summary/?${queryParams.toString()}`
+      : `${API_ENDPOINT}/faculty/attendance-records/summary/`;
       
     const response = await fetchWithTokenRefresh(url, {
       method: "GET",
@@ -627,7 +627,7 @@ export const getAttendanceRecordsWithSummary = async (params?: {
 
 export const getApplyLeaveBootstrap = async (): Promise<GetApplyLeaveBootstrapResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/apply-leave/bootstrap/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/apply-leave/bootstrap/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -643,7 +643,7 @@ export const getApplyLeaveBootstrap = async (): Promise<GetApplyLeaveBootstrapRe
 
 export const getTimetable = async (): Promise<GetTimetableResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/timetable/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/timetable/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -662,7 +662,7 @@ export const manageChat = async (
   method: "GET" | "POST" = "GET"
 ): Promise<ManageChatResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/chat/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/chat/`, {
       method,
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -689,7 +689,7 @@ export const manageProfile = async (
     if (data.address) formData.append("address", data.address);
     if (data.bio) formData.append("bio", data.bio);
     if (data.profile_picture) formData.append("profile_picture", data.profile_picture);
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/profile/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/profile/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -707,7 +707,7 @@ export const scheduleMentoring = async (
   data: ScheduleMentoringRequest
 ): Promise<ScheduleMentoringResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/schedule-mentoring/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/schedule-mentoring/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -727,7 +727,7 @@ export const generateStatistics = async (
 ): Promise<GenerateStatisticsResponse> => {
   try {
     const query = new URLSearchParams(params).toString();
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/generate-statistics/?${query}`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/generate-statistics/?${query}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -745,7 +745,7 @@ export const downloadPDF = async (
   filename: string
 ): Promise<DownloadPDFResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/download-pdf/${filename}/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/download-pdf/${filename}/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -775,7 +775,7 @@ export async function getStudentsForClass(
     section_id: section_id.toString(),
     subject_id: subject_id.toString(),
   });
-  const res = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/students/?${params.toString()}`, {
+  const res = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/students/?${params.toString()}`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -802,7 +802,7 @@ export const getInternalMarksForClass = async (
     subject_id: subject_id.toString(),
     test_number: test_number.toString(),
   });
-  const res = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/internal-marks/?${params.toString()}`, {
+  const res = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/internal-marks/?${params.toString()}`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -816,7 +816,7 @@ export const getInternalMarksForClass = async (
 };
 
 export const getFacultyLeaveRequests = async (): Promise<FacultyLeaveRequest[]> => {
-  const res = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/leave-requests/`, {
+  const res = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/leave-requests/`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -831,7 +831,7 @@ export const getFacultyLeaveRequests = async (): Promise<FacultyLeaveRequest[]> 
 
 export const getFacultyProfile = async () => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/profile/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/profile/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -846,7 +846,7 @@ export const getFacultyProfile = async () => {
 };
 
 export async function getFacultyNotifications() {
-  const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/notifications/`, {
+  const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/notifications/`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -857,7 +857,7 @@ export async function getFacultyNotifications() {
 }
 
 export async function getFacultySentNotifications() {
-  const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/notifications/sent/`, {
+  const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/notifications/sent/`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -870,7 +870,7 @@ export async function getFacultySentNotifications() {
 
 
 export async function getAttendanceRecordsList() {
-  const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/attendance-records/list/`, {
+  const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/attendance-records/list/`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -881,7 +881,7 @@ export async function getAttendanceRecordsList() {
 }
 
 export async function getAttendanceRecordDetails(recordId: number) {
-  const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/attendance-records/${recordId}/details/`, {
+  const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/attendance-records/${recordId}/details/`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -954,7 +954,7 @@ export const getTakeAttendanceBootstrap = async (params: {
 }): Promise<GetTakeAttendanceBootstrapResponse> => {
   try {
     const query = new URLSearchParams(params).toString();
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/take-attendance/bootstrap/?${query}`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/take-attendance/bootstrap/?${query}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -980,7 +980,7 @@ export const getUploadMarksBootstrap = async (params: {
       ...params,
       test_number: params.test_number.toString(),
     }).toString();
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/upload-marks/bootstrap/?${query}`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/upload-marks/bootstrap/?${query}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -1008,7 +1008,7 @@ export const manageStudentLeave = async (
   data: ManageStudentLeaveRequest
 ): Promise<ManageStudentLeaveResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/manage-student-leave/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/manage-student-leave/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -1073,7 +1073,7 @@ export const markFacultyAttendance = async (
   data: MarkFacultyAttendanceRequest
 ): Promise<MarkFacultyAttendanceResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/mark-attendance/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/mark-attendance/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -1162,7 +1162,7 @@ export interface UploadIAMarksRequest {
 
 export const createQuestionPaper = async (data: CreateQPRequest): Promise<QPResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/qps/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/qps/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -1179,7 +1179,7 @@ export const createQuestionPaper = async (data: CreateQPRequest): Promise<QPResp
 
 export const getQuestionPapers = async (): Promise<any> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/qps/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/qps/`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -1201,7 +1201,7 @@ export const getStudentsForMarks = async (params: {
 }): Promise<StudentsForMarksResponse> => {
   try {
     const query = new URLSearchParams(params).toString();
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/students-for-marks/?${query}`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/students-for-marks/?${query}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -1216,7 +1216,7 @@ export const getStudentsForMarks = async (params: {
 
 export const uploadIAMarks = async (data: UploadIAMarksRequest): Promise<any> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/upload-ia-marks/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/upload-ia-marks/`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -1233,7 +1233,7 @@ export const uploadIAMarks = async (data: UploadIAMarksRequest): Promise<any> =>
 
 export const updateQuestionPaper = async (id: number, data: CreateQPRequest): Promise<QPResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_BASE_URL}/faculty/qps/${id}/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/qps/${id}/`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
