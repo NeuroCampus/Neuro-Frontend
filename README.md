@@ -13,7 +13,7 @@
 
 ---
 
-## 🚀 Overview
+##  Overview
 
 **NeuroCampus** is a next-generation, AI-powered, unified campus operating system designed to automate, optimize, and intelligently manage academic, administrative, and placement-oriented workflows in educational institutions. Built with an AI-first architecture, NeuroCampus integrates face recognition attendance, BLE-based presence detection, complete college management, CO/PO attainment automation, AI interviews, coding analytics, proctoring, payments, surveillance, and predictive insights into a single scalable platform.
 
@@ -21,29 +21,29 @@ This project is designed and developed as an industry-level, production-ready sy
 
 ---
 
-## 🎯 Key Highlights
+##  Key Highlights
 
-- 🤖 **AI Face Recognition Attendance** (single-snap whole-class)
-- 📡 **BLE (Bluetooth Low Energy) Attendance**
-- 🏫 **Complete College Management System (CMS)**
-- 📊 **Automated CO / PO Attainment & Academic Analytics**
-- 🎤 **AI-Powered Interview Simulator** (Real-time HR & Technical)
-- 💻 **AI Coding Platform with Analytics & Leaderboards**
-- 👁️ **AI Proctoring** (Online & Offline Exams)
-- 💳 **Stripe-based Secure Payment Integration**
-- 🔒 **AI Surveillance & Campus Safety**
-- 📈 **Predictive Student Performance Analytics**
-- ☁️ **Fully Cloud-Deployed, Scalable & Secure**
+-  **AI Face Recognition Attendance** (single-snap whole-class)
+-  **BLE (Bluetooth Low Energy) Attendance**
+-  **Complete College Management System (CMS)**
+-  **Automated CO / PO Attainment & Academic Analytics**
+-  **AI-Powered Interview Simulator** (Real-time HR & Technical)
+-  **AI Coding Platform with Analytics & Leaderboards**
+-  **AI Proctoring** (Online & Offline Exams)
+-  **Stripe-based Secure Payment Integration**
+-  **AI Surveillance & Campus Safety**
+-  **Predictive Student Performance Analytics**
+-  **Fully Cloud-Deployed, Scalable & Secure**
 
 ---
 
-## 🎯 Problem Statement
+##  Problem Statement
 
 Traditional campus systems rely heavily on manual processes and fragmented software, leading to inefficiency, inaccuracies, poor analytics, and limited insight into student performance and placement readiness. There is a lack of a unified, intelligent platform that automates attendance, academics, assessments, interviews, coding evaluations, payments, and analytics. NeuroCampus addresses this gap by providing a single AI-driven campus operating system that automates end-to-end campus operations with high accuracy, scalability, and intelligence.
 
 ---
 
-## 🏗️ System Architecture Overview
+##  System Architecture Overview
 
 NeuroCampus follows a modern cloud-native, modular architecture:
 
@@ -59,7 +59,7 @@ NeuroCampus follows a modern cloud-native, modular architecture:
 
 ---
 
-## 🧩 Core Modules
+##  Core Modules
 
 ### 1️⃣ AI Face Recognition Attendance
 - Single photo → whole class attendance
@@ -140,7 +140,7 @@ NeuroCampus follows a modern cloud-native, modular architecture:
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 ### Frontend
 - **React** - Modern UI framework
@@ -177,7 +177,7 @@ NeuroCampus follows a modern cloud-native, modular architecture:
 
 ---
 
-## ☁️ Deployment Configuration
+##  Deployment Configuration
 
 | Component | Details |
 |-----------|---------|
@@ -192,45 +192,45 @@ NeuroCampus follows a modern cloud-native, modular architecture:
 
 ---
 
-## 🔐 Security Features
+##  Security Features
 
-- 🔒 **Encrypted Database Connections** - SSL/TLS encryption
-- 🛡️ **JWT Authentication** - Secure token-based auth
-- 👥 **Role-Based Access Control** - Granular permissions
-- 🔐 **Encrypted Biometric Data** - Secure face encodings
-- 💳 **Secure Payment Processing** - PCI-compliant Stripe integration
-- 📊 **Audit Logs & Monitoring** - Comprehensive activity tracking
-- 🚨 **Real-time Threat Detection** - AI-powered anomaly detection
-
----
-
-## 📊 Target Users
-
-- 🎓 **Colleges & Universities** - Complete campus digitization
-- 🤖 **AI & ML Departments** - Advanced research platforms
-- 💼 **Placement Cells** - Automated recruitment workflows
-- 🏢 **Training Institutions** - Scalable learning management
-- 📚 **EdTech Platforms** - Next-gen educational technology
+-  **Encrypted Database Connections** - SSL/TLS encryption
+-  **JWT Authentication** - Secure token-based auth
+-  **Role-Based Access Control** - Granular permissions
+-  **Encrypted Biometric Data** - Secure face encodings
+-  **Secure Payment Processing** - PCI-compliant Stripe integration
+-  **Audit Logs & Monitoring** - Comprehensive activity tracking
+-  **Real-time Threat Detection** - AI-powered anomaly detection
 
 ---
 
-## 🎓 Academic & Industry Value
+##  Target Users
 
-- 🚀 **Real-world AI Deployment** - Production-grade AI systems
-- 🧠 **Comprehensive AI Coverage** - Computer Vision, NLP, ML, Cloud & Security
-- 💡 **Startup-grade Architecture** - Scalable, maintainable codebase
-- 🏭 **Industry-ready Solution** - Enterprise-level educational platform
-- 📖 **Research & Incubation Ready** - Suitable for final-year projects, theses, and startup incubation
+-  **Colleges & Universities** - Complete campus digitization
+-  **AI & ML Departments** - Advanced research platforms
+-  **Placement Cells** - Automated recruitment workflows
+-  **Training Institutions** - Scalable learning management
+-  **EdTech Platforms** - Next-gen educational technology
 
 ---
 
-## 🏁 Conclusion
+##  Academic & Industry Value
+
+-  **Real-world AI Deployment** - Production-grade AI systems
+-  **Comprehensive AI Coverage** - Computer Vision, NLP, ML, Cloud & Security
+-  **Startup-grade Architecture** - Scalable, maintainable codebase
+-  **Industry-ready Solution** - Enterprise-level educational platform
+-  **Research & Incubation Ready** - Suitable for final-year projects, theses, and startup incubation
+
+---
+
+##  Conclusion
 
 NeuroCampus is not just a project—it is a complete AI-driven digital transformation platform for educational institutions. By combining intelligent automation, analytics, assessments, and placement readiness into one unified system, NeuroCampus significantly reduces manual workload, improves accuracy, enhances student outcomes, and prepares campuses for the future of AI-powered education.
 
 ---
 
-## 👨‍💻 Developed By
+##  Developed By
 
 <div align="center">
 
@@ -255,7 +255,7 @@ NeuroCampus is not just a project—it is a complete AI-driven digital transform
 
 <div align="center">
 
-**🌟 Star this repository to support our work! 🌟**
+** Star this repository to support our work! 🌟**
 
 *Empowering Education Through Artificial Intelligence*
 
