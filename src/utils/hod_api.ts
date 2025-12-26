@@ -186,6 +186,7 @@ interface ManageStudentsRequest {
   branch_id: string;
   batch_id?: string;
   course_id?: string;
+  cycle?: string;
   parent_name?: string;
   parent_contact?: string;
   emergency_contact?: string;
@@ -198,6 +199,7 @@ interface ManageStudentsRequest {
     email: string;
     batch_id?: string;
     course_id?: string;
+    cycle?: string;
     parent_name?: string;
     parent_contact?: string;
     emergency_contact?: string;
@@ -219,6 +221,7 @@ interface ManageStudentsResponse {
     batch: string;
     subject?: string;
     proctor: string | null;
+    cycle?: string;
   }> | { student_id: string } | { created_count: number } | {
     results: Array<{
       usn: string;

@@ -59,6 +59,7 @@ interface Student {
   email: string;
   section: string;
   semester: string;
+  cycle?: string;
 }
 
 const StudentManagement = () => {
@@ -76,7 +77,7 @@ const StudentManagement = () => {
     uploadErrors: [] as string[],
     uploadedCount: 0,
     droppedFileName: null as string | null,
-    manualForm: { usn: "", name: "", email: "", section: "", semester: "", batch: "" },
+    manualForm: { usn: "", name: "", email: "", section: "", semester: "", batch: "", cycle: "" },
     currentPage: 1,
     selectedSemester: "",
     semesters: [] as Semester[],
@@ -122,6 +123,7 @@ const StudentManagement = () => {
               email: s.email,
               section: s.section || "Unknown",
               semester: s.semester || "Unknown",
+              cycle: s.cycle,
             })) 
           : [];
         updateState({ 
@@ -205,7 +207,14 @@ const StudentManagement = () => {
 
         // Students
         if (Array.isArray(boot.data?.students)) {
-          const students = boot.data.students.map((s: any) => ({ usn: s.usn, name: s.name, email: s.email, section: s.section || "Unknown", semester: s.semester || "Unknown" }));
+          const students = boot.data.students.map((s: any) => ({ 
+            usn: s.usn, 
+            name: s.name, 
+            email: s.email, 
+            section: s.section || "Unknown", 
+            semester: s.semester || "Unknown",
+            cycle: s.cycle
+          }));
           updateState({ 
             students,
             totalStudents: boot.count || students.length,
@@ -299,6 +308,17 @@ const StudentManagement = () => {
   const getSemesterId = (semesterName: string) =>
     state.semesters.find((s) => `${s.number}th Semester` === semesterName)?.id || "";
 
+  const getSemesterNumber = (semesterName: string) =>
+    state.semesters.find((s) => `${s.number}th Semester` === semesterName)?.number || 0;
+
+  const formatSemesterDisplay = (student: Student) => {
+    const semesterNumber = getSemesterNumber(student.semester);
+    if (semesterNumber <= 2 && student.cycle) {
+      return `${student.semester} (${student.cycle} cycle)`;
+    }
+    return student.semester;
+  };
+
   const getSectionId = (sectionName: string, sections: Section[]) =>
     sections.find((s) => s.name === sectionName)?.id || "";
 
@@ -309,6 +329,13 @@ const StudentManagement = () => {
   const handleFileUpload = async (file: File) => {
     if (!state.manualForm.semester || !state.manualForm.section || !state.manualForm.batch) {
       updateState({ uploadErrors: ["Please select batch, semester and section before uploading"] });
+      return;
+    }
+
+    // Check cycle validation for semesters 1 and 2
+    const semesterNumber = getSemesterNumber(state.manualForm.semester);
+    if (semesterNumber <= 2 && !state.manualForm.cycle) {
+      updateState({ uploadErrors: ["Please select cycle for semesters 1 and 2"] });
       return;
     }
 
@@ -374,10 +401,25 @@ const StudentManagement = () => {
               return null;
             }
 
+            const cycle = String(entry.cycle || entry.Cycle || "").trim().toUpperCase();
+            
+            // Validate cycle for semesters 1 and 2
+            const semesterNumber = getSemesterNumber(state.manualForm.semester);
+            if (semesterNumber <= 2) {
+              if (!cycle || !['P', 'C'].includes(cycle)) {
+                errors.push(`Row ${row}: Cycle (P or C) is required for semester ${semesterNumber}`);
+                return null;
+              }
+            } else if (cycle) {
+              errors.push(`Row ${row}: Cycle can only be set for semesters 1 and 2`);
+              return null;
+            }
+
             return {
               usn,
               name,
               email,
+              cycle: semesterNumber <= 2 ? cycle : undefined,
               parent_name,
               parent_contact,
               emergency_contact,
@@ -463,6 +505,14 @@ const StudentManagement = () => {
     if (!semester) newErrors.semester = "Semester is required";
     if (!batch) newErrors.batch = "Batch is required";
 
+    // Cycle validation for semesters 1 and 2
+    const semesterNumber = getSemesterNumber(semester);
+    if (semesterNumber <= 2 && !state.manualForm.cycle) {
+      newErrors.cycle = "Cycle is required for semesters 1 and 2";
+    } else if (semesterNumber > 2 && state.manualForm.cycle) {
+      newErrors.cycle = "Cycle can only be set for semesters 1 and 2";
+    }
+
     // If any validation errors, update state and stop
     if (Object.keys(newErrors).length > 0) {
       updateState({ manualErrors: newErrors, uploadErrors: ["Fix errors before submitting"] });
@@ -481,6 +531,7 @@ const StudentManagement = () => {
           semester_id: getSemesterId(semester),
           section_id: getSectionId(section, state.manualSections),
           batch_id: getBatchId(batch),
+          cycle: state.manualForm.cycle || undefined,
         },
         "POST"
       );
@@ -497,6 +548,7 @@ const StudentManagement = () => {
               ? `${state.semesters[0].number}th Semester`
               : "",
             batch: "",
+            cycle: "",
           },
           manualErrors: {},
           uploadErrors: [],
@@ -559,12 +611,21 @@ const StudentManagement = () => {
 
   // Generate CSV template
   const generateTemplate = () => {
-    const headers = ["usn", "name", "email"];
-    const rows = [
-      ["1AM22CI001", "John Doe", "john.doe@example.com"],
-      ["1AM22CI002", "Jane Smith", "jane.smith@example.com"],
-      ["1AM22CI003", "Alice Johnson", "alice.johnson@example.com"],
-    ];
+    const semesterNumber = getSemesterNumber(state.manualForm.semester);
+    const headers = semesterNumber <= 2 
+      ? ["usn", "name", "email", "cycle"] 
+      : ["usn", "name", "email"];
+    const rows = semesterNumber <= 2
+      ? [
+          ["1AM22CI001", "John Doe", "john.doe@example.com", "P"],
+          ["1AM22CI002", "Jane Smith", "jane.smith@example.com", "C"],
+          ["1AM22CI003", "Alice Johnson", "alice.johnson@example.com", "P"],
+        ]
+      : [
+          ["1AM22CI001", "John Doe", "john.doe@example.com"],
+          ["1AM22CI002", "Jane Smith", "jane.smith@example.com"],
+          ["1AM22CI003", "Alice Johnson", "alice.johnson@example.com"],
+        ];
     return [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
   };
 
@@ -908,9 +969,35 @@ const StudentManagement = () => {
                 ))}
               </SelectContent>
             </Select>
+            {state.manualForm.semester && getSemesterNumber(state.manualForm.semester) <= 2 && (
+              <Select
+                value={state.manualForm.cycle}
+                onValueChange={(value) => updateState({ manualForm: { ...state.manualForm, cycle: value } })}
+                disabled={state.isLoading}
+              >
+                <SelectTrigger className={`flex-1 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} placeholder:text-muted-foreground focus:ring-0`}>
+                  <SelectValue placeholder="Select Cycle" />
+                </SelectTrigger>
+                <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+                  <SelectItem value="P" className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>
+                    P Cycle (Physics)
+                  </SelectItem>
+                  <SelectItem value="C" className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>
+                    C Cycle (Chemistry)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
             <Button
               onClick={handleManualEntry}
-              disabled={state.isLoading || !state.branchId || !state.manualForm.semester || !state.manualForm.section || !state.manualForm.batch}
+              disabled={
+                state.isLoading || 
+                !state.branchId || 
+                !state.manualForm.semester || 
+                !state.manualForm.section || 
+                !state.manualForm.batch ||
+                (getSemesterNumber(state.manualForm.semester) <= 2 && !state.manualForm.cycle)
+              }
               className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition disabled:opacity-50 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
             >
               + Add Student
@@ -1035,7 +1122,7 @@ const StudentManagement = () => {
                     <td className="py-2 px-4">{student.name}</td>
                     <td className="py-2 px-4">{student.email}</td>
                     <td className="py-2 px-4">Section {student.section}</td>
-                    <td className="py-2 px-4">{student.semester}</td>
+                    <td className="py-2 px-4">{formatSemesterDisplay(student)}</td>
                     <td className="py-2 px-4 flex gap-2">
                       <button
                         onClick={() => openEdit(student)}
@@ -1222,6 +1309,27 @@ const StudentManagement = () => {
                     ))}
                 </SelectContent>
               </Select>
+
+              {/* Cycle Dropdown - only for semesters 1 and 2 */}
+              {state.manualForm.semester && getSemesterNumber(state.manualForm.semester) <= 2 && (
+                <Select
+                  value={state.manualForm.cycle}
+                  onValueChange={(value) => updateState({ manualForm: { ...state.manualForm, cycle: value } })}
+                  disabled={state.isLoading}
+                >
+                  <SelectTrigger className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
+                    <SelectValue placeholder="Select Cycle" />
+                  </SelectTrigger>
+                  <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+                    <SelectItem value="P" className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>
+                      P Cycle (Physics)
+                    </SelectItem>
+                    <SelectItem value="C" className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>
+                      C Cycle (Chemistry)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
 
