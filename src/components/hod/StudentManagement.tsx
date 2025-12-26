@@ -73,7 +73,7 @@ const StudentManagement = () => {
     confirmDelete: false,
     editDialog: false,
     addStudentModal: false,
-    editForm: { name: "", email: "", section: "", semester: "" },
+    editForm: { name: "", email: "", section: "", semester: "", cycle: "" },
     uploadErrors: [] as string[],
     uploadedCount: 0,
     droppedFileName: null as string | null,
@@ -283,6 +283,7 @@ const StudentManagement = () => {
   useEffect(() => {
     if (state.editDialog && state.branchId && state.editForm.semester) {
       const semesterId = getSemesterId(state.editForm.semester);
+      const semesterNumber = getSemesterNumber(state.editForm.semester);
       if (semesterId) {
         // Use cached sections instead of making API call
         const cacheKey = semesterId || "ALL";
@@ -290,16 +291,20 @@ const StudentManagement = () => {
         if (cached) {
           updateState({
             editSections: cached,
-            editForm: { ...state.editForm, section: cached.find((s: any) => s.name === state.editForm.section)?.name || cached[0]?.name || "" },
+            editForm: { 
+              ...state.editForm, 
+              section: cached.find((s: any) => s.name === state.editForm.section)?.name || cached[0]?.name || "",
+              cycle: semesterNumber <= 2 ? state.editForm.cycle : "" // Reset cycle for semesters > 2
+            },
           });
         } else {
           updateState({
             editSections: [],
-            editForm: { ...state.editForm, section: "" },
+            editForm: { ...state.editForm, section: "", cycle: semesterNumber <= 2 ? state.editForm.cycle : "" },
           });
         }
       } else {
-        updateState({ editSections: [], editForm: { ...state.editForm, section: "" } });
+        updateState({ editSections: [], editForm: { ...state.editForm, section: "", cycle: "" } });
       }
     }
   }, [state.branchId, state.editForm.semester, state.editDialog, sectionsCache]);
@@ -565,6 +570,13 @@ const StudentManagement = () => {
 
   // Handle edit save
   const handleEditSave = async () => {
+    // Validate cycle for semesters 1 and 2
+    const semesterNumber = getSemesterNumber(state.editForm.semester);
+    if (semesterNumber <= 2 && !state.editForm.cycle) {
+      updateState({ uploadErrors: ["Cycle is required for semesters 1 and 2"] });
+      return;
+    }
+
     try {
       const res = await manageStudents({
         action: "update",
@@ -574,6 +586,7 @@ const StudentManagement = () => {
         email: state.editForm.email,
         semester_id: getSemesterId(state.editForm.semester),
         section_id: getSectionId(state.editForm.section, state.editSections),
+        cycle: state.editForm.cycle || undefined,
       }, "POST");
 
       if (res.success) {
@@ -747,6 +760,7 @@ const StudentManagement = () => {
         email: student.email,
         section: student.section,
         semester: student.semester,
+        cycle: student.cycle || "",
       },
       editDialog: true,
       editSections: [],
@@ -1513,6 +1527,21 @@ const StudentManagement = () => {
                   ))}
               </SelectContent>
             </Select>
+            {/* Cycle field - only show for semesters 1 and 2 */}
+            {getSemesterNumber(state.editForm.semester) <= 2 && (
+              <Select
+                value={state.editForm.cycle}
+                onValueChange={(value) => updateState({ editForm: { ...state.editForm, cycle: value } })}
+              >
+                <SelectTrigger className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+                  <SelectValue placeholder="Select Cycle" />
+                </SelectTrigger>
+                <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+                  <SelectItem value="P" className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>Physics Cycle</SelectItem>
+                  <SelectItem value="C" className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>Chemistry Cycle</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <DialogFooter className="flex justify-end gap-2 mt-4">
             <Button
