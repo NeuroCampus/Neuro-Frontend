@@ -70,6 +70,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
 
   const getIcon = (page: string) => {
     const iconMap: { [key: string]: React.ReactNode } = {
+    'exam-applications': <ClipboardList size={20} />,
       dashboard: <LayoutDashboard size={20} />,
       "promotion-management": <UserCheck size={20} />,
       "enroll-user": <User size={20} />,
@@ -187,6 +188,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     
     // Academic
     { name: "Timetable", page: "timetable" },
+    { name: "Exam Applications", page: "exam-applications" },
     { name: "Proctor Students", page: "proctor-students" },
     { name: "Scan for Student Info", page: "scan-student-info" },
     

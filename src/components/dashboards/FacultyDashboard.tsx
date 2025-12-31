@@ -10,6 +10,7 @@ import ApplyLeave from "../faculty/ApplyLeave";
 import AttendanceRecords from "../faculty/AttendanceRecords";
 import Announcements from "../faculty/Announcements";
 import ProctorStudents from "../faculty/ProctorStudents";
+import ExamApplication from "../faculty/ExamApplication";
 import ManageStudentLeave from "../faculty/ManageStudentLeave";
 import Timetable from "../faculty/Timetable";
 import Chat from "../common/Chat";
@@ -39,8 +40,8 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
   const location = useLocation();
   
   const getActivePageFromPath = (pathname: string): string => {
-    const pathParts = pathname.split('/');
-    const lastPart = pathParts[pathParts.length - 1];
+    const pathParts = pathname.split('/').filter(Boolean);
+    const lastPart = pathParts[pathParts.length - 1] || '';
     
     // Map URL paths to page names
     const pathMap: { [key: string]: string } = {
@@ -93,6 +94,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'faculty-attendance': '/faculty/faculty-attendance',
       'announcements': '/faculty/announcements',
       'proctor-students': '/faculty/proctor-students',
+      'exam-applications': '/faculty/exam-applications',
       'student-leave': '/faculty/student-leave',
       'timetable': '/faculty/timetable',
       'chat': '/faculty/chat',
@@ -147,6 +149,8 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
         return <Announcements role="faculty" proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} />;
       case "proctor-students":
         return <ProctorStudents proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} />;
+      case "exam-applications":
+        return <ExamApplication proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} />;
       case "student-leave":
         return <ManageStudentLeave proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} />;
       case "timetable":

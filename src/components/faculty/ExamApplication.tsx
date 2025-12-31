@@ -1,0 +1,366 @@
+import React, { useEffect, useState, useRef } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
+import { Avatar, AvatarFallback } from "../ui/avatar";
+import { useTheme } from "@/context/ThemeContext";
+import { API_ENDPOINT } from "@/utils/config";
+import { manageSubjects } from "@/utils/hod_api";
+import { fetchWithTokenRefresh } from "@/utils/authService";
+import type { ProctorStudent } from "@/utils/faculty_api";
+
+interface ExamApplicationProps {
+  proctorStudents: ProctorStudent[];
+  proctorStudentsLoading?: boolean;
+}
+
+const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proctorStudentsLoading = false }) => {
+  const loading = proctorStudentsLoading;
+  const { theme } = useTheme();
+  const printRef = useRef<HTMLDivElement | null>(null);
+  const [exporting, setExporting] = useState(false);
+
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<ProctorStudent | null>(null);
+  const [studentDetails, setStudentDetails] = useState<any>(null);
+  const [semesterSubjects, setSemesterSubjects] = useState<Array<any>>([]);
+  const [appliedSubjects, setAppliedSubjects] = useState<Record<string, boolean>>({});
+
+  const filtered = proctorStudents.filter((s) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return (s.usn || "").toLowerCase().includes(q) || (s.name || "").toLowerCase().includes(q);
+  });
+
+  const openFor = async (student: ProctorStudent) => {
+    setSelectedStudent(student);
+    setStudentDetails(null);
+    setSemesterSubjects([]);
+    setAppliedSubjects({});
+    setOpen(true);
+  };
+
+  useEffect(() => {
+    if (!open || !selectedStudent) return;
+
+    const usn = selectedStudent.usn;
+
+    const fetchDetails = async () => {
+      try {
+        const res = await fetch(`${API_ENDPOINT}/public/student-data/?usn=${usn}`);
+        const json = await res.json();
+        if (json.success) {
+          setStudentDetails(json);
+          const registered = (json.subjects_registered || []).map((r: any) => r.subject_code);
+
+          if (selectedStudent.branch_id && selectedStudent.semester_id) {
+            try {
+              const url = `${API_ENDPOINT}/common/subjects/?branch_id=${selectedStudent.branch_id}&semester_id=${selectedStudent.semester_id}`;
+              const resp = await fetchWithTokenRefresh(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+              const subjResp = await resp.json();
+              if (subjResp.success && subjResp.data) {
+                const subjects = subjResp.data.filter((s: any) => !registered.includes(s.subject_code));
+                setSemesterSubjects(subjects);
+              }
+            } catch (e) {
+              console.error('Failed to fetch common subjects', e);
+            }
+          }
+        } else {
+          setStudentDetails({ error: json.message || "Failed to fetch" });
+        }
+      } catch (err) {
+        setStudentDetails({ error: "Network error" });
+      }
+    };
+
+    fetchDetails();
+  }, [open, selectedStudent]);
+
+  const handleApplyToggle = (subjectCode: string) => {
+    setAppliedSubjects((s) => ({ ...s, [subjectCode]: !s[subjectCode] }));
+  };
+
+  const exportPdf = async () => {
+    if (!printRef.current) return;
+    setExporting(true);
+    try {
+      const [jspdfModule, html2canvasModule] = await Promise.all([
+        import('jspdf'),
+        import('html2canvas')
+      ]);
+
+      // Resolve default vs named exports for html2canvas
+      const html2canvasFn = (html2canvasModule && (html2canvasModule.default || html2canvasModule)) as any;
+
+      // Resolve jsPDF constructor from various module shapes
+      let jsPDFCtor: any = null;
+      if (jspdfModule) {
+        if (jspdfModule.jsPDF) jsPDFCtor = jspdfModule.jsPDF;
+        else if (jspdfModule.default && jspdfModule.default.jsPDF) jsPDFCtor = jspdfModule.default.jsPDF;
+        else if (jspdfModule.default) jsPDFCtor = jspdfModule.default;
+        else jsPDFCtor = jspdfModule;
+      }
+
+      const element = printRef.current as HTMLElement;
+      // Render element to canvas at higher scale for better quality
+      const canvas = await html2canvasFn(element, { scale: 2, useCORS: true, logging: false });
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+
+      const pdf = new jsPDFCtor('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10; // mm
+      const contentWidth = pdfWidth - margin * 2;
+      const imgWidth = contentWidth; // mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width; // mm
+      const contentHeight = pdfHeight - margin * 2;
+
+      // If content fits on one page
+      if (imgHeight <= contentHeight) {
+        pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight);
+        pdf.save(`exam-application-${selectedStudent?.usn || 'student'}.pdf`);
+      } else {
+        // Split into pages
+        const totalPages = Math.ceil(imgHeight / contentHeight);
+
+        // compute page slice height in pixels
+        const pxPerMm = canvas.width / imgWidth; // pixels per mm
+        const sliceHeightPx = Math.floor(contentHeight * pxPerMm);
+
+        for (let page = 0; page < totalPages; page++) {
+          const sourceY = page * sliceHeightPx;
+          const canvasPage = document.createElement('canvas');
+          canvasPage.width = canvas.width;
+          // last page may be shorter
+          const remaining = canvas.height - sourceY;
+          canvasPage.height = remaining < sliceHeightPx ? remaining : sliceHeightPx;
+
+          const ctx = canvasPage.getContext('2d');
+          if (ctx) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvasPage.width, canvasPage.height);
+            ctx.drawImage(canvas, 0, sourceY, canvas.width, canvasPage.height, 0, 0, canvasPage.width, canvasPage.height);
+          }
+
+          const pageData = canvasPage.toDataURL('image/jpeg', 1.0);
+          const pageImgHeightMm = (canvasPage.height * imgWidth) / canvas.width;
+
+          if (page > 0) pdf.addPage();
+          pdf.addImage(pageData, 'JPEG', margin, margin, imgWidth, pageImgHeightMm);
+        }
+
+        pdf.save(`exam-application-${selectedStudent?.usn || 'student'}.pdf`);
+      }
+    } catch (err) {
+      console.error('Export PDF failed', err);
+      alert('Export failed. Please ensure jsPDF is installed (npm install jspdf)');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  return (
+    <Card className={theme === 'dark' ? 'bg-card text-foreground shadow-md' : 'bg-white text-gray-900 shadow-md'}>
+      <CardHeader>
+        <CardTitle className="text-xl font-semibold">Exam Applications</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Input
+          placeholder="Search proctor students by USN or name..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}
+        />
+
+        <div className="max-h-[60vh] overflow-auto">
+          <table className={`min-w-full rounded-md ${theme === 'dark' ? 'border border-border' : 'border border-gray-200'}`}>
+            <thead className={theme === 'dark' ? 'bg-muted text-foreground' : 'bg-gray-100 text-gray-900'}>
+              <tr>
+                <th className="px-4 py-2 text-left text-sm">USN</th>
+                <th className="px-4 py-2 text-left text-sm">Name</th>
+                <th className="px-4 py-2 text-left text-sm">Semester</th>
+                <th className="px-4 py-2 text-left text-sm">Action</th>
+              </tr>
+            </thead>
+            <tbody className={theme === 'dark' ? 'divide-border' : 'divide-gray-200'}>
+              {loading && (
+                <tr>
+                  <td colSpan={4} className="text-center py-6">Loading...</td>
+                </tr>
+              )}
+              {!loading && filtered.map((student) => (
+                <tr key={student.usn} className={theme === 'dark' ? 'hover:bg-muted' : 'hover:bg-gray-50'}>
+                  <td className="px-4 py-2 text-sm">{student.usn}</td>
+                  <td className="px-4 py-2 text-sm">{student.name}</td>
+                  <td className="px-4 py-2 text-sm">{student.semester}</td>
+                  <td className="px-4 py-2 text-sm">
+                    <Button onClick={() => openFor(student)}>Open</Button>
+                  </td>
+                </tr>
+              ))}
+              {!loading && filtered.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="text-center py-6">No students found.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Exam Application</DialogTitle>
+              </DialogHeader>
+              <div className="flex justify-end gap-2">
+                <Button onClick={async () => { await exportPdf(); }}>
+                  {exporting ? 'Exporting...' : 'Export PDF'}
+                </Button>
+              </div>
+
+              <div ref={printRef} className="mt-4">
+                {/* Printable application form */}
+                <div id="exam-application-printable" className="p-6 bg-white text-black" style={{width: '800px', margin: '0 auto'}}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <img src="/logo.jpeg" alt="Logo" style={{height: 60}} />
+                    </div>
+                    <div className="text-center">
+                      <div className="font-bold text-lg">NEURO CAMPUS</div>
+                      <div className="text-sm">Semester End Exam Application Form</div>
+                    </div>
+                    <div style={{width: 60}} />
+                  </div>
+
+                  <hr className="mb-4" />
+
+                  <div className="flex items-center gap-4 mb-4">
+                    <div>
+                      <Avatar className="w-20 h-20 rounded-md overflow-hidden">
+                        {(
+                          (studentDetails && (studentDetails.photo_url || studentDetails.photo)) ||
+                          (selectedStudent && (selectedStudent.photo || selectedStudent.photo_url))
+                        ) ? (
+                          <img
+                            src={studentDetails?.photo_url || studentDetails?.photo || selectedStudent?.photo || selectedStudent?.photo_url}
+                            alt={selectedStudent?.name || studentDetails?.name || 'Student'}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                        ) : (
+                          <AvatarFallback className="text-2xl font-medium">
+                            {(selectedStudent?.name || studentDetails?.name || 'U')[0]?.toUpperCase()}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                    </div>
+                    <div className="flex-1 grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="text-xs text-muted-foreground">Name</div>
+                        <div className="font-semibold">{selectedStudent?.name || studentDetails?.name || ''}</div>
+                        <div className="text-xs text-muted-foreground">USN</div>
+                        <div className="font-semibold">{selectedStudent?.usn || ''}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted-foreground">Department</div>
+                        <div className="font-semibold">{selectedStudent?.branch || ''}</div>
+                        <div className="text-xs text-muted-foreground">Semester</div>
+                        <div className="font-semibold">{selectedStudent?.semester || ''}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h4 className="font-medium mb-2">Regular Subjects</h4>
+                  <table className="w-full border-collapse" style={{border: '1px solid #ddd'}}>
+                    <thead>
+                      <tr style={{background: '#f3f4f6'}}>
+                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Subject Code</th>
+                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Subject Name</th>
+                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {semesterSubjects.length > 0 ? semesterSubjects.map((sub) => (
+                        <tr key={sub.subject_code}>
+                          <td style={{border: '1px solid #ddd', padding: 8}}>{sub.subject_code}</td>
+                          <td style={{border: '1px solid #ddd', padding: 8}}>{sub.name}</td>
+                          <td style={{border: '1px solid #ddd', padding: 8}}>{appliedSubjects[sub.subject_code] ? 'Applied' : '-'}</td>
+                        </tr>
+                      )) : (
+                        <tr><td colSpan={3} style={{padding: 12}}>No subjects available.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+
+                  <h4 className="font-medium mt-6 mb-2">Elective Subjects (Registered)</h4>
+                  <table className="w-full border-collapse mb-4" style={{border: '1px solid #ddd'}}>
+                    <thead>
+                      <tr style={{background: '#f3f4f6'}}>
+                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Subject Code</th>
+                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Subject Name</th>
+                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {((studentDetails?.subjects_registered || []).filter((x: any) => x.subject_type === 'elective')).length > 0 ? 
+                        (studentDetails?.subjects_registered || []).filter((x: any) => x.subject_type === 'elective').map((r: any) => (
+                          <tr key={r.subject_code}>
+                            <td style={{border: '1px solid #ddd', padding: 8}}>{r.subject_code}</td>
+                            <td style={{border: '1px solid #ddd', padding: 8}}>{r.subject_name}</td>
+                            <td style={{border: '1px solid #ddd', padding: 8}}>{''}</td>
+                          </tr>
+                        )) : (
+                          <tr><td colSpan={3} style={{padding: 12}}>No registered electives.</td></tr>
+                        )}
+                    </tbody>
+                  </table>
+
+                  <h4 className="font-medium mt-6 mb-2">Open Elective Subjects (Registered)</h4>
+                  <table className="w-full border-collapse" style={{border: '1px solid #ddd'}}>
+                    <thead>
+                      <tr style={{background: '#f3f4f6'}}>
+                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Subject Code</th>
+                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Subject Name</th>
+                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {((studentDetails?.subjects_registered || []).filter((x: any) => x.subject_type === 'open_elective')).length > 0 ? 
+                        (studentDetails?.subjects_registered || []).filter((x: any) => x.subject_type === 'open_elective').map((r: any) => (
+                          <tr key={r.subject_code}>
+                            <td style={{border: '1px solid #ddd', padding: 8}}>{r.subject_code}</td>
+                            <td style={{border: '1px solid #ddd', padding: 8}}>{r.subject_name}</td>
+                            <td style={{border: '1px solid #ddd', padding: 8}}>{''}</td>
+                          </tr>
+                        )) : (
+                          <tr><td colSpan={3} style={{padding: 12}}>No registered open electives.</td></tr>
+                        )}
+                    </tbody>
+                  </table>
+
+                  <div className="mt-8 grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-xs">Student Signature</div>
+                      <div style={{height: 60, borderBottom: '1px solid #000'}} />
+                    </div>
+                    <div>
+                      <div className="text-xs">Office Use</div>
+                      <div style={{height: 60, borderBottom: '1px solid #000'}} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter className="mt-4">
+                <Button onClick={() => setOpen(false)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+        </Dialog>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default ExamApplication;
+
