@@ -272,6 +272,7 @@ interface ManageSubjectsRequest {
   subject_code?: string;
   semester_id: string;
   branch_id: string;
+  subject_type?: string;
 }
 
 interface ManageSubjectsResponse {

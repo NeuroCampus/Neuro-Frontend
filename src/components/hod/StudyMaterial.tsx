@@ -235,7 +235,7 @@ const StudyMaterials = () => {
       <div className="flex flex-col sm:flex-row gap-4 mb-4">
         <input
           type="text"
-          placeholder="Search by title, subject name, subject code, semester, or uploaded by..."
+          placeholder="Search by title, course name, course code, semester, or uploaded by..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className={`flex-1 px-3 py-2 rounded outline-none focus:ring-2 border ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
@@ -258,8 +258,8 @@ const StudyMaterials = () => {
           <div className={`grid grid-cols-1 sm:grid-cols-7 font-semibold text-sm gap-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
             <div>Type</div>
             <div>Title</div>
-            <div>Subject Name</div>
-            <div>Subject Code</div>
+            <div>Course Name</div>
+            <div>Course Code</div>
             <div>Semester</div>
             <div>Uploaded By</div>
             <div>Action</div>
@@ -302,7 +302,7 @@ const StudyMaterials = () => {
               />
               <input
                 type="text"
-                placeholder="Subject Name"
+                placeholder="Course Name"
                 value={subjectName}
                 onChange={(e) => setSubjectName(e.target.value)}
                 className={`px-3 py-2 rounded outline-none focus:ring-2 ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
@@ -310,7 +310,7 @@ const StudyMaterials = () => {
               />
               <input
                 type="text"
-                placeholder="Subject Code"
+                placeholder="Course Code"
                 value={subjectCode}
                 onChange={(e) => setSubjectCode(e.target.value)}
                 className={`px-3 py-2 rounded outline-none focus:ring-2 ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}

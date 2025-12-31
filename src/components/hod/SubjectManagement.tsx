@@ -11,6 +11,7 @@ interface Subject {
   name: string;
   subject_code: string;
   semester_id: string;
+  subject_type: string;
 }
 
 interface Semester {
@@ -25,6 +26,7 @@ interface ManageSubjectsRequest {
   subject_code?: string;
   semester_id?: string;
   subject_id?: string;
+  subject_type?: string;
 }
 
 // Define error type for catch blocks
@@ -49,7 +51,7 @@ interface SubjectManagementState {
   deleteConfirmation: string | null;
   showModal: "add" | "edit" | null;
   currentSubject: Subject | null;
-  newSubject: { code: string; name: string; semester_id: string };
+  newSubject: { code: string; name: string; semester_id: string; subject_type: string };
   error: string | null;
   success: string | null;
   loading: boolean;
@@ -67,7 +69,7 @@ const SubjectManagement = () => {
     deleteConfirmation: null,
     showModal: null,
     currentSubject: null,
-    newSubject: { code: "", name: "", semester_id: "" },
+    newSubject: { code: "", name: "", semester_id: "", subject_type: "regular" },
     error: null,
     success: null,
     loading: false,
@@ -155,6 +157,7 @@ const SubjectManagement = () => {
       name: state.newSubject.name,
       subject_code: state.newSubject.code,
       semester_id: state.newSubject.semester_id,
+      subject_type: state.newSubject.subject_type,
       ...(state.showModal === "edit" && state.currentSubject ? { subject_id: state.currentSubject.id } : {}),
     };
 
@@ -163,9 +166,9 @@ const SubjectManagement = () => {
       const response = await manageSubjects(data, "POST");
       if (response.success) {
         updateState({
-          success: state.showModal === "add" ? "Subject added successfully" : "Subject updated successfully",
+          success: state.showModal === "add" ? "Course added successfully" : "Course updated successfully",
           showModal: null,
-          newSubject: { code: "", name: "", semester_id: "" },
+          newSubject: { code: "", name: "", semester_id: "", subject_type: "regular" },
           currentSubject: null,
         });
         fetchData(); // Refresh subjects
@@ -183,7 +186,6 @@ const SubjectManagement = () => {
     }
   };
 
-  // Handle editing a subject
   const handleEdit = (subject: Subject) => {
     updateState({
       currentSubject: subject,
@@ -191,6 +193,7 @@ const SubjectManagement = () => {
         code: subject.subject_code,
         name: subject.name,
         semester_id: subject.semester_id,
+        subject_type: subject.subject_type,
       },
       showModal: "edit",
     });
@@ -213,7 +216,7 @@ const SubjectManagement = () => {
       try {
         const response = await manageSubjects(data, "POST");
         if (response.success) {
-          updateState({ success: "Subject deleted successfully" });
+          updateState({ success: "Course deleted successfully" });
           fetchData(); // Refresh subjects
         } else {
           updateState({ error: response.message });
@@ -240,19 +243,19 @@ const SubjectManagement = () => {
   return (
     <div className={`p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <div className="flex justify-between items-center mb-4">
-        <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Manage Subjects</h2>
+        <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Manage Courses</h2>
         <Button
           onClick={() => {
             updateState({
               showModal: "add",
-              newSubject: { code: "", name: "", semester_id: "" },
+              newSubject: { code: "", name: "", semester_id: "", subject_type: "regular" },
               currentSubject: null,
             });
           }}
           className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
           disabled={state.loading || !state.branchId}
         >
-          + Add Subject
+          + Add Course
         </Button>
       </div>
 
@@ -262,16 +265,17 @@ const SubjectManagement = () => {
 
       <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
-          <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Manage Subjects</CardTitle>
+          <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Manage Courses</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full table-auto text-sm">
               <thead className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-gray-100 text-gray-900'}>
                 <tr>
-                  <th className="px-4 py-3 text-left">SUBJECT CODE</th>
-                  <th className="px-4 py-3 text-left">SUBJECT NAME</th>
+                  <th className="px-4 py-3 text-left">COURSE CODE</th>
+                  <th className="px-4 py-3 text-left">COURSE NAME</th>
                   <th className="px-4 py-3 text-left">SEMESTER</th>
+                  <th className="px-4 py-3 text-left">COURSE TYPE</th>
                   <th className="px-4 py-3 text-left">ACTIONS</th>
                 </tr>
               </thead>
@@ -292,6 +296,9 @@ const SubjectManagement = () => {
                       <td className="px-4 py-3">{subject.name}</td>
                       <td className="px-4 py-3">
                         {getSemesterNumber(subject.semester_id)}
+                      </td>
+                      <td className="px-4 py-3">
+                        {subject.subject_type === 'regular' ? 'Regular Subjects' : subject.subject_type === 'elective' ? 'Elective Subjects' : 'Open Elective Subjects'}
                       </td>
                       <td className="px-4 py-3 flex gap-5">
                         <Pencil
@@ -317,7 +324,7 @@ const SubjectManagement = () => {
                     ),
                 }).map((_, i) => (
                   <tr key={`empty-${i}`} className={theme === 'dark' ? 'bg-background h-[48px]' : 'bg-white h-[48px]'}>
-                    <td colSpan={4}></td>
+                    <td colSpan={5}></td>
                   </tr>
                 ))}
               </tbody>
@@ -333,7 +340,7 @@ const SubjectManagement = () => {
                 state.pageSize,
                 state.subjects.length - (state.currentPage - 1) * state.pageSize
               )}{" "}
-              out of {state.subjects.length} Subjects
+              out of {state.subjects.length} Courses
             </div>
 
             {/* Pagination Controls */}
@@ -371,7 +378,7 @@ const SubjectManagement = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
           <div className={`p-6 rounded shadow-lg ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
             <h3 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-              Are you sure you want to delete this subject?
+              Are you sure you want to delete this course?
             </h3>
             <div className="flex justify-end gap-4">
               <Button
@@ -406,9 +413,9 @@ const SubjectManagement = () => {
               <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{state.modalError}</p>
             )}
 
-            {/* Subject Code */}
+            {/* Course Code */}
             <div className="mb-4">
-              <label className={`block mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Subject Code</label>
+              <label className={`block mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Course Code</label>
               <Input
                 type="text"
                 value={state.newSubject.code}
@@ -418,7 +425,7 @@ const SubjectManagement = () => {
                   updateState({
                     newSubject: { ...state.newSubject, code },
                     modalError: code && !pattern.test(code)
-                      ? "Invalid Subject Code. Examples: PH1L001, BCS601, 19ACE54A"
+                      ? "Invalid Course Code. Examples: PH1L001, BCS601, 19ACE54A"
                       : null,
                   });
                 }}
@@ -428,9 +435,9 @@ const SubjectManagement = () => {
               />
             </div>
 
-            {/* Subject Name */}
+            {/* Course Name */}
             <div className="mb-4">
-              <label className={`block mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Subject Name</label>
+              <label className={`block mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Course Name</label>
               <Input
                 type="text"
                 value={state.newSubject.name}
@@ -469,13 +476,33 @@ const SubjectManagement = () => {
               </select>
             </div>
 
+            {/* Course Type */}
+            <div className="mb-4">
+              <label className={`block mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Course Type</label>
+              <select
+                className={`${theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-300 text-gray-900'} w-full px-4 py-2 rounded`}
+                value={state.newSubject.subject_type}
+                onChange={(e) =>
+                  updateState({
+                    newSubject: { ...state.newSubject, subject_type: e.target.value },
+                    modalError: null,
+                  })
+                }
+                disabled={state.loading}
+              >
+                <option value="regular">Regular Subjects</option>
+                <option value="elective">Elective Subjects</option>
+                <option value="open_elective">Open Elective Subjects</option>
+              </select>
+            </div>
+
             {/* Action Buttons */}
             <div className="flex justify-end gap-4">
               <Button
                 onClick={() => {
                   updateState({
                     showModal: null,
-                    newSubject: { code: "", name: "", semester_id: "" },
+                    newSubject: { code: "", name: "", semester_id: "", subject_type: "regular" },
                     currentSubject: null,
                     modalError: null,
                   });
@@ -533,7 +560,7 @@ const SubjectManagement = () => {
                 className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
                 disabled={state.loading}
               >
-                {state.showModal === "add" ? "Add Subject" : "Update Subject"}
+                {state.showModal === "add" ? "Add Course" : "Update Course"}
               </Button>
             </div>
           </div>
