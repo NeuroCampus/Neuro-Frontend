@@ -9,6 +9,7 @@ import { useTheme } from "@/context/ThemeContext";
 import { Search, User, Calendar, BookOpen, TrendingUp, CreditCard, Users, Clock, MapPin, Phone, Mail, Heart, Lock, Shield, QrCode, X, Camera, AlertCircle } from "lucide-react";
 import { showErrorAlert, showSuccessAlert } from "../../utils/sweetalert";
 import { BrowserMultiFormatReader, NotFoundException, ChecksumException, FormatException } from '@zxing/library';
+import { API_ENDPOINT } from "@/utils/config";
 
 interface StudentInfo {
   name: string;
@@ -147,7 +148,13 @@ const StudentInfoScanner = () => {
     setError(null);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/public/student-data/?usn=${usnValue.toUpperCase()}`);
+      console.debug('Fetching student data for USN:', usnValue.toUpperCase(), 'using API_ENDPOINT:', API_ENDPOINT);
+      const url = `${API_ENDPOINT}/public/student-data/?usn=${usnValue.toUpperCase()}`;
+      const response = await fetch(url);
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || response.statusText || `HTTP ${response.status}`);
+      }
       const data = await response.json();
 
       if (data.success) {
@@ -157,9 +164,10 @@ const StudentInfoScanner = () => {
         setError(data.message || "Student not found");
         showErrorAlert("Error", data.message || "Student not found");
       }
-    } catch (err) {
-      setError("Network error occurred");
-      showErrorAlert("Error", "Network error occurred");
+    } catch (err: any) {
+      console.error('Error fetching student data:', err);
+      setError(err.message || "Network error occurred");
+      showErrorAlert("Error", err.message || "Network error occurred");
     } finally {
       setLoading(false);
     }
@@ -265,7 +273,9 @@ const StudentInfoScanner = () => {
       formData.append('image', blob, 'face.jpg');
 
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/recognize-face/`, {
+        const url = `${API_ENDPOINT}/recognize-face/`;
+        console.debug('Posting face blob to:', url);
+        const response = await fetch(url, {
           method: 'POST',
           body: formData,
         });
@@ -427,7 +437,7 @@ const StudentInfoScanner = () => {
             <Camera className="h-4 w-4" />
           </Button>
           <Button
-            onClick={fetchStudentData}
+            onClick={() => fetchStudentData()}
             disabled={loading}
             className="h-12 px-8 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white"
           >

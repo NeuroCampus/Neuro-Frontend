@@ -176,6 +176,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
     sections: [] as Section[],
     semesters: [] as Semester[],
     faculties: [] as Faculty[],
+    facultySearch: "",
     branchId: "",
   });
 
@@ -543,11 +544,29 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                     <SelectValue placeholder={state.faculties.length === 0 ? "No faculties available" : "Select Faculty"} />
                   </SelectTrigger>
                   <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
-                    {state.faculties.map((faculty) => (
-                      <SelectItem key={faculty.id} value={faculty.id} className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
-                        {faculty.first_name} {faculty.last_name || ""} ({faculty.username})
-                      </SelectItem>
-                    ))}
+                    <div className="px-3 py-2">
+                      <input
+                        type="text"
+                        placeholder="Search faculty"
+                        value={state.facultySearch}
+                        onChange={(e) => updateState({ facultySearch: e.target.value })}
+                        className={`w-full px-2 py-1 text-sm rounded border placeholder-gray-400 ${theme === 'dark' ? 'bg-card border-border text-foreground placeholder:text-muted-foreground' : 'bg-white border-gray-300 text-gray-900'}`}
+                      />
+                    </div>
+                    <div className="max-h-60 overflow-y-auto">
+                      {state.faculties
+                        .filter((f) => {
+                          const q = state.facultySearch?.trim().toLowerCase();
+                          if (!q) return true;
+                          const name = `${f.first_name} ${f.last_name || ''}`.toLowerCase();
+                          return name.includes(q) || (f.username || '').toLowerCase().includes(q);
+                        })
+                        .map((faculty) => (
+                          <SelectItem key={faculty.id} value={faculty.id} className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
+                            {faculty.first_name} {faculty.last_name || ""} ({faculty.username})
+                          </SelectItem>
+                        ))}
+                    </div>
                   </SelectContent>
                 </Select>
               </div>

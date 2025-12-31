@@ -6,6 +6,7 @@ import { Checkbox } from "../ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
 import { manageStudents, manageSubjects, getHODTimetableBootstrap } from "../../utils/hod_api";
 import { useHODBootstrap } from "../../context/HODBootstrapContext";
+import { useTheme } from "../../context/ThemeContext";
 
 const StudentEnrollment = () => {
   const bootstrap = useHODBootstrap();
@@ -20,7 +21,9 @@ const StudentEnrollment = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [showEnrolledOnly, setShowEnrolledOnly] = useState<boolean>(false);
   const [enrolledCount, setEnrolledCount] = useState<number>(0);
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const { theme } = useTheme();
   const [saving, setSaving] = useState(false);
   const [resultModalOpen, setResultModalOpen] = useState(false);
   const [resultData, setResultData] = useState<{ added: number; removed: number; failed: any[] }>({ added: 0, removed: 0, failed: [] });
@@ -270,6 +273,19 @@ const StudentEnrollment = () => {
           </div>
 
           <div className="flex gap-2 mb-4 items-center">
+            <div className="flex-1 max-w-xs">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by USN or name"
+                className={`w-full px-3 py-1 text-sm rounded border placeholder-gray-400 ${
+                  theme === 'dark'
+                    ? 'bg-background border-border text-foreground placeholder:text-muted-foreground'
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
+              />
+            </div>
             <Button onClick={loadStudents} disabled={!semesterId || !sectionId || !selectedSubjectId || isLoading}>Load Students</Button>
             <Button onClick={loadEnrolledStudents} disabled={!selectedSubjectId || isLoading}>Load Enrolled</Button>
             <Button variant="secondary" onClick={save} disabled={saving || students.length===0}>Save Enrollment</Button>
@@ -288,41 +304,51 @@ const StudentEnrollment = () => {
                 {students.length === 0 ? (
                   <div className="text-sm text-muted-foreground">No students loaded</div>
                 ) : (
-                  <div className={showEnrolledOnly ? "" : "grid grid-cols-2 gap-4"}>
-                    <div className="p-2 border rounded">
-                      <div className="flex items-center justify-between mb-2">
-                        <strong>Enrolled</strong>
-                        <span className="text-sm">{enrolledList.length}</span>
-                      </div>
-                      <div className="space-y-2">
-                        {enrolledList.map((s: any) => (
-                          <div key={s.id} className="flex items-center gap-3">
-                            <Checkbox checked={s.checked} onCheckedChange={() => toggleStudent(s.id)} />
-                            <div>{s.usn} — {s.name}</div>
+                  (() => {
+                    const q = searchTerm.trim().toLowerCase();
+                    const filtered = q
+                      ? students.filter((s: any) => (s.usn || "").toLowerCase().includes(q) || (s.name || "").toLowerCase().includes(q))
+                      : students;
+                    const enrolledListFiltered = filtered.filter((s: any) => s.checked);
+                    const notEnrolledListFiltered = filtered.filter((s: any) => !s.checked);
+                    return (
+                      <div className={showEnrolledOnly ? "" : "grid grid-cols-2 gap-4"}>
+                        <div className="p-2 border rounded">
+                          <div className="flex items-center justify-between mb-2">
+                            <strong>Enrolled</strong>
+                            <span className="text-sm">{enrolledListFiltered.length}</span>
                           </div>
-                        ))}
-                        {enrolledList.length === 0 && <div className="text-sm text-muted-foreground">No enrolled students</div>}
-                      </div>
-                    </div>
+                          <div className="space-y-2">
+                            {enrolledListFiltered.map((s: any) => (
+                              <div key={s.id} className="flex items-center gap-3">
+                                <Checkbox checked={s.checked} onCheckedChange={() => toggleStudent(s.id)} />
+                                <div>{s.usn} — {s.name}</div>
+                              </div>
+                            ))}
+                            {enrolledListFiltered.length === 0 && <div className="text-sm text-muted-foreground">No enrolled students</div>}
+                          </div>
+                        </div>
 
-                    {!showEnrolledOnly && (
-                      <div className="p-2 border rounded">
-                        <div className="flex items-center justify-between mb-2">
-                          <strong>Not Enrolled</strong>
-                          <span className="text-sm">{notEnrolledList.length}</span>
-                        </div>
-                        <div className="space-y-2">
-                          {notEnrolledList.map((s: any) => (
-                            <div key={s.id} className="flex items-center gap-3">
-                              <Checkbox checked={s.checked} onCheckedChange={() => toggleStudent(s.id)} />
-                              <div>{s.usn} — {s.name}</div>
+                        {!showEnrolledOnly && (
+                          <div className="p-2 border rounded">
+                            <div className="flex items-center justify-between mb-2">
+                              <strong>Not Enrolled</strong>
+                              <span className="text-sm">{notEnrolledListFiltered.length}</span>
                             </div>
-                          ))}
-                          {notEnrolledList.length === 0 && <div className="text-sm text-muted-foreground">All students enrolled</div>}
-                        </div>
+                            <div className="space-y-2">
+                              {notEnrolledListFiltered.map((s: any) => (
+                                <div key={s.id} className="flex items-center gap-3">
+                                  <Checkbox checked={s.checked} onCheckedChange={() => toggleStudent(s.id)} />
+                                  <div>{s.usn} — {s.name}</div>
+                                </div>
+                              ))}
+                              {notEnrolledListFiltered.length === 0 && <div className="text-sm text-muted-foreground">All students enrolled</div>}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
+                    );
+                  })()
                 )}
               </>
             )}
