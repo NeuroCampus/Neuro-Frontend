@@ -1468,16 +1468,6 @@ export const manageStudents = async (
     });
     const result = await response.json();
     
-    // Handle paginated response
-    if (method === "GET" && result.results) {
-      return {
-        ...result.results,
-        count: result.count,
-        next: result.next,
-        previous: result.previous
-      };
-    }
-    
     return result;
   } catch (error: unknown) {
     return handleApiError(error, (error as any).response);

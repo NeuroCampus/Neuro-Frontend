@@ -114,21 +114,19 @@ const StudentManagement = () => {
         page: page,
         page_size: pageSize
       }, "GET");
-      if (studentRes.success && studentRes.data) {
-        // Handle paginated response - check if results exist (regular API) or students (bootstrap)
-        const students = studentRes.data.results && Array.isArray(studentRes.data.results) 
-          ? studentRes.data.results.map((s: any) => ({
-              usn: s.usn,
-              name: s.name,
-              email: s.email,
-              section: s.section || "Unknown",
-              semester: s.semester || "Unknown",
-              cycle: s.cycle,
-            })) 
-          : [];
+      if (studentRes.success && studentRes.results) {
+        // Handle paginated response
+        const students = studentRes.results.map((s: any) => ({
+            usn: s.usn,
+            name: s.name,
+            email: s.email,
+            section: s.section || "Unknown",
+            semester: s.semester || "Unknown",
+            cycle: s.cycle,
+          }));
         updateState({ 
           students,
-          totalStudents: studentRes.data.count || 0,
+          totalStudents: studentRes.count || 0,
           currentPage: page
         });
       } else {
@@ -461,6 +459,7 @@ const StudentManagement = () => {
             uploadedCount: bulkData.length,
             uploadErrors: [],
             droppedFileName: null,
+            currentPage: 1, // Reset to first page to show the new students
           });
           if (fileInputRef.current) fileInputRef.current.value = "";
           await fetchStudents(state.branchId);
@@ -557,7 +556,13 @@ const StudentManagement = () => {
           },
           manualErrors: {},
           uploadErrors: [],
+          uploadedCount: 1, // Show success message
+          currentPage: 1, // Reset to first page to show the new student
         });
+        // Clear success message after 3 seconds
+        setTimeout(() => {
+          updateState({ uploadedCount: 0 });
+        }, 3000);
       } else {
         updateState({ uploadErrors: [res.message || "Error adding student"] });
       }
@@ -591,7 +596,7 @@ const StudentManagement = () => {
 
       if (res.success) {
         await fetchStudents(state.branchId);
-        updateState({ editDialog: false, uploadErrors: [], editSections: [] });
+        updateState({ editDialog: false, uploadErrors: [], editSections: [], currentPage: 1 });
       } else {
         updateState({ uploadErrors: [res.message || "Error updating student"] });
       }
@@ -612,7 +617,7 @@ const StudentManagement = () => {
 
       if (res.success) {
         await fetchStudents(state.branchId);
-        updateState({ confirmDelete: false, uploadErrors: [] });
+        updateState({ confirmDelete: false, uploadErrors: [], currentPage: 1 });
       } else {
         updateState({ uploadErrors: [res.message || "Error deleting student"] });
       }
@@ -1017,6 +1022,18 @@ const StudentManagement = () => {
               + Add Student
             </Button>
           </div>
+          {state.uploadedCount === 1 && (
+            <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+              Student added successfully.
+            </p>
+          )}
+          {state.uploadErrors.length > 0 && (
+            <ul className="text-sm text-red-400 mt-2 list-disc list-inside">
+              {state.uploadErrors.map((err, idx) => (
+                <li key={idx}>{err}</li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
 
