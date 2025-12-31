@@ -114,24 +114,47 @@ const StudentManagement = () => {
         page: page,
         page_size: pageSize
       }, "GET");
-      if (studentRes.success && studentRes.results) {
-        // Handle paginated response
-        const students = studentRes.results.map((s: any) => ({
-            usn: s.usn,
-            name: s.name,
-            email: s.email,
-            section: s.section || "Unknown",
-            semester: s.semester || "Unknown",
-            cycle: s.cycle,
-          }));
-        updateState({ 
-          students,
-          totalStudents: studentRes.count || 0,
-          currentPage: page
-        });
+      // Normalize different possible response shapes from backend
+      // 1) { success: true, results: [...], count }
+      // 2) { success: true, data: { students: [...] } }
+      // 3) plain array
+      let results: any[] = [];
+      let count = 0;
+      if (studentRes == null) {
+        results = [];
+      } else if ((studentRes as any).results && Array.isArray((studentRes as any).results)) {
+        results = (studentRes as any).results;
+        count = (studentRes as any).count || results.length;
+      } else if ((studentRes as any).data && Array.isArray((studentRes as any).data.students)) {
+        results = (studentRes as any).data.students;
+        count = (studentRes as any).count || results.length;
+      } else if (Array.isArray(studentRes)) {
+        results = studentRes as any[];
+        count = results.length;
+      } else if ((studentRes as any).success === false) {
+        // Backend returned an error
+        updateState({ uploadErrors: [...state.uploadErrors, `Students API: ${(studentRes as any).message || 'Error fetching students'}`] });
+        results = [];
       } else {
-        updateState({ uploadErrors: [...state.uploadErrors, `Students API: ${studentRes.message || "No students found"}`] });
+        // Unknown shape but try to extract 'data' array
+        if ((studentRes as any).data && Array.isArray((studentRes as any).data)) {
+          results = (studentRes as any).data;
+          count = results.length;
+        } else {
+          results = [];
+        }
       }
+
+      // Map results into UI student shape
+      const students = results.map((s: any) => ({
+        usn: s.usn,
+        name: s.name,
+        email: s.email,
+        section: s.section || 'Unknown',
+        semester: s.semester || 'Unknown',
+        cycle: s.cycle,
+      }));
+      updateState({ students, totalStudents: count || students.length, currentPage: page });
     } catch (err) {
       updateState({ uploadErrors: [...state.uploadErrors, "Failed to fetch students"] });
     }
@@ -190,14 +213,14 @@ const StudentManagement = () => {
         if (Array.isArray(boot.data.sections) && boot.data.sections.length > 0) {
           const sectionsBySemester: Record<string, Section[]> = {};
           boot.data.sections.forEach((sec: any) => {
-            const semesterId = sec.semester_id || "ALL";
+            const semesterId = String(sec.semester_id || "ALL");
             if (!sectionsBySemester[semesterId]) {
               sectionsBySemester[semesterId] = [];
             }
             sectionsBySemester[semesterId].push({
-              id: sec.id,
+              id: String(sec.id),
               name: sec.name,
-              semester_id: sec.semester_id || "",
+              semester_id: String(sec.semester_id || ""),
             });
           });
           setSectionsCache(sectionsBySemester);
@@ -541,8 +564,17 @@ const StudentManagement = () => {
       );
 
       if (res.success) {
-        await fetchStudents(state.branchId);
+        // Optimistically add new student locally so UI updates without a full refresh
+        const newStudent = {
+          usn: usn,
+          name: name,
+          email: email,
+          section: section,
+          semester: semester,
+          cycle: state.manualForm.cycle,
+        };
         updateState({
+          students: [newStudent, ...state.students],
           manualForm: {
             usn: "",
             name: "",
@@ -559,6 +591,8 @@ const StudentManagement = () => {
           uploadedCount: 1, // Show success message
           currentPage: 1, // Reset to first page to show the new student
         });
+        // Refresh full list in background to reconcile with server
+        fetchStudents(state.branchId);
         // Clear success message after 3 seconds
         setTimeout(() => {
           updateState({ uploadedCount: 0 });
@@ -595,8 +629,15 @@ const StudentManagement = () => {
       }, "POST");
 
       if (res.success) {
-        await fetchStudents(state.branchId);
-        updateState({ editDialog: false, uploadErrors: [], editSections: [], currentPage: 1 });
+        // Optimistically update local list so changes appear immediately
+        const updated = state.students.map((s) =>
+          s.usn === state.selectedStudent!.usn
+            ? { ...s, name: state.editForm.name, email: state.editForm.email, section: state.editForm.section, semester: state.editForm.semester, cycle: state.editForm.cycle }
+            : s
+        );
+        updateState({ students: updated, editDialog: false, uploadErrors: [], editSections: [], currentPage: 1 });
+        // Refresh in background
+        fetchStudents(state.branchId);
       } else {
         updateState({ uploadErrors: [res.message || "Error updating student"] });
       }

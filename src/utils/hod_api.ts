@@ -176,7 +176,7 @@ interface ManageSectionsResponse {
 }
 
 interface ManageStudentsRequest {
-  action: "create" | "update" | "delete" | "bulk_update" | "register_subjects";
+  action: "create" | "update" | "delete" | "bulk_update" | "register_subjects" | "bulk_register_subjects";
   student_id?: string;
   usn?: string;
   name?: string;
@@ -193,6 +193,8 @@ interface ManageStudentsRequest {
   blood_group?: string;
   date_of_admission?: string;
   subject_ids?: string[];
+  subject_id?: string;
+  student_ids?: string[];
   bulk_data?: Array<{
     usn: string;
     name: string;
@@ -1427,6 +1429,7 @@ export const manageStudents = async (
       const params = new URLSearchParams({ branch_id });
       if ((data as any).semester_id) params.append("semester_id", (data as any).semester_id);
       if ((data as any).section_id) params.append("section_id", (data as any).section_id);
+      if ((data as any).subject_id) params.append("subject_id", (data as any).subject_id);
       if ((data as any).page) params.append("page", (data as any).page.toString());
       if ((data as any).page_size) params.append("page_size", (data as any).page_size.toString());
       url = `${API_ENDPOINT}/hod/students/?${params.toString()}`;
@@ -1458,6 +1461,16 @@ export const manageStudents = async (
       }
       if (req.action === "register_subjects" && (!req.student_id || !req.subject_ids || !Array.isArray(req.subject_ids))) {
         throw new Error("Student ID and subject IDs array are required for register_subjects action");
+      }
+      if (req.action === "bulk_unregister_subjects") {
+        if (!req.subject_id || !req.student_ids || !Array.isArray(req.student_ids) || req.student_ids.length === 0) {
+          throw new Error("subject_id and student_ids array are required for bulk_unregister_subjects action");
+        }
+      }
+      if (req.action === "bulk_register_subjects") {
+        if (!req.subject_id || !req.student_ids || !Array.isArray(req.student_ids) || req.student_ids.length === 0) {
+          throw new Error("subject_id and student_ids array are required for bulk_register_subjects action");
+        }
       }
     }
     const response = await fetchWithTokenRefresh(url, {

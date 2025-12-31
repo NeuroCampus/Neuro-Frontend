@@ -143,6 +143,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // Academic Management
     { name: "Semester Management", page: "semesters" },
     { name: "Students", page: "students" },
+    { name: "Student Enrollment", page: "student-enrollment" },
     { name: "Subjects", page: "subjects" },
     { name: "Faculty Assignments", page: "faculty-assignments" },
     { name: "Timetable", page: "timetable" },

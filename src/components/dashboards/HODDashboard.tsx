@@ -24,6 +24,7 @@ import StudyMaterial from "../hod/StudyMaterial";
 import PromotionManagement from "../hod/PromotionManagement";
 import FacultyAttendanceView from "../hod/FacultyAttendanceView";
 import StudentInfoScanner from "../hod/StudentInfoScanner";
+import StudentEnrollment from "../hod/StudentEnrollment";
 import { HODBootstrapProvider } from "../../context/HODBootstrapContext";
 import { useTheme } from "../../context/ThemeContext";
 import { motion } from "framer-motion";
@@ -107,6 +108,7 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
       'dashboard': 'dashboard',
       'promotion-management': 'promotion-management',
       'low-attendance': 'low-attendance',
+      'student-enrollment': 'student-enrollment',
       'semesters': 'semesters',
       'students': 'students',
       'subjects': 'subjects',
@@ -167,6 +169,7 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
       'low-attendance': '/hod/low-attendance',
       'semesters': '/hod/semesters',
       'students': '/hod/students',
+      'student-enrollment': '/hod/student-enrollment',
       'subjects': '/hod/subjects',
       'faculty-assignments': '/hod/faculty-assignments',
       'timetable': '/hod/timetable',
@@ -225,6 +228,8 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
         return <SemesterManagement />;
       case "students":
         return <StudentManagement />;
+      case "student-enrollment":
+        return <StudentEnrollment />;
       case "subjects":
         return <SubjectManagement />;
       case "faculty-assignments":
