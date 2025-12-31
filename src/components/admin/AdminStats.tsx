@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FaUserGraduate, FaChalkboardTeacher, FaUserTie, FaUserShield } from "react-icons/fa";
+import { FaUserGraduate, FaChalkboardTeacher, FaUserTie, FaUserShield, FaUserCheck } from "react-icons/fa";
 import { FiDownload, FiSearch } from "react-icons/fi";
 import { motion } from "framer-motion";
 import { Bar, Pie } from "react-chartjs-2";
@@ -148,25 +148,28 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
 
   // Pie chart data for role distribution
   const pieData = {
-    labels: ["Students", "Faculty", "HODs", "Admins"],
+    labels: ["Students", "Faculty", "HODs", "COE", "Admins"],
     datasets: [
       {
         data: [
           stats?.role_distribution?.students || 0,
           stats?.role_distribution?.faculty || 0,
           stats?.role_distribution?.hods || 0,
+          stats?.role_distribution?.coe || 0,
           stats?.role_distribution?.admins || 0,
         ],
         backgroundColor: [
           "rgba(59, 130, 246, 0.6)",
           "rgba(168, 85, 247, 0.6)",
           "rgba(234, 179, 8, 0.6)",
+          "rgba(34, 197, 94, 0.6)",
           "rgba(239, 68, 68, 0.6)",
         ],
         borderColor: [
           "rgba(59, 130, 246, 1)",
           "rgba(168, 85, 247, 1)",
           "rgba(234, 179, 8, 1)",
+          "rgba(34, 197, 94, 1)",
           "rgba(239, 68, 68, 1)",
         ],
         borderWidth: 1,
@@ -233,6 +236,14 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
               value={stats.total_hods || 0}
               description="Department heads"
               icon={<FaUserTie className={theme === 'dark' ? "text-yellow-400 text-3xl" : "text-yellow-500 text-3xl"} />}
+            />
+          </motion.div>
+          <motion.div variants={cardVariants} initial="hidden" animate="visible">
+            <DashboardCard
+              title="Total COE"
+              value={stats.total_coe || 0}
+              description="Controller of Examinations"
+              icon={<FaUserCheck className={theme === 'dark' ? "text-green-400 text-3xl" : "text-green-500 text-3xl"} />}
             />
           </motion.div>
           <motion.div variants={cardVariants} initial="hidden" animate="visible">

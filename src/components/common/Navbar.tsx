@@ -15,7 +15,7 @@ interface User {
 }
 
 interface NavbarProps {
-  role: "admin" | "hod" | "faculty" | "student" | "fees_manager";
+  role: "admin" | "hod" | "faculty" | "student" | "fees_manager" | "coe";
   user?: User;
   onNotificationClick?: () => void;
   setPage: (page: string) => void;

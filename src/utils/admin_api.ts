@@ -12,6 +12,7 @@ interface RoleDistribution {
   students: number;
   faculty: number;
   hods: number;
+  coe: number;
   admins: number;
 }
 
@@ -22,6 +23,7 @@ interface AdminStatsResponse {
     total_students: number;
     total_faculty: number;
     total_hods: number;
+    total_coe: number;
     total_branches: number;
     branch_distribution: BranchDistribution[];
     role_distribution: RoleDistribution;
@@ -31,7 +33,7 @@ interface AdminStatsResponse {
 interface EnrollUserRequest {
   username: string;
   email: string;
-  role: "hod" | "teacher";
+  role: "hod" | "teacher" | "coe";
   first_name: string;
   last_name?: string;
 }
