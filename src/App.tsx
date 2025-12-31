@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import PaymentSuccess from "./pages/PaymentSuccess";
@@ -45,10 +46,45 @@ const getUserData = () => {
   }
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <BrowserRouter>
+const App = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check authentication status on mount and when localStorage changes
+    const checkAuth = () => {
+      const token = localStorage.getItem("access_token");
+      const role = localStorage.getItem("role");
+      const user = localStorage.getItem("user");
+      
+      setIsAuthenticated(!!(token && role && user));
+      setUserRole(role);
+    };
+
+    checkAuth();
+
+    // Listen for storage changes (login/logout from other tabs)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "access_token" || e.key === "role" || e.key === "user") {
+        checkAuth();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    
+    // Also check periodically for same-tab changes
+    const interval = setInterval(checkAuth, 1000);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <BrowserRouter>
         <Routes>
           {/* Public routes */}
           <Route path="/" element={
@@ -241,5 +277,6 @@ const App = () => (
     </TooltipProvider>
   </QueryClientProvider>
 );
+};
 
 export default App;

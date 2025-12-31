@@ -95,12 +95,14 @@ const handleProfileClick = () => {
               {role === "admin"
                 ? "Principal"
                 : role === "hod"
-                ? "Head of Department"
+                ? `Head of Department${user?.branch ? ` - ${user.branch}` : ""}`
                 : role === "faculty"
                 ? "Faculty Member"
+                : role === "coe"
+                ? "Controller of Examinations"
                 : role === "fees_manager"
                 ? "Fees Manager"
-                : "Student"} - Academic Management System
+                : "Student"}
             </p>
           </div>
 

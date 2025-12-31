@@ -24,6 +24,8 @@ interface LoginResponse extends AuthResponse {
     user_id?: string;
     username?: string;
     email?: string;
+    first_name?: string;
+    last_name?: string;
     role?: string;
     department?: string | null;
     profile_image?: string | null;
