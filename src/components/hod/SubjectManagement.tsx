@@ -533,6 +533,7 @@ const SubjectManagement = () => {
                     name: state.newSubject.name,
                     subject_code: state.newSubject.code,
                     semester_id: state.newSubject.semester_id,
+                    subject_type: state.newSubject.subject_type,
                     ...(state.showModal === "edit" && state.currentSubject ? { subject_id: state.currentSubject.id } : {}),
                   };
 
@@ -543,7 +544,7 @@ const SubjectManagement = () => {
                       updateState({
                         success: state.showModal === "add" ? "Subject added successfully" : "Subject updated successfully",
                         showModal: null,
-                        newSubject: { code: "", name: "", semester_id: "" },
+                        newSubject: { code: "", name: "", semester_id: "", subject_type: "regular" },
                         currentSubject: null,
                         modalError: null,
                       });
