@@ -421,12 +421,9 @@ const SubjectManagement = () => {
                 value={state.newSubject.code}
                 onChange={(e) => {
                   const code = e.target.value.toUpperCase(); // auto-uppercase
-                  const pattern = /^(\d{2})?[A-Z]{2,4}\d{1,3}[A-Z]?[a-z]?(\([A-Z]\))?$/;
                   updateState({
                     newSubject: { ...state.newSubject, code },
-                    modalError: code && !pattern.test(code)
-                      ? "Invalid Course Code. Examples: PH1L001, BCS601, 19ACE54A"
-                      : null,
+                    modalError: null,
                   });
                 }}
                 placeholder="e.g., PH1L001, BCS601"
@@ -515,15 +512,8 @@ const SubjectManagement = () => {
 
               <Button
                 onClick={async () => {
-                  const pattern = /^(\d{2})?[A-Z]{2,4}\d{1,3}[A-Z]?[a-z]?(\([A-Z]\))?$/;
-
                   if (!state.newSubject.code || !state.newSubject.name || !state.newSubject.semester_id) {
                     updateState({ modalError: "All fields are required" });
-                    return;
-                  }
-
-                  if (!pattern.test(state.newSubject.code)) {
-                    updateState({ modalError: "Invalid Subject Code. Examples: PH1L001, CSEB107(P), 19ACE54a" });
                     return;
                   }
 
