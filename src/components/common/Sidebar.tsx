@@ -76,6 +76,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       "enroll-user": <User size={20} />,
       "bulk-upload": <Upload size={20} />,
       branches: <GitBranch size={20} />,
+      "teacher-assignments": <UserCheck size={20} />,
       notifications: <Bell size={20} />,
       "hod-leaves": <UserCheck size={20} />,
       users: <Users size={20} />,
@@ -127,6 +128,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     
     // Academic Structure
     { name: "Branches", page: "branches" },
+    { name: "Teacher Assignments", page: "teacher-assignments" },
     { name: "Batches", page: "batches" },
     
     // Notifications & Leaves
