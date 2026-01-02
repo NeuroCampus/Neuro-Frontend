@@ -229,11 +229,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Dashboard", page: "dashboard" },
 
     // Exam Management
-    { name: "Exam Applications", page: "exam-applications" },
     { name: "Student Status", page: "student-status" },
     { name: "Course Statistics", page: "course-statistics" },
-    { name: "Exam Schedule", page: "exam-schedule" },
-    { name: "Reports", page: "reports" },
 
     // Profile
     { name: "Profile", page: "profile" },

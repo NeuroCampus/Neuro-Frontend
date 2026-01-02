@@ -7,10 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { BookOpen, Users, TrendingUp, Download, BarChart3 } from "lucide-react";
 import { fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
-import { useTheme } from "../../context/ThemeContext";
 
 const CourseStatistics = () => {
-  const { theme } = useTheme();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
@@ -91,13 +89,10 @@ const CourseStatistics = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Course Statistics</h1>
-        <Badge variant="outline" className="text-sm">
-          COE Review Panel
-        </Badge>
       </div>
 
       {/* Filters */}
-      <Card className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+      <Card>
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
@@ -164,7 +159,7 @@ const CourseStatistics = () => {
       {/* Summary Cards */}
       {data && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Subjects</CardTitle>
               <BookOpen className="h-4 w-4 text-muted-foreground" />
@@ -174,7 +169,7 @@ const CourseStatistics = () => {
             </CardContent>
           </Card>
 
-          <Card className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
               <Users className="h-4 w-4 text-blue-500" />
@@ -184,7 +179,7 @@ const CourseStatistics = () => {
             </CardContent>
           </Card>
 
-          <Card className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Avg Applications/Subject</CardTitle>
               <TrendingUp className="h-4 w-4 text-green-500" />
@@ -194,7 +189,7 @@ const CourseStatistics = () => {
             </CardContent>
           </Card>
 
-          <Card className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Overall Application Rate</CardTitle>
               <BarChart3 className="h-4 w-4 text-purple-500" />
@@ -210,7 +205,7 @@ const CourseStatistics = () => {
 
       {/* Course Statistics Table */}
       {data && (
-        <Card className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+        <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>Subject-wise Application Statistics ({data.courses.length})</CardTitle>

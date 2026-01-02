@@ -2,17 +2,12 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "../common/Sidebar";
 import Navbar from "../common/Navbar";
-import COEStats from "../coe/COEStats";
-import ExamApplications from "../coe/ExamApplications";
-import COEReports from "../coe/COEReports";
-import ExamSchedule from "../coe/ExamSchedule";
 import StudentStatus from "../coe/StudentStatus";
 import CourseStatistics from "../coe/CourseStatistics";
-import Chat from "../common/Chat";
+import COEDashboardStats from "../coe/COEDashboardStats";
 import COEProfile from "../coe/COEProfile";
 import { logoutUser, fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
-import { useTheme } from "../../context/ThemeContext";
 
 interface COEDashboardProps {
   user: {
@@ -29,7 +24,6 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [currentUser, setCurrentUser] = useState(user);
-  const { theme } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const getActivePageFromPath = (pathname: string): string => {
@@ -39,11 +33,8 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
     // Map URL paths to page names
     const pathMap: { [key: string]: string } = {
       'dashboard': 'dashboard',
-      'exam-applications': 'exam-applications',
       'student-status': 'student-status',
       'course-statistics': 'course-statistics',
-      'reports': 'reports',
-      'exam-schedule': 'exam-schedule',
       'profile': 'profile',
     };
 
@@ -91,11 +82,8 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
     // Navigate to the corresponding URL path
     const pathMap: { [key: string]: string } = {
       'dashboard': '/coe/dashboard',
-      'exam-applications': '/coe/exam-applications',
       'student-status': '/coe/student-status',
       'course-statistics': '/coe/course-statistics',
-      'reports': '/coe/reports',
-      'exam-schedule': '/coe/exam-schedule',
       'profile': '/coe/profile',
     };
 
@@ -116,26 +104,20 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
   const renderContent = () => {
     switch (activePage) {
       case 'dashboard':
-        return <COEStats user={currentUser} />;
-      case 'exam-applications':
-        return <ExamApplications user={currentUser} />;
+        return <COEDashboardStats />;
       case 'student-status':
         return <StudentStatus />;
       case 'course-statistics':
         return <CourseStatistics />;
-      case 'reports':
-        return <COEReports user={currentUser} />;
-      case 'exam-schedule':
-        return <ExamSchedule user={currentUser} />;
       case 'profile':
-        return <COEProfile user={currentUser} />;
+        return <COEProfile />;
       default:
-        return <COEStats user={currentUser} />;
+        return <COEDashboardStats />;
     }
   };
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+    <div className="min-h-screen">
       {/* Sidebar (fixed left) */}
       <div className={`fixed top-0 left-0 h-full z-30 transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
         <Sidebar
@@ -152,8 +134,8 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
         <div className={`fixed top-0 ${sidebarCollapsed ? 'left-16' : 'left-64'} right-0 z-10 shadow-sm`}>
           <Navbar
             user={currentUser}
-            onLogout={handleLogout}
             role="coe"
+            setPage={handlePageChange}
           />
         </div>
         <main className="flex-1 p-6 mt-16">
@@ -165,7 +147,6 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
           {renderContent()}
         </main>
       </div>
-      <Chat user={currentUser} />
     </div>
   );
 };
