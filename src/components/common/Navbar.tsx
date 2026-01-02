@@ -97,7 +97,7 @@ const handleProfileClick = () => {
                 : role === "hod"
                 ? `Head of Department${user?.branch ? ` - ${user.branch}` : ""}`
                 : role === "faculty"
-                ? "Faculty Member"
+                ? `${user?.branch || "Faculty Member"}`
                 : role === "coe"
                 ? "Controller of Examinations"
                 : role === "fees_manager"

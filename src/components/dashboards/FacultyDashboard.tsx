@@ -18,7 +18,8 @@ import FacultyProfile from "../faculty/facultyProfile";
 import GenerateStatistics from "../faculty/GenerateStatistics";
 import FacultyAttendance from "../faculty/FacultyAttendance";
 import StudentInfoScanner from "../hod/StudentInfoScanner";
-import { logoutUser } from "../../utils/authService";
+import { logoutUser, fetchWithTokenRefresh } from "../../utils/authService";
+import { API_ENDPOINT } from "../../utils/config";
 import { useTheme } from "../../context/ThemeContext";
 import { useProctorStudentsQuery } from "../../hooks/useApiQueries";
 
@@ -38,6 +39,7 @@ interface FacultyDashboardProps {
 const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [currentUser, setCurrentUser] = useState(user);
   
   const getActivePageFromPath = (pathname: string): string => {
     const pathParts = pathname.split('/').filter(Boolean);
@@ -78,6 +80,34 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
   useEffect(() => {
     setActivePage(getActivePageFromPath(location.pathname));
   }, [location.pathname]);
+
+  // Fetch faculty profile to get branch information if not already available
+  useEffect(() => {
+    const fetchFacultyProfile = async () => {
+      // Only fetch if branch is not already available
+      if (user.branch) {
+        setCurrentUser(user);
+        return;
+      }
+
+      try {
+        const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/profile/`, {
+          method: 'GET',
+        });
+        const result = await response.json();
+        if (result.success && result.profile && result.profile.branch) {
+          setCurrentUser(prev => ({ ...prev, branch: result.profile.branch }));
+        } else {
+          setCurrentUser(user); // Use original user data if no branch found
+        }
+      } catch (error) {
+        console.error('Error fetching faculty profile:', error);
+        setCurrentUser(user); // Use original user data on error
+      }
+    };
+
+    fetchFacultyProfile();
+  }, [user]);
 
   const handlePageChange = (page: string) => {
     setActivePage(page);
@@ -187,7 +217,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
         <div className={`sticky top-0 z-20 ${theme === 'dark' ? 'bg-background border-b border-border' : 'bg-white border-b border-gray-200'}`}>
           <Navbar
             role="faculty"
-            user={user}
+            user={currentUser}
             onNotificationClick={handleNotificationClick}
             setPage={handlePageChange}
           />
