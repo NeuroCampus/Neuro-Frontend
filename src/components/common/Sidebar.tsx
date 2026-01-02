@@ -121,7 +121,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Dashboard", page: "dashboard" },
     
     // User Management
-    { name: "Enroll User", page: "enroll-user" },
+    { name: "Enroll Staff", page: "enroll-user" },
     { name: "Bulk Upload", page: "bulk-upload" },
     { name: "Users", page: "users" },
     

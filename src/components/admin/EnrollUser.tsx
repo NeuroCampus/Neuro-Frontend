@@ -122,15 +122,15 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
           designation: "",
         });
       } else {
-        setError(response.message || "Failed to enroll user");
+        setError(response.message || "Failed to enroll staff");
         toast({
           variant: "destructive",
           title: "Error",
-          description: response.message || "Failed to enroll user",
+          description: response.message || "Failed to enroll staff",
         });
       }
     } catch (err) {
-      setError("Network error while enrolling user");
+      setError("Network error while enrolling staff");
       toast({
         variant: "destructive",
         title: "Error",
@@ -146,9 +146,9 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
       <div className="max-w-2xl mx-auto">
         <Card className={theme === 'dark' ? 'w-full bg-card border border-border shadow-lg rounded-lg p-6' : 'w-full bg-white border border-gray-200 shadow-lg rounded-lg p-6'}>
           <CardHeader className="pb-4">
-            <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>User Enrollment Form</CardTitle>
+            <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Staff Enrollment Form</CardTitle>
             <CardDescription className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-              Add a new user to the system
+              Add a new staff member to the system
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -243,7 +243,7 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
                 onClick={handleSubmit}
                 disabled={loading}
               >
-                {loading ? "Enrolling..." : "Enroll User"}
+                {loading ? "Enrolling..." : "Enroll Staff"}
               </Button>
             </div>
           </CardContent>
