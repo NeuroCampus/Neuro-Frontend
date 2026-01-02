@@ -139,7 +139,7 @@ const VirtualizedSectionTable = React.memo(({
         <div className={`grid grid-cols-5 gap-4 p-3 text-xs font-medium ${theme === 'dark' ? 'text-gray-200 bg-card' : 'text-gray-900 bg-white'}`}>
           <div>USN</div>
           <div>Name</div>
-          <div>Subject</div>
+          <div>Course</div>
           <div>Attendance %</div>
           <div>Actions</div>
         </div>

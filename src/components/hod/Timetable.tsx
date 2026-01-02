@@ -254,10 +254,10 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, faculties, facult
         </h2>
 
         <div className="mb-4">
-          <label className={`block ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>Subject:</label>
+          <label className={`block ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>Course:</label>
           <Select value={newClassDetails.subject} onValueChange={(value) => handleSelectChange("subject", value)}>
             <SelectTrigger className={`w-full p-2 border rounded ${theme === 'dark' ? 'text-foreground bg-card border-border' : 'text-gray-900 bg-white border-gray-300'}`}>
-              <SelectValue placeholder="Select Subject" />
+              <SelectValue placeholder="Select Course" />
             </SelectTrigger>
             <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
               {subjects.map((subject: Subject) => (

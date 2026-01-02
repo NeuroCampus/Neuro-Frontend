@@ -127,7 +127,7 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
                 onClick={() => handlePageChange("branches")}
               />
               <DashboardCard
-                title="Teacher Assignments"
+                title="Faculty Assignments"
                 description="Assign teachers to branches & subjects"
                 icon={<UserCheck size={20} />}
                 onClick={() => handlePageChange("teacher-assignments")}
