@@ -90,12 +90,15 @@ interface CreateAnnouncementResponse {
 
 // Update the ProctorStudent interface to match the new backend response
 export interface ProctorStudent {
+  id: number;
   name: string;
   usn: string;
   branch: string | null;
   branch_id: number | null;
   semester: number | null;
   semester_id: number | null;
+  batch: string | null;
+  batch_id: number | null;
   section: string | null;
   section_id: number | null;
   attendance: number | string;

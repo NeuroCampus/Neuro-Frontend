@@ -29,6 +29,34 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
   const [studentDetails, setStudentDetails] = useState<any>(null);
   const [semesterSubjects, setSemesterSubjects] = useState<Array<any>>([]);
   const [appliedSubjects, setAppliedSubjects] = useState<Record<string, boolean>>({});
+  const [studentStatuses, setStudentStatuses] = useState<Record<string, string>>({});
+  const [subjectStatuses, setSubjectStatuses] = useState<Record<string, string>>({});
+
+  // Fetch student exam application statuses
+  useEffect(() => {
+    const fetchStudentStatuses = async () => {
+      if (!proctorStudents.length) return;
+      
+      try {
+        const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/proctor-students/exam-status/`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await response.json();
+        if (result.success) {
+          const statusMap: Record<string, string> = {};
+          result.data.forEach((student: any) => {
+            statusMap[student.usn] = student.status;
+          });
+          setStudentStatuses(statusMap);
+        }
+      } catch (error) {
+        console.error('Failed to fetch student statuses:', error);
+      }
+    };
+
+    fetchStudentStatuses();
+  }, [proctorStudents]);
 
   const filtered = proctorStudents.filter((s) => {
     const q = search.trim().toLowerCase();
@@ -40,8 +68,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
     setSelectedStudent(student);
     setStudentDetails(null);
     setSemesterSubjects([]);
-    setAppliedSubjects({});
-    setOpen(true);
+    setAppliedSubjects({});    setSubjectStatuses({});    setOpen(true);
   };
 
   useEffect(() => {
@@ -51,6 +78,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
 
     const fetchDetails = async () => {
       try {
+        // Fetch student details
         const res = await fetch(`${API_ENDPOINT}/public/student-data/?usn=${usn}`);
         const json = await res.json();
         if (json.success) {
@@ -72,6 +100,33 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
           }
         } else {
           setStudentDetails({ error: json.message || "Failed to fetch" });
+        }
+
+        // Fetch existing exam applications for this student
+        try {
+          console.log('Fetching exam applications for student:', selectedStudent.id, selectedStudent.usn);
+          const examAppsResponse = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/exam-applications/?student_id=${selectedStudent.id}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+          });
+          const examAppsResult = await examAppsResponse.json();
+          console.log('Exam applications response:', examAppsResult);
+          
+          if (examAppsResult.success) {
+            // Create a map of subject codes to their application status
+            // Filter by current exam period (june_july)
+            const subjectStatusMap: Record<string, string> = {};
+            examAppsResult.data
+              .filter((app: any) => app.exam_period === 'june_july') // Only current exam period
+              .forEach((app: any) => {
+                console.log('Processing application:', app.subject_code, app.status, app.exam_period);
+                subjectStatusMap[app.subject_code] = app.status === 'applied' ? 'Applied' : 'Not Applied';
+              });
+            console.log('Final subject status map:', subjectStatusMap);
+            setSubjectStatuses(subjectStatusMap);
+          }
+        } catch (e) {
+          console.error('Failed to fetch exam applications', e);
         }
       } catch (err) {
         setStudentDetails({ error: "Network error" });
@@ -184,13 +239,14 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
                 <th className="px-4 py-2 text-left text-sm">USN</th>
                 <th className="px-4 py-2 text-left text-sm">Name</th>
                 <th className="px-4 py-2 text-left text-sm">Semester</th>
+                <th className="px-4 py-2 text-left text-sm">Status</th>
                 <th className="px-4 py-2 text-left text-sm">Action</th>
               </tr>
             </thead>
             <tbody className={theme === 'dark' ? 'divide-border' : 'divide-gray-200'}>
               {loading && (
                 <tr>
-                  <td colSpan={4} className="text-center py-6">Loading...</td>
+                  <td colSpan={5} className="text-center py-6">Loading...</td>
                 </tr>
               )}
               {!loading && filtered.map((student) => (
@@ -199,13 +255,22 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
                   <td className="px-4 py-2 text-sm">{student.name}</td>
                   <td className="px-4 py-2 text-sm">{student.semester}</td>
                   <td className="px-4 py-2 text-sm">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      studentStatuses[student.usn] === 'Applied' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {studentStatuses[student.usn] || 'Not Applied'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 text-sm">
                     <Button onClick={() => openFor(student)} className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white">Open</Button>
                   </td>
                 </tr>
               ))}
               {!loading && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="text-center py-6">No students found.</td>
+                  <td colSpan={5} className="text-center py-6">No students found.</td>
                 </tr>
               )}
             </tbody>
@@ -284,6 +349,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
                   <table className="w-full border-collapse" style={{border: '1px solid #ddd'}}>
                     <thead>
                       <tr style={{background: '#f3f4f6'}}>
+                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Select</th>
                         <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Course Code</th>
                         <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Course Name</th>
                         <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Status</th>
@@ -292,12 +358,28 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
                     <tbody>
                       {semesterSubjects.length > 0 ? semesterSubjects.map((sub) => (
                         <tr key={sub.subject_code}>
+                          <td style={{border: '1px solid #ddd', padding: 8}}>
+                            <input
+                              type="checkbox"
+                              checked={appliedSubjects[sub.subject_code] || false}
+                              onChange={() => handleApplyToggle(sub.subject_code)}
+                              className="w-4 h-4"
+                            />
+                          </td>
                           <td style={{border: '1px solid #ddd', padding: 8}}>{sub.subject_code}</td>
                           <td style={{border: '1px solid #ddd', padding: 8}}>{sub.name}</td>
-                          <td style={{border: '1px solid #ddd', padding: 8}}>{appliedSubjects[sub.subject_code] ? 'Applied' : '-'}</td>
+                          <td style={{border: '1px solid #ddd', padding: 8}}>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              subjectStatuses[sub.subject_code] === 'Applied' 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {subjectStatuses[sub.subject_code] || 'Not Applied'}
+                            </span>
+                          </td>
                         </tr>
                       )) : (
-                        <tr><td colSpan={3} style={{padding: 12}}>No subjects available.</td></tr>
+                        <tr><td colSpan={4} style={{padding: 12}}>No subjects available.</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -306,6 +388,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
                   <table className="w-full border-collapse mb-4" style={{border: '1px solid #ddd'}}>
                     <thead>
                       <tr style={{background: '#f3f4f6'}}>
+                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Select</th>
                         <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Course Code</th>
                         <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Course Name</th>
                         <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Status</th>
@@ -315,12 +398,28 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
                       {((studentDetails?.subjects_registered || []).filter((x: any) => x.subject_type === 'elective')).length > 0 ? 
                         (studentDetails?.subjects_registered || []).filter((x: any) => x.subject_type === 'elective').map((r: any) => (
                           <tr key={r.subject_code}>
+                            <td style={{border: '1px solid #ddd', padding: 8}}>
+                              <input
+                                type="checkbox"
+                                checked={appliedSubjects[r.subject_code] || false}
+                                onChange={() => handleApplyToggle(r.subject_code)}
+                                className="w-4 h-4"
+                              />
+                            </td>
                             <td style={{border: '1px solid #ddd', padding: 8}}>{r.subject_code}</td>
                             <td style={{border: '1px solid #ddd', padding: 8}}>{r.subject_name}</td>
-                            <td style={{border: '1px solid #ddd', padding: 8}}>{''}</td>
+                            <td style={{border: '1px solid #ddd', padding: 8}}>
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                subjectStatuses[r.subject_code] === 'Applied' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {subjectStatuses[r.subject_code] || 'Not Applied'}
+                              </span>
+                            </td>
                           </tr>
                         )) : (
-                        <tr><td colSpan={3} style={{padding: 12}}>No registered electives.</td></tr>
+                        <tr><td colSpan={4} style={{padding: 12}}>No registered electives.</td></tr>
                         )}
                     </tbody>
                   </table>
@@ -329,6 +428,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
                   <table className="w-full border-collapse" style={{border: '1px solid #ddd'}}>
                     <thead>
                       <tr style={{background: '#f3f4f6'}}>
+                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Select</th>
                         <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Course Code</th>
                         <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Course Name</th>
                         <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Status</th>
@@ -338,12 +438,28 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
                       {((studentDetails?.subjects_registered || []).filter((x: any) => x.subject_type === 'open_elective')).length > 0 ? 
                         (studentDetails?.subjects_registered || []).filter((x: any) => x.subject_type === 'open_elective').map((r: any) => (
                           <tr key={r.subject_code}>
+                            <td style={{border: '1px solid #ddd', padding: 8}}>
+                              <input
+                                type="checkbox"
+                                checked={appliedSubjects[r.subject_code] || false}
+                                onChange={() => handleApplyToggle(r.subject_code)}
+                                className="w-4 h-4"
+                              />
+                            </td>
                             <td style={{border: '1px solid #ddd', padding: 8}}>{r.subject_code}</td>
                             <td style={{border: '1px solid #ddd', padding: 8}}>{r.subject_name}</td>
-                            <td style={{border: '1px solid #ddd', padding: 8}}>{''}</td>
+                            <td style={{border: '1px solid #ddd', padding: 8}}>
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                subjectStatuses[r.subject_code] === 'Applied' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-gray-100 text-gray-800'
+                              }`}>
+                                {subjectStatuses[r.subject_code] || 'Not Applied'}
+                              </span>
+                            </td>
                           </tr>
                         )) : (
-                        <tr><td colSpan={3} style={{padding: 12}}>No registered open electives.</td></tr>
+                        <tr><td colSpan={4} style={{padding: 12}}>No registered open electives.</td></tr>
                         )}
                     </tbody>
                   </table>
@@ -383,14 +499,135 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
               </div>
             </div>
             <DialogFooter className="mt-4">
-              <Button onClick={() => {
-                // Apply functionality would go here
-                toast({
-                  title: "Success",
-                  description: "Applied successfully!"
-                });
-                // Close the dialog after showing the toast
-                setOpen(false);
+              <Button onClick={async () => {
+                if (!selectedStudent) return;
+                
+                // Validate that student has required data
+                if (!selectedStudent.semester_id || !selectedStudent.batch_id) {
+                  toast({
+                    title: "Invalid student data",
+                    description: "Student must have semester and batch information to apply for exams.",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+                
+                // Get selected subjects from all tables
+                const selectedSubjectCodes = Object.entries(appliedSubjects)
+                  .filter(([_, applied]) => applied)
+                  .map(([subjectCode, _]) => subjectCode);
+                
+                if (selectedSubjectCodes.length === 0) {
+                  toast({
+                    title: "No subjects selected",
+                    description: "Please select at least one subject to apply for.",
+                    variant: "destructive"
+                  });
+                  return;
+                }
+                
+                try {
+                  // Collect all applications to submit
+                  const applications = [];
+                  
+                  // Handle semester subjects
+                  for (const subjectCode of selectedSubjectCodes) {
+                    const subject = semesterSubjects.find(s => s.subject_code === subjectCode);
+                    if (subject) {
+                      applications.push({
+                        student_id: selectedStudent.id,
+                        subject: subject.id,
+                        exam_period: 'june_july',
+                        semester: selectedStudent.semester_id,
+                        batch: selectedStudent.batch_id
+                      });
+                    }
+                  }
+                  
+                  // Handle registered elective subjects
+                  const registeredElectives = (studentDetails?.subjects_registered || [])
+                    .filter((x: any) => x.subject_type === 'elective' && selectedSubjectCodes.includes(x.subject_code));
+                  
+                  for (const elective of registeredElectives) {
+                    applications.push({
+                      student_id: selectedStudent.id,
+                      subject: elective.subject_id,
+                      exam_period: 'june_july',
+                      semester: selectedStudent.semester_id,
+                      batch: selectedStudent.batch_id
+                    });
+                  }
+                  
+                  // Handle registered open elective subjects
+                  const registeredOpenElectives = (studentDetails?.subjects_registered || [])
+                    .filter((x: any) => x.subject_type === 'open_elective' && selectedSubjectCodes.includes(x.subject_code));
+                  
+                  for (const openElective of registeredOpenElectives) {
+                    applications.push({
+                      student_id: selectedStudent.id,
+                      subject: openElective.subject_id,
+                      exam_period: 'june_july',
+                      semester: selectedStudent.semester_id,
+                      batch: selectedStudent.batch_id
+                    });
+                  }
+                  
+                  // Submit all applications
+                  for (const application of applications) {
+                    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/exam-applications/`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(application)
+                    });
+                    
+                    const result = await response.json();
+                    if (!response.ok && response.status !== 200) {
+                      throw new Error(result.message || 'Failed to submit application');
+                    }
+                    // 200 status means application already exists but was updated
+                    if (response.status === 200) {
+                      console.log('Application already exists:', result.message);
+                    }
+                  }
+                  
+                  // Update student status
+                  setStudentStatuses(prev => ({
+                    ...prev,
+                    [selectedStudent.usn]: 'Applied'
+                  }));
+                  
+                  // Refresh student statuses from API to ensure accuracy
+                  const statusResponse = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/proctor-students/exam-status/`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                  });
+                  if (statusResponse.ok) {
+                    const statusResult = await statusResponse.json();
+                    if (statusResult.success) {
+                      const statusMap: Record<string, string> = {};
+                      statusResult.data.forEach((student: any) => {
+                        statusMap[student.usn] = student.status;
+                      });
+                      setStudentStatuses(statusMap);
+                    }
+                  }
+                  
+                  toast({
+                    title: "Success",
+                    description: `Applied for ${applications.length} subject(s) successfully!`
+                  });
+                  
+                  // Close the dialog
+                  setOpen(false);
+                  
+                } catch (error) {
+                  console.error('Application submission error:', error);
+                  toast({
+                    title: "Application Failed",
+                    description: error instanceof Error ? error.message : "Failed to submit applications. Please try again.",
+                    variant: "destructive"
+                  });
+                }
               }} className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white">
                 Apply
               </Button>

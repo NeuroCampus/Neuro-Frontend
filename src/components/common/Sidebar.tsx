@@ -112,6 +112,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       "leave-status": <FileText size={20} />,
       certificates: <FileText size={20} />,
       fees: <CreditCard size={20} />,
+      "exam-schedule": <Calendar size={20} />,
+      reports: <BarChart2 size={20} />,
     };
     return iconMap[page] || <LayoutDashboard size={20} />;
   };
@@ -218,6 +220,21 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // Communication
     { name: "Announcements", page: "announcements" },
     
+    // Profile
+    { name: "Profile", page: "profile" },
+  ],
+
+  coe: [
+    // Main
+    { name: "Dashboard", page: "dashboard" },
+
+    // Exam Management
+    { name: "Exam Applications", page: "exam-applications" },
+    { name: "Student Status", page: "student-status" },
+    { name: "Course Statistics", page: "course-statistics" },
+    { name: "Exam Schedule", page: "exam-schedule" },
+    { name: "Reports", page: "reports" },
+
     // Profile
     { name: "Profile", page: "profile" },
   ],

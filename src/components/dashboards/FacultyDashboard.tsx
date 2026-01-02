@@ -56,6 +56,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'faculty-attendance': 'faculty-attendance',
       'announcements': 'announcements',
       'proctor-students': 'proctor-students',
+      'exam-applications': 'exam-applications',
       'student-leave': 'student-leave',
       'timetable': 'timetable',
       'chat': 'chat',
@@ -81,24 +82,19 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
     setActivePage(getActivePageFromPath(location.pathname));
   }, [location.pathname]);
 
-  // Fetch faculty profile to get branch information if not already available
+  // Fetch faculty profile to get complete user information
   useEffect(() => {
     const fetchFacultyProfile = async () => {
-      // Only fetch if branch is not already available
-      if (user.branch) {
-        setCurrentUser(user);
-        return;
-      }
-
       try {
         const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/profile/`, {
           method: 'GET',
         });
         const result = await response.json();
-        if (result.success && result.profile && result.profile.branch) {
-          setCurrentUser(prev => ({ ...prev, branch: result.profile.branch }));
+        if (result.success && result.profile) {
+          // Merge the fetched profile with the existing user data
+          setCurrentUser(prev => ({ ...prev, ...result.profile }));
         } else {
-          setCurrentUser(user); // Use original user data if no branch found
+          setCurrentUser(user); // Use original user data if profile fetch fails
         }
       } catch (error) {
         console.error('Error fetching faculty profile:', error);

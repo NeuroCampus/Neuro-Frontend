@@ -12,6 +12,7 @@ import StudentDashboard from "./components/dashboards/StudentDashboard";
 import AdminDashboard from "./components/dashboards/AdminDashboard";
 import HODDashboard from "./components/dashboards/HODDashboard";
 import FacultyDashboard from "./components/dashboards/FacultyDashboard";
+import COEDashboard from "./components/dashboards/COEDashboard";
 import FeesManagerDashboard from "./pages/FeesManager/FeesManagerDashboard";
 import { ThemeProvider } from "./context/ThemeContext";
 // Import the FloatingAssistant component
@@ -49,6 +50,7 @@ const getUserData = () => {
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userData, setUserData] = useState(getUserData());
 
   useEffect(() => {
     // Check authentication status on mount and when localStorage changes
@@ -57,8 +59,18 @@ const App = () => {
       const role = localStorage.getItem("role");
       const user = localStorage.getItem("user");
       
-      setIsAuthenticated(!!(token && role && user));
-      setUserRole(role);
+      const isAuth = !!(token && role && user);
+      const currentUserData = getUserData();
+      
+      // Only update state if values actually changed
+      setIsAuthenticated(prev => prev !== isAuth ? isAuth : prev);
+      setUserRole(prev => prev !== role ? role : prev);
+      setUserData(prev => {
+        // Only update if the user data actually changed
+        const prevStr = JSON.stringify(prev);
+        const currentStr = JSON.stringify(currentUserData);
+        return prevStr !== currentStr ? currentUserData : prev;
+      });
     };
 
     checkAuth();
@@ -72,8 +84,8 @@ const App = () => {
 
     window.addEventListener("storage", handleStorageChange);
     
-    // Also check periodically for same-tab changes
-    const interval = setInterval(checkAuth, 1000);
+    // Check less frequently - every 5 seconds instead of 1 second
+    const interval = setInterval(checkAuth, 5000);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
@@ -113,7 +125,7 @@ const App = () => {
           <Route path="/dashboard" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={getUserData()} setPage={() => {}} />
+                <StudentDashboard user={userData} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -121,7 +133,7 @@ const App = () => {
           <Route path="/timetable" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={getUserData()} setPage={() => {}} />
+                <StudentDashboard user={userData} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -129,7 +141,7 @@ const App = () => {
           <Route path="/attendance" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={getUserData()} setPage={() => {}} />
+                <StudentDashboard user={userData} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -137,7 +149,7 @@ const App = () => {
           <Route path="/marks" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
+                <StudentDashboard user={userData} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -145,7 +157,7 @@ const App = () => {
           <Route path="/leave-request" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
+                <StudentDashboard user={userData} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -153,7 +165,7 @@ const App = () => {
           <Route path="/leave-status" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
+                <StudentDashboard user={userData} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -161,7 +173,7 @@ const App = () => {
           <Route path="/fees" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={getUserData()} setPage={() => {}} />
+                <StudentDashboard user={userData} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -169,7 +181,7 @@ const App = () => {
           <Route path="/profile" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={JSON.parse(localStorage.getItem("user") || "{}")} setPage={() => {}} />
+                <StudentDashboard user={userData} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -177,7 +189,7 @@ const App = () => {
           <Route path="/announcements" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={getUserData()} setPage={() => {}} />
+                <StudentDashboard user={userData} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -185,7 +197,7 @@ const App = () => {
           <Route path="/chat" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={getUserData()} setPage={() => {}} />
+                <StudentDashboard user={userData} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -193,7 +205,7 @@ const App = () => {
           <Route path="/notifications" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={getUserData()} setPage={() => {}} />
+                <StudentDashboard user={userData} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -201,7 +213,7 @@ const App = () => {
           <Route path="/face-recognition" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={getUserData()} setPage={() => {}} />
+                <StudentDashboard user={userData} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -209,7 +221,7 @@ const App = () => {
           <Route path="/student-study-material" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={getUserData()} setPage={() => {}} />
+                <StudentDashboard user={userData} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -217,7 +229,7 @@ const App = () => {
           <Route path="/student-assignment" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
-                <StudentDashboard user={getUserData()} setPage={() => {}} />
+                <StudentDashboard user={userData} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -227,7 +239,7 @@ const App = () => {
           <Route path="/admin/*" element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <ThemeProvider>
-                <AdminDashboard user={getUserData()} setPage={() => {}} />
+                <AdminDashboard user={userData} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -237,7 +249,7 @@ const App = () => {
           <Route path="/hod/*" element={
             <ProtectedRoute allowedRoles={["hod"]}>
               <ThemeProvider>
-                <HODDashboard user={getUserData()} setPage={() => {}} />
+                <HODDashboard user={userData} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -247,7 +259,7 @@ const App = () => {
           <Route path="/faculty/*" element={
             <ProtectedRoute allowedRoles={["teacher"]}>
               <ThemeProvider>
-                <FacultyDashboard user={getUserData()} setPage={() => {}} />
+                <FacultyDashboard user={userData} setPage={() => {}} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
@@ -257,7 +269,17 @@ const App = () => {
           <Route path="/fees-manager/*" element={
             <ProtectedRoute allowedRoles={["fees_manager"]}>
               <ThemeProvider>
-                <FeesManagerDashboard user={getUserData()} setPage={() => {}} />
+                <FeesManagerDashboard user={userData} setPage={() => {}} />
+                <FloatingAssistant />
+              </ThemeProvider>
+            </ProtectedRoute>
+          } />
+
+          {/* COE routes */}
+          <Route path="/coe/*" element={
+            <ProtectedRoute allowedRoles={["coe"]}>
+              <ThemeProvider>
+                <COEDashboard user={userData} />
                 <FloatingAssistant />
               </ThemeProvider>
             </ProtectedRoute>
