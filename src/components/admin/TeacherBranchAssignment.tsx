@@ -179,7 +179,7 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
                       {teachers.map((teacher) => (
                         <Select.Item key={teacher.id} value={teacher.id.toString()} className="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer rounded-sm">
                           <Select.ItemText>
-                            {teacher.first_name} {teacher.last_name} ({teacher.username})
+                            {teacher.first_name} {teacher.last_name}
                           </Select.ItemText>
                           <Select.ItemIndicator>
                             <CheckIcon />
