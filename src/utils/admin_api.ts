@@ -36,6 +36,8 @@ interface EnrollUserRequest {
   role: "hod" | "teacher" | "coe";
   first_name: string;
   last_name?: string;
+  phone?: string;
+  designation?: string;
 }
 
 interface EnrollUserResponse {

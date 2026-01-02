@@ -34,7 +34,6 @@ const mockChartData = [
   { subject: "CS102", attendance: 92, marks: 88, semester: "4th Semester" },
   { subject: "CS103", attendance: 75, marks: 69, semester: "4th Semester" },
 ];
-
 interface Semester {
   id: string;
   number: number;
@@ -60,6 +59,7 @@ interface Student {
   section: string;
   semester: string;
   cycle?: string;
+  phone?: string;
 }
 
 const StudentManagement = () => {
@@ -73,11 +73,11 @@ const StudentManagement = () => {
     confirmDelete: false,
     editDialog: false,
     addStudentModal: false,
-    editForm: { name: "", email: "", section: "", semester: "", cycle: "" },
+    editForm: { name: "", email: "", section: "", semester: "", cycle: "", phone: "" },
     uploadErrors: [] as string[],
     uploadedCount: 0,
     droppedFileName: null as string | null,
-    manualForm: { usn: "", name: "", email: "", section: "", semester: "", batch: "", cycle: "" },
+    manualForm: { usn: "", name: "", email: "", section: "", semester: "", batch: "", cycle: "", phone: "" },
     currentPage: 1,
     selectedSemester: "",
     semesters: [] as Semester[],
@@ -150,6 +150,7 @@ const StudentManagement = () => {
         usn: s.usn,
         name: s.name,
         email: s.email,
+        phone: s.phone,
         section: s.section || 'Unknown',
         semester: s.semester || 'Unknown',
         cycle: s.cycle,
@@ -232,6 +233,7 @@ const StudentManagement = () => {
             usn: s.usn, 
             name: s.name, 
             email: s.email, 
+            phone: s.phone,
             section: s.section || "Unknown", 
             semester: s.semester || "Unknown",
             cycle: s.cycle
@@ -410,6 +412,7 @@ const StudentManagement = () => {
             const parent_name = String(entry.parent_name || entry.ParentName || "").trim() || "";
             const parent_contact = String(entry.parent_contact || entry.ParentContact || "").trim() || "";
             const emergency_contact = String(entry.emergency_contact || entry.EmergencyContact || "").trim() || "";
+            const phone = String(entry.phone || entry.Phone || entry.contact || entry.Contact || entry.contact_number || entry.ContactNumber || "").trim() || "";
             const blood_group = String(entry.blood_group || entry.BloodGroup || "").trim() || "";
             const date_of_admission = entry.date_of_admission || entry.DateOfAdmission || new Date().toISOString().split("T")[0];
             const row = index + 2;
@@ -446,6 +449,7 @@ const StudentManagement = () => {
               name,
               email,
               cycle: semesterNumber <= 2 ? cycle : undefined,
+              phone: phone || undefined,
               parent_name,
               parent_contact,
               emergency_contact,
@@ -504,7 +508,7 @@ const StudentManagement = () => {
 
   // Handle manual student entry
   const handleManualEntry = async () => {
-    const { usn, name, email, section, semester, batch } = state.manualForm;
+    const { usn, name, email, section, semester, batch, phone } = state.manualForm;
 
     const newErrors: any = {};
 
@@ -540,6 +544,11 @@ const StudentManagement = () => {
       newErrors.cycle = "Cycle can only be set for semesters 1 and 2";
     }
 
+    // Phone validation
+    const phoneRegex = /^\d{10}$/;
+    if (!phone) newErrors.phone = "Phone number is required";
+    else if (!phoneRegex.test(phone)) newErrors.phone = "Phone must be 10 digits";
+
     // If any validation errors, update state and stop
     if (Object.keys(newErrors).length > 0) {
       updateState({ manualErrors: newErrors, uploadErrors: ["Fix errors before submitting"] });
@@ -555,6 +564,7 @@ const StudentManagement = () => {
           usn,
           name,
           email,
+          phone,
           semester_id: getSemesterId(semester),
           section_id: getSectionId(section, state.manualSections),
           batch_id: getBatchId(batch),
@@ -572,6 +582,7 @@ const StudentManagement = () => {
           section: section,
           semester: semester,
           cycle: state.manualForm.cycle,
+          phone: phone,
         };
         updateState({
           students: [newStudent, ...state.students],
@@ -585,6 +596,7 @@ const StudentManagement = () => {
               : "",
             batch: "",
             cycle: "",
+            phone: "",
           },
           manualErrors: {},
           uploadErrors: [],
@@ -623,6 +635,7 @@ const StudentManagement = () => {
         student_id: state.selectedStudent!.usn,
         name: state.editForm.name,
         email: state.editForm.email,
+        phone: state.editForm.phone || undefined,
         semester_id: getSemesterId(state.editForm.semester),
         section_id: getSectionId(state.editForm.section, state.editSections),
         cycle: state.editForm.cycle || undefined,
@@ -632,7 +645,7 @@ const StudentManagement = () => {
         // Optimistically update local list so changes appear immediately
         const updated = state.students.map((s) =>
           s.usn === state.selectedStudent!.usn
-            ? { ...s, name: state.editForm.name, email: state.editForm.email, section: state.editForm.section, semester: state.editForm.semester, cycle: state.editForm.cycle }
+            ? { ...s, name: state.editForm.name, email: state.editForm.email, phone: state.editForm.phone, section: state.editForm.section, semester: state.editForm.semester, cycle: state.editForm.cycle }
             : s
         );
         updateState({ students: updated, editDialog: false, uploadErrors: [], editSections: [], currentPage: 1 });
@@ -671,19 +684,20 @@ const StudentManagement = () => {
   // Generate CSV template
   const generateTemplate = () => {
     const semesterNumber = getSemesterNumber(state.manualForm.semester);
-    const headers = semesterNumber <= 2 
-      ? ["usn", "name", "email", "cycle"] 
-      : ["usn", "name", "email"];
+    // Include phone as an additional column in the template
+    const headers = semesterNumber <= 2
+      ? ["usn", "name", "email", "phone", "cycle"]
+      : ["usn", "name", "email", "phone"];
     const rows = semesterNumber <= 2
       ? [
-          ["1AM22CI001", "John Doe", "john.doe@example.com", "P"],
-          ["1AM22CI002", "Jane Smith", "jane.smith@example.com", "C"],
-          ["1AM22CI003", "Alice Johnson", "alice.johnson@example.com", "P"],
+          ["1AM22CI001", "John Doe", "john.doe@example.com", "9876543210", "P"],
+          ["1AM22CI002", "Jane Smith", "jane.smith@example.com", "9123456780", "C"],
+          ["1AM22CI003", "Alice Johnson", "alice.johnson@example.com", "9988776655", "P"],
         ]
       : [
-          ["1AM22CI001", "John Doe", "john.doe@example.com"],
-          ["1AM22CI002", "Jane Smith", "jane.smith@example.com"],
-          ["1AM22CI003", "Alice Johnson", "alice.johnson@example.com"],
+          ["1AM22CI001", "John Doe", "john.doe@example.com", "9876543210"],
+          ["1AM22CI002", "Jane Smith", "jane.smith@example.com", "9123456780"],
+          ["1AM22CI003", "Alice Johnson", "alice.johnson@example.com", "9988776655"],
         ];
     return [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
   };
@@ -807,6 +821,7 @@ const StudentManagement = () => {
         section: student.section,
         semester: student.semester,
         cycle: student.cycle || "",
+        phone: student.phone || "",
       },
       editDialog: true,
       editSections: [],
@@ -962,6 +977,34 @@ const StudentManagement = () => {
               <span className="text-red-500 text-xs mt-1 h-4">
                 {state.manualErrors?.email}
               </span>
+            </div>
+
+            {/* Phone */}
+            <div className="flex flex-col flex-1">
+              <Input
+                placeholder="Phone"
+                type="tel"
+                value={state.manualForm.phone}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9]/g, "");
+                  let error = "";
+                  if (value && !/^\d{0,10}$/.test(value)) error = "Phone must be up to 10 digits";
+                  updateState({ manualForm: { ...state.manualForm, phone: value }, manualErrors: { ...state.manualErrors, phone: error } });
+                }}
+                onBlur={(e) => {
+                  const value = e.target.value.trim();
+                  let error = "";
+                  if (!value) error = "Phone number is required";
+                  else if (!/^\d{10}$/.test(value)) error = "Phone must be 10 digits";
+                  updateState({ manualErrors: { ...state.manualErrors, phone: error } });
+                }}
+                className={`flex-1 ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${
+                  state.manualErrors?.phone
+                    ? "border-red-500"
+                    : theme === 'dark' ? 'border-border focus:border-primary' : 'border-gray-300 focus:border-blue-500'
+                }`}
+              />
+              <span className="text-red-500 text-xs mt-1 h-4">{state.manualErrors?.phone}</span>
             </div>
 
             <Select
@@ -1182,6 +1225,7 @@ const StudentManagement = () => {
                   <th className="py-2 px-4">USN</th>
                   <th className="py-2 px-4">Name</th>
                   <th className="py-2 px-4">Email</th>
+                  <th className="py-2 px-4">Phone</th>
                   <th className="py-2 px-4">Section</th>
                   <th className="py-2 px-4">Semester</th>
                   <th className="py-2 px-4">Actions</th>
@@ -1193,6 +1237,7 @@ const StudentManagement = () => {
                     <td className="py-2 px-4">{student.usn}</td>
                     <td className="py-2 px-4">{student.name}</td>
                     <td className="py-2 px-4">{student.email}</td>
+                    <td className="py-2 px-4">{student.phone && student.phone.trim() ? student.phone : '-'}</td>
                     <td className="py-2 px-4">Section {student.section}</td>
                     <td className="py-2 px-4">{formatSemesterDisplay(student)}</td>
                     <td className="py-2 px-4 flex gap-2">
@@ -1458,8 +1503,7 @@ const StudentManagement = () => {
             <ul className="list-disc pl-6 space-y-1">
               <li>Use the provided template for proper data formatting</li>
               <li>
-                Required columns: <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>usn</strong>, <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>name</strong>,{" "}
-                <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>email</strong>
+                Required columns: <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>usn</strong>, <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>name</strong>, <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>email</strong>, and <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>phone</strong>
               </li>
               <li>USN format: e.g., 1AM22CI001 (10 characters, alphanumeric)</li>
               <li>Semester and Section are selected above, not in the file</li>
@@ -1533,6 +1577,15 @@ const StudentManagement = () => {
               placeholder="Email"
               value={state.editForm.email}
               onChange={(e) => updateState({ editForm: { ...state.editForm, email: e.target.value } })}
+            />
+            <Input
+              className={` ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'}`}
+              placeholder="Phone"
+              value={state.editForm.phone}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9]/g, "");
+                updateState({ editForm: { ...state.editForm, phone: value } });
+              }}
             />
             <Select
               value={state.editForm.semester}

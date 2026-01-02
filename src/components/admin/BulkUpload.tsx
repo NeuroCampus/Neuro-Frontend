@@ -53,6 +53,7 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
         // Map headers to indexes
         const nameIndex = headers.indexOf("name");
         const emailIndex = headers.indexOf("email");
+        const phoneIndex = headers.indexOf("phone");
 
         // Validate all rows except the first one (skip header)
         const dataRows = rows.slice(1);
@@ -69,6 +70,7 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
 
           const name = cols[nameIndex];
           const email = cols[emailIndex];
+          const phone = phoneIndex !== -1 ? cols[phoneIndex] : null;
 
           // Name validation
           if (!name || name.length < 2) {
@@ -81,6 +83,15 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
           if (!emailRegex.test(email)) {
             reject(`Invalid email at row ${i + 2}: "${email}"`);
             return;
+          }
+
+          // Phone validation (if provided)
+          if (phone && phone.trim() !== "") {
+            const phoneRegex = /^\d{10}$/;
+            if (!phoneRegex.test(phone.trim())) {
+              reject(`Invalid phone number at row ${i + 2}: "${phone}". Must be exactly 10 digits.`);
+              return;
+            }
           }
         }
 
@@ -148,8 +159,8 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
   };
 
   const handleDownloadTemplate = () => {
-    const csvContent = `name,email
-    John Doe,john@example.com`; // Updated template without USN
+    const csvContent = `name,email,phone,designation
+    John Doe,john@example.com,9876543210,Assistant Professor`; // Updated template with phone and designation
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -235,6 +246,7 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
             <ul className={`list-disc pl-5 text-sm space-y-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               <li>Use the provided template for proper data formatting</li>
               <li>Required columns: name, email</li>
+              <li>Optional columns: phone (10 digits), designation</li>
               <li>role not required, defaults to teacher</li>
               <li>Maximum 500 records per file</li>
               <li>

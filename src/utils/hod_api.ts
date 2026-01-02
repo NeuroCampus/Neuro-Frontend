@@ -181,6 +181,7 @@ interface ManageStudentsRequest {
   usn?: string;
   name?: string;
   email?: string;
+  phone?: string;
   semester_id?: string;
   section_id?: string;
   branch_id: string;
@@ -199,6 +200,7 @@ interface ManageStudentsRequest {
     usn: string;
     name: string;
     email: string;
+    phone?: string;
     batch_id?: string;
     course_id?: string;
     cycle?: string;

@@ -30,6 +30,8 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
     first_name: "",
     last_name: "",
     role: "",
+    phone: "",
+    designation: "",
   });
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
@@ -103,6 +105,8 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
       first_name: formData.first_name.trim(),
       last_name: formData.last_name.trim(),
       role: formData.role,
+      phone: formData.phone.trim(),
+      designation: formData.designation.trim(),
     };
 
     try {
@@ -114,6 +118,8 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
           first_name: "",
           last_name: "",
           role: "",
+          phone: "",
+          designation: "",
         });
       } else {
         setError(response.message || "Failed to enroll user");
@@ -148,6 +154,60 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
           <CardContent>
             <div className="space-y-5">
               <div>
+                <label htmlFor="role" className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                  Role
+                </label>
+                <Select value={formData.role} onValueChange={handleRoleChange}>
+                  <SelectTrigger className={theme === 'dark' ? 'w-full mt-1 bg-card text-foreground border border-border' : 'w-full mt-1 bg-white text-gray-900 border border-gray-300'}>
+                    <SelectValue placeholder="Select a role" />
+                  </SelectTrigger>
+                  <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-300'}>
+                    <SelectItem value="hod">HOD</SelectItem>
+                    <SelectItem value="teacher">Faculty/Teacher</SelectItem>
+                    <SelectItem value="coe">COE</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label htmlFor="first_name" className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                  First Name
+                </label>
+                <Input
+                  id="first_name"
+                  name="first_name"
+                  placeholder="HOD/Faculty name"
+                  className={theme === 'dark' ? 'mt-1 bg-card text-foreground border border-border' : 'mt-1 bg-white text-gray-900 border border-gray-300'}
+                  value={formData.first_name}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div>
+                <label htmlFor="last_name" className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                  Last Name
+                </label>
+                <Input
+                  id="last_name"
+                  name="last_name"
+                  placeholder="initials"
+                  className={theme === 'dark' ? 'mt-1 bg-card text-foreground border border-border' : 'mt-1 bg-white text-gray-900 border border-gray-300'}
+                  value={formData.last_name}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div>
+                <label htmlFor="designation" className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                  Designation
+                </label>
+                <Input
+                  id="designation"
+                  name="designation"
+                  placeholder="Enter designation"
+                  className={theme === 'dark' ? 'mt-1 bg-card text-foreground border border-border' : 'mt-1 bg-white text-gray-900 border border-gray-300'}
+                  value={formData.designation}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div>
                 <label htmlFor="email" className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                   Email
                 </label>
@@ -164,48 +224,19 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
                   <p className="mt-1 text-xs text-red-500">{emailError}</p>
                 )}
               </div>
-              <div className="flex gap-4">
-                <div className="w-1/2">
-                  <label htmlFor="first_name" className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                    First Name
-                  </label>
-                  <Input
-                    id="first_name"
-                    name="first_name"
-                    placeholder="HOD/Faculty name"
-                    className={theme === 'dark' ? 'mt-1 bg-card text-foreground border border-border' : 'mt-1 bg-white text-gray-900 border border-gray-300'}
-                    value={formData.first_name}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="w-1/2">
-                  <label htmlFor="last_name" className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                    Last Name
-                  </label>
-                  <Input
-                    id="last_name"
-                    name="last_name"
-                    placeholder="initials"
-                    className={theme === 'dark' ? 'mt-1 bg-card text-foreground border border-border' : 'mt-1 bg-white text-gray-900 border border-gray-300'}
-                    value={formData.last_name}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </div>
               <div>
-                <label htmlFor="role" className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                  Role
+                <label htmlFor="phone" className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                  Phone Number
                 </label>
-                <Select value={formData.role} onValueChange={handleRoleChange}>
-                  <SelectTrigger className={theme === 'dark' ? 'w-full mt-1 bg-card text-foreground border border-border' : 'w-full mt-1 bg-white text-gray-900 border border-gray-300'}>
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                  <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-300'}>
-                    <SelectItem value="hod">HOD</SelectItem>
-                    <SelectItem value="teacher">Faculty/Teacher</SelectItem>
-                    <SelectItem value="coe">COE</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  placeholder="Enter phone number"
+                  className={theme === 'dark' ? 'mt-1 bg-card text-foreground border border-border' : 'mt-1 bg-white text-gray-900 border border-gray-300'}
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                />
               </div>
               <Button
                 className="w-full text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
