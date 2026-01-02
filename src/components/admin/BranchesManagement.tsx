@@ -409,7 +409,6 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
             <table className="w-full text-sm md:text-base text-left">
               <thead className={`border-b ${theme === 'dark' ? 'border-border bg-card text-foreground' : 'border-gray-200 bg-gray-100 text-gray-900'}`}>
                 <tr>
-                <th className="py-2">ID</th>
                 <th className="py-2">Branch</th>
                 <th className="py-2">Assigned HOD</th>
                 <th className="py-2 text-right px-5">Actions</th>
@@ -425,9 +424,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                         : 'border-gray-200 hover:bg-gray-50 text-gray-900'
                     }`}
                   >
-                    {/* ID column */}
-                    <td className="py-3">{branch.id}</td>
-
+                  
                     {/* Branch Name column */}
                     <td className="py-3 pr-2">
                       {editingId === branch.id ? (

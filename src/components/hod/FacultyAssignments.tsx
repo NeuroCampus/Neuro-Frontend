@@ -590,7 +590,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                 </Select>
               </div>
               <div>
-                <label className={`block mb-1 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Subject</label>
+                <label className={`block mb-1 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Course</label>
                 <Select
                   value={state.subjectId}
                   onValueChange={(value) => updateState({ subjectId: value })}
@@ -683,7 +683,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                 <table className="w-full text-sm scroll-smooth">
                   <thead className={theme === 'dark' ? 'bg-card sticky top-0 z-10 border-border' : 'bg-gray-100 sticky top-0 z-10 border-gray-300'}>
                     <tr className="border-b">
-                      <th className="text-left p-2">Subject</th>
+                      <th className="text-left p-2">Course</th>
                       <th className="text-left p-2">Section</th>
                       <th className="text-left p-2">Semester</th>
                       <th className="text-left p-2">Assigned Faculty</th>
