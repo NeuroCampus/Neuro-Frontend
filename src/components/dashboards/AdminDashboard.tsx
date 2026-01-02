@@ -13,6 +13,7 @@ import HODLeavesManagement from "../admin/HODLeavesManagement";
 import UsersManagement from "../admin/UsersManagement";
 import AdminProfile from "../admin/AdminProfile";
 import CampusLocationManager from "../admin/CampusLocationManager";
+import TeacherBranchAssignment from "../admin/TeacherBranchAssignment";
 import DashboardCard from "../common/DashboardCard";
 import { useToast } from "../../hooks/use-toast";
 import {
@@ -126,6 +127,12 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
                 onClick={() => handlePageChange("branches")}
               />
               <DashboardCard
+                title="Teacher Assignments"
+                description="Assign teachers to branches & subjects"
+                icon={<UserCheck size={20} />}
+                onClick={() => handlePageChange("teacher-assignments")}
+              />
+              <DashboardCard
                 title="Manage Batches"
                 description="View or manage batches"
                 icon={<ClipboardList size={20} />}
@@ -189,6 +196,17 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
             transition={{ duration: 0.3 }}
           >
             <BranchesManagement setError={setError} toast={toast} />
+          </motion.div>
+        );
+      case "teacher-assignments":
+        return (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <TeacherBranchAssignment setError={setError} toast={toast} />
           </motion.div>
         );
       case "batches":

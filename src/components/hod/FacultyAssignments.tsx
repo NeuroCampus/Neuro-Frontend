@@ -563,7 +563,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                         })
                         .map((faculty) => (
                           <SelectItem key={faculty.id} value={faculty.id} className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
-                            {faculty.first_name} {faculty.last_name || ""} ({faculty.username})
+                            {faculty.first_name} {faculty.last_name || ""}
                           </SelectItem>
                         ))}
                     </div>
