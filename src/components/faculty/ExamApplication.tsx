@@ -8,6 +8,7 @@ import { useTheme } from "@/context/ThemeContext";
 import { API_ENDPOINT } from "@/utils/config";
 import { manageSubjects } from "@/utils/hod_api";
 import { fetchWithTokenRefresh } from "@/utils/authService";
+import { useToast } from "@/hooks/use-toast";
 import type { ProctorStudent } from "@/utils/faculty_api";
 
 interface ExamApplicationProps {
@@ -18,6 +19,7 @@ interface ExamApplicationProps {
 const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proctorStudentsLoading = false }) => {
   const loading = proctorStudentsLoading;
   const { theme } = useTheme();
+  const { toast } = useToast();
   const printRef = useRef<HTMLDivElement | null>(null);
   const [exporting, setExporting] = useState(false);
 
@@ -197,7 +199,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
                   <td className="px-4 py-2 text-sm">{student.name}</td>
                   <td className="px-4 py-2 text-sm">{student.semester}</td>
                   <td className="px-4 py-2 text-sm">
-                    <Button onClick={() => openFor(student)}>Open</Button>
+                    <Button onClick={() => openFor(student)} className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white">Open</Button>
                   </td>
                 </tr>
               ))}
@@ -211,33 +213,39 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-[80vw] max-h-[80vh] overflow-y-auto custom-scrollbar">
+            <div className="flex justify-between items-center mt-5">
               <DialogHeader>
                 <DialogTitle>Exam Application</DialogTitle>
               </DialogHeader>
               <div className="flex justify-end gap-2">
-                <Button onClick={async () => { await exportPdf(); }}>
+                <Button onClick={async () => { await exportPdf(); }} className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white">
                   {exporting ? 'Exporting...' : 'Export PDF'}
                 </Button>
               </div>
-
+            </div>
+            <div className="p-1">
               <div ref={printRef} className="mt-4">
                 {/* Printable application form */}
-                <div id="exam-application-printable" className="p-6 bg-white text-black" style={{width: '800px', margin: '0 auto'}}>
+                <div id="exam-application-printable" className="p-6 bg-white text-black" style={{minWidth: '800px', width: 'auto', margin: '0 auto'}}>
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <img src="/logo.jpeg" alt="Logo" style={{height: 60}} />
                     </div>
                     <div className="text-center">
-                      <div className="font-bold text-lg">NEURO CAMPUS</div>
-                      <div className="text-sm">Semester End Exam Application Form</div>
+                      <div className="font-bold text-lg">AMC ENGINEERING COLLEGE</div>
+                      <div className="text-sm">Bannerghatta Road, Bangalore-560083</div>
                     </div>
                     <div style={{width: 60}} />
                   </div>
 
                   <hr className="mb-4" />
+                  <div className="text-center mb-4">
+                    <div className="font-bold text-lg">Exam Application Form</div>
+                  </div>
 
                   <div className="flex items-center gap-4 mb-4">
+                    
                     <div>
                       <Avatar className="w-20 h-20 rounded-md overflow-hidden">
                         {(
@@ -272,12 +280,12 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
                     </div>
                   </div>
 
-                  <h4 className="font-medium mb-2">Regular Subjects</h4>
+                  <h4 className="font-medium mb-2">Regular Courses</h4>
                   <table className="w-full border-collapse" style={{border: '1px solid #ddd'}}>
                     <thead>
                       <tr style={{background: '#f3f4f6'}}>
-                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Subject Code</th>
-                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Subject Name</th>
+                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Course Code</th>
+                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Course Name</th>
                         <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Status</th>
                       </tr>
                     </thead>
@@ -294,12 +302,12 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
                     </tbody>
                   </table>
 
-                  <h4 className="font-medium mt-6 mb-2">Elective Subjects (Registered)</h4>
+                  <h4 className="font-medium mt-6 mb-2">Elective Courses (Registered)</h4>
                   <table className="w-full border-collapse mb-4" style={{border: '1px solid #ddd'}}>
                     <thead>
                       <tr style={{background: '#f3f4f6'}}>
-                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Subject Code</th>
-                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Subject Name</th>
+                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Course Code</th>
+                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Course Name</th>
                         <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Status</th>
                       </tr>
                     </thead>
@@ -312,17 +320,17 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
                             <td style={{border: '1px solid #ddd', padding: 8}}>{''}</td>
                           </tr>
                         )) : (
-                          <tr><td colSpan={3} style={{padding: 12}}>No registered electives.</td></tr>
+                        <tr><td colSpan={3} style={{padding: 12}}>No registered electives.</td></tr>
                         )}
                     </tbody>
                   </table>
 
-                  <h4 className="font-medium mt-6 mb-2">Open Elective Subjects (Registered)</h4>
+                  <h4 className="font-medium mt-6 mb-2">Open Elective Courses (Registered)</h4>
                   <table className="w-full border-collapse" style={{border: '1px solid #ddd'}}>
                     <thead>
                       <tr style={{background: '#f3f4f6'}}>
-                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Subject Code</th>
-                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Subject Name</th>
+                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Course Code</th>
+                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Course Name</th>
                         <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Status</th>
                       </tr>
                     </thead>
@@ -335,27 +343,60 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
                             <td style={{border: '1px solid #ddd', padding: 8}}>{''}</td>
                           </tr>
                         )) : (
-                          <tr><td colSpan={3} style={{padding: 12}}>No registered open electives.</td></tr>
+                        <tr><td colSpan={3} style={{padding: 12}}>No registered open electives.</td></tr>
                         )}
                     </tbody>
                   </table>
 
-                  <div className="mt-8 grid grid-cols-2 gap-4">
-                    <div>
-                      <div className="text-xs">Student Signature</div>
-                      <div style={{height: 60, borderBottom: '1px solid #000'}} />
-                    </div>
-                    <div>
-                      <div className="text-xs">Office Use</div>
-                      <div style={{height: 60, borderBottom: '1px solid #000'}} />
-                    </div>
-                  </div>
+                  <h4 className="font-medium mt-6 mb-2">Fees Details</h4>
+                  <table className="w-full border-collapse mb-4" style={{border: '1px solid #ddd'}}>
+                    <thead>
+                      <tr style={{background: '#f3f4f6'}}>
+                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Fee Type</th>
+                        <th style={{border: '1px solid #ddd', padding: 8, textAlign: 'left'}}>Amount (₹)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td style={{border: '1px solid #ddd', padding: 8}}>Registration</td>
+                        <td style={{border: '1px solid #ddd', padding: 8}}>100</td>
+                      </tr>
+                      <tr>
+                        <td style={{border: '1px solid #ddd', padding: 8}}>Exam fees for regular Courses</td>
+                        <td style={{border: '1px solid #ddd', padding: 8}}>2000</td>
+                      </tr>
+                      <tr>
+                        <td style={{border: '1px solid #ddd', padding: 8}}>Marks card fees</td>
+                        <td style={{border: '1px solid #ddd', padding: 8}}>300</td>
+                      </tr>
+                      <tr>
+                        <td style={{border: '1px solid #ddd', padding: 8}}>Arrear course fees</td>
+                        <td style={{border: '1px solid #ddd', padding: 8}}>0</td>
+                      </tr>
+                      <tr style={{background: '#f3f4f6', fontWeight: 'bold'}}>
+                        <td style={{border: '1px solid #ddd', padding: 8}}>Total</td>
+                        <td style={{border: '1px solid #ddd', padding: 8}}>2400</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
-              <DialogFooter className="mt-4">
-                <Button onClick={() => setOpen(false)}>Close</Button>
-              </DialogFooter>
-            </DialogContent>
+            </div>
+            <DialogFooter className="mt-4">
+              <Button onClick={() => {
+                // Apply functionality would go here
+                toast({
+                  title: "Success",
+                  description: "Applied successfully!"
+                });
+                // Close the dialog after showing the toast
+                setOpen(false);
+              }} className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white">
+                Apply
+              </Button>
+              <Button onClick={() => setOpen(false)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
         </Dialog>
       </CardContent>
     </Card>
