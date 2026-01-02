@@ -7,10 +7,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Users, CheckCircle, XCircle, Search, Download } from "lucide-react";
 import { fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
-import { useTheme } from "../../context/ThemeContext";
+
 
 const StudentStatus = () => {
-  const { theme } = useTheme();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
@@ -90,13 +89,10 @@ const StudentStatus = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Student Status</h1>
-        <Badge variant="outline" className="text-sm">
-          COE Review Panel
-        </Badge>
       </div>
 
       {/* Filters */}
-      <Card className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+      <Card>
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
@@ -163,7 +159,7 @@ const StudentStatus = () => {
       {/* Summary Cards */}
       {data && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Students</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
@@ -173,7 +169,7 @@ const StudentStatus = () => {
             </CardContent>
           </Card>
 
-          <Card className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Applied</CardTitle>
               <CheckCircle className="h-4 w-4 text-green-500" />
@@ -183,7 +179,7 @@ const StudentStatus = () => {
             </CardContent>
           </Card>
 
-          <Card className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Not Applied</CardTitle>
               <XCircle className="h-4 w-4 text-red-500" />
@@ -193,7 +189,7 @@ const StudentStatus = () => {
             </CardContent>
           </Card>
 
-          <Card className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Application Rate</CardTitle>
               <Search className="h-4 w-4 text-blue-500" />
@@ -207,7 +203,7 @@ const StudentStatus = () => {
 
       {/* Students Table */}
       {data && (
-        <Card className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+        <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>Student Application Status ({data.students.length})</CardTitle>

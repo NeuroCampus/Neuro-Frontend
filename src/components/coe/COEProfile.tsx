@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { User, Mail, Phone, MapPin, Calendar, Edit, Save, X } from "lucide-react";
 import { fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
-import { useTheme } from "../../context/ThemeContext";
 
 interface COEProfile {
   id: number;
@@ -30,7 +29,6 @@ interface COEProfile {
 }
 
 const COEProfile = () => {
-  const { theme } = useTheme();
   const [profile, setProfile] = useState<COEProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -59,13 +57,14 @@ const COEProfile = () => {
       });
       const result = await response.json();
       if (result.success) {
-        setProfile(result.data);
+        const profileData = result.profile || result.data;
+        setProfile(profileData);
         setFormData({
-          first_name: result.data.first_name || "",
-          last_name: result.data.last_name || "",
-          email: result.data.email || "",
-          phone_number: result.data.phone_number || "",
-          address: result.data.address || "",
+          first_name: profileData.first_name || "",
+          last_name: profileData.last_name || "",
+          email: profileData.email || "",
+          phone_number: profileData.phone_number || "",
+          address: profileData.address || "",
         });
       }
     } catch (error) {
@@ -153,13 +152,10 @@ const COEProfile = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Profile</h1>
-        <Badge variant="outline" className="text-sm">
-          Controller of Examinations
-        </Badge>
       </div>
 
       {/* Profile Header */}
-      <Card className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+      <Card>
         <CardContent className="p-6">
           <div className="flex items-center space-x-6">
             <Avatar className="h-24 w-24">
@@ -185,7 +181,7 @@ const COEProfile = () => {
             </div>
             <div className="flex space-x-2">
               <Button
-                variant="outline"
+                className="font-medium bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]"
                 onClick={() => setEditing(!editing)}
               >
                 <Edit className="mr-2 h-4 w-4" />
@@ -193,11 +189,11 @@ const COEProfile = () => {
               </Button>
               <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
                 <DialogTrigger asChild>
-                  <Button variant="outline">
+                  <Button className="font-medium bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]">
                     Change Password
                   </Button>
                 </DialogTrigger>
-                <DialogContent className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+                <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Change Password</DialogTitle>
                   </DialogHeader>
@@ -233,7 +229,7 @@ const COEProfile = () => {
                       <Button variant="outline" onClick={() => setShowPasswordDialog(false)}>
                         Cancel
                       </Button>
-                      <Button onClick={handleChangePassword}>
+                      <Button className="font-medium bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={handleChangePassword}>
                         Change Password
                       </Button>
                     </div>
@@ -247,7 +243,7 @@ const COEProfile = () => {
 
       {/* Profile Details */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+        <Card>
           <CardHeader>
             <CardTitle>Personal Information</CardTitle>
           </CardHeader>
@@ -339,7 +335,7 @@ const COEProfile = () => {
                   <X className="mr-2 h-4 w-4" />
                   Cancel
                 </Button>
-                <Button onClick={handleUpdateProfile}>
+                <Button className="font-medium bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={handleUpdateProfile}>
                   <Save className="mr-2 h-4 w-4" />
                   Save Changes
                 </Button>
@@ -348,7 +344,7 @@ const COEProfile = () => {
           </CardContent>
         </Card>
 
-        <Card className={theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white'}>
+        <Card>
           <CardHeader>
             <CardTitle>Account Information</CardTitle>
           </CardHeader>
