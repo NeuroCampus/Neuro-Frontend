@@ -5,7 +5,7 @@ import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { useTheme } from "@/context/ThemeContext";
-import { API_ENDPOINT } from "@/utils/config";
+import { API_ENDPOINT, API_BASE_URL } from "@/utils/config";
 import { manageSubjects } from "@/utils/hod_api";
 import { fetchWithTokenRefresh } from "@/utils/authService";
 import { useToast } from "@/hooks/use-toast";
@@ -368,7 +368,11 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
                           (selectedStudent && (selectedStudent.photo || selectedStudent.photo_url))
                         ) ? (
                           <img
-                            src={studentDetails?.student_info?.photo_url || selectedStudent?.photo || selectedStudent?.photo_url}
+                            src={
+                              studentDetails?.student_info?.photo_url 
+                                ? `${API_BASE_URL}${studentDetails.student_info.photo_url}`
+                                : selectedStudent?.photo || selectedStudent?.photo_url
+                            }
                             alt={selectedStudent?.name || studentDetails?.student_info?.name || 'Student'}
                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           />

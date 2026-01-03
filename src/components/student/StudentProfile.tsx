@@ -12,6 +12,7 @@ import { useFileUpload, useFormValidation } from "../../hooks/useOptimizations";
 import { Progress } from "../ui/progress";
 import { Upload, Camera, CheckCircle, AlertCircle } from "lucide-react";
 import { showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
+import { API_ENDPOINT } from "../../utils/config";
 
 const StudentProfile = () => {
   const [form, setForm] = useState({
@@ -105,19 +106,46 @@ const StudentProfile = () => {
     try {
       const result = await uploadProfilePicture(
         profilePictureFile,
-        '/api/profile/upload-picture',
+        `${API_ENDPOINT}/profile/upload-picture`,
         {}
       );
 
       // Update the profile picture URL in the form
-      if (result.success && result.url) {
-        setForm(prev => ({ ...prev, profile_picture: result.url }));
+      if (result.success && result.profile_picture_url) {
+        // Construct full URL if it's a relative path
+        const fullUrl = result.profile_picture_url.startsWith('http') 
+          ? result.profile_picture_url 
+          : `${API_ENDPOINT.replace('/api', '')}${result.profile_picture_url}`;
+        
+        setForm(prev => ({ ...prev, profile_picture: fullUrl }));
+        
+        // Update localStorage user data to reflect the new profile picture
+        const currentUserData = JSON.parse(localStorage.getItem('user') || '{}');
+        currentUserData.profile_picture = fullUrl;
+        localStorage.setItem('user', JSON.stringify(currentUserData));
+        
+        showSuccessAlert("Success", "Profile picture uploaded successfully!");
+      } else if (result.success && result.url) {
+        // Fallback for different response format
+        const fullUrl = result.url.startsWith('http') 
+          ? result.url 
+          : `${API_ENDPOINT.replace('/api', '')}${result.url}`;
+        
+        setForm(prev => ({ ...prev, profile_picture: fullUrl }));
+        
+        // Update localStorage user data to reflect the new profile picture
+        const currentUserData = JSON.parse(localStorage.getItem('user') || '{}');
+        currentUserData.profile_picture = fullUrl;
+        localStorage.setItem('user', JSON.stringify(currentUserData));
+        
+        showSuccessAlert("Success", "Profile picture uploaded successfully!");
       }
 
       setProfilePictureFile(null);
       resetUpload();
     } catch (error) {
       console.error('Profile picture upload failed:', error);
+      showErrorAlert("Error", "Failed to upload profile picture");
     }
   };
 
@@ -244,13 +272,19 @@ const StudentProfile = () => {
     const fetchProfile = async () => {
       const data = await getFullStudentProfile();
       if (data.success && data.profile) {
+        const profileData = data.profile;
         setForm((prev) => {
           const newForm = { ...prev };
-          Object.keys(data.profile).forEach(key => {
-            if (typeof data.profile[key] === 'string' || data.profile[key] === null) {
-              newForm[key] = data.profile[key] || "";
+          Object.keys(profileData).forEach(key => {
+            if (key === 'profile_picture' && profileData[key]) {
+              // Convert relative URL to absolute URL
+              newForm[key] = profileData[key].startsWith('http') 
+                ? profileData[key] 
+                : `${API_ENDPOINT.replace('/api', '')}${profileData[key]}`;
+            } else if (typeof profileData[key] === 'string' || profileData[key] === null) {
+              newForm[key] = profileData[key] || "";
             } else {
-              newForm[key] = data.profile[key];
+              newForm[key] = profileData[key];
             }
           });
           return newForm;
@@ -279,12 +313,12 @@ const StudentProfile = () => {
               <div className="w-full md:w-1/4 flex flex-col items-center text-center">
                 <div className="relative mb-2">
                   <img
-                    src={form.profile_picture || "/default-avatar.png"}
+                    src={form.profile_picture || "/placeholder.svg"}
                     alt="Profile"
-                    className="w-24 h-24 rounded-full object-cover"
+                    className="w-24 h-24 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
                   />
-                  <label htmlFor="profile-picture-upload" className="absolute bottom-0 right-0 bg-blue-600 text-white p-1 rounded-full cursor-pointer hover:bg-blue-700 transition-colors">
-                    <Camera className="h-3 w-3" />
+                  <label htmlFor="profile-picture-upload" className="absolute bottom-0 right-0 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white p-2 rounded-full cursor-pointer transition-colors shadow-lg">
+                    <Camera className="h-4 w-4" />
                   </label>
                   <input
                     id="profile-picture-upload"
@@ -343,63 +377,63 @@ const StudentProfile = () => {
                     <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>First Name</Label>
                     <Input
                       name="first_name"
-                      className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                      className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
                       value={form.first_name}
-                      onChange={handleChange}
+                      readOnly
                     />
                   </div>
                   <div>
                     <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Last Name</Label>
                     <Input
                       name="last_name"
-                      className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                      className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
                       value={form.last_name || ''}
-                      onChange={handleChange}
+                      readOnly
                     />
                   </div>
                   <div>
                     <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>USN</Label>
                     <Input
                       name="usn"
-                      className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                      className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
                       value={form.usn}
-                      onChange={handleChange}
+                      readOnly
                     />
                   </div>
                   <div>
                     <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Email</Label>
                     <Input
                       name="email"
-                      className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                      className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
                       value={form.email}
-                      onChange={handleChange}
+                      readOnly
                     />
                   </div>
                   <div>
                     <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Phone</Label>
                     <Input
                       name="phone"
-                      className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                      className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
                       value={form.phone}
-                      onChange={handleChange}
+                      readOnly
                     />
                   </div>
                   <div>
                     <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Department/Branch</Label>
                     <Input
                       name="department"
-                      className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                      className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
                       value={form.branch}
-                      onChange={handleChange}
+                      readOnly
                     />
                   </div>
                   <div>
                     <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Year of Study</Label>
                     <Input
                       name="year_of_study"
-                      className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                      className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
                       value={form.year_of_study}
-                      onChange={handleChange}
+                      readOnly
                     />
                   </div>
                   <div>
@@ -407,18 +441,18 @@ const StudentProfile = () => {
                     <Input
                       type="date"
                       name="date_of_birth"
-                      className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                      className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
                       value={form.date_of_birth}
-                      onChange={handleChange}
+                      readOnly
                     />
                   </div>
                   <div>
                     <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Blood Group</Label>
                     <Input
                       name="blood_group"
-                      className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                      className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
                       value={form.blood_group}
-                      onChange={handleChange}
+                      readOnly
                     />
                   </div>
                 </div>
@@ -427,9 +461,9 @@ const StudentProfile = () => {
                   <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Address</Label>
                   <Input
                     name="address"
-                    className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                    className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
                     value={form.address}
-                    onChange={handleChange}
+                    readOnly
                   />
                 </div>
 
@@ -437,9 +471,9 @@ const StudentProfile = () => {
                   <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>About</Label>
                   <Textarea
                     name="about"
-                    className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                    className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
                     value={form.about}
-                    onChange={handleChange}
+                    readOnly
                   />
                 </div>
 
@@ -448,27 +482,27 @@ const StudentProfile = () => {
                     <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Parent Name</Label>
                     <Input
                       name="parent_name"
-                      className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                      className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
                       value={form.parent_name}
-                      onChange={handleChange}
+                      readOnly
                     />
                   </div>
                   <div>
                     <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Parent Contact</Label>
                     <Input
                       name="parent_contact"
-                      className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                      className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
                       value={form.parent_contact}
-                      onChange={handleChange}
+                      readOnly
                     />
                   </div>
                   <div>
                     <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Emergency Contact</Label>
                     <Input
                       name="emergency_contact"
-                      className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
+                      className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
                       value={form.emergency_contact}
-                      onChange={handleChange}
+                      readOnly
                     />
                   </div>
                 </div>
@@ -485,8 +519,8 @@ const StudentProfile = () => {
                 <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Current Semester</Label>
                 <Input
                   value={form.current_semester}
-                  className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
-                  onChange={handleChange}
+                  className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
+                  readOnly
                   name="current_semester"
                 />
               </div>
@@ -494,8 +528,8 @@ const StudentProfile = () => {
                 <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Section</Label>
                 <Input
                   value={form.section}
-                  className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
-                  onChange={handleChange}
+                  className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
+                  readOnly
                   name="section"
                 />
               </div>
@@ -503,8 +537,8 @@ const StudentProfile = () => {
                 <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Enrollment Year</Label>
                 <Input
                   value={form.enrollment_year}
-                  className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
-                  onChange={handleChange}
+                  className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
+                  readOnly
                   name="enrollment_year"
                 />
               </div>
@@ -512,8 +546,8 @@ const StudentProfile = () => {
                 <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Expected Graduation</Label>
                 <Input
                   value={form.expected_graduation}
-                  className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
-                  onChange={handleChange}
+                  className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
+                  readOnly
                   name="expected_graduation"
                 />
               </div>
@@ -531,17 +565,17 @@ const StudentProfile = () => {
                 <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Student Status</Label>
                 <Input
                   value={form.student_status}
-                  onChange={handleChange}
+                  readOnly
                   name="student_status"
-                  className={theme === 'dark' ? 'bg-background text-green-600 font-semibold border-border' : 'bg-white text-green-600 font-semibold border-gray-300'}
+                  className={`${theme === 'dark' ? 'bg-muted text-green-600 font-semibold border-border' : 'bg-gray-100 text-green-600 font-semibold border-gray-300'} cursor-not-allowed`}
                 />
               </div>
               <div>
                 <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Mode of Admission</Label>
                 <Input
                   value={form.mode_of_admission}
-                  className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
-                  onChange={handleChange}
+                  className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
+                  readOnly
                   name="mode_of_admission"
                 />
               </div>
@@ -549,8 +583,8 @@ const StudentProfile = () => {
                 <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Batch</Label>
                 <Input
                   value={form.batch}
-                  className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
-                  onChange={handleChange}
+                  className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
+                  readOnly
                   name="batch"
                 />
               </div>
@@ -558,8 +592,8 @@ const StudentProfile = () => {
                 <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Course</Label>
                 <Input
                   value={form.course}
-                  className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
-                  onChange={handleChange}
+                  className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
+                  readOnly
                   name="course"
                 />
               </div>
@@ -568,8 +602,8 @@ const StudentProfile = () => {
                 <Input
                   type="date"
                   value={form.date_of_admission}
-                  className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
-                  onChange={handleChange}
+                  className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-gray-100 text-gray-500 border-gray-300'} cursor-not-allowed`}
+                  readOnly
                   name="date_of_admission"
                 />
               </div>

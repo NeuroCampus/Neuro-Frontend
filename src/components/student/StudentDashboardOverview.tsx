@@ -47,6 +47,16 @@ interface StudentDashboardOverviewProps {
 }
 
 interface DashboardData {
+  student_profile?: {
+    name: string;
+    usn: string;
+    branch: string;
+    semester: number;
+    section: string;
+    profile_picture?: string;
+    email: string;
+    mobile_number: string;
+  };
   today_lectures: {
     count: number;
     next_lecture: {
@@ -199,6 +209,13 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
         const response = await getDashboardOverview();
         
         if (response.success && response.data) {
+          // Convert relative profile picture URL to absolute URL
+          if (response.data.student_profile?.profile_picture && 
+              response.data.student_profile.profile_picture.startsWith('/media/')) {
+            response.data.student_profile.profile_picture = 
+              `http://127.0.0.1:8000${response.data.student_profile.profile_picture}`;
+          }
+          
           setDashboardData(response.data);
           setError(null);
         } else {
@@ -364,6 +381,25 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
 
   return (
     <div className={`space-y-6 ${theme === 'dark' ? 'bg-background text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
+      {/* Welcome Header with Profile Picture */}
+      <section className={`border rounded-md p-6 shadow-sm ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
+        <div className="flex items-center gap-4">
+          <img
+            src={dashboardData.student_profile?.profile_picture || "/placeholder.svg"}
+            alt="Profile"
+            className="w-16 h-16 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
+          />
+          <div>
+            <h1 className={`text-xl font-bold ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+              Welcome, {dashboardData.student_profile?.name || `${user?.first_name} ${user?.last_name || ''}`}!
+            </h1>
+            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+              {dashboardData.student_profile?.usn || user?.username} | {dashboardData.student_profile?.branch || user?.branch || 'Branch'} | Semester: {dashboardData.student_profile?.semester || user?.semester || 'N/A'} | Section: {dashboardData.student_profile?.section || user?.section || 'N/A'}
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Top Cards Row */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Today's Lectures Card */}

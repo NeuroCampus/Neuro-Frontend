@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { fetchWithTokenRefresh } from '../utils/authService';
 
 // Pagination Hook
 export interface PaginationOptions {
@@ -384,7 +385,7 @@ export const useFileUpload = (options: {
 
       // Create form data
       const formData = new FormData();
-      formData.append('file', processedFile);
+      formData.append('profile_picture', processedFile);
 
       // Add additional data
       if (additionalData) {
@@ -394,11 +395,8 @@ export const useFileUpload = (options: {
       }
 
       // Upload with progress tracking
-      const response = await fetch(uploadUrl, {
+      const response = await fetchWithTokenRefresh(uploadUrl, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-        },
         body: formData,
       });
 

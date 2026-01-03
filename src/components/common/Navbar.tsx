@@ -164,11 +164,32 @@ const handleProfileClick = () => {
           transition={{ duration: 0.3, delay: 0.4 }}
         >
           <motion.div 
-            className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm shadow-lg bg-[#a259ff] text-white"
+            className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm shadow-lg overflow-hidden"
             whileHover={{ scale: 1.1 }}
             transition={{ duration: 0.2 }}
           >
-            {user?.first_name?.[0] || role?.[0]?.toUpperCase()}
+            {user?.profile_picture || user?.profile_image ? (
+              <img
+                src={user.profile_picture || user.profile_image}
+                alt="Profile"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Fallback to initial if image fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    parent.innerHTML = `<div class="w-full h-full bg-[#a259ff] text-white flex items-center justify-center font-semibold text-sm">
+                      ${user?.first_name?.[0] || role?.[0]?.toUpperCase()}
+                    </div>`;
+                  }
+                }}
+              />
+            ) : (
+              <div className="w-full h-full bg-[#a259ff] text-white flex items-center justify-center font-semibold text-sm">
+                {user?.first_name?.[0] || role?.[0]?.toUpperCase()}
+              </div>
+            )}
           </motion.div>
 
           <div className="text-sm hidden sm:block">

@@ -203,6 +203,12 @@ export const loginUser = async ({ username, password }: LoginRequest): Promise<L
       if (result.message === "OTP sent") {
         return result; // Frontend handles OTP input
       }
+      
+      // Convert relative profile_image URL to absolute URL
+      if (result.profile && result.profile.profile_image && result.profile.profile_image.startsWith('/media/')) {
+        result.profile.profile_image = `http://127.0.0.1:8000${result.profile.profile_image}`;
+      }
+      
       localStorage.setItem("access_token", result.access || "");
       localStorage.setItem("refresh_token", result.refresh || "");
       localStorage.setItem("role", result.role || "");
@@ -233,6 +239,11 @@ export const verifyOTP = async ({ user_id, otp }: VerifyOTPRequest): Promise<Log
     const result: LoginResponse = await response.json();
     console.log("OTP verification response:", result);
     if (response.ok && result.success) {
+      // Convert relative profile_image URL to absolute URL
+      if (result.profile && result.profile.profile_image && result.profile.profile_image.startsWith('/media/')) {
+        result.profile.profile_image = `http://127.0.0.1:8000${result.profile.profile_image}`;
+      }
+      
       localStorage.setItem("access_token", result.access || "");
       localStorage.setItem("refresh_token", result.refresh || "");
       localStorage.setItem("role", result.role || "");
