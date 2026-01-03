@@ -34,6 +34,9 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
   const [subjectStatuses, setSubjectStatuses] = useState<Record<string, string>>({});
   const [filteredProctorStudents, setFilteredProctorStudents] = useState<ProctorStudent[]>(initialProctorStudents);
   const [loadingFiltered, setLoadingFiltered] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [existingApplications, setExistingApplications] = useState<Array<any>>([]);
+  const [editingApplication, setEditingApplication] = useState<any>(null);
 
   // Fetch all proctor students
   useEffect(() => {
@@ -97,7 +100,12 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
     setSelectedStudent(student);
     setStudentDetails(null);
     setSemesterSubjects([]);
-    setAppliedSubjects({});    setSubjectStatuses({});    setOpen(true);
+    setAppliedSubjects({});
+    setSubjectStatuses({});
+    setIsEditMode(false);
+    setExistingApplications([]);
+    setEditingApplication(null);
+    setOpen(true);
   };
 
   useEffect(() => {
@@ -142,6 +150,9 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
           console.log('Exam applications response:', examAppsResult);
           
           if (examAppsResult.success) {
+            // Store all applications for the existing applications section
+            setExistingApplications(examAppsResult.data);
+            
             // Create a map of subject codes to their application status
             // Filter by current exam period
             const subjectStatusMap: Record<string, string> = {};
@@ -167,6 +178,68 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
 
   const handleApplyToggle = (subjectCode: string) => {
     setAppliedSubjects((s) => ({ ...s, [subjectCode]: !s[subjectCode] }));
+  };
+
+  const handleEditApplication = (application: any) => {
+    setIsEditMode(true);
+    setEditingApplication(application);
+    // Pre-populate the form with existing data - checked if status is 'applied'
+    setAppliedSubjects({ [application.subject_code]: application.status === 'applied' });
+  };
+
+  const handleUpdateApplication = async () => {
+    if (!editingApplication || !selectedStudent) return;
+
+    try {
+      // Determine the new status based on whether the subject is checked
+      const isSubjectChecked = appliedSubjects[editingApplication.subject_code] || false;
+      const newStatus = isSubjectChecked ? 'applied' : 'not_applied';
+
+      const updateData = {
+        application_id: editingApplication.id,
+        subject: editingApplication.subject,
+        exam_period: editingApplication.exam_period,
+        status: newStatus, // Use the new status based on checkbox
+        semester: editingApplication.semester,
+        batch: editingApplication.batch
+      };
+
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/exam-applications/`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData)
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to update application');
+      }
+
+      toast({
+        title: "Success",
+        description: "Exam application updated successfully!"
+      });
+
+      // Reset edit mode and refresh data
+      setIsEditMode(false);
+      setEditingApplication(null);
+      setAppliedSubjects({});
+
+      // Refresh the dialog data
+      if (selectedStudent) {
+        // Re-trigger the useEffect by closing and reopening
+        setOpen(false);
+        setTimeout(() => openFor(selectedStudent), 100);
+      }
+
+    } catch (error) {
+      console.error('Application update error:', error);
+      toast({
+        title: "Update Failed",
+        description: error instanceof Error ? error.message : "Failed to update application. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const exportPdf = async () => {
@@ -340,6 +413,72 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
               </div>
             </div>
             <div className="p-1">
+              {/* Existing Applications Section - NOT in PDF */}
+              {!isEditMode && (
+                <div className="mb-6 p-4 border rounded-lg bg-gray-50">
+                  <h3 className="text-lg font-semibold mb-3">Existing Applications</h3>
+                  {(() => {
+                    // Get existing applications for current exam period
+                    const currentApps = existingApplications.filter(
+                      (app: any) => app.exam_period === examPeriod
+                    );
+                    
+                    if (currentApps.length === 0) {
+                      return <p className="text-gray-600">No existing applications for {examPeriod.replace('_', '/')} period.</p>;
+                    }
+
+                    return (
+                      <div className="space-y-2">
+                        {currentApps.map((app: any) => (
+                          <div key={app.id} className="flex items-center justify-between p-3 bg-white rounded border">
+                            <div>
+                              <span className="font-semibold text-gray-900">{app.subject_name} ({app.subject_code})</span>
+                              <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
+                                app.status === 'applied' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              }`}>
+                                {app.status === 'applied' ? 'Applied' : 'Not Applied'}
+                              </span>
+                            </div>
+                            <Button 
+                              onClick={() => handleEditApplication(app)}
+                              size="sm"
+                              className="bg-blue-500 hover:bg-blue-600 text-white"
+                            >
+                              Edit
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {/* Edit Mode Banner - NOT in PDF */}
+              {isEditMode && editingApplication && (
+                <div className="mb-6 p-4 border rounded-lg bg-blue-50 border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-blue-800">Editing Application</h3>
+                      <p className="text-blue-600">
+                        Subject: {editingApplication.subject_name} ({editingApplication.subject_code})
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={() => {
+                        setIsEditMode(false);
+                        setEditingApplication(null);
+                        setAppliedSubjects({});
+                      }}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Cancel Edit
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <div ref={printRef} className="mt-4">
                 {/* Printable application form */}
                 <div id="exam-application-printable" className="p-6 bg-white text-black" style={{minWidth: '800px', width: 'auto', margin: '0 auto'}}>
@@ -553,138 +692,144 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
               </div>
             </div>
             <DialogFooter className="mt-4">
-              <Button onClick={async () => {
-                if (!selectedStudent) return;
-                
-                // Validate that student has required data
-                if (!selectedStudent.semester_id || !selectedStudent.batch_id) {
-                  toast({
-                    title: "Invalid student data",
-                    description: "Student must have semester and batch information to apply for exams.",
-                    variant: "destructive"
-                  });
-                  return;
-                }
-                
-                // Get selected subjects from all tables
-                const selectedSubjectCodes = Object.entries(appliedSubjects)
-                  .filter(([_, applied]) => applied)
-                  .map(([subjectCode, _]) => subjectCode);
-                
-                if (selectedSubjectCodes.length === 0) {
-                  toast({
-                    title: "No subjects selected",
-                    description: "Please select at least one subject to apply for.",
-                    variant: "destructive"
-                  });
-                  return;
-                }
-                
-                try {
-                  // Collect all applications to submit
-                  const applications = [];
+              {isEditMode ? (
+                <Button onClick={handleUpdateApplication} className="bg-blue-500 hover:bg-blue-600 text-white">
+                  Update Application
+                </Button>
+              ) : (
+                <Button onClick={async () => {
+                  if (!selectedStudent) return;
                   
-                  // Handle semester subjects
-                  for (const subjectCode of selectedSubjectCodes) {
-                    const subject = semesterSubjects.find(s => s.subject_code === subjectCode);
-                    if (subject) {
+                  // Validate that student has required data
+                  if (!selectedStudent.semester_id || !selectedStudent.batch_id) {
+                    toast({
+                      title: "Invalid student data",
+                      description: "Student must have semester and batch information to apply for exams.",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  
+                  // Get selected subjects from all tables
+                  const selectedSubjectCodes = Object.entries(appliedSubjects)
+                    .filter(([_, applied]) => applied)
+                    .map(([subjectCode, _]) => subjectCode);
+                  
+                  if (selectedSubjectCodes.length === 0) {
+                    toast({
+                      title: "No subjects selected",
+                      description: "Please select at least one subject to apply for.",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  
+                  try {
+                    // Collect all applications to submit
+                    const applications = [];
+                    
+                    // Handle semester subjects
+                    for (const subjectCode of selectedSubjectCodes) {
+                      const subject = semesterSubjects.find(s => s.subject_code === subjectCode);
+                      if (subject) {
+                        applications.push({
+                          student_id: selectedStudent.id,
+                          subject: subject.id,
+                          exam_period: examPeriod,
+                          semester: selectedStudent.semester_id,
+                          batch: selectedStudent.batch_id
+                        });
+                      }
+                    }
+                    
+                    // Handle registered elective subjects
+                    const registeredElectives = (studentDetails?.subjects_registered || [])
+                      .filter((x: any) => x.subject_type === 'elective' && selectedSubjectCodes.includes(x.subject_code));
+                    
+                    for (const elective of registeredElectives) {
                       applications.push({
                         student_id: selectedStudent.id,
-                        subject: subject.id,
+                        subject: elective.subject_id,
                         exam_period: examPeriod,
                         semester: selectedStudent.semester_id,
                         batch: selectedStudent.batch_id
                       });
                     }
-                  }
-                  
-                  // Handle registered elective subjects
-                  const registeredElectives = (studentDetails?.subjects_registered || [])
-                    .filter((x: any) => x.subject_type === 'elective' && selectedSubjectCodes.includes(x.subject_code));
-                  
-                  for (const elective of registeredElectives) {
-                    applications.push({
-                      student_id: selectedStudent.id,
-                      subject: elective.subject_id,
-                      exam_period: examPeriod,
-                      semester: selectedStudent.semester_id,
-                      batch: selectedStudent.batch_id
+                    
+                    // Handle registered open elective subjects
+                    const registeredOpenElectives = (studentDetails?.subjects_registered || [])
+                      .filter((x: any) => x.subject_type === 'open_elective' && selectedSubjectCodes.includes(x.subject_code));
+                    
+                    for (const openElective of registeredOpenElectives) {
+                      applications.push({
+                        student_id: selectedStudent.id,
+                        subject: openElective.subject_id,
+                        exam_period: examPeriod,
+                        semester: selectedStudent.semester_id,
+                        batch: selectedStudent.batch_id
+                      });
+                    }
+                    
+                    // Submit all applications
+                    for (const application of applications) {
+                      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/exam-applications/`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(application)
+                      });
+                      
+                      const result = await response.json();
+                      if (!response.ok && response.status !== 200) {
+                        throw new Error(result.message || 'Failed to submit application');
+                      }
+                      // 200 status means application already exists but was updated
+                      if (response.status === 200) {
+                        console.log('Application already exists:', result.message);
+                      }
+                    }
+                    
+                    // Update student status
+                    setStudentStatuses(prev => ({
+                      ...prev,
+                      [selectedStudent.usn]: 'Applied'
+                    }));
+                    
+                    // Refresh student statuses from API to ensure accuracy
+                    const statusResponse = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/proctor-students/exam-status/?exam_period=${examPeriod}`, {
+                      method: 'GET',
+                      headers: { 'Content-Type': 'application/json' }
                     });
-                  }
-                  
-                  // Handle registered open elective subjects
-                  const registeredOpenElectives = (studentDetails?.subjects_registered || [])
-                    .filter((x: any) => x.subject_type === 'open_elective' && selectedSubjectCodes.includes(x.subject_code));
-                  
-                  for (const openElective of registeredOpenElectives) {
-                    applications.push({
-                      student_id: selectedStudent.id,
-                      subject: openElective.subject_id,
-                      exam_period: examPeriod,
-                      semester: selectedStudent.semester_id,
-                      batch: selectedStudent.batch_id
-                    });
-                  }
-                  
-                  // Submit all applications
-                  for (const application of applications) {
-                    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/exam-applications/`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify(application)
+                    if (statusResponse.ok) {
+                      const statusResult = await statusResponse.json();
+                      if (statusResult.success) {
+                        const statusMap: Record<string, string> = {};
+                        statusResult.data.forEach((student: any) => {
+                          statusMap[student.usn] = student.status;
+                        });
+                        setStudentStatuses(statusMap);
+                      }
+                    }
+                    
+                    toast({
+                      title: "Success",
+                      description: `Applied for ${applications.length} subject(s) successfully!`
                     });
                     
-                    const result = await response.json();
-                    if (!response.ok && response.status !== 200) {
-                      throw new Error(result.message || 'Failed to submit application');
-                    }
-                    // 200 status means application already exists but was updated
-                    if (response.status === 200) {
-                      console.log('Application already exists:', result.message);
-                    }
+                    // Close the dialog
+                    setOpen(false);
+                    
+                  } catch (error) {
+                    console.error('Application submission error:', error);
+                    toast({
+                      title: "Application Failed",
+                      description: error instanceof Error ? error.message : "Failed to submit applications. Please try again.",
+                      variant: "destructive"
+                    });
                   }
-                  
-                  // Update student status
-                  setStudentStatuses(prev => ({
-                    ...prev,
-                    [selectedStudent.usn]: 'Applied'
-                  }));
-                  
-                  // Refresh student statuses from API to ensure accuracy
-                  const statusResponse = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/proctor-students/exam-status/?exam_period=${examPeriod}`, {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
-                  });
-                  if (statusResponse.ok) {
-                    const statusResult = await statusResponse.json();
-                    if (statusResult.success) {
-                      const statusMap: Record<string, string> = {};
-                      statusResult.data.forEach((student: any) => {
-                        statusMap[student.usn] = student.status;
-                      });
-                      setStudentStatuses(statusMap);
-                    }
-                  }
-                  
-                  toast({
-                    title: "Success",
-                    description: `Applied for ${applications.length} subject(s) successfully!`
-                  });
-                  
-                  // Close the dialog
-                  setOpen(false);
-                  
-                } catch (error) {
-                  console.error('Application submission error:', error);
-                  toast({
-                    title: "Application Failed",
-                    description: error instanceof Error ? error.message : "Failed to submit applications. Please try again.",
-                    variant: "destructive"
-                  });
-                }
-              }} className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white">
-                Apply
-              </Button>
+                }} className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white">
+                  Apply
+                </Button>
+              )}
               <Button onClick={() => setOpen(false)}>Close</Button>
             </DialogFooter>
           </DialogContent>
