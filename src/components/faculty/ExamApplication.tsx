@@ -10,20 +10,21 @@ import { manageSubjects } from "@/utils/hod_api";
 import { fetchWithTokenRefresh } from "@/utils/authService";
 import { useToast } from "@/hooks/use-toast";
 import type { ProctorStudent } from "@/utils/faculty_api";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 interface ExamApplicationProps {
-  proctorStudents: ProctorStudent[];
+  proctorStudents?: ProctorStudent[];
   proctorStudentsLoading?: boolean;
 }
 
-const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proctorStudentsLoading = false }) => {
-  const loading = proctorStudentsLoading;
+const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: initialProctorStudents = [], proctorStudentsLoading = false }) => {
   const { theme } = useTheme();
   const { toast } = useToast();
   const printRef = useRef<HTMLDivElement | null>(null);
   const [exporting, setExporting] = useState(false);
 
   const [search, setSearch] = useState("");
+  const [examPeriod, setExamPeriod] = useState("june_july");
   const [open, setOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<ProctorStudent | null>(null);
   const [studentDetails, setStudentDetails] = useState<any>(null);
@@ -31,14 +32,42 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
   const [appliedSubjects, setAppliedSubjects] = useState<Record<string, boolean>>({});
   const [studentStatuses, setStudentStatuses] = useState<Record<string, string>>({});
   const [subjectStatuses, setSubjectStatuses] = useState<Record<string, string>>({});
+  const [filteredProctorStudents, setFilteredProctorStudents] = useState<ProctorStudent[]>(initialProctorStudents);
+  const [loadingFiltered, setLoadingFiltered] = useState(false);
+
+  // Fetch all proctor students
+  useEffect(() => {
+    const fetchProctorStudents = async () => {
+      setLoadingFiltered(true);
+      try {
+        const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/proctor-students/`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await response.json();
+        if (result.success) {
+          setFilteredProctorStudents(result.data);
+        } else {
+          setFilteredProctorStudents(initialProctorStudents); // Fallback to all students
+        }
+      } catch (error) {
+        console.error('Failed to fetch proctor students:', error);
+        setFilteredProctorStudents(initialProctorStudents); // Fallback to all students
+      } finally {
+        setLoadingFiltered(false);
+      }
+    };
+
+    fetchProctorStudents();
+  }, [initialProctorStudents]);
 
   // Fetch student exam application statuses
   useEffect(() => {
     const fetchStudentStatuses = async () => {
-      if (!proctorStudents.length) return;
+      if (!filteredProctorStudents.length) return;
       
       try {
-        const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/proctor-students/exam-status/`, {
+        const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/proctor-students/exam-status/?exam_period=${examPeriod}`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
         });
@@ -56,9 +85,9 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
     };
 
     fetchStudentStatuses();
-  }, [proctorStudents]);
+  }, [filteredProctorStudents, examPeriod]);
 
-  const filtered = proctorStudents.filter((s) => {
+  const filtered = filteredProctorStudents.filter((s) => {
     const q = search.trim().toLowerCase();
     if (!q) return true;
     return (s.usn || "").toLowerCase().includes(q) || (s.name || "").toLowerCase().includes(q);
@@ -114,10 +143,10 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
           
           if (examAppsResult.success) {
             // Create a map of subject codes to their application status
-            // Filter by current exam period (june_july)
+            // Filter by current exam period
             const subjectStatusMap: Record<string, string> = {};
             examAppsResult.data
-              .filter((app: any) => app.exam_period === 'june_july') // Only current exam period
+              .filter((app: any) => app.exam_period === examPeriod) // Use selected exam period
               .forEach((app: any) => {
                 console.log('Processing application:', app.subject_code, app.status, app.exam_period);
                 subjectStatusMap[app.subject_code] = app.status === 'applied' ? 'Applied' : 'Not Applied';
@@ -225,6 +254,25 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
         <CardTitle className="text-xl font-semibold">Exam Applications</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <label className="block text-sm font-medium mb-2">Exam Period</label>
+            <Select value={examPeriod} onValueChange={setExamPeriod}>
+              <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
+                <SelectValue placeholder="Select exam period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="june_july">June/July</SelectItem>
+                <SelectItem value="nov_dec">November/December</SelectItem>
+                <SelectItem value="jan_feb">January/February</SelectItem>
+                <SelectItem value="apr_may">April/May</SelectItem>
+                <SelectItem value="supplementary">Supplementary</SelectItem>
+                <SelectItem value="revaluation">Revaluation</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         <Input
           placeholder="Search proctor students by USN or name..."
           value={search}
@@ -244,12 +292,12 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
               </tr>
             </thead>
             <tbody className={theme === 'dark' ? 'divide-border' : 'divide-gray-200'}>
-              {loading && (
+              {(loadingFiltered || proctorStudentsLoading) && (
                 <tr>
                   <td colSpan={5} className="text-center py-6">Loading...</td>
                 </tr>
               )}
-              {!loading && filtered.map((student) => (
+              {!(loadingFiltered || proctorStudentsLoading) && filtered.map((student) => (
                 <tr key={student.usn} className={theme === 'dark' ? 'hover:bg-muted' : 'hover:bg-gray-50'}>
                   <td className="px-4 py-2 text-sm">{student.usn}</td>
                   <td className="px-4 py-2 text-sm">{student.name}</td>
@@ -268,9 +316,11 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
                   </td>
                 </tr>
               ))}
-              {!loading && filtered.length === 0 && (
+              {!(loadingFiltered || proctorStudentsLoading) && filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="text-center py-6">No students found.</td>
+                  <td colSpan={5} className="text-center py-6">
+                    {examPeriod ? `No students found with exam applications for ${examPeriod === 'june_july' ? 'June/July' : 'January/February'} period.` : 'No students found.'}
+                  </td>
                 </tr>
               )}
             </tbody>
@@ -314,12 +364,12 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
                     <div>
                       <Avatar className="w-20 h-20 rounded-md overflow-hidden">
                         {(
-                          (studentDetails && (studentDetails.photo_url || studentDetails.photo)) ||
+                          (studentDetails?.student_info && studentDetails.student_info.photo_url) ||
                           (selectedStudent && (selectedStudent.photo || selectedStudent.photo_url))
                         ) ? (
                           <img
-                            src={studentDetails?.photo_url || studentDetails?.photo || selectedStudent?.photo || selectedStudent?.photo_url}
-                            alt={selectedStudent?.name || studentDetails?.name || 'Student'}
+                            src={studentDetails?.student_info?.photo_url || selectedStudent?.photo || selectedStudent?.photo_url}
+                            alt={selectedStudent?.name || studentDetails?.student_info?.name || 'Student'}
                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           />
                         ) : (
@@ -332,7 +382,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
                     <div className="flex-1 grid grid-cols-2 gap-4">
                       <div>
                         <div className="text-xs text-muted-foreground">Name</div>
-                        <div className="font-semibold">{selectedStudent?.name || studentDetails?.name || ''}</div>
+                        <div className="font-semibold">{selectedStudent?.name || studentDetails?.student_info?.name || ''}</div>
                         <div className="text-xs text-muted-foreground">USN</div>
                         <div className="font-semibold">{selectedStudent?.usn || ''}</div>
                       </div>
@@ -537,7 +587,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
                       applications.push({
                         student_id: selectedStudent.id,
                         subject: subject.id,
-                        exam_period: 'june_july',
+                        exam_period: examPeriod,
                         semester: selectedStudent.semester_id,
                         batch: selectedStudent.batch_id
                       });
@@ -552,7 +602,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
                     applications.push({
                       student_id: selectedStudent.id,
                       subject: elective.subject_id,
-                      exam_period: 'june_july',
+                      exam_period: examPeriod,
                       semester: selectedStudent.semester_id,
                       batch: selectedStudent.batch_id
                     });
@@ -566,7 +616,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
                     applications.push({
                       student_id: selectedStudent.id,
                       subject: openElective.subject_id,
-                      exam_period: 'june_july',
+                      exam_period: examPeriod,
                       semester: selectedStudent.semester_id,
                       batch: selectedStudent.batch_id
                     });
@@ -597,7 +647,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents, proc
                   }));
                   
                   // Refresh student statuses from API to ensure accuracy
-                  const statusResponse = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/proctor-students/exam-status/`, {
+                  const statusResponse = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/proctor-students/exam-status/?exam_period=${examPeriod}`, {
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' }
                   });

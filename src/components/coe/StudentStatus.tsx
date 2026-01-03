@@ -100,7 +100,11 @@ const StudentStatus = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="june_july">June/July</SelectItem>
+                  <SelectItem value="nov_dec">November/December</SelectItem>
                   <SelectItem value="jan_feb">January/February</SelectItem>
+                  <SelectItem value="apr_may">April/May</SelectItem>
+                  <SelectItem value="supplementary">Supplementary</SelectItem>
+                  <SelectItem value="revaluation">Revaluation</SelectItem>
                 </SelectContent>
               </Select>
             </div>
