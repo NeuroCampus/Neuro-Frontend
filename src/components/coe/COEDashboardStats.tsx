@@ -3,23 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Users, FileText, CheckCircle, XCircle, Calendar, TrendingUp, Clock } from "lucide-react";
-import { fetchWithTokenRefresh } from "../../utils/authService";
-import { API_ENDPOINT } from "../../utils/config";
-
-interface DashboardStats {
-  total_applications: number;
-  pending_applications: number;
-  approved_applications: number;
-  rejected_applications: number;
-  total_students: number;
-  upcoming_exams: number;
-  recent_activity: Array<{
-    description: string;
-    timestamp: string;
-    type: string;
-    status: string;
-  }>;
-}
+import { getCOEDashboardStats, DashboardStats } from "../../utils/coe_api";
 
 const COEDashboardStats = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -31,15 +15,7 @@ const COEDashboardStats = () => {
 
   const fetchDashboardStats = async () => {
     try {
-      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/dashboard-stats/`, {
-        method: 'GET',
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const result = await response.json();
+      const result = await getCOEDashboardStats();
       console.log('Dashboard stats response:', result); // Debug log
       
       if (result.success) {

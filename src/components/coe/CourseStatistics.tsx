@@ -4,9 +4,8 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import { BookOpen, Users, TrendingUp, Download, BarChart3 } from "lucide-react";
-import { fetchWithTokenRefresh } from "../../utils/authService";
-import { API_ENDPOINT } from "../../utils/config";
+import { BookOpen, Users, Download } from "lucide-react";
+import { getCourseApplicationStats, getFilterOptions, FilterOptions } from "../../utils/coe_api";
 
 const CourseStatistics = () => {
   const [data, setData] = useState<any>(null);
@@ -17,7 +16,7 @@ const CourseStatistics = () => {
     branch: "",
     semester: ""
   });
-  const [filterOptions, setFilterOptions] = useState({
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     batches: [],
     branches: [],
     semesters: []
@@ -35,21 +34,8 @@ const CourseStatistics = () => {
 
   const fetchFilterOptions = async () => {
     try {
-      const [batchesRes, branchesRes, semestersRes] = await Promise.all([
-        fetchWithTokenRefresh(`${API_ENDPOINT}/admin/batches/`, { method: 'GET' }),
-        fetchWithTokenRefresh(`${API_ENDPOINT}/admin/branches/`, { method: 'GET' }),
-        fetchWithTokenRefresh(`${API_ENDPOINT}/hod/semesters/`, { method: 'GET' })
-      ]);
-
-      const batches = await batchesRes.json();
-      const branches = await branchesRes.json();
-      const semesters = await semestersRes.json();
-
-      setFilterOptions({
-        batches: batches.success ? batches.data : [],
-        branches: branches.success ? branches.data : [],
-        semesters: semesters.success ? semesters.data : []
-      });
+      const options = await getFilterOptions();
+      setFilterOptions(options);
     } catch (error) {
       console.error('Error fetching filter options:', error);
     }
@@ -58,11 +44,7 @@ const CourseStatistics = () => {
   const fetchCourseStatistics = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams(filters);
-      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/exam-applications/courses/?${params}`, {
-        method: 'GET',
-      });
-      const result = await response.json();
+      const result = await getCourseApplicationStats(filters);
       if (result.success) {
         setData(result.data);
       }
@@ -158,14 +140,14 @@ const CourseStatistics = () => {
 
       {/* Summary Cards */}
       {data && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Subjects</CardTitle>
               <BookOpen className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data.summary.total_subjects}</div>
+              <div className="text-2xl font-bold">{data.summary.total_courses}</div>
             </CardContent>
           </Card>
 
@@ -176,28 +158,6 @@ const CourseStatistics = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">{data.summary.total_applications}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Avg Applications/Subject</CardTitle>
-              <TrendingUp className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{data.summary.avg_applications_per_subject}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Overall Application Rate</CardTitle>
-              <BarChart3 className="h-4 w-4 text-purple-500" />
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${getApplicationRateColor(data.summary.overall_application_rate)}`}>
-                {data.summary.overall_application_rate}%
-              </div>
             </CardContent>
           </Card>
         </div>
@@ -233,7 +193,7 @@ const CourseStatistics = () => {
                     <TableCell className="font-medium">{course.subject_code}</TableCell>
                     <TableCell>{course.subject_name}</TableCell>
                     <TableCell>{course.total_students}</TableCell>
-                    <TableCell>{course.applications}</TableCell>
+                    <TableCell>{course.applied_students}</TableCell>
                     <TableCell>
                       <span className={`font-medium ${getApplicationRateColor(course.application_rate)}`}>
                         {course.application_rate}%

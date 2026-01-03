@@ -5,8 +5,7 @@ import { Button } from "../ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Users, CheckCircle, XCircle, Search, Download } from "lucide-react";
-import { fetchWithTokenRefresh } from "../../utils/authService";
-import { API_ENDPOINT } from "../../utils/config";
+import { getStudentApplicationStatus, getFilterOptions, FilterOptions } from "../../utils/coe_api";
 
 
 const StudentStatus = () => {
@@ -18,7 +17,7 @@ const StudentStatus = () => {
     branch: "",
     semester: ""
   });
-  const [filterOptions, setFilterOptions] = useState({
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     batches: [],
     branches: [],
     semesters: []
@@ -36,21 +35,8 @@ const StudentStatus = () => {
 
   const fetchFilterOptions = async () => {
     try {
-      const [batchesRes, branchesRes, semestersRes] = await Promise.all([
-        fetchWithTokenRefresh(`${API_ENDPOINT}/admin/batches/`, { method: 'GET' }),
-        fetchWithTokenRefresh(`${API_ENDPOINT}/admin/branches/`, { method: 'GET' }),
-        fetchWithTokenRefresh(`${API_ENDPOINT}/hod/semesters/`, { method: 'GET' })
-      ]);
-
-      const batches = await batchesRes.json();
-      const branches = await branchesRes.json();
-      const semesters = await semestersRes.json();
-
-      setFilterOptions({
-        batches: batches.success ? batches.data : [],
-        branches: branches.success ? branches.data : [],
-        semesters: semesters.success ? semesters.data : []
-      });
+      const options = await getFilterOptions();
+      setFilterOptions(options);
     } catch (error) {
       console.error('Error fetching filter options:', error);
     }
@@ -59,11 +45,7 @@ const StudentStatus = () => {
   const fetchStudentStatus = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams(filters);
-      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/exam-applications/students/?${params}`, {
-        method: 'GET',
-      });
-      const result = await response.json();
+      const result = await getStudentApplicationStatus(filters);
       if (result.success) {
         setData(result.data);
       }
