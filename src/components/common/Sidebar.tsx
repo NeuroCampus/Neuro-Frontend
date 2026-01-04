@@ -133,8 +133,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Faculty Assignments", page: "teacher-assignments" },
     { name: "Batches", page: "batches" },
     
-    // Notifications & Leaves
-    { name: "Notifications", page: "notifications" },
+    // Leaves
     { name: "HOD Leaves", page: "hod-leaves" },
     
     // Profile
@@ -168,7 +167,6 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Study Material", page: "study-materials" },
     { name: "Scan for Student Info", page: "scan-student-info" },
     { name: "Proctors", page: "proctors" },
-    { name: "Notifications", page: "notifications" },
     
     // Profile
     { name: "Profile", page: "hod-profile" },
@@ -196,9 +194,6 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Proctor Students", page: "proctor-students" },
     { name: "Scan for Student Info", page: "scan-student-info" },
     
-    // Communication
-    { name: "Announcements", page: "announcements" },
-    
     // Profile
     { name: "Profile", page: "faculty-profile" },
   ],
@@ -216,9 +211,6 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // Leave Management
     { name: "Leave Request", page: "leave-request" },
     { name: "Leave Status", page: "leave-status" },
-    
-    // Communication
-    { name: "Announcements", page: "announcements" },
     
     // Profile
     { name: "Profile", page: "profile" },
