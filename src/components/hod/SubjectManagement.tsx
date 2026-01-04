@@ -298,7 +298,7 @@ const SubjectManagement = () => {
                         {getSemesterNumber(subject.semester_id)}
                       </td>
                       <td className="px-4 py-3">
-                        {subject.subject_type === 'regular' ? 'Regular Subjects' : subject.subject_type === 'elective' ? 'Elective Subjects' : 'Open Elective Subjects'}
+                        {subject.subject_type === 'regular' ? 'Regular' : subject.subject_type === 'elective' ? 'Elective Subjects' : 'Open Elective Subjects'}
                       </td>
                       <td className="px-4 py-3 flex gap-5">
                         <Pencil
@@ -487,7 +487,7 @@ const SubjectManagement = () => {
                 }
                 disabled={state.loading}
               >
-                <option value="regular">Regular Subjects</option>
+                <option value="regular">Regular</option>
                 <option value="elective">Elective Subjects</option>
                 <option value="open_elective">Open Elective Subjects</option>
               </select>

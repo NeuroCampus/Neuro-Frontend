@@ -398,7 +398,6 @@ const StudentManagement = () => {
         // Validate and sanitize
         const errors: string[] = [];
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const usnRegex = /^[1-4][A-Z]{2}\d{2}[A-Z]{2}\d{3}$/;
 
         const selectedBatchId = getBatchId(state.manualForm.batch);
         const selectedSemesterId = getSemesterId(state.manualForm.semester);
@@ -421,10 +420,7 @@ const StudentManagement = () => {
               errors.push(`Row ${row}: Missing required fields`);
               return null;
             }
-            if (!usnRegex.test(usn)) {
-              errors.push(`Row ${row}: Invalid USN "${usn}"`);
-              return null;
-            }
+            // Removed USN format validation
             if (!emailRegex.test(email)) {
               errors.push(`Row ${row}: Invalid email "${email}"`);
               return null;
@@ -512,11 +508,9 @@ const StudentManagement = () => {
 
     const newErrors: any = {};
 
-    // Strong USN regex (last 3 digits cannot be 000)
-    const usnRegex = /^[1-9][A-Z]{2}[0-9]{2}[A-Z]{2}[0-9]{3}$/;
+    // USN validation removed
     if (!usn) newErrors.usn = "USN is required";
-    else if (!usnRegex.test(usn.toUpperCase()))
-      newErrors.usn = "Invalid USN (e.g., 1AM22CI064)";
+    // Removed USN format validation
 
     // Name validation
     const nameRegex = /^[A-Za-z\s]+$/;
