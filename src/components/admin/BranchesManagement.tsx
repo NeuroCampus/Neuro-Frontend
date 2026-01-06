@@ -20,7 +20,9 @@ import { useTheme } from "../../context/ThemeContext";
 interface Branch {
   id: number;
   name: string;
+  branch_code: string | null;
   hod: string | null;
+  hod_contact: string | null;
 }
 
 interface User {
@@ -30,6 +32,7 @@ interface User {
   role: string;
   first_name: string;
   last_name: string;
+  mobile_number: string | null;
 }
 
 const BranchesManagement = ({ setError, toast }: { setError: (error: string | null) => void; toast: (options: any) => void }) => {
@@ -40,7 +43,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
   const [editData, setEditData] = useState<Branch | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newBranch, setNewBranch] = useState({ name: "" });
+  const [newBranch, setNewBranch] = useState({ name: "", branch_code: "" });
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
   const [newHodId, setNewHodId] = useState("");
@@ -65,7 +68,9 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
             ? dataSource.branches.map((b: any) => ({
                 id: b.id,
                 name: b.name || "",
+                branch_code: b.branch_code || null,
                 hod: b.hod ? `${b.hod.first_name} ${b.hod.last_name}`.trim() : null,
+                hod_contact: b.hod ? (b.hod.mobile_number || b.hod.email || "--") : null,
               }))
             : [];
           setBranches(branchData);
@@ -79,6 +84,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                 role: "hod",
                 first_name: u.first_name,
                 last_name: u.last_name,
+                mobile_number: u.mobile_number,
               }))
             : [];
           setUsers(hodData);
@@ -147,6 +153,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
   const saveEdit = async () => {
     if (editData) {
       const trimmedName = editData.name.trim();
+      const trimmedCode = editData.branch_code?.trim() || "";
 
       // ✅ Empty name check
       if (!trimmedName) {
@@ -161,6 +168,12 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
         return;
       }
 
+      // ✅ Branch code validation (optional but if provided, must be 2-10 characters, letters/numbers)
+      if (trimmedCode && (!/^[A-Za-z0-9]{2,10}$/.test(trimmedCode))) {
+        toast({ variant: "destructive", title: "Error", description: "Branch code must be 2-10 characters (letters and numbers only)" });
+        return;
+      }
+
       // ✅ Prevent duplicates (excluding the current branch being edited)
       const isDuplicate = branches.some(
         (b) => b.id !== editData.id && b.name.toLowerCase() === trimmedName.toLowerCase()
@@ -170,11 +183,23 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
         return;
       }
 
+      // ✅ Prevent branch code duplicates (excluding the current branch being edited)
+      if (trimmedCode) {
+        const isCodeDuplicate = branches.some(
+          (b) => b.id !== editData.id && b.branch_code && b.branch_code.toLowerCase() === trimmedCode.toLowerCase()
+        );
+        if (isCodeDuplicate) {
+          toast({ variant: "destructive", title: "Error", description: "Branch code already exists" });
+          return;
+        }
+      }
+
       setLoading(true);
       try {
         const response = await manageBranches(
           { 
             name: trimmedName, 
+            branch_code: trimmedCode || null,
             hod_id: editData.hod ? users.find((u) => `${u.first_name} ${u.last_name}`.trim() === editData.hod)?.id?.toString() : null 
           },
           editData.id,
@@ -186,7 +211,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
         const dataSource = hasResults ? (response as any).results : (response as any);
 
         if (dataSource && dataSource.success) {
-          setBranches(branches.map((b) => (b.id === editData.id ? { ...editData, name: trimmedName } : b)));
+          setBranches(branches.map((b) => (b.id === editData.id ? { ...editData, name: trimmedName, branch_code: trimmedCode || null } : b)));
           setEditingId(null);
           setEditData(null);
           toast({ title: "Success", description: "Branch updated successfully" });
@@ -230,6 +255,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
 
   const handleAddBranch = async () => {
     const trimmedName = newBranch.name.trim();
+    const trimmedCode = newBranch.branch_code.trim();
 
     // ✅ Empty or invalid branch name
     if (!trimmedName) {
@@ -244,6 +270,12 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
       return;
     }
 
+    // ✅ Branch code validation (optional but if provided, must be 2-10 characters, letters/numbers)
+    if (trimmedCode && (!/^[A-Za-z0-9]{2,10}$/.test(trimmedCode))) {
+      toast({ variant: "destructive", title: "Error", description: "Branch code must be 2-10 characters (letters and numbers only)" });
+      return;
+    }
+
     // ✅ Prevent duplicates (case-insensitive)
     const isDuplicate = branches.some((b) => b.name.toLowerCase() === trimmedName.toLowerCase());
     if (isDuplicate) {
@@ -251,10 +283,19 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
       return;
     }
 
+    // ✅ Prevent branch code duplicates (case-insensitive)
+    if (trimmedCode) {
+      const isCodeDuplicate = branches.some((b) => b.branch_code && b.branch_code.toLowerCase() === trimmedCode.toLowerCase());
+      if (isCodeDuplicate) {
+        toast({ variant: "destructive", title: "Error", description: "Branch code already exists" });
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const response = await manageBranches(
-        { name: trimmedName },
+        { name: trimmedName, branch_code: trimmedCode || null },
         undefined,
         "POST"
       );
@@ -274,13 +315,15 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
             ? updatedDataSource.branches.map((b: any) => ({
                 id: b.id,
                 name: b.name || "",
+                branch_code: b.branch_code || null,
                 hod: b.hod ? b.hod.username : null,
+                hod_contact: b.hod ? (b.hod.mobile_number || b.hod.email || "--") : null,
               }))
             : [];
           setBranches(branchData);
         }
         setIsAddDialogOpen(false);
-        setNewBranch({ name: "" });
+        setNewBranch({ name: "", branch_code: "" });
         toast({ title: "Success", description: "Branch added successfully" });
       } else {
         setError(response.message || "Failed to add branch");
@@ -317,7 +360,11 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
       const dataSource = hasResults ? (response as any).results : (response as any);
       
       if (dataSource && dataSource.success) {
-        setBranches(branches.map((b) => (b.id === selectedBranchId ? { ...b, hod: users.find((u) => u.id === Number(newHodId)) ? `${users.find((u) => u.id === Number(newHodId))!.first_name} ${users.find((u) => u.id === Number(newHodId))!.last_name}`.trim() : null } : b)));
+        setBranches(branches.map((b) => (b.id === selectedBranchId ? { 
+          ...b, 
+          hod: users.find((u) => u.id === Number(newHodId)) ? `${users.find((u) => u.id === Number(newHodId))!.first_name} ${users.find((u) => u.id === Number(newHodId))!.last_name}`.trim() : null,
+          hod_contact: users.find((u) => u.id === Number(newHodId)) ? (users.find((u) => u.id === Number(newHodId))!.mobile_number || users.find((u) => u.id === Number(newHodId))!.email || "--") : null
+        } : b)));
         setIsAssignDialogOpen(false);
         setNewHodId("");
         setSelectedBranchId(null);
@@ -340,11 +387,13 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
     doc.text("Branch Management", 14, 15);
     autoTable(doc, {
       startY: 20,
-      head: [["ID", "Branch", "Assigned HOD"]],
+      head: [["ID", "Branch", "Branch Code", "Assigned HOD", "HOD Contact No"]],
       body: filteredBranches.map((branch) => [
         branch.id || "",
         branch.name || "--",
+        branch.branch_code || "--",
         branch.hod || "--",
+        branch.hod_contact || "--",
       ]),
     });
     doc.save("Branch_list.pdf");
@@ -410,7 +459,9 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
               <thead className={`border-b ${theme === 'dark' ? 'border-border bg-card text-foreground' : 'border-gray-200 bg-gray-100 text-gray-900'}`}>
                 <tr>
                 <th className="py-2">Branch</th>
+                <th className="py-2">Branch Code</th>
                 <th className="py-2">Assigned HOD</th>
+                <th className="py-2">HOD Contact No</th>
                 <th className="py-2 text-right px-5">Actions</th>
                 </tr>
               </thead>
@@ -445,6 +496,21 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                       )}
                     </td>
 
+                    {/* Branch Code column */}
+                    <td className="py-3 pr-2">
+                      {editingId === branch.id ? (
+                        <Input
+                          name="branch_code"
+                          value={editData?.branch_code || ""}
+                          onChange={handleEditChange}
+                          placeholder="Branch Code"
+                          className={theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-300'}
+                        />
+                      ) : (
+                        branch.branch_code || "--"
+                      )}
+                    </td>
+
                     {/* HOD column */}
                     <td className="py-3">
                       {editingId === branch.id ? (
@@ -464,6 +530,11 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                       ) : (
                         branch.hod || "--"
                       )}
+                    </td>
+
+                    {/* HOD Contact column */}
+                    <td className="py-3">
+                      {branch.hod_contact || "--"}
                     </td>
 
                     {/* Actions column */}
@@ -557,6 +628,12 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
               placeholder="Branch Name" 
               value={newBranch.name} 
               onChange={(e) => setNewBranch({ ...newBranch, name: e.target.value })} 
+            />
+            <Input 
+              className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'} 
+              placeholder="Branch Code (e.g., CSE, ME)" 
+              value={newBranch.branch_code} 
+              onChange={(e) => setNewBranch({ ...newBranch, branch_code: e.target.value })} 
             />
           </div>
           <DialogFooter>

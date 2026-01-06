@@ -86,9 +86,11 @@ const handleProfileClick = () => {
             >
               Welcome,{" "}
               <span className={theme === 'dark' ? 'text-primary font-medium' : 'text-blue-600 font-medium'}>
-                {user?.first_name
-                  ? user.first_name.charAt(0).toUpperCase() + user.first_name.slice(1) + "!"
-                  : user?.username || "User!"}
+                {user?.first_name && user?.last_name
+                  ? `${user.first_name.charAt(0).toUpperCase() + user.first_name.slice(1)} ${user.last_name.charAt(0).toUpperCase() + user.last_name.slice(1)}`
+                  : user?.first_name
+                  ? user.first_name.charAt(0).toUpperCase() + user.first_name.slice(1)
+                  : user?.username || "User"}
               </span>
             </motion.div>
             <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
@@ -194,7 +196,11 @@ const handleProfileClick = () => {
 
           <div className="text-sm hidden sm:block">
             <div className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-              {user?.first_name || (role ? role.charAt(0).toUpperCase() + role.slice(1) : "User")}
+              {user?.first_name && user?.last_name
+                ? `${user.first_name.charAt(0).toUpperCase() + user.first_name.slice(1)} ${user.last_name.charAt(0).toUpperCase() + user.last_name.slice(1)}`
+                : user?.first_name
+                ? user.first_name.charAt(0).toUpperCase() + user.first_name.slice(1)
+                : (role ? role.charAt(0).toUpperCase() + role.slice(1) : "User")}
             </div>
             <div className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               {role === "admin"

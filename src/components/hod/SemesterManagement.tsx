@@ -222,8 +222,8 @@ const SemesterManagement = () => {
       toast({ variant: "destructive", title: "Error", description: "Semester or Branch ID is missing" });
       return;
     }
-    if (!sectionForm.name || !["A", "B", "C", "D", "E", "F", "G"].includes(sectionForm.name)) {
-      toast({ variant: "destructive", title: "Error", description: "Please select a valid section (A-G)" });
+    if (!sectionForm.name || !["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"].includes(sectionForm.name)) {
+      toast({ variant: "destructive", title: "Error", description: "Please select a valid section (A-Z)" });
       return;
     }
     if (sections.some(s => s.semester_id === managingSemester.id && s.name === sectionForm.name)) {
@@ -480,7 +480,7 @@ const SemesterManagement = () => {
           <SelectValue placeholder="Select Section" />
             </SelectTrigger>
             <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
-          {["A", "B", "C", "D", "E", "F", "G"].map((section) => (
+          {["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"].map((section) => (
             <SelectItem key={section} value={section} className={theme === 'dark' ? 'text-foreground hover:bg-accent' : 'text-gray-900 hover:bg-gray-100'}>
               Section {section}
             </SelectItem>

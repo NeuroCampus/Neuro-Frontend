@@ -126,7 +126,6 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // User Management
     { name: "Enroll Staff", page: "enroll-user" },
     { name: "Bulk Upload", page: "bulk-upload" },
-    { name: "Users", page: "users" },
     
     // Academic Structure
     { name: "Branches", page: "branches" },
@@ -136,7 +135,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // Leaves
     { name: "HOD Leaves", page: "hod-leaves" },
     
-    // Profile
+    // User & Profile
+    { name: "Users", page: "users" },
     { name: "Profile", page: "profile" },
   ],
 
@@ -151,6 +151,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Courses", page: "subjects" },
     { name: "Faculty Assignments", page: "faculty-assignments" },
     { name: "Timetable", page: "timetable" },
+    { name: "Proctors", page: "proctors" },
     
     // Attendance & Marks
     // { name: "Attendance", page: "attendance" },
@@ -166,7 +167,6 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // Resources & Communication
     { name: "Study Material", page: "study-materials" },
     { name: "Scan for Student Info", page: "scan-student-info" },
-    { name: "Proctors", page: "proctors" },
     
     // Profile
     { name: "Profile", page: "hod-profile" },
