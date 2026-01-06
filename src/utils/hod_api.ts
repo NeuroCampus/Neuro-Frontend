@@ -1456,8 +1456,8 @@ export const manageStudents = async (
           throw new Error("Bulk data must be a non-empty array for bulk_update action");
         }
         for (const entry of req.bulk_data) {
-          if (!entry.usn || !entry.name || !entry.email || !entry.batch_id) {
-            throw new Error("Each bulk data entry must include USN, Name, Email, and Batch ID");
+          if (!entry.usn || !entry.name) {
+            throw new Error("Each bulk data entry must include USN and Name");
           }
         }
       }

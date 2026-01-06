@@ -425,6 +425,11 @@ const StudentManagement = () => {
         const selectedSemesterId = getSemesterId(state.manualForm.semester);
         const selectedSectionId = getSectionId(state.manualForm.section, state.manualSections);
 
+        if (!selectedBatchId) {
+          updateState({ uploadErrors: ["Invalid batch selected. Please select a valid batch."], uploadedCount: 0, updatedCount: 0, isLoading: false });
+          return;
+        }
+
         const bulkData = data
           .map((entry, index) => {
             const usn = String(entry.usn || entry.USN || "").trim();
