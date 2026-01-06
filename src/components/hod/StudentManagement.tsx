@@ -101,7 +101,6 @@ const StudentManagement = () => {
   const [sectionsCache, setSectionsCache] = useState<Record<string, Section[]>>({});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const itemsPerPage = 10;
 
   // Helper to update state
   const updateState = (newState: Partial<typeof state>) => {
@@ -109,13 +108,16 @@ const StudentManagement = () => {
   };
 
   // Fetch students
-  const fetchStudents = async (branchId: string, page: number = 1, pageSize: number = 50) => {
+  const fetchStudents = async (branchId: string, page: number = 1, pageSize: number = 10, search: string = '', sectionId: string = '') => {
     try {
-      const studentRes = await manageStudents({ 
+      const params: any = { 
         branch_id: branchId,
         page: page,
         page_size: pageSize
-      }, "GET");
+      };
+      if (search) params.search = search;
+      if (sectionId) params.section_id = sectionId;
+      const studentRes = await manageStudents(params, "GET");
       // Normalize different possible response shapes from backend
       // 1) { success: true, results: [...], count }
       // 2) { success: true, data: { students: [...] } }
@@ -244,7 +246,7 @@ const StudentManagement = () => {
             students,
             totalStudents: boot.count || students.length,
             currentPage: 1, // Bootstrap returns first page
-            pageSize: 50 // Default page size
+            pageSize: 10 // Default page size
           });
         } else {
           await fetchStudents(branchId);
@@ -260,6 +262,22 @@ const StudentManagement = () => {
     };
     fetchInitialData();
   }, []);
+
+  // Handle search
+  const handleSearch = () => {
+    if (state.branchId) {
+      const sectionId = state.sectionFilter === "All" ? "" : state.sectionFilter;
+      fetchStudents(state.branchId, 1, state.pageSize, state.search, sectionId);
+    }
+  };
+
+  // Fetch students when section filter changes
+  useEffect(() => {
+    if (state.branchId) {
+      const sectionId = state.sectionFilter === "All" ? "" : state.sectionFilter;
+      fetchStudents(state.branchId, 1, state.pageSize, state.search, sectionId);
+    }
+  }, [state.sectionFilter]);
 
   // Fetch sections when semester changes in Add Student Manually
   useEffect(() => {
@@ -780,59 +798,18 @@ const StudentManagement = () => {
     return dp[a.length][b.length];
   }
 
-  // Filter students for table
-  const filteredStudents = state.students
-    .map((student) => {
-      const search = state.search.toLowerCase().trim();
+  // Filter students for table (now server-side, so just use state.students)
+  const filteredStudents = state.students;
 
-      // Match section & semester (exact filter)
-      const matchesSection =
-        state.sectionFilter === "All" ||
-        student.section === state.listSections.find((s) => s.id === state.sectionFilter)?.name;
+  // Paginate the filtered students (server-side, so no slicing)
+  const paginatedFilteredStudents = filteredStudents;
 
-      const matchesSemester =
-        state.semesterFilter === "All" ||
-        student.semester ===
-          state.semesters.find((s) => s.id === state.semesterFilter)?.number.toString() + "th Semester";
-
-      if (!matchesSection || !matchesSemester) return null;
-
-      if (!search) return { student, score: 0 }; // No search → neutral score
-
-      const name = student.name.toLowerCase();
-      const usn = student.usn.toLowerCase();
-
-      // Relevance scoring:
-      let score = 0;
-      if (name === search || usn === search) score += 100; // Exact match = highest priority
-      else if (name.startsWith(search) || usn.startsWith(search)) score += 80; // Starts with = very strong match
-      else if (name.includes(search) || usn.includes(search)) score += 50; // Contains = good match
-      else {
-        // Fuzzy match (levenshtein-like scoring)
-        const distanceName = levenshteinDistance(name, search);
-        const distanceUSN = levenshteinDistance(usn, search);
-        const minDistance = Math.min(distanceName, distanceUSN);
-        if (minDistance <= 2) score += 30; // Allow up to 2 typos
-      }
-
-      return score > 0 || !search ? { student, score } : null;
-    })
-    .filter(Boolean)
-    .sort((a, b) => b.score - a.score) // Sort by relevance
-    .map((entry) => entry!.student);
-
-  // Paginate the filtered students
-  const paginatedFilteredStudents = filteredStudents.slice(
-    (state.currentPage - 1) * itemsPerPage,
-    state.currentPage * itemsPerPage
-  );
-
-  const totalFilteredPages = Math.ceil(filteredStudents.length / itemsPerPage);
+  const totalFilteredPages = Math.ceil(state.totalStudents / state.pageSize);
 
   // Handle page change
-  const handlePageChange = (newPage: number) => {
+  const handlePageChange = async (newPage: number) => {
     if (newPage >= 1 && newPage <= totalFilteredPages) {
-      updateState({ currentPage: newPage });
+      await fetchStudents(state.branchId, newPage, state.pageSize, state.search, state.sectionFilter);
     }
   };
 
@@ -1149,15 +1126,19 @@ const StudentManagement = () => {
 
         <CardContent>
           <div className="flex justify-between items-center mb-4">
-            {/* Left side: Search input */}
-            <Input
-              placeholder="Search students..."
-              className={`w-64 ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'}`}
-              value={state.search}
-              onChange={(e) =>
-                updateState({ search: e.target.value, currentPage: 1 })
-              }
-            />
+            {/* Left side: Search input and button */}
+            <div className="flex gap-2">
+              <Input
+                placeholder="Search students..."
+                className={`w-64 ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'}`}
+                value={state.search}
+                onChange={(e) => updateState({ search: e.target.value })}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              />
+              <Button onClick={handleSearch} variant="outline">
+                Search
+              </Button>
+            </div>
 
             {/* Right side: Dropdowns */}
             <div className="flex gap-4">

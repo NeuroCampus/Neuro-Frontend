@@ -1431,6 +1431,7 @@ export const manageStudents = async (
       const params = new URLSearchParams({ branch_id });
       if ((data as any).semester_id) params.append("semester_id", (data as any).semester_id);
       if ((data as any).section_id) params.append("section_id", (data as any).section_id);
+      if ((data as any).search) params.append("search", (data as any).search);
       if ((data as any).subject_id) params.append("subject_id", (data as any).subject_id);
       if ((data as any).page) params.append("page", (data as any).page.toString());
       if ((data as any).page_size) params.append("page_size", (data as any).page_size.toString());
