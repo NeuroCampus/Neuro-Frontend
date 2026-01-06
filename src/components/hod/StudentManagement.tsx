@@ -439,7 +439,7 @@ const StudentManagement = () => {
             const row = index + 2;
 
             if (!usn || !name) {
-              errors.push(`Row ${row}: Missing required fields (USN and Name are required)`);
+              // Skip rows with missing required fields instead of erroring
               return null;
             }
             // Email validation (optional)
@@ -484,6 +484,11 @@ const StudentManagement = () => {
             };
           })
           .filter(Boolean);
+
+        if (bulkData.length === 0) {
+          updateState({ uploadErrors: ["No valid students found in the file. Please ensure USN and Name columns are filled for at least one row."], uploadedCount: 0, updatedCount: 0, isLoading: false });
+          return;
+        }
 
         if (errors.length > 0) {
           updateState({ uploadErrors: errors, uploadedCount: 0, updatedCount: 0, isLoading: false });
