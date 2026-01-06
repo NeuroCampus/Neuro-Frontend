@@ -125,7 +125,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     
     // User Management
     { name: "Enroll Staff", page: "enroll-user" },
-    { name: "Bulk Upload", page: "bulk-upload" },
+    { name: "Bulk Upload Faculty", page: "bulk-upload" },
     
     // Academic Structure
     { name: "Branches", page: "branches" },

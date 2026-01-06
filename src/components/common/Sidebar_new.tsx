@@ -108,7 +108,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     admin: [
       { name: "Dashboard", page: "dashboard" },
       { name: "Enroll User", page: "enroll-user" },
-      { name: "Bulk Upload", page: "bulk-upload" },
+      { name: "Bulk Upload Faculty", page: "bulk-upload" },
       { name: "Branches", page: "branches" },
       { name: "Notifications", page: "notifications" },
       { name: "HOD Leaves", page: "hod-leaves" },
