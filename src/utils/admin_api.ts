@@ -49,8 +49,12 @@ interface EnrollUserResponse {
 interface BulkUploadFacultyResponse {
   success: boolean;
   message?: string;
+  created_count?: number;
+  updated_count?: number;
   uploaded_count?: number;
   errors?: string[];
+  created?: Array<{name: string; email: string; username: string}>;
+  updated?: Array<{name: string; email: string; username: string}>;
 }
 
 interface Branch {

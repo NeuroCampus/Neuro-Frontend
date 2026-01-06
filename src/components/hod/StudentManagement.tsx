@@ -76,7 +76,9 @@ const StudentManagement = () => {
     editForm: { name: "", email: "", section: "", semester: "", cycle: "", phone: "" },
     uploadErrors: [] as string[],
     uploadedCount: 0,
+    updatedCount: 0,
     droppedFileName: null as string | null,
+    selectedFile: null as File | null,
     manualForm: { usn: "", name: "", email: "", section: "", semester: "", batch: "", cycle: "", phone: "" },
     currentPage: 1,
     selectedSemester: "",
@@ -353,10 +355,26 @@ const StudentManagement = () => {
   const getBatchId = (batchName: string) =>
     state.batches.find((b) => b.name === batchName)?.id || "";
 
-  // Handle file upload
-  const handleFileUpload = async (file: File) => {
+  // Handle file selection (just stores the file, doesn't process)
+  const handleFileSelect = (file: File) => {
+    updateState({ 
+      selectedFile: file, 
+      droppedFileName: file.name,
+      uploadErrors: [],
+      uploadedCount: 0,
+      updatedCount: 0
+    });
+  };
+
+  // Handle student enrollment (processes the selected file)
+  const handleEnrollStudents = async () => {
+    if (!state.selectedFile) {
+      updateState({ uploadErrors: ["Please select a file first"] });
+      return;
+    }
+
     if (!state.manualForm.semester || !state.manualForm.section || !state.manualForm.batch) {
-      updateState({ uploadErrors: ["Please select batch, semester and section before uploading"] });
+      updateState({ uploadErrors: ["Please select batch, semester and section before enrolling"] });
       return;
     }
 
@@ -367,6 +385,9 @@ const StudentManagement = () => {
       return;
     }
 
+    updateState({ isLoading: true, uploadErrors: [] });
+
+    const file = state.selectedFile;
     const reader = new FileReader();
     const extension = file.name.split(".").pop()?.toLowerCase();
 
@@ -374,7 +395,7 @@ const StudentManagement = () => {
       try {
         const result = e.target?.result;
         if (!result) {
-          updateState({ uploadErrors: ["No data in file"], uploadedCount: 0 });
+          updateState({ uploadErrors: ["No data in file"], uploadedCount: 0, updatedCount: 0, isLoading: false });
           return;
         }
 
@@ -391,6 +412,7 @@ const StudentManagement = () => {
           updateState({
             uploadErrors: ["Unsupported file type (use CSV, XLS, or XLSX)"],
             uploadedCount: 0,
+            updatedCount: 0,
           });
           return;
         }
@@ -416,23 +438,27 @@ const StudentManagement = () => {
             const date_of_admission = entry.date_of_admission || entry.DateOfAdmission || new Date().toISOString().split("T")[0];
             const row = index + 2;
 
-            if (!usn || !name || !email) {
-              errors.push(`Row ${row}: Missing required fields`);
+            if (!usn || !name) {
+              errors.push(`Row ${row}: Missing required fields (USN and Name are required)`);
               return null;
             }
-            // Removed USN format validation
-            if (!emailRegex.test(email)) {
+            // Email validation (optional)
+            if (email && !emailRegex.test(email)) {
               errors.push(`Row ${row}: Invalid email "${email}"`);
               return null;
             }
 
             const cycle = String(entry.cycle || entry.Cycle || "").trim().toUpperCase();
             
-            // Validate cycle for semesters 1 and 2
+            // Validate cycle for semesters 1 and 2 - use UI selected cycle if available
             const semesterNumber = getSemesterNumber(state.manualForm.semester);
+            const selectedCycle = state.manualForm.cycle;
+            
             if (semesterNumber <= 2) {
-              if (!cycle || !['P', 'C'].includes(cycle)) {
-                errors.push(`Row ${row}: Cycle (P or C) is required for semester ${semesterNumber}`);
+              // Use cycle from UI selection, or from CSV if provided
+              const finalCycle = selectedCycle || cycle;
+              if (!finalCycle || !['P', 'C'].includes(finalCycle)) {
+                errors.push(`Row ${row}: Cycle (P or C) is required for semester ${semesterNumber}. Please select cycle above or include in CSV.`);
                 return null;
               }
             } else if (cycle) {
@@ -444,7 +470,7 @@ const StudentManagement = () => {
               usn,
               name,
               email,
-              cycle: semesterNumber <= 2 ? cycle : undefined,
+              cycle: semesterNumber <= 2 ? (selectedCycle || cycle) : undefined,
               phone: phone || undefined,
               parent_name,
               parent_contact,
@@ -460,7 +486,7 @@ const StudentManagement = () => {
           .filter(Boolean);
 
         if (errors.length > 0) {
-          updateState({ uploadErrors: errors, uploadedCount: 0 });
+          updateState({ uploadErrors: errors, uploadedCount: 0, updatedCount: 0, isLoading: false });
           return;
         }
 
@@ -478,20 +504,25 @@ const StudentManagement = () => {
         );
 
         if (res.success) {
+          const createdCount = res.data?.created_count || 0;
+          const updatedCount = res.data?.updated_count || 0;
           updateState({
-            uploadedCount: bulkData.length,
+            uploadedCount: createdCount,
+            updatedCount: updatedCount,
             uploadErrors: [],
             droppedFileName: null,
+            selectedFile: null,
             currentPage: 1, // Reset to first page to show the new students
+            isLoading: false,
           });
           if (fileInputRef.current) fileInputRef.current.value = "";
           await fetchStudents(state.branchId);
         } else {
-          updateState({ uploadErrors: [res.message || "Bulk upload failed"], uploadedCount: 0 });
+          updateState({ uploadErrors: [res.message || "Bulk upload failed"], uploadedCount: 0, updatedCount: 0, isLoading: false });
         }
       } catch (err) {
         console.error("File upload error:", err);
-        updateState({ uploadErrors: ["Error processing file"], uploadedCount: 0 });
+        updateState({ uploadErrors: ["Error processing file"], uploadedCount: 0, updatedCount: 0, isLoading: false });
       }
     };
 
@@ -517,12 +548,11 @@ const StudentManagement = () => {
     if (!name) newErrors.name = "Name is required";
     else if (!nameRegex.test(name)) newErrors.name = "Name should contain only letters and spaces";
 
-    // Strong email validation
+    // Email validation (optional)
     const emailRegex =
       /^[a-zA-Z0-9]+([._%+-]?[a-zA-Z0-9]+)*@([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\.)+[A-Za-z]{2,10}$/;
     const consecutiveDotRegex = /\.{2,}/;
-    if (!email) newErrors.email = "Email is required";
-    else if (!emailRegex.test(email) || consecutiveDotRegex.test(email))
+    if (email && (!emailRegex.test(email) || consecutiveDotRegex.test(email)))
       newErrors.email = "Invalid email format (e.g., user@example.com)";
 
     // Section, semester, batch
@@ -538,10 +568,9 @@ const StudentManagement = () => {
       newErrors.cycle = "Cycle can only be set for semesters 1 and 2";
     }
 
-    // Phone validation
+    // Phone validation (optional)
     const phoneRegex = /^\d{10}$/;
-    if (!phone) newErrors.phone = "Phone number is required";
-    else if (!phoneRegex.test(phone)) newErrors.phone = "Phone must be 10 digits";
+    if (phone && !phoneRegex.test(phone)) newErrors.phone = "Phone must be 10 digits";
 
     // If any validation errors, update state and stop
     if (Object.keys(newErrors).length > 0) {
@@ -601,7 +630,7 @@ const StudentManagement = () => {
         fetchStudents(state.branchId);
         // Clear success message after 3 seconds
         setTimeout(() => {
-          updateState({ uploadedCount: 0 });
+          updateState({ uploadedCount: 0, updatedCount: 0 });
         }, 3000);
       } else {
         updateState({ uploadErrors: [res.message || "Error adding student"] });
@@ -679,20 +708,12 @@ const StudentManagement = () => {
   const generateTemplate = () => {
     const semesterNumber = getSemesterNumber(state.manualForm.semester);
     // Include phone as an additional column in the template
-    const headers = semesterNumber <= 2
-      ? ["usn", "name", "email", "phone", "cycle"]
-      : ["usn", "name", "email", "phone"];
-    const rows = semesterNumber <= 2
-      ? [
-          ["1AM22CI001", "John Doe", "john.doe@example.com", "9876543210", "P"],
-          ["1AM22CI002", "Jane Smith", "jane.smith@example.com", "9123456780", "C"],
-          ["1AM22CI003", "Alice Johnson", "alice.johnson@example.com", "9988776655", "P"],
-        ]
-      : [
-          ["1AM22CI001", "John Doe", "john.doe@example.com", "9876543210"],
-          ["1AM22CI002", "Jane Smith", "jane.smith@example.com", "9123456780"],
-          ["1AM22CI003", "Alice Johnson", "alice.johnson@example.com", "9988776655"],
-        ];
+    const headers = ["usn", "name", "email", "phone"];
+    const rows = [
+        ["1AM22CI001", "John Doe", "john.doe@example.com", "9876543210"],
+        ["1AM22CI002", "Jane Smith", "jane.smith@example.com", "9123456780"],
+        ["1AM22CI003", "Alice Johnson", "alice.johnson@example.com", "9988776655"],
+      ];
     return [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
   };
 
@@ -715,8 +736,7 @@ const StudentManagement = () => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (file) {
-      handleFileUpload(file);
-      updateState({ droppedFileName: file.name });
+      handleFileSelect(file);
     }
   };
 
@@ -726,7 +746,9 @@ const StudentManagement = () => {
       addStudentModal: false,
       uploadErrors: [],
       droppedFileName: null,
+      selectedFile: null,
       uploadedCount: 0,
+      updatedCount: 0,
     });
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -854,14 +876,6 @@ const StudentManagement = () => {
                   const value = e.target.value.toUpperCase();
                   let error = "";
 
-                  const usnRegex = /^[1-9][A-Z]{2}[0-9]{2}[A-Z]{2}[0-9]{3}$/;
-
-                  if (value && !usnRegex.test(value)) {
-                    error = "Invalid USN (e.g., 1AM22CI064)";
-                  } else if (value.slice(-3) === "000") {
-                    error = "Invalid USN (cannot end with 000)";
-                  }
-
                   updateState({
                     manualForm: { ...state.manualForm, usn: value },
                     manualErrors: { ...state.manualErrors, usn: error },
@@ -870,14 +884,6 @@ const StudentManagement = () => {
                 onBlur={(e) => {
                   const value = e.target.value.toUpperCase();
                   let error = "";
-
-                  const usnRegex = /^[1-9][A-Z]{2}[0-9]{2}[A-Z]{2}[0-9]{3}$/;
-
-                  if (value && !usnRegex.test(value)) {
-                    error = "Invalid USN (e.g., 1AM22CI064)";
-                  } else if (value.slice(-3) === "000") {
-                    error = "Invalid USN (cannot end with 000)";
-                  }
 
                   updateState({
                     manualErrors: { ...state.manualErrors, usn: error },
@@ -988,8 +994,7 @@ const StudentManagement = () => {
                 onBlur={(e) => {
                   const value = e.target.value.trim();
                   let error = "";
-                  if (!value) error = "Phone number is required";
-                  else if (!/^\d{10}$/.test(value)) error = "Phone must be 10 digits";
+                  if (value && !/^\d{10}$/.test(value)) error = "Phone must be 10 digits";
                   updateState({ manualErrors: { ...state.manualErrors, phone: error } });
                 }}
                 className={`flex-1 ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${
@@ -1294,7 +1299,7 @@ const StudentManagement = () => {
 
 
       <Dialog open={state.addStudentModal} onOpenChange={closeModal}>
-        <DialogContent className={`max-w-xl ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
+        <DialogContent className={`max-w-4xl ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
           <DialogHeader>
             <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Upload Student Data</DialogTitle>
           </DialogHeader>
@@ -1466,8 +1471,7 @@ const StudentManagement = () => {
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
-                  handleFileUpload(file);
-                  updateState({ droppedFileName: file.name });
+                  handleFileSelect(file);
                 }
               }}
               style={{ display: "none" }}
@@ -1484,9 +1488,12 @@ const StudentManagement = () => {
                 ))}
               </ul>
             )}
-            {state.uploadedCount > 0 && (
+            {(state.uploadedCount > 0 || state.updatedCount > 0) && (
               <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
-                {state.uploadedCount} students successfully added.
+                {state.uploadedCount > 0 && `${state.uploadedCount} new student${state.uploadedCount !== 1 ? 's' : ''} added`}
+                {state.uploadedCount > 0 && state.updatedCount > 0 && ', '}
+                {state.updatedCount > 0 && `${state.updatedCount} student${state.updatedCount !== 1 ? 's' : ''} updated`}
+                .
               </p>
             )}
           </div>
@@ -1497,10 +1504,12 @@ const StudentManagement = () => {
             <ul className="list-disc pl-6 space-y-1">
               <li>Use the provided template for proper data formatting</li>
               <li>
-                Required columns: <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>usn</strong>, <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>name</strong>, <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>email</strong>, and <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>phone</strong>
+                Required columns: <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>usn</strong> and <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>name</strong>
               </li>
-              <li>USN format: e.g., 1AM22CI001 (10 characters, alphanumeric)</li>
-              <li>Semester and Section are selected above, not in the file</li>
+              <li>
+                Optional columns: <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>email</strong> and <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>phone</strong>
+              </li>
+              <li>Semester, Section, and Cycle (for semesters 1-2) are selected above, not in the file</li>
               <li>Maximum 500 records per file</li>
               <li>
                 <a
@@ -1523,8 +1532,12 @@ const StudentManagement = () => {
             >
               Cancel
             </Button>
-            <Button className={`text-foreground ${theme === 'dark' ? 'bg-card border-border hover:bg-accent' : 'bg-white border-gray-300 hover:bg-gray-100'}`}>
-              Done
+            <Button 
+              onClick={handleEnrollStudents}
+              disabled={!state.selectedFile || state.isLoading}
+              className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition disabled:opacity-50 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+            >
+              {state.isLoading ? "Enrolling..." : "Enroll Students"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -20,6 +20,9 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [uploadedCount, setUploadedCount] = useState(0);
+  const [updatedCount, setUpdatedCount] = useState(0);
+  const [successMessage, setSuccessMessage] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const { theme } = useTheme();
 
@@ -106,6 +109,9 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setFile(e.target.files[0]);
+      setUploadedCount(0);
+      setUpdatedCount(0);
+      setSuccessMessage("");
     }
   };
 
@@ -120,25 +126,40 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
   const handleUpload = async () => {
     if (!file) {
       setError("Please select a file to upload");
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please select a file to upload",
-      });
       return;
     }
 
     setLoading(true);
     setError(null);
+    setUploadedCount(0);
+    setUpdatedCount(0);
+    setSuccessMessage("");
 
     try {
       await validateFile(file);
       const response = await bulkUploadFaculty(file);
       if (response.success) {
-        toast({ title: "Success", description: "Faculty list uploaded successfully" });
+        const createdCount = response.created_count || 0;
+        const updatedCount = response.updated_count || 0;
+        setUploadedCount(createdCount);
+        setUpdatedCount(updatedCount);
+        
+        // Use the backend's detailed message
+        const message = response.message || `${createdCount} faculty added, ${updatedCount} faculty updated`;
+        setSuccessMessage(message);
+        
+        toast({ title: "Success", description: message });
         setFile(null);
         if (inputRef.current) inputRef.current.value = "";
+        
+        // Clear success message after 10 seconds
+        setTimeout(() => {
+          setUploadedCount(0);
+          setUpdatedCount(0);
+          setSuccessMessage("");
+        }, 10000);
       } else {
+        // Backend error - show toast
         setError(response.message || "Failed to upload file");
         toast({
           variant: "destructive",
@@ -147,12 +168,8 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
         });
       }
     } catch (err: any) {
+      // Validation or network error - don't show toast, just set error in UI
       setError(err || "Network error while uploading file");
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: err || "Network error while uploading file",
-      });
     } finally {
       setLoading(false);
     }
@@ -240,6 +257,12 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
           >
             {loading ? "Uploading..." : "Upload File"}
           </Button>
+
+          {(uploadedCount > 0 || updatedCount > 0) && successMessage && (
+            <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+              {successMessage}
+            </p>
+          )}
 
           <div>
             <p className={`font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Upload Instructions</p>

@@ -226,7 +226,7 @@ interface ManageStudentsResponse {
     subject?: string;
     proctor: string | null;
     cycle?: string;
-  }> | { student_id: string } | { created_count: number } | {
+  }> | { student_id: string } | { created_count: number; updated_count: number } | {
     results: Array<{
       usn: string;
       name: string;
