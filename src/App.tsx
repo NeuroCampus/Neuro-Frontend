@@ -234,6 +234,14 @@ const App = () => {
               </ThemeProvider>
             </ProtectedRoute>
           } />
+          <Route path="/study-mode" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <ThemeProvider>
+                <StudentDashboard user={userData} setPage={() => {}} />
+                <FloatingAssistant />
+              </ThemeProvider>
+            </ProtectedRoute>
+          } />
 
           {/* Admin routes */}
           <Route path="/admin/*" element={

@@ -114,6 +114,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       fees: <CreditCard size={20} />,
       "exam-schedule": <Calendar size={20} />,
       reports: <BarChart2 size={20} />,
+      "study-mode": <BookOpen size={20} />,
     };
     return iconMap[page] || <LayoutDashboard size={20} />;
   };
@@ -207,6 +208,9 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Attendance", page: "attendance" },
     { name: "Internal Marks", page: "marks" },
     { name: "Fees", page: "fees" },
+    
+    // Study
+    { name: "Study Mode", page: "study-mode" },
     
     // Leave Management
     { name: "Leave Request", page: "leave-request" },

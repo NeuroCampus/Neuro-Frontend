@@ -112,6 +112,8 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
         return <StudentStudyMaterial />;
       case "student-assignment":
         return <StudentAssignments />;
+      case "study-mode":
+        return <Chat role="student" />;
       default:
         return <StudentDashboardOverview setPage={handlePageChange} user={user} />;
     }
@@ -144,7 +146,7 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
     {/* Main Page Content */}
     <main className={`flex-1 mt-16 p-6 overflow-y-auto ${theme === 'dark' ? 'bg-background text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-0 gap-4">
         <h1 className={`text-2xl font-bold tracking-tight ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
           Student Dashboard – Overview
         </h1>
