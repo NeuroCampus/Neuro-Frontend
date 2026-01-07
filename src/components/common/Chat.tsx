@@ -218,26 +218,88 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
     if (chatContainerRef.current) {
       const input = chatContainerRef.current;
 
-      html2canvas(input).then((canvas) => {
-        const imgData = canvas.toDataURL('image/png');
+      // Temporarily adjust the container to show all content without scroll
+      const originalHeight = input.style.height;
+      const originalMaxHeight = input.style.maxHeight;
+      const originalOverflow = input.style.overflow;
+      
+      input.style.height = 'auto';
+      input.style.maxHeight = 'none';
+      input.style.overflow = 'visible';
+      
+      html2canvas(input, {
+        scale: 3, // Increase scale for better quality
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff', // Match the theme background
+      }).then((canvas) => {
+        // Restore original styles
+        input.style.height = originalHeight;
+        input.style.maxHeight = originalMaxHeight;
+        input.style.overflow = originalOverflow;
+        
+        const imgData = canvas.toDataURL('image/jpeg', 1.0); // Use JPEG with max quality
         const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgWidth = 210;
-        const pageHeight = 295;
-        const imgHeight = canvas.height * imgWidth / canvas.width;
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-
-        while (heightLeft >= 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-          heightLeft -= pageHeight;
+        
+        const imgWidth = 210; // A4 width in mm
+        const pageHeight = 295; // A4 height in mm
+        const margin = 10; // 10mm margins
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        // Calculate how many pages we need
+        const totalPages = Math.ceil(imgHeight / (pageHeight - 2 * margin));
+        
+        // Process each page
+        for (let pageNum = 0; pageNum < totalPages; pageNum++) {
+          if (pageNum > 0) {
+            pdf.addPage();
+          }
+          
+          // Calculate the source position in the canvas
+          const usablePageHeight = pageHeight - (2 * margin); // Usable height on PDF page
+          const srcY = pageNum * usablePageHeight * (canvas.width / imgWidth);
+          // Reduce the height slightly to avoid cutting content at the edges
+          const srcHeight = Math.min(usablePageHeight * (canvas.width / imgWidth) * 0.95, canvas.height - srcY);
+          
+          // Create a temporary canvas to extract the portion we need
+          const tempCanvas = document.createElement('canvas');
+          const tempCtx = tempCanvas.getContext('2d');
+          
+          if (tempCtx) {
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = srcHeight;
+            
+            // Draw the portion of the original canvas onto the temporary canvas
+            tempCtx.drawImage(
+              canvas,
+              0, srcY, canvas.width, srcHeight,
+              0, 0, canvas.width, srcHeight
+            );
+            
+            // Convert the temp canvas to data URL
+            const pageImgData = tempCanvas.toDataURL('image/jpeg', 1.0);
+            
+            // Calculate the destination position and dimensions in the PDF
+            const destY = margin;
+            const pageImgHeight = (srcHeight * imgWidth) / canvas.width;
+            
+            pdf.addImage(pageImgData, 'JPEG', 0, destY, imgWidth, pageImgHeight);
+          }
         }
 
         pdf.save('chat-export.pdf');
+      }).catch((error) => {
+        // Restore original styles in case of error
+        input.style.height = originalHeight;
+        input.style.maxHeight = originalMaxHeight;
+        input.style.overflow = originalOverflow;
+        
+        console.error('Error generating PDF:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Export Failed',
+          description: 'Failed to export chat as PDF. Please try again.',
+        });
       });
     }
   };
