@@ -21,6 +21,7 @@ const FaceRecognition = lazy(() => import("../student/FaceRecognition"));
 const StudentDashboardOverview = lazy(() => import("../student/StudentDashboardOverview"));
 const StudentStudyMaterial = lazy(() => import("../student/StudentStudyMaterial"));
 const StudentAssignments = lazy(() => import("../student/StudentAssignments"));
+const AIInterview = lazy(() => import("../student/AIInterview"));
 const StudentFees = lazy(() => import("../../pages/StudentFees"));
 const PaymentSuccess = lazy(() => import("../../pages/PaymentSuccess"));
 const PaymentCancel = lazy(() => import("../../pages/PaymentCancel"));
@@ -114,6 +115,8 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
         return <StudentAssignments />;
       case "study-mode":
         return <Chat role="student" />;
+      case "ai-interview":
+        return <AIInterview />;
       default:
         return <StudentDashboardOverview setPage={handlePageChange} user={user} />;
     }

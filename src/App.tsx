@@ -17,6 +17,7 @@ import FeesManagerDashboard from "./pages/FeesManager/FeesManagerDashboard";
 import { ThemeProvider } from "./context/ThemeContext";
 // Import the FloatingAssistant component
 import FloatingAssistant from "./components/common/FloatingAssistant";
+import AIInterview from "./components/common/AIInterview";
 
 const queryClient = new QueryClient();
 
@@ -235,6 +236,14 @@ const App = () => {
             </ProtectedRoute>
           } />
           <Route path="/study-mode" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <ThemeProvider>
+                <StudentDashboard user={userData} setPage={() => {}} />
+                <FloatingAssistant />
+              </ThemeProvider>
+            </ProtectedRoute>
+          } />
+          <Route path="/ai-interview" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={userData} setPage={() => {}} />

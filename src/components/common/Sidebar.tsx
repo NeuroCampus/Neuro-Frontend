@@ -24,6 +24,7 @@ import {
   Upload,
   CreditCard,
   Search,
+  Mic,
 } from "lucide-react";
 import { useIsMobile } from "../../hooks/use-mobile";
 import {
@@ -115,6 +116,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       "exam-schedule": <Calendar size={20} />,
       reports: <BarChart2 size={20} />,
       "study-mode": <BookOpen size={20} />,
+      "ai-interview": <Mic size={20} />,
     };
     return iconMap[page] || <LayoutDashboard size={20} />;
   };
@@ -211,6 +213,9 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     
     // Study
     { name: "Study Mode", page: "study-mode" },
+    
+    // Interview
+    { name: "AI Interview", page: "ai-interview" },
     
     // Leave Management
     { name: "Leave Request", page: "leave-request" },
