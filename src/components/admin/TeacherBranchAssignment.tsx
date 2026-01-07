@@ -118,7 +118,7 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
   const fetchTeacherAssignments = async () => {
     try {
       setLoading(true);
-      let url = `${API_ENDPOINT}/admin/teacher-assignments/?page=${currentPage}&page_size=20`;
+      let url = `${API_ENDPOINT}/admin/teacher-assignments/?page=${currentPage}&page_size=5`;
       if (appliedSearch) url += `&search=${encodeURIComponent(appliedSearch)}`;
       if (branchFilter) url += `&branch_id=${branchFilter}`;
 
@@ -145,7 +145,7 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
       if (dataSource && dataSource.success) {
         setTeachers(dataSource.teachers || []);
         setBranches(dataSource.branches || []);
-        setTotalPages(Math.ceil((paginationData.count || 0) / 20));
+        setTotalPages(Math.ceil((paginationData.count || 0) / 5));
         setTotalCount(paginationData.count || 0);
       } else {
         setError(dataSource?.message || result.message || "Failed to fetch Faculty assignments");
@@ -250,10 +250,34 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
         </div>
       </div>
 
-      {/* Pagination Info */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-600 mb-4">
+      <div className="max-h-[calc(100vh-28rem)] sm:max-h-[calc(100vh-26rem)] md:max-h-[calc(100vh-24rem)] lg:max-h-[calc(100vh-22rem)] overflow-y-auto custom-scrollbar pr-2">
+        <div className="grid gap-4">
+          {teachers.map((teacher) => (
+            <Card key={teacher.id} className="p-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-semibold">
+                    {teacher.first_name} {teacher.last_name}
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{teacher.email}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">@{teacher.username}</p>
+                  <p className="text-sm font-medium mt-1">
+                    Branch: {teacher.primary_branch ? teacher.primary_branch.name : "Not Assigned"}
+                  </p>
+                </div>
+                <Badge variant={teacher.primary_branch ? "default" : "secondary"}>
+                  {teacher.primary_branch ? teacher.primary_branch.name : "No Primary Branch"}
+                </Badge>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Pagination Info - moved to bottom */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-600 mt-4">
         <div>
-          Showing {Math.min((currentPage - 1) * 20 + 1, totalCount)} to {Math.min(currentPage * 20, totalCount)} of {totalCount} teachers
+          Showing {Math.min((currentPage - 1) * 5 + 1, totalCount)} to {Math.min(currentPage * 5, totalCount)} of {totalCount} teachers
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -267,8 +291,9 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
 
           {/* Page Numbers */}
           <div className="flex gap-1">
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+            {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
+              const startPage = Math.max(1, Math.min(totalPages - 6, currentPage - 3));
+              const pageNum = startPage + i;
               if (pageNum > totalPages) return null;
               return (
                 <Button
@@ -292,30 +317,6 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
           >
             Next
           </Button>
-        </div>
-      </div>
-
-      <div className="max-h-[calc(100vh-18rem)] sm:max-h-[calc(100vh-16rem)] md:max-h-[calc(100vh-14rem)] lg:max-h-[calc(100vh-12rem)] overflow-y-auto custom-scrollbar pr-2">
-        <div className="grid gap-4">
-          {teachers.map((teacher) => (
-            <Card key={teacher.id} className="p-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-lg font-semibold">
-                    {teacher.first_name} {teacher.last_name}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{teacher.email}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">@{teacher.username}</p>
-                  <p className="text-sm font-medium mt-1">
-                    Branch: {teacher.primary_branch ? teacher.primary_branch.name : "Not Assigned"}
-                  </p>
-                </div>
-                <Badge variant={teacher.primary_branch ? "default" : "secondary"}>
-                  {teacher.primary_branch ? teacher.primary_branch.name : "No Primary Branch"}
-                </Badge>
-              </div>
-            </Card>
-          ))}
         </div>
       </div>
 
