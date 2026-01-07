@@ -301,6 +301,42 @@ export const useMemoizedCalculation = <T,>(
   return result;
 };
 
+// Helper function to convert image to PNG format
+const convertImageToPNG = async (file: File): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Failed to get canvas context'));
+          return;
+        }
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            reject(new Error('Failed to convert image to PNG'));
+            return;
+          }
+          const pngFile = new File([blob], file.name.replace(/\.[^/.]+$/, '') + '.png', {
+            type: 'image/png',
+            lastModified: file.lastModified,
+          });
+          resolve(pngFile);
+        }, 'image/png', 0.95); // 95% quality for PNG
+      };
+      img.onerror = () => reject(new Error('Failed to load image'));
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+  });
+};
+
 // File Upload Hook with Compression, Progress, and Validation
 export const useFileUpload = (options: {
   maxSizeMB?: number;
@@ -335,6 +371,7 @@ export const useFileUpload = (options: {
         maxSizeMB,
         maxWidthOrHeight,
         useWebWorker,
+        fileType: 'image/png', // Force PNG format
         onProgress: (progress) => {
           setUploadProgress(Math.round(progress * 0.5)); // Compression is 50% of total progress
         },
@@ -380,12 +417,17 @@ export const useFileUpload = (options: {
       }
 
       // Compress if it's an image
-      const processedFile = await compressImage(file);
+      let processedFile = await compressImage(file);
       setUploadProgress(50); // Compression complete
+
+      // Convert to PNG format if it's an image
+      if (processedFile.type.startsWith('image/') && processedFile.type !== 'image/png') {
+        processedFile = await convertImageToPNG(processedFile);
+      }
 
       // Create form data
       const formData = new FormData();
-      formData.append('profile_picture', processedFile);
+      formData.append('profile_picture', processedFile, `profile_picture.png`);
 
       // Add additional data
       if (additionalData) {
