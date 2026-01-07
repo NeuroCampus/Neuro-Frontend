@@ -158,7 +158,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
   const renderContent = () => {
     switch (activePage) {
       case "dashboard":
-        return <FacultyStats setActivePage={setPage} />;
+        return <FacultyStats setActivePage={handlePageChange} />;
       case "take-attendance":
         return <TakeAttendance />;
       case "upload-marks":
@@ -190,7 +190,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       case "scan-student-info":
         return <StudentInfoScanner />;
       default:
-        return <FacultyStats setActivePage={setPage} />;
+        return <FacultyStats setActivePage={handlePageChange} />;
     }
   };
 
