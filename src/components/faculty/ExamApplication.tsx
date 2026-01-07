@@ -90,6 +90,39 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
     fetchStudentStatuses();
   }, [filteredProctorStudents, examPeriod]);
 
+  const downloadHallTicket = async (student: ProctorStudent) => {
+    try {
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/hall-ticket/${student.id}/?exam_period=${examPeriod}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to download hall ticket');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `hall_ticket_${student.usn}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading hall ticket:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to download hall ticket",
+        variant: "destructive",
+      });
+    }
+  };
+
   const filtered = filteredProctorStudents.filter((s) => {
     const q = search.trim().toLowerCase();
     if (!q) return true;
@@ -385,7 +418,17 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
                     </span>
                   </td>
                   <td className="px-4 py-2 text-sm">
-                    <Button onClick={() => openFor(student)} className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white">Open</Button>
+                    <div className="flex gap-2">
+                      <Button onClick={() => openFor(student)} className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white">Open</Button>
+                      {studentStatuses[student.usn] === 'Applied' && (
+                        <Button 
+                          onClick={() => downloadHallTicket(student)}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          Download Hall Ticket
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
