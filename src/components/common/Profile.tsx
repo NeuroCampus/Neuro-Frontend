@@ -13,6 +13,42 @@ interface ProfileProps {
   user: any;
 }
 
+// Helper function to convert image to PNG format
+const convertImageToPNG = async (file: File): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Failed to get canvas context'));
+          return;
+        }
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            reject(new Error('Failed to convert image to PNG'));
+            return;
+          }
+          const pngFile = new File([blob], file.name.replace(/\.[^/.]+$/, '') + '.png', {
+            type: 'image/png',
+            lastModified: file.lastModified,
+          });
+          resolve(pngFile);
+        }, 'image/png', 0.95); // 95% quality for PNG
+      };
+      img.onerror = () => reject(new Error('Failed to load image'));
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+  });
+};
+
 const Profile = ({ role, user }: ProfileProps) => {
   const [formData, setFormData] = useState({
     email: user?.email || "",
@@ -33,10 +69,27 @@ const Profile = ({ role, user }: ProfileProps) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const selectedFile = e.target.files[0];
-      setProfilePicture(selectedFile);
-      const objectUrl = URL.createObjectURL(selectedFile);
-      setPreviewUrl(objectUrl);
-      return () => URL.revokeObjectURL(objectUrl);
+      
+      // Convert to PNG if not already PNG
+      if (selectedFile.type !== 'image/png') {
+        convertImageToPNG(selectedFile).then(pngFile => {
+          setProfilePicture(pngFile);
+          const objectUrl = URL.createObjectURL(pngFile);
+          setPreviewUrl(objectUrl);
+          return () => URL.revokeObjectURL(objectUrl);
+        }).catch(error => {
+          console.error('Failed to convert image to PNG:', error);
+          setProfilePicture(selectedFile);
+          const objectUrl = URL.createObjectURL(selectedFile);
+          setPreviewUrl(objectUrl);
+          return () => URL.revokeObjectURL(objectUrl);
+        });
+      } else {
+        setProfilePicture(selectedFile);
+        const objectUrl = URL.createObjectURL(selectedFile);
+        setPreviewUrl(objectUrl);
+        return () => URL.revokeObjectURL(objectUrl);
+      }
     }
   };
 
