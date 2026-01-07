@@ -18,6 +18,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 // Import the FloatingAssistant component
 import FloatingAssistant from "./components/common/FloatingAssistant";
 import AIInterview from "./components/common/AIInterview";
+import { shouldShowFloatingAssistant } from "./utils/config";
 
 const queryClient = new QueryClient();
 
@@ -112,13 +113,13 @@ const App = () => {
           <Route path="/payment/success" element={
             <ThemeProvider>
               <PaymentSuccess />
-              <FloatingAssistant />
+              {shouldShowFloatingAssistant() && <FloatingAssistant />}
             </ThemeProvider>
           } />
           <Route path="/payment/cancel" element={
             <ThemeProvider>
               <PaymentCancel />
-              <FloatingAssistant />
+              {shouldShowFloatingAssistant() && <FloatingAssistant />}
             </ThemeProvider>
           } />
 
@@ -127,7 +128,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={userData} setPage={() => {}} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -135,7 +136,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={userData} setPage={() => {}} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -143,7 +144,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={userData} setPage={() => {}} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -151,7 +152,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={userData} setPage={() => {}} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -159,7 +160,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={userData} setPage={() => {}} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -167,7 +168,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={userData} setPage={() => {}} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -175,7 +176,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={userData} setPage={() => {}} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -183,7 +184,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={userData} setPage={() => {}} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -191,7 +192,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={userData} setPage={() => {}} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -199,7 +200,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={userData} setPage={() => {}} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -207,7 +208,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={userData} setPage={() => {}} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -215,7 +216,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={userData} setPage={() => {}} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -223,7 +224,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={userData} setPage={() => {}} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -231,7 +232,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={userData} setPage={() => {}} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -239,7 +240,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={userData} setPage={() => {}} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -247,7 +248,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>
                 <StudentDashboard user={userData} setPage={() => {}} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -257,7 +258,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["admin"]}>
               <ThemeProvider>
                 <AdminDashboard user={userData} setPage={() => {}} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -267,7 +268,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["hod"]}>
               <ThemeProvider>
                 <HODDashboard user={userData} setPage={() => {}} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -277,7 +278,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["teacher"]}>
               <ThemeProvider>
                 <FacultyDashboard user={userData} setPage={() => {}} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -287,7 +288,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["fees_manager"]}>
               <ThemeProvider>
                 <FeesManagerDashboard user={userData} setPage={() => {}} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -297,7 +298,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={["coe"]}>
               <ThemeProvider>
                 <COEDashboard user={userData} />
-                <FloatingAssistant />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
@@ -306,7 +307,7 @@ const App = () => {
           <Route path="*" element={
             <ThemeProvider>
               <NotFound />
-              <FloatingAssistant />
+              {shouldShowFloatingAssistant() && <FloatingAssistant />}
             </ThemeProvider>
           } />
         </Routes>
