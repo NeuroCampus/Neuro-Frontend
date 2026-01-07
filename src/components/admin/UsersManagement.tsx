@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import * as Select from "@radix-ui/react-select";
 import { ChevronDownIcon, CheckIcon, Pencil1Icon, TrashIcon } from "@radix-ui/react-icons";
+import { Search } from "lucide-react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import {
@@ -60,7 +61,8 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
   const [users, setUsers] = useState<User[]>([]);
   const [roleFilter, setRoleFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(""); // Input value
+  const [appliedSearch, setAppliedSearch] = useState(""); // Applied search term
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState<User | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -68,14 +70,27 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
-  const [pageSize] = useState(10); // Fixed page size for consistency
+  const [pageSize] = useState(20); // Fixed page size for consistency
   const normalize = (str: string) => str.toLowerCase().trim();
   const { theme } = useTheme();
 
   // Reset current page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [roleFilter, statusFilter, searchQuery]);
+  }, [roleFilter, statusFilter, appliedSearch]);
+
+  // Function to perform search
+  const performSearch = () => {
+    setAppliedSearch(searchQuery.trim());
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  // Handle Enter key press for search
+  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      performSearch();
+    }
+  };
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -99,8 +114,8 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
         }
 
         // Add search filter if not empty
-        if (searchQuery.trim()) {
-          filterParams.search = searchQuery.trim();
+        if (appliedSearch.trim()) {
+          filterParams.search = appliedSearch.trim();
         }
 
         const response = await manageUsers(filterParams);
@@ -160,7 +175,7 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
       }
     };
     fetchUsers();
-  }, [setError, toast, currentPage, roleFilter, statusFilter, searchQuery, pageSize]);
+  }, [setError, toast, currentPage, roleFilter, statusFilter, appliedSearch, pageSize]);
 
 const filteredUsers = Array.isArray(users) ? users : [];
 
@@ -416,14 +431,27 @@ const filteredUsers = Array.isArray(users) ? users : [];
             {/* Search */}
             <div className="w-full md:w-full lg:w-auto flex flex-col">
               <label className={`text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Search</label>
-              <Input
-                placeholder="Search name or email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={theme === 'dark' 
-                  ? 'w-full md:w-full lg:w-64 rounded bg-card border border-border text-foreground' 
-                  : 'w-full md:w-full lg:w-64 rounded bg-white border border-gray-300 text-gray-900'}
-              />
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Search name or email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={handleSearchKeyPress}
+                  className={theme === 'dark' 
+                    ? 'flex-1 md:flex-1 lg:w-52 rounded bg-card border border-border text-foreground' 
+                    : 'flex-1 md:flex-1 lg:w-52 rounded bg-white border border-gray-300 text-gray-900'}
+                />
+                <Button
+                  onClick={performSearch}
+                  variant="outline"
+                  size="sm"
+                  className={theme === 'dark' 
+                    ? 'bg-card border border-border text-foreground hover:bg-accent' 
+                    : 'bg-white border border-gray-300 text-gray-900 hover:bg-gray-50'}
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
 

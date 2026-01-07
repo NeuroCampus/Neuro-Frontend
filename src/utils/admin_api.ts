@@ -428,13 +428,26 @@ export const manageHODLeaves = async (
   method: "GET" | "POST" = "GET"
 ): Promise<ManageHODLeavesResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/hod-leaves/`, {
+    let url = `${API_ENDPOINT}/admin/hod-leaves/`;
+    
+    // Add query parameters for GET requests
+    if (method === "GET" && data) {
+      const params = new URLSearchParams();
+      Object.keys(data).forEach(key => {
+        if (data[key] !== undefined && data[key] !== null) {
+          params.append(key, data[key].toString());
+        }
+      });
+      if (params.toString()) url += `?${params.toString()}`;
+    }
+    
+    const response = await fetchWithTokenRefresh(url, {
       method,
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         "Content-Type": "application/json",
       },
-      body: data ? JSON.stringify(data) : undefined,
+      body: (method === "POST" && data) ? JSON.stringify(data) : undefined,
     });
     const result = await response.json();
     if (!response.ok) {
