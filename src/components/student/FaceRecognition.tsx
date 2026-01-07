@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { useTheme } from "@/context/ThemeContext";
-
-const API_BASE_URL = "http://127.0.0.1:8000";
+import { API_ENDPOINT } from "@/utils/config";
 
 const FaceRecognition = () => {
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
@@ -44,7 +43,7 @@ const FaceRecognition = () => {
         formData.append("images", selectedFiles[i]);
       }
 
-      const response = await fetch(`${API_BASE_URL}/student/upload-face-encodings/`, {
+      const response = await fetch(`${API_ENDPOINT}/student/upload-face-encodings/`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
