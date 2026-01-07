@@ -355,7 +355,7 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
       <div 
         className={`flex-1 flex flex-col p-2 rounded-md ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}
       >
-        <div className="max-w-5xl mx-auto w-full h-[calc(100vh-8rem)] flex flex-col">
+        <div className="max-w-5xl mx-auto w-full h-[calc(100vh-12rem)] flex flex-col">
           <div 
             ref={chatContainerRef} 
             className="flex-1 overflow-y-auto space-y-1 custom-scrollbar pt-4"
@@ -411,7 +411,7 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
           </div>
           
           {/* Input Area - At the end of the container */}
-          <div className={`mt-4 p-2 rounded-md ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
+          <div className={`p-2 rounded-md ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
             <div className="w-full flex gap-2">
               <input
                 value={input}
