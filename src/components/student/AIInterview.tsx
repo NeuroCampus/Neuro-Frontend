@@ -8,7 +8,7 @@ const AIInterview: React.FC = () => {
 
   const handleTakeInterview = () => {
     // Open the external interview website in a new tab
-    window.open('https://www.wonsulting.com/', '_blank');
+    window.open('http://localhost:3000/', '_blank');
   };
 
   return (
@@ -29,9 +29,9 @@ const AIInterview: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}`}>
             <Video className={`mx-auto w-8 h-8 mb-2 ${theme === 'dark' ? 'text-primary' : 'text-blue-600'}`} />
-            <h3 className={`text-center font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Video Interviews</h3>
+            <h3 className={`text-center font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Coding Interviews</h3>
             <p className={`text-xs text-center mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-              Practice with realistic video interviews
+              AI based coding interview
             </p>
           </div>
           
