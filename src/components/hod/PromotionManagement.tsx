@@ -302,29 +302,51 @@ const PromotionPage = ({ theme }: { theme: string }) => {
             section_id: sectionId,
           }, "GET");
 
-          if (studentRes.success && studentRes.data && Array.isArray(studentRes.data)) {
-            console.log(`API returned ${studentRes.data.length} students for semester ${state.selectedSemester}`);
-            
-            // Filter students to ensure they belong to the selected semester
-            const currentSemesterNumber = state.semesters.find(s => `${s.number}th Semester` === state.selectedSemester)?.number;
-            const filteredStudents = studentRes.data.filter((student: Student) => {
-              // Check if batch contains the correct semester number
-              const batchSemesterMatch = student.batch.match(/Sem(\d+)/);
-              if (batchSemesterMatch) {
-                const studentSemester = parseInt(batchSemesterMatch[1]);
-                return studentSemester === currentSemesterNumber;
-              }
-              return true; // If no semester in batch, include by default
-            });
-            
-            console.log(`Filtered to ${filteredStudents.length} students for semester ${currentSemesterNumber}`);
-            updateState({
-              students: filteredStudents,
-              selectedStudents: [],
-            });
-          } else {
+          // Normalize different possible response shapes from backend
+          // 1) { success: true, results: [...], count }
+          // 2) { success: true, data: { students: [...] } }
+          // 3) plain array
+          let results: any[] = [];
+          if (studentRes == null) {
+            results = [];
+          } else if (studentRes.results && Array.isArray(studentRes.results)) {
+            results = studentRes.results;
+          } else if (studentRes.data && Array.isArray(studentRes.data.students)) {
+            results = studentRes.data.students;
+          } else if (Array.isArray(studentRes)) {
+            results = studentRes as any[];
+          } else if (studentRes.success === false) {
+            // Backend returned an error
             updateState({ errors: [studentRes.message || "Failed to load students"] });
+            results = [];
+          } else {
+            // Unknown shape but try to extract 'data' array
+            if (studentRes.data && Array.isArray(studentRes.data)) {
+              results = studentRes.data;
+            } else {
+              results = [];
+            }
           }
+
+          console.log(`API returned ${results.length} students for semester ${state.selectedSemester}`);
+          
+          // Filter students to ensure they belong to the selected semester
+          const currentSemesterNumber = state.semesters.find(s => `${s.number}th Semester` === state.selectedSemester)?.number;
+          const filteredStudents = results.filter((student: Student) => {
+            // Check if batch contains the correct semester number
+            const batchSemesterMatch = student.batch.match(/Sem(\d+)/);
+            if (batchSemesterMatch) {
+              const studentSemester = parseInt(batchSemesterMatch[1]);
+              return studentSemester === currentSemesterNumber;
+            }
+            return true; // If no semester in batch, include by default
+          });
+          
+          console.log(`Filtered to ${filteredStudents.length} students for semester ${currentSemesterNumber}`);
+          updateState({
+            students: filteredStudents,
+            selectedStudents: [],
+          });
         }
       } catch (err) {
         console.error("Error fetching students:", err);
@@ -773,29 +795,51 @@ const DemotionPage = ({ theme }: { theme: string }) => {
             section_id: sectionId,
           }, "GET");
 
-          if (studentRes.success && studentRes.data && Array.isArray(studentRes.data)) {
-            console.log(`API returned ${studentRes.data.length} students for semester ${state.selectedSemester}`);
-            
-            // Filter students to ensure they belong to the selected semester
-            const currentSemesterNumber = state.semesters.find(s => `${s.number}th Semester` === state.selectedSemester)?.number;
-            const filteredStudents = studentRes.data.filter((student: Student) => {
-              // Check if batch contains the correct semester number
-              const batchSemesterMatch = student.batch.match(/Sem(\d+)/);
-              if (batchSemesterMatch) {
-                const studentSemester = parseInt(batchSemesterMatch[1]);
-                return studentSemester === currentSemesterNumber;
-              }
-              return true; // If no semester in batch, include by default
-            });
-            
-            console.log(`Filtered to ${filteredStudents.length} students for semester ${currentSemesterNumber}`);
-            updateState({
-              students: filteredStudents,
-              selectedStudents: [],
-            });
-          } else {
+          // Normalize different possible response shapes from backend
+          // 1) { success: true, results: [...], count }
+          // 2) { success: true, data: { students: [...] } }
+          // 3) plain array
+          let results: any[] = [];
+          if (studentRes == null) {
+            results = [];
+          } else if (studentRes.results && Array.isArray(studentRes.results)) {
+            results = studentRes.results;
+          } else if (studentRes.data && Array.isArray(studentRes.data.students)) {
+            results = studentRes.data.students;
+          } else if (Array.isArray(studentRes)) {
+            results = studentRes as any[];
+          } else if (studentRes.success === false) {
+            // Backend returned an error
             updateState({ errors: [studentRes.message || "Failed to load students"] });
+            results = [];
+          } else {
+            // Unknown shape but try to extract 'data' array
+            if (studentRes.data && Array.isArray(studentRes.data)) {
+              results = studentRes.data;
+            } else {
+              results = [];
+            }
           }
+
+          console.log(`API returned ${results.length} students for semester ${state.selectedSemester}`);
+          
+          // Filter students to ensure they belong to the selected semester
+          const currentSemesterNumber = state.semesters.find(s => `${s.number}th Semester` === state.selectedSemester)?.number;
+          const filteredStudents = results.filter((student: Student) => {
+            // Check if batch contains the correct semester number
+            const batchSemesterMatch = student.batch.match(/Sem(\d+)/);
+            if (batchSemesterMatch) {
+              const studentSemester = parseInt(batchSemesterMatch[1]);
+              return studentSemester === currentSemesterNumber;
+            }
+            return true; // If no semester in batch, include by default
+          });
+          
+          console.log(`Filtered to ${filteredStudents.length} students for semester ${currentSemesterNumber}`);
+          updateState({
+            students: filteredStudents,
+            selectedStudents: [],
+          });
         }
       } catch (err) {
         console.error("Error fetching students:", err);
@@ -866,7 +910,7 @@ const DemotionPage = ({ theme }: { theme: string }) => {
         : undefined;
 
       const res = await bulkDemoteStudents({
-        student_ids: state.selectedStudents.length > 0 ? state.selectedStudents : [],
+        student_ids: state.selectedStudents.length > 0 ? state.selectedStudents : studentsToDemote.map(s => s.usn),
         to_semester_id: prevSemester.id, // Pass as string
         branch_id: state.branchId,
         reason: state.bulkDemoteReason,
