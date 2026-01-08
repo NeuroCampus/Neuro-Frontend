@@ -300,6 +300,7 @@ const PromotionPage = ({ theme }: { theme: string }) => {
             branch_id: state.branchId,
             semester_id: semesterId,
             section_id: sectionId,
+            page_size: 200, // Request maximum allowed page size to show all students
           }, "GET");
 
           // Normalize different possible response shapes from backend
@@ -793,6 +794,7 @@ const DemotionPage = ({ theme }: { theme: string }) => {
             branch_id: state.branchId,
             semester_id: semesterId,
             section_id: sectionId,
+            page_size: 200, // Request maximum allowed page size to show all students
           }, "GET");
 
           // Normalize different possible response shapes from backend
