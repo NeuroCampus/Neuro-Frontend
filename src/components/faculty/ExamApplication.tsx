@@ -552,7 +552,9 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
                           <img
                             src={
                               studentDetails?.student_info?.photo_url 
-                                ? `${API_BASE_URL}${studentDetails.student_info.photo_url}`
+                                ? (studentDetails.student_info.photo_url.startsWith('http') 
+                                    ? studentDetails.student_info.photo_url 
+                                    : `${API_BASE_URL}${studentDetails.student_info.photo_url}`)
                                 : selectedStudent?.photo || selectedStudent?.photo_url
                             }
                             alt={selectedStudent?.name || studentDetails?.student_info?.name || 'Student'}

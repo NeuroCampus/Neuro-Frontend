@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { manageStudents, manageSubjects, getHODTimetableBootstrap } from "../../utils/hod_api";
 import { useHODBootstrap } from "../../context/HODBootstrapContext";
 import { useTheme } from "../../context/ThemeContext";
+import { API_ENDPOINT } from "../../utils/config";
+import { fetchWithTokenRefresh } from "../../utils/authService";
 
 const StudentEnrollment = () => {
   const bootstrap = useHODBootstrap();
@@ -28,24 +30,49 @@ const StudentEnrollment = () => {
   const [resultModalOpen, setResultModalOpen] = useState(false);
   const [resultData, setResultData] = useState<{ added: number; removed: number; failed: any[] }>({ added: 0, removed: 0, failed: [] });
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalStudents, setTotalStudents] = useState(0);
+  const studentsPerPage = 20; // Frontend pagination
+
   const loadEnrolledStudents = async () => {
     if (!branchId || !selectedSubjectId) return;
     setIsLoading(true);
     try {
-      const res = await manageStudents({ branch_id: branchId, subject_id: selectedSubjectId }, "GET");
-      let resultsArray: any[] = [];
-      if (res && Array.isArray((res as any).results)) {
-        resultsArray = (res as any).results;
-      } else if (res && (res as any).data && Array.isArray((res as any).data)) {
-        resultsArray = (res as any).data;
-      } else if (Array.isArray(res)) {
-        resultsArray = res as any[];
-      } else {
-        console.warn("Unexpected enrolled students response shape:", res);
-        resultsArray = [];
+      // Fetch all enrolled students for this subject (all pages)
+      let enrolledStudents: any[] = [];
+      let page = 1;
+      let hasNextPage = true;
+
+      while (hasNextPage) {
+        const params = new URLSearchParams({
+          branch_id: branchId,
+          subject_id: selectedSubjectId,
+          page: page.toString(),
+          page_size: '50'
+        });
+
+        const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/students/?${params}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        const data = await response.json();
+
+        if (!data.success || !data.results) {
+          throw new Error(data.message || "Failed to fetch enrolled students");
+        }
+
+        // Accumulate enrolled students from this page
+        enrolledStudents = [...enrolledStudents, ...data.results];
+
+        // Check if there's a next page
+        hasNextPage = data.next !== null;
+        page += 1;
       }
 
-      const mapped = resultsArray.map((s: any) => ({
+      const mapped = enrolledStudents.map((s: any) => ({
         id: s.usn || s.student_id || s.id,
         usn: s.usn || s.student_id || s.id,
         name: s.name,
@@ -53,6 +80,11 @@ const StudentEnrollment = () => {
       }));
       setStudents(mapped);
       setEnrolledCount(mapped.length);
+
+      // Reset pagination
+      setCurrentPage(1);
+      setTotalStudents(mapped.length);
+      setTotalPages(Math.ceil(mapped.length / studentsPerPage));
     } catch (e) {
       console.error(e);
     }
@@ -101,40 +133,105 @@ const StudentEnrollment = () => {
     loadSubjects();
   }, [branchId, semesterId, subjectType]);
 
+  useEffect(() => {
+    setCurrentPage(1); // Reset to first page when search changes
+  }, [searchTerm]);
+
   const loadStudents = async () => {
     if (!branchId || !semesterId || !sectionId || !selectedSubjectId) return;
     setIsLoading(true);
     try {
-      const res = await manageStudents({ branch_id: branchId, semester_id: semesterId, section_id: sectionId }, "GET");
-      // Support multiple response shapes: paginated ({ results }), { success: true, results }, plain array, or data array
-      let resultsArray: any[] = [];
-      if (res && Array.isArray((res as any).results)) {
-        resultsArray = (res as any).results;
-      } else if (res && (res as any).data && Array.isArray((res as any).data)) {
-        resultsArray = (res as any).data;
-      } else if (Array.isArray(res)) {
-        resultsArray = res as any[];
-      } else {
-        console.warn("Unexpected students response shape:", res);
-        resultsArray = [];
+      // Fetch all students in the section (all pages)
+      let allStudents: any[] = [];
+      let page = 1;
+      let hasNextPage = true;
+
+      while (hasNextPage) {
+        const params = new URLSearchParams({
+          branch_id: branchId,
+          semester_id: semesterId,
+          section_id: sectionId,
+          page: page.toString(),
+          page_size: '50'
+        });
+
+        const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/students/?${params}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        const data = await response.json();
+
+        if (!data.results) {
+          throw new Error(data.message || "Failed to fetch students");
+        }
+
+        // If no results, stop pagination
+        if (data.results.length === 0) {
+          break;
+        }
+
+        // Accumulate students from this page
+        allStudents = [...allStudents, ...data.results];
+
+        // Check if there's a next page
+        hasNextPage = data.next !== null;
+        page += 1;
       }
 
-      // Also fetch enrolled students for this subject to mark them
-      const enrolledRes = await manageStudents({ branch_id: branchId, subject_id: selectedSubjectId }, "GET");
-      let enrolledArray: any[] = [];
-      if (enrolledRes && Array.isArray((enrolledRes as any).results)) enrolledArray = (enrolledRes as any).results;
-      else if (enrolledRes && (enrolledRes as any).data && Array.isArray((enrolledRes as any).data)) enrolledArray = (enrolledRes as any).data;
-      else if (Array.isArray(enrolledRes)) enrolledArray = enrolledRes as any[];
-      const enrolledSet = new Set(enrolledArray.map((s: any) => s.usn || s.student_id || s.id));
+      // Also fetch enrolled students for this subject (all pages)
+      let enrolledStudents: any[] = [];
+      page = 1;
+      hasNextPage = true;
 
-      const mapped = resultsArray.map((s: any) => ({
+      while (hasNextPage) {
+        const params = new URLSearchParams({
+          branch_id: branchId,
+          subject_id: selectedSubjectId,
+          page: page.toString(),
+          page_size: '50'
+        });
+
+        const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/students/?${params}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        const data = await response.json();
+
+        if (!data.results) {
+          throw new Error(data.message || "Failed to fetch enrolled students");
+        }
+
+        // If no results, stop pagination
+        if (data.results.length === 0) {
+          break;
+        }
+
+        // Accumulate enrolled students from this page
+        enrolledStudents = [...enrolledStudents, ...data.results];
+
+        // Check if there's a next page
+        hasNextPage = data.next !== null;
+        page += 1;
+      }
+
+      const enrolledSet = new Set(enrolledStudents.map((s: any) => s.usn || s.student_id || s.id));
+
+      const mapped = allStudents.map((s: any) => ({
         id: s.usn || s.student_id || s.id,
         usn: s.usn || s.student_id || s.id,
         name: s.name,
         checked: enrolledSet.has(s.usn || s.student_id || s.id),
       }));
+
       setStudents(mapped);
       setEnrolledCount(enrolledSet.size);
+
+      // Reset pagination
+      setCurrentPage(1);
+      setTotalStudents(mapped.length);
+      setTotalPages(Math.ceil(mapped.length / studentsPerPage));
     } catch (e) {
       console.error(e);
     }
@@ -152,12 +249,42 @@ const StudentEnrollment = () => {
     if (!selectedSubjectId) return;
     setSaving(true);
     try {
-      // Fetch current registrations from backend to compute diffs
-      const current = await manageStudents({ branch_id: branchId, subject_id: selectedSubjectId }, "GET");
+      // Fetch current registrations from backend (all pages)
       let currentArray: any[] = [];
-      if (current && Array.isArray((current as any).results)) currentArray = (current as any).results;
-      else if (current && (current as any).data && Array.isArray((current as any).data)) currentArray = (current as any).data;
-      else if (Array.isArray(current)) currentArray = current as any[];
+      let page = 1;
+      let hasNextPage = true;
+
+      while (hasNextPage) {
+        const params = new URLSearchParams({
+          branch_id: branchId,
+          subject_id: selectedSubjectId,
+          page: page.toString(),
+          page_size: '50'
+        });
+
+        const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/students/?${params}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        const data = await response.json();
+
+        if (!data.results) {
+          throw new Error(data.message || "Failed to fetch current registrations");
+        }
+
+        // If no results, stop pagination
+        if (data.results.length === 0) {
+          break;
+        }
+
+        // Accumulate current registrations from this page
+        currentArray = [...currentArray, ...data.results];
+
+        // Check if there's a next page
+        hasNextPage = data.next !== null;
+        page += 1;
+      }
 
       const currentlyRegistered = new Set(currentArray.map((s: any) => s.usn || s.student_id || s.id));
 
@@ -179,6 +306,8 @@ const StudentEnrollment = () => {
           const msg = res?.message || 'Failed to register students';
           setResultData({ added: 0, removed: 0, failed: [msg] });
           setResultModalOpen(true);
+          setSaving(false);
+          return;
         }
       }
 
@@ -191,6 +320,8 @@ const StudentEnrollment = () => {
           const msg = res2?.message || 'Failed to unregister students';
           setResultData({ added: 0, removed: 0, failed: [msg] });
           setResultModalOpen(true);
+          setSaving(false);
+          return;
         }
       }
 
@@ -309,44 +440,85 @@ const StudentEnrollment = () => {
                     const filtered = q
                       ? students.filter((s: any) => (s.usn || "").toLowerCase().includes(q) || (s.name || "").toLowerCase().includes(q))
                       : students;
-                    const enrolledListFiltered = filtered.filter((s: any) => s.checked);
-                    const notEnrolledListFiltered = filtered.filter((s: any) => !s.checked);
-                    return (
-                      <div className={showEnrolledOnly ? "" : "grid grid-cols-2 gap-4"}>
-                        <div className="p-2 border rounded">
-                          <div className="flex items-center justify-between mb-2">
-                            <strong>Enrolled</strong>
-                            <span className="text-sm">{enrolledListFiltered.length}</span>
-                          </div>
-                          <div className="space-y-2">
-                            {enrolledListFiltered.map((s: any) => (
-                              <div key={s.id} className="flex items-center gap-3">
-                                <Checkbox checked={s.checked} onCheckedChange={() => toggleStudent(s.id)} />
-                                <div>{s.usn} — {s.name}</div>
-                              </div>
-                            ))}
-                            {enrolledListFiltered.length === 0 && <div className="text-sm text-muted-foreground">No enrolled students</div>}
-                          </div>
-                        </div>
 
-                        {!showEnrolledOnly && (
+                    // Apply frontend pagination
+                    const startIndex = (currentPage - 1) * studentsPerPage;
+                    const endIndex = startIndex + studentsPerPage;
+                    const paginatedFiltered = filtered.slice(startIndex, endIndex);
+
+                    const enrolledListFiltered = paginatedFiltered.filter((s: any) => s.checked);
+                    const notEnrolledListFiltered = paginatedFiltered.filter((s: any) => !s.checked);
+
+                    return (
+                      <>
+                        <div className={showEnrolledOnly ? "" : "grid grid-cols-2 gap-4"}>
                           <div className="p-2 border rounded">
                             <div className="flex items-center justify-between mb-2">
-                              <strong>Not Enrolled</strong>
-                              <span className="text-sm">{notEnrolledListFiltered.length}</span>
+                              <strong>Enrolled</strong>
+                              <span className="text-sm">{enrolledListFiltered.length}</span>
                             </div>
-                            <div className="space-y-2">
-                              {notEnrolledListFiltered.map((s: any) => (
+                            <div className="space-y-2 max-h-96 overflow-y-auto">
+                              {enrolledListFiltered.map((s: any) => (
                                 <div key={s.id} className="flex items-center gap-3">
                                   <Checkbox checked={s.checked} onCheckedChange={() => toggleStudent(s.id)} />
                                   <div>{s.usn} — {s.name}</div>
                                 </div>
                               ))}
-                              {notEnrolledListFiltered.length === 0 && <div className="text-sm text-muted-foreground">All students enrolled</div>}
+                              {enrolledListFiltered.length === 0 && <div className="text-sm text-muted-foreground">No enrolled students</div>}
+                            </div>
+                          </div>
+
+                          {!showEnrolledOnly && (
+                            <div className="p-2 border rounded">
+                              <div className="flex items-center justify-between mb-2">
+                                <strong>Not Enrolled</strong>
+                                <span className="text-sm">{notEnrolledListFiltered.length}</span>
+                              </div>
+                              <div className="space-y-2 max-h-96 overflow-y-auto">
+                                {notEnrolledListFiltered.map((s: any) => (
+                                  <div key={s.id} className="flex items-center gap-3">
+                                    <Checkbox checked={s.checked} onCheckedChange={() => toggleStudent(s.id)} />
+                                    <div>{s.usn} — {s.name}</div>
+                                  </div>
+                                ))}
+                                {notEnrolledListFiltered.length === 0 && <div className="text-sm text-muted-foreground">All students enrolled</div>}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Pagination Controls */}
+                        {totalPages > 1 && (
+                          <div className="flex items-center justify-between mt-4">
+                            <div className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                              Showing {Math.min(startIndex + 1, filtered.length)} to{" "}
+                              {Math.min(endIndex, filtered.length)} of {filtered.length} students
+                              {q && ` (filtered from ${students.length} total)`}
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                variant="outline"
+                                disabled={currentPage === 1}
+                                onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
+                                className={`text-sm font-medium px-4 py-2 rounded-md ${theme === 'dark' ? 'text-foreground bg-background border-border hover:bg-accent' : 'text-gray-900 bg-white border-gray-300 hover:bg-gray-50'}`}
+                              >
+                                Previous
+                              </Button>
+                              <span className={`px-4 text-lg font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                                {currentPage} of {Math.ceil(filtered.length / studentsPerPage)}
+                              </span>
+                              <Button
+                                variant="outline"
+                                disabled={currentPage === Math.ceil(filtered.length / studentsPerPage)}
+                                onClick={() => setCurrentPage(Math.min(currentPage + 1, Math.ceil(filtered.length / studentsPerPage)))}
+                                className={`text-sm font-medium px-4 py-2 rounded-md ${theme === 'dark' ? 'text-foreground bg-background border-border hover:bg-accent' : 'text-gray-900 bg-white border-gray-300 hover:bg-gray-50'}`}
+                              >
+                                Next
+                              </Button>
                             </div>
                           </div>
                         )}
-                      </div>
+                      </>
                     );
                   })()
                 )}

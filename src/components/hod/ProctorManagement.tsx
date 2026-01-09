@@ -9,6 +9,8 @@ import autoTable from "jspdf-autotable";
 import { useToast } from "@/components/ui/use-toast";
 import { getProctors, manageStudents, assignProctorsBulk, getSemesters, manageSections, manageProfile, getProctorBootstrap } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
+import { API_ENDPOINT } from "../../utils/config";
+import { fetchWithTokenRefresh } from "../../utils/authService";
 
 interface Student {
   usn: string;
@@ -72,41 +74,65 @@ const ProctorStudents = () => {
     const fetchData = async () => {
       updateState({ loading: true, error: null });
       try {
-        const response = await getProctorBootstrap();
-        if (!response.success || !response.data) {
-          throw new Error(response.message || "Failed to fetch data");
+        let allStudents: any[] = [];
+        let page = 1;
+        let hasNextPage = true;
+        let lastData: any = null;
+
+        // Fetch all pages of students
+        while (hasNextPage) {
+          const params = new URLSearchParams({ page: page.toString(), page_size: '50' });
+          const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/proctor-bootstrap/?${params}`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          });
+
+          const data = await response.json();
+
+          if (!data.success || !data.data) {
+            throw new Error(data.message || "Failed to fetch data");
+          }
+
+          // Set branch ID and name from profile (only on first page)
+          if (page === 1) {
+            updateState({
+              branchId: data.data.profile.branch_id,
+              branchName: data.data.profile.branch,
+            });
+          }
+
+          // Accumulate students from this page
+          const pageStudents = data.data.students.map((s: any) => ({
+            usn: s.usn,
+            name: s.name,
+            semester: s.semester ? `${s.semester}th Semester` : "N/A",
+            branch: data.data.profile.branch,
+            section: s.section || "N/A",
+            proctor: s.proctor,
+          }));
+
+          allStudents = [...allStudents, ...pageStudents];
+
+          // Store the last response data for non-paginated items
+          lastData = data.data;
+
+          // Check if there's a next page
+          hasNextPage = data.next !== null;
+          page += 1;
         }
 
-        const data = response.data;
-
-        // Set branch ID and name from profile
-        updateState({
-          branchId: data.profile.branch_id,
-          branchName: data.profile.branch,
-        });
-
-        // Process students data
-        const students = data.students.map((s) => ({
-          usn: s.usn,
-          name: s.name,
-          semester: s.semester ? `${s.semester}th Semester` : "N/A",
-          branch: data.profile.branch,
-          section: s.section || "N/A",
-          proctor: s.proctor,
-        }));
-
-        // Process proctors data
-        const proctors = data.proctors.map((f) => ({
+        // Process proctors data (from last response)
+        const proctors = lastData.proctors.map((f: any) => ({
           id: f.id,
           name: f.name,
         }));
 
         // Set all data at once
         updateState({
-          students,
+          students: allStudents,
           proctors,
-          semesters: data.semesters,
-          sections: data.sections,
+          semesters: lastData.semesters,
+          sections: lastData.sections,
           filters: {
             semester_id: "all",
             section_id: "all",
