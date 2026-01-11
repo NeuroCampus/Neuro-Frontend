@@ -227,3 +227,33 @@ Memory Management: Implement proper cleanup for large datasets
 Progressive Loading: Load data in chunks for better performance
 Background Sync: Implement background sync for offline actions
 Push Notifications: Add push notification support for mobile
+
+
+
+Recommendations to Handle the Load
+Optimize Password Hashing:
+
+Switch to Argon2 (faster and more secure than PBKDF2). Add to settings.py:
+This reduces hashing time by ~20-50%, lowering CPU usage.
+Scale the Server:
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
+    'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    'django.contrib.auth.hashers.SHA1PasswordHasher',
+]
+
+Upgrade to a server with 4-8 vCPUs and 4-8 GB RAM (e.g., Render Pro, AWS t3.medium).
+Increase Gunicorn workers (e.g., to 8-12) in Procfile or config: gunicorn attendance_system.wsgi:application --workers 8 --threads 2.
+Use a load balancer (e.g., Nginx) or cloud auto-scaling.
+Mitigate Peak Load:
+
+Stagger logins: Notify users to change passwords over days, not all at once.
+Add rate limiting (e.g., via django-ratelimit) to prevent abuse.
+Cache or offload: Use Redis for sessions if needed, but not critical here.
+Monitor and Test:
+
+Use tools like New Relic, Datadog, or Django's django-debug-toolbar to monitor CPU/RAM during load tests.
+Simulate with locust or ab: ab -n 300 -c 50 http://your-server/change-password-endpoint (adjust concurrency).
+If DB is the bottleneck, ensure connection pooling (already set with conn_max_age=600).
