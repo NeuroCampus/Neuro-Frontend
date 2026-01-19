@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FaUserGraduate, FaChalkboardTeacher, FaUserTie, FaUserShield, FaUserCheck } from "react-icons/fa";
+import { FaUserGraduate, FaChalkboardTeacher, FaUserTie, FaUserCheck } from "react-icons/fa";
 import { FiDownload, FiSearch } from "react-icons/fi";
 import { motion } from "framer-motion";
 import { Bar, Pie } from "react-chartjs-2";
@@ -148,7 +148,7 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
 
   // Pie chart data for role distribution
   const pieData = {
-    labels: ["Students", "Faculty", "HODs", "COE", "Admins"],
+    labels: ["Students", "Faculty", "HODs", "COE"],
     datasets: [
       {
         data: [
@@ -156,21 +156,18 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
           stats?.role_distribution?.faculty || 0,
           stats?.role_distribution?.hods || 0,
           stats?.role_distribution?.coe || 0,
-          stats?.role_distribution?.admins || 0,
         ],
         backgroundColor: [
           "rgba(59, 130, 246, 0.6)",
           "rgba(168, 85, 247, 0.6)",
           "rgba(234, 179, 8, 0.6)",
           "rgba(34, 197, 94, 0.6)",
-          "rgba(239, 68, 68, 0.6)",
         ],
         borderColor: [
           "rgba(59, 130, 246, 1)",
           "rgba(168, 85, 247, 1)",
           "rgba(234, 179, 8, 1)",
           "rgba(34, 197, 94, 1)",
-          "rgba(239, 68, 68, 1)",
         ],
         borderWidth: 1,
       },
@@ -244,14 +241,6 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
               value={stats.total_coe || 0}
               description="Controller of Examinations"
               icon={<FaUserCheck className={theme === 'dark' ? "text-green-400 text-3xl" : "text-green-500 text-3xl"} />}
-            />
-          </motion.div>
-          <motion.div variants={cardVariants} initial="hidden" animate="visible">
-            <DashboardCard
-              title="Total Admins"
-              value={stats.role_distribution?.admins || 0}
-              description="System administrators"
-              icon={<FaUserShield className={theme === 'dark' ? "text-red-400 text-3xl" : "text-red-500 text-3xl"} />}
             />
           </motion.div>
         </div>

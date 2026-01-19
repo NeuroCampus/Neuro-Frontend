@@ -118,7 +118,7 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
   const fetchTeacherAssignments = async () => {
     try {
       setLoading(true);
-      let url = `${API_ENDPOINT}/admin/teacher-assignments/?page=${currentPage}&page_size=5`;
+      let url = `${API_ENDPOINT}/admin/teacher-assignments/?page=${currentPage}&page_size=10`;
       if (appliedSearch) url += `&search=${encodeURIComponent(appliedSearch)}`;
       if (branchFilter) url += `&branch_id=${branchFilter}`;
 
@@ -145,7 +145,7 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
       if (dataSource && dataSource.success) {
         setTeachers(dataSource.teachers || []);
         setBranches(dataSource.branches || []);
-        setTotalPages(Math.ceil((paginationData.count || 0) / 5));
+        setTotalPages(Math.ceil((paginationData.count || 0) / 10));
         setTotalCount(paginationData.count || 0);
       } else {
         setError(dataSource?.message || result.message || "Failed to fetch Faculty assignments");
@@ -260,7 +260,6 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
                     {teacher.first_name} {teacher.last_name}
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">{teacher.email}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">@{teacher.username}</p>
                   <p className="text-sm font-medium mt-1">
                     Branch: {teacher.primary_branch ? teacher.primary_branch.name : "Not Assigned"}
                   </p>
@@ -277,7 +276,7 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
       {/* Pagination Info - moved to bottom */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-600 mt-4">
         <div>
-          Showing {Math.min((currentPage - 1) * 5 + 1, totalCount)} to {Math.min(currentPage * 5, totalCount)} of {totalCount} teachers
+          Showing {Math.min((currentPage - 1) * 10 + 1, totalCount)} to {Math.min(currentPage * 10, totalCount)} of {totalCount} teachers
         </div>
         <div className="flex items-center gap-2">
           <Button

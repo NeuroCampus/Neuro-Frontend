@@ -64,7 +64,7 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
     setLoading(true);
     setError(null);
     try {
-      const params: any = { page, page_size: 20 };
+      const params: any = { page, page_size: 10 };
       if (month) {
         params.month = month;
       }
@@ -100,7 +100,7 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
         
         // Set pagination info if available
         if (hasResults && response.count) {
-          setTotalPages(Math.ceil(response.count / 20)); // Assuming page_size is 20
+          setTotalPages(Math.ceil(response.count / 10)); // Assuming page_size is 10
           setTotalCount(response.count);
         }
       } else {

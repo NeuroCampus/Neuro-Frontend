@@ -13,7 +13,6 @@ interface RoleDistribution {
   faculty: number;
   hods: number;
   coe: number;
-  admins: number;
 }
 
 interface AdminStatsResponse {

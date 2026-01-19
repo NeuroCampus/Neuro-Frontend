@@ -70,7 +70,7 @@ const UsersManagement = ({ setError, toast }: UsersManagementProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
-  const [pageSize] = useState(20); // Fixed page size for consistency
+  const [pageSize] = useState(10); // Fixed page size for consistency
   const normalize = (str: string) => str.toLowerCase().trim();
   const { theme } = useTheme();
 
