@@ -378,15 +378,7 @@ const SemesterManagement = () => {
 
                           {/* Semester Actions */}
                           <td className="p-2 flex justify-center gap-2">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => openModal(sem)}
-                              disabled={loading}
-                              title="Edit Semester Name"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
+                            
 
                             <Button
                               size="icon"
