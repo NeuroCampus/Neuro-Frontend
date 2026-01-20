@@ -305,12 +305,7 @@ const SemesterManagement = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex justify-between items-center">
-            <Input
-              placeholder="Search by semester number..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className={`max-w-sm ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'}`}
-            />
+           
             <Button
               onClick={() => openModal()}
               disabled={loading || !branchId}
