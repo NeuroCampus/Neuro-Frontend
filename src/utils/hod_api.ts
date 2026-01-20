@@ -1562,12 +1562,8 @@ export const getHODTimetableBootstrap = async (): Promise<{
   success: boolean;
   message?: string;
   data?: {
-    profile: { branch_id: string };
-    branches: Array<{ id: string; name: string }>;
+    profile: { branch_id: string; branch: string };
     semesters: Array<{ id: string; number: number }>;
-    sections: Array<{ id: string; name: string; semester_id: string | null }>;
-    subjects: Array<{ id: string; name: string; subject_code: string; semester_id: string | null }>;
-    faculties: Array<{ id: string; username: string; first_name: string; last_name: string | null }>;
   };
 }> => {
   try {
