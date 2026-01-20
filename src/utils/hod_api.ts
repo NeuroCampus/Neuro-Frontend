@@ -176,7 +176,7 @@ interface ManageSectionsResponse {
 }
 
 interface ManageStudentsRequest {
-  action: "create" | "update" | "delete" | "bulk_update" | "register_subjects" | "bulk_register_subjects";
+  action: "create" | "update" | "delete" | "bulk_update" | "register_subjects" | "bulk_register_subjects" | "bulk_unregister_subjects";
   student_id?: string;
   usn?: string;
   name?: string;
@@ -1689,6 +1689,8 @@ export const manageFacultyAssignments = async (
       const params = new URLSearchParams({ branch_id: data.branch_id });
       if (data.semester_id) params.append("semester_id", data.semester_id);
       if (data.section_id) params.append("section_id", data.section_id);
+      if ((data as any).page) params.append("page", (data as any).page.toString());
+      if ((data as any).search) params.append("search", (data as any).search);
       url = `${API_ENDPOINT}/hod/faculty-assignments/?${params.toString()}`;
     }
     const response = await fetchWithTokenRefresh(url, {
@@ -2147,20 +2149,7 @@ export const getFacultyAssignmentsBootstrap = async (): Promise<{
       branch_id: string;
     };
     semesters: Array<{ id: string; number: number }>;
-    sections: Array<{ id: string; name: string; semester_id: string | null }>;
-    subjects: Array<{ id: string; name: string; subject_code: string; semester_id: string | null }>;
     faculties: Array<{ id: string; username: string; first_name: string; last_name: string }>;
-    assignments: Array<{
-      id: string;
-      faculty: string;
-      subject: string;
-      section: string;
-      semester: number;
-      faculty_id: string;
-      subject_id: string;
-      section_id: string;
-      semester_id: string;
-    }>;
   };
 }> => {
   try {
