@@ -108,7 +108,7 @@ const StudentManagement = () => {
   };
 
   // Fetch students
-  const fetchStudents = async (branchId: string, page: number = 1, pageSize: number = 10, search: string = '', sectionId: string = '') => {
+  const fetchStudents = async (branchId: string, page: number = 1, pageSize: number = 50, search: string = '', sectionId: string = '') => {
     try {
       const params: any = { 
         branch_id: branchId,
@@ -246,7 +246,7 @@ const StudentManagement = () => {
             students,
             totalStudents: boot.count || students.length,
             currentPage: 1, // Bootstrap returns first page
-            pageSize: 10 // Default page size
+            pageSize: 50 // Default page size
           });
         } else {
           await fetchStudents(branchId);

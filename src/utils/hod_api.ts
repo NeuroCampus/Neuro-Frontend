@@ -215,33 +215,32 @@ interface ManageStudentsRequest {
 }
 
 interface ManageStudentsResponse {
-  success: boolean;
-  message?: string;
-  data?: Array<{
-    usn: string;
-    name: string;
-    semester: number;
-    section: string | null;
-    batch: string;
-    subject?: string;
-    proctor: string | null;
-    cycle?: string;
-  }> | { student_id: string } | { created_count: number; updated_count: number } | {
-    results: Array<{
-      usn: string;
-      name: string;
-      email: string;
-      section: string | null;
-      semester: string;
-    }>;
-    count: number;
-    next: string | null;
-    previous: string | null;
-  };
-  // For paginated GET responses
+  // For GET requests (DRF pagination)
   count?: number;
   next?: string | null;
   previous?: string | null;
+  results?: Array<{
+    student_id: string;
+    usn: string;
+    name: string;
+    email: string | null;
+    phone: string;
+    semester: string;
+    section: string | null;
+    batch: string | null;
+    course: string | null;
+    proctor: string | null;
+    date_of_admission: string | null;
+    parent_name: string;
+    parent_contact: string;
+    emergency_contact: string;
+    blood_group: string;
+    cycle: string;
+  }>;
+  // For POST requests (actions)
+  success?: boolean;
+  message?: string;
+  data?: { student_id: string } | { created_count: number; updated_count: number } | { registered_count?: number; removed_count?: number; failed?: any[] };
 }
 
 interface ManageBatchesRequest {
@@ -930,6 +929,40 @@ export const getSemesterBootstrap = async (
     if (branch_id) params.branch_id = branch_id;
     const query = new URLSearchParams(params).toString();
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/semester-bootstrap/?${query}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
+export const getElectiveEnrollmentBootstrap = async (): Promise<{
+  success: boolean;
+  message?: string;
+  data?: {
+    profile: {
+      first_name: string;
+      last_name: string;
+      email: string;
+      branch: string;
+      branch_id: string;
+    };
+    semesters: Array<{ id: string; number: number }>;
+    sections: Array<{ id: string; name: string; semester_id: string | null }>;
+    elective_subjects: Array<{
+      id: string;
+      name: string;
+      subject_code: string;
+      semester_id: string | null;
+      subject_type: string;
+      credits: number;
+    }>;
+  };
+}> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/elective-enrollment-bootstrap/`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });

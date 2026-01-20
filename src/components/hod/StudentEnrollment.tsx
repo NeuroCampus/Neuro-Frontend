@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "../ui/select";
 import { Checkbox } from "../ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
-import { manageStudents, manageSubjects, getHODTimetableBootstrap } from "../../utils/hod_api";
+import { manageStudents, manageSubjects, getElectiveEnrollmentBootstrap } from "../../utils/hod_api";
 import { useHODBootstrap } from "../../context/HODBootstrapContext";
 import { useTheme } from "../../context/ThemeContext";
 import { API_ENDPOINT } from "../../utils/config";
@@ -18,6 +18,7 @@ const StudentEnrollment = () => {
   const [semesterId, setSemesterId] = useState<string>("");
   const [sectionId, setSectionId] = useState<string>("");
   const [subjectType, setSubjectType] = useState<string>("elective");
+  const [electiveSubjects, setElectiveSubjects] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
   const [students, setStudents] = useState<any[]>([]);
@@ -50,7 +51,7 @@ const StudentEnrollment = () => {
           branch_id: branchId,
           subject_id: selectedSubjectId,
           page: page.toString(),
-          page_size: '50'
+          page_size: '25'
         });
 
         const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/students/?${params}`, {
@@ -60,7 +61,7 @@ const StudentEnrollment = () => {
 
         const data = await response.json();
 
-        if (!data.success || !data.results) {
+        if (!response.ok || !data.results) {
           throw new Error(data.message || "Failed to fetch enrolled students");
         }
 
@@ -94,7 +95,7 @@ const StudentEnrollment = () => {
   useEffect(() => {
     const loadBootstrap = async () => {
       try {
-      const boot = await getHODTimetableBootstrap();
+      const boot = await getElectiveEnrollmentBootstrap();
         if (boot.success && boot.data) {
           const bId = boot.data.profile?.branch_id;
           if (bId) setBranchId(String(bId));
@@ -108,6 +109,9 @@ const StudentEnrollment = () => {
             });
             setSectionsBySemester(map);
           }
+          if (Array.isArray(boot.data.elective_subjects)) {
+            setElectiveSubjects(boot.data.elective_subjects.map((s: any) => ({ ...s, id: String(s.id) })));
+          }
         }
       } catch (e) {
         console.error(e);
@@ -118,20 +122,19 @@ const StudentEnrollment = () => {
 
   useEffect(() => {
     const loadSubjects = async () => {
-      if (!branchId || !semesterId) return;
+      if (!semesterId) return;
       try {
-        const res = await manageSubjects({ branch_id: branchId, semester_id: semesterId }, "GET");
-        if (res.success && Array.isArray(res.subjects)) {
-          setSubjects(res.subjects.filter((s: any) => s.subject_type === subjectType));
-        } else if (res.success && Array.isArray(res.data)) {
-          setSubjects(res.data.filter((s: any) => s.subject_type === subjectType));
-        }
+        // Filter elective subjects by semester and subject type
+        const filteredSubjects = electiveSubjects.filter((s: any) => 
+          s.semester_id === semesterId && s.subject_type === subjectType
+        );
+        setSubjects(filteredSubjects);
       } catch (e) {
         console.error(e);
       }
     };
     loadSubjects();
-  }, [branchId, semesterId, subjectType]);
+  }, [electiveSubjects, semesterId, subjectType]);
 
   useEffect(() => {
     setCurrentPage(1); // Reset to first page when search changes
