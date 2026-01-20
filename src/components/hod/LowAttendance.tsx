@@ -3,7 +3,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, FileDown, Loader2, CheckCircle } from "lucide-react";
+import { Search, FileDown, Loader2, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Select,
   SelectTrigger,
@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { getAttendance, getSemesters, manageSections, manageSubjects, manageProfile, sendNotification, getLowAttendanceBootstrap } from "../../utils/hod_api";
+import { getAttendance, getSemesters, manageSections, manageSubjects, manageProfile, sendNotification, getLowAttendanceBootstrap, getLowAttendanceStudents, getHODDashboardBootstrap } from "../../utils/hod_api";
 import { Component } from "react";
 import { useTheme } from "../../context/ThemeContext";
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -236,18 +236,23 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
   const { toast } = useToast();
   const { theme } = useTheme();
   const [state, setState] = useState({
-    searchTerm: "",
-    currentPage: 1,
+    selectedSemester: "",
+    selectedSection: "",
     students: [] as Student[],
     semesters: [] as Semester[],
     sections: [] as Section[],
-    subjects: [] as Subject[],
-    loading: true,
+    loading: false,
     branchId: "",
     notifyingStudents: {} as Record<string, boolean>,
     notifiedStudents: {} as Record<string, boolean>,
     isNotifyingAll: false,
     hasNotifiedAll: false,
+    // Pagination state
+    currentPage: 1,
+    totalCount: 0,
+    pageSize: 50,
+    next: null as string | null,
+    previous: null as string | null,
   });
 
   // Helper to update state
@@ -255,42 +260,100 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
     setState(prev => ({ ...prev, ...newState }));
   };
 
-  // Fetch all low attendance data (no pagination for complete dataset)
+  // Pagination functions
+  const goToPage = (page: number) => {
+    updateState({ currentPage: page });
+  };
+
+  const goToNextPage = () => {
+    if (state.next) {
+      updateState({ currentPage: state.currentPage + 1 });
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (state.previous) {
+      updateState({ currentPage: state.currentPage - 1 });
+    }
+  };
+
+  // Reset pagination when filters change
+  const handleSemesterChange = (value: string) => {
+    updateState({
+      selectedSemester: value,
+      selectedSection: "",
+      students: [],
+      currentPage: 1,
+      totalCount: 0,
+      next: null,
+      previous: null
+    });
+  };
+
+  const handleSectionChange = (value: string) => {
+    updateState({
+      selectedSection: value,
+      students: [],
+      currentPage: 1,
+      totalCount: 0,
+      next: null,
+      previous: null
+    });
+  };
+
+  // Load metadata on component mount
   useEffect(() => {
-    const fetchData = async () => {
+    const loadMetadata = async () => {
       updateState({ loading: true });
       try {
-        // Fetch all low attendance students without pagination
-        const response = await getLowAttendanceBootstrap("", {});
-        if (!response.success || !response.data) {
-          throw new Error(response.message || "Failed to fetch data");
+        // Get branch ID and semesters from bootstrap endpoint
+        const bootstrapResponse = await getHODDashboardBootstrap(["profile", "semesters"]);
+        if (!bootstrapResponse.success || !bootstrapResponse.data) {
+          throw new Error("Failed to fetch bootstrap data");
         }
 
-        // Set branchId
-        updateState({ branchId: response.data.profile.branch_id });
+        const branchId = bootstrapResponse.data.profile?.branch_id;
+        if (!branchId) {
+          throw new Error("Branch ID not found in profile");
+        }
 
-        // Set semesters
-        const semestersData = response.data.semesters.map((s) => ({
-          id: s.id,
-          number: s.number,
-        }));
+        updateState({
+          branchId: branchId,
+          semesters: bootstrapResponse.data.semesters || [],
+          loading: false
+        });
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to fetch metadata";
+        toast({ variant: "destructive", title: "Error", description: errorMessage });
+        setError(errorMessage);
+        updateState({ loading: false });
+      }
+    };
+    loadMetadata();
+  }, [toast, setError]);
 
-        // Set sections
-        const sectionsData = response.data.sections.map((s) => ({
-          id: s.id,
-          name: s.name,
-          semester_id: s.semester_id,
-        }));
+  // Load students when both semester and section are selected
+  useEffect(() => {
+    const loadStudents = async () => {
+      if (!state.selectedSemester || !state.selectedSection) {
+        updateState({ students: [] });
+        return;
+      }
 
-        // Set subjects
-        const subjectsData = response.data.subjects.map((s) => ({
-          id: s.id,
-          name: s.name,
-          semester_id: s.semester_id,
-        }));
+      updateState({ loading: true });
+      try {
+        const studentsResponse = await getLowAttendanceStudents("", {
+          semester_id: state.selectedSemester,
+          section_id: state.selectedSection,
+          page: state.currentPage,
+          page_size: state.pageSize
+        });
 
-        // Set low attendance students
-        const studentsData = response.data.low_attendance.students.map((student) => ({
+        if (!studentsResponse.success || !studentsResponse.data) {
+          throw new Error(studentsResponse.message || "Failed to fetch students");
+        }
+
+        const studentsData = studentsResponse.data.students.map((student) => ({
           student_id: student.student_id,
           usn: student.usn,
           name: student.name,
@@ -301,62 +364,54 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
         }));
 
         updateState({
-          semesters: semestersData,
-          sections: sectionsData,
-          subjects: subjectsData,
           students: studentsData,
           loading: false,
+          hasNotifiedAll: false,
+          notifiedStudents: {},
+          totalCount: studentsResponse.count || 0,
+          next: studentsResponse.next,
+          previous: studentsResponse.previous,
         });
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to fetch data";
+        const errorMessage = err instanceof Error ? err.message : "Failed to fetch students";
         toast({ variant: "destructive", title: "Error", description: errorMessage });
         setError(errorMessage);
         updateState({ loading: false });
       }
     };
-    fetchData();
-  }, [toast, setError]);
+
+    loadStudents();
+  }, [state.selectedSemester, state.selectedSection, state.currentPage, state.pageSize, toast, setError]);
+  useEffect(() => {
+    const loadSections = async () => {
+      if (!state.selectedSemester) {
+        updateState({ sections: [], selectedSection: "" });
+        return;
+      }
+
+      try {
+        const sectionsResponse = await manageSections({ branch_id: state.branchId, semester_id: state.selectedSemester }, "GET");
+        if (!sectionsResponse.success || !sectionsResponse.data) {
+          throw new Error("Failed to fetch sections");
+        }
+
+        updateState({
+          sections: sectionsResponse.data,
+          selectedSection: "" // Reset section selection
+        });
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Failed to fetch sections";
+        toast({ variant: "destructive", title: "Error", description: errorMessage });
+        setError(errorMessage);
+      }
+    };
+
+    loadSections();
+  }, [state.selectedSemester, toast, setError]);
 
   const filteredStudents = state.students; // Server-side filtering now
 
   const currentStudents = filteredStudents;
-
-  // Group students by semester and section for organized display
-  const groupedStudents = React.useMemo(() => {
-    const groups: Record<string, Record<string, Student[]>> = {};
-
-    state.students.forEach(student => {
-      const semesterKey = `Semester ${student.semester}`;
-      const sectionKey = student.section;
-
-      if (!groups[semesterKey]) {
-        groups[semesterKey] = {};
-      }
-      if (!groups[semesterKey][sectionKey]) {
-        groups[semesterKey][sectionKey] = [];
-      }
-      groups[semesterKey][sectionKey].push(student);
-    });
-
-    // Sort semesters and sections
-    const sortedGroups: Record<string, Record<string, Student[]>> = {};
-    Object.keys(groups)
-      .sort((a, b) => {
-        const numA = parseInt(a.replace('Semester ', ''));
-        const numB = parseInt(b.replace('Semester ', ''));
-        return numA - numB;
-      })
-      .forEach(semester => {
-        sortedGroups[semester] = {};
-        Object.keys(groups[semester])
-          .sort()
-          .forEach(section => {
-            sortedGroups[semester][section] = groups[semester][section];
-          });
-      });
-
-    return sortedGroups;
-  }, [state.students]);
 
   const exportPDF = () => {
     const doc = new jsPDF();
@@ -364,93 +419,60 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
     const margin = 14;
     let currentPageNumber = 1;
 
-    // Collect all students from grouped data
-    const allStudents: Student[] = [];
-    Object.values(groupedStudents).forEach(semesterData => {
-      Object.values(semesterData).forEach(sectionStudents => {
-        allStudents.push(...sectionStudents);
-      });
-    });
+    // Use the current filtered students
+    const studentsToExport = state.students;
 
-    // Apply search filter if present
-    const filteredStudents = state.searchTerm
-      ? allStudents.filter(student =>
-          student.name.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
-          student.usn.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
-          student.subject.toLowerCase().includes(state.searchTerm.toLowerCase())
-        )
-      : allStudents;
+    if (studentsToExport.length === 0) {
+      toast({ variant: "destructive", title: "Error", description: "No students to export" });
+      return;
+    }
 
-    // Group by semester for PDF
-    const pdfData: { semester: string; students: Student[] }[] = [];
-    Object.entries(groupedStudents).forEach(([semester, sections]) => {
-      const semesterStudents: Student[] = [];
-      Object.values(sections).forEach(sectionStudents => {
-        semesterStudents.push(...sectionStudents);
-      });
+    // Get semester and section info for the title
+    const semesterNumber = state.semesters.find(s => s.id === state.selectedSemester)?.number;
+    const sectionName = state.sections.find(s => s.id === state.selectedSection)?.name;
 
-      const filteredSemesterStudents = state.searchTerm
-        ? semesterStudents.filter(student =>
-            student.name.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
-            student.usn.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
-            student.subject.toLowerCase().includes(state.searchTerm.toLowerCase())
-          )
-        : semesterStudents;
+    doc.setFontSize(16);
+    doc.text(`Low Attendance Students - Semester ${semesterNumber} Section ${sectionName}`, margin, 14);
+    doc.setFontSize(10);
+    doc.text(`Generated on ${new Date().toLocaleDateString()}`, 180, 14);
 
-      if (filteredSemesterStudents.length > 0) {
-        pdfData.push({ semester, students: filteredSemesterStudents });
-      }
-    });
+    const studentChunks = [];
+    for (let i = 0; i < studentsToExport.length; i += 40) { // 40 items per page for better readability
+      studentChunks.push(studentsToExport.slice(i, i + 40));
+    }
 
-    pdfData.forEach((semesterData, semesterIndex) => {
-      if (semesterIndex > 0) {
+    studentChunks.forEach((chunk, chunkIndex) => {
+      if (chunkIndex > 0) {
         doc.addPage();
-        currentPageNumber = 1;
+        currentPageNumber++;
+        doc.setFontSize(16);
+        doc.text(`Low Attendance Students - Semester ${semesterNumber} Section ${sectionName} (Cont.)`, margin, 14);
+        doc.setFontSize(10);
+        doc.text(`Page ${currentPageNumber}`, 180, 14);
       }
 
-      doc.setFontSize(16);
-      doc.text(`${semesterData.semester} - Low Attendance Students`, margin, 14);
-      doc.setFontSize(10);
-      doc.text(`Generated on ${new Date().toLocaleDateString()}`, 180, 14);
-
-      const studentChunks = [];
-      for (let i = 0; i < semesterData.students.length; i += 40) { // 40 items per page for better readability
-        studentChunks.push(semesterData.students.slice(i, i + 40));
-      }
-
-      studentChunks.forEach((chunk, chunkIndex) => {
-        if (chunkIndex > 0) {
-          doc.addPage();
-          currentPageNumber++;
-          doc.setFontSize(16);
-          doc.text(`${semesterData.semester} - Low Attendance Students (Cont.)`, margin, 14);
-          doc.setFontSize(10);
-          doc.text(`Page ${currentPageNumber}`, 180, 14);
-        }
-
-        autoTable(doc, {
-          startY: 20,
-          head: [["USN", "Name", "Subject", "Section", "Attendance %"]],
-          body: chunk.map((student) => [
-            student.usn,
-            student.name,
-            student.subject,
-            student.section,
-            formatAttendancePercentage(student.attendance_percentage),
-          ]),
-          theme: "striped",
-          headStyles: { fillColor: [200, 200, 200], textColor: "black" },
-          bodyStyles: { fontSize: 10 },
-          margin: { top: 20, left: margin, right: margin },
-          didDrawPage: (data) => {
-            doc.setFontSize(8);
-            doc.text(
-              `Generated on ${new Date().toLocaleDateString()}`,
-              margin,
-              pageHeight - 10
-            );
-          },
-        });
+      autoTable(doc, {
+        startY: 20,
+        head: [["USN", "Name", "Subject", "Section", "Attendance %"]],
+        body: chunk.map((student) => [
+          student.usn,
+          student.name,
+          student.subject,
+          student.section,
+          formatAttendancePercentage(student.attendance_percentage),
+        ]),
+        theme: "striped",
+        headStyles: { fillColor: [200, 200, 200], textColor: "black" },
+        bodyStyles: { fontSize: 10 },
+        margin: { top: 20, left: margin, right: margin },
+        didDrawPage: (data) => {
+          doc.setFontSize(8);
+          doc.text(
+            `Generated on ${new Date().toLocaleDateString()}`,
+            margin,
+            pageHeight - 10
+          );
+        },
       });
     });
 
@@ -461,7 +483,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
     try {
       updateState({ isNotifyingAll: true });
 
-      const studentIds = filteredStudents.map((student) => student.student_id); // ✅ use student_id
+      const studentIds = state.students.map((student) => student.student_id);
 
       const response = await sendNotification({
         action: "notify_all",
@@ -553,105 +575,161 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
 
   return (
     <ErrorBoundary>
-      <div className={`p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-        <h1 className={`text-2xl font-semibold mb-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Low Attendance Students</h1>
-        <div className="flex flex-wrap items-center gap-4 mb-6">
-          <div className="ml-auto flex gap-4">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Low Attendance Management</h1>
+            <p className="text-muted-foreground">Monitor and notify students with low attendance</p>
+          </div>
+          <div className="flex gap-2">
             <Button
               onClick={exportPDF}
-              className="flex items-center gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md rounded-md px-4 py-2"
-              disabled={state.loading || filteredStudents.length === 0}
+              disabled={state.loading || state.students.length === 0}
+              className="flex items-center gap-2"
             >
               <FileDown className="w-4 h-4" />
               Export PDF
             </Button>
             <Button
               onClick={notifyAll}
-              className={`flex items-center gap-2 rounded-md px-4 py-2 shadow-sm border transition-all duration-200 ease-in-out transform hover:scale-105
-                ${
-                  state.hasNotifiedAll
-                    ? "bg-green-800 border-green-600 text-white cursor-default"
-                    : "bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
-                }`}
-              disabled={
-                state.loading ||
-                filteredStudents.length === 0 ||
-                state.isNotifyingAll ||
-                state.hasNotifiedAll
-              }
+              disabled={state.loading || state.students.length === 0 || state.isNotifyingAll || state.hasNotifiedAll}
+              variant="outline"
+              className="flex items-center gap-2"
             >
               {state.isNotifyingAll ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Sending...
-                </>
-              ) : state.hasNotifiedAll ? (
-                "All Notified ✓"
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                "Notify All"
+                <CheckCircle className="w-4 h-4" />
               )}
+              {state.hasNotifiedAll ? "All Notified" : "Notify All"}
             </Button>
-
           </div>
         </div>
-        <div className="mb-4 relative w-full md:w-1/3">
-          <Input
-            placeholder="Search students..."
-            value={state.searchTerm}
-            onChange={(e) => updateState({ searchTerm: e.target.value })}
-            className={`pl-10 ${theme === 'dark' ? 'bg-card border-border text-foreground placeholder:text-muted-foreground' : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-500'}`}
-            disabled={state.loading}
-          />
-          <Search className={`absolute left-3 top-2.5 h-4 w-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`} />
+
+        {/* Filters */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Semester</label>
+            <Select
+              value={state.selectedSemester}
+              onValueChange={handleSemesterChange}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select Semester" />
+              </SelectTrigger>
+              <SelectContent>
+                {state.semesters.map((semester) => (
+                  <SelectItem key={semester.id} value={semester.id}>
+                    Semester {semester.number}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Section</label>
+            <Select
+              value={state.selectedSection}
+              onValueChange={handleSectionChange}
+              disabled={!state.selectedSemester}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select Section" />
+              </SelectTrigger>
+              <SelectContent>
+                {state.sections.map((section) => (
+                  <SelectItem key={section.id} value={section.id}>
+                    {section.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        {/* Grouped Display by Semester and Section */}
-        <div className="space-y-6">
-          {Object.entries(groupedStudents).map(([semester, sections]) => (
-            <div key={semester} className={`border rounded-lg p-4 ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
-              <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                {semester} Details
-              </h3>
-
-              {Object.entries(sections).map(([section, students]) => {
-                // Filter students by search term
-                const filteredSectionStudents = students.filter(student =>
-                  state.searchTerm === "" ||
-                  student.name.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
-                  student.usn.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
-                  student.subject.toLowerCase().includes(state.searchTerm.toLowerCase())
-                );
-
-                if (filteredSectionStudents.length === 0) return null;
-
-                return (
-                  <div key={section} className="mb-4">
-                    <h4 className={`text-md font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                      Section {section} ({filteredSectionStudents.length} students)
-                    </h4>
-
-                    <VirtualizedSectionTable
-                      students={filteredSectionStudents}
-                      theme={theme}
-                      notifyingStudents={state.notifyingStudents}
-                      notifiedStudents={state.notifiedStudents}
-                      onNotifyStudent={notifyStudent}
-                    />
-                  </div>
-                );
-              })}
+        {/* Students Table */}
+        {state.loading ? (
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin" />
+            <span className="ml-2">Loading students...</span>
+          </div>
+        ) : state.students.length > 0 ? (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-lg font-semibold">
+                Students ({state.totalCount > 0 ? `${(state.currentPage - 1) * state.pageSize + 1}-${Math.min(state.currentPage * state.pageSize, state.totalCount)} of ${state.totalCount}` : state.students.length})
+              </h2>
             </div>
-          ))}
-        </div>
-        {state.loading && (
-          <div className={`text-center py-8 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-            Loading low attendance data...
+            <div className="border rounded-lg overflow-hidden">
+              <VirtualizedSectionTable
+                students={state.students}
+                theme={theme}
+                notifyingStudents={state.notifyingStudents}
+                notifiedStudents={state.notifiedStudents}
+                onNotifyStudent={notifyStudent}
+              />
+            </div>
+            
+            {/* Pagination Controls */}
+            {state.totalCount > state.pageSize && (
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                  Showing {state.students.length} of {state.totalCount} students
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToPreviousPage}
+                    disabled={!state.previous || state.loading}
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    Previous
+                  </Button>
+                  
+                  <div className="flex items-center space-x-1">
+                    {Array.from(
+                      { length: Math.min(5, Math.ceil(state.totalCount / state.pageSize)) },
+                      (_, i) => {
+                        const pageNum = Math.max(1, state.currentPage - 2) + i;
+                        if (pageNum > Math.ceil(state.totalCount / state.pageSize)) return null;
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={pageNum === state.currentPage ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => goToPage(pageNum)}
+                            disabled={state.loading}
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      }
+                    )}
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={goToNextPage}
+                    disabled={!state.next || state.loading}
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-
-        {!state.loading && Object.keys(groupedStudents).length === 0 && (
-          <div className={`text-center py-8 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-            No low attendance students found.
+        ) : state.selectedSemester && state.selectedSection ? (
+          <div className="text-center py-12 text-muted-foreground">
+            No students with low attendance found for the selected semester and section.
+          </div>
+        ) : (
+          <div className="text-center py-12 text-muted-foreground">
+            Please select a semester and section to view students with low attendance.
           </div>
         )}
       </div>

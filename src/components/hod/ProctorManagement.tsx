@@ -3,9 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { FileDown,Loader2 } from "lucide-react";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
+import { Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { getProctors, manageStudents, assignProctorsBulk, getSemesters, manageSections, manageProfile, getProctorBootstrap } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
@@ -44,9 +42,12 @@ const ProctorStudents = () => {
     students: [] as Student[],
     proctors: [] as Proctor[],
     semesters: [] as Semester[],
-    sections: [] as Section[],
+    sections: [] as Semester[],
     search: "",
     currentPage: 1,
+    totalCount: 0,
+    totalAssigned: 0,
+    totalUnassigned: 0,
     editMode: false,
     selectedUSNs: [] as string[],
     selectedProctor: "",
@@ -69,74 +70,30 @@ const ProctorStudents = () => {
     setState((prev) => ({ ...prev, ...newState }));
   };
 
-  // Fetch all data using combined endpoint
+  // Load metadata (semesters, sections, proctors) once
   useEffect(() => {
-    const fetchData = async () => {
-      updateState({ loading: true, error: null });
+    const loadMetadata = async () => {
       try {
-        let allStudents: any[] = [];
-        let page = 1;
-        let hasNextPage = true;
-        let lastData: any = null;
+        const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/proctor-bootstrap/?include=profile,semesters,sections,proctors`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
 
-        // Fetch all pages of students
-        while (hasNextPage) {
-          const params = new URLSearchParams({ page: page.toString(), page_size: '50' });
-          const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/proctor-bootstrap/?${params}`, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-          });
+        const data = await response.json();
 
-          const data = await response.json();
-
-          if (!data.success || !data.data) {
-            throw new Error(data.message || "Failed to fetch data");
-          }
-
-          // Set branch ID and name from profile (only on first page)
-          if (page === 1) {
-            updateState({
-              branchId: data.data.profile.branch_id,
-              branchName: data.data.profile.branch,
-            });
-          }
-
-          // Accumulate students from this page
-          const pageStudents = data.data.students.map((s: any) => ({
-            usn: s.usn,
-            name: s.name,
-            semester: s.semester ? `${s.semester}th Semester` : "N/A",
-            branch: data.data.profile.branch,
-            section: s.section || "N/A",
-            proctor: s.proctor,
-          }));
-
-          allStudents = [...allStudents, ...pageStudents];
-
-          // Store the last response data for non-paginated items
-          lastData = data.data;
-
-          // Check if there's a next page
-          hasNextPage = data.next !== null;
-          page += 1;
+        if (!data.success || !data.data) {
+          throw new Error(data.message || "Failed to fetch metadata");
         }
 
-        // Process proctors data (from last response)
-        const proctors = lastData.proctors.map((f: any) => ({
-          id: f.id,
-          name: f.name,
-        }));
-
-        // Set all data at once
         updateState({
-          students: allStudents,
-          proctors,
-          semesters: lastData.semesters,
-          sections: lastData.sections,
-          filters: {
-            semester_id: "all",
-            section_id: "all",
-          },
+          branchId: data.data.profile.branch_id,
+          branchName: data.data.profile.branch,
+          semesters: data.data.semesters,
+          sections: data.data.sections,
+          proctors: data.data.proctors.map((f: any) => ({
+            id: f.id,
+            name: f.name,
+          })),
         });
       } catch (error) {
         const errorMessage = (error as Error).message || "Network error";
@@ -146,12 +103,82 @@ const ProctorStudents = () => {
           title: "Error",
           description: errorMessage,
         });
-      } finally {
-        updateState({ loading: false });
       }
     };
-    fetchData();
+    loadMetadata();
   }, [toast]);
+
+  // Separate function to load students
+  const loadStudents = async (searchTerm?: string) => {
+    updateState({ loading: true, error: null });
+    try {
+      const params = new URLSearchParams({
+        include: "students",
+        page: state.currentPage.toString(),
+        page_size: studentsPerPage.toString(),
+      });
+
+      if (state.filters.semester_id !== "all") {
+        params.append("semester_id", state.filters.semester_id);
+      }
+
+      if (state.filters.section_id !== "all") {
+        params.append("section_id", state.filters.section_id);
+      }
+
+      const searchValue = searchTerm !== undefined ? searchTerm : state.search;
+      if (searchValue.trim()) {
+        params.append("search", searchValue.trim());
+      }
+
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/proctor-bootstrap/?${params}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = await response.json();
+
+      if (!data.success || !data.data) {
+        throw new Error(data.message || "Failed to fetch students");
+      }
+
+      // Process students data
+      const students = data.data.students.map((s: any) => ({
+        usn: s.usn,
+        name: s.name,
+        semester: s.semester ? `${s.semester}th Semester` : "N/A",
+        branch: state.branchName,
+        section: s.section || "N/A",
+        proctor: s.proctor,
+      }));
+
+      updateState({
+        students,
+        totalCount: data.count,
+        totalAssigned: data.total_assigned || 0,
+        totalUnassigned: data.total_unassigned || 0,
+        totalPages: Math.ceil(data.count / studentsPerPage),
+      });
+    } catch (error) {
+      const errorMessage = (error as Error).message || "Network error";
+      updateState({ error: errorMessage });
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: errorMessage,
+      });
+    } finally {
+      updateState({ loading: false });
+    }
+  };
+
+  // Load students with filters and pagination (but not on every search keystroke)
+  useEffect(() => {
+    // Only load students if we have metadata loaded
+    if (state.branchId && state.semesters.length > 0) {
+      loadStudents();
+    }
+  }, [toast, state.currentPage, state.filters.semester_id, state.filters.section_id, state.branchId, state.branchName, state.semesters.length]);
 
   const handleFilterChange = (field: string, value: string) => {
     updateState({
@@ -162,6 +189,14 @@ const ProctorStudents = () => {
       },
       currentPage: 1,
     });
+  };
+
+  const handleSearch = () => {
+    // Trigger search with current search term
+    updateState({ currentPage: 1 });
+    if (state.branchId && state.semesters.length > 0) {
+      loadStudents(state.search);
+    }
   };
 
   const handleCheckboxToggle = (usn: string) => {
@@ -280,50 +315,11 @@ const ProctorStudents = () => {
     }
   };
 
-  const filteredStudents = state.students.filter((student) => {
-    const matchesSearch =
-      state.search === "" ||
-      student.name.toLowerCase().includes(state.search.toLowerCase()) ||
-      student.usn.toLowerCase().includes(state.search.toLowerCase());
-
-    const studentSemesterId = state.semesters.find((sem) => sem.number === parseInt(student.semester))?.id || "";
-    const matchesSemester = state.filters.semester_id === "all" || studentSemesterId === state.filters.semester_id;
-    const matchesSection = state.filters.section_id === "all" || student.section === state.sections.find((s) => s.id === state.filters.section_id)?.name;
-    return matchesSearch && matchesSemester && matchesSection;
-  });
-
-  const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
-  const currentStudents = filteredStudents.slice(
-    (state.currentPage - 1) * studentsPerPage,
-    state.currentPage * studentsPerPage
-  );
-  const total = filteredStudents.length;
-  const assigned = filteredStudents.filter((s) => s.proctor).length;
-  const unassigned = total - assigned;
-
-  const handleExportPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text(`Student Proctor Assignment - ${state.branchName.toUpperCase()}`, 14, 16);
-    const tableColumn = ["USN", "Name", "Semester", "Section", "Proctor"];
-    const tableRows = filteredStudents.map((student) => [
-      student.usn,
-      student.name,
-      student.semester,
-      student.section,
-      student.proctor || "Not assigned",
-    ]);
-
-    autoTable(doc, {
-      head: [tableColumn],
-      body: tableRows,
-      startY: 20,
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0] },
-    });
-
-    doc.save(`proctor-assignment-${state.branchName}.pdf`);
-  };
+  // Since we're doing server-side filtering and pagination, 
+  // state.students already contains the filtered results for current page
+  const currentStudents = state.students;
+  const assigned = state.totalAssigned;
+  const unassigned = state.totalUnassigned;
 
   if (state.loading && !state.students.length) {
     return <div className={`text-center py-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading...</div>;
@@ -336,7 +332,7 @@ const ProctorStudents = () => {
   return (
     <div className={`min-h-screen p-6 space-y-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <div className="grid grid-cols-3 gap-4 ">
-        <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}><CardHeader><CardTitle>Total Students</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{total}</CardContent></Card>
+        <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}><CardHeader><CardTitle>Total Students</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{state.totalCount}</CardContent></Card>
         <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}><CardHeader><CardTitle className={theme === 'dark' ? 'text-green-400' : 'text-green-600'}>Assigned</CardTitle></CardHeader><CardContent className={`text-2xl font-bold ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{assigned}</CardContent></Card>
         <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}><CardHeader><CardTitle className={theme === 'dark' ? 'text-red-400' : 'text-red-600'}>Unassigned</CardTitle></CardHeader><CardContent className={`text-2xl font-bold ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{unassigned}</CardContent></Card>
       </div>
@@ -344,13 +340,6 @@ const ProctorStudents = () => {
       <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
         <CardHeader><CardTitle>Student-Proctor Management</CardTitle></CardHeader>
         <CardContent className="flex items-center gap-4">
-          <Input
-            placeholder="Search by name or USN"
-            className={theme === 'dark' ? 'w-64 bg-background text-foreground border-border' : 'w-64 bg-white text-gray-900 border-gray-300'}
-            value={state.search}
-            onChange={(e) => updateState({ search: e.target.value })}
-            disabled={state.loading}
-          />
           <div className="flex-1" />
           {state.editMode && (
             <Select onValueChange={(value) => updateState({ selectedProctor: value })} disabled={state.proctors.length === 0}>
@@ -364,13 +353,6 @@ const ProctorStudents = () => {
               </SelectContent>
             </Select>
           )}
-          <Button
-            onClick={() => updateState({ editMode: true })}
-            className={`min-w-fit text-sm font-medium px-4 py-2 rounded-md transition-all duration-200 ease-in-out transform hover:scale-105 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}
-            disabled={state.loading || state.editMode} // disable when already editing
-          >
-            Edit Proctors
-          </Button>
 
           {state.editMode && (
             <div className="flex gap-2">
@@ -398,25 +380,38 @@ const ProctorStudents = () => {
               </Button>
             </div>
           )}
-
-
-          <Button
-            variant="outline"
-            className={`min-w-fit text-sm font-medium px-4 py-2 rounded-md flex items-center gap-2 transition-all duration-200 ease-in-out transform hover:scale-105 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}
-            onClick={handleExportPDF}
-            disabled={state.loading || filteredStudents.length === 0}
-          >
-            <FileDown size={16} />
-            Export to PDF
-          </Button>
         </CardContent>
       </Card>
 
       <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Proctor Assignment - {state.branchName.toUpperCase()}</CardTitle>
+          <Button
+            onClick={() => updateState({ editMode: true })}
+            className={`min-w-fit text-sm font-medium px-4 py-2 rounded-md transition-all duration-200 ease-in-out transform hover:scale-105 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}
+            disabled={state.loading || state.editMode}
+          >
+            Edit Proctors
+          </Button>
         </CardHeader>
         <CardContent>
+          <div className="flex justify-between items-center mb-4">
+            {/* Left side: Search input and button */}
+            <div className="flex gap-2">
+              <Input
+                placeholder="Search students..."
+                className={`w-64 ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'}`}
+                value={state.search}
+                onChange={(e) => updateState({ search: e.target.value })}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                disabled={state.loading}
+              />
+              <Button onClick={handleSearch} variant="outline" disabled={state.loading}>
+                Search
+              </Button>
+            </div>
+            <div className="flex-1" />
+          </div>
           <div className="grid grid-cols-4 gap-4 mb-4">
             <Select
               value={state.filters.semester_id}
@@ -508,8 +503,8 @@ const ProctorStudents = () => {
 
           <div className="flex justify-between items-center mt-4">
             <div className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-              Showing {Math.min((state.currentPage - 1) * studentsPerPage + 1, total)} to{" "}
-              {Math.min(state.currentPage * studentsPerPage, total)} of {total}
+              Showing {Math.min((state.currentPage - 1) * studentsPerPage + 1, state.totalCount)} to{" "}
+              {Math.min(state.currentPage * studentsPerPage, state.totalCount)} of {state.totalCount}
             </div>
             <div className="flex space-x-2 items-center">
               <Button
@@ -523,8 +518,8 @@ const ProctorStudents = () => {
               <span className={`px-4 text-lg font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{state.currentPage}</span>
               <Button
                 variant="outline"
-                disabled={state.currentPage === totalPages || state.loading}
-                onClick={() => updateState({ currentPage: Math.min(state.currentPage + 1, totalPages) })}
+                disabled={state.currentPage === state.totalPages || state.loading}
+                onClick={() => updateState({ currentPage: Math.min(state.currentPage + 1, state.totalPages) })}
                 className={`text-sm font-medium px-4 py-2 rounded-md bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}
               >
                 Next

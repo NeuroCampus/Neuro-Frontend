@@ -1156,6 +1156,50 @@ export const getLowAttendanceBootstrap = async (
   }
 };
 
+export const getLowAttendanceStudents = async (
+  branch_id?: string,
+  filters: { semester_id?: string; section_id?: string; subject_id?: string; threshold?: number; page?: number; page_size?: number } = {}
+): Promise<{
+  success: boolean;
+  message?: string;
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
+  data?: {
+    students: Array<{
+      student_id: string;
+      usn: string;
+      name: string;
+      attendance_percentage: number;
+      total_sessions: number;
+      present_sessions: number;
+      semester: number | null;
+      section: string | null;
+      batch: string | null;
+      subject: string;
+    }>;
+  };
+}> => {
+  try {
+    const params: Record<string, string> = {};
+    if (branch_id) params.branch_id = branch_id;
+    if (filters.semester_id) params.semester_id = filters.semester_id;
+    if (filters.section_id) params.section_id = filters.section_id;
+    if (filters.subject_id) params.subject_id = filters.subject_id;
+    if (filters.threshold) params.threshold = filters.threshold.toString();
+    if (filters.page) params.page = filters.page.toString();
+    if (filters.page_size) params.page_size = filters.page_size.toString();
+    const query = new URLSearchParams(params).toString();
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/low-attendance-students/${query ? '?' + query : ''}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
+
 export const getAttendanceBootstrap = async (
   branch_id?: string,
   filters: { semester_id?: string; section_id?: string; subject_id?: string; page?: number; page_size?: number } = {}
