@@ -245,8 +245,6 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
     branchId: "",
     notifyingStudents: {} as Record<string, boolean>,
     notifiedStudents: {} as Record<string, boolean>,
-    isNotifyingAll: false,
-    hasNotifiedAll: false,
     // Pagination state
     currentPage: 1,
     totalCount: 0,
@@ -366,7 +364,6 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
         updateState({
           students: studentsData,
           loading: false,
-          hasNotifiedAll: false,
           notifiedStudents: {},
           totalCount: studentsResponse.count || 0,
           next: studentsResponse.next,
@@ -479,44 +476,6 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
     doc.save("low-attendance-report.pdf");
   };
 
-  const notifyAll = async () => {
-    try {
-      updateState({ isNotifyingAll: true });
-
-      const studentIds = state.students.map((student) => student.student_id);
-
-      const response = await sendNotification({
-        action: "notify_all",
-        title: "Low Attendance Warning",
-        message: "Your attendance is below the required threshold. Please improve.",
-        target: "student",
-        branch_id: state.branchId,
-      });
-
-      if (response.success) {
-        toast({
-          title: "Success",
-          description: `Notified ${studentIds.length} students!`,
-        });
-
-        updateState({
-          hasNotifiedAll: true,
-          notifiedStudents: studentIds.reduce(
-            (acc, id) => ({ ...acc, [id]: true }),
-            state.notifiedStudents
-          ),
-        });
-      } else {
-        throw new Error(response.message || "Failed to send notifications");
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Network error";
-      toast({ variant: "destructive", title: "Error", description: errorMessage });
-    } finally {
-      updateState({ isNotifyingAll: false });
-    }
-  };
-
   const notifyStudent = async (student: Student) => {
     try {
       updateState({
@@ -575,7 +534,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
 
   return (
     <ErrorBoundary>
-      <div className="space-y-6">
+      <div className="pt-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -590,19 +549,6 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
             >
               <FileDown className="w-4 h-4" />
               Export PDF
-            </Button>
-            <Button
-              onClick={notifyAll}
-              disabled={state.loading || state.students.length === 0 || state.isNotifyingAll || state.hasNotifiedAll}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              {state.isNotifyingAll ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <CheckCircle className="w-4 h-4" />
-              )}
-              {state.hasNotifiedAll ? "All Notified" : "Notify All"}
             </Button>
           </div>
         </div>

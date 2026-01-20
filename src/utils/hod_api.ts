@@ -2313,6 +2313,16 @@ export interface GetFacultyAttendanceTodayResponse {
     absent: number;
     not_marked: number;
   };
+  pagination?: {
+    page: number;
+    page_size: number;
+    total_pages: number;
+    total_items: number;
+    has_next: boolean;
+    has_prev: boolean;
+    next_page: number | null;
+    prev_page: number | null;
+  };
 }
 
 export interface FacultyAttendanceRecord {
@@ -2336,11 +2346,30 @@ export interface GetFacultyAttendanceRecordsResponse {
     absent_days: number;
     attendance_percentage: number;
   }>;
+  pagination?: {
+    page: number;
+    page_size: number;
+    total_pages: number;
+    total_items: number;
+    has_next: boolean;
+    has_prev: boolean;
+    next_page: number | null;
+    prev_page: number | null;
+  };
 }
 
-export const getFacultyAttendanceToday = async (): Promise<GetFacultyAttendanceTodayResponse> => {
+export const getFacultyAttendanceToday = async (params?: {
+  page?: number;
+  page_size?: number;
+}): Promise<GetFacultyAttendanceTodayResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/faculty-attendance-today/`, {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.page_size) queryParams.append("page_size", params.page_size.toString());
+
+    const url = `${API_ENDPOINT}/hod/faculty-attendance-today/${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+
+    const response = await fetchWithTokenRefresh(url, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -2357,12 +2386,16 @@ export const getFacultyAttendanceRecords = async (params?: {
   start_date?: string;
   end_date?: string;
   faculty_id?: string;
+  page?: number;
+  page_size?: number;
 }): Promise<GetFacultyAttendanceRecordsResponse> => {
   try {
     const queryParams = new URLSearchParams();
     if (params?.start_date) queryParams.append("start_date", params.start_date);
     if (params?.end_date) queryParams.append("end_date", params.end_date);
     if (params?.faculty_id) queryParams.append("faculty_id", params.faculty_id);
+    if (params?.page) queryParams.append("page", params.page.toString());
+    if (params?.page_size) queryParams.append("page_size", params.page_size.toString());
 
     const url = `${API_ENDPOINT}/hod/faculty-attendance-records/${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
 

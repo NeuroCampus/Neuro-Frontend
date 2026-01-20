@@ -41,38 +41,136 @@ const FacultyAttendanceView: React.FC = () => {
     start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days ago
     end_date: new Date().toISOString().split('T')[0] // today
   });
+  const [todayPagination, setTodayPagination] = useState({
+    page: 1,
+    page_size: 50,
+    total_pages: 1,
+    total_items: 0,
+    has_next: false,
+    has_prev: false,
+    next_page: null as number | null,
+    prev_page: null as number | null
+  });
+  const [recordsPagination, setRecordsPagination] = useState({
+    page: 1,
+    page_size: 50,
+    total_pages: 1,
+    total_items: 0,
+    has_next: false,
+    has_prev: false,
+    next_page: null as number | null,
+    prev_page: null as number | null
+  });
+  const [todaySummary, setTodaySummary] = useState({
+    total_faculty: 0,
+    present: 0,
+    absent: 0,
+    not_marked: 0
+  });
   const { theme } = useTheme();
 
-  const fetchTodayAttendance = async () => {
+  const fetchTodayAttendance = async (page: number = 1, pageSize: number = 50) => {
     setIsLoading(true);
     try {
-      const response = await getFacultyAttendanceToday();
+      const response = await getFacultyAttendanceToday({ page, page_size: pageSize });
       if (response.success && response.data) {
         setTodayAttendance(response.data);
+        if (response.pagination) {
+          setTodayPagination(response.pagination);
+        }
+        if (response.summary) {
+          setTodaySummary(response.summary);
+        }
       } else {
         console.error("Failed to fetch today's faculty attendance:", response.message);
+        // Reset pagination and summary on error
+        setTodayPagination({
+          page: 1,
+          page_size: pageSize,
+          total_pages: 1,
+          total_items: 0,
+          has_next: false,
+          has_prev: false,
+          next_page: null,
+          prev_page: null
+        });
+        setTodaySummary({
+          total_faculty: 0,
+          present: 0,
+          absent: 0,
+          not_marked: 0
+        });
       }
     } catch (error) {
       console.error("Error fetching today's faculty attendance:", error);
       Swal.fire("Error", "Failed to load today's attendance data", "error");
+      // Reset state on error
+      setTodayAttendance([]);
+      setTodayPagination({
+        page: 1,
+        page_size: pageSize,
+        total_pages: 1,
+        total_items: 0,
+        has_next: false,
+        has_prev: false,
+        next_page: null,
+        prev_page: null
+      });
+      setTodaySummary({
+        total_faculty: 0,
+        present: 0,
+        absent: 0,
+        not_marked: 0
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchAttendanceRecords = async () => {
+  const fetchAttendanceRecords = async (page: number = 1, pageSize: number = 50) => {
     setIsLoading(true);
     try {
-      const response = await getFacultyAttendanceRecords(dateRange);
+      const response = await getFacultyAttendanceRecords({
+        ...dateRange,
+        page,
+        page_size: pageSize
+      });
       if (response.success) {
         setAttendanceRecords(response.data || []);
         setFacultySummary(response.faculty_summary || []);
+        if (response.pagination) {
+          setRecordsPagination(response.pagination);
+        }
       } else {
         console.error("Failed to fetch faculty attendance records:", response.message);
+        // Reset pagination on error
+        setRecordsPagination({
+          page: 1,
+          page_size: pageSize,
+          total_pages: 1,
+          total_items: 0,
+          has_next: false,
+          has_prev: false,
+          next_page: null,
+          prev_page: null
+        });
       }
     } catch (error) {
       console.error("Error fetching faculty attendance records:", error);
       Swal.fire("Error", "Failed to load attendance records", "error");
+      // Reset state on error
+      setAttendanceRecords([]);
+      setFacultySummary([]);
+      setRecordsPagination({
+        page: 1,
+        page_size: pageSize,
+        total_pages: 1,
+        total_items: 0,
+        has_next: false,
+        has_prev: false,
+        next_page: null,
+        prev_page: null
+      });
     } finally {
       setIsLoading(false);
     }
@@ -80,11 +178,11 @@ const FacultyAttendanceView: React.FC = () => {
 
   useEffect(() => {
     if (activeTab === 'today') {
-      fetchTodayAttendance();
-    } else {
-      fetchAttendanceRecords();
+      fetchTodayAttendance(todayPagination.page, todayPagination.page_size);
+    } else if (activeTab === 'records') {
+      fetchAttendanceRecords(recordsPagination.page, recordsPagination.page_size);
     }
-  }, [activeTab, dateRange]);
+  }, [activeTab, dateRange, todayPagination.page, todayPagination.page_size, recordsPagination.page, recordsPagination.page_size]);
 
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
@@ -147,41 +245,71 @@ const FacultyAttendanceView: React.FC = () => {
     }
   };
 
-  const exportToCSV = () => {
-    if (attendanceRecords.length === 0) {
+  const exportToCSV = async () => {
+    if (todayPagination.total_items === 0) {
       Swal.fire("No Data", "No attendance records to export", "info");
       return;
     }
 
-    const headers = ['Faculty Name', 'Date', 'Status', 'Marked At', 'Notes'];
-    const csvData = attendanceRecords.map(record => [
-      record.faculty_name,
-      formatDate(record.date),
-      record.status,
-      record.marked_at ? formatTime(record.marked_at) : 'Not marked',
-      record.notes || ''
-    ]);
+    try {
+      setIsLoading(true);
 
-    const csvContent = [headers, ...csvData]
-      .map(row => row.map(field => `"${field}"`).join(','))
-      .join('\n');
+      // If we have paginated data and there are more records, load all data for export
+      let exportData = todayAttendance;
+      if (todayPagination.total_items > todayPagination.page_size) {
+        const response = await getFacultyAttendanceToday({ page: 1, page_size: 1000 });
+        if (response.success && response.data) {
+          exportData = response.data;
+        }
+      }
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `faculty_attendance_${dateRange.start_date}_to_${dateRange.end_date}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const headers = ['Faculty Name', 'Faculty ID', 'Status', 'Marked At', 'Notes'];
+      const csvData = exportData.map(record => [
+        record.faculty_name,
+        record.faculty_id,
+        record.status,
+        record.marked_at ? formatTime(record.marked_at) : 'Not marked',
+        record.notes || ''
+      ]);
+
+      const csvContent = [headers, ...csvData]
+        .map(row => row.map(field => `"${field}"`).join(','))
+        .join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `faculty_attendance_today_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      Swal.fire("Success", "Attendance data exported successfully", "success");
+    } catch (error) {
+      console.error("Export error:", error);
+      Swal.fire("Error", "Failed to export attendance data", "error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const todayStats = {
-    total: todayAttendance.length,
-    present: todayAttendance.filter(a => a.status.toLowerCase() === 'present').length,
-    absent: todayAttendance.filter(a => a.status.toLowerCase() === 'absent').length,
-    notMarked: todayAttendance.filter(a => a.status.toLowerCase() === 'not_marked').length
+  const handlePageChange = (newPage: number) => {
+    setTodayPagination(prev => ({ ...prev, page: newPage }));
+  };
+
+  const handleRecordsPageChange = (newPage: number) => {
+    setRecordsPagination(prev => ({ ...prev, page: newPage }));
+  };
+
+  const handleRecordsPageSizeChange = (newPageSize: number) => {
+    setRecordsPagination(prev => ({ ...prev, page_size: newPageSize, page: 1 })); // Reset to page 1 when changing page size
+  };
+
+  const loadAllData = async () => {
+    // Load all data by setting a large page size
+    await fetchTodayAttendance(1, 1000); // Load up to 1000 records
   };
 
   return (
@@ -190,10 +318,11 @@ const FacultyAttendanceView: React.FC = () => {
         <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
           Faculty Attendance Management
         </h1>
-        {activeTab === 'records' && (
+        {(activeTab === 'records' || (activeTab === 'today' && todayPagination.total_items > 0)) && (
           <button
             onClick={exportToCSV}
-            className="flex items-center gap-2 px-4 py-2 bg-[#a259ff] text-white rounded-lg hover:bg-[#8a4dde] transition-colors"
+            disabled={isLoading}
+            className="flex items-center gap-2 px-4 py-2 bg-[#a259ff] text-white rounded-lg hover:bg-[#8a4dde] transition-colors disabled:opacity-50"
           >
             <Download className="w-4 h-4" />
             Export CSV
@@ -235,7 +364,7 @@ const FacultyAttendanceView: React.FC = () => {
         </div>
       )}
 
-      {activeTab === 'today' && !isLoading && (
+      {activeTab === 'today' && !isLoading && todaySummary.total_faculty > 0 && (
         <>
           {/* Today's Stats Cards */}
           <div className={`grid grid-cols-1 md:grid-cols-4 gap-4 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
@@ -243,7 +372,7 @@ const FacultyAttendanceView: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Total Faculty</p>
-                  <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{todayStats.total}</p>
+                  <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{todaySummary.total_faculty}</p>
                 </div>
                 <Users className="w-8 h-8 text-blue-600" />
               </div>
@@ -252,7 +381,7 @@ const FacultyAttendanceView: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Present</p>
-                  <p className={`text-2xl font-bold text-green-600`}>{todayStats.present}</p>
+                  <p className={`text-2xl font-bold text-green-600`}>{todaySummary.present}</p>
                 </div>
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
@@ -261,7 +390,7 @@ const FacultyAttendanceView: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Absent</p>
-                  <p className={`text-2xl font-bold text-red-600`}>{todayStats.absent}</p>
+                  <p className={`text-2xl font-bold text-red-600`}>{todaySummary.absent}</p>
                 </div>
                 <XCircle className="w-8 h-8 text-red-600" />
               </div>
@@ -270,10 +399,102 @@ const FacultyAttendanceView: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Not Marked</p>
-                  <p className={`text-2xl font-bold text-gray-600`}>{todayStats.notMarked}</p>
+                  <p className={`text-2xl font-bold text-gray-600`}>{todaySummary.not_marked}</p>
                 </div>
                 <Clock className="w-8 h-8 text-gray-600" />
               </div>
+            </div>
+          </div>
+
+          {/* Pagination Controls */}
+          <div className={`flex flex-col sm:flex-row justify-between items-center gap-4 p-4 ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} rounded-lg`}>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <label className={`text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
+                  Show:
+                </label>
+                <select
+                  value={todayPagination.page_size}
+                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                  className={`px-3 py-1 border rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    theme === 'dark'
+                      ? 'bg-background border-border text-foreground'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                >
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+                <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                  per page
+                </span>
+              </div>
+              <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                Showing {todayAttendance.length > 0 ? ((todayPagination.page - 1) * todayPagination.page_size) + 1 : 0} to{' '}
+                {Math.min(todayPagination.page * todayPagination.page_size, todayPagination.total_items)} of{' '}
+                {todayPagination.total_items} faculty
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {todayPagination.total_items > todayPagination.page_size && (
+                <button
+                  onClick={loadAllData}
+                  disabled={isLoading}
+                  className={`px-3 py-1 text-sm border border-green-500 text-green-600 rounded-md hover:bg-green-50 transition-colors disabled:opacity-50 ${
+                    theme === 'dark' ? 'hover:bg-accent' : ''
+                  }`}
+                >
+                  {isLoading ? 'Loading...' : 'Load All'}
+                </button>
+              )}
+
+              <button
+                onClick={() => handlePageChange(todayPagination.page - 1)}
+                disabled={!todayPagination.has_prev || isLoading}
+                className={`px-3 py-1 text-sm border rounded-md transition-colors ${
+                  todayPagination.has_prev && !isLoading
+                    ? 'border-blue-500 text-blue-600 hover:bg-blue-50 disabled:opacity-50'
+                    : 'border-gray-300 text-gray-400 cursor-not-allowed'
+                } ${theme === 'dark' ? 'hover:bg-accent' : ''}`}
+              >
+                Previous
+              </button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, todayPagination.total_pages) }, (_, i) => {
+                  const pageNum = Math.max(1, Math.min(todayPagination.total_pages - 4, todayPagination.page - 2)) + i;
+                  if (pageNum > todayPagination.total_pages) return null;
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      disabled={isLoading}
+                      className={`px-3 py-1 text-sm border rounded-md transition-colors disabled:opacity-50 ${
+                        pageNum === todayPagination.page
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : `border-gray-300 text-gray-700 hover:bg-gray-50 ${theme === 'dark' ? 'hover:bg-accent' : ''}`
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => handlePageChange(todayPagination.page + 1)}
+                disabled={!todayPagination.has_next || isLoading}
+                className={`px-3 py-1 text-sm border rounded-md transition-colors ${
+                  todayPagination.has_next && !isLoading
+                    ? 'border-blue-500 text-blue-600 hover:bg-blue-50'
+                    : 'border-gray-300 text-gray-400 cursor-not-allowed'
+                } ${theme === 'dark' ? 'hover:bg-accent' : ''}`}
+              >
+                Next
+              </button>
             </div>
           </div>
 
@@ -468,6 +689,88 @@ const FacultyAttendanceView: React.FC = () => {
               </table>
             </div>
           </div>
+
+          {/* Records Pagination Controls */}
+          {recordsPagination.total_items > recordsPagination.page_size && (
+            <div className={`flex flex-col sm:flex-row justify-between items-center gap-4 p-4 ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} rounded-lg mt-4`}>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <label className={`text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
+                    Show:
+                  </label>
+                  <select
+                    value={recordsPagination.page_size}
+                    onChange={(e) => handleRecordsPageSizeChange(Number(e.target.value))}
+                    className={`px-3 py-1 border rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      theme === 'dark'
+                        ? 'bg-background border-border text-foreground'
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  >
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                  <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                    per page
+                  </span>
+                </div>
+                <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                  Showing {attendanceRecords.length > 0 ? ((recordsPagination.page - 1) * recordsPagination.page_size) + 1 : 0} to{' '}
+                  {Math.min(recordsPagination.page * recordsPagination.page_size, recordsPagination.total_items)} of{' '}
+                  {recordsPagination.total_items} records
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleRecordsPageChange(recordsPagination.page - 1)}
+                  disabled={!recordsPagination.has_prev || isLoading}
+                  className={`px-3 py-1 text-sm border rounded-md transition-colors ${
+                    recordsPagination.has_prev && !isLoading
+                      ? 'border-blue-500 text-blue-600 hover:bg-blue-50 disabled:opacity-50'
+                      : 'border-gray-300 text-gray-400 cursor-not-allowed'
+                  } ${theme === 'dark' ? 'hover:bg-accent' : ''}`}
+                >
+                  Previous
+                </button>
+
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, recordsPagination.total_pages) }, (_, i) => {
+                    const pageNum = Math.max(1, Math.min(recordsPagination.total_pages - 4, recordsPagination.page - 2)) + i;
+                    if (pageNum > recordsPagination.total_pages) return null;
+
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handleRecordsPageChange(pageNum)}
+                        disabled={isLoading}
+                        className={`px-3 py-1 text-sm border rounded-md transition-colors disabled:opacity-50 ${
+                          pageNum === recordsPagination.page
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : `border-gray-300 text-gray-700 hover:bg-gray-50 ${theme === 'dark' ? 'hover:bg-accent' : ''}`
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  onClick={() => handleRecordsPageChange(recordsPagination.page + 1)}
+                  disabled={!recordsPagination.has_next || isLoading}
+                  className={`px-3 py-1 text-sm border rounded-md transition-colors ${
+                    recordsPagination.has_next && !isLoading
+                      ? 'border-blue-500 text-blue-600 hover:bg-blue-50'
+                      : 'border-gray-300 text-gray-400 cursor-not-allowed'
+                  } ${theme === 'dark' ? 'hover:bg-accent' : ''}`}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
