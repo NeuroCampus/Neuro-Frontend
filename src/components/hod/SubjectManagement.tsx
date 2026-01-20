@@ -58,6 +58,8 @@ interface SubjectManagementState {
   branchId: string;
   currentPage: number;
   pageSize: number;
+  totalCount: number;
+  totalPages: number;
   modalError: string | null;
 }
 
@@ -76,10 +78,12 @@ const SubjectManagement = () => {
     branchId: "",
     currentPage: 1,
     pageSize: 10,
+    totalCount: 0,
+    totalPages: 0,
     modalError: null,
   });
 
-  const totalPages = Math.ceil(state.subjects.length / state.pageSize);
+  const totalPages = state.totalPages;
 
   // Helper to update state
   const updateState = (newState: Partial<SubjectManagementState>) => {
@@ -96,11 +100,9 @@ const SubjectManagement = () => {
     }
   }, [state.error, state.success]);
 
-  // Fetch branch ID, semesters, and subjects
-  const fetchData = async () => {
-    updateState({ loading: true });
+  // Fetch branch ID and semesters (one-time bootstrap)
+  const fetchBootstrap = async () => {
     try {
-      // Bootstrap in one call
       const boot = await getHODSubjectBootstrap();
       if (!boot.success || !boot.data?.profile?.branch_id) {
         throw new Error(boot.message || "Failed to bootstrap subject management");
@@ -112,7 +114,7 @@ const SubjectManagement = () => {
       const semestersRes = boot.data.semesters ? { success: true, data: boot.data.semesters } : await getSemesters(branchId);
 
       if (semestersRes.success) {
-        console.log("Semesters fetched:", semestersRes.data); // Debug semesters
+        console.log("Semesters fetched:", semestersRes.data);
         updateState({ semesters: semestersRes.data || [] });
         if (!semestersRes.data?.length) {
           updateState({ error: "No semesters found for this branch" });
@@ -121,28 +123,68 @@ const SubjectManagement = () => {
         updateState({ error: semestersRes.message || "Failed to fetch semesters" });
       }
 
-      // Subjects
-      if (boot.data.subjects) {
-        console.log("Subjects fetched:", boot.data.subjects);
-        updateState({ subjects: boot.data.subjects || [] });
+      return branchId;
+    } catch (err) {
+      if (isErrorWithMessage(err)) {
+        updateState({ error: err.message || "Failed to fetch bootstrap data" });
       } else {
-        const subjectsRes = await manageSubjects({ branch_id: branchId }, "GET");
-        if (subjectsRes.success) updateState({ subjects: subjectsRes.data || [] }); else updateState({ error: subjectsRes.message || "Failed to fetch subjects" });
+        updateState({ error: "Failed to fetch bootstrap data" });
+      }
+      return null;
+    }
+  };
+
+  // Fetch subjects with pagination
+  const fetchSubjects = async (branchId: string, page: number = 1, pageSize: number = 10) => {
+    updateState({ loading: true });
+    try {
+      const subjectsRes = await manageSubjects({
+        branch_id: branchId,
+        page,
+        page_size: pageSize
+      }, "GET");
+
+      if (subjectsRes.success) {
+        console.log("Subjects fetched:", subjectsRes.data);
+        updateState({
+          subjects: subjectsRes.data || [],
+          totalCount: subjectsRes.count || 0,
+          totalPages: subjectsRes.total_pages || 0,
+          currentPage: subjectsRes.current_page || 1
+        });
+      } else {
+        updateState({ error: subjectsRes.message || "Failed to fetch subjects" });
       }
     } catch (err) {
       if (isErrorWithMessage(err)) {
-        updateState({ error: err.message || "Failed to fetch data" });
+        updateState({ error: err.message || "Failed to fetch subjects" });
       } else {
-        updateState({ error: "Failed to fetch data" });
+        updateState({ error: "Failed to fetch subjects" });
       }
     } finally {
       updateState({ loading: false });
     }
   };
 
+  // Initial bootstrap on mount
   useEffect(() => {
-    fetchData();
-  }, []);
+    const initialize = async () => {
+      updateState({ loading: true });
+      const branchId = await fetchBootstrap();
+      if (branchId) {
+        await fetchSubjects(branchId, state.currentPage, state.pageSize);
+      }
+      updateState({ loading: false });
+    };
+    initialize();
+  }, []); // Only run once on mount
+
+  // Fetch subjects when pagination changes (but not on initial mount)
+  useEffect(() => {
+    if (state.branchId) {
+      fetchSubjects(state.branchId, state.currentPage, state.pageSize);
+    }
+  }, [state.currentPage, state.pageSize]);
 
   // Handle adding or updating a subject
   const handleSubmit = async () => {
@@ -171,7 +213,7 @@ const SubjectManagement = () => {
           newSubject: { code: "", name: "", semester_id: "", subject_type: "regular" },
           currentSubject: null,
         });
-        fetchData(); // Refresh subjects
+        fetchSubjects(state.branchId, state.currentPage, state.pageSize); // Refresh subjects with current pagination
       } else {
         updateState({ error: response.message });
       }
@@ -217,7 +259,11 @@ const SubjectManagement = () => {
         const response = await manageSubjects(data, "POST");
         if (response.success) {
           updateState({ success: "Course deleted successfully" });
-          fetchData(); // Refresh subjects
+          // If we're on a page that becomes empty after deletion, go to previous page
+          const newTotalCount = state.totalCount - 1;
+          const newTotalPages = Math.ceil(newTotalCount / state.pageSize);
+          const newPage = state.currentPage > newTotalPages ? Math.max(1, newTotalPages) : state.currentPage;
+          fetchSubjects(state.branchId, newPage, state.pageSize);
         } else {
           updateState({ error: response.message });
         }
@@ -280,51 +326,31 @@ const SubjectManagement = () => {
                 </tr>
               </thead>
               <tbody className={theme === 'dark' ? 'bg-background' : 'bg-white'}>
-                {state.subjects
-                  .slice(
-                    (state.currentPage - 1) * state.pageSize,
-                    state.currentPage * state.pageSize
-                  )
-                  .map((subject, index) => (
-                    <tr
-                      key={subject.id}
-                      className={
-                        index % 2 === 0 ? (theme === 'dark' ? 'bg-card' : 'bg-gray-50') : (theme === 'dark' ? 'bg-background' : 'bg-white')
-                      }
-                    >
-                      <td className="px-4 py-3">{subject.subject_code}</td>
-                      <td className="px-4 py-3">{subject.name}</td>
-                      <td className="px-4 py-3">
-                        {getSemesterNumber(subject.semester_id)}
-                      </td>
-                      <td className="px-4 py-3">
-                        {subject.subject_type === 'regular' ? 'Regular' : subject.subject_type === 'elective' ? 'Elective Subjects' : 'Open Elective Subjects'}
-                      </td>
-                      <td className="px-4 py-3 flex gap-5">
-                        <Pencil
-                          className={`w-4 h-4 cursor-pointer ${theme === 'dark' ? 'text-primary hover:text-primary/80' : 'text-blue-600 hover:text-blue-800'}`}
-                          onClick={() => handleEdit(subject)}
-                        />
-                        <Trash2
-                          className={`w-4 h-4 cursor-pointer ${theme === 'dark' ? 'text-destructive hover:text-destructive/80' : 'text-red-600 hover:text-red-800'}`}
-                          onClick={() => handleDelete(subject.id)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-
-                {/* Keep layout consistent by filling empty rows */}
-                {Array.from({
-                  length:
-                    state.pageSize -
-                    Math.min(
-                      state.pageSize,
-                      state.subjects.length -
-                        (state.currentPage - 1) * state.pageSize
-                    ),
-                }).map((_, i) => (
-                  <tr key={`empty-${i}`} className={theme === 'dark' ? 'bg-background h-[48px]' : 'bg-white h-[48px]'}>
-                    <td colSpan={5}></td>
+                {state.subjects.map((subject, index) => (
+                  <tr
+                    key={subject.id}
+                    className={
+                      index % 2 === 0 ? (theme === 'dark' ? 'bg-card' : 'bg-gray-50') : (theme === 'dark' ? 'bg-background' : 'bg-white')
+                    }
+                  >
+                    <td className="px-4 py-3">{subject.subject_code}</td>
+                    <td className="px-4 py-3">{subject.name}</td>
+                    <td className="px-4 py-3">
+                      {getSemesterNumber(subject.semester_id)}
+                    </td>
+                    <td className="px-4 py-3">
+                      {subject.subject_type === 'regular' ? 'Regular' : subject.subject_type === 'elective' ? 'Elective Subjects' : 'Open Elective Subjects'}
+                    </td>
+                    <td className="px-4 py-3 flex gap-5">
+                      <Pencil
+                        className={`w-4 h-4 cursor-pointer ${theme === 'dark' ? 'text-primary hover:text-primary/80' : 'text-blue-600 hover:text-blue-800'}`}
+                        onClick={() => handleEdit(subject)}
+                      />
+                      <Trash2
+                        className={`w-4 h-4 cursor-pointer ${theme === 'dark' ? 'text-destructive hover:text-destructive/80' : 'text-red-600 hover:text-red-800'}`}
+                        onClick={() => handleDelete(subject.id)}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -335,39 +361,60 @@ const SubjectManagement = () => {
           <div className="flex justify-between items-center mt-4">
             {/* Showing count */}
             <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-              Showing{" "}
-              {Math.min(
-                state.pageSize,
-                state.subjects.length - (state.currentPage - 1) * state.pageSize
-              )}{" "}
-              out of {state.subjects.length} Courses
+              Showing {state.subjects.length} out of {state.totalCount} Courses
             </div>
 
             {/* Pagination Controls */}
-            <div className="flex items-center">
-              <Button
-                onClick={() =>
-                  updateState({ currentPage: Math.max(state.currentPage - 1, 1) })
-                }
-                disabled={state.currentPage === 1}
-                className="w-24 flex items-center justify-center gap-1 text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
-              >
-                Previous
-              </Button>
-              <div className={`w-16 text-center text-sm font-medium py-1.5 mx-2 rounded-md ${theme === 'dark' ? 'text-foreground bg-card border-border' : 'text-gray-900 bg-white border-gray-300'}`}>
-                {state.currentPage}
+            <div className="flex items-center gap-4">
+              {/* Page Size Selector */}
+              <div className="flex items-center gap-2">
+                <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                  Per page:
+                </span>
+                <select
+                  value={state.pageSize}
+                  onChange={(e) => {
+                    updateState({ pageSize: Number(e.target.value), currentPage: 1 });
+                  }}
+                  className={`text-sm px-2 py-1 rounded-md border ${theme === 'dark'
+                    ? 'bg-card text-foreground border-border'
+                    : 'bg-white text-gray-900 border-gray-300'
+                    }`}
+                  disabled={state.loading}
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </select>
               </div>
-              <Button
-                onClick={() =>
-                  updateState({
-                    currentPage: Math.min(state.currentPage + 1, totalPages),
-                  })
-                }
-                disabled={state.currentPage === totalPages}
-                className="w-24 flex items-center justify-center gap-1 text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
-              >
-                Next
-              </Button>
+
+              {/* Page Navigation */}
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => {
+                    const newPage = Math.max(state.currentPage - 1, 1);
+                    updateState({ currentPage: newPage });
+                  }}
+                  disabled={state.currentPage === 1 || state.loading}
+                  className="w-24 flex items-center justify-center gap-1 text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                >
+                  Previous
+                </Button>
+                <div className={`px-4 text-center text-sm font-medium py-1.5 rounded-md ${theme === 'dark' ? 'text-foreground bg-card border border-border' : 'text-gray-900 bg-white border border-gray-300'}`}>
+                  Page {state.currentPage} of {totalPages || 1}
+                </div>
+                <Button
+                  onClick={() => {
+                    const newPage = Math.min(state.currentPage + 1, totalPages);
+                    updateState({ currentPage: newPage });
+                  }}
+                  disabled={state.currentPage === totalPages || state.loading || totalPages === 0}
+                  className="w-24 flex items-center justify-center gap-1 text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -538,7 +585,7 @@ const SubjectManagement = () => {
                         currentSubject: null,
                         modalError: null,
                       });
-                      fetchData();
+                      fetchSubjects(state.branchId, state.currentPage, state.pageSize);
                     } else {
                       updateState({ modalError: response.message });
                     }

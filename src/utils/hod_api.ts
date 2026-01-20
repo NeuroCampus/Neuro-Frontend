@@ -260,12 +260,18 @@ interface Subject {
   name: string;
   subject_code: string;
   semester_id: string;
+  subject_type: string;
 }
 
 interface GetSubjectsResponse {
   success: boolean;
   message?: string;
   data?: Subject[];
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
+  current_page?: number;
+  total_pages?: number;
 }
 
 interface ManageSubjectsRequest {
@@ -1416,15 +1422,19 @@ export const getHODStudentBootstrap = async (
   }
 };
 export const manageSubjects = async (
-  data: ManageSubjectsRequest | { branch_id: string; semester_id?: string },
+  data: ManageSubjectsRequest | { branch_id: string; semester_id?: string; page?: number; page_size?: number },
   method: "GET" | "POST" = "GET"
 ): Promise<GetSubjectsResponse> => {
   try {
     const branch_id = (data as { branch_id: string }).branch_id;
     if (!branch_id) throw new Error("Branch ID is required");
     let url = `${API_ENDPOINT}/hod/subjects/?branch_id=${branch_id}`;
-    if (method === "GET" && (data as any).semester_id) {
-      url += `&semester_id=${(data as any).semester_id}`;
+    if (method === "GET") {
+      const params = new URLSearchParams({ branch_id });
+      if ((data as any).semester_id) params.append("semester_id", (data as any).semester_id);
+      if ((data as any).page) params.append("page", (data as any).page.toString());
+      if ((data as any).page_size) params.append("page_size", (data as any).page_size.toString());
+      url = `${API_ENDPOINT}/hod/subjects/?${params.toString()}`;
     }
     if (method === "POST") {
       const req = data as ManageSubjectsRequest;
@@ -1451,20 +1461,22 @@ export const manageSubjects = async (
   }
 };
 
-// Subject management bootstrap (profile + semesters + subjects)
-export const getHODSubjectBootstrap = async (): Promise<{
+// Subject management bootstrap (profile + semesters)
+// Use include parameter to control what data is returned
+export const getHODSubjectBootstrap = async (include: string[] = ['profile', 'semesters']): Promise<{
   success: boolean;
   message?: string;
   data?: {
-    profile: { branch_id: string };
-    semesters: Array<{ id: string; number: number }>;
-    subjects: Array<{ id: string; name: string; subject_code: string; semester_id: string | null }>;
-    faculties: Array<{ id: string; username: string; first_name: string; last_name: string | null }>;
-    assignments: Array<{ id: string; faculty: string; subject: string; section: string; semester: number; faculty_id: string; subject_id: string; section_id: string; semester_id: string }>;  
+    profile?: { branch_id: string };
+    semesters?: Array<{ id: string; number: number }>;
+    subjects?: Array<{ id: string; name: string; subject_code: string; semester_id: string | null; subject_type: string }>;
+    faculties?: Array<{ id: string; username: string; first_name: string; last_name: string | null }>;
+    assignments?: Array<{ id: string; faculty: string; subject: string; section: string; semester: number; faculty_id: string; subject_id: string; section_id: string; semester_id: string }>;
   };
 }> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/subject-bootstrap/`, {
+    const includeParam = include.join(',');
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/subject-bootstrap/?include=${includeParam}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
 
@@ -1538,7 +1550,7 @@ export const manageStudents = async (
 
     });
     const result = await response.json();
-    
+
     return result;
   } catch (error: unknown) {
     return handleApiError(error, (error as any).response);
@@ -1701,7 +1713,7 @@ export const manageTimetable = async (data: ManageTimetableRequest): Promise<Man
       const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/timetable/?${params.toString()}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
-  
+
       });
       return await response.json();
     }
@@ -2324,7 +2336,7 @@ export const getFacultyAttendanceRecords = async (params?: {
     if (params?.faculty_id) queryParams.append("faculty_id", params.faculty_id);
 
     const url = `${API_ENDPOINT}/hod/faculty-attendance-records/${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
-    
+
     const response = await fetchWithTokenRefresh(url, {
       method: "GET",
       headers: {

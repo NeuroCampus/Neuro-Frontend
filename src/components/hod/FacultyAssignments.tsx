@@ -194,11 +194,11 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
         if (!boot.success || !boot.data) {
           throw new Error(boot.message || "Failed to bootstrap faculty assignments");
         }
-        
+
         const profile = boot.data.profile;
-        const semesters = boot.data.semesters.map((s) => ({ 
-          id: s.id.toString(), 
-          number: s.number 
+        const semesters = boot.data.semesters.map((s) => ({
+          id: s.id.toString(),
+          number: s.number
         }));
         const sections = boot.data.sections.map((s) => ({
           id: s.id,
@@ -213,14 +213,14 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
         }));
         const faculties = boot.data.faculties;
         const assignments = boot.data.assignments;
-        
-        updateState({ 
-          branchId: profile.branch_id, 
-          semesters, 
+
+        updateState({
+          branchId: profile.branch_id,
+          semesters,
           sections,
           subjects,
-          faculties, 
-          assignments 
+          faculties,
+          assignments
         });
       } catch (err) {
         if (isErrorWithMessage(err)) {
@@ -312,7 +312,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
 
     if (duplicateFaculty) {
       const facultyName =
-        state.faculties.find((f) => f.id === state.facultyId)?.first_name + " " + 
+        state.faculties.find((f) => f.id === state.facultyId)?.first_name + " " +
         (state.faculties.find((f) => f.id === state.facultyId)?.last_name || "") || "This faculty";
 
       toast({
@@ -340,16 +340,16 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
       const updatedAssignments = state.assignments.map(assignment =>
         assignment.id === state.editingId
           ? {
-              ...assignment,
-              faculty_id: state.facultyId,
-              subject_id: state.subjectId,
-              section_id: state.sectionId,
-              semester_id: state.semesterId,
-              faculty: `${state.faculties.find(f => f.id === state.facultyId)?.first_name} ${state.faculties.find(f => f.id === state.facultyId)?.last_name || ''}`.trim(),
-              subject: state.subjects.find(s => s.id === state.subjectId)?.name || '',
-              section: state.sections.find(s => s.id === state.sectionId)?.name || '',
-              semester: state.semesters.find(s => s.id === state.semesterId)?.number || 0,
-            }
+            ...assignment,
+            faculty_id: state.facultyId,
+            subject_id: state.subjectId,
+            section_id: state.sectionId,
+            semester_id: state.semesterId,
+            faculty: `${state.faculties.find(f => f.id === state.facultyId)?.first_name} ${state.faculties.find(f => f.id === state.facultyId)?.last_name || ''}`.trim(),
+            subject: state.subjects.find(s => s.id === state.subjectId)?.name || '',
+            section: state.sections.find(s => s.id === state.sectionId)?.name || '',
+            semester: state.semesters.find(s => s.id === state.semesterId)?.number || 0,
+          }
           : assignment
       );
       updateState({ assignments: updatedAssignments });
@@ -521,7 +521,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
     };
     return acc;
   }, {} as Record<string, { name: string; email: string }>);
-  
+
 
   return (
     <ErrorBoundary>
