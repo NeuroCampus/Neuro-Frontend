@@ -901,12 +901,13 @@ export const getProctorBootstrap = async (
 };
 
 export const getSemesterBootstrap = async (
+  include: string[] = ['profile', 'semesters', 'sections', 'subjects'],
   branch_id?: string
 ): Promise<{
   success: boolean;
   message?: string;
   data?: {
-    profile: {
+    profile?: {
       username: string;
       email: string;
       first_name: string;
@@ -917,17 +918,18 @@ export const getSemesterBootstrap = async (
       branch: string;
       branch_id: string;
     };
-    branches: Branch[];
-    semesters: Array<{ id: string; number: number }>;
-    sections: Array<{ id: string; name: string; semester_id: string }>;
-    subjects: Array<{ id: string; name: string; subject_code: string; semester_id: string }>;
+    branches?: Branch[];
+    semesters?: Array<{ id: string; number: number }>;
+    sections?: Array<{ id: string; name: string; semester_id: string | null }>;
+    subjects?: Array<{ id: string; name: string; subject_code: string; semester_id: string | null }>;
   };
 }> => {
   try {
     const params: Record<string, string> = {};
+    params.include = include.join(',');
     if (branch_id) params.branch_id = branch_id;
     const query = new URLSearchParams(params).toString();
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/semester-bootstrap/${query ? '?' + query : ''}`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/semester-bootstrap/?${query}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
@@ -986,11 +988,13 @@ export const getHODDashboard = async (
 };
 
 // Combined HOD dashboard bootstrap (profile + stats + leaves in one call)
-export const getHODDashboardBootstrap = async (): Promise<{
+export const getHODDashboardBootstrap = async (
+  include: string[] = ['profile', 'overview', 'attendance_trend', 'leaves', 'semesters', 'sections']
+): Promise<{
   success: boolean;
   message?: string;
   data?: {
-    profile: {
+    profile?: {
       username: string;
       email: string;
       first_name: string;
@@ -1001,20 +1005,20 @@ export const getHODDashboardBootstrap = async (): Promise<{
       branch: string;
       branch_id: string;
     };
-    semesters: Array<{ id: string; number: number }>;
-    sections: Array<{ id: string; name: string; semester_id: string }>;
-    overview: {
+    semesters?: Array<{ id: string; number: number }>;
+    sections?: Array<{ id: string; name: string; semester_id: string | null }>;
+    overview?: {
       faculty_count: number;
       student_count: number;
       pending_leaves: number;
     };
-    attendance_trend: Array<{
+    attendance_trend?: Array<{
       week: string;
       start_date: string;
       end_date: string;
       attendance_percentage: number | string;
     }>;
-    leaves: Array<{
+    leaves?: Array<{
       id: number;
       faculty_name: string;
       department: string;
@@ -1026,7 +1030,10 @@ export const getHODDashboardBootstrap = async (): Promise<{
   };
 }> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/dashboard/`, {
+    const params: Record<string, string> = {};
+    params.include = include.join(',');
+    const query = new URLSearchParams(params).toString();
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/dashboard/?${query}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
@@ -1334,23 +1341,30 @@ export const getHODBootstrap = async (): Promise<{
 };
 
 // Student management bootstrap (profile + semesters + sections + batches + students + performance)
-export const getHODStudentBootstrap = async (): Promise<{
+export const getHODStudentBootstrap = async (
+  include: string[] = ['profile', 'semesters', 'sections', 'batches', 'students', 'performance'],
+  page?: number
+): Promise<{
   success: boolean;
   message?: string;
   count?: number;
   next?: string | null;
   previous?: string | null;
   data?: {
-    profile: { branch_id: string };
-    semesters: Array<{ id: string; number: number }>;
-    sections: Array<{ id: string; name: string; semester_id: string | null }>;
-    batches: Array<{ id: number; name: string; start_year: number; end_year: number }>;
-    students: Array<{ usn: string; name: string; email: string; section: string; semester: string }>;
-    performance: Array<{ subject: string; attendance: number; marks: number; semester: string }>;
+    profile?: { branch_id: string };
+    semesters?: Array<{ id: string; number: number }>;
+    sections?: Array<{ id: string; name: string; semester_id: string | null }>;
+    batches?: Array<{ id: number; name: string; start_year: number; end_year: number }>;
+    students?: Array<{ usn: string; name: string; email: string; section: string; semester: string }>;
+    performance?: Array<{ subject: string; attendance: number; marks: number; semester: string }>;
   };
 }> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/student-bootstrap/`, {
+    const params: Record<string, string> = {};
+    params.include = include.join(',');
+    if (page) params.page = page.toString();
+    const query = new URLSearchParams(params).toString();
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/student-bootstrap/?${query}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
 

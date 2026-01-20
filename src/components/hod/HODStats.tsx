@@ -100,7 +100,7 @@ export default function HODStats({ setError, setPage, onBootstrapData }: HODStat
   const fetchDashboardBootstrap = async () => {
     setIsLoading(true);
     try {
-      const res = await getHODDashboardBootstrap();
+      const res = await getHODDashboardBootstrap(['profile', 'overview', 'attendance_trend', 'leaves']);
       if (res.success && res.data) {
         // Set profile data
         setBranchId(res.data.profile.branch_id);
@@ -144,12 +144,12 @@ export default function HODStats({ setError, setPage, onBootstrapData }: HODStat
           console.error("Failed to fetch faculty attendance:", facultyError);
         }
 
-        // Pass bootstrap data to parent
+        // Pass bootstrap data to parent (only pass available data)
         if (onBootstrapData) {
           onBootstrapData({
             branch_id: res.data.profile.branch_id,
-            semesters: res.data.semesters,
-            sections: res.data.sections,
+            semesters: res.data.semesters || [],
+            sections: res.data.sections || [],
           });
         }
       } else {
@@ -270,11 +270,6 @@ const handleApprove = async (index: number) => {
 
   return (
     <div className={`p-8 space-y-6 font-sans min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      {/* Welcome Message */}
-      <h1 className={`text-2xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-        Welcome back, {hodName}, Here's what's happening in your {branchName} department.
-      </h1>
-
       {/* Loading and Errors */}
       {isLoading && <p className={`${theme === 'dark' ? 'bg-background text-muted-foreground' : 'bg-gray-50 text-gray-600'} mb-4 animate-pulse`}>Loading data...</p>}
       {errors.length > 0 && (

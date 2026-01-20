@@ -67,8 +67,8 @@ const SemesterManagement = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Use the bootstrap endpoint for better performance
-        const bootstrapResponse = await getSemesterBootstrap();
+        // Use the bootstrap endpoint for better performance - only fetch needed data
+        const bootstrapResponse = await getSemesterBootstrap(['profile', 'semesters', 'sections']);
         if (bootstrapResponse.success && bootstrapResponse.data) {
           setBranchId(bootstrapResponse.data.profile.branch_id);
           setSemesters(bootstrapResponse.data.semesters.map((s: any) => ({ id: s.id.toString(), number: s.number })));
@@ -166,8 +166,8 @@ const SemesterManagement = () => {
       }
       const response = await manageSemesters(data);
       if (response.success) {
-        // Refresh data using bootstrap endpoint
-        const bootstrapResponse = await getSemesterBootstrap();
+        // Refresh data using bootstrap endpoint - only fetch semesters
+        const bootstrapResponse = await getSemesterBootstrap(['semesters']);
         if (bootstrapResponse.success && bootstrapResponse.data) {
           setSemesters(bootstrapResponse.data.semesters.map((s: any) => ({ id: s.id.toString(), number: s.number })));
         }
@@ -198,8 +198,8 @@ const SemesterManagement = () => {
       };
       const response = await manageSemesters(data);
       if (response.success) {
-        // Refresh data using bootstrap endpoint
-        const bootstrapResponse = await getSemesterBootstrap();
+        // Refresh data using bootstrap endpoint - fetch semesters and sections
+        const bootstrapResponse = await getSemesterBootstrap(['semesters', 'sections']);
         if (bootstrapResponse.success && bootstrapResponse.data) {
           setSemesters(bootstrapResponse.data.semesters.map((s: any) => ({ id: s.id.toString(), number: s.number })));
           setSections(bootstrapResponse.data.sections.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id?.toString() })));
@@ -241,8 +241,8 @@ const SemesterManagement = () => {
       };
       const response = await manageSections(data, "POST");
       if (response.success && response.data) {
-        // Refresh data using bootstrap endpoint
-        const bootstrapResponse = await getSemesterBootstrap();
+        // Refresh data using bootstrap endpoint - only fetch sections
+        const bootstrapResponse = await getSemesterBootstrap(['sections']);
         if (bootstrapResponse.success && bootstrapResponse.data) {
           setSections(bootstrapResponse.data.sections.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id?.toString() })));
         }
@@ -273,8 +273,8 @@ const SemesterManagement = () => {
       };
       const response = await manageSections(data, "POST");
       if (response.success) {
-        // Refresh data using bootstrap endpoint
-        const bootstrapResponse = await getSemesterBootstrap();
+        // Refresh data using bootstrap endpoint - only fetch sections
+        const bootstrapResponse = await getSemesterBootstrap(['sections']);
         if (bootstrapResponse.success && bootstrapResponse.data) {
           setSections(bootstrapResponse.data.sections.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id?.toString() })));
         }
@@ -326,18 +326,17 @@ const SemesterManagement = () => {
             <div className={`text-center py-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>No semesters found.</div>
           ) : (
             <div className="rounded-md border overflow-hidden">
-              <div className="overflow-y-auto max-h-96 custom-scrollbar">
-                <table className="w-full text-sm">
-                  <thead className={`sticky top-0 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-gray-100 text-gray-900 border-gray-300'} z-10`}>
-                    <tr className="border-b">
-                      <th className="p-2 text-left">NAME</th>
-                      <th className="p-2 text-left">YEAR</th>
-                      <th className="p-2 text-left">SECTIONS</th>
-                      <th className="p-2 text-center">ACTIONS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredSemesters.slice(0, 8).map((sem) => {
+              <table className="w-full text-sm">
+                <thead className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-gray-100 text-gray-900 border-gray-300'}>
+                  <tr className="border-b">
+                    <th className="p-2 text-left">NAME</th>
+                    <th className="p-2 text-left">YEAR</th>
+                    <th className="p-2 text-left">SECTIONS</th>
+                    <th className="p-2 text-center">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredSemesters.map((sem) => {
                       const semesterSections = sections
                         .filter((s) => s.semester_id === sem.id)
                         .sort((a, b) => a.name.localeCompare(b.name));
@@ -414,7 +413,6 @@ const SemesterManagement = () => {
                     })}
                   </tbody>
                 </table>
-              </div>
             </div>
           )}
         </CardContent>

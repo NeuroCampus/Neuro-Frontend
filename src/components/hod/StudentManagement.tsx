@@ -188,7 +188,7 @@ const StudentManagement = () => {
     const fetchInitialData = async () => {
       updateState({ isLoading: true });
       try {
-        const boot = await getHODStudentBootstrap();
+        const boot = await getHODStudentBootstrap(['profile', 'semesters', 'sections', 'batches', 'students']);
         if (!boot.success || !boot.data?.profile?.branch_id) {
           throw new Error(boot.message || "Failed to bootstrap student management");
         }
