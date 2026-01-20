@@ -1060,6 +1060,14 @@ export const getHODDashboardBootstrap = async (
       reason: string;
       status: string;
     }>;
+    faculty_attendance_today?: {
+      summary: {
+        total_faculty: number;
+        present: number;
+        absent: number;
+        not_marked: number;
+      };
+    };
   };
 }> => {
   try {

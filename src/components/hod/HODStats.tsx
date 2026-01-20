@@ -21,7 +21,6 @@ import {
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { getHODStats, manageLeaves, manageProfile, getHODDashboard, getHODDashboardBootstrap } from "../../utils/hod_api";
-import { getFacultyAttendanceToday } from "../../utils/hod_api";
 import { motion } from "framer-motion";
 import { useTheme } from "../../context/ThemeContext";
 
@@ -100,7 +99,7 @@ export default function HODStats({ setError, setPage, onBootstrapData }: HODStat
   const fetchDashboardBootstrap = async () => {
     setIsLoading(true);
     try {
-      const res = await getHODDashboardBootstrap(['profile', 'overview', 'attendance_trend', 'leaves']);
+      const res = await getHODDashboardBootstrap(['profile', 'overview', 'attendance_trend', 'leaves', 'faculty_attendance']);
       if (res.success && res.data) {
         // Set profile data
         setBranchId(res.data.profile.branch_id);
@@ -131,17 +130,12 @@ export default function HODStats({ setError, setPage, onBootstrapData }: HODStat
           setLeaveRequests(requests);
         }
 
-        // Fetch faculty attendance data
-        try {
-          const facultyAttendanceRes = await getFacultyAttendanceToday();
-          if (facultyAttendanceRes.success && facultyAttendanceRes.summary) {
-            setStats(prev => prev ? {
-              ...prev,
-              faculty_attendance_today: facultyAttendanceRes.summary
-            } : null);
-          }
-        } catch (facultyError) {
-          console.error("Failed to fetch faculty attendance:", facultyError);
+        // Set faculty attendance data
+        if (res.data.faculty_attendance_today) {
+          setStats(prev => prev ? {
+            ...prev,
+            faculty_attendance_today: res.data.faculty_attendance_today.summary
+          } : null);
         }
 
         // Pass bootstrap data to parent (only pass available data)
