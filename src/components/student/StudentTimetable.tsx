@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -6,14 +6,17 @@ import {
   CardTitle,
 } from "../ui/card";
 import { Button } from "../ui/button";
-import { CalendarDays, Download } from "lucide-react";
+import { CalendarDays, FileDown } from "lucide-react";
 import { ScrollArea } from "../ui/scroll-area";
 import { getTimetable, type TimetableEntry } from "@/utils/student_api";
 import { useTheme } from "@/context/ThemeContext";
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const StudentTimetable = () => {
   const [timetableData, setTimetableData] = useState<TimetableEntry[]>([]);
   const { theme } = useTheme();
+  const tableRef = useRef<HTMLTableElement>(null);
 
   // Predefined time slots for the grid (9:00 AM to 5:00 PM)
   const timeSlots = [
@@ -56,31 +59,33 @@ const StudentTimetable = () => {
     return tableData;
   };
 
-  const exportToCSV = () => {
-    const headers = ["Time/Day", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const tableData = getTableData();
+  const exportToPDF = async () => {
+    if (!tableRef.current) return;
 
-    const csvRows = [
-      headers,
-      ...tableData.map((row) => [
-        row.time,
-        row.mon || "",
-        row.tue || "",
-        row.wed || "",
-        row.thu || "",
-        row.fri || "",
-        row.sat || "",
-      ]),
-    ];
+    try {
+      const canvas = await html2canvas(tableRef.current, {
+        backgroundColor: theme === 'dark' ? '#1a1a1a' : '#ffffff',
+        scale: 2,
+      });
 
-    const blob = new Blob([csvRows.map(row => row.join(",")).join("\n")], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `timetable.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };  return (
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = 280;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      pdf.save('timetable.pdf');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    }
+  };
+
+  return (
     <Card className={theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className={theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}>Timetable</CardTitle>
@@ -89,9 +94,9 @@ const StudentTimetable = () => {
             variant="outline" 
             size="sm" 
             className={theme === 'dark' ? 'text-card-foreground bg-muted hover:bg-accent border-border' : 'text-gray-700 bg-white hover:bg-gray-100 border-gray-300'}
-            onClick={exportToCSV}
+            onClick={exportToPDF}
           >
-            <Download className="w-4 h-4 mr-2" /> Export
+            <FileDown className="w-4 h-4 mr-2" /> Export
           </Button>
         </div>
       </CardHeader>
@@ -105,7 +110,7 @@ const StudentTimetable = () => {
           </div>
 
           <ScrollArea className="w-full overflow-auto">
-            <table className="min-w-full text-sm text-left">
+            <table ref={tableRef} className="min-w-full text-sm text-left">
               <thead className={theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}>
                 <tr>
                   <th className={`py-2 px-4 font-semibold ${theme === 'dark' ? 'border-b border-border' : 'border-b border-gray-200'}`}>Time/Day</th>

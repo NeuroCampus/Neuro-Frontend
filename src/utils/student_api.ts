@@ -67,8 +67,6 @@ interface DashboardOverviewData {
     correlation: number;
     subject_performance: SubjectPerformance[];
   };
-  leave_request_status: LeaveRequestStatus[];
-  notification_panel: NotificationItem[];
 }
 
 interface DashboardOverviewResponse {
