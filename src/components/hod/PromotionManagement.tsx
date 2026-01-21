@@ -61,7 +61,6 @@ interface Student {
   semester: string;
   section: string | null;
   batch: string | null;
-  proctor: string | null;
 }
 
 const PromotionManagement = () => {
@@ -780,7 +779,7 @@ const PromotionPage = ({ theme }: { theme: string }) => {
                     <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Name</TableHead>
                     <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Batch</TableHead>
                     <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Section</TableHead>
-                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Proctor</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Sem</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -797,7 +796,7 @@ const PromotionPage = ({ theme }: { theme: string }) => {
                       <TableCell className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{student.name}</TableCell>
                       <TableCell className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{student.batch}</TableCell>
                       <TableCell className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{student.section || 'N/A'}</TableCell>
-                      <TableCell className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{student.proctor || 'N/A'}</TableCell>
+                      <TableCell className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{student.semester}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -1107,15 +1106,7 @@ const DemotionPage = ({ theme }: { theme: string }) => {
       selectedStudents: [],
       showBulkDemoteDialog: false,
       bulkDemoteReason: "",
-      demotionResults: {
-        message: `${studentsToDemote.length} students demoted successfully`,
-        demoted: studentsToDemote.map(student => ({
-          name: student.name,
-          usn: student.usn,
-          to_semester: prevSemester.number
-        })),
-        failed: [],
-      },
+      isDemoting: true,
     });
 
     try {
@@ -1131,7 +1122,36 @@ const DemotionPage = ({ theme }: { theme: string }) => {
         ...(sectionId && { section_id: sectionId }),
       });
 
-      if (!res.success) {
+      if (res.success) {
+        // Update with actual API response data
+        const apiData = res.data || {};
+        const demotedCount = apiData.demoted_count || 0;
+        
+        // Only keep students removed if some were actually demoted
+        if (demotedCount === 0) {
+          // Revert the optimistic removal since no students were demoted
+          updateState({
+            students: [...state.students, ...studentsToDemote],
+            selectedStudents: state.selectedStudents.length > 0 ? state.selectedStudents : studentsToDemote.map(s => s.usn),
+          });
+        }
+        
+        updateState({
+          demotionResults: {
+            message: res.message || `${demotedCount} students demoted successfully`,
+            demoted: (apiData.demoted_students || []).map((student: any) => ({
+              name: student.name || 'Unknown',
+              usn: student.usn || '',
+              to_semester: apiData.target_semester || prevSemester.number
+            })),
+            failed: (apiData.failed_students || []).map((student: any) => ({
+              name: student.name || 'Unknown',
+              usn: student.usn || '',
+              reason: student.reason || 'Unknown error'
+            })),
+          },
+        });
+      } else {
         // Revert optimistic update on failure
         updateState({
           students: [...state.students, ...studentsToDemote],
@@ -1153,6 +1173,8 @@ const DemotionPage = ({ theme }: { theme: string }) => {
         demotionResults: null,
         errors: ["Failed to demote students"],
       });
+    } finally {
+      updateState({ isDemoting: false });
     }
   };
 
@@ -1310,7 +1332,7 @@ const DemotionPage = ({ theme }: { theme: string }) => {
                     <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Name</TableHead>
                     <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Batch</TableHead>
                     <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Section</TableHead>
-                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Proctor</TableHead>
+                    <TableHead className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Sem</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1327,7 +1349,7 @@ const DemotionPage = ({ theme }: { theme: string }) => {
                       <TableCell className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{student.name}</TableCell>
                       <TableCell className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{student.batch}</TableCell>
                       <TableCell className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{student.section || 'N/A'}</TableCell>
-                      <TableCell className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{student.proctor || 'N/A'}</TableCell>
+                      <TableCell className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{student.semester}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
