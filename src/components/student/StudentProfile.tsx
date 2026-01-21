@@ -81,23 +81,8 @@ const StudentProfile = () => {
   });
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const data = await getFullStudentProfile();
-      if (data.success && data.profile) {
-        setForm((prev) => {
-          const newForm = { ...prev };
-          Object.keys(data.profile).forEach(key => {
-            if (typeof data.profile[key] === 'string' || data.profile[key] === null) {
-              newForm[key] = data.profile[key] || "";
-            } else {
-              newForm[key] = data.profile[key];
-            }
-          });
-          return newForm;
-        });
-      }
-    };
-    fetchProfile();
+    // This effect intentionally left empty: profile is fetched in the
+    // consolidated effect further down (which also checks face status).
   }, []);
 
   const handleProfilePictureUpload = async () => {
