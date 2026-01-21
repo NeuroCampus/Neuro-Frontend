@@ -29,7 +29,7 @@ import {
   Receipt,
   UserCheck
 } from "lucide-react";
-import FeesManagerDashboard from "../../pages/FeesManager/FeesManagerDashboard";
+import FeesManagerDashboard from "../FeesManager/FeesManagerDashboard";
 
 interface FeesManagerDashboardProps {
   user: any;

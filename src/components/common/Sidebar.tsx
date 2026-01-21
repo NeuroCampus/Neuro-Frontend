@@ -23,6 +23,7 @@ import {
   BookOpen,
   Upload,
   CreditCard,
+  Receipt,
   Search,
   Mic,
 } from "lucide-react";
@@ -73,6 +74,14 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     const iconMap: { [key: string]: React.ReactNode } = {
     'exam-applications': <ClipboardList size={20} />,
       dashboard: <LayoutDashboard size={20} />,
+      overview: <LayoutDashboard size={20} />,
+      components: <ClipboardList size={20} />,
+      templates: <FileText size={20} />,
+      assignments: <UserCheck size={20} />,
+      "individual-fees": <UserCheck size={20} />,
+      "bulk-assignment": <Users size={20} />,
+      invoices: <Receipt size={20} />,
+      payments: <CreditCard size={20} />,
       "promotion-management": <UserCheck size={20} />,
       "enroll-user": <User size={20} />,
       "bulk-upload": <Upload size={20} />,
@@ -122,6 +131,17 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
   };
 
   const menuItems: { [key: string]: { name: string; page: string }[] } = {
+  fees_manager: [
+    { name: "Overview", page: "overview" },
+    { name: "Components", page: "components" },
+    { name: "Templates", page: "templates" },
+    { name: "Assignments", page: "assignments" },
+    { name: "Individual Fees", page: "individual-fees" },
+    { name: "Bulk Assignment", page: "bulk-assignment" },
+    { name: "Invoices", page: "invoices" },
+    { name: "Payments", page: "payments" },
+    { name: "Reports", page: "reports" },
+  ],
   admin: [
     // Main
     { name: "Dashboard", page: "dashboard" },

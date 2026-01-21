@@ -13,7 +13,7 @@ import AdminDashboard from "./components/dashboards/AdminDashboard";
 import HODDashboard from "./components/dashboards/HODDashboard";
 import FacultyDashboard from "./components/dashboards/FacultyDashboard";
 import COEDashboard from "./components/dashboards/COEDashboard";
-import FeesManagerDashboard from "./pages/FeesManager/FeesManagerDashboard";
+import FeesManagerDashboard from "./components/FeesManager/FeesManagerDashboard";
 import { ThemeProvider } from "./context/ThemeContext";
 // Import the FloatingAssistant component
 import FloatingAssistant from "./components/common/FloatingAssistant";
