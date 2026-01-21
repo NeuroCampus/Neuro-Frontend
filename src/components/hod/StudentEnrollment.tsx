@@ -37,60 +37,7 @@ const StudentEnrollment = () => {
   const [totalStudents, setTotalStudents] = useState(0);
   const studentsPerPage = 20; // Frontend pagination
 
-  const loadEnrolledStudents = async () => {
-    if (!branchId || !selectedSubjectId) return;
-    setIsLoading(true);
-    try {
-      // Fetch all enrolled students for this subject (all pages)
-      let enrolledStudents: any[] = [];
-      let page = 1;
-      let hasNextPage = true;
 
-      while (hasNextPage) {
-        const params = new URLSearchParams({
-          branch_id: branchId,
-          subject_id: selectedSubjectId,
-          page: page.toString(),
-          page_size: '25'
-        });
-
-        const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/students/?${params}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || !data.results) {
-          throw new Error(data.message || "Failed to fetch enrolled students");
-        }
-
-        // Accumulate enrolled students from this page
-        enrolledStudents = [...enrolledStudents, ...data.results];
-
-        // Check if there's a next page
-        hasNextPage = data.next !== null;
-        page += 1;
-      }
-
-      const mapped = enrolledStudents.map((s: any) => ({
-        id: s.usn || s.student_id || s.id,
-        usn: s.usn || s.student_id || s.id,
-        name: s.name,
-        checked: true,
-      }));
-      setStudents(mapped);
-      setEnrolledCount(mapped.length);
-
-      // Reset pagination
-      setCurrentPage(1);
-      setTotalStudents(mapped.length);
-      setTotalPages(Math.ceil(mapped.length / studentsPerPage));
-    } catch (e) {
-      console.error(e);
-    }
-    setIsLoading(false);
-  };
 
   useEffect(() => {
     const loadBootstrap = async () => {
@@ -140,101 +87,47 @@ const StudentEnrollment = () => {
     setCurrentPage(1); // Reset to first page when search changes
   }, [searchTerm]);
 
-  const loadStudents = async () => {
+  const loadStudents = async (page = 1) => {
     if (!branchId || !semesterId || !sectionId || !selectedSubjectId) return;
     setIsLoading(true);
     try {
-      // Fetch all students in the section (all pages)
-      let allStudents: any[] = [];
-      let page = 1;
-      let hasNextPage = true;
+      // Load current page of students from the section with enrollment status in one call
+      const params = new URLSearchParams({
+        branch_id: branchId,
+        semester_id: semesterId,
+        section_id: sectionId,
+        subject_id: selectedSubjectId,
+        include_enrollment_status: 'true',
+        page: page.toString(),
+        page_size: '50'
+      });
 
-      while (hasNextPage) {
-        const params = new URLSearchParams({
-          branch_id: branchId,
-          semester_id: semesterId,
-          section_id: sectionId,
-          page: page.toString(),
-          page_size: '50'
-        });
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/students/?${params}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
 
-        const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/students/?${params}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
+      const data = await response.json();
 
-        const data = await response.json();
-
-        if (!data.results) {
-          throw new Error(data.message || "Failed to fetch students");
-        }
-
-        // If no results, stop pagination
-        if (data.results.length === 0) {
-          break;
-        }
-
-        // Accumulate students from this page
-        allStudents = [...allStudents, ...data.results];
-
-        // Check if there's a next page
-        hasNextPage = data.next !== null;
-        page += 1;
+      if (!data.results) {
+        throw new Error(data.message || "Failed to fetch students");
       }
 
-      // Also fetch enrolled students for this subject (all pages)
-      let enrolledStudents: any[] = [];
-      page = 1;
-      hasNextPage = true;
-
-      while (hasNextPage) {
-        const params = new URLSearchParams({
-          branch_id: branchId,
-          subject_id: selectedSubjectId,
-          page: page.toString(),
-          page_size: '50'
-        });
-
-        const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/students/?${params}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-
-        const data = await response.json();
-
-        if (!data.results) {
-          throw new Error(data.message || "Failed to fetch enrolled students");
-        }
-
-        // If no results, stop pagination
-        if (data.results.length === 0) {
-          break;
-        }
-
-        // Accumulate enrolled students from this page
-        enrolledStudents = [...enrolledStudents, ...data.results];
-
-        // Check if there's a next page
-        hasNextPage = data.next !== null;
-        page += 1;
-      }
-
-      const enrolledSet = new Set(enrolledStudents.map((s: any) => s.usn || s.student_id || s.id));
-
-      const mapped = allStudents.map((s: any) => ({
+      const mapped = data.results.map((s: any) => ({
         id: s.usn || s.student_id || s.id,
         usn: s.usn || s.student_id || s.id,
         name: s.name,
-        checked: enrolledSet.has(s.usn || s.student_id || s.id),
+        checked: s.is_enrolled || false,
+        originallyEnrolled: s.is_enrolled || false, // Store original state for change detection
       }));
 
       setStudents(mapped);
-      setEnrolledCount(enrolledSet.size);
+      setCurrentPage(page);
+      setTotalPages(Math.ceil(data.count / 50));  // Fixed page size of 50
+      setTotalStudents(data.count);
 
-      // Reset pagination
-      setCurrentPage(1);
-      setTotalStudents(mapped.length);
-      setTotalPages(Math.ceil(mapped.length / studentsPerPage));
+      // Reset enrolled count - will be calculated from checked states
+      setEnrolledCount(mapped.filter(s => s.checked).length);
     } catch (e) {
       console.error(e);
     }
@@ -249,52 +142,16 @@ const StudentEnrollment = () => {
   const notEnrolledList = students.filter((s) => !s.checked);
 
   const save = async () => {
-    if (!selectedSubjectId) return;
+    if (students.length === 0) return;
     setSaving(true);
     try {
-      // Fetch current registrations from backend (all pages)
-      let currentArray: any[] = [];
-      let page = 1;
-      let hasNextPage = true;
+      // Get current checked state (what user wants)
+      const currentChecked = students.filter(s => s.checked).map(s => s.usn);
+      const currentUnchecked = students.filter(s => !s.checked).map(s => s.usn);
 
-      while (hasNextPage) {
-        const params = new URLSearchParams({
-          branch_id: branchId,
-          subject_id: selectedSubjectId,
-          page: page.toString(),
-          page_size: '50'
-        });
-
-        const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/students/?${params}`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-
-        const data = await response.json();
-
-        if (!data.results) {
-          throw new Error(data.message || "Failed to fetch current registrations");
-        }
-
-        // If no results, stop pagination
-        if (data.results.length === 0) {
-          break;
-        }
-
-        // Accumulate current registrations from this page
-        currentArray = [...currentArray, ...data.results];
-
-        // Check if there's a next page
-        hasNextPage = data.next !== null;
-        page += 1;
-      }
-
-      const currentlyRegistered = new Set(currentArray.map((s: any) => s.usn || s.student_id || s.id));
-
-      const nowChecked = new Set(students.filter((s) => s.checked).map((s) => s.usn));
-
-      const toRegister = Array.from(nowChecked).filter((u) => !currentlyRegistered.has(u));
-      const toUnregister = Array.from(currentlyRegistered).filter((u) => !nowChecked.has(u));
+      // Determine changes based on original loaded state vs current checked state
+      const toRegister = students.filter(s => s.checked && !s.originallyEnrolled).map(s => s.usn);
+      const toUnregister = students.filter(s => !s.checked && s.originallyEnrolled).map(s => s.usn);
 
       let registeredCount = 0;
       let removedCount = 0;
@@ -330,8 +187,19 @@ const StudentEnrollment = () => {
 
       setResultData({ added: registeredCount, removed: removedCount, failed });
       setResultModalOpen(true);
-      // reload full class view to reflect changes
-      await loadStudents();
+      
+      // Update local state instead of reloading to avoid extra API call
+      setStudents((prev) => prev.map(student => {
+        if (toRegister.includes(student.usn)) {
+          return { ...student, checked: true, originallyEnrolled: true };
+        } else if (toUnregister.includes(student.usn)) {
+          return { ...student, checked: false, originallyEnrolled: false };
+        }
+        return student;
+      }));
+      
+      // Update enrolled count
+      setEnrolledCount((prev) => prev + registeredCount - removedCount);
     } catch (e) {
       console.error(e);
       setResultData({ added: 0, removed: 0, failed: [] });
@@ -341,17 +209,17 @@ const StudentEnrollment = () => {
   };
 
   return (
-    <div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Student Enrollment (Elective / Open Elective)</CardTitle>
+    <div className="container mx-auto px-4 py-6 max-w-7xl">
+      <Card className="shadow-lg">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-2xl font-bold">Student Enrollment (Elective / Open Elective)</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-4 gap-4 mb-4">
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
             <div>
-              <label className="block text-sm font-medium mb-1">Semester</label>
+              <label className="block text-sm font-medium mb-2">Semester</label>
               <Select value={semesterId} onValueChange={(v: string) => { setSemesterId(v); setSectionId(""); }}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select semester" />
                 </SelectTrigger>
                 <SelectContent>
@@ -362,9 +230,9 @@ const StudentEnrollment = () => {
               </Select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Section</label>
+              <label className="block text-sm font-medium mb-2">Section</label>
               <Select value={sectionId} onValueChange={setSectionId}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select section" />
                 </SelectTrigger>
                 <SelectContent>
@@ -380,9 +248,9 @@ const StudentEnrollment = () => {
               </Select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Subject Type</label>
+              <label className="block text-sm font-medium mb-2">Subject Type</label>
               <Select value={subjectType} onValueChange={setSubjectType}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Subject type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -392,9 +260,9 @@ const StudentEnrollment = () => {
               </Select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Subject</label>
+              <label className="block text-sm font-medium mb-2">Subject</label>
               <Select value={selectedSubjectId} onValueChange={setSelectedSubjectId}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select subject" />
                 </SelectTrigger>
                 <SelectContent>
@@ -404,30 +272,61 @@ const StudentEnrollment = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div className="flex items-end">
+              <Button 
+                onClick={() => loadStudents(1)} 
+                disabled={!semesterId || !sectionId || !selectedSubjectId || isLoading}
+                className="w-full"
+              >
+                {isLoading ? "Loading..." : "Load Students"}
+              </Button>
+            </div>
           </div>
 
-          <div className="flex gap-2 mb-4 items-center">
-            <div className="flex-1 max-w-xs">
+          <div className={`flex flex-wrap items-center gap-4 mb-6 p-4 rounded-lg ${
+            theme === 'dark' ? 'bg-muted/50' : 'bg-gray-50'
+          }`}>
+            <div className="flex-1 min-w-64">
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by USN or name"
-                className={`w-full px-3 py-1 text-sm rounded border placeholder-gray-400 ${
+                className={`w-full px-3 py-2 text-sm rounded-md border placeholder-gray-400 ${
                   theme === 'dark'
                     ? 'bg-background border-border text-foreground placeholder:text-muted-foreground'
                     : 'bg-white border-gray-300 text-gray-900'
                 }`}
               />
             </div>
-            <Button onClick={loadStudents} disabled={!semesterId || !sectionId || !selectedSubjectId || isLoading}>Load Students</Button>
-            <Button onClick={loadEnrolledStudents} disabled={!selectedSubjectId || isLoading}>Load Enrolled</Button>
-            <Button variant="secondary" onClick={save} disabled={saving || students.length===0}>Save Enrollment</Button>
-            <div className="ml-4 text-sm">Enrolled: {students.filter((s:any)=>s.checked).length}</div>
-            <label className="flex items-center gap-2 ml-4 text-sm">
-              <input type="checkbox" checked={showEnrolledOnly} onChange={(e)=>setShowEnrolledOnly(e.target.checked)} />
-              <span>Show enrolled only</span>
-            </label>
+            <Button 
+              onClick={save} 
+              disabled={saving || students.length === 0}
+              className="px-6"
+            >
+              {saving ? "Saving..." : "Save Enrollment"}
+            </Button>
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="font-medium">Enrolled:</span>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  theme === 'dark' 
+                    ? 'bg-green-900/20 text-green-400' 
+                    : 'bg-green-100 text-green-800'
+                }`}>
+                  {students.filter((s:any)=>s.checked).length}
+                </span>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={showEnrolledOnly} 
+                  onChange={(e)=>setShowEnrolledOnly(e.target.checked)} 
+                  className="rounded"
+                />
+                <span>Show enrolled only</span>
+              </label>
+            </div>
           </div>
 
           <div>
@@ -444,47 +343,62 @@ const StudentEnrollment = () => {
                       ? students.filter((s: any) => (s.usn || "").toLowerCase().includes(q) || (s.name || "").toLowerCase().includes(q))
                       : students;
 
-                    // Apply frontend pagination
-                    const startIndex = (currentPage - 1) * studentsPerPage;
-                    const endIndex = startIndex + studentsPerPage;
-                    const paginatedFiltered = filtered.slice(startIndex, endIndex);
-
-                    const enrolledListFiltered = paginatedFiltered.filter((s: any) => s.checked);
-                    const notEnrolledListFiltered = paginatedFiltered.filter((s: any) => !s.checked);
+                    const enrolledListFiltered = filtered.filter((s: any) => s.checked);
+                    const notEnrolledListFiltered = filtered.filter((s: any) => !s.checked);
 
                     return (
                       <>
-                        <div className={showEnrolledOnly ? "" : "grid grid-cols-2 gap-4"}>
-                          <div className="p-2 border rounded">
-                            <div className="flex items-center justify-between mb-2">
-                              <strong>Enrolled</strong>
-                              <span className="text-sm">{enrolledListFiltered.length}</span>
+                        <div className={showEnrolledOnly ? "" : "grid grid-cols-1 lg:grid-cols-2 gap-4"}>
+                          <div className="p-4 border rounded-lg">
+                            <div className="flex items-center justify-between mb-3">
+                              <strong className="text-lg">Enrolled</strong>
+                              <span className={`text-sm px-2 py-1 rounded-full ${
+                                theme === 'dark' 
+                                  ? 'bg-green-900/20 text-green-400' 
+                                  : 'bg-green-100 text-green-800'
+                              }`}>
+                                {enrolledListFiltered.length}
+                              </span>
                             </div>
-                            <div className="space-y-2 max-h-96 overflow-y-auto">
+                            <div className="space-y-2 max-h-[500px] overflow-y-auto">
                               {enrolledListFiltered.map((s: any) => (
-                                <div key={s.id} className="flex items-center gap-3">
+                                <div key={s.id} className={`flex items-center gap-3 p-2 rounded ${
+                                  theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-50'
+                                }`}>
                                   <Checkbox checked={s.checked} onCheckedChange={() => toggleStudent(s.id)} />
-                                  <div>{s.usn} — {s.name}</div>
+                                  <div className="text-sm">
+                                    <span className="font-medium">{s.usn}</span> — {s.name}
+                                  </div>
                                 </div>
                               ))}
-                              {enrolledListFiltered.length === 0 && <div className="text-sm text-muted-foreground">No enrolled students</div>}
+                              {enrolledListFiltered.length === 0 && <div className="text-sm text-muted-foreground py-4 text-center">No enrolled students</div>}
                             </div>
                           </div>
 
                           {!showEnrolledOnly && (
-                            <div className="p-2 border rounded">
-                              <div className="flex items-center justify-between mb-2">
-                                <strong>Not Enrolled</strong>
-                                <span className="text-sm">{notEnrolledListFiltered.length}</span>
+                            <div className="p-4 border rounded-lg">
+                              <div className="flex items-center justify-between mb-3">
+                                <strong className="text-lg">Not Enrolled</strong>
+                                <span className={`text-sm px-2 py-1 rounded-full ${
+                                  theme === 'dark' 
+                                    ? 'bg-red-900/20 text-red-400' 
+                                    : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {notEnrolledListFiltered.length}
+                                </span>
                               </div>
-                              <div className="space-y-2 max-h-96 overflow-y-auto">
+                              <div className="space-y-2 max-h-[500px] overflow-y-auto">
                                 {notEnrolledListFiltered.map((s: any) => (
-                                  <div key={s.id} className="flex items-center gap-3">
+                                  <div key={s.id} className={`flex items-center gap-3 p-2 rounded ${
+                                    theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-50'
+                                  }`}>
                                     <Checkbox checked={s.checked} onCheckedChange={() => toggleStudent(s.id)} />
-                                    <div>{s.usn} — {s.name}</div>
+                                    <div className="text-sm">
+                                      <span className="font-medium">{s.usn}</span> — {s.name}
+                                    </div>
                                   </div>
                                 ))}
-                                {notEnrolledListFiltered.length === 0 && <div className="text-sm text-muted-foreground">All students enrolled</div>}
+                                {notEnrolledListFiltered.length === 0 && <div className="text-sm text-muted-foreground py-4 text-center">All students enrolled</div>}
                               </div>
                             </div>
                           )}
@@ -492,29 +406,28 @@ const StudentEnrollment = () => {
 
                         {/* Pagination Controls */}
                         {totalPages > 1 && (
-                          <div className="flex items-center justify-between mt-4">
-                            <div className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                              Showing {Math.min(startIndex + 1, filtered.length)} to{" "}
-                              {Math.min(endIndex, filtered.length)} of {filtered.length} students
-                              {q && ` (filtered from ${students.length} total)`}
+                          <div className="flex flex-col sm:flex-row items-center justify-between mt-6 pt-4 border-t gap-4">
+                            <div className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-600'}`}>
+                              Page {currentPage} of {totalPages} ({totalStudents} total students)
+                              {q && ` (filtered from ${students.length} on this page)`}
                             </div>
                             <div className="flex items-center space-x-2">
                               <Button
                                 variant="outline"
                                 disabled={currentPage === 1}
-                                onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
-                                className={`text-sm font-medium px-4 py-2 rounded-md ${theme === 'dark' ? 'text-foreground bg-background border-border hover:bg-accent' : 'text-gray-900 bg-white border-gray-300 hover:bg-gray-50'}`}
+                                onClick={() => loadStudents(currentPage - 1)}
+                                className={`text-sm font-medium px-4 py-2 rounded-md ${theme === 'dark' ? 'text-foreground bg-background border-border hover:bg-accent disabled:opacity-50' : 'text-gray-900 bg-white border-gray-300 hover:bg-gray-50 disabled:opacity-50'}`}
                               >
                                 Previous
                               </Button>
-                              <span className={`px-4 text-lg font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                                {currentPage} of {Math.ceil(filtered.length / studentsPerPage)}
+                              <span className={`px-4 py-2 text-sm font-medium rounded-md ${theme === 'dark' ? 'text-foreground bg-accent' : 'text-gray-900 bg-gray-100'}`}>
+                                {currentPage} of {totalPages}
                               </span>
                               <Button
                                 variant="outline"
-                                disabled={currentPage === Math.ceil(filtered.length / studentsPerPage)}
-                                onClick={() => setCurrentPage(Math.min(currentPage + 1, Math.ceil(filtered.length / studentsPerPage)))}
-                                className={`text-sm font-medium px-4 py-2 rounded-md ${theme === 'dark' ? 'text-foreground bg-background border-border hover:bg-accent' : 'text-gray-900 bg-white border-gray-300 hover:bg-gray-50'}`}
+                                disabled={currentPage === totalPages}
+                                onClick={() => loadStudents(currentPage + 1)}
+                                className={`text-sm font-medium px-4 py-2 rounded-md ${theme === 'dark' ? 'text-foreground bg-background border-border hover:bg-accent disabled:opacity-50' : 'text-gray-900 bg-white border-gray-300 hover:bg-gray-50 disabled:opacity-50'}`}
                               >
                                 Next
                               </Button>
@@ -529,7 +442,7 @@ const StudentEnrollment = () => {
             )}
           </div>
 
-          <Dialog open={resultModalOpen} onOpenChange={(open) => { setResultModalOpen(open); if (!open) loadStudents(); }}>
+          <Dialog open={resultModalOpen} onOpenChange={(open) => { setResultModalOpen(open); if (!open) loadStudents(currentPage); }}>
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Enrollment Results</DialogTitle>
@@ -548,7 +461,7 @@ const StudentEnrollment = () => {
               </div>
               <DialogFooter>
                 <div className="w-full flex justify-end">
-                  <Button onClick={() => { setResultModalOpen(false); loadStudents(); }}>Close</Button>
+                  <Button onClick={() => { setResultModalOpen(false); loadStudents(currentPage); }}>Close</Button>
                 </div>
               </DialogFooter>
             </DialogContent>

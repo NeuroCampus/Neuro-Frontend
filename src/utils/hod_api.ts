@@ -1609,6 +1609,11 @@ export const manageStudents = async (
           throw new Error("subject_id and student_ids array are required for bulk_register_subjects action");
         }
       }
+      if (req.action === "get_enrollment_status") {
+        if (!req.subject_id || !req.student_ids || !Array.isArray(req.student_ids) || req.student_ids.length === 0) {
+          throw new Error("subject_id and student_ids array are required for get_enrollment_status action");
+        }
+      }
     }
     const response = await fetchWithTokenRefresh(url, {
       method,
