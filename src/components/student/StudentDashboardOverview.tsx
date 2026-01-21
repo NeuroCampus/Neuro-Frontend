@@ -98,24 +98,12 @@ interface DashboardData {
       average_mark: number;
     }>;
   };
-  leave_request_status: Array<{
-    period: string;
-    reason: string;
-    status: string;
-  }>;
-  notification_panel: Array<{
-    title: string;
-    message: string;
-    created_at: string;
-    read: boolean;
-  }>;
 }
 
 const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ user, setPage }) => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentSession, setCurrentSession] = useState<any>(null);
   const [nextSession, setNextSession] = useState<any>(null);
@@ -383,20 +371,13 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
     <div className={`space-y-6 ${theme === 'dark' ? 'bg-background text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
       {/* Welcome Header with Profile Picture */}
       <section className={`border rounded-md p-6 shadow-sm ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
-        <div className="flex items-center gap-4">
-          <img
-            src={dashboardData.student_profile?.profile_picture || "/placeholder.svg"}
-            alt="Profile"
-            className="w-16 h-16 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
-          />
-          <div>
-            <h1 className={`text-xl font-bold ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
-              Welcome, {dashboardData.student_profile?.name || `${user?.first_name} ${user?.last_name || ''}`}!
-            </h1>
-            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-              {dashboardData.student_profile?.usn || user?.username} | {dashboardData.student_profile?.branch || user?.branch || 'Branch'} | Semester: {dashboardData.student_profile?.semester || user?.semester || 'N/A'} | Section: {dashboardData.student_profile?.section || user?.section || 'N/A'}
-            </p>
-          </div>
+        <div>
+          <h1 className={`text-xl font-bold ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+            Welcome, {dashboardData.student_profile?.name || `${user?.first_name} ${user?.last_name || ''}`}!
+          </h1>
+          <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+            {dashboardData.student_profile?.usn || user?.username} | {dashboardData.student_profile?.branch || user?.branch || 'Branch'} | Semester: {dashboardData.student_profile?.semester || user?.semester || 'N/A'} | Section: {dashboardData.student_profile?.section || user?.section || 'N/A'}
+          </p>
         </div>
       </section>
 
@@ -569,141 +550,6 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
             </div>
           )}
         </div>
-      </section>
-
-      {/* Bottom Section (Leave Requests & Notifications) */}
-      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">
-        
-        {/* Leave Request Status */}
-        <div className={`border rounded-lg shadow-sm p-4 max-h-96 overflow-y-auto ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>Leave Request Status</h2>
-            <button
-              className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition ${
-                theme === 'dark' 
-                  ? 'border border-border text-card-foreground bg-muted hover:bg-accent' 
-                  : 'border border-gray-300 text-gray-700 bg-gray-100 hover:bg-gray-200'
-              }`}
-              onClick={() => setPage("leave-request")}
-            >
-              Apply for Leave
-            </button>
-          </div>
-
-          <table className={`w-full rounded-md overflow-hidden ${theme === 'dark' ? 'border border-border' : 'border border-gray-300'}`}>
-            <thead className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-card' : 'bg-white'}`}>
-              <tr className={`text-center ${theme === 'dark' ? 'border-b border-border text-card-foreground' : 'border-b border-gray-300 text-gray-900'} text-xs`}>
-                <th className="py-2">Period</th>
-                <th className="py-2">Reason</th>
-                <th className="py-2">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(!dashboardData.leave_request_status || dashboardData.leave_request_status.length === 0) ? (
-                <tr>
-                  <td colSpan={3} className={`py-3 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                    No leave requests found
-                  </td>
-                </tr>
-              ) : (
-                dashboardData.leave_request_status.slice(0, 10).map((request, index) => (
-                  <tr
-                    key={index}
-                    className={`border-b last:border-none text-sm ${theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-50'} text-center`}
-                  >
-                    <td className="py-3">{request.period}</td>
-                    <td className="py-3">
-                      <button
-                        className={`px-3 py-1 rounded-md text-xs font-medium transition ${
-                          theme === 'dark' 
-                            ? 'text-card-foreground bg-muted hover:bg-accent' 
-                            : 'text-gray-700 bg-gray-100 hover:bg-gray-200'
-                        }`}
-                        onClick={() => setSelectedReason(request.reason)}
-                      >
-                        View Reason
-                      </button>
-                    </td>
-                    <td>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-xs font-medium align-middle ${
-                          request.status.toLowerCase() === "pending"
-                            ? (theme === 'dark' ? "bg-yellow-100 text-yellow-800" : "bg-yellow-100 text-yellow-800")
-                            : request.status.toLowerCase() === "approved"
-                            ? (theme === 'dark' ? "bg-green-100 text-green-700" : "bg-green-100 text-green-700")
-                            : (theme === 'dark' ? "bg-red-100 text-red-700" : "bg-red-100 text-red-700")
-                        }`}
-                      >
-                        {request.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-        
-        {/* Notification Panel */}
-        <div className={`text-gray-200 border rounded-lg p-4 shadow-sm ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>Notification Panel</h2>
-            <button
-              className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition ${
-                theme === 'dark' 
-                  ? 'border border-border text-card-foreground bg-muted hover:bg-accent' 
-                  : 'border border-gray-300 text-gray-700 bg-gray-100 hover:bg-gray-200'
-              }`}
-              onClick={() => setPage("announcements")}
-            >
-              View All
-            </button>
-          </div>
-
-          <ul className="space-y-4 max-h-64 overflow-y-auto">
-            {dashboardData.notification_panel.length === 0 ? (
-              <li className={`text-center py-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No notifications available</li>
-            ) : (
-              dashboardData.notification_panel.slice(0, 5).map((notification, index) => (
-                <li key={index} className="flex gap-3">
-                  {getNotificationIcon(notification.title)}
-                  <div className={notification.read ? '' : (theme === 'dark' ? 'bg-primary/10 p-2 rounded' : 'bg-blue-50 p-2 rounded')}>
-                    <p className={`text-sm font-medium ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>{notification.title}</p>
-                    <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>{notification.message}</p>
-                    <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                      {new Date(notification.created_at).toLocaleString()}
-                    </p>
-                    {!notification.read && (
-                      <span className="inline-block w-2 h-2 bg-primary rounded-full ml-2"></span>
-                    )}
-                  </div>
-                </li>
-              ))
-            )}
-          </ul>
-        </div>
-
-        {/* Reason Dialog */}
-        <Dialog open={!!selectedReason} onOpenChange={() => setSelectedReason(null)}>
-          <DialogContent className={`rounded-lg w-80 ${theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
-            <DialogHeader>
-              <DialogTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Reason</DialogTitle>
-            </DialogHeader>
-            <div className={`text-sm mt-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>{selectedReason}</div>
-            <div className="flex justify-end pt-4">
-              <Button 
-                className={`${
-                  theme === 'dark' 
-                    ? 'text-foreground bg-muted hover:bg-accent border border-border' 
-                    : 'text-gray-900 bg-gray-200 hover:bg-gray-300 border border-gray-300'
-                }`} 
-                onClick={() => setSelectedReason(null)}
-              >
-                Close
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       </section>
     </div>
   );
