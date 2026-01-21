@@ -81,6 +81,7 @@ const StudentManagement = () => {
     selectedFile: null as File | null,
     manualForm: { usn: "", name: "", email: "", section: "", semester: "", batch: "", cycle: "", phone: "" },
     currentPage: 1,
+    totalPages: 1,
     selectedSemester: "",
     semesters: [] as Semester[],
     manualSections: [] as Section[],
@@ -159,7 +160,8 @@ const StudentManagement = () => {
         semester: s.semester || 'Unknown',
         cycle: s.cycle,
       }));
-      updateState({ students, totalStudents: count || students.length, currentPage: page });
+      const totalPages = Math.ceil(count / pageSize);
+      updateState({ students, totalStudents: count, currentPage: page, totalPages });
     } catch (err) {
       updateState({ uploadErrors: [...state.uploadErrors, "Failed to fetch students"] });
     }
@@ -188,12 +190,15 @@ const StudentManagement = () => {
     const fetchInitialData = async () => {
       updateState({ isLoading: true });
       try {
-        const boot = await getHODStudentBootstrap(['profile', 'semesters', 'sections', 'batches', 'students']);
+        const boot = await getHODStudentBootstrap(['profile', 'semesters', 'sections', 'batches']);
         if (!boot.success || !boot.data?.profile?.branch_id) {
           throw new Error(boot.message || "Failed to bootstrap student management");
         }
         const branchId = boot.data.profile.branch_id;
         updateState({ branchId });
+
+        // Fetch initial students separately
+        await fetchStudents(branchId, 1, state.pageSize);
 
         // Batches
         if (Array.isArray(boot.data.batches)) {
@@ -231,26 +236,7 @@ const StudentManagement = () => {
           setSectionsCache(sectionsBySemester);
         }
 
-        // Students
-        if (Array.isArray(boot.data?.students)) {
-          const students = boot.data.students.map((s: any) => ({ 
-            usn: s.usn, 
-            name: s.name, 
-            email: s.email, 
-            phone: s.phone,
-            section: s.section || "Unknown", 
-            semester: s.semester || "Unknown",
-            cycle: s.cycle
-          }));
-          updateState({ 
-            students,
-            totalStudents: boot.count || students.length,
-            currentPage: 1, // Bootstrap returns first page
-            pageSize: 50 // Default page size
-          });
-        } else {
-          await fetchStudents(branchId);
-        }
+        // Students are now fetched separately via fetchStudents call above
 
         // Performance fetch removed (chart not shown on this page)
       } catch (err) {
@@ -1259,7 +1245,7 @@ const StudentManagement = () => {
             )}
 
             <div className="text-sm text-gray-500 mt-4">
-              Showing {paginatedFilteredStudents.length} out of {filteredStudents.length}{" "}
+              Showing {Math.min((state.currentPage - 1) * state.pageSize + 1, state.totalStudents)} to {Math.min(state.currentPage * state.pageSize, state.totalStudents)} of {state.totalStudents}{" "}
               students (Page {state.currentPage} of {totalFilteredPages})
             </div>
           </div>

@@ -33,11 +33,19 @@ interface ProfileData {
 interface FacultyLeavesBootstrapResponse {
   profile: ProfileData;
   leaves: FacultyLeaveData[];
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
 }
 
 const LeaveManagement = () => {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<"All" | "Pending" | "Approved" | "Rejected">("All");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [open, setOpen] = useState(false);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,6 +53,7 @@ const LeaveManagement = () => {
   const [branchId, setBranchId] = useState("");
   const { theme } = useTheme();
   const hasFetchedRef = useRef(false);
+  const initialLoadRef = useRef(true);
 
   // Format date range to "MMM DD, YYYY to MMM DD, YYYY"
   const formatPeriod = (startDate: string, endDate: string): string => {
@@ -76,35 +85,30 @@ const LeaveManagement = () => {
   };
 
   // Fetch leave requests
-  const fetchLeaveRequests = async () => {
-    // Wait for branchId to be set if it's not available yet
-    if (!branchId) {
-      // Try to fetch branchId first
-      try {
-        const profileRes = await manageProfile({}, "GET");
-        if (profileRes.success && profileRes.data?.branch_id) {
-          setBranchId(profileRes.data.branch_id);
-        } else {
-          setErrors(["Failed to fetch branch ID: No branch assigned"]);
-          setLeaveRequests([]);
-          return;
-        }
-      } catch (err) {
-        console.error("Error fetching branch ID:", err);
-        setErrors(["Failed to connect to backend for branch ID"]);
-        setLeaveRequests([]);
-        return;
-      }
-    }
-    
+  const fetchLeaveRequests = async (page: number = 1) => {
     setIsLoading(true);
     try {
-      const response = await getFacultyLeavesBootstrap(branchId);
-      if (!response.success || !response.data) {
-        throw new Error(response.message || "Failed to fetch data");
+      const filters = {
+        status: filterStatus !== "All" ? 
+          (filterStatus === "Pending" ? "PENDING" : 
+           filterStatus === "Approved" ? "APPROVED" : 
+           filterStatus === "Rejected" ? "REJECTED" : undefined) : undefined,
+        search: search || undefined,
+        date_from: dateFrom ? `${dateFrom}T00:00:00Z` : undefined,
+        date_to: dateTo ? `${dateTo}T23:59:59Z` : undefined,
+        page,
+        page_size: 50, // Match backend AdminPagination default
+      };
+
+      const response = await getFacultyLeavesBootstrap(undefined, filters); // No branch_id needed
+      if (!response.results || !response.results.success || !response.results.data) {
+        throw new Error(response.results?.message || response.message || "Failed to fetch data");
       }
 
-      const data: FacultyLeavesBootstrapResponse = response.data;
+      const data: FacultyLeavesBootstrapResponse = response.results.data;
+
+      // Set branchId from response
+      setBranchId(data.profile.branch_id);
 
       // Set leave requests
       const requests = data.leaves.map((req: FacultyLeaveData) => ({
@@ -115,7 +119,11 @@ const LeaveManagement = () => {
         reason: req.reason || "No reason provided",
         status: req.status === "APPROVED" ? "Approved" : req.status === "REJECTED" ? "Rejected" : "Pending",
       })) as LeaveRequest[];
+      
       setLeaveRequests(requests);
+      setTotalCount(response.count || 0);
+      setTotalPages(Math.ceil((response.count || 0) / 50));
+      setCurrentPage(page);
       setErrors([]);
       console.log("Processed leave requests:", requests);
     } catch (err: unknown) {
@@ -141,7 +149,7 @@ const LeaveManagement = () => {
     try {
       const res = await manageLeaves(payload, "PATCH");
       if (res.success) {
-        await fetchLeaveRequests();
+        await fetchLeaveRequests(currentPage);
         Swal.fire('Approved!', 'The leave request has been approved.', 'success');
       } else {
         setErrors([res.message || "Failed to approve leave"]);
@@ -180,7 +188,7 @@ const LeaveManagement = () => {
         try {
           const res = await manageLeaves(payload, "PATCH");
           if (res.success) {
-            await fetchLeaveRequests();
+            await fetchLeaveRequests(currentPage);
             Swal.fire('Rejected!', 'The leave request has been rejected.', 'success');
           } else {
             setErrors([res.message || "Failed to reject leave"]);
@@ -204,47 +212,37 @@ const LeaveManagement = () => {
       }
       hasFetchedRef.current = true;
 
-      setIsLoading(true);
-      try {
-        const response = await getFacultyLeavesBootstrap(branchId);
-        if (!response.success || !response.data) {
-          throw new Error(response.message || "Failed to fetch data");
-        }
-
-        const data: FacultyLeavesBootstrapResponse = response.data;
-
-        // Set branchId
-        setBranchId(data.profile.branch_id);
-
-        // Set leave requests
-        const requests = data.leaves.map((req: FacultyLeaveData) => ({
-          id: req.id.toString(),
-          name: req.faculty_name || "Unknown",
-          dept: req.department || "Unknown",
-          period: formatPeriod(req.start_date, req.end_date),
-          reason: req.reason || "No reason provided",
-          status: req.status === "APPROVED" ? "Approved" : req.status === "REJECTED" ? "Rejected" : "Pending",
-        })) as LeaveRequest[];
-        setLeaveRequests(requests);
-        setErrors([]);
-      } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : "Failed to fetch data";
-        console.error("Error fetching data:", err);
-        setErrors([errorMessage]);
-        setLeaveRequests([]);
-      } finally {
-        setIsLoading(false);
-      }
+      await fetchLeaveRequests(1);
     };
     fetchData();
   }, []);
 
-  // Filter requests
-  const filteredRequests = leaveRequests.filter((req) => {
-    const matchesSearch = req.name.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = filterStatus === "All" || req.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
+  // Handle search changes - real-time search (only after initial load)
+  useEffect(() => {
+    if (initialLoadRef.current) return; // Don't search on initial load
+    
+    const timeoutId = setTimeout(() => {
+      setCurrentPage(1);
+      fetchLeaveRequests(1);
+    }, 300); // Debounce search by 300ms
+
+    return () => clearTimeout(timeoutId);
+  }, [search]);
+
+  // Mark initial load as complete after first render
+  useEffect(() => {
+    initialLoadRef.current = false;
+  }, []);
+
+  // Handle filter changes - only when user clicks Apply Filters
+  const handleFilterChange = () => {
+    setCurrentPage(1);
+    fetchLeaveRequests(1);
+  };
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    fetchLeaveRequests(page);
+  };
 
   return (
     <div className={`p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
@@ -262,14 +260,32 @@ const LeaveManagement = () => {
         </ul>
       )}
 
-      {/* Search and Filter */}
-      <div className="flex justify-between items-center mb-6">
+      {/* Search and Filters */}
+      <div className="flex flex-wrap gap-4 mb-6">
         <Input
           placeholder="Search faculty..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className={`w-64 text-sm ${theme === 'dark' ? 'bg-card border-border text-foreground placeholder:text-muted-foreground' : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-500'}`}
         />
+        
+        <div className="flex gap-2">
+          <Input
+            type="date"
+            placeholder="From date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className={`w-40 text-sm ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`}
+          />
+          <Input
+            type="date"
+            placeholder="To date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className={`w-40 text-sm ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`}
+          />
+        </div>
+
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <div className="flex justify-end items-center">
@@ -278,13 +294,13 @@ const LeaveManagement = () => {
                 className="flex items-center gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md text-sm font-medium"
               >
                 <Filter className="w-4 h-4" />
-                Filter
+                Status: {filterStatus}
               </Button>
             </div>
           </PopoverTrigger>
           <PopoverContent className={`w-48 p-4 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
             <div className="flex flex-col gap-2">
-              <h4 className={`text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Filter Leave Requests</h4>
+              <h4 className={`text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Filter by Status</h4>
               <Button
                 variant={filterStatus === "All" ? "default" : "outline"}
                 size="sm"
@@ -335,9 +351,9 @@ const LeaveManagement = () => {
       </div>
 
       {/* Leave Requests Table */}
-      <div className={`p-4 rounded-md shadow text-sm border custom-scrollbar ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`} style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+      <div className={`p-4 rounded-md shadow text-sm border custom-scrollbar ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`} style={{ maxHeight: '60vh', overflowY: 'auto' }}>
         <div className="flex justify-between items-center mb-4">
-          <h3 className={`text-base font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Requests</h3>
+          <h3 className={`text-base font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Requests ({totalCount} total)</h3>
         </div>
         <table className="w-full">
           <thead>
@@ -350,14 +366,14 @@ const LeaveManagement = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredRequests.length === 0 ? (
+            {leaveRequests.length === 0 ? (
               <tr>
                 <td colSpan={5} className={`py-3 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`}>
                   No leave requests found
                 </td>
               </tr>
             ) : (
-              filteredRequests.map((row, index) => (
+              leaveRequests.map((row, index) => (
                 <tr key={row.id} className={`border-b last:border-none text-sm ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
                   <td className="py-3">
                     <div>
@@ -411,6 +427,35 @@ const LeaveManagement = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-6">
+          <Button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1 || isLoading}
+            variant="outline"
+            size="sm"
+            className={`${theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-900 hover:bg-gray-100'}`}
+          >
+            Previous
+          </Button>
+          
+          <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+            Page {currentPage} of {totalPages}
+          </span>
+          
+          <Button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages || isLoading}
+            variant="outline"
+            size="sm"
+            className={`${theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-900 hover:bg-gray-100'}`}
+          >
+            Next
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

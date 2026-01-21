@@ -791,30 +791,39 @@ export const getBranches = async (): Promise<GetBranchesResponse> => {
 };
 
 interface GetLeaveBootstrapResponse {
-  success: boolean;
-  message?: string;
-  data?: {
-    profile: {
-      username: string;
-      email: string;
-      first_name: string;
-      last_name: string;
-      mobile_number: string;
-      address: string;
-      bio: string;
-      branch: string;
-      branch_id: string;
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
+  results?: {
+    success: boolean;
+    message?: string;
+    data?: {
+      profile: {
+        username: string;
+        email: string;
+        first_name: string;
+        last_name: string;
+        mobile_number: string;
+        address: string;
+        bio: string;
+        branch: string;
+        branch_id: string;
+      };
+      leaves: Array<{
+        id: number;
+        faculty_name: string;
+        department: string;
+        start_date: string;
+        end_date: string;
+        reason: string;
+        status: string;
+      }>;
     };
-    leaves: Array<{
-      id: number;
-      faculty_name: string;
-      department: string;
-      start_date: string;
-      end_date: string;
-      reason: string;
-      status: string;
-    }>;
   };
+  // Fallback for non-paginated responses
+  success?: boolean;
+  message?: string;
+  data?: any;
 }
 
 export const getLeaveBootstrap = async (
@@ -835,11 +844,25 @@ export const getLeaveBootstrap = async (
 };
 
 export const getFacultyLeavesBootstrap = async (
-  branch_id?: string
+  branch_id?: string,
+  filters?: {
+    status?: string;
+    search?: string;
+    date_from?: string;
+    date_to?: string;
+    page?: number;
+    page_size?: number;
+  }
 ): Promise<GetLeaveBootstrapResponse> => {
   try {
     const params: Record<string, string> = {};
     if (branch_id) params.branch_id = branch_id;
+    if (filters?.status && filters.status !== 'All') params.status = filters.status;
+    if (filters?.search) params.search = filters.search;
+    if (filters?.date_from) params.date_from = filters.date_from;
+    if (filters?.date_to) params.date_to = filters.date_to;
+    if (filters?.page) params.page = filters.page.toString();
+    if (filters?.page_size) params.page_size = filters.page_size.toString();
     const query = new URLSearchParams(params).toString();
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/faculty-leaves-bootstrap/${query ? '?' + query : ''}`, {
       method: "GET",
@@ -1431,9 +1454,10 @@ export const getHODBootstrap = async (): Promise<{
   }
 };
 
-// Student management bootstrap (profile + semesters + sections + batches + students + performance)
+// Student management bootstrap (profile + semesters + sections + batches + performance)
+// Note: Students are fetched separately via manageStudents for pagination
 export const getHODStudentBootstrap = async (
-  include: string[] = ['profile', 'semesters', 'sections', 'batches', 'students', 'performance'],
+  include: string[] = ['profile', 'semesters', 'sections', 'batches', 'performance'],
   page?: number
 ): Promise<{
   success: boolean;
@@ -1446,7 +1470,6 @@ export const getHODStudentBootstrap = async (
     semesters?: Array<{ id: string; number: number }>;
     sections?: Array<{ id: string; name: string; semester_id: string | null }>;
     batches?: Array<{ id: number; name: string; start_year: number; end_year: number }>;
-    students?: Array<{ usn: string; name: string; email: string; section: string; semester: string }>;
     performance?: Array<{ subject: string; attendance: number; marks: number; semester: string }>;
   };
 }> => {
