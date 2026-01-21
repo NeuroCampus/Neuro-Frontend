@@ -58,9 +58,9 @@ interface Section {
 interface Student {
   usn: string;
   name: string;
-  semester: number;
+  semester: string;
   section: string | null;
-  batch: string;
+  batch: string | null;
   proctor: string | null;
 }
 
@@ -214,6 +214,12 @@ const PromotionPage = ({ theme }: { theme: string }) => {
     isPromoting: false,
     promotionResults: null as any,
     errors: [] as string[],
+    // Pagination state
+    currentPage: 1,
+    totalPages: 1,
+    totalStudents: 0,
+    hasNext: false,
+    hasPrevious: false,
   });
 
   // Helper to update state
@@ -229,9 +235,9 @@ const PromotionPage = ({ theme }: { theme: string }) => {
         const bootstrapResponse = await getPromotionBootstrap();
         if (bootstrapResponse.success && bootstrapResponse.data) {
           const { profile, semesters, sections } = bootstrapResponse.data;
-          
+
           if (profile?.branch_id) {
-            updateState({ 
+            updateState({
               branchId: profile.branch_id,
               semesters: semesters || [],
               sections: sections || [],
@@ -300,10 +306,23 @@ const PromotionPage = ({ theme }: { theme: string }) => {
             branch_id: state.branchId,
             semester_id: semesterId,
             section_id: sectionId,
-            page_size: 200, // Request maximum allowed page size to show all students
+            page_size: 50, // Use AdminPagination default page size
           }, "GET");
 
-          // Normalize different possible response shapes from backend
+          if (studentRes.results && Array.isArray(studentRes.results)) {
+            const totalPages = Math.ceil((studentRes.count || 0) / 50);
+            updateState({
+              students: studentRes.results,
+              selectedStudents: [],
+              currentPage: 1,
+              totalPages: totalPages,
+              totalStudents: studentRes.count || 0,
+              hasNext: !!studentRes.next,
+              hasPrevious: !!studentRes.previous,
+            });
+          } else {
+            updateState({ errors: ["Failed to load students"] });
+          }
           // 1) { success: true, results: [...], count }
           // 2) { success: true, data: { students: [...] } }
           // 3) plain array
@@ -312,8 +331,8 @@ const PromotionPage = ({ theme }: { theme: string }) => {
             results = [];
           } else if (studentRes.results && Array.isArray(studentRes.results)) {
             results = studentRes.results;
-          } else if (studentRes.data && Array.isArray(studentRes.data.students)) {
-            results = studentRes.data.students;
+          } else if (studentRes.data && Array.isArray((studentRes.data as any).students)) {
+            results = (studentRes.data as any).students;
           } else if (Array.isArray(studentRes)) {
             results = studentRes as any[];
           } else if (studentRes.success === false) {
@@ -330,19 +349,19 @@ const PromotionPage = ({ theme }: { theme: string }) => {
           }
 
           console.log(`API returned ${results.length} students for semester ${state.selectedSemester}`);
-          
+
           // Filter students to ensure they belong to the selected semester
           const currentSemesterNumber = state.semesters.find(s => `${s.number}th Semester` === state.selectedSemester)?.number;
           const filteredStudents = results.filter((student: Student) => {
             // Check if batch contains the correct semester number
-            const batchSemesterMatch = student.batch.match(/Sem(\d+)/);
+            const batchSemesterMatch = student.batch?.match(/Sem(\d+)/);
             if (batchSemesterMatch) {
               const studentSemester = parseInt(batchSemesterMatch[1]);
               return studentSemester === currentSemesterNumber;
             }
             return true; // If no semester in batch, include by default
           });
-          
+
           console.log(`Filtered to ${filteredStudents.length} students for semester ${currentSemesterNumber}`);
           updateState({
             students: filteredStudents,
@@ -375,6 +394,52 @@ const PromotionPage = ({ theme }: { theme: string }) => {
       updateState({ selectedStudents: state.students.map(student => student.usn) });
     } else {
       updateState({ selectedStudents: [] });
+    }
+  };
+
+  // Handle page change
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= state.totalPages) {
+      fetchStudentsPage(newPage);
+    }
+  };
+
+  // Function to fetch students for a specific page
+  const fetchStudentsPage = async (page: number = 1) => {
+    try {
+      updateState({ isLoading: true });
+      const semesterId = state.semesters.find(s => `${s.number}th Semester` === state.selectedSemester)?.id;
+      const sectionId = state.sections.find(s => s.name === state.selectedSection)?.id;
+
+      if (semesterId && sectionId) {
+        const studentRes = await manageStudents({
+          branch_id: state.branchId,
+          semester_id: semesterId,
+          section_id: sectionId,
+          page: page,
+          page_size: 50, // Use AdminPagination default page size
+        }, "GET");
+
+        if (studentRes.results && Array.isArray(studentRes.results)) {
+          const totalPages = Math.ceil((studentRes.count || 0) / 50);
+          updateState({
+            students: studentRes.results,
+            selectedStudents: [],
+            currentPage: page,
+            totalPages: totalPages,
+            totalStudents: studentRes.count || 0,
+            hasNext: !!studentRes.next,
+            hasPrevious: !!studentRes.previous,
+          });
+        } else {
+          updateState({ errors: ["Failed to load students"] });
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching students:", err);
+      updateState({ errors: ["Failed to load students"] });
+    } finally {
+      updateState({ isLoading: false });
     }
   };
 
@@ -435,7 +500,28 @@ const PromotionPage = ({ theme }: { theme: string }) => {
         });
       }
 
-      if (!res.success) {
+      if (res.success) {
+        // Update with actual results from backend
+        const successfulPromotions = res.promoted || [];
+        const failedPromotions = res.failed || [];
+
+        updateState({
+          students: state.students.filter(student =>
+            !successfulPromotions.some(p => p.usn === student.usn)
+          ),
+          selectedStudents: [],
+          promotionResults: {
+            message: res.message || `${successfulPromotions.length} students promoted successfully${failedPromotions.length > 0 ? `, ${failedPromotions.length} failed` : ''}`,
+            promoted: successfulPromotions.map(p => ({
+              name: p.name,
+              usn: p.usn,
+              to_semester: p.to_semester,
+              section: p.section
+            })),
+            failed: failedPromotions
+          },
+        });
+      } else {
         // Revert optimistic update on failure
         updateState({
           students: [...state.students, ...studentsToPromote],
@@ -498,7 +584,28 @@ const PromotionPage = ({ theme }: { theme: string }) => {
         ...(sectionId && { section_id: sectionId }),
       });
 
-      if (!res.success) {
+      if (res.success) {
+        // Update with actual results from backend
+        const successfulPromotions = res.promoted || [];
+        const failedPromotions = res.failed || [];
+
+        updateState({
+          students: allStudents.filter(student =>
+            !successfulPromotions.some(p => p.usn === student.usn)
+          ),
+          selectedStudents: [],
+          promotionResults: {
+            message: res.message || `${successfulPromotions.length} students promoted successfully${failedPromotions.length > 0 ? `, ${failedPromotions.length} failed` : ''}`,
+            promoted: successfulPromotions.map(p => ({
+              name: p.name,
+              usn: p.usn,
+              to_semester: p.to_semester,
+              section: p.section
+            })),
+            failed: failedPromotions
+          },
+        });
+      } else {
         // Revert optimistic update on failure
         updateState({
           students: allStudents,
@@ -557,7 +664,17 @@ const PromotionPage = ({ theme }: { theme: string }) => {
                 <p className={`text-sm ${theme === 'dark' ? 'text-green-300' : 'text-green-700'}`}>Promoted students:</p>
                 <ul className={`text-xs list-disc list-inside ml-4 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
                   {state.promotionResults.promoted.map((student: any, idx: number) => (
-                    <li key={idx}>{student.name} ({student.usn}) - Semester {student.to_semester}</li>
+                    <li key={idx}>{student.name} ({student.usn}) - Semester {student.to_semester}{student.section ? `, Section ${student.section}` : ''}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {state.promotionResults.failed && state.promotionResults.failed.length > 0 && (
+              <div className="mt-2">
+                <p className={`text-sm ${theme === 'dark' ? 'text-yellow-300' : 'text-yellow-700'}`}>Failed to promote:</p>
+                <ul className={`text-xs list-disc list-inside ml-4 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'}`}>
+                  {state.promotionResults.failed.map((student: any, idx: number) => (
+                    <li key={idx}>{student.name} ({student.usn}) - {student.reason}</li>
                   ))}
                 </ul>
               </div>
@@ -667,8 +784,8 @@ const PromotionPage = ({ theme }: { theme: string }) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {state.students.map((student) => (
-                    <TableRow key={student.usn} className={theme === 'dark' ? 'border-border' : 'border-gray-200'}>
+                  {state.students.map((student, index) => (
+                    <TableRow key={`${student.usn}-${index}`} className={theme === 'dark' ? 'border-border' : 'border-gray-200'}>
                       <TableCell>
                         <Checkbox
                           checked={state.selectedStudents.includes(student.usn)}
@@ -685,6 +802,36 @@ const PromotionPage = ({ theme }: { theme: string }) => {
                   ))}
                 </TableBody>
               </Table>
+
+              {/* Pagination Controls */}
+              {state.totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4">
+                  <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                    Showing {state.students.length} of {state.totalStudents} students
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      onClick={() => handlePageChange(state.currentPage - 1)}
+                      disabled={!state.hasPrevious || state.isLoading}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Previous
+                    </Button>
+                    <span className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                      Page {state.currentPage} of {state.totalPages}
+                    </span>
+                    <Button
+                      onClick={() => handlePageChange(state.currentPage + 1)}
+                      disabled={!state.hasNext || state.isLoading}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -708,6 +855,12 @@ const DemotionPage = ({ theme }: { theme: string }) => {
     bulkDemoteReason: "",
     demotionResults: null as any,
     errors: [] as string[],
+    // Pagination state
+    currentPage: 1,
+    totalPages: 1,
+    totalStudents: 0,
+    hasNext: false,
+    hasPrevious: false,
   });
 
   // Helper to update state
@@ -723,9 +876,9 @@ const DemotionPage = ({ theme }: { theme: string }) => {
         const bootstrapResponse = await getPromotionBootstrap();
         if (bootstrapResponse.success && bootstrapResponse.data) {
           const { profile, semesters, sections } = bootstrapResponse.data;
-          
+
           if (profile?.branch_id) {
-            updateState({ 
+            updateState({
               branchId: profile.branch_id,
               semesters: semesters || [],
               sections: sections || [],
@@ -794,10 +947,23 @@ const DemotionPage = ({ theme }: { theme: string }) => {
             branch_id: state.branchId,
             semester_id: semesterId,
             section_id: sectionId,
-            page_size: 200, // Request maximum allowed page size to show all students
+            page_size: 50, // Use AdminPagination default page size
           }, "GET");
 
-          // Normalize different possible response shapes from backend
+          if (studentRes.results && Array.isArray(studentRes.results)) {
+            const totalPages = Math.ceil((studentRes.count || 0) / 50);
+            updateState({
+              students: studentRes.results,
+              selectedStudents: [],
+              currentPage: 1,
+              totalPages: totalPages,
+              totalStudents: studentRes.count || 0,
+              hasNext: !!studentRes.next,
+              hasPrevious: !!studentRes.previous,
+            });
+          } else {
+            updateState({ errors: ["Failed to load students"] });
+          }
           // 1) { success: true, results: [...], count }
           // 2) { success: true, data: { students: [...] } }
           // 3) plain array
@@ -806,8 +972,8 @@ const DemotionPage = ({ theme }: { theme: string }) => {
             results = [];
           } else if (studentRes.results && Array.isArray(studentRes.results)) {
             results = studentRes.results;
-          } else if (studentRes.data && Array.isArray(studentRes.data.students)) {
-            results = studentRes.data.students;
+          } else if (studentRes.data && Array.isArray((studentRes.data as any).students)) {
+            results = (studentRes.data as any).students;
           } else if (Array.isArray(studentRes)) {
             results = studentRes as any[];
           } else if (studentRes.success === false) {
@@ -824,19 +990,19 @@ const DemotionPage = ({ theme }: { theme: string }) => {
           }
 
           console.log(`API returned ${results.length} students for semester ${state.selectedSemester}`);
-          
+
           // Filter students to ensure they belong to the selected semester
           const currentSemesterNumber = state.semesters.find(s => `${s.number}th Semester` === state.selectedSemester)?.number;
           const filteredStudents = results.filter((student: Student) => {
             // Check if batch contains the correct semester number
-            const batchSemesterMatch = student.batch.match(/Sem(\d+)/);
+            const batchSemesterMatch = student.batch?.match(/Sem(\d+)/);
             if (batchSemesterMatch) {
               const studentSemester = parseInt(batchSemesterMatch[1]);
               return studentSemester === currentSemesterNumber;
             }
             return true; // If no semester in batch, include by default
           });
-          
+
           console.log(`Filtered to ${filteredStudents.length} students for semester ${currentSemesterNumber}`);
           updateState({
             students: filteredStudents,
@@ -869,6 +1035,52 @@ const DemotionPage = ({ theme }: { theme: string }) => {
       updateState({ selectedStudents: state.students.map(student => student.usn) });
     } else {
       updateState({ selectedStudents: [] });
+    }
+  };
+
+  // Handle page change
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= state.totalPages) {
+      fetchStudentsPage(newPage);
+    }
+  };
+
+  // Function to fetch students for a specific page
+  const fetchStudentsPage = async (page: number = 1) => {
+    try {
+      updateState({ isLoading: true });
+      const semesterId = state.semesters.find(s => `${s.number}th Semester` === state.selectedSemester)?.id;
+      const sectionId = state.sections.find(s => s.name === state.selectedSection)?.id;
+
+      if (semesterId && sectionId) {
+        const studentRes = await manageStudents({
+          branch_id: state.branchId,
+          semester_id: semesterId,
+          section_id: sectionId,
+          page: page,
+          page_size: 50, // Use AdminPagination default page size
+        }, "GET");
+
+        if (studentRes.results && Array.isArray(studentRes.results)) {
+          const totalPages = Math.ceil((studentRes.count || 0) / 50);
+          updateState({
+            students: studentRes.results,
+            selectedStudents: [],
+            currentPage: page,
+            totalPages: totalPages,
+            totalStudents: studentRes.count || 0,
+            hasNext: !!studentRes.next,
+            hasPrevious: !!studentRes.previous,
+          });
+        } else {
+          updateState({ errors: ["Failed to load students"] });
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching students:", err);
+      updateState({ errors: ["Failed to load students"] });
+    } finally {
+      updateState({ isLoading: false });
     }
   };
 
@@ -982,7 +1194,7 @@ const DemotionPage = ({ theme }: { theme: string }) => {
                 <p className={`text-sm ${theme === 'dark' ? 'text-red-300' : 'text-red-700'}`}>Demoted students:</p>
                 <ul className={`text-xs list-disc list-inside ml-4 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
                   {state.demotionResults.demoted.map((student: any, idx: number) => (
-                    <li key={idx}>{student.name} ({student.usn}) - Semester {student.to_semester}</li>
+                    <li key={idx}>{student.name} ({student.usn}) - Semester {student.to_semester}{student.section ? `, Section ${student.section}` : ''}</li>
                   ))}
                 </ul>
               </div>
@@ -1102,8 +1314,8 @@ const DemotionPage = ({ theme }: { theme: string }) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {state.students.map((student) => (
-                    <TableRow key={student.usn} className={theme === 'dark' ? 'border-border' : 'border-gray-200'}>
+                  {state.students.map((student, index) => (
+                    <TableRow key={`${student.usn}-${index}`} className={theme === 'dark' ? 'border-border' : 'border-gray-200'}>
                       <TableCell>
                         <Checkbox
                           checked={state.selectedStudents.includes(student.usn)}
@@ -1120,6 +1332,36 @@ const DemotionPage = ({ theme }: { theme: string }) => {
                   ))}
                 </TableBody>
               </Table>
+
+              {/* Pagination Controls */}
+              {state.totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4">
+                  <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                    Showing {state.students.length} of {state.totalStudents} students
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      onClick={() => handlePageChange(state.currentPage - 1)}
+                      disabled={!state.hasPrevious || state.isLoading}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Previous
+                    </Button>
+                    <span className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                      Page {state.currentPage} of {state.totalPages}
+                    </span>
+                    <Button
+                      onClick={() => handlePageChange(state.currentPage + 1)}
+                      disabled={!state.hasNext || state.isLoading}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -1145,12 +1387,18 @@ const DemotionPage = ({ theme }: { theme: string }) => {
               <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                 Reason for Demotion *
               </label>
-              <Input
-                value={state.bulkDemoteReason}
-                onChange={(e) => updateState({ bulkDemoteReason: e.target.value })}
-                placeholder="Enter reason for demotion"
-                className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}
-              />
+              <Select value={state.bulkDemoteReason} onValueChange={(value) => updateState({ bulkDemoteReason: value })}>
+                <SelectTrigger className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+                  <SelectValue placeholder="Select reason for demotion" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="exam_failure">Exam Failure</SelectItem>
+                  <SelectItem value="attendance_shortage">Attendance Shortage</SelectItem>
+                  <SelectItem value="academic_misconduct">Academic Misconduct</SelectItem>
+                  <SelectItem value="manual_demotion">Manual Demotion</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>

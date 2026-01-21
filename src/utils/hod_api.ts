@@ -573,15 +573,18 @@ interface PromoteStudentsRequest {
 interface PromoteStudentsResponse {
   success: boolean;
   message?: string;
-  data?: {
-    promoted: Array<{
-      usn: string;
-      name: string;
-      from_semester: number;
-      to_semester: number;
-      batch: string;
-    }>;
-  };
+  promoted?: Array<{
+    usn: string;
+    name: string;
+    from_semester: number;
+    to_semester: number;
+    section?: string;
+  }>;
+  failed?: Array<{
+    usn: string;
+    name: string;
+    reason: string;
+  }>;
 }
 
 interface PromoteSelectedStudentsRequest {
@@ -598,7 +601,12 @@ interface PromoteSelectedStudentsResponse {
     name: string;
     from_semester: number;
     to_semester: number;
-    batch: string;
+    section?: string;
+  }>;
+  failed?: Array<{
+    usn: string;
+    name: string;
+    reason: string;
   }>;
 }
 
@@ -621,6 +629,7 @@ interface DemoteStudentResponse {
     to_semester: number;
     reason: string;
     remarks: string;
+    section?: string;
   };
 }
 
@@ -642,6 +651,7 @@ interface BulkDemoteStudentsResponse {
       name: string;
       from_semester: number;
       to_semester: number;
+      section?: string;
     }>;
     failed_students: Array<{
       usn: string;
@@ -2276,9 +2286,6 @@ export const getNotificationsBootstrap = async (): Promise<{
 export const getPromotionBootstrap = async (): Promise<{
   success: boolean;
   message?: string;
-  count?: number;
-  next?: string | null;
-  previous?: string | null;
   data?: {
     profile: {
       first_name: string;
@@ -2289,25 +2296,6 @@ export const getPromotionBootstrap = async (): Promise<{
     };
     semesters: Array<{ id: string; number: number }>;
     sections: Array<{ id: string; name: string; semester_id: string | null }>;
-    students: Array<{
-      usn: string;
-      name: string;
-      semester: string;
-      section: string;
-    }>;
-    eligibility: Array<{
-      semester_id: string;
-      semester_number: number;
-      eligible_count: number;
-      students: Array<{
-        student_id: string;
-        usn: string;
-        name: string;
-        is_eligible: boolean;
-        failed_subjects: string[];
-        attendance_percentage: number;
-      }>;
-    }>;
   };
 }> => {
   try {
