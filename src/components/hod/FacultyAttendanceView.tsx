@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Calendar, Users, CheckCircle, XCircle, Clock, Download } from "lucide-react";
+import { Calendar, Users, CheckCircle, XCircle, Clock } from "lucide-react";
 import { getFacultyAttendanceToday, getFacultyAttendanceRecords } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
 import Swal from "sweetalert2";
@@ -245,56 +245,6 @@ const FacultyAttendanceView: React.FC = () => {
     }
   };
 
-  const exportToCSV = async () => {
-    if (todayPagination.total_items === 0) {
-      Swal.fire("No Data", "No attendance records to export", "info");
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-
-      // If we have paginated data and there are more records, load all data for export
-      let exportData = todayAttendance;
-      if (todayPagination.total_items > todayPagination.page_size) {
-        const response = await getFacultyAttendanceToday({ page: 1, page_size: 1000 });
-        if (response.success && response.data) {
-          exportData = response.data;
-        }
-      }
-
-      const headers = ['Faculty Name', 'Faculty ID', 'Status', 'Marked At', 'Notes'];
-      const csvData = exportData.map(record => [
-        record.faculty_name,
-        record.faculty_id,
-        record.status,
-        record.marked_at ? formatTime(record.marked_at) : 'Not marked',
-        record.notes || ''
-      ]);
-
-      const csvContent = [headers, ...csvData]
-        .map(row => row.map(field => `"${field}"`).join(','))
-        .join('\n');
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `faculty_attendance_today_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      Swal.fire("Success", "Attendance data exported successfully", "success");
-    } catch (error) {
-      console.error("Export error:", error);
-      Swal.fire("Error", "Failed to export attendance data", "error");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handlePageChange = (newPage: number) => {
     setTodayPagination(prev => ({ ...prev, page: newPage }));
   };
@@ -318,16 +268,6 @@ const FacultyAttendanceView: React.FC = () => {
         <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
           Faculty Attendance Management
         </h1>
-        {(activeTab === 'records' || (activeTab === 'today' && todayPagination.total_items > 0)) && (
-          <button
-            onClick={exportToCSV}
-            disabled={isLoading}
-            className="flex items-center gap-2 px-4 py-2 bg-[#a259ff] text-white rounded-lg hover:bg-[#8a4dde] transition-colors disabled:opacity-50"
-          >
-            <Download className="w-4 h-4" />
-            Export CSV
-          </button>
-        )}
       </div>
 
       {/* Tab Navigation */}
@@ -409,27 +349,6 @@ const FacultyAttendanceView: React.FC = () => {
           {/* Pagination Controls */}
           <div className={`flex flex-col sm:flex-row justify-between items-center gap-4 p-4 ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} rounded-lg`}>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <label className={`text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
-                  Show:
-                </label>
-                <select
-                  value={todayPagination.page_size}
-                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-                  className={`px-3 py-1 border rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    theme === 'dark'
-                      ? 'bg-background border-border text-foreground'
-                      : 'bg-white border-gray-300 text-gray-900'
-                  }`}
-                >
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
-                <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                  per page
-                </span>
-              </div>
               <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                 Showing {todayAttendance.length > 0 ? ((todayPagination.page - 1) * todayPagination.page_size) + 1 : 0} to{' '}
                 {Math.min(todayPagination.page * todayPagination.page_size, todayPagination.total_items)} of{' '}
@@ -694,27 +613,6 @@ const FacultyAttendanceView: React.FC = () => {
           {recordsPagination.total_items > recordsPagination.page_size && (
             <div className={`flex flex-col sm:flex-row justify-between items-center gap-4 p-4 ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} rounded-lg mt-4`}>
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <label className={`text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
-                    Show:
-                  </label>
-                  <select
-                    value={recordsPagination.page_size}
-                    onChange={(e) => handleRecordsPageSizeChange(Number(e.target.value))}
-                    className={`px-3 py-1 border rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      theme === 'dark'
-                        ? 'bg-background border-border text-foreground'
-                        : 'bg-white border-gray-300 text-gray-900'
-                    }`}
-                  >
-                    <option value={25}>25</option>
-                    <option value={50}>50</option>
-                    <option value={100}>100</option>
-                  </select>
-                  <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                    per page
-                  </span>
-                </div>
                 <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                   Showing {attendanceRecords.length > 0 ? ((recordsPagination.page - 1) * recordsPagination.page_size) + 1 : 0} to{' '}
                   {Math.min(recordsPagination.page * recordsPagination.page_size, recordsPagination.total_items)} of{' '}
