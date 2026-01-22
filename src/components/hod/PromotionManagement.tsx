@@ -729,14 +729,7 @@ const PromotionPage = ({ theme }: { theme: string }) => {
               </SelectContent>
             </Select>
 
-            <Button
-              onClick={promoteAllStudents}
-              disabled={state.isPromoting || !state.selectedSemester}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              <UserCheck className="h-4 w-4 mr-2" />
-              {state.isPromoting ? "Promoting..." : "Promote All Students"}
-            </Button>
+            
           </div>
         </CardContent>
       </Card>
