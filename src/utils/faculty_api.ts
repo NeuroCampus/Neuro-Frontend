@@ -922,6 +922,14 @@ export interface GetTakeAttendanceBootstrapResponse {
       total_count: number;
       percentage: number;
     }>;
+    pagination?: {
+      page: number;
+      page_size: number;
+      total_students: number;
+      total_pages: number;
+      has_next: boolean;
+      has_previous: boolean;
+    };
   };
 }
 
@@ -946,18 +954,34 @@ export interface GetUploadMarksBootstrapResponse {
       code: string;
       test_number: number;
     };
+    pagination?: {
+      page: number;
+      page_size: number;
+      total_students: number;
+      total_pages: number;
+      has_next: boolean;
+      has_previous: boolean;
+    };
   };
 }
 
 export const getTakeAttendanceBootstrap = async (params: {
-  branch_id: string;
-  semester_id: string;
-  section_id: string;
+  branch_id?: string;
+  semester_id?: string;
+  section_id?: string;
   subject_id: string;
+  page?: number;
+  page_size?: number;
 }): Promise<GetTakeAttendanceBootstrapResponse> => {
   try {
-    const query = new URLSearchParams(params).toString();
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/take-attendance/bootstrap/?${query}`, {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v === undefined || v === null) return;
+      const s = String(v);
+      if (s === '' || s === 'undefined' || s === 'null' || s === 'NaN') return;
+      query.append(k, s);
+    });
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/take-attendance/bootstrap/?${query.toString()}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -971,19 +995,126 @@ export const getTakeAttendanceBootstrap = async (params: {
   }
 };
 
+export const getAssignedSubjects = async (): Promise<{ success: boolean; message?: string; data?: FacultyAssignment[] }> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/assigned-subjects/`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Get Assigned Subjects Error:', error);
+    return { success: false, message: 'Network error' };
+  }
+};
+
+export const getStudentsForRegular = async (params: { branch_id: string; semester_id: string; section_id: string; subject_id: string; page?: number; page_size?: number; }) => {
+  try {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v === undefined || v === null) return;
+      const s = String(v);
+      if (s === '' || s === 'undefined' || s === 'null' || s === 'NaN') return;
+      query.append(k, s);
+    });
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/students/regular/?${query.toString()}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Get Students For Regular Error:', error);
+    return { success: false, message: 'Network error' };
+  }
+};
+
+export const getStudentsForElective = async (params: { subject_id: string; branch_id: string; semester_id: string; section_id?: string; page?: number; page_size?: number; }) => {
+  try {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v === undefined || v === null) return;
+      const s = String(v);
+      if (s === '' || s === 'undefined' || s === 'null' || s === 'NaN') return;
+      query.append(k, s);
+    });
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/students/elective/?${query.toString()}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Get Students For Elective Error:', error);
+    return { success: false, message: 'Network error' };
+  }
+};
+
+export const getStudentsForOpenElective = async (params: { subject_id: string; branch_id?: string; semester_id?: string; section_id?: string; page?: number; page_size?: number; }) => {
+  try {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v === undefined || v === null) return;
+      const s = String(v);
+      if (s === '' || s === 'undefined' || s === 'null' || s === 'NaN') return;
+      query.append(k, s);
+    });
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/students/open-elective/?${query.toString()}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Get Students For Open Elective Error:', error);
+    return { success: false, message: 'Network error' };
+  }
+};
+
+export const getSubjectDetail = async (subject_id: string): Promise<{ success: boolean; message?: string; data?: { id: number; name: string; subject_type: string; subject_code?: string; semester_id?: number | null; branch_id?: number | null } }> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/common/subject-detail/?subject_id=${encodeURIComponent(subject_id)}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Get Subject Detail Error:', error);
+    return { success: false, message: 'Network error' };
+  }
+};
+
 export const getUploadMarksBootstrap = async (params: {
-  branch_id: string;
-  semester_id: string;
-  section_id: string;
+  branch_id?: string;
+  semester_id?: string;
+  section_id?: string;
   subject_id: string;
   test_number: number;
+  page?: number;
+  page_size?: number;
 }): Promise<GetUploadMarksBootstrapResponse> => {
   try {
-    const query = new URLSearchParams({
-      ...params,
-      test_number: params.test_number.toString(),
-    }).toString();
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/upload-marks/bootstrap/?${query}`, {
+    const query = new URLSearchParams();
+    if (params.branch_id) query.append('branch_id', params.branch_id);
+    if (params.semester_id) query.append('semester_id', params.semester_id);
+    if (params.section_id) query.append('section_id', params.section_id);
+    if (params.subject_id) query.append('subject_id', params.subject_id);
+    query.append('test_number', params.test_number.toString());
+    if (params.page) query.append('page', params.page.toString());
+    if (params.page_size) query.append('page_size', params.page_size.toString());
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/upload-marks/bootstrap/?${query.toString()}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,

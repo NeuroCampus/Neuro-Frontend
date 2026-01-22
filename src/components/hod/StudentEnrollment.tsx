@@ -71,10 +71,14 @@ const StudentEnrollment = () => {
     const loadSubjects = async () => {
       if (!semesterId) return;
       try {
-        // Filter elective subjects by semester and subject type
-        const filteredSubjects = electiveSubjects.filter((s: any) => 
-          s.semester_id === semesterId && s.subject_type === subjectType
-        );
+        // Map selected semester id to its semester number (semester objects are branch-scoped)
+        const semObj = semesters.find((s: any) => String(s.id) === String(semesterId));
+        const semNumber = semObj ? String(semObj.number) : null;
+        // Filter elective subjects by semester number and subject type so we include open electives from other branches
+        const filteredSubjects = electiveSubjects.filter((s: any) => {
+          const subjSemNum = s.semester_number ? String(s.semester_number) : String(s.semester_id);
+          return subjSemNum === semNumber && s.subject_type === subjectType;
+        });
         setSubjects(filteredSubjects);
       } catch (e) {
         console.error(e);
@@ -88,19 +92,28 @@ const StudentEnrollment = () => {
   }, [searchTerm]);
 
   const loadStudents = async (page = 1) => {
-    if (!branchId || !semesterId || !sectionId || !selectedSubjectId) return;
+    if (!branchId || !selectedSubjectId) return;
+    // Determine selected subject type to decide required params (open_elective vs regular)
+    const selSub = subjects.find((s: any) => String(s.id) === String(selectedSubjectId));
+    const selType = selSub ? (selSub.subject_type || selSub.subjectType || '') : '';
+
+    // non-open electives require semester and section
+    if (selType !== 'open_elective' && (!semesterId || !sectionId)) return;
+    // open electives require semester at minimum (section optional for combined/branch modes)
+    if (selType === 'open_elective' && !semesterId) return;
+
     setIsLoading(true);
     try {
-      // Load current page of students from the section with enrollment status in one call
+      // Build params: always include branch and subject; include semester/section when provided
       const params = new URLSearchParams({
         branch_id: branchId,
-        semester_id: semesterId,
-        section_id: sectionId,
         subject_id: selectedSubjectId,
         include_enrollment_status: 'true',
         page: page.toString(),
         page_size: '50'
       });
+      if (semesterId) params.set('semester_id', semesterId);
+      if (sectionId) params.set('section_id', sectionId);
 
       const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/students/?${params}`, {
         method: "GET",
@@ -275,7 +288,7 @@ const StudentEnrollment = () => {
             <div className="flex items-end">
               <Button 
                 onClick={() => loadStudents(1)} 
-                disabled={!semesterId || !sectionId || !selectedSubjectId || isLoading}
+                disabled={!selectedSubjectId || isLoading || !branchId}
                 className="w-full"
               >
                 {isLoading ? "Loading..." : "Load Students"}

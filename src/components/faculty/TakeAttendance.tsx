@@ -23,17 +23,24 @@ import { Button } from "../ui/button";
 import { Check, X, UploadCloud } from "lucide-react";
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
-import { getTakeAttendanceBootstrap, takeAttendance, aiAttendance, FacultyAssignment, ClassStudent, GetTakeAttendanceBootstrapResponse } from "@/utils/faculty_api";
+import { getSubjectDetail, takeAttendance, aiAttendance, getStudentsForRegular, getStudentsForElective, getStudentsForOpenElective, FacultyAssignment, ClassStudent, GetTakeAttendanceBootstrapResponse } from "@/utils/faculty_api";
 import { useFacultyAssignmentsQuery } from "@/hooks/useApiQueries";
 import { useTheme } from "@/context/ThemeContext";
 
 const TakeAttendance = () => {
   const { data: assignments = [], isLoading: assignmentsLoading, error: assignmentsError } = useFacultyAssignmentsQuery();
+  const { theme } = useTheme();
   const [branchId, setBranchId] = useState<number | null>(null);
   const [semesterId, setSemesterId] = useState<number | null>(null);
   const [sectionId, setSectionId] = useState<number | null>(null);
   const [subjectId, setSubjectId] = useState<number | null>(null);
   const [students, setStudents] = useState<ClassStudent[]>([]);
+  const [subjectStudents, setSubjectStudents] = useState<any[]>([]); // students returned for subject-only bootstrap
+  const [bootstrapParams, setBootstrapParams] = useState<any | null>(null);
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(50);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalStudentsCount, setTotalStudentsCount] = useState<number | null>(null);
   const [attendance, setAttendance] = useState<{ [studentId: number]: boolean }>({});
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -42,30 +49,179 @@ const TakeAttendance = () => {
   const [recentRecords, setRecentRecords] = useState<GetTakeAttendanceBootstrapResponse['data']['recent_records']>([]);
   const [aiPhoto, setAiPhoto] = useState<File | null>(null);
   const [aiResults, setAiResults] = useState<any>(null);
+  const [subjectType, setSubjectType] = useState<string | null>(null);
   const [processingAI, setProcessingAI] = useState(false);
-  const { theme } = useTheme();
+  const [lastBootstrapParams, setLastBootstrapParams] = useState<any>(null);
+
+  // Helper to build query params: omit null/undefined/'undefined' values and stringify
+  const makeParams = (obj: Record<string, any>) => {
+    const out: Record<string, any> = {};
+    Object.entries(obj).forEach(([k, v]) => {
+      if (v === null || v === undefined) return;
+      const s = String(v);
+      if (s === '' || s === 'undefined' || s === 'null' || s === 'NaN') return;
+      out[k] = s;
+    });
+    return out;
+  };
+
+  // Reset last params when subject changes
+  useEffect(() => {
+    setLastBootstrapParams(null);
+  }, [subjectId]);
 
   // Assignments are now loaded via context
 
-  // Reset selections if branch/semester/section/subject changes
+  // Reset selections and load students when subject or class selection changes
   useEffect(() => {
     setStudents([]);
     setAttendance({});
     setRecentRecords([]);
     setSuccessMsg("");
     setErrorMsg("");
-    if (branchId && semesterId && sectionId && subjectId) {
+
+    if (!subjectId) return;
+
+    // CASE 0: Elective (Branch + Semester + Subject, section optional)
+    if (subjectId && branchId && semesterId && subjectType === 'elective') {
       setLoadingStudents(true);
-      getTakeAttendanceBootstrap({
-        branch_id: branchId.toString(),
-        semester_id: semesterId.toString(),
-        section_id: sectionId.toString(),
-        subject_id: subjectId.toString(),
-      })
+      const params: any = makeParams({ subject_id: subjectId, branch_id: branchId, semester_id: semesterId, section_id: sectionId, page, page_size: pageSize });
+      
+      // Prevent duplicate calls
+      if (lastBootstrapParams && JSON.stringify(params) === JSON.stringify(lastBootstrapParams)) return;
+      setLastBootstrapParams(params);
+      
+      setBootstrapParams(params);
+      getStudentsForElective(params)
+        .then(response => {
+          if (response.success && response.data) {
+            setSubjectStudents(response.data.students || []);
+            setStudents(response.data.students.map((s: any) => ({ id: s.id, name: s.name, usn: s.usn })));
+            setRecentRecords(response.data.recent_records || []);
+            if (response.data.pagination) {
+              setPage(response.data.pagination.page);
+              setPageSize(response.data.pagination.page_size);
+              setTotalPages(response.data.pagination.total_pages);
+              setTotalStudentsCount(response.data.pagination.total_students);
+            } else {
+              setTotalPages(1);
+              setTotalStudentsCount(response.data.students.length || 0);
+            }
+          } else {
+            setErrorMsg(response.message || "Failed to load data");
+          }
+        })
+        .catch(e => setErrorMsg(e.message || "Failed to load data"))
+        .finally(() => setLoadingStudents(false));
+      return;
+    }
+
+    // CASE 1: Combined class (Subject only)
+    if (subjectId && !branchId) {
+      if (subjectStudents.length) {
+        const mapped = subjectStudents.map(s => ({ id: s.id, name: s.name, usn: s.usn }));
+        setStudents(mapped);
+        // recentRecords already set by subject-only bootstrap
+      }
+      return;
+    }
+
+    // CASE 2: Branch-specific class (Subject + Branch)
+    if (subjectId && branchId && !semesterId && !sectionId) {
+      // For elective subjects we require semester selection before calling the elective endpoint
+      if (subjectType === 'elective') {
+        // don't call elective endpoint without semester; allow semester dropdown to populate
+        return;
+      }
+      setLoadingStudents(true);
+      const params: any = makeParams({ subject_id: subjectId, branch_id: branchId, page, page_size: pageSize });
+      setBootstrapParams(params);
+      // Use open-elective or regular endpoint depending on subjectType
+      const loader = subjectType === 'open_elective' ? getStudentsForOpenElective : getStudentsForRegular;
+      loader(params)
+        .then(response => {
+          if (response.success && response.data) {
+            setStudents(response.data.students.map((s: any) => ({ id: s.id, name: s.name, usn: s.usn })));
+            setRecentRecords(response.data.recent_records || []);
+            if (subjectType === 'elective' || subjectType === 'open_elective') {
+              setSubjectStudents(response.data.students || []);
+            }
+            if (response.data.pagination) {
+              setPage(response.data.pagination.page);
+              setPageSize(response.data.pagination.page_size);
+              setTotalPages(response.data.pagination.total_pages);
+              setTotalStudentsCount(response.data.pagination.total_students);
+            } else {
+              setTotalPages(1);
+              setTotalStudentsCount(response.data.students.length || 0);
+            }
+          } else {
+            setErrorMsg(response.message || "Failed to load data");
+          }
+        })
+        .catch(e => setErrorMsg(e.message || "Failed to load data"))
+        .finally(() => setLoadingStudents(false));
+      return;
+    }
+
+    // CASE 2b: Branch + Semester selected (section optional)
+    // This handles elective/open_elective where section may be optional.
+    if (subjectId && branchId && semesterId && !sectionId) {
+      setLoadingStudents(true);
+      const params: any = makeParams({ subject_id: subjectId, branch_id: branchId, semester_id: semesterId, page, page_size: pageSize });
+      setBootstrapParams(params);
+      const loader = subjectType === 'elective'
+        ? getStudentsForElective
+        : (subjectType === 'open_elective' ? getStudentsForOpenElective : getStudentsForRegular);
+      loader(params)
+        .then(response => {
+          if (response.success && response.data) {
+            setStudents(response.data.students.map((s: any) => ({ id: s.id, name: s.name, usn: s.usn })));
+            setRecentRecords(response.data.recent_records || []);
+            if (subjectType === 'elective' || subjectType === 'open_elective') {
+              setSubjectStudents(response.data.students || []);
+            }
+            if (response.data.pagination) {
+              setPage(response.data.pagination.page);
+              setPageSize(response.data.pagination.page_size);
+              setTotalPages(response.data.pagination.total_pages);
+              setTotalStudentsCount(response.data.pagination.total_students);
+            } else {
+              setTotalPages(1);
+              setTotalStudentsCount(response.data.students.length || 0);
+            }
+          } else {
+            setErrorMsg(response.message || "Failed to load data");
+          }
+        })
+        .catch(e => setErrorMsg(e.message || "Failed to load data"))
+        .finally(() => setLoadingStudents(false));
+      return;
+    }
+
+    // CASE 3: Section-specific class (Subject + Branch + Semester + Section)
+    if (subjectId && branchId && semesterId && sectionId) {
+      setLoadingStudents(true);
+      const params: any = makeParams({ subject_id: subjectId, branch_id: branchId, semester_id: semesterId, section_id: sectionId, page, page_size: pageSize });
+      setBootstrapParams(params);
+      const loader = subjectType === 'regular' || !subjectType ? getStudentsForRegular : (subjectType === 'elective' ? getStudentsForElective : getStudentsForOpenElective);
+      loader(params)
         .then(response => {
           if (response.success && response.data) {
             setStudents(response.data.students);
             setRecentRecords(response.data.recent_records || []);
+            if (subjectType === 'elective' || subjectType === 'open_elective') {
+              setSubjectStudents(response.data.students || []);
+            }
+            if (response.data.pagination) {
+              setPage(response.data.pagination.page);
+              setPageSize(response.data.pagination.page_size);
+              setTotalPages(response.data.pagination.total_pages);
+              setTotalStudentsCount(response.data.pagination.total_students);
+            } else {
+              setTotalPages(1);
+              setTotalStudentsCount(response.data.students.length || 0);
+            }
           } else {
             setErrorMsg(response.message || "Failed to load data");
           }
@@ -73,33 +229,217 @@ const TakeAttendance = () => {
         .catch(e => setErrorMsg(e.message || "Failed to load data"))
         .finally(() => setLoadingStudents(false));
     }
-  }, [branchId, semesterId, sectionId, subjectId]);
+  }, [subjectId, branchId, semesterId, sectionId]);
+
+  // When subject changes, reset branch/semester/section selections
+  useEffect(() => {
+    setBranchId(null);
+    setSemesterId(null);
+    setSectionId(null);
+    setStudents([]);
+    setAttendance({});
+    setRecentRecords([]);
+    setSuccessMsg("");
+    setErrorMsg("");
+  }, [subjectId]);
+
+  // When branch changes, clear dependent selections so the UI recomputes semesters/sections
+  useEffect(() => {
+    setSemesterId(null);
+    setSectionId(null);
+    setStudents([]);
+    setSubjectStudents([]);
+    setAttendance({});
+    setRecentRecords([]);
+    setSuccessMsg("");
+    setErrorMsg("");
+  }, [branchId]);
+
+  // When semester changes, clear section and refresh students derived from registrations
+  useEffect(() => {
+    setSectionId(null);
+    setStudents([]);
+    setSubjectStudents([]);
+    setAttendance({});
+    setRecentRecords([]);
+    setSuccessMsg("");
+    setErrorMsg("");
+  }, [semesterId]);
+
+  // When page or pageSize changes, re-fetch current bootstrap results if any
+  useEffect(() => {
+    if (!bootstrapParams || !bootstrapParams.subject_id) return;
+    const params = { ...bootstrapParams, page, page_size: pageSize };
+    setLoadingStudents(true);
+    // Choose loader based on subjectType so we call the correct endpoint
+    const loader = subjectType === 'elective'
+      ? getStudentsForElective
+      : (subjectType === 'open_elective' ? getStudentsForOpenElective : getStudentsForRegular);
+
+    loader(params)
+      .then(response => {
+        if (response.success && response.data) {
+          if (!params.branch_id) {
+            setSubjectStudents(response.data.students || []);
+            setStudents((response.data.students || []).map((s: any) => ({ id: s.id, name: s.name, usn: s.usn })));
+          } else {
+            setStudents(response.data.students.map((s: any) => ({ id: s.id, name: s.name, usn: s.usn })));
+          }
+          setRecentRecords(response.data.recent_records || []);
+          if (response.data.pagination) {
+            setPage(response.data.pagination.page);
+            setPageSize(response.data.pagination.page_size);
+            setTotalPages(response.data.pagination.total_pages);
+            setTotalStudentsCount(response.data.pagination.total_students);
+          } else {
+            setTotalPages(1);
+            setTotalStudentsCount(response.data.students.length || 0);
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingStudents(false));
+  }, [page, pageSize, bootstrapParams]);
+
+  // When a subject is selected, fetch subject detail first. For open electives, fetch subject-only bootstrap to discover available registrations.
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      setSubjectStudents([]);
+      if (!subjectId) return;
+      setLoadingStudents(true);
+      try {
+        const subjRes = await getSubjectDetail(subjectId.toString());
+        if (cancelled) return;
+          if (subjRes.success && subjRes.data) {
+          const subjType = subjRes.data.subject_type;
+          setSubjectType(subjType);
+          if (subjType === 'open_elective') {
+            // For open electives use the open-elective students endpoint (registration-driven)
+            const params = makeParams({ subject_id: subjectId, page, page_size: pageSize });
+            setBootstrapParams(params);
+            const bsRes = await getStudentsForOpenElective(params);
+            if (!cancelled && bsRes.success && bsRes.data) {
+              setSubjectStudents(bsRes.data.students || []);
+              setRecentRecords(bsRes.data.recent_records || []);
+              if (bsRes.data.pagination) {
+                setPage(bsRes.data.pagination.page);
+                setPageSize(bsRes.data.pagination.page_size);
+                setTotalPages(bsRes.data.pagination.total_pages);
+                setTotalStudentsCount(bsRes.data.pagination.total_students);
+              } else {
+                setTotalPages(1);
+                setTotalStudentsCount(bsRes.data.students.length || 0);
+              }
+            }
+          } else {
+            // normal subject: do not call subject-only bootstrap; wait for branch/sem/section selection
+            setSubjectStudents([]);
+          }
+        }
+      } catch (e) {
+        setSubjectStudents([]);
+      } finally {
+        if (!cancelled) setLoadingStudents(false);
+      }
+    };
+    run();
+    return () => { cancelled = true; };
+  }, [subjectId]);
 
   // Dropdown options (deduplicated by id)
-  const branches = Array.from(new Map(assignments.map(a => [a.branch_id, { id: a.branch_id, name: a.branch }])).values());
-  const semesters = branchId ? Array.from(new Map(assignments.filter(a => a.branch_id === branchId).map(a => [a.semester_id, { id: a.semester_id, name: a.semester.toString() }])).values()) : [];
-  const sections = branchId && semesterId ? Array.from(new Map(assignments.filter(a => a.branch_id === branchId && a.semester_id === semesterId).map(a => [a.section_id, { id: a.section_id, name: a.section }])).values()) : [];
-  const subjects = branchId && semesterId && sectionId ? Array.from(new Map(assignments.filter(a => a.branch_id === branchId && a.semester_id === semesterId && a.section_id === sectionId).map(a => [a.subject_id, { id: a.subject_id, name: a.subject_name }])).values()) : [];
+  // Subject-first behavior: list all subjects assigned to this faculty
+  const assignedSubjects = Array.from(new Map(assignments.map(a => [a.subject_id, { id: a.subject_id, name: a.subject_name }])).values());
+
+  // Branch options: if subjectStudents available (subject-only bootstrap), use branches from registrations; otherwise use assignment branches
+  const branchesFromAssignments = Array.from(new Map(assignments.map(a => [a.branch_id, { id: a.branch_id, name: a.branch }])).values());
+  // If registration entries don't include branch names, fall back to assignment labels
+  const branchesFromRegistrations = subjectStudents.length ? Array.from(new Map(subjectStudents.filter(s => s.branch_id).map(s => [s.branch_id, { id: s.branch_id, name: s.branch || (branchesFromAssignments.find(b => b.id === s.branch_id)?.name) }])).values()) : [];
+  // Prefer registrations-derived branches but ensure current selection remains available
+  const preferredBranches = branchesFromRegistrations.length ? branchesFromRegistrations : branchesFromAssignments;
+  const branches = preferredBranches.slice();
+  if (branchId && !branches.find(b => b.id === branchId)) {
+    const match = branchesFromAssignments.find(b => b.id === branchId);
+    if (match) branches.unshift(match);
+  }
+
+  // Semesters: derive from subjectStudents when available for chosen branch, else fall back to assignments
+  const subjectAssignments = subjectId ? assignments.filter(a => a.subject_id === subjectId) : [];
+  const semestersFromRegistrations = (subjectStudents.length && branchId)
+    ? Array.from(new Map(subjectStudents.filter(s => s.branch_id === branchId && s.semester_id).map(s => [s.semester_id, { id: s.semester_id, name: s.semester || (subjectAssignments.length ? (subjectAssignments.find(a => a.semester_id === s.semester_id)?.semester?.toString()) : (assignments.find(a => a.semester_id === s.semester_id && a.branch_id === branchId)?.semester?.toString())) }])).values())
+    : [];
+  // Prefer registrations-derived semesters but ensure current selection remains available
+  const preferredSemesters = semestersFromRegistrations.length
+    ? semestersFromRegistrations
+    : (subjectAssignments.length
+      ? Array.from(new Map(subjectAssignments.map(a => [a.semester_id, { id: a.semester_id, name: a.semester.toString() }])).values())
+      : (branchId ? Array.from(new Map(assignments.filter(a => a.branch_id === branchId).map(a => [a.semester_id, { id: a.semester_id, name: a.semester.toString() }])).values()) : []));
+  const semesters = preferredSemesters.slice();
+  if (semesterId && !semesters.find(s => s.id === semesterId)) {
+    const match = subjectAssignments.length ? subjectAssignments.find(a => a.semester_id === semesterId) : assignments.find(a => a.semester_id === semesterId && a.branch_id === branchId);
+    if (match) semesters.unshift({ id: match.semester_id, name: match.semester.toString() });
+  }
+
+  // Sections: derive from subjectStudents when available for chosen branch+semester, else fall back to assignments
+  const sectionsFromRegistrations = (subjectStudents.length && branchId && semesterId)
+    ? Array.from(new Map(subjectStudents.filter(s => s.branch_id === branchId && s.semester_id === semesterId && s.section_id).map(s => {
+      const assignLabel = assignments.find(a => a.section_id === s.section_id && a.branch_id === branchId && a.semester_id === semesterId)?.section;
+      const label = s.section || assignLabel || `Section ${s.section_id}`;
+      return [s.section_id, { id: s.section_id, name: label } as { id: number; name: string }];
+    })).values())
+    : [];
+  let sectionsPreferred: { id: number; name: string }[] = [];
+  if (subjectType === 'elective') {
+    // For elective subjects prefer the sections present in student registrations
+    sectionsPreferred = sectionsFromRegistrations.slice();
+  } else {
+    sectionsPreferred = sectionsFromRegistrations.length
+      ? sectionsFromRegistrations
+      : ((subjectId && branchId && semesterId && subjectType === 'elective')
+        ? Array.from(new Map(assignments.filter(a => a.branch_id === branchId && a.semester_id === semesterId).map(a => [a.section_id, { id: a.section_id, name: a.section }])).values())
+        : ((subjectId && branchId && semesterId)
+          ? Array.from(new Map(assignments.filter(a => a.subject_id === subjectId && a.branch_id === branchId && a.semester_id === semesterId).map(a => [a.section_id, { id: a.section_id, name: a.section }])).values())
+          : (branchId && semesterId ? Array.from(new Map(assignments.filter(a => a.branch_id === branchId && a.semester_id === semesterId).map(a => [a.section_id, { id: a.section_id, name: a.section }])).values()) : [])));
+  }
+  const sections = sectionsPreferred.slice();
+  if (sectionId && !sections.find(s => s.id === sectionId)) {
+    const match = assignments.find(a => a.section_id === sectionId && a.branch_id === branchId && a.semester_id === semesterId);
+    if (match) sections.unshift({ id: match.section_id, name: match.section });
+  }
+
+  // Subjects for selection: show all assigned subjects (faculty's subjects)
+  const subjects = assignedSubjects;
 
   const handleAttendance = (studentId: number, present: boolean) => {
     setAttendance(prev => ({ ...prev, [studentId]: present }));
   };
 
   const handleSubmit = async () => {
-    if (!branchId || !semesterId || !sectionId || !subjectId) return;
+    // Validation:
+    // - regular: require branch, semester, section
+    // - elective: require branch, semester (section optional)
+    // - open_elective: require subject only (branch/semester/section optional)
+    if (!subjectId) return;
+    if (subjectType === 'regular') {
+      if (!branchId || !semesterId || !sectionId) return;
+    } else if (subjectType === 'elective') {
+      if (!branchId || !semesterId) return;
+    }
     setSubmitting(true);
     setSuccessMsg("");
     setErrorMsg("");
     try {
       const attendanceArr = students.map(s => ({ student_id: s.id.toString(), status: !!attendance[s.id] }));
-      const res = await takeAttendance({
-        branch_id: branchId.toString(),
-        semester_id: semesterId.toString(),
-        section_id: sectionId.toString(),
+      const data: any = {
         subject_id: subjectId.toString(),
         method: "manual",
         attendance: attendanceArr,
-      });
+      };
+      // include optional identifiers only when present
+      if (branchId) data.branch_id = branchId.toString();
+      if (semesterId) data.semester_id = semesterId.toString();
+      if (sectionId) data.section_id = sectionId.toString();
+      const res = await takeAttendance(data);
       if (res.success) {
         setSuccessMsg("Attendance submitted successfully!");
       } else {
@@ -165,36 +505,36 @@ const TakeAttendance = () => {
         <CardContent>
           <div className="space-y-6">
             <div className="grid grid-cols-4 gap-4">
-              <Select value={branchId?.toString()} onValueChange={v => setBranchId(Number(v))}>
+              <Select value={subjectId?.toString()} onValueChange={v => setSubjectId(Number(v))}>
                 <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
+                  <SelectValue placeholder="Select Subject" />
+                </SelectTrigger>
+                <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
+                  {subjects.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={branchId?.toString()} onValueChange={v => setBranchId(Number(v))} disabled={!subjectId}>
+                <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'} disabled={!subjectId}>
                   <SelectValue placeholder="Select Branch" />
                 </SelectTrigger>
                 <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
                   {branches.map(b => <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Select value={semesterId?.toString()} onValueChange={v => setSemesterId(Number(v))} disabled={!branchId}>
-                <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'} disabled={!branchId}>
+              <Select value={semesterId?.toString()} onValueChange={v => setSemesterId(Number(v))} disabled={!branchId || semesters.length === 0}>
+                <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'} disabled={!branchId || semesters.length === 0}>
                   <SelectValue placeholder="Select Semester" />
                 </SelectTrigger>
                 <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
                   {semesters.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Select value={sectionId?.toString()} onValueChange={v => setSectionId(Number(v))} disabled={!semesterId}>
-                <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'} disabled={!semesterId}>
-                  <SelectValue placeholder="Select Section" />
+              <Select value={sectionId?.toString() || ""} onValueChange={v => setSectionId(v ? Number(v) : null)} disabled={!semesterId || sections.length === 0}>
+                <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'} disabled={!semesterId || sections.length === 0}>
+                  <SelectValue placeholder={subjectType === 'elective' ? "Select Section (Optional)" : "Select Section"} />
                 </SelectTrigger>
                 <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
                   {sections.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Select value={subjectId?.toString()} onValueChange={v => setSubjectId(Number(v))} disabled={!sectionId}>
-                <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'} disabled={!sectionId}>
-                  <SelectValue placeholder="Select Subject" />
-                </SelectTrigger>
-                <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
-                  {subjects.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -298,6 +638,25 @@ const TakeAttendance = () => {
                         </tbody>
                       </table>
                     </div>
+                    {totalPages && totalPages > 1 && (
+                      <div className="p-3 flex items-center justify-between gap-4">
+                        <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                          Showing page {page} of {totalPages} {totalStudentsCount !== null && `— ${totalStudentsCount} students`}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Prev</Button>
+                          <Button disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Next</Button>
+                          <div className="flex items-center gap-2 ml-4">
+                            <label className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Per page:</label>
+                            <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className="border rounded px-2 py-1">
+                              <option value={25}>25</option>
+                              <option value={50}>50</option>
+                              <option value={100}>100</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     <div className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                       <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                         {Object.keys(attendance).filter(key => attendance[Number(key)] === true).length} Present, 
