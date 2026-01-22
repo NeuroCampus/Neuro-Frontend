@@ -460,10 +460,10 @@ export const uploadInternalMarks = async (
 ): Promise<UploadMarksResponse> => {
   try {
     const formData = new FormData();
-    formData.append("branch_id", data.branch_id);
-    formData.append("semester_id", data.semester_id);
-    formData.append("section_id", data.section_id);
-    formData.append("subject_id", data.subject_id);
+    if (data.branch_id) formData.append("branch_id", String(data.branch_id));
+    if (data.semester_id) formData.append("semester_id", String(data.semester_id));
+    if (data.section_id) formData.append("section_id", String(data.section_id));
+    if (data.subject_id) formData.append("subject_id", String(data.subject_id));
     formData.append("test_number", data.test_number.toString());
     if (data.marks) {
       formData.append("marks", JSON.stringify(data.marks));
@@ -1107,13 +1107,21 @@ export const getUploadMarksBootstrap = async (params: {
 }): Promise<GetUploadMarksBootstrapResponse> => {
   try {
     const query = new URLSearchParams();
-    if (params.branch_id) query.append('branch_id', params.branch_id);
-    if (params.semester_id) query.append('semester_id', params.semester_id);
-    if (params.section_id) query.append('section_id', params.section_id);
-    if (params.subject_id) query.append('subject_id', params.subject_id);
-    query.append('test_number', params.test_number.toString());
-    if (params.page) query.append('page', params.page.toString());
-    if (params.page_size) query.append('page_size', params.page_size.toString());
+    const entries: Record<string, any> = {
+      branch_id: params.branch_id,
+      semester_id: params.semester_id,
+      section_id: params.section_id,
+      subject_id: params.subject_id,
+      test_number: params.test_number,
+      page: params.page,
+      page_size: params.page_size,
+    };
+    Object.entries(entries).forEach(([k, v]) => {
+      if (v === undefined || v === null) return;
+      const s = String(v);
+      if (s === '' || s === 'undefined' || s === 'null' || s === 'NaN') return;
+      query.append(k, s);
+    });
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/upload-marks/bootstrap/?${query.toString()}`, {
       method: "GET",
       headers: {
@@ -1277,6 +1285,10 @@ export interface StudentsForMarksResponse {
     id: number;
     name: string;
     usn: string;
+    branch_id?: number | null;
+    branch?: string | null;
+    semester_id?: number | null;
+    semester?: number | null;
     existing_mark?: {
       marks_detail: Record<string, number>;
       total_obtained: number;
@@ -1327,15 +1339,21 @@ export const getQuestionPapers = async (): Promise<any> => {
 };
 
 export const getStudentsForMarks = async (params: {
-  branch_id: string;
-  semester_id: string;
-  section_id: string;
-  subject_id: string;
-  test_type: string;
+  branch_id?: string;
+  semester_id?: string;
+  section_id?: string;
+  subject_id?: string;
+  test_type?: string;
 }): Promise<StudentsForMarksResponse> => {
   try {
-    const query = new URLSearchParams(params).toString();
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/students-for-marks/?${query}`, {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v === undefined || v === null) return;
+      const s = String(v);
+      if (s === '' || s === 'undefined' || s === 'null' || s === 'NaN') return;
+      query.append(k, s);
+    });
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/students-for-marks/?${query.toString()}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,

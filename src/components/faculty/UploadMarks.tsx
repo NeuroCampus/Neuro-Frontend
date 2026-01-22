@@ -27,6 +27,7 @@ import {
   GetUploadMarksBootstrapResponse,
   createQuestionPaper,
   getStudentsForMarks,
+  getSubjectDetail,
   uploadIAMarks,
   CreateQPRequest,
   StudentsForMarksResponse,
@@ -71,6 +72,7 @@ const normalizeMarks = (value: string): string => {
 const validateMarks = (marks: string, total: string): boolean => {
   const marksNum = parseInt(marks, 10);
   const totalNum = parseInt(total, 10);
+
   return (
     !isNaN(marksNum) &&
     !isNaN(totalNum) &&
@@ -114,6 +116,7 @@ const UploadMarks = () => {
     branch_id: undefined as number | undefined,
     subject: "",
     subject_id: undefined as number | undefined,
+    subject_type: undefined as string | undefined,
     section: "",
     section_id: undefined as number | undefined,
     semester: "",
@@ -217,6 +220,9 @@ const UploadMarks = () => {
   // New state for QP ID
   const [qpId, setQpId] = useState<number | null>(null);
   const [studentMarks, setStudentMarks] = useState<Record<string, Record<string, string>>>({});
+  const [subjectType, setSubjectType] = useState<string | null>(null);
+  // Effective subject type for rendering (prefer current state, fall back to stored selection)
+  const effectiveType = subjectType || (selected as any).subject_type || null;
 
   // New state for action button modes
   const [actionModes, setActionModes] = useState<Record<string, 'edit' | 'save' | 'view'>>({});
@@ -227,6 +233,14 @@ const UploadMarks = () => {
       new Map(assignments.map(a => [a.branch_id, { id: a.branch_id, name: a.branch }])).values()
     );
     setDropdownData(prev => ({ ...prev, branch: branches }));
+  }, [assignments]);
+
+  // Populate subject dropdown from assignments so subject list shows immediately
+  useEffect(() => {
+    const subjects = Array.from(
+      new Map(assignments.map(a => [a.subject_id, { id: a.subject_id, name: a.subject_name }])).values()
+    );
+    setDropdownData(prev => ({ ...prev, subject: subjects }));
   }, [assignments]);
 
   // Calculate total marks when questions change
@@ -356,10 +370,17 @@ const UploadMarks = () => {
     try {
       const qpResponse = await getQuestionPapers();
       if (qpResponse.success && qpResponse.data) {
-        const existingQp = qpResponse.data.find((q: { branch: number; semester: number; section: number; subject: number; test_type: string; id: number; questions: Array<{ question_number: string; co: string; blooms_level: string; subparts: Array<{ subpart_label: string; content: string; max_marks: number }> }> }) => 
-          q.branch === selected.branch_id && q.semester === selected.semester_id && q.section === selected.section_id && 
-          q.subject === selected.subject_id && q.test_type === selected.testType
-        );
+        const existingQp = qpResponse.data.find((q: any) => {
+          // Match depending on effective subject type
+          if (effectiveType === 'open_elective') {
+            return q.subject === selected.subject_id && q.test_type === selected.testType;
+          }
+          if (effectiveType === 'elective') {
+            return q.branch === selected.branch_id && q.semester === selected.semester_id && q.subject === selected.subject_id && q.test_type === selected.testType;
+          }
+          // regular
+          return q.branch === selected.branch_id && q.semester === selected.semester_id && q.section === selected.section_id && q.subject === selected.subject_id && q.test_type === selected.testType;
+        });
         
         if (existingQp) {
           setQpId(existingQp.id);
@@ -425,15 +446,24 @@ const UploadMarks = () => {
     
     // Clear any previous error messages
     setErrorMessage("");
+
+    // NOTE: SEE is supported server-side; allow SEE QP creation
     
     // Check if QP already exists
     const qpResponse = await getQuestionPapers();
     let existingQp = null;
     if (qpResponse.success && qpResponse.data) {
-      existingQp = qpResponse.data.find((q: { branch: number; semester: number; section: number; subject: number; test_type: string; id: number; questions: Array<{ question_number: string; co: string; blooms_level: string; subparts: Array<{ subpart_label: string; content: string; max_marks: number }> }> }) => 
-        q.branch === selected.branch_id && q.semester === selected.semester_id && q.section === selected.section_id && 
-        q.subject === selected.subject_id && q.test_type === selected.testType
-      );
+      existingQp = qpResponse.data.find((q: any) => {
+        // Match depending on effective subject type
+        if (effectiveType === 'open_elective') {
+          return q.subject === selected.subject_id && q.test_type === selected.testType;
+        }
+        if (effectiveType === 'elective') {
+          return q.branch === selected.branch_id && q.semester === selected.semester_id && q.subject === selected.subject_id && q.test_type === selected.testType;
+        }
+        // regular
+        return q.branch === selected.branch_id && q.semester === selected.semester_id && q.section === selected.section_id && q.subject === selected.subject_id && q.test_type === selected.testType;
+      });
     }
     
     // Prepare QP data - group by main question
@@ -450,10 +480,14 @@ const UploadMarks = () => {
       });
     });
 
-    const qpData: CreateQPRequest = {
-      branch: selected.branch_id!,
-      semester: selected.semester_id!,
-      section: selected.section_id!,
+    // Derive branch/semester/section when missing for open_elective from assignments
+    const assignForSubject = assignments.find(a => a.subject_id === selected.subject_id);
+    const derivedBranchId = selected.branch_id || (assignForSubject ? assignForSubject.branch_id : undefined);
+    const derivedSemesterId = selected.semester_id || (assignForSubject ? assignForSubject.semester_id : undefined);
+    const derivedSectionId = selected.section_id || (assignForSubject ? assignForSubject.section_id : undefined);
+
+    // Build QP payload; QuestionPaper model requires branch/semester/section, so ensure we have values
+    const qpData: any = {
       subject: selected.subject_id!,
       test_type: selected.testType,
       questions_data: Object.keys(groupedQuestions).map(mainQ => ({
@@ -463,6 +497,17 @@ const UploadMarks = () => {
         subparts_data: groupedQuestions[mainQ].subparts
       }))
     };
+
+    // For open_elective, try to derive branch/semester/section from assignments when user didn't select them
+    qpData.branch = derivedBranchId;
+    qpData.semester = derivedSemesterId;
+    qpData.section = derivedSectionId;
+
+    // Validate that required fields for the model are present before sending
+    if (!qpData.branch || !qpData.semester || !qpData.section) {
+      setErrorMessage('Cannot create question paper: branch/semester/section could not be determined. Please select branch/semester/section or ensure an assignment exists for this subject.');
+      return;
+    }
 
     try {
       let response;
@@ -500,13 +545,21 @@ const UploadMarks = () => {
   const handleSubmit = async () => {
     setSavingMarks(true);
     const { branch_id, subject_id, section_id, semester_id, testType } = selected;
-    if (!branch_id || !subject_id || !section_id || !semester_id || !testType) {
-      MySwal.fire({
-        title: "Select all class and test details!",
-        icon: "warning",
-        confirmButtonText: "OK",
-      });
+    // Validate required fields depending on effective subject type
+    if (!subject_id || !testType) {
+      MySwal.fire({ title: "Select subject and test type!", icon: "warning", confirmButtonText: "OK" });
       return;
+    }
+    if (effectiveType === 'regular') {
+      if (!branch_id || !semester_id || !section_id) {
+        MySwal.fire({ title: "Select branch, semester and section for regular subjects!", icon: "warning", confirmButtonText: "OK" });
+        return;
+      }
+    } else if (effectiveType === 'elective') {
+      if (!branch_id || !semester_id) {
+        MySwal.fire({ title: "Select branch and semester for elective subjects!", icon: "warning", confirmButtonText: "OK" });
+        return;
+      }
     }
 
     // Find QP
@@ -519,10 +572,15 @@ const UploadMarks = () => {
       });
       return;
     }
-    const qp = qpResponse.data.find((q: { branch: number; semester: number; section: number; subject: number; test_type: string; id: number; questions: Array<{ question_number: string; co: string; blooms_level: string; subparts: Array<{ subpart_label: string; content: string; max_marks: number }> }> }) => 
-      q.branch === branch_id && q.semester === semester_id && q.section === section_id && 
-      q.subject === subject_id && q.test_type === testType
-    );
+    const qp = qpResponse.data.find((q: any) => {
+      if (effectiveType === 'open_elective') {
+        return q.subject === subject_id && q.test_type === testType;
+      }
+      if (effectiveType === 'elective') {
+        return q.branch === branch_id && q.semester === semester_id && q.subject === subject_id && q.test_type === testType;
+      }
+      return q.branch === branch_id && q.semester === semester_id && q.section === section_id && q.subject === subject_id && q.test_type === testType;
+    });
     if (!qp) {
       MySwal.fire({
         title: "Question Paper not found",
@@ -983,6 +1041,7 @@ const UploadMarks = () => {
   };
 
   const handleSelectChange = async (field: string, value: string | number) => {
+    console.log('UploadMarks: handleSelectChange called', { field, value });
     setErrorMessage("");
     const updated = { ...selected };
     if (field.endsWith('_id')) {
@@ -1004,6 +1063,70 @@ const UploadMarks = () => {
       updated[field] = value as string;
     }
     setSelected(updated);
+    // If subject changed, fetch its detail to determine subject_type (regular/elective/open_elective)
+    // Use a local variable so we can use the fresh type immediately in this handler
+    // Prefer the current `subjectType` state, otherwise fall back to the stored `selected.subject_type`
+    let localSubjectType = subjectType || (updated as any).subject_type || null;
+    if (field === 'subject_id' && value) {
+      localSubjectType = null;
+      try {
+        const res = await getSubjectDetail(String(value));
+        if (res && res.success && res.data && res.data.subject_type) {
+          localSubjectType = res.data.subject_type;
+          setSubjectType(localSubjectType);
+          // store subject type on selected so UI checks can use it immediately
+          updated.subject_type = localSubjectType;
+          setSelected(updated);
+        } else {
+          setSubjectType(null);
+          updated.subject_type = undefined;
+          setSelected(updated);
+        }
+      } catch (err) {
+        setSubjectType(null);
+        updated.subject_type = undefined;
+        setSelected(updated);
+      }
+
+      // Also derive branch/semester/section dropdowns from assignments for this subject
+      try {
+        const subjIdNum = Number(value);
+        if (localSubjectType === 'open_elective') {
+          // Try to derive branches from student registrations
+          const studentsResp = await getStudentsForMarks({ subject_id: subjIdNum.toString() });
+          let branchesFromStudents: { id: number; name: string }[] = [];
+          if (studentsResp && studentsResp.success && Array.isArray(studentsResp.data)) {
+            branchesFromStudents = Array.from(
+              new Map(
+                studentsResp.data
+                  .filter((s: any) => s.branch_id)
+                  .map((s: any) => [s.branch_id, { id: s.branch_id, name: s.branch }])
+              ).values()
+            );
+          }
+          if (branchesFromStudents.length > 0) {
+            setDropdownData(prev => ({ ...prev, branch: branchesFromStudents, semester: [], section: [], subject: [{ id: subjIdNum, name: updated.subject }] }));
+            setSelected(prev => ({ ...prev, branch: "", branch_id: undefined, semester: "", semester_id: undefined, section: "", section_id: undefined }));
+          } else {
+            // fallback to assignments-derived branches
+            const filteredBySubject = assignments.filter(a => a.subject_id === subjIdNum);
+            const branches = Array.from(new Map(filteredBySubject.map(a => [a.branch_id, { id: a.branch_id, name: a.branch }])).values());
+            setDropdownData(prev => ({ ...prev, branch: branches, semester: [], section: [], subject: [{ id: subjIdNum, name: updated.subject }] }));
+            setSelected(prev => ({ ...prev, branch: "", branch_id: undefined, semester: "", semester_id: undefined, section: "", section_id: undefined }));
+          }
+        } else {
+          const filteredBySubject = assignments.filter(a => a.subject_id === subjIdNum);
+          const branches = Array.from(new Map(filteredBySubject.map(a => [a.branch_id, { id: a.branch_id, name: a.branch }])).values());
+          const semesters = Array.from(new Map(filteredBySubject.map(a => [a.semester_id, { id: a.semester_id, number: a.semester }])).values());
+          const sections = Array.from(new Map(filteredBySubject.map(a => [a.section_id, { id: a.section_id, name: a.section }])).values());
+          const subjects = Array.from(new Map(filteredBySubject.map(a => [a.subject_id, { id: a.subject_id, name: a.subject_name }])).values());
+          setDropdownData(prev => ({ ...prev, branch: branches, semester: semesters, section: sections, subject: subjects }));
+          setSelected(prev => ({ ...prev, branch: "", branch_id: undefined, semester: "", semester_id: undefined, section: "", section_id: undefined }));
+        }
+      } catch (err) {
+        // ignore
+      }
+    }
     let filtered = assignments;
     if (updated.branch_id) filtered = filtered.filter(a => a.branch_id === updated.branch_id);
     if (updated.semester_id) filtered = filtered.filter(a => a.semester_id === updated.semester_id);
@@ -1012,23 +1135,59 @@ const UploadMarks = () => {
       const semesters = Array.from(
         new Map(filtered.map(a => [a.semester_id, { id: a.semester_id, number: a.semester }])).values()
       );
-      setDropdownData(prev => ({ ...prev, semester: semesters, section: [], subject: [] }));
-      setSelected(prev => ({ ...prev, semester: "", semester_id: undefined, section: "", section_id: undefined, subject: "", subject_id: undefined }));
+      // Build subjects available under the selected branch (filtered may already include semester/section)
+      let subjectsForBranch = Array.from(new Map(filtered.map(a => [a.subject_id, { id: a.subject_id, name: a.subject_name }])).values());
+      const effectiveLocalType = subjectType || (updated as any).subject_type || null;
+      // If open_elective, ensure the currently selected subject remains available in the dropdown even if not assigned
+      if (effectiveLocalType === 'open_elective' && updated.subject_id) {
+        const hasSelected = subjectsForBranch.some(s => s.id === updated.subject_id);
+        if (!hasSelected) {
+          subjectsForBranch = [{ id: updated.subject_id, name: updated.subject }, ...subjectsForBranch];
+        }
+      }
+      setDropdownData(prev => ({ ...prev, semester: semesters, section: [], subject: subjectsForBranch }));
+      // Preserve current subject selection if it's still valid for the new branch filter or if open_elective
+      const keepSubject = updated.subject_id && (effectiveLocalType === 'open_elective' || subjectsForBranch.some(s => s.id === updated.subject_id));
+      setSelected(prev => ({ ...prev, semester: "", semester_id: undefined, section: "", section_id: undefined, subject: keepSubject ? prev.subject : "", subject_id: keepSubject ? prev.subject_id : undefined }));
     } else if (field === "semester_id") {
       const sections = Array.from(
         new Map(filtered.map(a => [a.section_id, { id: a.section_id, name: a.section }])).values()
       );
-      setDropdownData(prev => ({ ...prev, section: sections, subject: [] }));
-      setSelected(prev => ({ ...prev, section: "", section_id: undefined, subject: "", subject_id: undefined }));
+      let subjectsForSem = Array.from(new Map(filtered.map(a => [a.subject_id, { id: a.subject_id, name: a.subject_name }])).values());
+      const effectiveLocalType = subjectType || (updated as any).subject_type || null;
+      if (effectiveLocalType === 'open_elective' && updated.subject_id) {
+        const hasSelected = subjectsForSem.some(s => s.id === updated.subject_id);
+        if (!hasSelected) {
+          subjectsForSem = [{ id: updated.subject_id, name: updated.subject }, ...subjectsForSem];
+        }
+      }
+      setDropdownData(prev => ({ ...prev, section: sections, subject: subjectsForSem }));
+      const keepSubject = updated.subject_id && (effectiveLocalType === 'open_elective' || subjectsForSem.some(s => s.id === updated.subject_id));
+      setSelected(prev => ({ ...prev, section: "", section_id: undefined, subject: keepSubject ? prev.subject : "", subject_id: keepSubject ? prev.subject_id : undefined }));
     } else if (field === "section_id") {
-      const subjects = Array.from(
+      let subjects = Array.from(
         new Map(filtered.map(a => [a.subject_id, { id: a.subject_id, name: a.subject_name }])).values()
       );
+      const effectiveLocalType = subjectType || (updated as any).subject_type || null;
+      if (effectiveLocalType === 'open_elective' && updated.subject_id) {
+        const hasSelected = subjects.some(s => s.id === updated.subject_id);
+        if (!hasSelected) {
+          subjects = [{ id: updated.subject_id, name: updated.subject }, ...subjects];
+        }
+      }
       setDropdownData(prev => ({ ...prev, subject: subjects }));
-      setSelected(prev => ({ ...prev, subject: "", subject_id: undefined }));
+      const keepSubject = updated.subject_id && (effectiveLocalType === 'open_elective' || subjects.some(s => s.id === updated.subject_id));
+      setSelected(prev => ({ ...prev, subject: keepSubject ? prev.subject : "", subject_id: keepSubject ? prev.subject_id : undefined }));
     }
     const { branch_id, semester_id, section_id, subject_id, testType } = { ...updated };
-    if (branch_id && semester_id && section_id && subject_id && testType) {
+    // Log computed selection values to diagnose why student load isn't triggered
+    console.log('UploadMarks: computed selections', { branch_id, semester_id, section_id, subject_id, testType, localSubjectType, selected });
+    // Determine whether to load students based on subject type
+    const shouldLoadForOpenElective = localSubjectType === 'open_elective' && subject_id && testType;
+    const shouldLoadForElective = localSubjectType === 'elective' && branch_id && semester_id && subject_id && testType;
+    const shouldLoadForRegular = (!localSubjectType || localSubjectType === 'regular') && branch_id && semester_id && section_id && subject_id && testType;
+
+    if (shouldLoadForOpenElective || shouldLoadForElective || shouldLoadForRegular) {
       // Only reset QP related states and reload students if bulk upload hasn't just completed
       if (!bulkUploadCompleted) {
         // Reset QP related states when selections change
@@ -1042,14 +1201,24 @@ const UploadMarks = () => {
         loadExistingQP();
         
         setLoadingStudents(true);
+        console.log('UploadMarks: selection triggers student load', { updated, localSubjectType, shouldLoadForOpenElective, shouldLoadForElective, shouldLoadForRegular });
         try {
-          const response: StudentsForMarksResponse = await getStudentsForMarks({
-            branch_id: branch_id.toString(),
-            semester_id: semester_id.toString(),
-            section_id: section_id.toString(),
-            subject_id: subject_id.toString(),
-            test_type: testType
-          });
+          const params: any = { subject_id: subject_id.toString(), test_type: testType };
+          // Include branch filter if present — for open_elective this narrows registrations by branch
+          if (branch_id) {
+            params.branch_id = branch_id.toString();
+          }
+          // Include semester when elective or regular (open_elective intentionally omits semester)
+          if (shouldLoadForElective || shouldLoadForRegular) {
+            if (semester_id) params.semester_id = semester_id.toString();
+          }
+          // Include section only for regular
+          if (shouldLoadForRegular && section_id) {
+            params.section_id = section_id.toString();
+          }
+          console.log('UploadMarks: fetching students with params', params);
+          const response: StudentsForMarksResponse = await getStudentsForMarks(params);
+          console.log('UploadMarks: students-for-marks response', response);
           if (response.success && response.data) {
             const newStudents = response.data.map(s => ({
               id: s.id,
@@ -1102,12 +1271,21 @@ const UploadMarks = () => {
 
   // Check if all dropdowns are selected
   const areAllDropdownsSelected = () => {
+    // subject and testType are always required
+    if (!selected.subject_id || !selected.testType) return false;
+    // Determine effective subject type: prefer local state, fall back to selected stored type
+    const effectiveType = subjectType || (selected as any).subject_type || null;
+    // If subject type is open_elective, subject + testType is enough
+    if (effectiveType === 'open_elective') return true;
+    // If elective, require branch + semester (section optional)
+    if (effectiveType === 'elective') {
+      return selected.branch_id !== undefined && selected.semester_id !== undefined;
+    }
+    // Regular subjects require branch + semester + section
     return (
       selected.branch_id !== undefined &&
       selected.semester_id !== undefined &&
-      selected.section_id !== undefined &&
-      selected.subject_id !== undefined &&
-      selected.testType !== ""
+      selected.section_id !== undefined
     );
   };
 
@@ -1211,6 +1389,18 @@ const UploadMarks = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <Select onValueChange={value => handleSelectChange('subject_id', Number(value))}>
+            <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
+              <SelectValue placeholder="Select Subject" />
+            </SelectTrigger>
+            <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
+              {dropdownData.subject.map((item) => (
+                <SelectItem key={item.id} value={item.id.toString()}>
+                  {item.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select onValueChange={value => handleSelectChange('branch_id', Number(value))}>
             <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               <SelectValue placeholder="Select Branch" />
@@ -1223,7 +1413,7 @@ const UploadMarks = () => {
               ))}
             </SelectContent>
           </Select>
-          <Select onValueChange={value => handleSelectChange('semester_id', Number(value))}>
+          <Select onValueChange={value => handleSelectChange('semester_id', Number(value))} disabled={effectiveType === 'open_elective'}>
             <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               <SelectValue placeholder="Select Semester" />
             </SelectTrigger>
@@ -1235,24 +1425,12 @@ const UploadMarks = () => {
               ))}
             </SelectContent>
           </Select>
-          <Select onValueChange={value => handleSelectChange('section_id', Number(value))}>
+          <Select onValueChange={value => handleSelectChange('section_id', Number(value))} disabled={effectiveType === 'elective' || effectiveType === 'open_elective'}>
             <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               <SelectValue placeholder="Select Section" />
             </SelectTrigger>
             <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               {dropdownData.section.map((item) => (
-                <SelectItem key={item.id} value={item.id.toString()}>
-                  {item.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select onValueChange={value => handleSelectChange('subject_id', Number(value))}>
-            <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
-              <SelectValue placeholder="Select Subject" />
-            </SelectTrigger>
-            <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
-              {dropdownData.subject.map((item) => (
                 <SelectItem key={item.id} value={item.id.toString()}>
                   {item.name}
                 </SelectItem>
