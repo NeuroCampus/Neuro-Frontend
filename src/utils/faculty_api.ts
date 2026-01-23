@@ -612,7 +612,12 @@ export const getAttendanceRecordsWithSummary = async (params?: {
   try {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    // Clamp page_size to backend max to avoid accidental huge requests
+    const MAX_PAGE_SIZE = 500;
+    if (params?.page_size) {
+      const ps = Math.min(params.page_size, MAX_PAGE_SIZE);
+      queryParams.append('page_size', ps.toString());
+    }
     
     const url = queryParams.toString() 
       ? `${API_ENDPOINT}/faculty/attendance-records/summary/?${queryParams.toString()}`
@@ -1185,8 +1190,6 @@ export const manageStudentLeave = async (
 export interface MarkFacultyAttendanceRequest {
   status: "present" | "absent";
   notes?: string;
-  latitude?: number;
-  longitude?: number;
 }
 
 export interface MarkFacultyAttendanceResponse {
@@ -1197,11 +1200,8 @@ export interface MarkFacultyAttendanceResponse {
     date: string;
     status: string;
     marked_at: string;
-    latitude?: number;
-    longitude?: number;
     updated?: boolean;
-    location_valid?: boolean;
-    location_message?: string;
+    // location validation removed
   };
 }
 
@@ -1211,8 +1211,6 @@ export interface FacultyAttendanceRecord {
   status: string;
   marked_at: string;
   notes: string;
-  latitude?: number;
-  longitude?: number;
 }
 
 export interface GetFacultyAttendanceRecordsResponse {
@@ -1224,6 +1222,14 @@ export interface GetFacultyAttendanceRecordsResponse {
     present_days: number;
     absent_days: number;
     attendance_percentage: number;
+  };
+  pagination?: {
+    current_page: number;
+    page_size: number;
+    total_items: number;
+    total_pages: number;
+    has_next: boolean;
+    has_prev: boolean;
   };
 }
 
@@ -1249,11 +1255,15 @@ export const markFacultyAttendance = async (
 export const getFacultyAttendanceRecords = async (params?: {
   start_date?: string;
   end_date?: string;
+  page?: number;
+  page_size?: number;
 }): Promise<GetFacultyAttendanceRecordsResponse> => {
   try {
     const queryParams = new URLSearchParams();
     if (params?.start_date) queryParams.append("start_date", params.start_date);
     if (params?.end_date) queryParams.append("end_date", params.end_date);
+    if (params?.page) queryParams.append("page", String(params.page));
+    if (params?.page_size) queryParams.append("page_size", String(params.page_size));
 
     const url = `/api/faculty/my-attendance-records/${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
     
@@ -1339,9 +1349,32 @@ export const createQuestionPaper = async (data: CreateQPRequest): Promise<QPResp
   }
 };
 
-export const getQuestionPapers = async (): Promise<any> => {
+export interface GetQPsParams {
+  branch_id?: string;
+  semester_id?: string;
+  section_id?: string;
+  subject_id?: string;
+  test_type?: string;
+  qp_id?: string | number;
+  detail?: boolean;
+}
+
+export const getQuestionPapers = async (params: GetQPsParams = {}): Promise<any> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/qps/`, {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v === undefined || v === null) return;
+      if (k === 'detail') {
+        query.append('detail', String(Boolean(v)));
+        return;
+      }
+      const s = String(v);
+      if (s === '' || s === 'undefined' || s === 'null' || s === 'NaN') return;
+      query.append(k, s);
+    });
+
+    const url = `${API_ENDPOINT}/faculty/qps/${query.toString() ? '?' + query.toString() : ''}`;
+    const response = await fetchWithTokenRefresh(url, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -1350,6 +1383,21 @@ export const getQuestionPapers = async (): Promise<any> => {
     return await response.json();
   } catch (error) {
     console.error("Get QPs Error:", error);
+    return { success: false };
+  }
+};
+
+export const getQuestionPaperDetail = async (id: number): Promise<any> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/qps/?qp_id=${id}&detail=true`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get QP Detail Error:", error);
     return { success: false };
   }
 };

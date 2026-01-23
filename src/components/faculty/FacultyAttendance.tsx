@@ -14,6 +14,12 @@ const FacultyAttendance = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [todayRecord, setTodayRecord] = useState<FacultyAttendanceRecord | null>(null);
   const [recentRecords, setRecentRecords] = useState<FacultyAttendanceRecord[]>([]);
+  const [historyRecords, setHistoryRecords] = useState<FacultyAttendanceRecord[]>([]);
+  const [historyPage, setHistoryPage] = useState<number>(1);
+  const [historyPageSize] = useState<number>(10);
+  const [historyTotalPages, setHistoryTotalPages] = useState<number>(1);
+  const [historyTotalItems, setHistoryTotalItems] = useState<number>(0);
+  const [historyLoading, setHistoryLoading] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
   const { theme } = useTheme();
@@ -25,31 +31,21 @@ const FacultyAttendance = () => {
   const fetchAttendanceData = async () => {
     try {
       setLoading(true);
-      // Get today's record
-      const today = new Date().toISOString().split('T')[0];
-      const recordsResponse = await getFacultyAttendanceRecords({
-        start_date: today,
-        end_date: today
-      });
+      // Load recent records and today's record in a single paginated call (reduces duplicate requests)
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      const startDate = weekAgo.toISOString().split('T')[0];
 
-      if (recordsResponse.success && recordsResponse.data) {
-        const todayRec = recordsResponse.data.find(record => record.date === today);
-        setTodayRecord(todayRec || null);
+      const resp = await fetchHistoryPage(1, startDate);
+      if (resp && resp.success && resp.data) {
+        setRecentRecords(resp.data.slice(0, 7));
+        const today = new Date().toISOString().split('T')[0];
+        const todayRec = resp.data.find((r) => r.date === today) || null;
+        setTodayRecord(todayRec);
         if (todayRec) {
           setAttendanceStatus(todayRec.status as "present" | "absent");
           setNotes(todayRec.notes || "");
         }
-      }
-
-      // Get recent records (last 7 days)
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 7);
-      const recentResponse = await getFacultyAttendanceRecords({
-        start_date: weekAgo.toISOString().split('T')[0]
-      });
-
-      if (recentResponse.success && recentResponse.data) {
-        setRecentRecords(recentResponse.data.slice(0, 7)); // Show last 7 records
       }
     } catch (error) {
       console.error("Error fetching attendance data:", error);
@@ -59,53 +55,45 @@ const FacultyAttendance = () => {
     }
   };
 
+  const fetchHistoryPage = async (page: number, start_date?: string) => {
+    try {
+      setHistoryLoading(true);
+      const params: any = { page, page_size: historyPageSize };
+      if (start_date) params.start_date = start_date;
+      const response = await getFacultyAttendanceRecords(params);
+      if (response.success && response.data) {
+        setHistoryRecords(response.data);
+        if (response.pagination) {
+          setHistoryPage(response.pagination.current_page || page);
+          setHistoryTotalPages(response.pagination.total_pages || 1);
+          setHistoryTotalItems(response.pagination.total_items || 0);
+        }
+      }
+      return response;
+    } catch (e) {
+      console.error('Failed to fetch history page', e);
+      return null;
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
   const handleToggleAttendance = async (status: "present" | "absent") => {
     setIsSubmitting(true);
     setIsAnimating(true);
 
     try {
-      // Get user's current location
-      let latitude: number | undefined;
-      let longitude: number | undefined;
-
-      if (navigator.geolocation) {
-        try {
-          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              enableHighAccuracy: true,
-              timeout: 10000,
-              maximumAge: 300000 // 5 minutes
-            });
-          });
-          latitude = position.coords.latitude;
-          longitude = position.coords.longitude;
-        } catch (geoError) {
-          console.warn("Could not get location:", geoError);
-          toast.warning("Location access denied or unavailable. Attendance will be marked without location.");
-        }
-      } else {
-        toast.warning("Geolocation is not supported by this browser.");
-      }
+      // Location is not required; do not collect or send it.
 
       const requestData: MarkFacultyAttendanceRequest = {
         status,
-        notes: notes.trim() || undefined,
-        latitude,
-        longitude
+        notes: notes.trim() || undefined
       };
 
       const response = await markFacultyAttendance(requestData);
 
       if (response.success) {
         const isUpdate = response.data?.updated || false;
-        
-        // Handle location validation feedback
-        if (response.data?.location_valid === false) {
-          toast.warning(response.data.location_message || "Location verification failed");
-        } else if (response.data?.location_valid === true) {
-          toast.success(response.data.location_message || "Location verified successfully");
-        }
-        
         toast.success(isUpdate ? `Attendance updated to ${status}` : `Attendance marked as ${status}`);
         setAttendanceStatus(status);
         await fetchAttendanceData(); // Refresh data
@@ -312,11 +300,7 @@ const FacultyAttendance = () => {
                     <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                       Marked at {new Date(todayRecord.marked_at).toLocaleTimeString()}
                     </p>
-                    {todayRecord.latitude && todayRecord.longitude && (
-                      <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                        Location: {todayRecord.latitude.toFixed(6)}, {todayRecord.longitude.toFixed(6)}
-                      </p>
-                    )}
+                    {/* Location removed from UI */}
                     {todayRecord.notes && (
                       <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                         Notes: {todayRecord.notes}
@@ -370,14 +354,7 @@ const FacultyAttendance = () => {
                       </p>
                     </div>
                   )}
-                  {record.latitude && record.longitude && (
-                    <div className="mt-2 flex items-start space-x-2">
-                      <div className="w-4 h-4 mt-0.5 text-gray-500">📍</div>
-                      <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                        {record.latitude.toFixed(6)}, {record.longitude.toFixed(6)}
-                      </p>
-                    </div>
-                  )}
+                  {/* Location removed from UI */}
                 </motion.div>
               ))}
             </div>
@@ -386,6 +363,66 @@ const FacultyAttendance = () => {
               No attendance records found
             </p>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Attendance History (paginated) */}
+      <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
+        <CardHeader>
+          <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
+            Attendance History
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {historyLoading ? (
+            <p className={`text-center py-8 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Loading history...</p>
+          ) : historyRecords.length > 0 ? (
+            <div className="space-y-3">
+              {historyRecords.map((record) => (
+                <div key={record.id} className={`p-3 rounded-lg border ${getStatusColor(record.status)}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      {getStatusIcon(record.status)}
+                      <div>
+                        <p className="font-medium capitalize">{record.status}</p>
+                        <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                          {new Date(record.date).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                      {new Date(record.marked_at).toLocaleTimeString()}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className={`text-center py-8 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+              No history available
+            </p>
+          )}
+
+          {/* Pagination Controls */}
+          <div className="mt-4 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Button size="sm" onClick={() => fetchHistoryPage(1)} disabled={historyLoading || historyPage === 1}>
+                First
+              </Button>
+              <Button size="sm" onClick={() => fetchHistoryPage(Math.max(1, historyPage - 1))} disabled={historyLoading || historyPage === 1}>
+                Prev
+              </Button>
+              <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-700'}`}>
+                Page {historyPage} / {historyTotalPages} ({historyTotalItems} records)
+              </span>
+              <Button size="sm" onClick={() => fetchHistoryPage(Math.min(historyTotalPages, historyPage + 1))} disabled={historyLoading || historyPage === historyTotalPages}>
+                Next
+              </Button>
+              <Button size="sm" onClick={() => fetchHistoryPage(historyTotalPages)} disabled={historyLoading || historyPage === historyTotalPages}>
+                Last
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

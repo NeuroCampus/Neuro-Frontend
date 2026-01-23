@@ -11,29 +11,12 @@ import {
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useFacultyAssignmentsQuery } from "../../hooks/useApiQueries";
-import { getUploadMarksBootstrap, GetUploadMarksBootstrapResponse, getStudentsForMarks, getQuestionPapers } from "../../utils/faculty_api";
+import { getUploadMarksBootstrap, GetUploadMarksBootstrapResponse, getQuestionPapers } from "../../utils/faculty_api";
 import { useTheme } from "@/context/ThemeContext";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-// Type for question format (copied from UploadMarks.tsx)
-interface Question {
-  id: string;
-  number: string;
-  content: string;
-  maxMarks: string;
-  co: string;
-  bloomsLevel: string;
-}
-
-// Type for student marks
-interface StudentMark {
-  studentId: number;
-  name: string;
-  usn: string;
-  marks: Record<string, string>; // questionId -> marks
-  total: number;
-}
+// Component shows aggregated CO results only — per-question and per-student types removed
 
 const COAttainment = () => {
   // TODO: In a full implementation, this component should integrate with actual UploadMarks data
@@ -62,9 +45,7 @@ const COAttainment = () => {
     testType: "",
     question_paper_id: undefined as number | undefined,
   });
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [studentMarks, setStudentMarks] = useState<StudentMark[]>([]);
-  const [loadingStudents, setLoadingStudents] = useState(false);
+  // per-student marks removed: UI shows aggregated CO data from server
   const [errorMessage, setErrorMessage] = useState("");
   const { theme } = useTheme();
   
@@ -100,10 +81,10 @@ const COAttainment = () => {
   
   // Update dropdown data when assignments change
   useEffect(() => {
-    const branches = Array.from(
-      new Map(assignments.map(a => [a.branch_id, { id: a.branch_id, name: a.branch }])).values()
+    const subjects = Array.from(
+      new Map(assignments.map(a => [a.subject_id, { id: a.subject_id, name: a.subject_name }])).values()
     );
-    setDropdownData(prev => ({ ...prev, branch: branches }));
+    setDropdownData(prev => ({ ...prev, subject: subjects }));
   }, [assignments]);
 
   const handleSelectChange = async (field: string, value: string | number) => {
@@ -128,253 +109,58 @@ const COAttainment = () => {
       updated[field] = value as string;
     }
     setSelected(updated);
-    let filtered = assignments;
-    if (updated.branch_id) filtered = filtered.filter(a => a.branch_id === updated.branch_id);
-    if (updated.semester_id) filtered = filtered.filter(a => a.semester_id === updated.semester_id);
-    if (updated.section_id) filtered = filtered.filter(a => a.section_id === updated.section_id);
-    if (field === "branch_id") {
-      const semesters = Array.from(
-        new Map(filtered.map(a => [a.semester_id, { id: a.semester_id, number: a.semester }])).values()
-      );
-      setDropdownData(prev => ({ ...prev, semester: semesters, section: [], subject: [] }));
-      setSelected(prev => ({ ...prev, semester: "", semester_id: undefined, section: "", section_id: undefined, subject: "", subject_id: undefined }));
-    } else if (field === "semester_id") {
-      const sections = Array.from(
-        new Map(filtered.map(a => [a.section_id, { id: a.section_id, name: a.section }])).values()
-      );
-      setDropdownData(prev => ({ ...prev, section: sections, subject: [] }));
-      setSelected(prev => ({ ...prev, section: "", section_id: undefined, subject: "", subject_id: undefined }));
-    } else if (field === "section_id") {
-      const subjects = Array.from(
-        new Map(filtered.map(a => [a.subject_id, { id: a.subject_id, name: a.subject_name }])).values()
-      );
-      setDropdownData(prev => ({ ...prev, subject: subjects }));
-      setSelected(prev => ({ ...prev, subject: "", subject_id: undefined }));
-    }
-    const { branch_id, semester_id, section_id, subject_id, testType } = { ...updated };
-        if (branch_id && semester_id && section_id && subject_id && testType) {
-      setLoadingStudents(true);
+    // Only subject selection is required for CO attainment
+    const { subject_id } = { ...updated };
+    if (subject_id) {
+      // Fetch aggregated CO attainment from server (no per-student marks by default)
       try {
-        const assignment = assignments.find(a =>
-          a.branch_id === branch_id &&
-          a.semester_id === semester_id &&
-          a.section_id === section_id &&
-          a.subject_id === subject_id
-        );
-        if (!assignment) throw new Error("Assignment not found");
-        // Map test type to expected value for API
-        const testMap: Record<string, string> = { IA1: 'IA1', IA2: 'IA2', IA3: 'IA3', SEE: 'SEE' };
-        // Use students-for-marks endpoint which returns existing marks and question_paper id
-        const studentsRes = await getStudentsForMarks({
-          branch_id: branch_id.toString(),
-          semester_id: semester_id.toString(),
-          section_id: section_id.toString(),
-          subject_id: subject_id.toString(),
-          test_type: testMap[testType] || 'IA1'
-        });
+        const url = `/api/co-attainment/?subject_id=${subject_id}&target_pct=${targetThreshold}`;
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error('Failed to fetch CO attainment');
+        const data = await resp.json();
 
-        if (!studentsRes.success) throw new Error((studentsRes as any).message || 'Failed to fetch students for marks');
-
-        // If backend provides question_paper id, fetch QP details
-        let qpId: number | undefined = (studentsRes as any).question_paper;
-        setSelected(prev => ({ ...prev, question_paper_id: qpId }));
-        let qpDetails: any = null;
-        if (qpId) {
-          const qps = await getQuestionPapers();
-          if (qps && qps.data) {
-            qpDetails = qps.data.find((q: any) => q.id === qpId) || null;
-          }
-        }
-
-        // Build questions list from qpDetails if available, otherwise fallback to subject_info-like structure
-        let realQuestions: Question[] = [];
-        if (qpDetails && qpDetails.questions) {
-          // qpDetails.questions expected to be array with question_number, subparts etc.
-          qpDetails.questions.forEach((q: any, idx: number) => {
-            // Flatten subparts as separate question entries using combined id
-            if (q.subparts && q.subparts.length > 0) {
-              q.subparts.forEach((sp: any, si: number) => {
-                realQuestions.push({
-                  id: `${q.question_number}${sp.subpart_label}`,
-                  number: `${q.question_number}${sp.subpart_label}`,
-                  content: sp.content || '',
-                  maxMarks: String(sp.max_marks || 0),
-                  co: q.co || 'UNMAPPED',
-                  bloomsLevel: q.blooms_level || ''
-                });
-              });
-            } else {
-              realQuestions.push({
-                id: `${q.question_number}`,
-                number: `${q.question_number}`,
-                content: q.content || '',
-                maxMarks: String(q.max_marks || 0),
-                co: q.co || 'UNMAPPED',
-                bloomsLevel: q.blooms_level || ''
-              });
-            }
-          });
-        } else {
-          // Fallback: create a simple mapping from studentsRes.data.existing_mark if available
-          // Use the first student's existing_mark keys as question ids
-          const sample = (studentsRes.data && studentsRes.data[0] && studentsRes.data[0].existing_mark && studentsRes.data[0].existing_mark.marks_detail) || {};
-          Object.keys(sample).forEach((k, idx) => {
-            realQuestions.push({ id: k, number: k, content: k, maxMarks: '0', co: 'UNMAPPED', bloomsLevel: '' });
-          });
-        }
-
-        setQuestions(realQuestions);
-
-        // Process student data
-        const processedStudents: StudentMark[] = (studentsRes.data || []).map((student: any) => {
-          const marks: Record<string, string> = {};
-          realQuestions.forEach(q => {
-            // student.existing_mark.marks_detail may have numeric values
-            const existing = student.existing_mark && student.existing_mark.marks_detail && student.existing_mark.marks_detail[q.id];
-            marks[q.id] = existing !== undefined ? String(existing) : '0';
-          });
-          const total = Object.values(marks).reduce((sum, mark) => sum + parseInt(mark || '0'), 0);
-          return { studentId: student.id, name: student.name, usn: student.usn, marks, total };
-        });
-
-        setStudentMarks(processedStudents);
-
-        // Initialize indirect attainment values
+        const attainmentData: Record<string, any> = {};
+        const finalAttainmentData: Record<string, any> = {};
         const initialIndirect: Record<string, number> = {};
-        realQuestions.forEach(q => {
-          if (q.co && !initialIndirect[q.co]) {
-            initialIndirect[q.co] = 0;
-          }
-        });
-        setIndirectAttainment(initialIndirect);
 
-        // Calculate CO attainment
-        calculateCOAttainment(realQuestions, processedStudents);
+        data.results.forEach((result: any) => {
+          attainmentData[result.co] = {
+            co: result.co,
+            maxMarks: result.max_marks,
+            targetMarks: result.max_marks * (targetThreshold / 100),
+            avgMarks: result.avg_marks,
+            // Method 1: average-based percentage
+            percentage: result.avg_pct,
+            // Method 2: students-above-target percentage
+            method2Percentage: result.pct_students_above_target,
+            studentsAboveTarget: result.students_above_target,
+            totalStudents: result.total_students,
+            // Levels: use the explicit backend-provided fields
+            attainmentLevel: result.direct_attainment_level_by_avg ?? result.direct_attainment_level,
+            method2Level: result.direct_attainment_level_by_students ?? result.direct_attainment_level,
+          };
+
+          finalAttainmentData[result.co] = {
+            direct: result.direct_attainment_level_by_avg ?? result.direct_attainment_level,
+            indirect: result.indirect_attainment_level,
+            final: result.final_attainment_level,
+            level: result.final_attainment_level,
+          };
+
+          initialIndirect[result.co] = 0;
+        });
+
+        setCoAttainment(attainmentData);
+        setFinalAttainment(finalAttainmentData);
+        setIndirectAttainment(initialIndirect);
+        setOverallAttainment(data.course_attainment_level);
       } catch (err: unknown) {
-        setStudentMarks([]);
-        setErrorMessage((err as { message?: string })?.message || "Failed to fetch students/marks");
+        setErrorMessage((err as { message?: string })?.message || "Failed to fetch CO attainment");
       }
-      setLoadingStudents(false);
     }
   };
 
-  const calculateCOAttainment = (questions: Question[], students: StudentMark[]) => {
-    // Group questions by CO
-    const coQuestions: Record<string, Question[]> = {};
-    questions.forEach(q => {
-      if (q.co) {
-        if (!coQuestions[q.co]) {
-          coQuestions[q.co] = [];
-        }
-        coQuestions[q.co].push(q);
-      }
-    });
-    
-    // Calculate attainment for each CO
-    const attainmentData: Record<string, {
-      co: string;
-      maxMarks: number;
-      targetMarks: number;
-      avgMarks: number;
-      percentage: number;
-      studentsAboveTarget: number;
-      totalStudents: number;
-      attainmentLevel: number;
-      method2Percentage: number; // Method 2: Percentage of students above target
-      method2Level: number; // Method 2 attainment level
-    }> = {};
-    
-    Object.entries(coQuestions).forEach(([co, coQs]) => {
-      // Calculate total max marks for this CO
-      const maxMarks = coQs.reduce((sum, q) => sum + parseInt(q.maxMarks || "0"), 0);
-      
-      // Calculate target marks (configurable threshold, default 60%)
-      const targetMarks = maxMarks * (targetThreshold / 100);
-      
-      // Calculate total marks obtained by all students for this CO
-      const totalMarks = students.reduce((sum, student) => {
-        const studentMarksForCO = coQs.reduce((qSum, q) => qSum + parseInt(student.marks[q.id] || "0"), 0);
-        return sum + studentMarksForCO;
-      }, 0);
-      
-      // Calculate average marks
-      const avgMarks = students.length > 0 ? totalMarks / students.length : 0;
-      
-      // Calculate percentage (Method 1: Average percentage)
-      const percentage = maxMarks > 0 ? (avgMarks / maxMarks) * 100 : 0;
-      
-      // Calculate students above target (Method 2: Percentage of students above target)
-      const studentsAboveTarget = students.filter(student => {
-        const studentMarksForCO = coQs.reduce((sum, q) => sum + parseInt(student.marks[q.id] || "0"), 0);
-        return studentMarksForCO >= targetMarks;
-      }).length;
-      
-      // Calculate percentage for Method 2
-      const method2Percentage = students.length > 0 ? (studentsAboveTarget / students.length) * 100 : 0;
-      
-      // Calculate attainment level for Method 1 (using the 3-level system)
-      let attainmentLevel = 1;
-      if (percentage >= 70) attainmentLevel = 3;
-      else if (percentage >= 55) attainmentLevel = 2;
-      
-      // Calculate attainment level for Method 2
-      let method2Level = 1;
-      if (method2Percentage >= 70) method2Level = 3;
-      else if (method2Percentage >= 55) method2Level = 2;
-      
-      attainmentData[co] = {
-        co,
-        maxMarks,
-        targetMarks,
-        avgMarks: parseFloat(avgMarks.toFixed(2)),
-        percentage: parseFloat(percentage.toFixed(2)),
-        studentsAboveTarget,
-        totalStudents: students.length,
-        attainmentLevel,
-        method2Percentage: parseFloat(method2Percentage.toFixed(2)),
-        method2Level
-      };
-    });
-    
-    setCoAttainment(attainmentData);
-    
-    // Calculate final attainment (direct + indirect) using proper weighting
-    const finalAttainmentData: Record<string, {
-      direct: number;
-      indirect: number;
-      final: number;
-      level: number;
-    }> = {};
-    
-    Object.entries(attainmentData).forEach(([co, data]) => {
-      const directLevel = data.attainmentLevel;
-      const indirectLevel = indirectAttainment[co] || 0;
-      
-      // Validate indirect attainment values (should be 0-3)
-      const validatedIndirectLevel = Math.max(0, Math.min(3, indirectLevel));
-      
-      // Final CO attainment using weighted combination: Final = (0.8 × Direct) + (0.2 × Indirect)
-      const finalLevel = (0.8 * directLevel) + (0.2 * validatedIndirectLevel);
-      
-      let attainmentLevel = 1;
-      if (finalLevel >= 2.7) attainmentLevel = 3;
-      else if (finalLevel >= 2.0) attainmentLevel = 2;
-      
-      finalAttainmentData[co] = {
-        direct: directLevel,
-        indirect: validatedIndirectLevel,
-        final: parseFloat(finalLevel.toFixed(2)),
-        level: attainmentLevel
-      };
-    });
-    
-    setFinalAttainment(finalAttainmentData);
-    
-    // Calculate overall attainment
-    const totalLevel = Object.values(finalAttainmentData).reduce((sum, co) => sum + co.level, 0);
-    const avgLevel = Object.keys(finalAttainmentData).length > 0 ? totalLevel / Object.keys(finalAttainmentData).length : 0;
-    setOverallAttainment(parseFloat(avgLevel.toFixed(2)));
-  };
+  // CO calculation is performed server-side via `/api/co-attainment/`.
 
   const handleIndirectAttainmentChange = (co: string, value: string) => {
     const numValue = parseFloat(value) || 0;
@@ -393,7 +179,13 @@ const COAttainment = () => {
     try {
       // Call backend API with indirect attainment
       const indirectJson = JSON.stringify(indirectAttainment);
-      const response = await fetch(`/api/co-attainment/?question_paper=${selected.question_paper_id}&indirect_attainment=${encodeURIComponent(indirectJson)}`);
+      let url = `/api/co-attainment/?indirect_attainment=${encodeURIComponent(indirectJson)}&target_pct=${targetThreshold}`;
+      if (selected.question_paper_id) {
+        url += `&question_paper=${selected.question_paper_id}`;
+      } else if (selected.subject_id) {
+        url += `&subject_id=${selected.subject_id}`;
+      }
+      const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch CO attainment');
       const data = await response.json();
 
@@ -408,9 +200,9 @@ const COAttainment = () => {
           percentage: result.avg_pct,
           studentsAboveTarget: result.students_above_target,
           totalStudents: result.total_students,
-          attainmentLevel: result.direct_attainment_level,
+          attainmentLevel: result.direct_attainment_level_by_avg ?? result.direct_attainment_level,
           method2Percentage: result.pct_students_above_target,
-          method2Level: result.direct_attainment_level, // Using direct for both methods for now
+          method2Level: result.direct_attainment_level_by_students ?? result.direct_attainment_level,
         };
       });
       setCoAttainment(attainmentData);
@@ -419,7 +211,7 @@ const COAttainment = () => {
       const finalAttainmentData: Record<string, any> = {};
       data.results.forEach((result: any) => {
         finalAttainmentData[result.co] = {
-          direct: result.direct_attainment_level,
+          direct: result.direct_attainment_level_by_avg ?? result.direct_attainment_level,
           indirect: result.indirect_attainment_level,
           final: result.final_attainment_level,
           level: result.final_attainment_level,
@@ -468,7 +260,7 @@ const COAttainment = () => {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `CO_Attainment_Report_${selected.branch}_${selected.subject}_${selected.testType}.csv`);
+    link.setAttribute('download', `CO_Attainment_Report_${selected.subject}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -483,14 +275,10 @@ const COAttainment = () => {
     doc.setFontSize(18);
     doc.text("CO Attainment Report", 14, 20);
     
-    // Add selected filters information
+    // Add selected filters information (subject only)
     doc.setFontSize(12);
-    doc.text(`Branch: ${selected.branch}`, 14, 30);
-    doc.text(`Semester: ${selected.semester}`, 14, 37);
-    doc.text(`Section: ${selected.section}`, 14, 44);
-    doc.text(`Subject: ${selected.subject}`, 14, 51);
-    doc.text(`Test Type: ${selected.testType}`, 14, 58);
-    doc.text(`Target Threshold: ${targetThreshold}%`, 14, 65);
+    doc.text(`Subject: ${selected.subject}`, 14, 30);
+    doc.text(`Target Threshold: ${targetThreshold}%`, 14, 37);
     
     // Add CO Attainment Results table
     autoTable(doc, {
@@ -533,48 +321,13 @@ const COAttainment = () => {
     // Reset colors
     doc.setTextColor(0, 0, 0);
     
-    // Add Student Marks table
-    finalY = finalY + 40;
-    if (finalY > 250) { // If we're near the bottom of the page, add a new page
-      doc.addPage();
-      finalY = 20;
-    }
-    
-    doc.setFontSize(14);
-    doc.setTextColor(0, 0, 0);
-    doc.text("Student Marks", 14, finalY);
-    
-    // Prepare student marks data for the table
-    const studentMarksHeaders = ['#', 'USN', 'Name', ...questions.map(q => `Q${q.number} (${q.co})`), 'Total'];
-    const studentMarksData = studentMarks.map((student, index) => [
-      index + 1,
-      student.usn,
-      student.name,
-      ...questions.map(q => `${student.marks[q.id] || 0}/${q.maxMarks}`),
-      student.total
-    ]);
-    
-    autoTable(doc, {
-      startY: finalY + 5,
-      head: [studentMarksHeaders],
-      body: studentMarksData,
-      styles: { fontSize: 6 },
-      headStyles: { fillColor: [162, 89, 255] }, // Purple color to match theme
-    });
-    
-    // Save the PDF
+    // Save the PDF (student-level marks omitted — aggregated CO results only)
     doc.save(`CO_Attainment_Report_${selected.branch}_${selected.subject}_${selected.testType}.pdf`);
   };
 
   // Check if all dropdowns are selected
   const areAllDropdownsSelected = () => {
-    return (
-      selected.branch_id !== undefined &&
-      selected.semester_id !== undefined &&
-      selected.section_id !== undefined &&
-      selected.subject_id !== undefined &&
-      selected.testType !== ""
-    );
+    return selected.subject_id !== undefined;
   };
 
   return (
@@ -583,43 +336,7 @@ const COAttainment = () => {
         <CardTitle className="text-xl font-bold">CO Attainment Calculation</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <Select onValueChange={value => handleSelectChange('branch_id', Number(value))}>
-            <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
-              <SelectValue placeholder="Select Branch" />
-            </SelectTrigger>
-            <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
-              {dropdownData.branch.map((item) => (
-                <SelectItem key={item.id} value={item.id.toString()}>
-                  {item.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select onValueChange={value => handleSelectChange('semester_id', Number(value))}>
-            <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
-              <SelectValue placeholder="Select Semester" />
-            </SelectTrigger>
-            <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
-              {dropdownData.semester.map((item) => (
-                <SelectItem key={item.id} value={item.id.toString()}>
-                  {item.number}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select onValueChange={value => handleSelectChange('section_id', Number(value))}>
-            <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
-              <SelectValue placeholder="Select Section" />
-            </SelectTrigger>
-            <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
-              {dropdownData.section.map((item) => (
-                <SelectItem key={item.id} value={item.id.toString()}>
-                  {item.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Select onValueChange={value => handleSelectChange('subject_id', Number(value))}>
             <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               <SelectValue placeholder="Select Subject" />
@@ -628,18 +345,6 @@ const COAttainment = () => {
               {dropdownData.subject.map((item) => (
                 <SelectItem key={item.id} value={item.id.toString()}>
                   {item.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select onValueChange={value => handleSelectChange('testType', value)}>
-            <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
-              <SelectValue placeholder="Select TestType" />
-            </SelectTrigger>
-            <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
-              {dropdownData.testType.map((item) => (
-                <SelectItem key={item} value={item}>
-                  {item}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -763,7 +468,7 @@ const COAttainment = () => {
                                   ? 'bg-yellow-100 text-yellow-800' 
                                   : 'bg-red-100 text-red-800'
                             }`}>
-                              Level {finalAttainment[co.co]?.level || "N/A"}
+                              Level {finalAttainment[co.co]?.level ?? "N/A"}
                             </span>
                           </TableCell>
                         </TableRow>
@@ -800,52 +505,14 @@ const COAttainment = () => {
               </CardContent>
             </Card>
             
-            <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-300'}>
-              <CardHeader>
-                <CardTitle className="text-lg">Student Marks</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>#</TableHead>
-                        <TableHead>USN</TableHead>
-                        <TableHead>Name</TableHead>
-                        {questions.map(q => (
-                          <TableHead key={q.id} className="text-center">
-                            Q{q.number} ({q.co})
-                          </TableHead>
-                        ))}
-                        <TableHead>Total</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {studentMarks.map((student, index) => (
-                        <TableRow key={student.studentId}>
-                          <TableCell>{index + 1}</TableCell>
-                          <TableCell>{student.usn}</TableCell>
-                          <TableCell>{student.name}</TableCell>
-                          {questions.map(q => (
-                            <TableCell key={q.id} className="text-center">
-                              {student.marks[q.id] || 0}/{q.maxMarks}
-                            </TableCell>
-                          ))}
-                          <TableCell>{student.total}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Student-level marks removed from CO Attainment page by default. Use dedicated paginated viewer if needed. */}
           </div>
         )}
         
         {!areAllDropdownsSelected() && (
           <div className={`p-6 text-center rounded-lg ${theme === 'dark' ? 'bg-card border border-border' : 'bg-gray-50 border border-gray-200'}`}>
             <p className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
-              Please select all the dropdown options to calculate CO attainment.
+              Please select a subject to calculate CO attainment.
             </p>
           </div>
         )}

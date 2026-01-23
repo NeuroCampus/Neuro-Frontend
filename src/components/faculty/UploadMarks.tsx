@@ -33,7 +33,8 @@ import {
   StudentsForMarksResponse,
   UploadIAMarksRequest,
   updateQuestionPaper,
-  getQuestionPapers
+  getQuestionPapers,
+  getQuestionPaperDetail
 } from "../../utils/faculty_api";
 import { useFacultyAssignmentsQuery } from "../../hooks/useApiQueries";
 import { useTheme } from "@/context/ThemeContext";
@@ -219,6 +220,8 @@ const UploadMarks = () => {
 
   // New state for QP ID
   const [qpId, setQpId] = useState<number | null>(null);
+  // Store lightweight summary returned from list endpoint
+  const [existingQpSummary, setExistingQpSummary] = useState<any | null>(null);
   const [studentMarks, setStudentMarks] = useState<Record<string, Record<string, string>>>({});
   const [subjectType, setSubjectType] = useState<string | null>(null);
   // Effective subject type for rendering (prefer current state, fall back to stored selection)
@@ -258,6 +261,51 @@ const UploadMarks = () => {
       loadExistingQP();
     }
   }, [selected.branch_id, selected.semester_id, selected.section_id, selected.subject_id, selected.testType]);
+
+  // Load full QP detail only when user opens the Question Format or Question Paper tab
+  useEffect(() => {
+    const shouldLoad = (tabValue === 'questionFormat' || tabValue === 'questionPaper') && questionFormatSaved && existingQpSummary && (!questions || questions.length === 0);
+    if (!shouldLoad) return;
+
+    let mounted = true;
+    (async () => {
+      try {
+        const detailRes = await getQuestionPaperDetail(existingQpSummary.id);
+        if (!mounted) return;
+        if (detailRes && detailRes.success && detailRes.data && Array.isArray(detailRes.data) && detailRes.data.length > 0) {
+          const full = detailRes.data[0];
+          const loadedQuestions: Question[] = [];
+          (full.questions || []).forEach((q: any) => {
+            if (q.subparts && q.subparts.length > 0) {
+              q.subparts.forEach((sub: any) => {
+                loadedQuestions.push({
+                  id: `${q.question_number}${sub.subpart_label}`,
+                  number: `${q.question_number}${sub.subpart_label}`,
+                  content: sub.content || '',
+                  maxMarks: String(sub.max_marks || 0),
+                  co: q.co || 'UNMAPPED',
+                  bloomsLevel: q.blooms_level || ''
+                });
+              });
+            } else {
+              loadedQuestions.push({
+                id: `${q.question_number}`,
+                number: `${q.question_number}`,
+                content: q.content || '',
+                maxMarks: String(q.max_marks || 0),
+                co: q.co || 'UNMAPPED',
+                bloomsLevel: q.blooms_level || ''
+              });
+            }
+          });
+          if (loadedQuestions.length > 0) setQuestions(loadedQuestions);
+        }
+      } catch (err) {
+        console.error('Failed to fetch QP detail on tab open:', err);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [tabValue, questionFormatSaved, existingQpSummary]);
 
 
 
@@ -368,7 +416,14 @@ const UploadMarks = () => {
     if (!areAllDropdownsSelected()) return;
     
     try {
-      const qpResponse = await getQuestionPapers();
+      const qpResponse = await getQuestionPapers({
+        branch_id: selected.branch_id?.toString(),
+        semester_id: selected.semester_id?.toString(),
+        section_id: selected.section_id?.toString(),
+        subject_id: selected.subject_id?.toString(),
+        test_type: selected.testType,
+        detail: false,
+      });
       if (qpResponse.success && qpResponse.data) {
         const existingQp = qpResponse.data.find((q: any) => {
           // Match depending on effective subject type
@@ -383,27 +438,10 @@ const UploadMarks = () => {
         });
         
         if (existingQp) {
+          // Keep only the summary for now; defer loading full QP until user opens the format/paper tab
           setQpId(existingQp.id);
           setQuestionFormatSaved(true);
-          
-          // Load questions from existing QP
-          const loadedQuestions: Question[] = [];
-          existingQp.questions.forEach((q: { question_number: string; co: string; blooms_level: string; subparts: Array<{ subpart_label: string; content: string; max_marks: number }> }) => {
-            q.subparts.forEach((sub: { subpart_label: string; content: string; max_marks: number }, index: number) => {
-              loadedQuestions.push({
-                id: `${q.question_number}${sub.subpart_label}`,
-                number: `${q.question_number}${sub.subpart_label}`,
-                content: sub.content,
-                maxMarks: sub.max_marks.toString(),
-                co: q.co,
-                bloomsLevel: q.blooms_level
-              });
-            });
-          });
-          
-          if (loadedQuestions.length > 0) {
-            setQuestions(loadedQuestions);
-          }
+          setExistingQpSummary(existingQp);
         } else {
           // Reset to default if no existing QP
           setQpId(null);
@@ -449,8 +487,15 @@ const UploadMarks = () => {
 
     // NOTE: SEE is supported server-side; allow SEE QP creation
     
-    // Check if QP already exists
-    const qpResponse = await getQuestionPapers();
+    // Check if QP already exists (fetch lightweight summaries)
+    const qpResponse = await getQuestionPapers({
+      branch_id: selected.branch_id?.toString(),
+      semester_id: selected.semester_id?.toString(),
+      section_id: selected.section_id?.toString(),
+      subject_id: selected.subject_id?.toString(),
+      test_type: selected.testType,
+      detail: false,
+    });
     let existingQp = null;
     if (qpResponse.success && qpResponse.data) {
       existingQp = qpResponse.data.find((q: any) => {
@@ -562,8 +607,15 @@ const UploadMarks = () => {
       }
     }
 
-    // Find QP
-    const qpResponse = await getQuestionPapers();
+    // Find QP using summary endpoint
+    const qpResponse = await getQuestionPapers({
+      branch_id: selected.branch_id?.toString(),
+      semester_id: selected.semester_id?.toString(),
+      section_id: selected.section_id?.toString(),
+      subject_id: selected.subject_id?.toString(),
+      test_type: selected.testType,
+      detail: false,
+    });
     if (!qpResponse.success || !qpResponse.data) {
       MySwal.fire({
         title: "Question Paper not found",
