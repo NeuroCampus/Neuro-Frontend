@@ -53,7 +53,7 @@ import {
 import { usePagination, useInfiniteScroll, useOptimisticUpdate } from './useOptimizations';
 
 // Custom hooks for data fetching
-export const useProctorStudentsQuery = (enabled: boolean = true) => {
+export const useProctorStudentsQuery = (enabled: boolean = true, include?: string | string[]) => {
   const pagination = usePagination({
     queryKey: ['proctorStudents'],
     pageSize: 20,
@@ -66,6 +66,7 @@ export const useProctorStudentsQuery = (enabled: boolean = true) => {
         const response = await getProctorStudents({
           page: pagination.page,
           page_size: pagination.pageSize,
+          include: include,
         });
         if (response.success && response.data) {
           pagination.updatePagination(response);

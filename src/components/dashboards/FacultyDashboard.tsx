@@ -78,11 +78,15 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
     'announcements',
     'proctor-students',
     'exam-applications',
-    'student-leave',
-    'statistics'
+    'student-leave'
   ];
   const needsProctorData = pagesNeedingProctor.includes(activePage);
-  const { data: proctorStudentsData, isLoading: proctorStudentsLoading } = useProctorStudentsQuery(needsProctorData);
+  // Determine which fields to include based on active page to minimize payload
+  // Request a lightweight "minimal" payload for the Proctor Students page
+  const includeForProctor = activePage === 'student-leave'
+    ? 'leave_requests'
+    : (needsProctorData ? (activePage === 'proctor-students' ? 'minimal' : 'students') : undefined);
+  const { data: proctorStudentsData, isLoading: proctorStudentsLoading, pagination: proctorPagination } = useProctorStudentsQuery(needsProctorData, includeForProctor);
   const proctorStudents = proctorStudentsData?.data || [];
 
   // Update active page when location changes
@@ -182,7 +186,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       case "announcements":
         return <Announcements role="faculty" proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} />;
       case "proctor-students":
-        return <ProctorStudents proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} />;
+        return <ProctorStudents proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} pagination={proctorPagination} />;
       case "exam-applications":
         return <ExamApplication proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} />;
       case "student-leave":
@@ -194,7 +198,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       case "faculty-profile":
         return <FacultyProfile />;
       case "statistics":
-        return <GenerateStatistics proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} />;
+        return <GenerateStatistics />;
       case "scan-student-info":
         return <StudentInfoScanner />;
       default:

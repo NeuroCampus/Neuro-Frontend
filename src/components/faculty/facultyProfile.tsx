@@ -19,6 +19,16 @@ const FacultyProfile = () => {
     address: "",
     bio: "",
     profile_picture: "",
+    // faculty-specific fields returned in the new `profile` object
+    department: "",
+    designation: "",
+    qualification: "",
+    branch: "",
+    experience_years: "",
+    office_location: "",
+    office_hours: "",
+    date_of_birth: "",
+    gender: "",
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,15 +39,26 @@ const FacultyProfile = () => {
     setLoading(true);
     getFacultyProfile()
       .then((res) => {
-        if (res.success && res.data) {
+        // Backend now returns { success: true, profile: { ... } }
+        const payload = res.profile || res.data || null;
+        if (res.success && payload) {
           setFormData({
-            firstName: res.data.first_name || "",
-            lastName: res.data.last_name || "",
-            email: res.data.email || "",
-            mobile: res.data.mobile || "",
-            address: res.data.address || "",
-            bio: res.data.bio || "",
-            profile_picture: res.data.profile_picture || "",
+            firstName: payload.first_name || "",
+            lastName: payload.last_name || "",
+            email: payload.email || "",
+            mobile: payload.mobile_number || payload.mobile || "",
+            address: payload.address || "",
+            bio: payload.bio || "",
+            profile_picture: payload.profile_picture || payload.profile_picture_url || "",
+            department: payload.department || "",
+            designation: payload.designation || "",
+            qualification: payload.qualification || "",
+            branch: payload.branch || "",
+            experience_years: payload.experience_years ? String(payload.experience_years) : "",
+            office_location: payload.office_location || "",
+            office_hours: payload.office_hours || "",
+            date_of_birth: payload.date_of_birth || "",
+            gender: payload.gender || "",
           });
         } else {
           setError(res.message || "Failed to load profile");
@@ -122,8 +143,14 @@ const FacultyProfile = () => {
         bio: formData.bio,
       });
 
+      // Backend may return updated profile under `profile` or `data`
+      const payload = res.profile || res.data || null;
       if (res.success) {
         showSuccessAlert("Success", "Profile updated successfully!");
+        // Update local formData from returned payload when available
+        if (payload) {
+          setFormData((prev) => ({ ...prev, firstName: payload.first_name || prev.firstName, lastName: payload.last_name || prev.lastName, email: payload.email || prev.email, mobile: payload.mobile_number || payload.mobile || prev.mobile, address: payload.address || prev.address, bio: payload.bio || prev.bio, profile_picture: payload.profile_picture || prev.profile_picture }));
+        }
         setIsEditing(false);
       } else {
         setError(res.message || "Failed to update profile");
@@ -168,8 +195,8 @@ const FacultyProfile = () => {
 
         <div className="flex flex-col items-center mb-6 mt-4">
           <div className={`w-16 h-16 rounded-full bg-[#a259ff] text-white flex items-center justify-center text-xl font-semibold mb-2`}>
-            {formData.firstName[0] || ""}
-            {formData.lastName[0] || ""}
+            {(formData.firstName && formData.firstName[0]) || ""}
+            {(formData.lastName && formData.lastName[0]) || ""}
           </div>
           <div className="text-base font-medium">
             {formData.firstName} {formData.lastName}
@@ -274,6 +301,26 @@ const FacultyProfile = () => {
             {localErrors.bio && (
               <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.bio}</p>
             )}
+          </div>
+        </div>
+
+        {/* Faculty details block (read-only metadata returned by backend) */}
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className={`p-4 rounded-md ${theme === 'dark' ? 'bg-card border border-input text-foreground' : 'bg-gray-50 border border-gray-200 text-gray-700'}`}>
+            <h4 className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Academic / Office</h4>
+            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}><strong>Department:</strong> {formData.department || '—'}</p>
+            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}><strong>Designation:</strong> {formData.designation || '—'}</p>
+            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}><strong>Qualification:</strong> {formData.qualification || '—'}</p>
+            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}><strong>Branch:</strong> {formData.branch || '—'}</p>
+            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}><strong>Experience:</strong> {formData.experience_years ? `${formData.experience_years} years` : '—'}</p>
+            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}><strong>Office:</strong> {formData.office_location || '—'}</p>
+            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}><strong>Office Hours:</strong> {formData.office_hours || '—'}</p>
+          </div>
+
+          <div className={`p-4 rounded-md ${theme === 'dark' ? 'bg-card border border-input text-foreground' : 'bg-gray-50 border border-gray-200 text-gray-700'}`}>
+            <h4 className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Personal</h4>
+            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}><strong>Date of Birth:</strong> {formData.date_of_birth || '—'}</p>
+            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}><strong>Gender:</strong> {formData.gender || '—'}</p>
           </div>
         </div>
       </CardContent>

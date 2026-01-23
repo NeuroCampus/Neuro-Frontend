@@ -1,6 +1,9 @@
 import { API_ENDPOINT } from "./config";
 import { fetchWithTokenRefresh } from "./authService";
 
+// In-flight request deduplication map to avoid duplicate network calls (useful in React StrictMode)
+const inflightRequests: Map<string, Promise<any>> = new Map();
+
 // Type definitions for request and response data
 interface DashboardOverviewResponse {
   success: boolean;
@@ -549,11 +552,23 @@ export const createAnnouncement = async (
 export const getProctorStudents = async (params?: {
   page?: number;
   page_size?: number;
+  include?: string | string[]; // e.g. 'students' or ['students']
 }): Promise<GetProctorStudentsResponse> => {
   try {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.include) {
+      // Special-case 'minimal' keyword: backend expects 'minimal=true' flag
+      if (params.include === 'minimal' || (Array.isArray(params.include) && params.include.includes('minimal'))) {
+        queryParams.append('minimal', 'true');
+      }
+      const includes = Array.isArray(params.include) ? params.include : params.include.split(',');
+      const nonMinimal = includes.map(s => s.trim()).filter(s => s && s !== 'minimal');
+      if (nonMinimal.length > 0) {
+        queryParams.append('include', nonMinimal.join(','));
+      }
+    }
     
     const url = queryParams.toString() 
       ? `${API_ENDPOINT}/faculty/proctor-students/?${queryParams.toString()}`
@@ -563,12 +578,55 @@ export const getProctorStudents = async (params?: {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        "Content-Type": "application/json",
       },
     });
     return await response.json();
   } catch (error) {
     console.error("Get Proctor Students Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+// Lightweight proctor students fetch for statistics page - requests minimal fields from backend
+export const getProctorStudentsForStats = async (params?: {
+  page?: number;
+  page_size?: number;
+}): Promise<GetProctorStudentsResponse> => {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    // Ask backend to return a minimal payload optimized for statistics
+    queryParams.append('minimal', 'true');
+
+    const url = `${API_ENDPOINT}/faculty/proctor-students/?${queryParams.toString()}`;
+
+    // Deduplicate identical simultaneous requests
+    if (inflightRequests.has(url)) {
+      return inflightRequests.get(url) as Promise<GetProctorStudentsResponse>;
+    }
+
+    const promise = (async () => {
+      try {
+        const response = await fetchWithTokenRefresh(url, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            "Content-Type": "application/json",
+          },
+        });
+        const json = await response.json();
+        return json;
+      } finally {
+        // remove the in-flight marker after completion
+        inflightRequests.delete(url);
+      }
+    })();
+
+    inflightRequests.set(url, promise);
+    return promise;
+  } catch (error) {
+    console.error("Get Proctor Students (minimal) Error:", error);
     return { success: false, message: "Network error" };
   }
 };
@@ -655,14 +713,29 @@ export const getApplyLeaveBootstrap = async (): Promise<GetApplyLeaveBootstrapRe
 
 export const getTimetable = async (): Promise<GetTimetableResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/timetable/`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        "Content-Type": "application/json",
-      },
-    });
-    return await response.json();
+    const url = `${API_ENDPOINT}/faculty/timetable/`;
+
+    // Deduplicate identical simultaneous requests
+    if (inflightRequests.has(url)) {
+      return inflightRequests.get(url) as Promise<GetTimetableResponse>;
+    }
+
+    const promise = (async () => {
+      try {
+        const response = await fetchWithTokenRefresh(url, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          },
+        });
+        return await response.json();
+      } finally {
+        inflightRequests.delete(url);
+      }
+    })();
+
+    inflightRequests.set(url, promise);
+    return promise;
   } catch (error) {
     console.error("Get Timetable Error:", error);
     return { success: false, message: "Network error" };

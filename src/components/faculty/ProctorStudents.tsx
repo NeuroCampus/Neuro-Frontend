@@ -10,26 +10,31 @@ const ITEMS_PER_PAGE = 10;
 interface ProctorStudentsProps {
   proctorStudents: ProctorStudent[];
   proctorStudentsLoading: boolean;
+  pagination?: any; // pagination object returned from useProctorStudentsQuery
 }
 
-const ProctorStudents = ({ proctorStudents, proctorStudentsLoading }: ProctorStudentsProps) => {
-  // Helper function to format attendance percentage
-  const formatAttendancePercentage = (percentage: number | string): string => {
-    if (percentage === "NA" || percentage === null || percentage === undefined) {
-      return "NA";
-    }
-    if (typeof percentage === "string") {
-      return percentage;
-    }
-    return `${percentage}%`;
-  };
+const ProctorStudents = ({ proctorStudents, proctorStudentsLoading, pagination }: ProctorStudentsProps) => {
   const [search, setSearch] = useState("");
+  // Use server-side pagination provided by the pagination object when available
   const { theme } = useTheme();
 
   if (proctorStudentsLoading) {
     return <div className={`p-6 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading students...</div>;
   }
 
+  // Client-side search (by USN or name) applied to the returned page items
+  const q = search.trim().toLowerCase();
+  const pageItems = (proctorStudents || []).filter((s: any) => {
+    if (!q) return true;
+    const name = (s.name || '').toString().toLowerCase();
+    const usn = (s.usn || '').toString().toLowerCase();
+    return name.includes(q) || usn.includes(q);
+  });
+
+  // Server pagination metadata
+  const currentPage = pagination?.page ?? pagination?.paginationState?.page ?? 1;
+  const pageSize = pagination?.pageSize ?? pagination?.paginationState?.pageSize ?? ITEMS_PER_PAGE;
+  const totalPages = pagination?.paginationState?.totalPages ?? 1;
   return (
     <Card className={theme === 'dark' ? 'bg-card text-foreground shadow-md' : 'bg-white text-gray-900 shadow-md'}>
       <CardHeader>
@@ -40,7 +45,8 @@ const ProctorStudents = ({ proctorStudents, proctorStudentsLoading }: ProctorStu
           placeholder="Search by USN or name..."
           value={search}
           onChange={e => {
-            setSearch(e.target.value);
+            setSearch(e.target.value.replace(/[^a-zA-Z0-9\s]/g, ''));
+            setPage(1);
           }}
           className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}
         />
@@ -51,32 +57,18 @@ const ProctorStudents = ({ proctorStudents, proctorStudentsLoading }: ProctorStu
                 <th className={`px-4 py-2 text-left text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>USN</th>
                 <th className={`px-4 py-2 text-left text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Name</th>
                 <th className={`px-4 py-2 text-left text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Semester</th>
-                <th className={`px-4 py-2 text-left text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Attendance %</th>
-                <th className={`px-4 py-2 text-left text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Avg Mark</th>
+                <th className={`px-4 py-2 text-left text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Section</th>
+                <th className={`px-4 py-2 text-left text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Contact No</th>
               </tr>
             </thead>
             <tbody className={theme === 'dark' ? 'divide-border' : 'divide-gray-200'}>
-              {proctorStudents.map((student, index) => (
+              {pageItems.map((student: any, index: number) => (
                 <tr key={index} className={theme === 'dark' ? 'hover:bg-muted' : 'hover:bg-gray-100'}>
                   <td className={`px-4 py-2 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.usn}</td>
                   <td className={`px-4 py-2 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.name}</td>
                   <td className={`px-4 py-2 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.semester}</td>
-                  <td className={`px-4 py-2 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                    {formatAttendancePercentage(student.attendance)}
-                  </td>
-                  <td className={`px-4 py-2 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                    {(() => {
-                      const internalMarks = student.marks || [];
-                      const iaMarks = student.ia_marks || [];
-                      const allMarks = [
-                        ...internalMarks.map(m => m.mark),
-                        ...iaMarks.map(m => m.total_obtained)
-                      ];
-                      return allMarks.length > 0
-                        ? (allMarks.reduce((sum, mark) => sum + (mark || 0), 0) / allMarks.length).toFixed(2)
-                        : 0;
-                    })()}
-                  </td>
+                  <td className={`px-4 py-2 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.section}</td>
+                  <td className={`px-4 py-2 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.contact || '-'}</td>
                 </tr>
               ))}
               {proctorStudents.length === 0 && (
@@ -88,6 +80,20 @@ const ProctorStudents = ({ proctorStudents, proctorStudentsLoading }: ProctorStu
               )}
             </tbody>
           </table>
+        </div>
+        {/* Pagination controls (server-driven) */}
+        <div className="flex justify-end items-center gap-2 mt-3">
+          <button
+            onClick={() => pagination?.goToPage?.(Math.max(1, (currentPage || 1) - 1))}
+            disabled={currentPage <= 1}
+            className="px-3 py-1 rounded border"
+          >Previous</button>
+          <span className="text-sm">Page {currentPage} / {totalPages}</span>
+          <button
+            onClick={() => pagination?.goToPage?.(Math.min(totalPages, (currentPage || 1) + 1))}
+            disabled={currentPage >= totalPages}
+            className="px-3 py-1 rounded border"
+          >Next</button>
         </div>
       </CardContent>
     </Card>

@@ -70,7 +70,8 @@ const Timetable = ({ role }: TimetableProps) => {
                 return {
                   time: `${entry.start_time}-${entry.end_time}`,
                   subject: entry.subject,
-                  faculty: `${entry.faculty_name} - ${entry.subject} (${entry.branch}, Sem ${entry.semester}, Sec ${entry.section})`,
+                  // Show only semester and section as requested
+                  faculty: `Sem ${entry.semester}, Sec ${entry.section}`,
                   room: entry.room,
                   section: entry.section,
                   semester: entry.semester,

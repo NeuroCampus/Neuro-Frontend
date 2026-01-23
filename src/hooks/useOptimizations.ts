@@ -33,13 +33,20 @@ export const usePagination = (options: PaginationOptions) => {
 
   const updatePagination = useCallback((data: any) => {
     if (data?.pagination) {
+      const p = data.pagination || {};
+      const currentPage = p.current_page ?? p.page ?? page;
+      const pageSz = p.page_size ?? p.pageSize ?? pageSize;
+      const hasNext = p.has_next ?? p.hasNext ?? false;
+      const hasPrev = p.has_prev ?? p.hasPrev ?? false;
+      const totalPages = p.total_pages ?? p.totalPages ?? 0;
+      const totalItems = p.total_items ?? p.totalItems ?? 0;
       setPaginationState({
-        page: data.pagination.current_page || page,
-        pageSize: data.pagination.page_size || pageSize,
-        hasNext: data.pagination.has_next || false,
-        hasPrev: data.pagination.has_prev || false,
-        totalPages: data.pagination.total_pages || 0,
-        totalItems: data.pagination.total_items || 0,
+        page: currentPage,
+        pageSize: pageSz,
+        hasNext,
+        hasPrev,
+        totalPages,
+        totalItems,
       });
     }
   }, [page, pageSize]);

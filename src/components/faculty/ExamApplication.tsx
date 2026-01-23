@@ -43,9 +43,10 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
     const fetchProctorStudents = async () => {
       setLoadingFiltered(true);
       try {
-        const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/proctor-students/`, {
+        // Request full student payload explicitly
+        const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/proctor-students/?include=students`, {
           method: 'GET',
-          headers: { 'Content-Type': 'application/json' }
+          headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` }
         });
         const result = await response.json();
         if (result.success) {
