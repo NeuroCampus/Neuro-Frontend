@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -53,6 +53,88 @@ const TakeAttendance = () => {
   const [processingAI, setProcessingAI] = useState(false);
   const [lastBootstrapParams, setLastBootstrapParams] = useState<any>(null);
 
+  // Simple debounced value hook to avoid rapid-fire API calls when user changes selections
+  const useDebounced = <T,>(value: T, delay = 300) => {
+    const [debounced, setDebounced] = useState<T>(value);
+    useEffect(() => {
+      const id = setTimeout(() => setDebounced(value), delay);
+      return () => clearTimeout(id);
+    }, [value, delay]);
+    return debounced;
+  };
+  // Map to hold in-flight requests to deduplicate identical calls
+  const inFlightRequests = useRef<Map<string, Promise<any>>>(new Map());
+  // Mirror of lastBootstrapParams in a ref for synchronous checks (avoids state update timing races)
+  const lastBootstrapParamsRef = useRef<any>(null);
+
+  // Central runLoader function (moved to component scope so multiple effects can use it)
+  const runLoader = (loader: any, paramsObj: any, mapStudents: boolean = true) => {
+    setLoadingStudents(true);
+    const params: any = makeParams(paramsObj);
+    // Prevent duplicate calls by comparing against lastBootstrapParams (use ref for synchronous check)
+    if (lastBootstrapParamsRef.current && JSON.stringify(params) === JSON.stringify(lastBootstrapParamsRef.current)) {
+      setLoadingStudents(false);
+      return Promise.resolve();
+    }
+    setLastBootstrapParams(params);
+    lastBootstrapParamsRef.current = params;
+    setBootstrapParams(params);
+
+    // Use a key to dedupe identical in-flight requests
+    const key = JSON.stringify(params);
+    console.debug("runLoader start", key, params);
+    const existing = inFlightRequests.current.get(key);
+    if (existing) {
+      // Return the existing promise so callers share the same network request
+      console.debug("Deduping student-list request", key);
+      console.trace();
+      return existing;
+    }
+
+    const p = loader(params)
+      .then((response: any) => {
+        if (response && response.success && response.data) {
+          const studentsArr = response.data.students || [];
+          if (mapStudents) {
+            setStudents(studentsArr.map((s: any) => ({ id: s.id, name: s.name, usn: s.usn })));
+          } else {
+            setStudents(studentsArr);
+          }
+          setRecentRecords(response.data.recent_records || []);
+          if (response.data.pagination) {
+            setPage(response.data.pagination.page);
+            setPageSize(response.data.pagination.page_size);
+            setTotalPages(response.data.pagination.total_pages);
+            setTotalStudentsCount(response.data.pagination.total_students);
+          } else {
+            setTotalPages(1);
+            setTotalStudentsCount(studentsArr.length || 0);
+          }
+        } else {
+          setErrorMsg(response?.message || "Failed to load data");
+        }
+        return response;
+      })
+      .catch((e: any) => {
+        setErrorMsg(e?.message || "Failed to load data");
+        throw e;
+      })
+      .finally(() => {
+        setLoadingStudents(false);
+        inFlightRequests.current.delete(key);
+      });
+
+    inFlightRequests.current.set(key, p);
+    return p;
+  };
+
+  const debouncedSubjectId = useDebounced(subjectId, 300);
+  const debouncedBranchId = useDebounced(branchId, 300);
+  const debouncedSemesterId = useDebounced(semesterId, 300);
+  const debouncedSectionId = useDebounced(sectionId, 300);
+  const debouncedPage = useDebounced(page, 300);
+  const debouncedPageSize = useDebounced(pageSize, 300);
+
   // Helper to build query params: omit null/undefined/'undefined' values and stringify
   const makeParams = (obj: Record<string, any>) => {
     const out: Record<string, any> = {};
@@ -68,11 +150,12 @@ const TakeAttendance = () => {
   // Reset last params when subject changes
   useEffect(() => {
     setLastBootstrapParams(null);
+    lastBootstrapParamsRef.current = null;
   }, [subjectId]);
 
   // Assignments are now loaded via context
 
-  // Reset selections and load students when subject or class selection changes
+  // Reset selections and load students when debounced subject or class selection changes
   useEffect(() => {
     setStudents([]);
     setAttendance({});
@@ -80,44 +163,18 @@ const TakeAttendance = () => {
     setSuccessMsg("");
     setErrorMsg("");
 
-    if (!subjectId) return;
+    if (!debouncedSubjectId) return;
+
+    
 
     // CASE 0: Elective (Branch + Semester + Subject, section optional)
-    if (subjectId && branchId && semesterId && subjectType === 'elective') {
-      setLoadingStudents(true);
-      const params: any = makeParams({ subject_id: subjectId, branch_id: branchId, semester_id: semesterId, section_id: sectionId, page, page_size: pageSize });
-      
-      // Prevent duplicate calls
-      if (lastBootstrapParams && JSON.stringify(params) === JSON.stringify(lastBootstrapParams)) return;
-      setLastBootstrapParams(params);
-      
-      setBootstrapParams(params);
-      getStudentsForElective(params)
-        .then(response => {
-          if (response.success && response.data) {
-            setSubjectStudents(response.data.students || []);
-            setStudents(response.data.students.map((s: any) => ({ id: s.id, name: s.name, usn: s.usn })));
-            setRecentRecords(response.data.recent_records || []);
-            if (response.data.pagination) {
-              setPage(response.data.pagination.page);
-              setPageSize(response.data.pagination.page_size);
-              setTotalPages(response.data.pagination.total_pages);
-              setTotalStudentsCount(response.data.pagination.total_students);
-            } else {
-              setTotalPages(1);
-              setTotalStudentsCount(response.data.students.length || 0);
-            }
-          } else {
-            setErrorMsg(response.message || "Failed to load data");
-          }
-        })
-        .catch(e => setErrorMsg(e.message || "Failed to load data"))
-        .finally(() => setLoadingStudents(false));
+    if (debouncedSubjectId && debouncedBranchId && debouncedSemesterId && subjectType === 'elective') {
+      runLoader(getStudentsForElective, { subject_id: debouncedSubjectId, branch_id: debouncedBranchId, semester_id: debouncedSemesterId, section_id: debouncedSectionId, page: debouncedPage, page_size: debouncedPageSize });
       return;
     }
 
     // CASE 1: Combined class (Subject only)
-    if (subjectId && !branchId) {
+    if (debouncedSubjectId && !debouncedBranchId) {
       if (subjectStudents.length) {
         const mapped = subjectStudents.map(s => ({ id: s.id, name: s.name, usn: s.usn }));
         setStudents(mapped);
@@ -127,109 +184,50 @@ const TakeAttendance = () => {
     }
 
     // CASE 2: Branch-specific class (Subject + Branch)
-    if (subjectId && branchId && !semesterId && !sectionId) {
+    if (debouncedSubjectId && debouncedBranchId && !debouncedSemesterId && !debouncedSectionId) {
       // For elective subjects we require semester selection before calling the elective endpoint
-      if (subjectType === 'elective') {
-        // don't call elective endpoint without semester; allow semester dropdown to populate
-        return;
-      }
-      setLoadingStudents(true);
-      const params: any = makeParams({ subject_id: subjectId, branch_id: branchId, page, page_size: pageSize });
-      setBootstrapParams(params);
-      // Use open-elective or regular endpoint depending on subjectType
+      if (subjectType === 'elective') return;
       const loader = subjectType === 'open_elective' ? getStudentsForOpenElective : getStudentsForRegular;
-      loader(params)
-        .then(response => {
-          if (response.success && response.data) {
-            setStudents(response.data.students.map((s: any) => ({ id: s.id, name: s.name, usn: s.usn })));
-            setRecentRecords(response.data.recent_records || []);
-            if (subjectType === 'elective' || subjectType === 'open_elective') {
-              setSubjectStudents(response.data.students || []);
-            }
-            if (response.data.pagination) {
-              setPage(response.data.pagination.page);
-              setPageSize(response.data.pagination.page_size);
-              setTotalPages(response.data.pagination.total_pages);
-              setTotalStudentsCount(response.data.pagination.total_students);
-            } else {
-              setTotalPages(1);
-              setTotalStudentsCount(response.data.students.length || 0);
-            }
-          } else {
-            setErrorMsg(response.message || "Failed to load data");
-          }
-        })
-        .catch(e => setErrorMsg(e.message || "Failed to load data"))
-        .finally(() => setLoadingStudents(false));
+      runLoader(loader, { subject_id: debouncedSubjectId, branch_id: debouncedBranchId, page: debouncedPage, page_size: debouncedPageSize });
       return;
     }
 
     // CASE 2b: Branch + Semester selected (section optional)
-    // This handles elective/open_elective where section may be optional.
-    if (subjectId && branchId && semesterId && !sectionId) {
-      setLoadingStudents(true);
-      const params: any = makeParams({ subject_id: subjectId, branch_id: branchId, semester_id: semesterId, page, page_size: pageSize });
-      setBootstrapParams(params);
-      const loader = subjectType === 'elective'
-        ? getStudentsForElective
-        : (subjectType === 'open_elective' ? getStudentsForOpenElective : getStudentsForRegular);
-      loader(params)
-        .then(response => {
-          if (response.success && response.data) {
-            setStudents(response.data.students.map((s: any) => ({ id: s.id, name: s.name, usn: s.usn })));
-            setRecentRecords(response.data.recent_records || []);
-            if (subjectType === 'elective' || subjectType === 'open_elective') {
-              setSubjectStudents(response.data.students || []);
-            }
-            if (response.data.pagination) {
-              setPage(response.data.pagination.page);
-              setPageSize(response.data.pagination.page_size);
-              setTotalPages(response.data.pagination.total_pages);
-              setTotalStudentsCount(response.data.pagination.total_students);
-            } else {
-              setTotalPages(1);
-              setTotalStudentsCount(response.data.students.length || 0);
-            }
-          } else {
-            setErrorMsg(response.message || "Failed to load data");
-          }
-        })
-        .catch(e => setErrorMsg(e.message || "Failed to load data"))
-        .finally(() => setLoadingStudents(false));
+    if (debouncedSubjectId && debouncedBranchId && debouncedSemesterId && !debouncedSectionId) {
+      if (subjectType === 'elective') {
+        // Elective requires semester selection; call elective loader
+        runLoader(getStudentsForElective, { subject_id: debouncedSubjectId, branch_id: debouncedBranchId, semester_id: debouncedSemesterId, page: debouncedPage, page_size: debouncedPageSize });
+        return;
+      }
+
+      if (subjectType === 'open_elective') {
+        // For open electives: avoid server call on semester-only selection when we already have subject-level registrations.
+        if (subjectStudents && subjectStudents.length) {
+          const filtered = subjectStudents.filter((s: any) => String(s.branch_id) === String(debouncedBranchId) && String(s.semester_id) === String(debouncedSemesterId));
+          setStudents(filtered.map((s: any) => ({ id: s.id, name: s.name, usn: s.usn })));
+          // Update pagination/counts based on filtered result
+          setTotalPages(1);
+          setTotalStudentsCount(filtered.length || 0);
+          return;
+        }
+        // Fallback: if we don't have subjectStudents cached, fetch from server
+        runLoader(getStudentsForOpenElective, { subject_id: debouncedSubjectId, branch_id: debouncedBranchId, semester_id: debouncedSemesterId, page: debouncedPage, page_size: debouncedPageSize });
+        return;
+      }
+
+      // Regular subject: call regular loader
+      const loader = getStudentsForRegular;
+      runLoader(loader, { subject_id: debouncedSubjectId, branch_id: debouncedBranchId, semester_id: debouncedSemesterId, page: debouncedPage, page_size: debouncedPageSize });
       return;
     }
 
     // CASE 3: Section-specific class (Subject + Branch + Semester + Section)
-    if (subjectId && branchId && semesterId && sectionId) {
-      setLoadingStudents(true);
-      const params: any = makeParams({ subject_id: subjectId, branch_id: branchId, semester_id: semesterId, section_id: sectionId, page, page_size: pageSize });
-      setBootstrapParams(params);
+    if (debouncedSubjectId && debouncedBranchId && debouncedSemesterId && debouncedSectionId) {
       const loader = subjectType === 'regular' || !subjectType ? getStudentsForRegular : (subjectType === 'elective' ? getStudentsForElective : getStudentsForOpenElective);
-      loader(params)
-        .then(response => {
-          if (response.success && response.data) {
-            setStudents(response.data.students);
-            setRecentRecords(response.data.recent_records || []);
-            if (subjectType === 'elective' || subjectType === 'open_elective') {
-              setSubjectStudents(response.data.students || []);
-            }
-            if (response.data.pagination) {
-              setPage(response.data.pagination.page);
-              setPageSize(response.data.pagination.page_size);
-              setTotalPages(response.data.pagination.total_pages);
-              setTotalStudentsCount(response.data.pagination.total_students);
-            } else {
-              setTotalPages(1);
-              setTotalStudentsCount(response.data.students.length || 0);
-            }
-          } else {
-            setErrorMsg(response.message || "Failed to load data");
-          }
-        })
-        .catch(e => setErrorMsg(e.message || "Failed to load data"))
-        .finally(() => setLoadingStudents(false));
+      runLoader(loader, { subject_id: debouncedSubjectId, branch_id: debouncedBranchId, semester_id: debouncedSemesterId, section_id: debouncedSectionId, page: debouncedPage, page_size: debouncedPageSize }, subjectType === 'regular');
+      return;
     }
-  }, [subjectId, branchId, semesterId, sectionId]);
+  }, [debouncedSubjectId, debouncedBranchId, debouncedSemesterId, debouncedSectionId, debouncedPage, debouncedPageSize]);
 
   // When subject changes, reset branch/semester/section selections
   useEffect(() => {
@@ -248,7 +246,10 @@ const TakeAttendance = () => {
     setSemesterId(null);
     setSectionId(null);
     setStudents([]);
-    setSubjectStudents([]);
+    // For open electives keep the subject-level registrations so branch dropdown labels remain available
+    if (subjectType !== 'open_elective') {
+      setSubjectStudents([]);
+    }
     setAttendance({});
     setRecentRecords([]);
     setSuccessMsg("");
@@ -259,7 +260,10 @@ const TakeAttendance = () => {
   useEffect(() => {
     setSectionId(null);
     setStudents([]);
-    setSubjectStudents([]);
+    // Preserve subjectStudents for open electives to allow branch/semester dropdown derivation
+    if (subjectType !== 'open_elective') {
+      setSubjectStudents([]);
+    }
     setAttendance({});
     setRecentRecords([]);
     setSuccessMsg("");
@@ -270,35 +274,31 @@ const TakeAttendance = () => {
   useEffect(() => {
     if (!bootstrapParams || !bootstrapParams.subject_id) return;
     const params = { ...bootstrapParams, page, page_size: pageSize };
-    setLoadingStudents(true);
+    // Avoid duplicate reloads when the params equal the last bootstrap params
+    try {
+      if (lastBootstrapParamsRef.current && JSON.stringify(params) === JSON.stringify(lastBootstrapParamsRef.current)) {
+        console.debug('Skipping page reload; params equal lastBootstrapParamsRef', params);
+        return;
+      }
+    } catch (e) {
+      // Fallback: if JSON stringify fails for any reason, continue with reload
+    }
     // Choose loader based on subjectType so we call the correct endpoint
     const loader = subjectType === 'elective'
       ? getStudentsForElective
       : (subjectType === 'open_elective' ? getStudentsForOpenElective : getStudentsForRegular);
 
-    loader(params)
-      .then(response => {
-        if (response.success && response.data) {
+    // Use runLoader (dedupes in-flight requests). If this is a subject-only bootstrap (no branch_id),
+    // update `subjectStudents` from the response so downstream UI uses registration-derived branches/semesters.
+    runLoader(loader, params, subjectType === 'regular')
+      .then((response: any) => {
+        if (response && response.success && response.data) {
           if (!params.branch_id) {
             setSubjectStudents(response.data.students || []);
-            setStudents((response.data.students || []).map((s: any) => ({ id: s.id, name: s.name, usn: s.usn })));
-          } else {
-            setStudents(response.data.students.map((s: any) => ({ id: s.id, name: s.name, usn: s.usn })));
-          }
-          setRecentRecords(response.data.recent_records || []);
-          if (response.data.pagination) {
-            setPage(response.data.pagination.page);
-            setPageSize(response.data.pagination.page_size);
-            setTotalPages(response.data.pagination.total_pages);
-            setTotalStudentsCount(response.data.pagination.total_students);
-          } else {
-            setTotalPages(1);
-            setTotalStudentsCount(response.data.students.length || 0);
           }
         }
       })
-      .catch(() => {})
-      .finally(() => setLoadingStudents(false));
+      .catch(() => {});
   }, [page, pageSize, bootstrapParams]);
 
   // When a subject is selected, fetch subject detail first. For open electives, fetch subject-only bootstrap to discover available registrations.
@@ -318,19 +318,24 @@ const TakeAttendance = () => {
             // For open electives use the open-elective students endpoint (registration-driven)
             const params = makeParams({ subject_id: subjectId, page, page_size: pageSize });
             setBootstrapParams(params);
-            const bsRes = await getStudentsForOpenElective(params);
-            if (!cancelled && bsRes.success && bsRes.data) {
-              setSubjectStudents(bsRes.data.students || []);
-              setRecentRecords(bsRes.data.recent_records || []);
-              if (bsRes.data.pagination) {
-                setPage(bsRes.data.pagination.page);
-                setPageSize(bsRes.data.pagination.page_size);
-                setTotalPages(bsRes.data.pagination.total_pages);
-                setTotalStudentsCount(bsRes.data.pagination.total_students);
-              } else {
-                setTotalPages(1);
-                setTotalStudentsCount(bsRes.data.students.length || 0);
+            // Use runLoader (dedupes) and then set subjectStudents from the response
+            try {
+              const bsRes: any = await runLoader(getStudentsForOpenElective, params, false);
+              if (!cancelled && bsRes && bsRes.success && bsRes.data) {
+                setSubjectStudents(bsRes.data.students || []);
+                setRecentRecords(bsRes.data.recent_records || []);
+                if (bsRes.data.pagination) {
+                  setPage(bsRes.data.pagination.page);
+                  setPageSize(bsRes.data.pagination.page_size);
+                  setTotalPages(bsRes.data.pagination.total_pages);
+                  setTotalStudentsCount(bsRes.data.pagination.total_students);
+                } else {
+                  setTotalPages(1);
+                  setTotalStudentsCount(bsRes.data.students.length || 0);
+                }
               }
+            } catch (e) {
+              // error already handled in runLoader
             }
           } else {
             // normal subject: do not call subject-only bootstrap; wait for branch/sem/section selection

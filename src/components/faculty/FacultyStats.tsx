@@ -50,13 +50,24 @@ interface FacultyStatsProps {
 const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
   const [stats, setStats] = useState<Stat[]>([]);
   const [subjects, setSubjects] = useState<FacultyAssignment[]>([]);
-  const [proctorStudents, setProctorStudents] = useState<ProctorStudent[]>([]);
+  const [proctorStudentsCount, setProctorStudentsCount] = useState<number>(0);
+  const [performanceTrends, setPerformanceTrends] = useState<{avg_attendance_percent_30d?: number; avg_ia_mark?: number}>({});
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedClass, setSelectedClass] = useState<string>("All");
   const [selectedSection, setSelectedSection] = useState<string>("All");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const { theme } = useTheme();
+
+  // Derive class and section options from assignments (lightweight) to avoid fetching full student list
+  const classOptions = [
+    "All",
+    ...Array.from(new Set(subjects.map((s) => s.branch || ""))).filter(Boolean),
+  ];
+  const sectionOptions = [
+    "All",
+    ...Array.from(new Set(subjects.map((s) => s.section || ""))).filter(Boolean),
+  ];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -65,18 +76,19 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
         // Fetch both assignments and proctor students in single call
         const bootstrapRes = await getFacultyDashboardBootstrap();
         if (bootstrapRes.success && bootstrapRes.data) {
-          const { assignments, proctor_students } = bootstrapRes.data;
-          setSubjects(assignments);
-          setProctorStudents(proctor_students);
+          const { assignments, proctor_students_count, performance_trends } = bootstrapRes.data;
+          setSubjects(assignments || []);
+          setProctorStudentsCount(proctor_students_count || 0);
+          setPerformanceTrends(performance_trends || {});
           setStats([
             {
               label: "Assigned Subjects",
-              value: assignments.length,
+              value: (assignments || []).length,
               icon: <CalendarDays className="text-blue-600 w-5 h-5" />,
             },
             {
               label: "Total Proctor Students",
-              value: proctor_students.length,
+              value: proctor_students_count || 0,
               icon: <Users className="text-green-600 w-5 h-5" />,
             },
           ]);
@@ -94,62 +106,8 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
     // eslint-disable-next-line
   }, []);
 
-  // Prepare data for charts
-  const attendanceData = proctorStudents.map((s) => ({
-    name: s.name,
-    attendance: s.attendance === "NA" || s.attendance === null || s.attendance === undefined ? 0 : typeof s.attendance === "string" ? 0 : s.attendance,
-  }));
-  const marksData = proctorStudents.map((s) => ({
-    name: s.name,
-    avgMark: (() => {
-      const internalMarks = s.marks || [];
-      const iaMarks = s.ia_marks || [];
-      const allMarks = [
-        ...internalMarks.map(m => m.mark),
-        ...iaMarks.map(m => m.total_obtained)
-      ];
-      return allMarks.length > 0
-        ? (allMarks.reduce((sum, mark) => sum + (mark || 0), 0) / allMarks.length).toFixed(2)
-        : 0;
-    })(),
-  }));
-
-  // Get unique classes and sections from proctorStudents
-  const classOptions = [
-    "All",
-    ...Array.from(new Set(proctorStudents.map((s) => s.branch || ""))).filter(Boolean),
-  ];
-  const sectionOptions = [
-    "All",
-    ...Array.from(new Set(proctorStudents.map((s) => s.section || ""))).filter(Boolean),
-  ];
-
-  // Filter data based on selections
-  const filteredStudents = proctorStudents.filter((s) => {
-    const classMatch = selectedClass === "All" || s.branch === selectedClass;
-    const sectionMatch = selectedSection === "All" || s.section === selectedSection;
-    return classMatch && sectionMatch;
-  });
-
-  // Use filtered data for charts
-  const filteredAttendanceData = filteredStudents.map((s) => ({
-    name: s.name,
-    attendance: s.attendance === "NA" || s.attendance === null || s.attendance === undefined ? 0 : typeof s.attendance === "string" ? 0 : s.attendance,
-  }));
-  const filteredMarksData = filteredStudents.map((s) => ({
-    name: s.name,
-    avgMark: (() => {
-      const internalMarks = s.marks || [];
-      const iaMarks = s.ia_marks || [];
-      const allMarks = [
-        ...internalMarks.map(m => m.mark),
-        ...iaMarks.map(m => m.total_obtained)
-      ];
-      return allMarks.length > 0
-        ? (allMarks.reduce((sum, mark) => sum + (mark || 0), 0) / allMarks.length).toFixed(2)
-        : 0;
-    })(),
-  }));
+  // We no longer load the full proctor student list on the dashboard.
+  // Charts are replaced by aggregated performance metrics provided by the bootstrap API.
 
   if (loading) {
     return <div className={`p-6 text-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Loading dashboard...</div>;
@@ -286,77 +244,16 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
             </div>
           </div>
 
-          <div className="w-full h-[250px] grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Attendance Line Chart */}
-            <div className="relative">
-              <h3 className={`font-semibold mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Performance</h3>
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart
-                  data={filteredAttendanceData}
-                  margin={{ top: 5, right: 20, left: 0, bottom: 50 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#2e2e30' : '#e5e7eb'} />
-                  <XAxis
-                    dataKey="name"
-                    stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'}
-                    interval={0}
-                    angle={filteredAttendanceData.length > 10 ? -45 : 0}
-                    textAnchor={filteredAttendanceData.length > 10 ? "end" : "middle"}
-                    height={filteredAttendanceData.length > 10 ? 60 : 40}
-                  />
-                  <YAxis stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: theme === 'dark' ? '#1c1c1e' : '#ffffff',
-                      border: theme === 'dark' ? '1px solid #2e2e30' : '1px solid #e5e7eb',
-                      color: theme === 'dark' ? '#f3f4f6' : '#1f2937',
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="attendance"
-                    stroke="#60a5fa"
-                    strokeWidth={2}
-                    dot={{ fill: "#93c5fd" }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4">
+              <h3 className={`font-semibold mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Average Attendance (30d)</h3>
+              <div className={`text-3xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{performanceTrends.avg_attendance_percent_30d ?? 0}%</div>
+              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Average attendance for your proctor students over last 30 days</p>
             </div>
-
-            {/* Marks Bar Chart */}
-            <div className="relative">
-              <h3 className={`font-semibold mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Average Marks</h3>
-              {filteredMarksData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart
-                    data={filteredMarksData}
-                    margin={{ top: 5, right: 20, left: 0, bottom: 50 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#2e2e30' : '#e5e7eb'} />
-                    <XAxis
-                      dataKey="name"
-                      stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'}
-                      interval={0}
-                      angle={filteredMarksData.length > 10 ? -45 : 0}
-                      textAnchor={filteredMarksData.length > 10 ? "end" : "middle"}
-                      height={filteredMarksData.length > 10 ? 60 : 40}
-                    />
-                    <YAxis stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: theme === 'dark' ? '#1c1c1e' : '#ffffff',
-                        border: theme === 'dark' ? '1px solid #2e2e30' : '1px solid #e5e7eb',
-                        color: theme === 'dark' ? '#f3f4f6' : '#1f2937',
-                      }}
-                    />
-                    <Bar dataKey="avgMark" fill="#818cf8">
-                      <LabelList dataKey="avgMark" position="top" fill={theme === 'dark' ? '#f3f4f6' : '#1f2937'} fontSize={12} />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <p className={theme === 'dark' ? 'text-muted-foreground text-center' : 'text-gray-500 text-center'}>No marks data</p>
-              )}
+            <div className="p-4">
+              <h3 className={`font-semibold mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Average IA Marks</h3>
+              <div className={`text-3xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{performanceTrends.avg_ia_mark ?? 0}</div>
+              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Average internal assessment marks for your proctor students</p>
             </div>
           </div>
 

@@ -195,7 +195,11 @@ interface GetFacultyDashboardBootstrapResponse {
   message?: string;
   data?: {
     assignments: FacultyAssignment[];
-    proctor_students: ProctorStudent[];
+    proctor_students_count?: number;
+    performance_trends?: {
+      avg_attendance_percent_30d?: number;
+      avg_ia_mark?: number;
+    };
   };
 }
 
@@ -1013,6 +1017,10 @@ export const getAssignedSubjects = async (): Promise<{ success: boolean; message
 
 export const getStudentsForRegular = async (params: { branch_id: string; semester_id: string; section_id: string; subject_id: string; page?: number; page_size?: number; }) => {
   try {
+    // Client-side guard: ensure required params are present to avoid backend 400s
+    if (!params.subject_id || !params.branch_id || !params.semester_id || !params.section_id) {
+      return { success: false, message: 'subject_id, branch_id, semester_id and section_id required', data: { students: [] } };
+    }
     const query = new URLSearchParams();
     Object.entries(params).forEach(([k, v]) => {
       if (v === undefined || v === null) return;
@@ -1036,6 +1044,10 @@ export const getStudentsForRegular = async (params: { branch_id: string; semeste
 
 export const getStudentsForElective = async (params: { subject_id: string; branch_id: string; semester_id: string; section_id?: string; page?: number; page_size?: number; }) => {
   try {
+    // Elective requires subject_id, branch_id and semester_id
+    if (!params.subject_id || !params.branch_id || !params.semester_id) {
+      return { success: false, message: 'subject_id, branch_id and semester_id required', data: { students: [] } };
+    }
     const query = new URLSearchParams();
     Object.entries(params).forEach(([k, v]) => {
       if (v === undefined || v === null) return;
@@ -1059,6 +1071,10 @@ export const getStudentsForElective = async (params: { subject_id: string; branc
 
 export const getStudentsForOpenElective = async (params: { subject_id: string; branch_id?: string; semester_id?: string; section_id?: string; page?: number; page_size?: number; }) => {
   try {
+    // Open elective requires at least subject_id
+    if (!params.subject_id) {
+      return { success: false, message: 'subject_id required', data: { students: [] } };
+    }
     const query = new URLSearchParams();
     Object.entries(params).forEach(([k, v]) => {
       if (v === undefined || v === null) return;

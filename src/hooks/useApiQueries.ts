@@ -53,7 +53,7 @@ import {
 import { usePagination, useInfiniteScroll, useOptimisticUpdate } from './useOptimizations';
 
 // Custom hooks for data fetching
-export const useProctorStudentsQuery = () => {
+export const useProctorStudentsQuery = (enabled: boolean = true) => {
   const pagination = usePagination({
     queryKey: ['proctorStudents'],
     pageSize: 20,
@@ -73,6 +73,7 @@ export const useProctorStudentsQuery = () => {
         }
         throw new Error(response.message || 'Failed to fetch proctor students');
       },
+      enabled, // allow caller to control when to fetch
     }),
     pagination,
   };
@@ -88,6 +89,9 @@ export const useFacultyAssignmentsQuery = () => {
       }
       throw new Error(response.message || 'Failed to fetch faculty assignments');
     },
+    // Keep assignments cached for a short period to avoid duplicate calls on rapid remounts
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 };
 

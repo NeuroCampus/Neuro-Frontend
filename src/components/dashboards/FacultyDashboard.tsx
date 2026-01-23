@@ -73,8 +73,16 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { theme } = useTheme();
 
-  // Fetch proctor students data at dashboard level to avoid duplicate API calls
-  const { data: proctorStudentsData, isLoading: proctorStudentsLoading } = useProctorStudentsQuery();
+  // Only fetch proctor students when a page requires them (lazy load)
+  const pagesNeedingProctor = [
+    'announcements',
+    'proctor-students',
+    'exam-applications',
+    'student-leave',
+    'statistics'
+  ];
+  const needsProctorData = pagesNeedingProctor.includes(activePage);
+  const { data: proctorStudentsData, isLoading: proctorStudentsLoading } = useProctorStudentsQuery(needsProctorData);
   const proctorStudents = proctorStudentsData?.data || [];
 
   // Update active page when location changes
