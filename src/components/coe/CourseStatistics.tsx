@@ -5,11 +5,17 @@ import { Button } from "../ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { BookOpen, Users, Download } from "lucide-react";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { getCourseApplicationStats, getFilterOptions, FilterOptions } from "../../utils/coe_api";
 
 const CourseStatistics = () => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
+  const [exporting, setExporting] = useState<boolean>(false);
   const [filters, setFilters] = useState({
     batch: "",
     exam_period: "",
@@ -31,6 +37,11 @@ const CourseStatistics = () => {
       fetchCourseStatistics();
     }
   }, [filters]);
+  useEffect(() => {
+    if (filters.batch && filters.exam_period && filters.branch && filters.semester) {
+      fetchCourseStatistics();
+    }
+  }, [page, pageSize]);
 
   const fetchFilterOptions = async () => {
     try {
@@ -44,9 +55,14 @@ const CourseStatistics = () => {
   const fetchCourseStatistics = async () => {
     setLoading(true);
     try {
-      const result = await getCourseApplicationStats(filters);
+      const result = await getCourseApplicationStats({ ...filters, page: String(page), page_size: String(pageSize) } as any);
       if (result.success) {
         setData(result.data);
+        if (result.data && (result.data as any).pagination) {
+          setTotalCount((result.data as any).pagination.count || 0);
+        } else {
+          setTotalCount(null);
+        }
       }
     } catch (error) {
       console.error('Error fetching course statistics:', error);
@@ -54,6 +70,39 @@ const CourseStatistics = () => {
       setLoading(false);
     }
   };
+
+  const handleExport = async () => {
+    if (!filters.batch || !filters.branch || !filters.semester) return;
+    setExporting(true);
+    try {
+      const perPage = 200; // matches backend AdminPagination.max_page_size
+      let p = 1;
+      const allCourses: any[] = [];
+
+      while (true) {
+        const res = await getCourseApplicationStats({ ...filters, page: String(p), page_size: String(perPage) } as any);
+        if (!res.success || !res.data) break;
+        allCourses.push(...(res.data.courses || []));
+        const pagination = (res.data as any).pagination;
+        if (!pagination || !pagination.next) break;
+        p += 1;
+      }
+
+      // Generate PDF
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const head = [['Subject Code', 'Subject Name', 'Total Students', 'Applications', 'Application Rate', 'Faculty']];
+      const body = allCourses.map(c => [c.subject_code || '', c.subject_name || '', c.total_students || 0, c.applied_students || 0, `${c.application_rate || 0}%`, c.faculty_name || '']);
+      autoTable(doc, { head, body, startY: 20, styles: { fontSize: 9 } });
+      const fileName = `course_statistics_${filters.branch}_${filters.semester}.pdf`;
+      doc.save(fileName);
+    } catch (e) {
+      console.error('Export error', e);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // CSV export removed. Use PDF export handler above (handleExport).
 
   const getApplicationRateColor = (rate: number) => {
     if (rate >= 80) return "text-green-600";
@@ -172,11 +221,12 @@ const CourseStatistics = () => {
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle>Subject-wise Application Statistics ({data.courses.length})</CardTitle>
-              <Button variant="outline" size="sm">
+              <CardTitle>Subject-wise Application Statistics ({totalCount !== null ? totalCount : data.courses.length})</CardTitle>
+              <Button variant="outline" size="sm" onClick={handleExport}>
                 <Download className="mr-2 h-4 w-4" />
-                Export
+                {exporting ? 'Exporting...' : 'Export PDF'}
               </Button>
+              
             </div>
           </CardHeader>
           <CardContent>
@@ -213,6 +263,14 @@ const CourseStatistics = () => {
                 No course statistics found for the selected filters.
               </div>
             )}
+          {/* Pagination controls */}
+          <div className="flex items-center justify-between mt-4">
+            <div className="text-sm text-muted-foreground">{totalCount !== null ? `Showing page ${page} — ${totalCount} subjects` : `Page ${page}`}</div>
+            <div className="space-x-2">
+              <Button size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
+              <Button size="sm" onClick={() => setPage(p => p + 1)} disabled={data.courses.length < pageSize}>Next</Button>
+            </div>
+          </div>
           </CardContent>
         </Card>
       )}

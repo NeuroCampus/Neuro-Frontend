@@ -6,11 +6,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Users, CheckCircle, XCircle, Search, Download } from "lucide-react";
 import { getStudentApplicationStatus, getFilterOptions, FilterOptions } from "../../utils/coe_api";
+import { fetchWithTokenRefresh } from "../../utils/authService";
+import { API_ENDPOINT } from "../../utils/config";
 
 
 const StudentStatus = () => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
+  const [exporting, setExporting] = useState(false);
   const [filters, setFilters] = useState({
     batch: "",
     exam_period: "",
@@ -32,6 +38,11 @@ const StudentStatus = () => {
       fetchStudentStatus();
     }
   }, [filters]);
+  useEffect(() => {
+    if (filters.batch && filters.exam_period && filters.branch && filters.semester) {
+      fetchStudentStatus();
+    }
+  }, [page, pageSize]);
 
   const fetchFilterOptions = async () => {
     try {
@@ -45,9 +56,14 @@ const StudentStatus = () => {
   const fetchStudentStatus = async () => {
     setLoading(true);
     try {
-      const result = await getStudentApplicationStatus(filters);
+      const result = await getStudentApplicationStatus({ ...filters, page: String(page), page_size: String(pageSize) } as any);
       if (result.success) {
         setData(result.data);
+        if (result.data && (result.data as any).pagination) {
+          setTotalCount((result.data as any).pagination.count || 0);
+        } else {
+          setTotalCount(null);
+        }
       }
     } catch (error) {
       console.error('Error fetching student status:', error);
@@ -64,6 +80,49 @@ const StudentStatus = () => {
         return <Badge variant="secondary" className="bg-red-100 text-red-800"><XCircle className="w-3 h-3 mr-1" />Not Applied</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
+
+  const handleExport = async () => {
+    if (!filters.batch || !filters.exam_period || !filters.branch || !filters.semester) return;
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) {
+      // Provide immediate feedback and avoid sending unauthenticated requests
+      // Frontend uses fetchWithTokenRefresh which requires an access token
+      // so inform the user to login
+      // eslint-disable-next-line no-alert
+      alert('You must be logged in to export. Please login and try again.');
+      return;
+    }
+    setExporting(true);
+    try {
+      const params = new URLSearchParams({
+        batch: filters.batch,
+        exam_period: filters.exam_period,
+        branch: filters.branch,
+        semester: filters.semester,
+        format: 'pdf'
+      });
+      const url = `${API_ENDPOINT}/coe/export-not-applied/?${params.toString()}`;
+      const resp = await fetchWithTokenRefresh(url, { method: 'GET' });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const blob = await resp.blob();
+      const disposition = resp.headers.get('content-disposition') || '';
+      const match = disposition.match(/filename\*=UTF-8''(.+)|filename="?([^";]+)"?/i);
+      let filename = `not_applied_${filters.semester}_${filters.batch}.pdf`;
+      if (match) filename = decodeURIComponent((match[1] || match[2] || '').trim());
+      const urlBlob = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = urlBlob;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(urlBlob);
+    } catch (err) {
+      console.error('Export error', err);
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -192,11 +251,18 @@ const StudentStatus = () => {
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle>Student Application Status ({data.students.length})</CardTitle>
-              <Button variant="outline" size="sm">
-                <Download className="mr-2 h-4 w-4" />
-                Export
-              </Button>
+              <CardTitle>Student Application Status ({totalCount !== null ? totalCount : data.students.length})</CardTitle>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExport}
+                  disabled={exporting || !(filters.batch && filters.exam_period && filters.branch && filters.semester)}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  {exporting ? 'Exporting...' : 'Export'}
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -234,6 +300,14 @@ const StudentStatus = () => {
                 No students found for the selected filters.
               </div>
             )}
+            {/* Pagination controls */}
+            <div className="flex items-center justify-between mt-4">
+              <div className="text-sm text-muted-foreground">{totalCount !== null ? `Showing page ${page} — ${totalCount} students` : `Page ${page}`}</div>
+              <div className="space-x-2">
+                <Button size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
+                <Button size="sm" onClick={() => setPage(p => p + 1)} disabled={data.students.length < pageSize}>Next</Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}

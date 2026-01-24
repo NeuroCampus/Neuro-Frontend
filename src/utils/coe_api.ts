@@ -52,6 +52,11 @@ export interface StudentApplicationStatusResponse {
       branch: string;
       semester: string;
     };
+    pagination?: {
+      count: number;
+      next: string | null;
+      previous: string | null;
+    };
   };
 }
 
@@ -146,6 +151,8 @@ export const getStudentApplicationStatus = async (filters: {
   exam_period: string;
   branch: string;
   semester: string;
+  page?: string | number;
+  page_size?: string | number;
 }): Promise<StudentApplicationStatusResponse> => {
   try {
     const params = new URLSearchParams(filters);
@@ -158,7 +165,24 @@ export const getStudentApplicationStatus = async (filters: {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return await response.json();
+    const result = await response.json();
+
+    // Normalize paginated responses from backend paginator
+    if ((result as any).results) {
+      const pag = (result as any);
+      const payload = pag.results as any;
+      return {
+        success: payload.success,
+        data: {
+          students: payload.students,
+          summary: payload.summary,
+          filters: payload.filters,
+          pagination: { count: pag.count, next: pag.next, previous: pag.previous }
+        }
+      };
+    }
+
+    return result;
   } catch (error) {
     console.error('Error fetching student application status:', error);
     return {
@@ -175,6 +199,8 @@ export const getCourseApplicationStats = async (filters: {
   batch: string;
   branch: string;
   semester: string;
+  page?: string | number;
+  page_size?: string | number;
 }): Promise<CourseApplicationStatsResponse> => {
   try {
     const params = new URLSearchParams(filters);
@@ -187,7 +213,22 @@ export const getCourseApplicationStats = async (filters: {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    return await response.json();
+    const result = await response.json();
+    if ((result as any).results) {
+      const pag = (result as any);
+      const payload = pag.results as any;
+      return {
+        success: payload.success,
+        data: {
+          courses: payload.courses,
+          summary: payload.summary,
+          filters: payload.filters,
+          pagination: { count: pag.count, next: pag.next, previous: pag.previous }
+        }
+      };
+    }
+
+    return result;
   } catch (error) {
     console.error('Error fetching course application stats:', error);
     return {
@@ -229,5 +270,50 @@ export const getFilterOptions = async (): Promise<{
       branches: [],
       semesters: []
     };
+  }
+};
+
+/**
+ * Fetch paginated exam applications (COE)
+ */
+export const getExamApplications = async (paramsObj: {
+  status?: string;
+  search?: string;
+  page?: number;
+  page_size?: number;
+}): Promise<{ success: boolean; message?: string; data?: { applications: any[]; pagination?: any } }> => {
+  try {
+    const params = new URLSearchParams();
+    Object.entries(paramsObj).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) params.append(k, String(v));
+    });
+
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/exam-applications/?${params}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+    const result = await response.json();
+
+    // Backend uses paginator: {count,next,previous,results: {success, applications...}}
+    if ((result as any).results) {
+      const pag = result as any;
+      const payload = pag.results as any;
+      return {
+        success: payload.success,
+        data: {
+          applications: payload.applications,
+          pagination: { count: pag.count, next: pag.next, previous: pag.previous }
+        }
+      };
+    }
+
+    // Fallback
+    return result;
+  } catch (error) {
+    console.error('Error fetching exam applications:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
   }
 };

@@ -124,7 +124,7 @@ const UploadMarks = () => {
     semester_id: undefined as number | undefined,
     testType: "",
   });
-  const [students, setStudents] = useState<(ClassStudent & { marks: string; total: string; isEditing: boolean })[]>([]);
+  const [students, setStudents] = useState<(ClassStudent & { marks: string; total: string; isEditing: boolean; totalEdited?: boolean })[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [savingMarks, setSavingMarks] = useState(false);
@@ -649,15 +649,27 @@ const UploadMarks = () => {
         const marksDetail = Object.fromEntries(
           Object.entries(studentMarks[s.id.toString()] || {}).map(([key, value]) => [key, parseFloat(value) || 0])
         );
+        // If instructor manually edited total for this student, prefer that value
+        const autoTotal = parseFloat(calculateTotal(studentMarks[s.id.toString()] || {})) || 0;
+        const manualTotal = s.totalEdited ? (parseFloat(s.total as any) || autoTotal) : null;
         return {
           student_id: s.id,
           marks_detail: marksDetail,
-          total_obtained: parseFloat(calculateTotal(studentMarks[s.id.toString()] || {})) || 0
+          total_obtained: manualTotal !== null ? manualTotal : autoTotal
         };
       })
     };
 
     try {
+      // Debug: log students and studentMarks to verify edited totals and per-question marks
+      // eslint-disable-next-line no-console
+      console.log('Upload IAMarks - students state:', JSON.stringify(students, null, 2));
+      // eslint-disable-next-line no-console
+      console.log('Upload IAMarks - studentMarks state:', JSON.stringify(studentMarks, null, 2));
+      // Debug: log payload to verify manual vs auto totals
+      // Remove or disable this in production
+      // eslint-disable-next-line no-console
+      console.log('Upload IAMarks payload:', JSON.stringify(marksData, null, 2));
       const res = await uploadIAMarks(marksData);
       if (res.success) {
         MySwal.fire({
@@ -780,6 +792,7 @@ const UploadMarks = () => {
             marks,
             total,
             isEditing: false,
+            totalEdited: false,
           });
         }
         setStudents(studentData);
@@ -1272,29 +1285,40 @@ const UploadMarks = () => {
           const response: StudentsForMarksResponse = await getStudentsForMarks(params);
           console.log('UploadMarks: students-for-marks response', response);
           if (response.success && response.data) {
-            const newStudents = response.data.map(s => ({
-              id: s.id,
-              name: s.name,
-              usn: s.usn,
-              marks: s.existing_mark ? s.existing_mark.total_obtained.toString() : '',
-              total: totalMarks.toString(),
-              isEditing: false
-            }));
-            
-            console.log('Loaded students:', newStudents);
-            setStudents(newStudents);
-            setCurrentPage(1);
-            
-            // Initialize student marks with existing data
+            // Build a map of initial marks and determine if backend has a stored total that differs
             const initialMarks: Record<string, Record<string, string>> = {};
+            const existingTotals: Record<number, number | null> = {};
             response.data.forEach(s => {
-              if (s.existing_mark) {
+              existingTotals[s.id] = s.existing_mark ? (s.existing_mark.total_obtained || null) : null;
+              if (s.existing_mark && s.existing_mark.marks_detail) {
                 initialMarks[s.id.toString()] = {};
                 Object.keys(s.existing_mark.marks_detail).forEach(key => {
                   initialMarks[s.id.toString()][key] = s.existing_mark!.marks_detail[key].toString();
                 });
               }
             });
+
+            // Create students array and set total/totalEdited based on backend existing total vs auto-calculation
+            const newStudents = response.data.map(s => {
+              const marksForStudent = initialMarks[s.id?.toString()] || {};
+              const autoTotal = calculateTotal(marksForStudent) || '';
+              const existingTotal = existingTotals[s.id];
+              const totalValue = existingTotal != null ? String(existingTotal) : String(totalMarks);
+              const isEdited = existingTotal != null ? String(existingTotal) !== String(autoTotal) : false;
+              return {
+                id: s.id,
+                name: s.name,
+                usn: s.usn,
+                marks: (s.existing_mark && s.existing_mark.total_obtained) ? String(s.existing_mark.total_obtained) : '',
+                total: totalValue,
+                isEditing: false,
+                totalEdited: isEdited,
+              };
+            });
+
+            console.log('Loaded students:', newStudents);
+            setStudents(newStudents);
+            setCurrentPage(1);
             console.log('Setting initial marks:', initialMarks);
             setStudentMarks(initialMarks);
             
@@ -1661,13 +1685,35 @@ const UploadMarks = () => {
                             
                             {/* Final columns */}
                             <td className="px-4 py-2 text-center">
-                              <Input 
-                                type="text" 
-                                className="w-20 text-center mx-auto" 
-                                placeholder="Total" 
-                                value={calculateTotal(studentMarks[student.id] || {})}
-                                readOnly
-                              />
+                              {(() => {
+                                const autoTotal = calculateTotal(studentMarks[student.id] || {});
+                                const displayTotal = student.totalEdited ? (student.total ?? '') : (autoTotal || (student.total ?? ''));
+                                return (
+                                  <div className="flex items-center justify-center gap-2">
+                                    <Input
+                                      type="text"
+                                      className="w-20 text-center mx-auto"
+                                      placeholder="Total"
+                                      value={displayTotal}
+                                      onChange={(e) => {
+                                        const v = e.target.value;
+                                        if (!/^\d*$/.test(v)) return;
+                                        setStudents(prev => prev.map(s => s.id === student.id ? { ...s, total: v, totalEdited: true } : s));
+                                      }}
+                                    />
+                                    {/* Reset to auto-calc */}
+                                    <button
+                                      title="Reset to auto"
+                                      className="text-xs text-muted-foreground"
+                                      onClick={() => {
+                                        setStudents(prev => prev.map(s => s.id === student.id ? { ...s, totalEdited: false, total: calculateTotal(studentMarks[student.id] || {}) } : s));
+                                      }}
+                                    >
+                                      Reset
+                                    </button>
+                                  </div>
+                                );
+                              })()}
                             </td>
                             <td className="px-4 py-2 text-center">
                               {actionModes[student.id] === 'edit' ? (

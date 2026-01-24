@@ -588,21 +588,24 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
                     <div>
                       <Avatar className="w-20 h-20 rounded-md overflow-hidden">
                         {(
-                          (studentDetails?.student_info && studentDetails.student_info.photo_url) ||
-                          (selectedStudent && ((selectedStudent as any).photo || (selectedStudent as any).photo_url))
-                        ) ? (
-                          <img
-                            src={
-                              studentDetails?.student_info?.photo_url
-                                ? (studentDetails.student_info.photo_url.startsWith('http')
-                                  ? studentDetails.student_info.photo_url
-                                  : `${API_BASE_URL}${studentDetails.student_info.photo_url}`)
-                                : (selectedStudent as any).photo || (selectedStudent as any).photo_url
-                            }
-                            alt={selectedStudent?.name || studentDetails?.student_info?.name || 'Student'}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                          />
-                        ) : (
+                            (studentDetails?.student_info && studentDetails.student_info.photo_url) ||
+                            (studentDetails?.student && (studentDetails.student.profile_picture || studentDetails.student.photo_url)) ||
+                            (selectedStudent && ((selectedStudent as any).photo || (selectedStudent as any).photo_url || (selectedStudent as any).profile_picture))
+                          ) ? (
+                            <img
+                              src={
+                                // Priority: studentDetails.student_info.photo_url -> studentDetails.student.profile_picture -> selectedStudent.profile_picture -> legacy photo/photo_url
+                                studentDetails?.student_info?.photo_url
+                                  ? (studentDetails.student_info.photo_url.startsWith('http')
+                                    ? studentDetails.student_info.photo_url
+                                    : `${API_BASE_URL}${studentDetails.student_info.photo_url}`)
+                                  : (studentDetails?.student?.profile_picture ? studentDetails.student.profile_picture
+                                    : (selectedStudent as any).profile_picture || (selectedStudent as any).photo || (selectedStudent as any).photo_url)
+                              }
+                              alt={selectedStudent?.name || studentDetails?.student_info?.name || 'Student'}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          ) : (
                           <AvatarFallback className="text-2xl font-medium">
                             {(selectedStudent?.name || studentDetails?.name || 'U')[0]?.toUpperCase()}
                           </AvatarFallback>
