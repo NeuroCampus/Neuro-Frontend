@@ -559,21 +559,24 @@ export const getProctorStudents = async (params?: {
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.include) {
+      const includes = Array.isArray(params.include) ? params.include : params.include.split(',');
+      const normalizedIncludes = includes.map(s => s.trim()).filter(Boolean);
+
       // Special-case 'minimal' keyword: backend expects 'minimal=true' flag
-      if (params.include === 'minimal' || (Array.isArray(params.include) && params.include.includes('minimal'))) {
+      if (normalizedIncludes.includes('minimal')) {
         queryParams.append('minimal', 'true');
       }
-      const includes = Array.isArray(params.include) ? params.include : params.include.split(',');
-      const nonMinimal = includes.map(s => s.trim()).filter(s => s && s !== 'minimal');
+
+      const nonMinimal = normalizedIncludes.filter(s => s !== 'minimal');
       if (nonMinimal.length > 0) {
         queryParams.append('include', nonMinimal.join(','));
       }
     }
-    
-    const url = queryParams.toString() 
+
+    const url = queryParams.toString()
       ? `${API_ENDPOINT}/faculty/proctor-students/?${queryParams.toString()}`
       : `${API_ENDPOINT}/faculty/proctor-students/`;
-      
+
     const response = await fetchWithTokenRefresh(url, {
       method: "GET",
       headers: {
@@ -676,11 +679,11 @@ export const getAttendanceRecordsWithSummary = async (params?: {
       const ps = Math.min(params.page_size, MAX_PAGE_SIZE);
       queryParams.append('page_size', ps.toString());
     }
-    
-    const url = queryParams.toString() 
+
+    const url = queryParams.toString()
       ? `${API_ENDPOINT}/faculty/attendance-records/summary/?${queryParams.toString()}`
       : `${API_ENDPOINT}/faculty/attendance-records/summary/`;
-      
+
     const response = await fetchWithTokenRefresh(url, {
       method: "GET",
       headers: {
@@ -1339,7 +1342,7 @@ export const getFacultyAttendanceRecords = async (params?: {
     if (params?.page_size) queryParams.append("page_size", String(params.page_size));
 
     const url = `/api/faculty/my-attendance-records/${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
-    
+
     const response = await fetchWithTokenRefresh(url, {
       method: "GET",
       headers: {

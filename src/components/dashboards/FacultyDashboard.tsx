@@ -40,11 +40,11 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [currentUser, setCurrentUser] = useState(user);
-  
+
   const getActivePageFromPath = (pathname: string): string => {
     const pathParts = pathname.split('/').filter(Boolean);
     const lastPart = pathParts[pathParts.length - 1] || '';
-    
+
     // Map URL paths to page names
     const pathMap: { [key: string]: string } = {
       'dashboard': 'dashboard',
@@ -64,7 +64,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'statistics': 'statistics',
       'scan-student-info': 'scan-student-info'
     };
-    
+
     return pathMap[lastPart] || 'dashboard';
   };
 
@@ -82,10 +82,10 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
   ];
   const needsProctorData = pagesNeedingProctor.includes(activePage);
   // Determine which fields to include based on active page to minimize payload
-  // Request a lightweight "minimal" payload for the Proctor Students page
+  // Request a lightweight payload with only required fields for the Proctor Students page
   const includeForProctor = activePage === 'student-leave'
     ? 'leave_requests'
-    : (needsProctorData ? (activePage === 'proctor-students' ? 'minimal' : 'students') : undefined);
+    : (needsProctorData ? (activePage === 'proctor-students' ? 'id,name,usn,semester,section,contact,minimal' : 'students') : undefined);
   const { data: proctorStudentsData, isLoading: proctorStudentsLoading, pagination: proctorPagination } = useProctorStudentsQuery(needsProctorData, includeForProctor);
   const proctorStudents = proctorStudentsData?.data || [];
 
@@ -120,7 +120,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
   const handlePageChange = (page: string) => {
     setActivePage(page);
     setError(null);
-    
+
     // Navigate to the corresponding URL path
     const pathMap: { [key: string]: string } = {
       'dashboard': '/faculty/dashboard',
@@ -140,7 +140,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'statistics': '/faculty/statistics',
       'scan-student-info': '/faculty/scan-student-info'
     };
-    
+
     const path = pathMap[page] || '/faculty/dashboard';
     navigate(path);
 
@@ -217,9 +217,8 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
         toggleCollapse={toggleSidebar}
       />
       <div
-        className={`flex-1 overflow-y-auto transition-all duration-300 scroll-smooth ${
-          isSidebarCollapsed ? "ml-16" : "ml-64"
-        } ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}
+        className={`flex-1 overflow-y-auto transition-all duration-300 scroll-smooth ${isSidebarCollapsed ? "ml-16" : "ml-64"
+          } ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}
       >
         {/* Navbar same as HOD, but role="faculty" */}
         <div className={`sticky top-0 z-20 ${theme === 'dark' ? 'bg-background border-b border-border' : 'bg-white border-b border-gray-200'}`}>

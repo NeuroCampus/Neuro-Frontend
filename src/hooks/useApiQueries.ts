@@ -49,7 +49,8 @@ import {
   DeleteCertificateRequest,
 } from '../utils/student_api';
 
-// Import optimization hooks
+import { fetchWithTokenRefresh } from '../utils/authService';
+import { API_ENDPOINT } from '../utils/config';
 import { usePagination, useInfiniteScroll, useOptimisticUpdate } from './useOptimizations';
 
 // Custom hooks for data fetching
@@ -78,6 +79,25 @@ export const useProctorStudentsQuery = (enabled: boolean = true, include?: strin
     }),
     pagination,
   };
+};
+
+export const useProctorExamStatusQuery = (examPeriod: string, page: number, pageSize: number, enabled: boolean = true) => {
+  // Request only essential fields for the status map
+  const fields = 'id,user_id,name,usn,branch,semester,section,status';
+  return useQuery({
+    queryKey: ['proctorExamStatus', examPeriod, page, pageSize, fields],
+    queryFn: async () => {
+      const response = await fetchWithTokenRefresh(
+        `${API_ENDPOINT}/faculty/proctor-students/exam-status/?exam_period=${examPeriod}&page=${page}&page_size=${pageSize}&include=${fields}`,
+        { method: 'GET', headers: { 'Content-Type': 'application/json' } }
+      );
+      const result = await response.json();
+      if (result.success) return result.data;
+      throw new Error(result.message || 'Failed to fetch exam statuses');
+    },
+    enabled,
+    staleTime: 1000 * 30, // 30 seconds
+  });
 };
 
 export const useFacultyAssignmentsQuery = () => {
