@@ -249,6 +249,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // Exam Management
     { name: "Student Status", page: "student-status" },
     { name: "Course Statistics", page: "course-statistics" },
+    { name: "Publish Results", page: "publish-results" },
 
     // Profile
     { name: "Profile", page: "profile" },

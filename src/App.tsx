@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
+import ResultsView from "./pages/ResultsView";
 import StudentDashboard from "./components/dashboards/StudentDashboard";
 import AdminDashboard from "./components/dashboards/AdminDashboard";
 import HODDashboard from "./components/dashboards/HODDashboard";
@@ -119,6 +120,14 @@ const App = () => {
           <Route path="/payment/cancel" element={
             <ThemeProvider>
               <PaymentCancel />
+              {shouldShowFloatingAssistant() && <FloatingAssistant />}
+            </ThemeProvider>
+          } />
+
+          {/* Public results view (students) */}
+          <Route path="/results/view/:token" element={
+            <ThemeProvider>
+              <ResultsView />
               {shouldShowFloatingAssistant() && <FloatingAssistant />}
             </ThemeProvider>
           } />

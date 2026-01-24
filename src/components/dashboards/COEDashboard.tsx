@@ -6,6 +6,7 @@ import StudentStatus from "../coe/StudentStatus";
 import CourseStatistics from "../coe/CourseStatistics";
 import COEDashboardStats from "../coe/COEDashboardStats";
 import COEProfile from "../coe/COEProfile";
+import PublishResults from "../coe/PublishResults";
 import { logoutUser, fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
 
@@ -35,6 +36,7 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
       'dashboard': 'dashboard',
       'student-status': 'student-status',
       'course-statistics': 'course-statistics',
+      'publish-results': 'publish-results',
       'profile': 'profile',
     };
 
@@ -63,6 +65,7 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
       'dashboard': '/coe/dashboard',
       'student-status': '/coe/student-status',
       'course-statistics': '/coe/course-statistics',
+      'publish-results': '/coe/publish-results',
       'profile': '/coe/profile',
     };
 
@@ -88,6 +91,8 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
         return <StudentStatus />;
       case 'course-statistics':
         return <CourseStatistics />;
+      case 'publish-results':
+        return <PublishResults />;
       case 'profile':
         return <COEProfile />;
       default:

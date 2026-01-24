@@ -317,3 +317,72 @@ export const getExamApplications = async (paramsObj: {
     return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
   }
 };
+
+// Create result upload batch
+export const createResultUploadBatch = async (payload: { batch: string; branch: string; semester: string; exam_period: string }) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/result-upload/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating result upload batch:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+export const getStudentsForUpload = async (uploadId: number) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/result-upload/${uploadId}/students/`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching students for upload:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+export const saveMarksForUpload = async (uploadId: number, marks: any[]) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/result-upload/${uploadId}/marks/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ marks })
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error saving marks for upload:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+export const publishUploadBatch = async (uploadId: number) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/result-upload/${uploadId}/publish/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error publishing upload batch:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+// Public view by token
+export const publicViewResultByToken = async (token: string, usn: string) => {
+  try {
+    const response = await fetch(`${API_ENDPOINT}/results/view/${token}/?usn=${encodeURIComponent(usn)}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching public result by token:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
