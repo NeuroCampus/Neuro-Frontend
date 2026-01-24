@@ -86,10 +86,22 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
       }
 
       const blob = await response.blob();
+      // try to read filename from content-disposition header
+      let filename = `hall_ticket_${student.usn}.pdf`;
+      try {
+        const cd = response.headers.get('content-disposition') || response.headers.get('Content-Disposition');
+        if (cd) {
+          const m = cd.match(/filename\*?=(?:UTF-8'')?["']?([^;"']+)/i);
+          if (m && m[1]) filename = decodeURIComponent(m[1]);
+        }
+      } catch (e) {
+        // ignore and use fallback filename
+      }
+
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `hall_ticket_${student.usn}.pdf`;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -129,61 +141,49 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
 
     const fetchDetails = async () => {
       try {
-        // Fetch student details - optimized to only request basic info
-        const res = await fetch(`${API_ENDPOINT}/public/student-data/?usn=${usn}&include=student_info`);
-        const json = await res.json();
-        if (json.success) {
-          setStudentDetails(json);
-          const registered = (json.subjects_registered || []).map((r: any) => r.subject_code);
+        // Skip public student-data fetch (not required). Use selectedStudent for basic info.
+        setStudentDetails(null);
+        const registered: string[] = [];
 
-          if (selectedStudent.branch_id && selectedStudent.semester_id) {
-            try {
-              const url = `${API_ENDPOINT}/common/subjects/?branch_id=${selectedStudent.branch_id}&semester_id=${selectedStudent.semester_id}`;
-              const resp = await fetchWithTokenRefresh(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
-              const subjResp = await resp.json();
-              if (subjResp.success && subjResp.data) {
-                const subjects = subjResp.data.filter((s: any) => !registered.includes(s.subject_code));
-                setSemesterSubjects(subjects);
-              }
-            } catch (e) {
-              console.error('Failed to fetch common subjects', e);
+        // Fetch common subjects for branch/semester (exclude registered subjects if available)
+        if (selectedStudent.branch_id && selectedStudent.semester_id) {
+          try {
+            const url = `${API_ENDPOINT}/common/subjects/?branch_id=${selectedStudent.branch_id}&semester_id=${selectedStudent.semester_id}`;
+            const resp = await fetchWithTokenRefresh(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+            const subjResp = await resp.json();
+            if (subjResp.success && subjResp.data) {
+              const subjects = subjResp.data.filter((s: any) => !registered.includes(s.subject_code));
+              setSemesterSubjects(subjects);
             }
+          } catch (e) {
+            console.error('Failed to fetch common subjects', e);
           }
-        } else {
-          setStudentDetails({ error: json.message || "Failed to fetch" });
         }
 
         // Fetch existing exam applications for this student
         try {
-          console.log('Fetching exam applications for student:', selectedStudent.id, selectedStudent.usn);
           const examAppsResponse = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/exam-applications/?student_id=${selectedStudent.id}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
           });
           const examAppsResult = await examAppsResponse.json();
-          console.log('Exam applications response:', examAppsResult);
 
           if (examAppsResult.success) {
-            // Store all applications for the existing applications section
             setExistingApplications(examAppsResult.data);
 
-            // Create a map of subject codes to their application status
-            // Filter by current exam period
             const subjectStatusMap: Record<string, string> = {};
             examAppsResult.data
-              .filter((app: any) => app.exam_period === examPeriod) // Use selected exam period
+              .filter((app: any) => app.exam_period === examPeriod)
               .forEach((app: any) => {
-                console.log('Processing application:', app.subject_code, app.status, app.exam_period);
                 subjectStatusMap[app.subject_code] = app.status === 'applied' ? 'Applied' : 'Not Applied';
               });
-            console.log('Final subject status map:', subjectStatusMap);
             setSubjectStatuses(subjectStatusMap);
           }
         } catch (e) {
           console.error('Failed to fetch exam applications', e);
         }
       } catch (err) {
-        setStudentDetails({ error: "Network error" });
+        console.error('Error in fetchDetails', err);
       }
     };
 
