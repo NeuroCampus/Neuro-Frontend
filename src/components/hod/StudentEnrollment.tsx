@@ -87,11 +87,10 @@ const StudentEnrollment = () => {
     loadSubjects();
   }, [electiveSubjects, semesterId, subjectType]);
 
-  useEffect(() => {
-    setCurrentPage(1); // Reset to first page when search changes
-  }, [searchTerm]);
+  // NOTE: search is performed on demand by clicking Search button.
+  // Do not auto-reset page when typing into the search box.
 
-  const loadStudents = async (page = 1) => {
+  const loadStudents = async (page = 1, search?: string) => {
     if (!branchId || !selectedSubjectId) return;
     // Determine selected subject type to decide required params (open_elective vs regular)
     const selSub = subjects.find((s: any) => String(s.id) === String(selectedSubjectId));
@@ -112,6 +111,7 @@ const StudentEnrollment = () => {
         page: page.toString(),
         page_size: '50'
       });
+      if (search && String(search).trim().length > 0) params.set('search', String(search).trim());
       if (semesterId) params.set('semester_id', semesterId);
       if (sectionId) params.set('section_id', sectionId);
 
@@ -312,6 +312,15 @@ const StudentEnrollment = () => {
                 }`}
               />
             </div>
+            <div className="flex items-center ml-2">
+              <Button
+                onClick={() => loadStudents(1, searchTerm)}
+                disabled={!selectedSubjectId || isLoading || !branchId}
+                className="px-4"
+              >
+                {isLoading ? "Searching..." : "Search"}
+              </Button>
+            </div>
             <Button 
               onClick={save} 
               disabled={saving || students.length === 0}
@@ -351,11 +360,9 @@ const StudentEnrollment = () => {
                   <div className="text-sm text-muted-foreground">No students loaded</div>
                 ) : (
                   (() => {
-                    const q = searchTerm.trim().toLowerCase();
-                    const filtered = q
-                      ? students.filter((s: any) => (s.usn || "").toLowerCase().includes(q) || (s.name || "").toLowerCase().includes(q))
-                      : students;
-
+                    // Server-side search is used when the user clicks the Search button.
+                    // `students` already contains the server-provided (possibly searched) page.
+                    const filtered = students;
                     const enrolledListFiltered = filtered.filter((s: any) => s.checked);
                     const notEnrolledListFiltered = filtered.filter((s: any) => !s.checked);
 
@@ -422,7 +429,6 @@ const StudentEnrollment = () => {
                           <div className="flex flex-col sm:flex-row items-center justify-between mt-6 pt-4 border-t gap-4">
                             <div className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-600'}`}>
                               Page {currentPage} of {totalPages} ({totalStudents} total students)
-                              {q && ` (filtered from ${students.length} on this page)`}
                             </div>
                             <div className="flex items-center space-x-2">
                               <Button
@@ -455,7 +461,7 @@ const StudentEnrollment = () => {
             )}
           </div>
 
-          <Dialog open={resultModalOpen} onOpenChange={(open) => { setResultModalOpen(open); if (!open) loadStudents(currentPage); }}>
+          <Dialog open={resultModalOpen} onOpenChange={(open) => { setResultModalOpen(open); if (!open) loadStudents(currentPage, searchTerm); }}>
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Enrollment Results</DialogTitle>
@@ -474,7 +480,7 @@ const StudentEnrollment = () => {
               </div>
               <DialogFooter>
                 <div className="w-full flex justify-end">
-                  <Button onClick={() => { setResultModalOpen(false); loadStudents(currentPage); }}>Close</Button>
+                  <Button onClick={() => { setResultModalOpen(false); loadStudents(currentPage, searchTerm); }}>Close</Button>
                 </div>
               </DialogFooter>
             </DialogContent>

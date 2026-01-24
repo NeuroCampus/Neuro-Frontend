@@ -71,6 +71,9 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
     }
   }, [proctorData]);
 
+  // Prevent duplicate fetches when dialog opens (React StrictMode may double-invoke effects)
+  const fetchInProgressRef = useRef<number | null>(null);
+
   const downloadHallTicket = async (student: any) => {
     try {
       const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/hall-ticket/${student.id}/?exam_period=${examPeriod}`, {
@@ -137,58 +140,123 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
   useEffect(() => {
     if (!open || !selectedStudent) return;
 
+    const token = `${selectedStudent.id}:${examPeriod}`;
+    if (fetchInProgressRef.current === token) return; // already fetching for this student+period
+    fetchInProgressRef.current = token;
+
     const usn = selectedStudent.usn;
 
     const fetchDetails = async () => {
       try {
-        // Skip public student-data fetch (not required). Use selectedStudent for basic info.
         setStudentDetails(null);
-        const registered: string[] = [];
 
-        // Fetch common subjects for branch/semester (exclude registered subjects if available)
-        if (selectedStudent.branch_id && selectedStudent.semester_id) {
+        // First try the new consolidated exam-student-subjects endpoint
+        let regularSubjects: any[] = [];
+        let registeredElectives: any[] = [];
+        let registeredOpenElectives: any[] = [];
+
+        let resJson: any = null;
+        try {
+          const url = `${API_ENDPOINT}/faculty/exam-student-subjects/?student_id=${selectedStudent.id}&exam_period=${examPeriod}`;
+          const resp = await fetchWithTokenRefresh(url, { method: 'GET' });
+          resJson = await resp.json();
+          if (resp.ok && resJson.success && resJson.data) {
+            regularSubjects = resJson.data.regular_subjects || [];
+            registeredElectives = resJson.data.registered_electives || [];
+            registeredOpenElectives = resJson.data.registered_open_electives || [];
+          } else {
+            console.warn('exam-student-subjects returned no data, falling back to common/subjects');
+          }
+        } catch (e) {
+          console.error('Failed to call exam-student-subjects', e);
+        }
+
+        // Fallback to common subjects if regularSubjects empty
+        if (regularSubjects.length === 0 && selectedStudent.branch_id && selectedStudent.semester_id) {
           try {
             const url = `${API_ENDPOINT}/common/subjects/?branch_id=${selectedStudent.branch_id}&semester_id=${selectedStudent.semester_id}`;
-            const resp = await fetchWithTokenRefresh(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } });
+            const resp = await fetchWithTokenRefresh(url, { method: 'GET' });
             const subjResp = await resp.json();
             if (subjResp.success && subjResp.data) {
-              const subjects = subjResp.data.filter((s: any) => !registered.includes(s.subject_code));
-              setSemesterSubjects(subjects);
+              regularSubjects = subjResp.data;
             }
           } catch (e) {
             console.error('Failed to fetch common subjects', e);
           }
         }
 
-        // Fetch existing exam applications for this student
-        try {
-          const examAppsResponse = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/exam-applications/?student_id=${selectedStudent.id}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
-          });
-          const examAppsResult = await examAppsResponse.json();
+        setSemesterSubjects(regularSubjects);
 
-          if (examAppsResult.success) {
-            setExistingApplications(examAppsResult.data);
+        // Compose a combined registered subjects list for the UI (used earlier as studentDetails.subjects_registered)
+        const combinedRegistered = [...registeredElectives.map((r: any) => ({
+          subject_id: r.subject_id,
+          subject_name: r.subject_name || r.subject_name,
+          subject_code: r.subject_code,
+          subject_type: r.subject_type,
+          status: r.status
+        })), ...registeredOpenElectives.map((r: any) => ({
+          subject_id: r.subject_id,
+          subject_name: r.subject_name || r.subject_name,
+          subject_code: r.subject_code,
+          subject_type: r.subject_type,
+          status: r.status
+        }))];
 
-            const subjectStatusMap: Record<string, string> = {};
-            examAppsResult.data
-              .filter((app: any) => app.exam_period === examPeriod)
-              .forEach((app: any) => {
-                subjectStatusMap[app.subject_code] = app.status === 'applied' ? 'Applied' : 'Not Applied';
-              });
-            setSubjectStatuses(subjectStatusMap);
-          }
-        } catch (e) {
-          console.error('Failed to fetch exam applications', e);
+        // Defensive guard: if the server returned a student meta with a different semester
+        // than the currently selected student's semester, the student was likely promoted.
+        // In that case, drop any open-elective entries from the combined list to avoid
+        // showing previous-semester open electives in the application UI.
+        const metaSemester = resJson?.data?.student?.semester_id;
+        const prevSemester = selectedStudent?.semester_id;
+        let combinedFiltered = combinedRegistered;
+        if (metaSemester && prevSemester && String(metaSemester) !== String(prevSemester)) {
+          combinedFiltered = combinedRegistered.filter((it: any) => it.subject_type !== 'open_elective');
         }
+
+        setStudentDetails({ subjects_registered: combinedFiltered, student: resJson?.data?.student || null });
+
+        // Merge returned student meta (semester_id/batch_id) into selectedStudent for validation
+        if (resJson && resJson.data && resJson.data.student) {
+          const meta = resJson.data.student;
+          setSelectedStudent(prev => {
+            if (!prev) return prev;
+            const newSemester = meta.semester_id ?? prev.semester_id;
+            const newBatch = meta.batch_id ?? prev.batch_id;
+            if (prev.semester_id === newSemester && prev.batch_id === newBatch) return prev;
+            return { ...prev, semester_id: newSemester, batch_id: newBatch };
+          });
+          // also merge batch info into studentDetails if helpful
+          setStudentDetails(sd => ({ ...(sd || {}), batch_name: meta.batch_name || (sd && sd.batch_name) }));
+        }
+
+        // Use applications returned by exam-student-subjects (if present)
+        if (resJson && Array.isArray(resJson.data?.applications)) {
+          setExistingApplications(resJson.data.applications);
+          const subjectStatusMap: Record<string, string> = {};
+          resJson.data.applications.forEach((app: any) => {
+            if (app.subject_code) {
+              subjectStatusMap[app.subject_code] = app.status === 'applied' ? 'Applied' : 'Not Applied';
+            }
+          });
+          setSubjectStatuses(subjectStatusMap);
+          // Initialize checkbox state: mark checked for applied subjects
+          const initialApplied: Record<string, boolean> = {};
+          Object.keys(subjectStatusMap).forEach(code => {
+            initialApplied[code] = subjectStatusMap[code] === 'Applied';
+          });
+          setAppliedSubjects(initialApplied);
+        }
+
       } catch (err) {
         console.error('Error in fetchDetails', err);
+      } finally {
+        // clear the in-progress token so future opens/fetches are allowed
+        fetchInProgressRef.current = null;
       }
     };
 
     fetchDetails();
-  }, [open, selectedStudent]);
+  }, [open]);
 
   const handleApplyToggle = (subjectCode: string) => {
     setAppliedSubjects((s) => ({ ...s, [subjectCode]: !s[subjectCode] }));
@@ -466,45 +534,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
               </div>
             </div>
             <div className="p-1">
-              {/* Existing Applications Section - NOT in PDF */}
-              {!isEditMode && (
-                <div className="mb-6 p-4 border rounded-lg bg-gray-50">
-                  <h3 className="text-lg font-semibold mb-3">Existing Applications</h3>
-                  {(() => {
-                    // Get existing applications for current exam period
-                    const currentApps = existingApplications.filter(
-                      (app: any) => app.exam_period === examPeriod
-                    );
-
-                    if (currentApps.length === 0) {
-                      return <p className="text-gray-600">No existing applications for {examPeriod.replace('_', '/')} period.</p>;
-                    }
-
-                    return (
-                      <div className="space-y-2">
-                        {currentApps.map((app: any) => (
-                          <div key={app.id} className="flex items-center justify-between p-3 bg-white rounded border">
-                            <div>
-                              <span className="font-semibold text-gray-900">{app.subject_name} ({app.subject_code})</span>
-                              <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${app.status === 'applied' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                }`}>
-                                {app.status === 'applied' ? 'Applied' : 'Not Applied'}
-                              </span>
-                            </div>
-                            <Button
-                              onClick={() => handleEditApplication(app)}
-                              size="sm"
-                              className="bg-blue-500 hover:bg-blue-600 text-white"
-                            >
-                              Edit
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
+              {/* Existing Applications UI removed — statuses shown via checkboxes */}
 
               {/* Edit Mode Banner - NOT in PDF */}
               {isEditMode && editingApplication && (
@@ -534,18 +564,21 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
               <div ref={printRef} className="mt-4">
                 {/* Printable application form */}
                 <div id="exam-application-printable" className="p-6 bg-white text-black" style={{ minWidth: '800px', width: 'auto', margin: '0 auto' }}>
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-2">
                     <div>
-                      <img src="/logo.jpeg" alt="Logo" style={{ height: 60 }} />
+                      <img src="/logo.jpeg" alt="Logo" style={{ height: 96, width: 96, objectFit: 'contain', borderRadius: 6 }} />
                     </div>
-                    <div className="text-center">
-                      <div className="font-bold text-lg">AMC ENGINEERING COLLEGE</div>
-                      <div className="text-sm">Bannerghatta Road, Bangalore-560083</div>
+                    <div style={{ flex: 1, textAlign: 'center' }}>
+                      <div className="font-bold text-lg" style={{ letterSpacing: '0.6px' }}>AMC ENGINEERING COLLEGE</div>
+                      <div className="text-xs text-muted-foreground">Bannerghatta Road, Bangalore - 560083</div>
                     </div>
-                    <div style={{ width: 60 }} />
+                    <div style={{ width: 120, textAlign: 'right' }}>
+                      <div className="text-sm font-medium">Exam Application</div>
+                      <div className="text-xs text-muted-foreground">{new Date().toLocaleDateString()}</div>
+                    </div>
                   </div>
 
-                  <hr className="mb-4" />
+                  <hr style={{ marginBottom: 12, borderColor: '#e5e7eb' }} />
                   <div className="text-center mb-4">
                     <div className="font-bold text-lg">Exam Application Form</div>
                   </div>
@@ -776,59 +809,85 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
                   }
 
                   try {
-                    // Collect all subject IDs to submit in bulk
+                    // Build map of existing applications by subject_code
+                    const existingMap: Record<string, any> = {};
+                    (existingApplications || []).forEach((app: any) => {
+                      if (app.subject_code) existingMap[app.subject_code] = app;
+                    });
+
+                    // Determine which previously-applied subjects were unchecked -> cancel them
+                    const previouslyAppliedCodes = Object.keys(existingMap).filter(code => existingMap[code].status === 'applied');
+                    const toCancelCodes = previouslyAppliedCodes.filter(code => !selectedSubjectCodes.includes(code));
+
+                    // Collect subject IDs to create (only for checked subjects that are not already applied)
                     const subjectIdsSet = new Set<number>();
 
                     // Handle semester subjects
                     for (const subjectCode of selectedSubjectCodes) {
+                      // Skip ones already applied
+                      if (existingMap[subjectCode] && existingMap[subjectCode].status === 'applied') continue;
                       const subject = semesterSubjects.find(s => s.subject_code === subjectCode);
-                      if (subject) {
-                        subjectIdsSet.add(subject.id);
-                      }
+                      if (subject) subjectIdsSet.add(subject.id);
                     }
 
                     // Handle registered subjects (electives and open electives)
-                    const registeredSubjects = (studentDetails?.subjects_registered || [])
-                      .filter((x: any) => selectedSubjectCodes.includes(x.subject_code));
-
+                    const registeredSubjects = (studentDetails?.subjects_registered || []);
                     for (const sub of registeredSubjects) {
+                      if (!selectedSubjectCodes.includes(sub.subject_code)) continue;
+                      if (existingMap[sub.subject_code] && existingMap[sub.subject_code].status === 'applied') continue;
                       subjectIdsSet.add(sub.subject_id);
                     }
 
-                    const subjectIds = Array.from(subjectIdsSet);
+                    const subjectIdsToCreate = Array.from(subjectIdsSet);
 
-                    if (subjectIds.length === 0) {
-                      toast({
-                        title: "No subjects found",
-                        description: "Could not map selected codes to subject IDs.",
-                        variant: "destructive"
+                    // First, cancel unchecked previously applied applications
+                    if (toCancelCodes.length > 0) {
+                      const cancelPromises = toCancelCodes.map(async (code) => {
+                        const app = existingMap[code];
+                        if (!app) return null;
+                        try {
+                          const updateData = {
+                            application_id: app.id,
+                            subject: app.subject,
+                            exam_period: examPeriod,
+                            status: 'not_applied',
+                            semester: selectedStudent.semester_id,
+                            batch: selectedStudent.batch_id
+                          };
+                          const resp = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/exam-applications/`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(updateData)
+                          });
+                          const resJson = await resp.json();
+                          if (!resp.ok) throw new Error(resJson.message || 'Failed to update application');
+                          return resJson;
+                        } catch (e) {
+                          console.error('Failed to cancel application for', code, e);
+                          return null;
+                        }
                       });
-                      return;
+                      await Promise.all(cancelPromises);
                     }
 
-                    // Bulk Submit all applications in one request
-                    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/exam-applications/`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        student_id: selectedStudent.id,
-                        subjects: subjectIds,
-                        exam_period: examPeriod,
-                        semester: selectedStudent.semester_id,
-                        batch: selectedStudent.batch_id
-                      })
-                    });
-
-                    const result = await response.json();
-                    if (!response.ok && response.status !== 200 && response.status !== 207) {
-                      throw new Error(result.message || 'Failed to submit applications');
+                    // Then, create new applications for newly checked subjects
+                    if (subjectIdsToCreate.length > 0) {
+                      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/exam-applications/`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          student_id: selectedStudent.id,
+                          subjects: subjectIdsToCreate,
+                          exam_period: examPeriod,
+                          semester: selectedStudent.semester_id,
+                          batch: selectedStudent.batch_id
+                        })
+                      });
+                      const result = await response.json();
+                      if (!response.ok && response.status !== 200 && response.status !== 207) {
+                        throw new Error(result.message || 'Failed to submit applications');
+                      }
                     }
-
-                    // Update student status locally
-                    setStudentStatuses(prev => ({
-                      ...prev,
-                      [selectedStudent.usn]: 'Applied'
-                    }));
 
                     // Refresh consolidated proctor students (which includes status)
                     try {
@@ -845,7 +904,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
 
                     toast({
                       title: "Success",
-                      description: `Applied for ${subjectIds.length} subject(s) successfully!`
+                      description: `Applications updated successfully.`
                     });
 
                     // Close the dialog

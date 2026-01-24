@@ -93,28 +93,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
     setActivePage(getActivePageFromPath(location.pathname));
   }, [location.pathname]);
 
-  // Fetch faculty profile to get complete user information
-  useEffect(() => {
-    const fetchFacultyProfile = async () => {
-      try {
-        const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/profile/`, {
-          method: 'GET',
-        });
-        const result = await response.json();
-        if (result.success && result.profile) {
-          // Merge the fetched profile with the existing user data
-          setCurrentUser(prev => ({ ...prev, ...result.profile }));
-        } else {
-          setCurrentUser(user); // Use original user data if profile fetch fails
-        }
-      } catch (error) {
-        console.error('Error fetching faculty profile:', error);
-        setCurrentUser(user); // Use original user data on error
-      }
-    };
-
-    fetchFacultyProfile();
-  }, [user]);
+  // Note: Profile fetching is handled by the profile page component itself
 
   const handlePageChange = (page: string) => {
     setActivePage(page);

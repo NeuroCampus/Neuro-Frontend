@@ -33,6 +33,7 @@ const FacultyProfile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState<"personal" | "academic" | "contact" | "about">("personal");
   const { theme } = useTheme();
 
   useEffect(() => {
@@ -165,162 +166,158 @@ const FacultyProfile = () => {
     return <div className={`p-6 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading profile...</div>;
   }
 
-  return (
-    <Card className={theme === 'dark' ? 'max-w-2xl mx-auto mt-10 bg-card text-foreground' : 'max-w-2xl mx-auto mt-10 bg-white text-gray-900'}>
-      <CardHeader className="flex flex-col items-start gap-2">
-        <div className="flex justify-between items-center w-full">
-          <div>
-            <CardTitle className="text-xl font-semibold">
-              Profile Information
-            </CardTitle>
-            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-              View and update your personal information
-            </p>
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "personal":
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>First Name</label>
+                <Input value={formData.firstName} onChange={(e) => handleChange("firstName", e.target.value)} disabled={!isEditing} placeholder="First name" />
+                {localErrors.firstName && <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.firstName}</p>}
+              </div>
+
+              <div>
+                <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Last Name</label>
+                <Input value={formData.lastName} onChange={(e) => handleChange("lastName", e.target.value)} disabled={!isEditing} placeholder="Last name" />
+                {localErrors.lastName && <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.lastName}</p>}
+              </div>
+            </div>
+
+            <div>
+              <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Date of Birth</label>
+              <Input value={formData.date_of_birth} onChange={(e) => handleChange("date_of_birth", e.target.value)} disabled={!isEditing} placeholder="YYYY-MM-DD" />
+            </div>
+
+            <div>
+              <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Gender</label>
+              <Input value={formData.gender} onChange={(e) => handleChange("gender", e.target.value)} disabled={!isEditing} placeholder="Gender" />
+            </div>
           </div>
-          <Button
-            variant="outline"
-            className="text-sm px-4 py-1.5 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out shadow-md"
-            onClick={() => {
-              if (isEditing) handleSave();
-              else setIsEditing(true);
-            }}
-          >
-            {isEditing ? "Save" : "Edit Profile"}
-          </Button>
+        );
+
+      case "academic":
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Department</label>
+                <Input value={formData.department} onChange={(e) => handleChange("department", e.target.value)} disabled={!isEditing} placeholder="Department" />
+              </div>
+              <div>
+                <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Designation</label>
+                <Input value={formData.designation} onChange={(e) => handleChange("designation", e.target.value)} disabled={!isEditing} placeholder="Designation" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Qualification</label>
+                <Input value={formData.qualification} onChange={(e) => handleChange("qualification", e.target.value)} disabled={!isEditing} placeholder="Qualification" />
+              </div>
+              <div>
+                <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Branch</label>
+                <Input value={formData.branch} onChange={(e) => handleChange("branch", e.target.value)} disabled={!isEditing} placeholder="Branch" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Experience (years)</label>
+                <Input value={formData.experience_years} onChange={(e) => handleChange("experience_years", e.target.value)} disabled={!isEditing} placeholder="Experience" />
+              </div>
+              <div>
+                <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Office Location</label>
+                <Input value={formData.office_location} onChange={(e) => handleChange("office_location", e.target.value)} disabled={!isEditing} placeholder="Office" />
+              </div>
+            </div>
+          </div>
+        );
+
+      case "contact":
+        return (
+          <div className="space-y-4">
+            <div>
+              <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Email</label>
+              <Input value={formData.email} onChange={(e) => handleChange("email", e.target.value)} disabled={!isEditing} placeholder="Email address" />
+              {localErrors.email && <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.email}</p>}
+            </div>
+
+            <div>
+              <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Mobile</label>
+              <Input value={formData.mobile} onChange={(e) => handleChange("mobile", e.target.value)} disabled={!isEditing} maxLength={10} placeholder="10-digit mobile" />
+              {localErrors.mobile && <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.mobile}</p>}
+            </div>
+
+            <div>
+              <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Address</label>
+              <Textarea value={formData.address} onChange={(e) => handleChange("address", e.target.value)} disabled={!isEditing} placeholder="Address" rows={3} />
+              {localErrors.address && <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.address}</p>}
+            </div>
+          </div>
+        );
+
+      case "about":
+        return (
+          <div>
+            <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Bio</label>
+            <Textarea value={formData.bio} onChange={(e) => handleChange("bio", e.target.value)} disabled={!isEditing} placeholder="Tell us about yourself" rows={4} />
+            {localErrors.bio && <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.bio}</p>}
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <Card className={theme === 'dark' ? 'max-w-4xl mx-auto mt-8 bg-card text-foreground' : 'max-w-4xl mx-auto mt-8 bg-white text-gray-900'}>
+      <CardHeader className="flex items-center justify-between gap-4">
+        <div>
+          <CardTitle className="text-lg font-semibold">Faculty Profile</CardTitle>
+          <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Manage your profile and academic details</p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" className="text-sm" onClick={() => { if (isEditing) { setIsEditing(false); } else { setIsEditing(true); } }}>{isEditing ? 'Cancel' : 'Edit'}</Button>
+          <Button className="text-sm px-4 py-1.5 bg-[#6b46c1] text-white border-[#6b46c1] hover:bg-[#5a3db0]" onClick={() => { if (isEditing) handleSave(); else setIsEditing(true); }}>{isEditing ? 'Save' : 'Edit Profile'}</Button>
         </div>
       </CardHeader>
 
-      <CardContent className="pt-2">
-        {error && <div className={`mb-2 ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>{error}</div>}
+      <CardContent>
+        {error && <div className={`mb-3 ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>{error}</div>}
 
-        <div className="flex flex-col items-center mb-6 mt-4">
-          <div className={`w-16 h-16 rounded-full bg-[#a259ff] text-white flex items-center justify-center text-xl font-semibold mb-2`}>
-            {(formData.firstName && formData.firstName[0]) || ""}
-            {(formData.lastName && formData.lastName[0]) || ""}
-          </div>
-          <div className="text-base font-medium">
-            {formData.firstName} {formData.lastName}
-          </div>
-          <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Faculty</div>
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Left column: avatar and basic */}
+          <div className="col-span-1 flex flex-col items-center md:items-start">
+            <div className={`w-24 h-24 rounded-full bg-[#6b46c1] text-white flex items-center justify-center text-2xl font-semibold mb-3`}>
+              {(formData.firstName && formData.firstName[0]) || ""}{(formData.lastName && formData.lastName[0]) || ""}
+            </div>
+            <div className="text-lg font-medium">{formData.firstName} {formData.lastName}</div>
+            <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Faculty</div>
 
-        <div className="space-y-4">
-          {/* First Name */}
-          <div>
-            <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>First Name</label>
-            <Input
-              value={formData.firstName}
-              onChange={(e) => handleChange("firstName", e.target.value)}
-              disabled={!isEditing}
-              className={theme === 'dark' ? 'w-full bg-background border border-input text-foreground' : 'w-full bg-white border border-gray-300 text-gray-900'}
-              placeholder="Enter your first name"
-            />
-            {localErrors.firstName && (
-              <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.firstName}</p>
-            )}
+            <div className="mt-4 w-full">
+              <h4 className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Quick Info</h4>
+              <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-700'}`}><strong>Department:</strong> {formData.department || '—'}</div>
+              <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-700'}`}><strong>Designation:</strong> {formData.designation || '—'}</div>
+              <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-700'}`}><strong>Office:</strong> {formData.office_location || '—'}</div>
+            </div>
           </div>
 
-          {/* Last Name */}
-          <div>
-            <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Last Name</label>
-            <Input
-              value={formData.lastName}
-              onChange={(e) => handleChange("lastName", e.target.value)}
-              disabled={!isEditing}
-              className={theme === 'dark' ? 'w-full bg-background border border-input text-foreground' : 'w-full bg-white border border-gray-300 text-gray-900'}
-              placeholder="Enter your last name"
-            />
-            {localErrors.lastName && (
-              <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.lastName}</p>
-            )}
-          </div>
+          {/* Right column: tabs and content */}
+          <div className="col-span-2">
+            <div className="flex items-center gap-3 mb-4 border-b pb-2">
+              <button onClick={() => setActiveTab('personal')} className={`px-3 py-1 rounded-md ${activeTab === 'personal' ? 'bg-[#6b46c1] text-white' : theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Personal</button>
+              <button onClick={() => setActiveTab('academic')} className={`px-3 py-1 rounded-md ${activeTab === 'academic' ? 'bg-[#6b46c1] text-white' : theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Academic</button>
+              <button onClick={() => setActiveTab('contact')} className={`px-3 py-1 rounded-md ${activeTab === 'contact' ? 'bg-[#6b46c1] text-white' : theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Contact</button>
+              <button onClick={() => setActiveTab('about')} className={`px-3 py-1 rounded-md ${activeTab === 'about' ? 'bg-[#6b46c1] text-white' : theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>About</button>
+            </div>
 
-          {/* Email */}
-          <div>
-            <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Email Address</label>
-            <Input
-              value={formData.email}
-              onChange={(e) => handleChange("email", e.target.value)}
-              disabled={!isEditing}
-              className={theme === 'dark' ? 'w-full bg-background border border-input text-foreground' : 'w-full bg-white border border-gray-300 text-gray-900'}
-              placeholder="Enter a valid email"
-            />
-            {localErrors.email && (
-              <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.email}</p>
-            )}
-          </div>
-
-          {/* Mobile */}
-          <div>
-            <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Mobile Number</label>
-            <Input
-              value={formData.mobile}
-              onChange={(e) => handleChange("mobile", e.target.value)}
-              disabled={!isEditing}
-              maxLength={10}
-              className={theme === 'dark' ? 'w-full bg-background border border-input text-foreground' : 'w-full bg-white border border-gray-300 text-gray-900'}
-              placeholder="Enter 10-digit mobile number"
-            />
-            {localErrors.mobile && (
-              <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.mobile}</p>
-            )}
-          </div>
-
-          {/* Address */}
-          <div>
-            <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Address</label>
-            <Input
-              value={formData.address}
-              onChange={(e) => handleChange("address", e.target.value)}
-              disabled={!isEditing}
-              className={theme === 'dark' ? 'w-full bg-background border border-input text-foreground' : 'w-full bg-white border border-gray-300 text-gray-900'}
-              placeholder="Enter your address (5–200 characters)"
-            />
-            {localErrors.address && (
-              <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.address}</p>
-            )}
-          </div>
-
-          {/* Bio */}
-          <div>
-            <label className={`block text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Bio</label>
-            <Textarea
-              value={formData.bio}
-              onChange={(e) => handleChange("bio", e.target.value)}
-              disabled={!isEditing}
-              className={`w-full resize-none overflow-y-auto thin-scrollbar ${theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}`}
-              placeholder="Tell us about yourself (10–300 characters)"
-              rows={1}
-              style={{ maxHeight: "200px" }}
-              onInput={(e) => {
-                const target = e.currentTarget;
-                target.style.height = "auto";
-                target.style.height = `${Math.min(target.scrollHeight, 200)}px`;
-              }}
-            />
-            {localErrors.bio && (
-              <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.bio}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Faculty details block (read-only metadata returned by backend) */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className={`p-4 rounded-md ${theme === 'dark' ? 'bg-card border border-input text-foreground' : 'bg-gray-50 border border-gray-200 text-gray-700'}`}>
-            <h4 className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Academic / Office</h4>
-            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}><strong>Department:</strong> {formData.department || '—'}</p>
-            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}><strong>Designation:</strong> {formData.designation || '—'}</p>
-            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}><strong>Qualification:</strong> {formData.qualification || '—'}</p>
-            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}><strong>Branch:</strong> {formData.branch || '—'}</p>
-            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}><strong>Experience:</strong> {formData.experience_years ? `${formData.experience_years} years` : '—'}</p>
-            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}><strong>Office:</strong> {formData.office_location || '—'}</p>
-            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}><strong>Office Hours:</strong> {formData.office_hours || '—'}</p>
-          </div>
-
-          <div className={`p-4 rounded-md ${theme === 'dark' ? 'bg-card border border-input text-foreground' : 'bg-gray-50 border border-gray-200 text-gray-700'}`}>
-            <h4 className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Personal</h4>
-            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}><strong>Date of Birth:</strong> {formData.date_of_birth || '—'}</p>
-            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}><strong>Gender:</strong> {formData.gender || '—'}</p>
+            <div className={`p-4 rounded-md ${theme === 'dark' ? 'bg-card border border-input' : 'bg-gray-50 border border-gray-200'}`}>
+              {renderTabContent()}
+            </div>
           </div>
         </div>
       </CardContent>
