@@ -9,7 +9,7 @@ import { API_ENDPOINT, API_BASE_URL } from "@/utils/config";
 import { manageSubjects } from "@/utils/hod_api";
 import { fetchWithTokenRefresh } from "@/utils/authService";
 import { useToast } from "@/hooks/use-toast";
-import { useProctorStudentsQuery, useProctorExamStatusQuery } from "@/hooks/useApiQueries";
+import { useProctorStudentsQuery } from "@/hooks/useApiQueries";
 import type { ProctorStudent } from "@/utils/faculty_api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
@@ -46,8 +46,9 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
   const {
     data: proctorData,
     isLoading: isProctorLoading,
-    pagination: proctorPagination
-  } = useProctorStudentsQuery(true, includeFields);
+    pagination: proctorPagination,
+    refetch: refetchProctor
+  } = useProctorStudentsQuery(true, includeFields, examPeriod);
 
   // Sync current page to pagination hook
   useEffect(() => {
@@ -58,19 +59,17 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
   const totalPages = proctorPagination?.paginationState.totalPages || 1;
   const totalStudentsCount = proctorPagination?.paginationState.totalItems || 0;
 
-  // Fetch status map using dedicated hook for deduplication
-  const { data: statusData } = useProctorExamStatusQuery(examPeriod, currentPage, pageSize, students.length > 0);
-
-  // Sync status map to local state for faster UI updates during actions
+  // Sync status map from the consolidated proctor students response
   useEffect(() => {
-    if (statusData) {
+    const entries = proctorData?.data || [];
+    if (entries && Array.isArray(entries)) {
       const statusMap: Record<string, string> = {};
-      statusData.forEach((student: any) => {
-        statusMap[student.usn] = student.status;
+      entries.forEach((student: any) => {
+        statusMap[student.usn] = student.status || 'Not Applied';
       });
       setStudentStatuses(statusMap);
     }
-  }, [statusData]);
+  }, [proctorData]);
 
   const downloadHallTicket = async (student: any) => {
     try {
@@ -831,20 +830,17 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
                       [selectedStudent.usn]: 'Applied'
                     }));
 
-                    // Refresh student statuses from API to ensure accuracy
-                    const statusResponse = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/proctor-students/exam-status/?exam_period=${examPeriod}`, {
-                      method: 'GET',
-                      headers: { 'Content-Type': 'application/json' }
-                    });
-                    if (statusResponse.ok) {
-                      const statusResult = await statusResponse.json();
-                      if (statusResult.success) {
-                        const statusMap: Record<string, string> = {};
-                        statusResult.data.forEach((student: any) => {
-                          statusMap[student.usn] = student.status;
-                        });
-                        setStudentStatuses(statusMap);
-                      }
+                    // Refresh consolidated proctor students (which includes status)
+                    try {
+                      const fresh = await refetchProctor();
+                      const freshData = fresh?.data?.data || (fresh?.data ?? []);
+                      const statusMap: Record<string, string> = {};
+                      (Array.isArray(freshData) ? freshData : []).forEach((student: any) => {
+                        statusMap[student.usn] = student.status || 'Not Applied';
+                      });
+                      setStudentStatuses(statusMap);
+                    } catch (err) {
+                      console.error('Failed to refresh proctor students after apply:', err);
                     }
 
                     toast({

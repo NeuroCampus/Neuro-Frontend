@@ -54,9 +54,9 @@ import { API_ENDPOINT } from '../utils/config';
 import { usePagination, useInfiniteScroll, useOptimisticUpdate } from './useOptimizations';
 
 // Custom hooks for data fetching
-export const useProctorStudentsQuery = (enabled: boolean = true, include?: string | string[]) => {
+export const useProctorStudentsQuery = (enabled: boolean = true, include?: string | string[], examPeriod?: string) => {
   const pagination = usePagination({
-    queryKey: ['proctorStudents'],
+    queryKey: ['proctorStudents', examPeriod || ''],
     pageSize: 20,
   });
 
@@ -68,6 +68,7 @@ export const useProctorStudentsQuery = (enabled: boolean = true, include?: strin
           page: pagination.page,
           page_size: pagination.pageSize,
           include: include,
+          exam_period: examPeriod,
         });
         if (response.success && response.data) {
           pagination.updatePagination(response);
@@ -88,7 +89,7 @@ export const useProctorExamStatusQuery = (examPeriod: string, page: number, page
     queryKey: ['proctorExamStatus', examPeriod, page, pageSize, fields],
     queryFn: async () => {
       const response = await fetchWithTokenRefresh(
-        `${API_ENDPOINT}/faculty/proctor-students/exam-status/?exam_period=${examPeriod}&page=${page}&page_size=${pageSize}&include=${fields}`,
+        `${API_ENDPOINT}/faculty/proctor-students/with-exam-status/?exam_period=${examPeriod}&page=${page}&page_size=${pageSize}&include=${fields}`,
         { method: 'GET', headers: { 'Content-Type': 'application/json' } }
       );
       const result = await response.json();

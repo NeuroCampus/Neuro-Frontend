@@ -77,7 +77,6 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
   const pagesNeedingProctor = [
     'announcements',
     'proctor-students',
-    'exam-applications',
     'student-leave'
   ];
   const needsProctorData = pagesNeedingProctor.includes(activePage);

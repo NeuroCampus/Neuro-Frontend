@@ -96,6 +96,7 @@ export interface ProctorStudent {
   id: number;
   name: string;
   usn: string;
+  status?: string;
   branch: string | null;
   branch_id: number | null;
   semester: number | null;
@@ -553,6 +554,7 @@ export const getProctorStudents = async (params?: {
   page?: number;
   page_size?: number;
   include?: string | string[]; // e.g. 'students' or ['students']
+  exam_period?: string;
 }): Promise<GetProctorStudentsResponse> => {
   try {
     const queryParams = new URLSearchParams();
@@ -573,9 +575,17 @@ export const getProctorStudents = async (params?: {
       }
     }
 
-    const url = queryParams.toString()
-      ? `${API_ENDPOINT}/faculty/proctor-students/?${queryParams.toString()}`
+    if (params?.exam_period) {
+      queryParams.append('exam_period', params.exam_period);
+    }
+
+    const basePath = params && params.exam_period
+      ? `${API_ENDPOINT}/faculty/proctor-students/with-exam-status/`
       : `${API_ENDPOINT}/faculty/proctor-students/`;
+
+    const url = queryParams.toString()
+      ? `${basePath}?${queryParams.toString()}`
+      : basePath;
 
     const response = await fetchWithTokenRefresh(url, {
       method: "GET",
