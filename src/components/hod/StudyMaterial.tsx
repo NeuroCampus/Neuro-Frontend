@@ -15,6 +15,8 @@ interface ApiStudyMaterial {
   uploaded_by: string;
   uploaded_at: string;
   file_url: string;
+  drive_file_id?: string | null;
+  drive_web_view_link?: string | null;
 }
 
 // Interface for display study material
@@ -187,11 +189,12 @@ const StudyMaterials = () => {
           title: apiMaterial.title,
           subject_name: apiMaterial.subject_name,
           subject_code: apiMaterial.subject_code,
-          semester: apiMaterial.semester_id ? parseInt(apiMaterial.semester_id) || null : null,
-          branch: apiMaterial.branch_id || null,
+          semester: (apiMaterial.semester_id ? parseInt(apiMaterial.semester_id) || null : (apiMaterial.semester ? parseInt(apiMaterial.semester as any) || null : null)),
+          branch: apiMaterial.branch_id || apiMaterial.branch || null,
           uploaded_by: apiMaterial.uploaded_by,
           uploaded_at: apiMaterial.uploaded_at,
-          file_url: apiMaterial.file_url,
+          // Prefer Drive web view link when available
+          file_url: apiMaterial.drive_web_view_link || apiMaterial.file_url,
         };
         addStudyMaterial(newMaterial);
         resetForm();

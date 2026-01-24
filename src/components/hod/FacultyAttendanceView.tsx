@@ -346,76 +346,7 @@ const FacultyAttendanceView: React.FC = () => {
             </div>
           </div>
 
-          {/* Pagination Controls */}
-          <div className={`flex flex-col sm:flex-row justify-between items-center gap-4 p-4 ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} rounded-lg`}>
-            <div className="flex items-center gap-4">
-              <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                Showing {todayAttendance.length > 0 ? ((todayPagination.page - 1) * todayPagination.page_size) + 1 : 0} to{' '}
-                {Math.min(todayPagination.page * todayPagination.page_size, todayPagination.total_items)} of{' '}
-                {todayPagination.total_items} faculty
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {todayPagination.total_items > todayPagination.page_size && (
-                <button
-                  onClick={loadAllData}
-                  disabled={isLoading}
-                  className={`px-3 py-1 text-sm border border-green-500 text-green-600 rounded-md hover:bg-green-50 transition-colors disabled:opacity-50 ${
-                    theme === 'dark' ? 'hover:bg-accent' : ''
-                  }`}
-                >
-                  {isLoading ? 'Loading...' : 'Load All'}
-                </button>
-              )}
-
-              <button
-                onClick={() => handlePageChange(todayPagination.page - 1)}
-                disabled={!todayPagination.has_prev || isLoading}
-                className={`px-3 py-1 text-sm border rounded-md transition-colors ${
-                  todayPagination.has_prev && !isLoading
-                    ? 'border-blue-500 text-blue-600 hover:bg-blue-50 disabled:opacity-50'
-                    : 'border-gray-300 text-gray-400 cursor-not-allowed'
-                } ${theme === 'dark' ? 'hover:bg-accent' : ''}`}
-              >
-                Previous
-              </button>
-
-              <div className="flex items-center gap-1">
-                {Array.from({ length: Math.min(5, todayPagination.total_pages) }, (_, i) => {
-                  const pageNum = Math.max(1, Math.min(todayPagination.total_pages - 4, todayPagination.page - 2)) + i;
-                  if (pageNum > todayPagination.total_pages) return null;
-
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => handlePageChange(pageNum)}
-                      disabled={isLoading}
-                      className={`px-3 py-1 text-sm border rounded-md transition-colors disabled:opacity-50 ${
-                        pageNum === todayPagination.page
-                          ? 'bg-blue-600 text-white border-blue-600'
-                          : `border-gray-300 text-gray-700 hover:bg-gray-50 ${theme === 'dark' ? 'hover:bg-accent' : ''}`
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <button
-                onClick={() => handlePageChange(todayPagination.page + 1)}
-                disabled={!todayPagination.has_next || isLoading}
-                className={`px-3 py-1 text-sm border rounded-md transition-colors ${
-                  todayPagination.has_next && !isLoading
-                    ? 'border-blue-500 text-blue-600 hover:bg-blue-50'
-                    : 'border-gray-300 text-gray-400 cursor-not-allowed'
-                } ${theme === 'dark' ? 'hover:bg-accent' : ''}`}
-              >
-                Next
-              </button>
-            </div>
-          </div>
+          {/* Pagination controls moved below the table for better UX */}
 
           {/* Today's Attendance Table */}
           <div className={`rounded-lg shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} overflow-hidden`}>
@@ -467,6 +398,79 @@ const FacultyAttendanceView: React.FC = () => {
             </div>
           </div>
         </>
+      )}
+
+      {/* Today's Pagination Controls (moved to bottom) */}
+      {activeTab === 'today' && !isLoading && (
+        <div className={`flex flex-col sm:flex-row justify-between items-center gap-4 p-4 ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} rounded-lg mt-4`}>
+          <div className="flex items-center gap-4">
+            <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+              Showing {todayAttendance.length > 0 ? ((todayPagination.page - 1) * todayPagination.page_size) + 1 : 0} to{' '}
+              {Math.min(todayPagination.page * todayPagination.page_size, todayPagination.total_items)} of{' '}
+              {todayPagination.total_items} faculty
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {todayPagination.total_items > todayPagination.page_size && (
+              <button
+                onClick={loadAllData}
+                disabled={isLoading}
+                className={`px-3 py-1 text-sm border border-green-500 text-green-600 rounded-md hover:bg-green-50 transition-colors disabled:opacity-50 ${
+                  theme === 'dark' ? 'hover:bg-accent' : ''
+                }`}
+              >
+                {isLoading ? 'Loading...' : 'Load All'}
+              </button>
+            )}
+
+            <button
+              onClick={() => handlePageChange(todayPagination.page - 1)}
+              disabled={!todayPagination.has_prev || isLoading}
+              className={`px-3 py-1 text-sm border rounded-md transition-colors ${
+                todayPagination.has_prev && !isLoading
+                  ? 'border-blue-500 text-blue-600 hover:bg-blue-50 disabled:opacity-50'
+                  : 'border-gray-300 text-gray-400 cursor-not-allowed'
+              } ${theme === 'dark' ? 'hover:bg-accent' : ''}`}
+            >
+              Previous
+            </button>
+
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(5, todayPagination.total_pages) }, (_, i) => {
+                const pageNum = Math.max(1, Math.min(todayPagination.total_pages - 4, todayPagination.page - 2)) + i;
+                if (pageNum > todayPagination.total_pages) return null;
+
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                    disabled={isLoading}
+                    className={`px-3 py-1 text-sm border rounded-md transition-colors disabled:opacity-50 ${
+                      pageNum === todayPagination.page
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : `border-gray-300 text-gray-700 hover:bg-gray-50 ${theme === 'dark' ? 'hover:bg-accent' : ''}`
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => handlePageChange(todayPagination.page + 1)}
+              disabled={!todayPagination.has_next || isLoading}
+              className={`px-3 py-1 text-sm border rounded-md transition-colors ${
+                todayPagination.has_next && !isLoading
+                  ? 'border-blue-500 text-blue-600 hover:bg-blue-50'
+                  : 'border-gray-300 text-gray-400 cursor-not-allowed'
+              } ${theme === 'dark' ? 'hover:bg-accent' : ''}`}
+            >
+              Next
+            </button>
+          </div>
+        </div>
       )}
 
       {activeTab === 'records' && !isLoading && (

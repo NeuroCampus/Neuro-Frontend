@@ -12,6 +12,7 @@ interface Subject {
   subject_code: string;
   semester_id: string;
   subject_type: string;
+  credits?: number;
 }
 
 interface Semester {
@@ -27,6 +28,7 @@ interface ManageSubjectsRequest {
   semester_id?: string;
   subject_id?: string;
   subject_type?: string;
+  credits?: number;
 }
 
 // Define error type for catch blocks
@@ -51,7 +53,7 @@ interface SubjectManagementState {
   deleteConfirmation: string | null;
   showModal: "add" | "edit" | null;
   currentSubject: Subject | null;
-  newSubject: { code: string; name: string; semester_id: string; subject_type: string };
+  newSubject: { code: string; name: string; semester_id: string; subject_type: string; credits: number };
   error: string | null;
   success: string | null;
   loading: boolean;
@@ -71,7 +73,7 @@ const SubjectManagement = () => {
     deleteConfirmation: null,
     showModal: null,
     currentSubject: null,
-    newSubject: { code: "", name: "", semester_id: "", subject_type: "regular" },
+    newSubject: { code: "", name: "", semester_id: "", subject_type: "regular", credits: 3 },
     error: null,
     success: null,
     loading: false,
@@ -200,6 +202,7 @@ const SubjectManagement = () => {
       subject_code: state.newSubject.code,
       semester_id: state.newSubject.semester_id,
       subject_type: state.newSubject.subject_type,
+      credits: Number(state.newSubject.credits),
       ...(state.showModal === "edit" && state.currentSubject ? { subject_id: state.currentSubject.id } : {}),
     };
 
@@ -210,7 +213,7 @@ const SubjectManagement = () => {
         updateState({
           success: state.showModal === "add" ? "Course added successfully" : "Course updated successfully",
           showModal: null,
-          newSubject: { code: "", name: "", semester_id: "", subject_type: "regular" },
+          newSubject: { code: "", name: "", semester_id: "", subject_type: "regular", credits: 3 },
           currentSubject: null,
         });
         fetchSubjects(state.branchId, state.currentPage, state.pageSize); // Refresh subjects with current pagination
@@ -236,6 +239,7 @@ const SubjectManagement = () => {
         name: subject.name,
         semester_id: subject.semester_id,
         subject_type: subject.subject_type,
+        credits: subject.credits || 3,
       },
       showModal: "edit",
     });
@@ -294,7 +298,7 @@ const SubjectManagement = () => {
           onClick={() => {
             updateState({
               showModal: "add",
-              newSubject: { code: "", name: "", semester_id: "", subject_type: "regular" },
+              newSubject: { code: "", name: "", semester_id: "", subject_type: "regular", credits: 3 },
               currentSubject: null,
             });
           }}
@@ -322,6 +326,7 @@ const SubjectManagement = () => {
                   <th className="px-4 py-3 text-left">COURSE NAME</th>
                   <th className="px-4 py-3 text-left">SEMESTER</th>
                   <th className="px-4 py-3 text-left">COURSE TYPE</th>
+                  <th className="px-4 py-3 text-left">COURSE CREDITS</th>
                   <th className="px-4 py-3 text-left">ACTIONS</th>
                 </tr>
               </thead>
@@ -341,6 +346,7 @@ const SubjectManagement = () => {
                     <td className="px-4 py-3">
                       {subject.subject_type === 'regular' ? 'Regular' : subject.subject_type === 'elective' ? 'Elective Subjects' : 'Open Elective Subjects'}
                     </td>
+                    <td className="px-4 py-3">{subject.credits ?? 0}</td>
                     <td className="px-4 py-3 flex gap-5">
                       <Pencil
                         className={`w-4 h-4 cursor-pointer ${theme === 'dark' ? 'text-primary hover:text-primary/80' : 'text-blue-600 hover:text-blue-800'}`}
@@ -363,6 +369,8 @@ const SubjectManagement = () => {
             <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               Showing {state.subjects.length} out of {state.totalCount} Courses
             </div>
+
+            
 
             {/* Pagination Controls */}
             <div className="flex items-center gap-4">
@@ -540,13 +548,29 @@ const SubjectManagement = () => {
               </select>
             </div>
 
+            {/* Course Credits */}
+            <div className="mb-4">
+              <label className={`block mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Course Credits</label>
+              <Input
+                type="number"
+                min={0}
+                value={state.newSubject.credits}
+                onChange={(e) =>
+                  updateState({ newSubject: { ...state.newSubject, credits: Number(e.target.value) }, modalError: null })
+                }
+                placeholder="e.g., 3"
+                disabled={state.loading}
+                className={`${theme === 'dark' ? 'bg-card border-border text-foreground placeholder:text-muted-foreground' : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-500'} px-3 py-2 rounded`}
+              />
+            </div>
+
             {/* Action Buttons */}
             <div className="flex justify-end gap-4">
               <Button
                 onClick={() => {
                   updateState({
                     showModal: null,
-                    newSubject: { code: "", name: "", semester_id: "", subject_type: "regular" },
+                    newSubject: { code: "", name: "", semester_id: "", subject_type: "regular", credits: 3 },
                     currentSubject: null,
                     modalError: null,
                   });
@@ -571,6 +595,7 @@ const SubjectManagement = () => {
                     subject_code: state.newSubject.code,
                     semester_id: state.newSubject.semester_id,
                     subject_type: state.newSubject.subject_type,
+                    credits: Number(state.newSubject.credits),
                     ...(state.showModal === "edit" && state.currentSubject ? { subject_id: state.currentSubject.id } : {}),
                   };
 
@@ -581,7 +606,7 @@ const SubjectManagement = () => {
                       updateState({
                         success: state.showModal === "add" ? "Subject added successfully" : "Subject updated successfully",
                         showModal: null,
-                        newSubject: { code: "", name: "", semester_id: "", subject_type: "regular" },
+                        newSubject: { code: "", name: "", semester_id: "", subject_type: "regular", credits: 3 },
                         currentSubject: null,
                         modalError: null,
                       });
