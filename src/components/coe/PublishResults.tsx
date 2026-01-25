@@ -179,8 +179,38 @@ export default function PublishResults() {
       toast({ title: 'Saved', description: `Saved ${res.saved_count} records` });
       // clear dirty flags after a successful save
       setDirtyPages({});
-      // refresh current page to reflect server-side persisted values
-      if (upload) await fetchStudentsPage(upload.id, studentsPage, studentsPageSize, true);
+      // Merge the saved payload into local cache so UI reflects confirmed values
+      setAllMarks(prev => {
+        const next = { ...(prev || {}) } as any;
+        payload.forEach((rec: any) => {
+          const sid = Object.keys(next).find(k => next[k].usn === rec.usn) || String(rec.usn);
+          // if we can't find by usn in existing cache, try to find student by matching current students list
+          let sidKey = sid;
+          if (!next[sidKey]) {
+            // fallback: if payload contains usn but no existing entry, attempt to find student_id from `students` on current page
+            const found = (students || []).find(s => s.usn === rec.usn);
+            if (found) sidKey = String(found.student_id);
+          }
+          if (!next[sidKey]) next[sidKey] = { usn: rec.usn, subs: {} };
+          if (!next[sidKey].subs) next[sidKey].subs = {};
+          const subId = String(rec.subject_id);
+          next[sidKey].subs[subId] = { cie: rec.cie_marks === null ? '' : Number(rec.cie_marks), see: rec.see_marks === null ? '' : Number(rec.see_marks) };
+        });
+        return next;
+      });
+      // also update marks for current page rendering
+      setMarks(prev => {
+        const next = { ...(prev || {}) } as any;
+        payload.forEach((rec: any) => {
+          const sid = String(rec.student_id || Object.keys(next).find(k => k === String(rec.student_id)) || (students.find(s => s.usn === rec.usn) ? String((students.find(s => s.usn === rec.usn) as any).student_id) : String(rec.student_id || rec.usn)));
+          const subId = String(rec.subject_id);
+          if (!next[sid]) next[sid] = {};
+          if (!next[sid][subId]) next[sid][subId] = {};
+          next[sid][subId].cie = rec.cie_marks === null ? '' : Number(rec.cie_marks);
+          next[sid][subId].see = rec.see_marks === null ? '' : Number(rec.see_marks);
+        });
+        return next;
+      });
       return true;
     } else {
       toast({ variant: 'destructive', title: 'Save failed', description: res.message || 'Failed saving' });
@@ -375,8 +405,8 @@ export default function PublishResults() {
                           <tr key={sub.id}>
                             <td className="border px-2 py-1">{sub.name}</td>
                             <td className="border px-2 py-1">{sub.code}</td>
-                            <td className={`border px-2 py-1`}><Input disabled={upload?.is_published} className="w-20" type="number" min={0} max={50} value={cie} onChange={(e: any) => handleInput(s.student_id, s.usn, sub.id, 'cie', e.target.value)} /></td>
-                            <td className={`border px-2 py-1`}><Input disabled={upload?.is_published} className="w-20" type="number" min={0} max={50} value={see} onChange={(e: any) => handleInput(s.student_id, s.usn, sub.id, 'see', e.target.value)} /></td>
+                            <td className={`border px-2 py-1`}><Input disabled={upload?.is_published} className="w-20" type="number" min={0} max={50} value={cie} onChange={(e: any) => handleInput(s.student_id, s.usn, sub.id, 'cie', e.target.value)} onWheel={(e:any) => e.currentTarget.blur()} /></td>
+                            <td className={`border px-2 py-1`}><Input disabled={upload?.is_published} className="w-20" type="number" min={0} max={50} value={see} onChange={(e: any) => handleInput(s.student_id, s.usn, sub.id, 'see', e.target.value)} onWheel={(e:any) => e.currentTarget.blur()} /></td>
                             <td className="border px-2 py-1">{total}</td>
                             <td className={`border px-2 py-1 ${status === 'Pass' ? 'text-green-600' : status === 'Fail' ? 'text-red-600' : 'text-yellow-600'}`}>{status}</td>
                           </tr>

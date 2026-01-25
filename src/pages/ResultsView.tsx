@@ -21,6 +21,40 @@ const ResultsView: React.FC = () => {
     return Math.round((passed / total) * 100);
   };
 
+  const calcCGPA = (marks: any[]) => {
+    if (!Array.isArray(marks) || marks.length === 0) return null;
+    let weightedGP = 0;
+    let totalCredits = 0;
+
+    for (const m of marks) {
+      // robustly fetch credits (common field names)
+      const credits = Number(
+        m?.credits ?? m?.credit ?? m?.credit_hours ?? m?.creditHours ?? m?.credit_hour ?? 0
+      );
+      if (!credits || credits <= 0) continue; // exclude zero-credit or invalid
+
+      // prefer provided total, else try to sum cie+see
+      let total = m?.total;
+      if (total == null) {
+        const cie = typeof m?.cie === 'number' ? m.cie : Number(m?.cie);
+        const see = typeof m?.see === 'number' ? m.see : Number(m?.see);
+        if (!Number.isFinite(cie) || !Number.isFinite(see)) continue;
+        total = cie + see;
+      }
+      total = Number(total);
+      if (!Number.isFinite(total)) continue;
+
+      // convert marks (out of 100) to grade point on 10-point scale
+      const gp = Math.max(0, total / 10);
+      weightedGP += gp * credits;
+      totalCredits += credits;
+    }
+
+    if (totalCredits === 0) return null;
+    const cgpa = weightedGP / totalCredits;
+    return Number(cgpa.toFixed(2));
+  };
+
   const fetchResult = async () => {
     setError(null);
     setResult(null);
@@ -89,6 +123,8 @@ const ResultsView: React.FC = () => {
   };
 
   const passPercent = result ? calcPassPercent(result.marks || []) : null;
+  // Prefer backend-provided CGPA when available, otherwise compute from marks
+  const cgpa = result ? (result.aggregate?.cgpa ?? calcCGPA(result.marks || [])) : null;
 
   return (
     <div className="min-h-screen flex items-start justify-center bg-white py-8 px-4">
@@ -177,12 +213,13 @@ const ResultsView: React.FC = () => {
 
             <div className="mt-4">
               <div className="text-gray-700"><strong>Total Marks:</strong> <span className="text-gray-900">{result.aggregate?.total_marks ?? '-'}</span></div>
+              <div className="text-gray-700"><strong>CGPA:</strong> <span className="text-gray-900">{cgpa ?? '-'}</span></div>
               <div className="text-gray-700"><strong>Overall Status:</strong> <span className={result.aggregate?.overall_status === 'pass' ? 'text-green-600' : 'text-red-600'}> {result.aggregate?.overall_status ?? '-'}</span></div>
             </div>
 
             <div className="mt-4 p-3 bg-yellow-50 border border-yellow-100 rounded text-sm text-gray-700">
               <strong>Notes:</strong>
-              <div className="text-xs text-gray-600 mt-1">This marks card is official. For disputes contact the examination office within 7 days.</div>
+              <div className="text-xs text-gray-600 mt-1">This is a provisional marks card issued for reference. The official marks card will be issued by the Administration in due course. The results and marks indicated are accurate and officially recognized.</div>
             </div>
 
             <div style={{ position: 'absolute', left: -9999, top: 0 }}>
@@ -222,7 +259,10 @@ const ResultsView: React.FC = () => {
                   </tbody>
                 </table>
                 <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between' }}>
-                  <div><strong>Total:</strong> {result.aggregate?.total_marks ?? '-'}</div>
+                  <div>
+                    <div><strong>Total:</strong> {result.aggregate?.total_marks ?? '-'}</div>
+                    <div><strong>CGPA:</strong> {cgpa ?? '-'}</div>
+                  </div>
                   <div><strong>Status:</strong> {result.aggregate?.overall_status ?? '-'}</div>
                 </div>
                 <div style={{ marginTop: 18, fontSize: 11 }}>This is an official marks card generated from AMC - Neuro Campus.</div>
