@@ -333,13 +333,36 @@ export const createResultUploadBatch = async (payload: { batch: string; branch: 
   }
 };
 
-export const getStudentsForUpload = async (uploadId: number) => {
+export const getStudentsForUpload = async (uploadId: number, page?: number, page_size?: number) => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/result-upload/${uploadId}/students/`, {
+    const params = new URLSearchParams();
+    if (page !== undefined) params.append('page', String(page));
+    if (page_size !== undefined) params.append('page_size', String(page_size));
+
+    const url = `${API_ENDPOINT}/coe/result-upload/${uploadId}/students/` + (params.toString() ? `?${params}` : '');
+    const response = await fetchWithTokenRefresh(url, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     });
-    return await response.json();
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    if ((result as any).results) {
+      const pag = result as any;
+      const payload = pag.results as any;
+      return {
+        success: payload.success,
+        data: {
+          students: payload.students,
+          pagination: { count: pag.count, next: pag.next, previous: pag.previous }
+        }
+      };
+    }
+
+    return result;
   } catch (error) {
     console.error('Error fetching students for upload:', error);
     return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
@@ -369,6 +392,64 @@ export const publishUploadBatch = async (uploadId: number) => {
     return await response.json();
   } catch (error) {
     console.error('Error publishing upload batch:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+export const unpublishUploadBatch = async (uploadId: number) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/result-upload/${uploadId}/unpublish/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error unpublishing upload batch:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+/**
+ * Fetch paginated published results with optional filters
+ */
+export const getPublishedResults = async (filters: {
+  upload_id?: string | number;
+  batch_id?: string | number;
+  branch_id?: string | number;
+  semester_id?: string | number;
+  student_usn?: string;
+  page?: number;
+  page_size?: number;
+}) => {
+  try {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) params.append(k, String(v));
+    });
+
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/published-results/?${params}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+    const result = await response.json();
+    if ((result as any).results) {
+      const pag = result as any;
+      const payload = pag.results as any;
+      return {
+        success: payload.success,
+        data: {
+          published_results: payload.published_results,
+          pagination: { count: pag.count, next: pag.next, previous: pag.previous }
+        }
+      };
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Error fetching published results:', error);
     return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
   }
 };

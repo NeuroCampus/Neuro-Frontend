@@ -47,7 +47,14 @@ const StudentStatus = () => {
   const fetchFilterOptions = async () => {
     try {
       const options = await getFilterOptions();
-      setFilterOptions(options);
+      // Deduplicate semesters by number (avoid repeated 1..8 entries)
+      const semestersRaw = (options && options.semesters) || [];
+      const semMap = new Map<number, any>();
+      semestersRaw.forEach((s: any) => {
+        if (!semMap.has(s.number)) semMap.set(s.number, s);
+      });
+      const semesters = Array.from(semMap.values()).sort((a: any, b: any) => a.number - b.number);
+      setFilterOptions({ ...options, semesters });
     } catch (error) {
       console.error('Error fetching filter options:', error);
     }

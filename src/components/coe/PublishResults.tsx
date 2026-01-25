@@ -4,14 +4,31 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { getFilterOptions } from '../../utils/coe_api';
 import { Input } from '@/components/ui/input';
 import { useTheme } from '@/context/ThemeContext';
-import { createResultUploadBatch, getStudentsForUpload, saveMarksForUpload, publishUploadBatch } from '../../utils/coe_api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { AlertTriangle } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import { createResultUploadBatch, getStudentsForUpload, saveMarksForUpload, publishUploadBatch, unpublishUploadBatch } from '../../utils/coe_api';
 
 export default function PublishResults() {
+  const { theme } = useTheme();
   const [filters, setFilters] = useState<any>({ batches: [], branches: [], semesters: [] });
-  const [selected, setSelected] = useState<any>({ batch: '', branch: '', semester: '', exam_period: 'june_july' });
+  // Do not pre-select exam_period so students aren't auto-loaded before user choice
+  const [selected, setSelected] = useState<any>({ batch: '', branch: '', semester: '', exam_period: '' });
   const [upload, setUpload] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
+  const [studentsPage, setStudentsPage] = useState(1);
+  const [studentsPageSize, setStudentsPageSize] = useState(25);
+  const [studentsPagination, setStudentsPagination] = useState<any>(null);
+  const [dirtyPages, setDirtyPages] = useState<Record<number, boolean>>({});
+  const [navModalOpen, setNavModalOpen] = useState(false);
+  const [pendingNav, setPendingNav] = useState<{ page: number; pageSize?: number } | null>(null);
+  const [publishModalOpen, setPublishModalOpen] = useState(false);
+  const [unpublishModalOpen, setUnpublishModalOpen] = useState(false);
+  const { toast } = useToast();
+  // marks for current page (kept for compatibility)
   const [marks, setMarks] = useState<Record<string, Record<string, { cie?: number | string | null; see?: number | string | null }>>>({});
+  // persisted marks across pages keyed by student_id -> { usn, subs: { subjectId: {cie,see} }}
+  const [allMarks, setAllMarks] = useState<Record<string, { usn: string; subs: Record<string, { cie?: number | string | null; see?: number | string | null }> }>>({});
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -29,27 +46,17 @@ export default function PublishResults() {
   }, []);
 
   const handleCreate = async () => {
-    if (!selected.batch || !selected.branch || !selected.semester || !selected.exam_period) return alert('Select all filters');
+    if (!selected.batch || !selected.branch || !selected.semester || !selected.exam_period) {
+      toast({ variant: 'destructive', title: 'Missing filters', description: 'Select all filters before creating upload' });
+      return;
+    }
     const res = await createResultUploadBatch({ batch: String(selected.batch), branch: String(selected.branch), semester: String(selected.semester), exam_period: selected.exam_period });
     if (res.success) {
       setUpload(res.upload_batch);
       // fetch students (includes existing marks if present)
-      const stu = await getStudentsForUpload(res.upload_batch.id);
-      if (stu.success) {
-        setStudents(stu.students || []);
-        // populate marks state from existing data
-        const marksState: any = {};
-        (stu.students || []).forEach((s: any) => {
-          const sKey = String(s.student_id);
-          marksState[sKey] = {};
-          (s.subjects || []).forEach((sub: any) => {
-            marksState[sKey][String(sub.id)] = { cie: sub.cie_marks ?? '', see: sub.see_marks ?? '' };
-          });
-        });
-        setMarks(marksState);
-      }
+      await fetchStudentsPage(res.upload_batch.id, studentsPage, studentsPageSize);
     } else {
-      alert(res.message || 'Failed');
+      toast({ variant: 'destructive', title: 'Error', description: res.message || 'Failed to create upload' });
     }
   };
 
@@ -63,19 +70,7 @@ export default function PublishResults() {
         if (!mounted) return;
         if (res.success) {
           setUpload(res.upload_batch);
-          const stu = await getStudentsForUpload(res.upload_batch.id);
-          if (stu.success) {
-            setStudents(stu.students || []);
-            const marksState: any = {};
-            (stu.students || []).forEach((s: any) => {
-              const sKey = String(s.student_id);
-              marksState[sKey] = {};
-              (s.subjects || []).forEach((sub: any) => {
-                marksState[sKey][String(sub.id)] = { cie: sub.cie_marks ?? '', see: sub.see_marks ?? '' };
-              });
-            });
-            setMarks(marksState);
-          }
+          await fetchStudentsPage(res.upload_batch.id, studentsPage, studentsPageSize);
         }
       } catch (e) {
         // ignore
@@ -84,51 +79,163 @@ export default function PublishResults() {
     return () => { mounted = false; };
   }, [selected.batch, selected.branch, selected.semester, selected.exam_period]);
 
-  const handleInput = (studentId: number, subjectId: number, field: 'cie' | 'see', value: string) => {
+  // Helper to fetch a specific students page and merge marks
+  const fetchStudentsPage = async (uploadId: number, page?: number, pageSize?: number, overwriteExisting: boolean = false) => {
+    const stu = await getStudentsForUpload(uploadId, page, pageSize);
+    if (stu.success) {
+      const studentList = stu.data?.students || [];
+      setStudents(studentList);
+      setStudentsPagination(stu.data?.pagination || null);
+      setStudentsPage(page || 1);
+      // mark this page as clean when freshly loaded
+      setDirtyPages(prev => ({ ...(prev || {}), [page || 1]: false }));
+      // merge marks into allMarks
+      setAllMarks(prev => {
+        const next = { ...prev };
+        (studentList || []).forEach((s: any) => {
+          const sid = String(s.student_id);
+          if (!next[sid]) next[sid] = { usn: s.usn, subs: {} };
+          (s.subjects || []).forEach((sub: any) => {
+            if (overwriteExisting) {
+              next[sid].subs[String(sub.id)] = { cie: sub.cie_marks ?? '', see: sub.see_marks ?? '' };
+            } else {
+              if (!next[sid].subs[String(sub.id)]) {
+                next[sid].subs[String(sub.id)] = { cie: sub.cie_marks ?? '', see: sub.see_marks ?? '' };
+              }
+            }
+          });
+        });
+        return next;
+      });
+    }
+  };
+
+  const handleInput = (studentId: number, usn: string, subjectId: number, field: 'cie' | 'see', value: string) => {
+    const sid = String(studentId);
+    const subKey = String(subjectId);
+    // sanitize input: allow empty string to clear, otherwise integer-like values only
+    const sanitize = (v: string) => {
+      if (v === null || v === undefined) return '';
+      const trimmed = String(v).trim();
+      if (trimmed === '') return '';
+      // allow leading zeros etc by parsing number
+      // but reject non-numeric input
+      if (!/^-?\d+$/.test(trimmed)) return null;
+      const n = Number(trimmed);
+      if (Number.isNaN(n)) return null;
+      return Math.floor(n);
+    };
+    const candidate = sanitize(value);
+    // if input is non-numeric, ignore
+    if (candidate === null) return;
+    // enforce bounds as-you-type: reject changes that go outside 0..50
+    if (typeof candidate === 'number' && (candidate > 50 || candidate < 0)) {
+      return; // do not update state, preventing typing >50 or <0
+    }
+    const val = candidate;
+    setAllMarks(prev => {
+      const next = { ...prev } as any;
+      if (!next[sid]) next[sid] = { usn: usn, subs: {} };
+      if (!next[sid].subs) next[sid].subs = {};
+      next[sid].subs[subKey] = { ...(next[sid].subs[subKey] || {}), [field]: val };
+      return next;
+    });
+    // keep compatibility marks for current page rendering
     setMarks(prev => {
-      const p = { ...prev };
-      const sKey = String(studentId);
-      const subKey = String(subjectId);
+      const p = { ...prev } as any;
+      const sKey = sid;
+      const subKey2 = subKey;
       if (!p[sKey]) p[sKey] = {};
-      if (!p[sKey][subKey]) p[sKey][subKey] = {};
-      const num = parseInt(value, 10);
-      p[sKey][subKey][field] = isNaN(num) ? undefined : num;
+      if (!p[sKey][subKey2]) p[sKey][subKey2] = {};
+      p[sKey][subKey2][field] = val;
       return p;
     });
+    // mark current page dirty when user edits
+    setDirtyPages(prev => ({ ...(prev || {}), [studentsPage]: true }));
   };
 
   const handleSave = async () => {
-    if (!upload) return alert('Create upload batch first');
-    const payload: any[] = [];
-    for (const s of students) {
-      for (const subj of s.subjects) {
-        const entry = marks[String(s.student_id)]?.[String(subj.id)];
-        const rawCie = entry?.cie;
-        const rawSee = entry?.see;
-        const cieVal = (rawCie === null || rawCie === undefined || (typeof rawCie === 'string' && rawCie.trim() === '')) ? null : Number(rawCie);
-        const seeVal = (rawSee === null || rawSee === undefined || (typeof rawSee === 'string' && rawSee.trim() === '')) ? null : Number(rawSee);
-        payload.push({ usn: s.usn, subject_id: subj.id, cie_marks: Number.isNaN(cieVal) ? null : cieVal, see_marks: Number.isNaN(seeVal) ? null : seeVal });
-      }
+    if (!upload) {
+      toast({ variant: 'destructive', title: 'No upload', description: 'Create upload batch first' });
+      return false;
     }
+    // Build payload from all persisted marks across pages so multi-page edits are preserved
+    const payload: any[] = [];
+    Object.entries(allMarks).forEach(([sid, data]) => {
+      const usn = data.usn;
+      const subs = data.subs || {};
+      Object.entries(subs).forEach(([subId, marksObj]) => {
+        const rawCie = (marksObj as any).cie;
+        const rawSee = (marksObj as any).see;
+        const cieVal = (rawCie === null || rawCie === undefined || (typeof rawCie === 'string' && String(rawCie).trim() === '')) ? null : Number(rawCie);
+        const seeVal = (rawSee === null || rawSee === undefined || (typeof rawSee === 'string' && String(rawSee).trim() === '')) ? null : Number(rawSee);
+        payload.push({ usn: usn, subject_id: Number(subId), cie_marks: Number.isNaN(cieVal) ? null : cieVal, see_marks: Number.isNaN(seeVal) ? null : seeVal });
+      });
+    });
     setSaving(true);
     const res = await saveMarksForUpload(upload.id, payload);
     setSaving(false);
     if (res.success) {
-      alert(`Saved ${res.saved_count} records`);
+      toast({ title: 'Saved', description: `Saved ${res.saved_count} records` });
+      // clear dirty flags after a successful save
+      setDirtyPages({});
+      // refresh current page to reflect server-side persisted values
+      if (upload) await fetchStudentsPage(upload.id, studentsPage, studentsPageSize, true);
+      return true;
     } else {
-      alert(res.message || 'Failed saving');
+      toast({ variant: 'destructive', title: 'Save failed', description: res.message || 'Failed saving' });
+      return false;
     }
   };
 
+  const navigateToPage = async (targetPage: number, pageSize?: number) => {
+    if (!upload) return;
+    if (targetPage === studentsPage) return;
+    const currentDirty = dirtyPages[studentsPage];
+    if (currentDirty) {
+      // open in-UI modal and store pending navigation
+      setPendingNav({ page: targetPage, pageSize });
+      setNavModalOpen(true);
+      return;
+    }
+    await fetchStudentsPage(upload.id, targetPage, pageSize ?? studentsPageSize);
+  };
+
+  const confirmNavSave = async (saveFirst: boolean) => {
+    if (!upload || !pendingNav) return setNavModalOpen(false);
+    setNavModalOpen(false);
+    if (saveFirst) {
+      const ok = await handleSave();
+      if (!ok) return; // abort if save failed
+    }
+    if (!saveFirst) {
+      // Discard local unsaved changes for the current page so server values are shown
+      setAllMarks(prev => {
+        const next = { ...prev };
+        (students || []).forEach((s: any) => {
+          delete next[String(s.student_id)];
+        });
+        return next;
+      });
+      // mark current page clean
+      setDirtyPages(prev => ({ ...(prev || {}), [studentsPage]: false }));
+    }
+    await fetchStudentsPage(upload.id, pendingNav.page, pendingNav.pageSize ?? studentsPageSize);
+    setPendingNav(null);
+  };
+
   const handlePublish = async () => {
-    if (!upload) return alert('Create upload batch first');
+    if (!upload) {
+      toast({ variant: 'destructive', title: 'No upload', description: 'Create upload batch first' });
+      return;
+    }
     const res = await publishUploadBatch(upload.id);
     if (res.success) {
-      alert('Published successfully');
+      toast({ title: 'Published', description: 'Published successfully' });
       // refresh upload info
       setUpload({ ...upload, is_published: true });
     } else {
-      alert(res.message || 'Publish failed');
+      toast({ variant: 'destructive', title: 'Publish failed', description: res.message || 'Publish failed' });
     }
   };
 
@@ -192,15 +299,43 @@ export default function PublishResults() {
       {upload && (
         <div className="mb-4">
           <div>Upload ID: {upload.id} | Token: {upload.token}</div>
-          <div>Published: {upload.is_published ? 'Yes' : 'No'}</div>
+          <div className="mt-2 flex items-center gap-4">
+            <div>Published: <span className={`font-medium ${upload.is_published ? 'text-green-600' : 'text-red-600'}`}>{upload.is_published ? 'Yes' : 'No'}</span></div>
+            {upload.is_published ? (
+              <Button onClick={() => setUnpublishModalOpen(true)} variant="secondary">Unpublish</Button>
+            ) : (
+              <Button className="btn-primary" onClick={() => setPublishModalOpen(true)}>Publish Results</Button>
+            )}
+          </div>
         </div>
       )}
 
       {students.length > 0 && (
         <div className="overflow-auto">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-sm text-muted-foreground">Showing {students.length} students</div>
+            <div className="flex gap-3 items-center">
+              {/* page size selector */}
+              <div className="flex items-center gap-2">
+                <label className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}>Page size</label>
+                <select value={studentsPageSize} onChange={(e) => {
+                  const v = Number(e.target.value);
+                  setStudentsPageSize(v);
+                  if (upload) navigateToPage(1, v);
+                }} className={`border rounded px-2 py-1 ${theme === 'dark' ? 'bg-slate-800 text-white border-slate-700' : 'bg-white text-foreground'}`}>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+
+            
+            </div>
+          </div>
           <div className="space-y-4">
             {students.map((s) => {
-              const studentMarks = marks[String(s.student_id)] || {};
+              const studentMarks = (allMarks[String(s.student_id)]?.subs) || marks[String(s.student_id)] || {};
               const incompleteCount = (s.subjects || []).reduce((acc: number, sub: any) => {
                 const e = studentMarks[String(sub.id)];
                 const cie = e?.cie;
@@ -240,8 +375,8 @@ export default function PublishResults() {
                           <tr key={sub.id}>
                             <td className="border px-2 py-1">{sub.name}</td>
                             <td className="border px-2 py-1">{sub.code}</td>
-                            <td className={`border px-2 py-1`}><Input className="w-20" type="number" min={0} max={50} value={cie} onChange={(e: any) => handleInput(s.student_id, sub.id, 'cie', e.target.value)} /></td>
-                            <td className={`border px-2 py-1`}><Input className="w-20" type="number" min={0} max={50} value={see} onChange={(e: any) => handleInput(s.student_id, sub.id, 'see', e.target.value)} /></td>
+                            <td className={`border px-2 py-1`}><Input disabled={upload?.is_published} className="w-20" type="number" min={0} max={50} value={cie} onChange={(e: any) => handleInput(s.student_id, s.usn, sub.id, 'cie', e.target.value)} /></td>
+                            <td className={`border px-2 py-1`}><Input disabled={upload?.is_published} className="w-20" type="number" min={0} max={50} value={see} onChange={(e: any) => handleInput(s.student_id, s.usn, sub.id, 'see', e.target.value)} /></td>
                             <td className="border px-2 py-1">{total}</td>
                             <td className={`border px-2 py-1 ${status === 'Pass' ? 'text-green-600' : status === 'Fail' ? 'text-red-600' : 'text-yellow-600'}`}>{status}</td>
                           </tr>
@@ -255,21 +390,115 @@ export default function PublishResults() {
           </div>
 
           <div className="mt-4 flex gap-2">
-            <Button onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save Marks'}</Button>
-            <Button onClick={async () => {
-              // warn about incomplete marks before publish
-              const anyIncomplete = students.some((s) => (s.subjects || []).some((sub: any) => {
-                const e = marks[String(s.student_id)]?.[String(sub.id)];
-                const cie = e?.cie;
-                const see = e?.see;
-                return (cie === null || cie === undefined || see === null || see === undefined || cie === '' || see === '');
-              }));
-              if (anyIncomplete) {
-                if (!confirm('Some students have incomplete marks. Are you sure you want to publish?')) return;
-              }
-              await handlePublish();
-            }}>Publish Results</Button>
+            <div className="flex items-center gap-3 mr-auto">
+              <button className="btn btn-sm" disabled={studentsPage <= 1} onClick={() => {
+                if (!upload) return;
+                navigateToPage(Math.max(1, studentsPage - 1));
+              }}>Previous</button>
+
+              {/* page numbers (windowed) */}
+              {(() => {
+                const totalPages = studentsPagination?.count ? Math.max(1, Math.ceil(studentsPagination.count / studentsPageSize)) : 1;
+                const maxButtons = 20;
+                let start = 1, end = totalPages;
+                if (totalPages > maxButtons) {
+                  const half = Math.floor(maxButtons / 2);
+                  start = Math.max(1, studentsPage - half);
+                  end = Math.min(totalPages, start + maxButtons - 1);
+                  if (end - start < maxButtons - 1) start = Math.max(1, end - maxButtons + 1);
+                }
+                const pages = [];
+                for (let p = start; p <= end; p++) pages.push(p);
+                return (
+                  <div className="flex gap-1">
+                      {pages.map(p => (
+                        <button
+                          key={p}
+                          className={`btn btn-xs ${p === studentsPage ? (theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-primary text-white') : (theme === 'dark' ? 'bg-slate-800 text-muted-foreground' : '')}`}
+                          onClick={() => upload && navigateToPage(p)}
+                        >{p}</button>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              <button className="btn btn-sm" disabled={!studentsPagination?.next} onClick={() => {
+                if (!upload) return;
+                navigateToPage(studentsPage + 1);
+              }}>Next</button>
+            </div>
+
+            <Button onClick={handleSave} disabled={saving || upload?.is_published}>{saving ? 'Saving...' : 'Save Marks'}</Button>
+            {upload?.is_published && (
+              <Button onClick={() => setUnpublishModalOpen(true)} variant="destructive">Unpublish</Button>
+            )}
           </div>
+          {/* Navigation confirmation modal */}
+          <Dialog open={navModalOpen} onOpenChange={setNavModalOpen}>
+            <DialogContent className={`max-w-xl ${theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
+                <DialogHeader>
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle className={`h-6 w-6 ${theme === 'dark' ? 'text-amber-300' : 'text-amber-500'} animate-pulse`} />
+                    <DialogTitle className={theme === 'dark' ? 'text-foreground text-lg' : 'text-gray-900 text-lg'}>Unsaved changes</DialogTitle>
+                  </div>
+                  <DialogDescription className={`mt-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-700'}`}>
+                    You have unsaved changes on this page. Save before navigating to avoid losing edits.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="mt-6 flex justify-end">
+                  <Button variant="ghost" onClick={() => { setNavModalOpen(false); setPendingNav(null); }}>Cancel</Button>
+                  <button className={`ml-3 px-4 py-2 rounded border ${theme === 'dark' ? 'border-amber-400 text-amber-200 bg-amber-900/10 hover:bg-amber-900/20' : 'border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100'}`} onClick={() => confirmNavSave(false)}>Continue without saving</button>
+                  <Button className="ml-3" onClick={() => confirmNavSave(true)}>Save and continue</Button>
+                </div>
+              </DialogContent>
+          </Dialog>
+      {/* Publish confirmation modal when incomplete marks present */}
+      <Dialog open={publishModalOpen} onOpenChange={setPublishModalOpen}>
+        <DialogContent className={`max-w-md ${theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
+            <DialogHeader>
+              <div className="flex items-center gap-3">
+                <AlertTriangle className={`h-6 w-6 ${theme === 'dark' ? 'text-amber-300' : 'text-amber-500'} animate-pulse`} />
+                <DialogTitle className={theme === 'dark' ? 'text-foreground text-lg' : 'text-gray-900 text-lg'}>Confirm Publish</DialogTitle>
+              </div>
+              <DialogDescription className={`mt-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-700'}`}>
+                <div className="mb-2">Once published, results cannot be edited. This action is irreversible.</div>
+                <div>Some students may have incomplete marks. You can continue to publish and those will be treated as incomplete/fail per rules.</div>
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4 flex justify-end">
+              <Button variant="ghost" onClick={() => setPublishModalOpen(false)}>Cancel</Button>
+              <Button variant="destructive" className="ml-3" onClick={async () => { setPublishModalOpen(false); await handlePublish(); }}>Confirm Publish</Button>
+            </div>
+        </DialogContent>
+      </Dialog>
+      {/* Unpublish confirmation modal (UI-only) */}
+      <Dialog open={unpublishModalOpen} onOpenChange={setUnpublishModalOpen}>
+        <DialogContent className={`max-w-md ${theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <AlertTriangle className={`h-6 w-6 ${theme === 'dark' ? 'text-rose-300' : 'text-rose-500'} animate-pulse`} />
+              <DialogTitle className={theme === 'dark' ? 'text-foreground text-lg' : 'text-gray-900 text-lg'}>Confirm Unpublish</DialogTitle>
+            </div>
+            <DialogDescription className={`mt-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-700'}`}>
+              This will mark the upload as not published in the UI only. No backend changes will be made. The public link will still work until the backend `is_published` flag is changed.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 flex justify-end">
+            <Button variant="ghost" onClick={() => setUnpublishModalOpen(false)}>Cancel</Button>
+            <Button className="ml-3" onClick={async () => {
+              setUnpublishModalOpen(false);
+              if (!upload) return;
+              const res = await unpublishUploadBatch(upload.id);
+              if (res.success) {
+                setUpload({ ...upload, is_published: false });
+                toast({ title: 'Unpublished', description: 'Public link is now inactive.' });
+              } else {
+                toast({ variant: 'destructive', title: 'Unpublish failed', description: res.message || 'Failed to unpublish' });
+              }
+            }}>Confirm Unpublish</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
         </div>
       )}
     </div>
