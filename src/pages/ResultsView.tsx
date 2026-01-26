@@ -1,11 +1,15 @@
 import React, { useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useLocation } from 'react-router-dom'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { publicViewResultByToken } from '@/utils/coe_api'
 
 const ResultsView: React.FC = () => {
-  const { token } = useParams<{ token: string }>();
+  const { token: paramToken } = useParams<{ token: string }>();
+  const location = useLocation();
+  // Accept token from route param or query string (?token=...)
+  const q = new URLSearchParams(location.search);
+  const token = paramToken || q.get('token') || '';
   const [usn, setUsn] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
