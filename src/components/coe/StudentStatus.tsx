@@ -197,7 +197,8 @@ const StudentStatus = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {filterOptions.semesters.map((semester: any) => (
-                    <SelectItem key={semester.id} value={semester.id.toString()}>
+                    // send semester number (string) so backend can match number+branch
+                    <SelectItem key={`${semester.id}_${semester.number}`} value={semester.number.toString()}>
                       Semester {semester.number}
                     </SelectItem>
                   ))}

@@ -302,7 +302,10 @@ export default function PublishResults() {
               <SelectValue placeholder="Select semester" />
             </SelectTrigger>
             <SelectContent>
-              {filters.semesters.map((s: any) => <SelectItem key={s.id} value={String(s.id)}>{s.number}</SelectItem>)}
+              {filters.semesters.map((s: any) => (
+                // Use semester number as the value so backend can resolve by number+branch
+                <SelectItem key={`${s.id}_${s.number}`} value={String(s.number)}>{s.number}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
