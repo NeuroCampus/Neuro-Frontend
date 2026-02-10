@@ -9,6 +9,8 @@ import NotFound from "./pages/NotFound";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
 import ResultsView from "./pages/ResultsView";
+import Revaluation from "./pages/Revaluation";
+import MakeupExam from "./pages/MakeupExam";
 import StudentDashboard from "./components/dashboards/StudentDashboard";
 import AdminDashboard from "./components/dashboards/AdminDashboard";
 import HODDashboard from "./components/dashboards/HODDashboard";
@@ -133,6 +135,23 @@ const App = () => {
           } />
 
           {/* Student routes */}
+          <Route path="/revaluation" element={
+            <ProtectedRoute allowedRoles={["teacher"]}>
+              <ThemeProvider>
+                <FacultyDashboard user={userData} setPage={() => {}} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </ThemeProvider>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/makeupexam" element={
+            <ProtectedRoute allowedRoles={["teacher"]}>
+              <ThemeProvider>
+                <FacultyDashboard user={userData} setPage={() => {}} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </ThemeProvider>
+            </ProtectedRoute>
+          } />
           <Route path="/dashboard" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>

@@ -115,6 +115,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       "attendance-records": <BarChart2 size={20} />,
       "faculty-attendance": <UserCheck size={20} />,
       announcements: <Bell size={20} />,
+      revaluation: <ClipboardList size={20} />,
+      makeupexam: <FileText size={20} />,
       "proctor-students": <UserCheck size={20} />,
       "student-leave": <FileText size={20} />,
       statistics: <BarChart2 size={20} />,
@@ -214,6 +216,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // Academic
     { name: "Timetable", page: "timetable" },
     { name: "Exam Applications", page: "exam-applications" },
+    { name: "Revaluation", page: "revaluation" },
+    { name: "Makeup Exam", page: "makeupexam" },
     { name: "Proctor Students", page: "proctor-students" },
     { name: "Scan for Student Info", page: "scan-student-info" },
     

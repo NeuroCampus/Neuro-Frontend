@@ -11,6 +11,8 @@ import AttendanceRecords from "../faculty/AttendanceRecords";
 import Announcements from "../faculty/Announcements";
 import ProctorStudents from "../faculty/ProctorStudents";
 import ExamApplication from "../faculty/ExamApplication";
+import Revaluation from "../../pages/Revaluation";
+import MakeupExam from "../../pages/MakeupExam";
 import ManageStudentLeave from "../faculty/ManageStudentLeave";
 import Timetable from "../faculty/Timetable";
 import Chat from "../common/Chat";
@@ -65,6 +67,10 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'scan-student-info': 'scan-student-info'
     };
 
+    // Add direct mappings for additional top-level routes
+    pathMap['revaluation'] = 'revaluation';
+    pathMap['makeupexam'] = 'makeupexam';
+
     return pathMap[lastPart] || 'dashboard';
   };
 
@@ -111,6 +117,8 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'announcements': '/faculty/announcements',
       'proctor-students': '/faculty/proctor-students',
       'exam-applications': '/faculty/exam-applications',
+      'revaluation': '/faculty/revaluation',
+      'makeupexam': '/faculty/makeupexam',
       'student-leave': '/faculty/student-leave',
       'timetable': '/faculty/timetable',
       'chat': '/faculty/chat',
@@ -167,6 +175,10 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
         return <ProctorStudents proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} pagination={proctorPagination} />;
       case "exam-applications":
         return <ExamApplication proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} />;
+      case "revaluation":
+        return <Revaluation />;
+      case "makeupexam":
+        return <MakeupExam />;
       case "student-leave":
         return <ManageStudentLeave proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} />;
       case "timetable":
