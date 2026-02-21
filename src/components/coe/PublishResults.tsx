@@ -382,19 +382,22 @@ export default function PublishResults() {
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <div className="font-medium">{s.name} <span className="text-sm text-muted-foreground">({s.usn})</span></div>
-                      <div className="text-sm text-muted-foreground">Subjects: {(s.subjects || []).length} • Incomplete: {incompleteCount}</div>
+                      <div className="text-sm text-muted-foreground">Subjects: {(s.subjects || []).length} • Incomplete Entries: {incompleteCount}</div>
                     </div>
                   </div>
 
                   <table className="table-auto w-full border-collapse">
                     <thead>
                       <tr>
-                        <th className="border px-2 py-1">Subject</th>
-                        <th className="border px-2 py-1">Code</th>
-                        <th className="border px-2 py-1">CIE (0-50)</th>
-                        <th className="border px-2 py-1">SEE (0-50)</th>
-                        <th className="border px-2 py-1">Total</th>
-                        <th className="border px-2 py-1">Status</th>
+                        <th className="border px-2 py-1">Subject Code</th>
+                        <th className="border px-2 py-1">Subject Title</th>
+                        <th className="border px-2 py-1">CIE</th>
+                        <th className="border px-2 py-1">SEE</th>
+                        <th className="border px-2 py-1">Total Marks</th>
+                        <th className="border px-2 py-1">Result</th>
+                        <th className="border px-2 py-1">Grade</th>
+                        <th className="border px-2 py-1">Grade Point</th>
+                        <th className="border px-2 py-1">Credits Assigned</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -403,19 +406,104 @@ export default function PublishResults() {
                         const cie = entry?.cie ?? '';
                         const see = entry?.see ?? '';
                         const total = (typeof cie === 'number' && typeof see === 'number') ? (cie + see) : '';
-                        const status = (typeof cie === 'number' && typeof see === 'number' && cie >= 18 && see >= 18) ? 'Pass' : (total === '' ? 'Incomplete' : 'Fail');
+                        const result = (typeof total === 'number' && total >= 40) ? 'Pass' : (total === '' ? 'Incomplete' : 'Fail');
+                        // Display actual total (CIE + SEE) for all cases
+                        const displayTotal = total;
+                        
+                        // Calculate grade based on total marks (assuming 100 max)
+                        let grade = '';
+                        let gradePoints = '';
+                        if (typeof total === 'number') {
+                          if (total >= 90) { grade = 'S'; gradePoints = '10'; }
+                          else if (total >= 80) { grade = 'A'; gradePoints = '9'; }
+                          else if (total >= 70) { grade = 'B'; gradePoints = '8'; }
+                          else if (total >= 60) { grade = 'C'; gradePoints = '7'; }
+                          else if (total >= 50) { grade = 'D'; gradePoints = '6'; }
+                          else if (total >= 40) { grade = 'E'; gradePoints = '5'; }
+                          else { grade = 'F'; gradePoints = '0'; }
+                        }
+                        
                         return (
                           <tr key={sub.id}>
-                            <td className="border px-2 py-1">{sub.name}</td>
                             <td className="border px-2 py-1">{sub.code}</td>
+                            <td className="border px-2 py-1">{sub.name}</td>
                             <td className={`border px-2 py-1`}><Input disabled={upload?.is_published} className="w-20" type="number" min={0} max={50} value={cie} onChange={(e: any) => handleInput(s.student_id, s.usn, sub.id, 'cie', e.target.value)} onWheel={(e:any) => e.currentTarget.blur()} /></td>
                             <td className={`border px-2 py-1`}><Input disabled={upload?.is_published} className="w-20" type="number" min={0} max={50} value={see} onChange={(e: any) => handleInput(s.student_id, s.usn, sub.id, 'see', e.target.value)} onWheel={(e:any) => e.currentTarget.blur()} /></td>
-                            <td className="border px-2 py-1">{total}</td>
-                            <td className={`border px-2 py-1 ${status === 'Pass' ? 'text-green-600' : status === 'Fail' ? 'text-red-600' : 'text-yellow-600'}`}>{status}</td>
+                            <td className="border px-2 py-1">{displayTotal}</td>
+                            <td className={`border px-2 py-1 ${result === 'Pass' ? 'text-green-600' : result === 'Fail' ? 'text-red-600' : 'text-yellow-600'}`}>{result}</td>
+                            <td className="border px-2 py-1">{grade}</td>
+                            <td className="border px-2 py-1">{gradePoints}</td>
+                            <td className="border px-2 py-1">{result === 'Pass' ? (sub.credits ?? 0) : (result === 'Fail' ? 0 : 'N/A')}</td>
                           </tr>
                         );
                       })}
                     </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colSpan={8} className="border px-2 py-1 font-semibold text-right">Total Credits Earned:</td>
+                        <td className="border px-2 py-1 font-semibold">
+                          {(s.subjects || []).reduce((acc: number, sub: any) => {
+                            const entry = studentMarks[String(sub.id)];
+                            const cie = entry?.cie;
+                            const see = entry?.see;
+                            const total = (typeof cie === 'number' && typeof see === 'number') ? (cie + see) : 0;
+                            const result = (typeof total === 'number' && total >= 40) ? 'Pass' : 'Fail';
+                            // Add credits based on result: Pass = actual credits, Fail = 0
+                            const creditsToAdd = result === 'Pass' ? (sub.credits || 0) : 0;
+                            return acc + creditsToAdd;
+                          }, 0)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colSpan={8} className="border px-2 py-1 font-semibold text-right">Total Marks Obtained:</td>
+                        <td className="border px-2 py-1 font-semibold">
+                          {(s.subjects || []).reduce((acc: number, sub: any) => {
+                            const entry = studentMarks[String(sub.id)];
+                            const cie = entry?.cie;
+                            const see = entry?.see;
+                            const total = (typeof cie === 'number' && typeof see === 'number') ? (cie + see) : 0;
+                            return acc + (typeof total === 'number' ? total : 0);
+                          }, 0)}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colSpan={8} className="border px-2 py-1 font-semibold text-right">SGPA:</td>
+                        <td className="border px-2 py-1 font-semibold">
+                          {(() => {
+                            const subjects = s.subjects || [];
+                            let totalGradePoints = 0;
+                            let totalCredits = 0;
+                            
+                            subjects.forEach((sub: any) => {
+                              const entry = studentMarks[String(sub.id)];
+                              const cie = entry?.cie;
+                              const see = entry?.see;
+                              const meetsMinCIE = typeof cie === 'number' && cie >= 20;
+                              const meetsMinSEE = typeof see === 'number' && see >= 18;
+                              const total = (typeof cie === 'number' && typeof see === 'number') ? (cie + see) : 0;
+                              const credits = sub.credits || 0;
+                              const result = (meetsMinCIE && meetsMinSEE) ? 'Pass' : 'Fail';
+                              
+                              if (typeof total === 'number' && credits > 0 && result === 'Pass') {
+                                let gradePoints = 0;
+                                if (total >= 90) gradePoints = 10;
+                                else if (total >= 80) gradePoints = 9;
+                                else if (total >= 70) gradePoints = 8;
+                                else if (total >= 60) gradePoints = 7;
+                                else if (total >= 50) gradePoints = 6;
+                                else if (total >= 40) gradePoints = 5;
+                                else gradePoints = 0;
+                                
+                                totalGradePoints += gradePoints * credits;
+                                totalCredits += credits;
+                              }
+                            });
+                            
+                            return totalCredits > 0 ? (totalGradePoints / totalCredits).toFixed(2) : '0.00';
+                          })()}
+                        </td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </div>
               );
