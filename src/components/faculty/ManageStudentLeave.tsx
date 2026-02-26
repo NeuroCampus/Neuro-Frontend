@@ -108,8 +108,8 @@ const ManageStudentLeave: React.FC<ManageStudentLeaveProps> = ({ proctorStudents
   // Filter and search
   const filteredRows = leaveRows.filter((row: LeaveRow) => {
     const matchesSearch =
-      row.student_name.toLowerCase().includes(search.toLowerCase()) ||
-      row.usn.toLowerCase().includes(search.toLowerCase());
+      (row.student_name?.toLowerCase() || '').includes(search.toLowerCase()) ||
+      (row.usn?.toLowerCase() || '').includes(search.toLowerCase());
     const matchesStatus =
       filterStatus === "All" || row.status === filterStatus;
     return matchesSearch && matchesStatus;
