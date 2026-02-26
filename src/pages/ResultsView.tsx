@@ -185,29 +185,55 @@ const ResultsView: React.FC = () => {
                 <table className="w-full table-auto border-collapse">
                   <thead>
                     <tr className="text-left">
-                      <th className="p-2 border-b text-gray-700">Subject</th>
-                      <th className="p-2 border-b text-gray-700">Code</th>
+                      <th className="p-2 border-b text-gray-700">Subject Code</th>
+                      <th className="p-2 border-b text-gray-700">Subject Title</th>
                       <th className="p-2 border-b text-gray-700 text-right">CIE</th>
                       <th className="p-2 border-b text-gray-700 text-right">SEE</th>
-                      <th className="p-2 border-b text-gray-700 text-right">Total</th>
-                      <th className="p-2 border-b text-gray-700">Status</th>
+                      <th className="p-2 border-b text-gray-700 text-right">Total Marks</th>
+                      <th className="p-2 border-b text-gray-700">Result</th>
+                      <th className="p-2 border-b text-gray-700">Grade</th>
+                      <th className="p-2 border-b text-gray-700">Grade Point</th>
+                      <th className="p-2 border-b text-gray-700">Credits Assigned</th>
                     </tr>
                   </thead>
                   <tbody>
                     {Array.isArray(result.marks) && result.marks.length > 0 ? (
-                      result.marks.map((m: any, idx: number) => (
+                      result.marks.map((m: {subject: string, subject_code: string, cie?: number, see?: number, total?: number, status: string, credits?: number, credit?: number, credit_hours?: number, creditHours?: number, credit_hour?: number}, idx: number) => {
+                        // Calculate grade and grade points based on total marks
+                        const total = m.total;
+                        let grade = '';
+                        let gradePoints = '';
+                        if (typeof total === 'number') {
+                          if (total >= 90) { grade = 'S'; gradePoints = '10'; }
+                          else if (total >= 80) { grade = 'A'; gradePoints = '9'; }
+                          else if (total >= 70) { grade = 'B'; gradePoints = '8'; }
+                          else if (total >= 60) { grade = 'C'; gradePoints = '7'; }
+                          else if (total >= 50) { grade = 'D'; gradePoints = '6'; }
+                          else if (total >= 40) { grade = 'E'; gradePoints = '5'; }
+                          else { grade = 'F'; gradePoints = '0'; }
+                        }
+                        
+                        // Determine credits based on pass/fail status
+                        const availableCredits = m.credits ?? m.credit ?? m.credit_hours ?? m.creditHours ?? m.credit_hour ?? 0;
+                        const credits = m.status === 'pass' ? availableCredits : 0;
+                        
+                        return (
                         <tr key={idx} className="odd:bg-gray-50 even:bg-white">
+                          <td className="p-2 text-gray-900">{m.subject_code}</td>
                           <td className="p-2 text-gray-900">{m.subject}</td>
-                          <td className="p-2 text-gray-700">{m.subject_code}</td>
                           <td className="p-2 text-gray-900 text-right">{m.cie ?? '-'}</td>
                           <td className="p-2 text-gray-900 text-right">{m.see ?? '-'}</td>
                           <td className="p-2 text-gray-900 text-right">{m.total ?? '-'}</td>
-                          <td className={m.status === 'pass' ? 'p-2 text-green-600' : 'p-2 text-red-600'}>{m.status ?? '-'}</td>
+                          <td className={m.status === 'pass' ? 'p-2 text-green-600 font-medium' : 'p-2 text-red-600 font-medium'}>{m.status?.toUpperCase() ?? '-'}</td>
+                          <td className="p-2 text-gray-900">{grade}</td>
+                          <td className="p-2 text-gray-900">{gradePoints}</td>
+                          <td className="p-2 text-gray-900">{credits}</td>
                         </tr>
-                      ))
+                        );
+                      })
                     ) : (
                       <tr>
-                        <td className="p-2 text-gray-600" colSpan={6}>No marks available</td>
+                        <td className="p-2 text-gray-600" colSpan={9}>No marks available</td>
                       </tr>
                     )}
                   </tbody>
@@ -243,32 +269,114 @@ const ResultsView: React.FC = () => {
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr>
-                      <th style={{ borderBottom: '1px solid #ddd', textAlign: 'left', padding: 6 }}>Subject</th>
-                      <th style={{ borderBottom: '1px solid #ddd', textAlign: 'left', padding: 6 }}>Code</th>
+                      <th style={{ borderBottom: '1px solid #ddd', textAlign: 'left', padding: 6 }}>Subject Code</th>
+                      <th style={{ borderBottom: '1px solid #ddd', textAlign: 'left', padding: 6 }}>Subject Title</th>
                       <th style={{ borderBottom: '1px solid #ddd', textAlign: 'right', padding: 6 }}>CIE</th>
                       <th style={{ borderBottom: '1px solid #ddd', textAlign: 'right', padding: 6 }}>SEE</th>
-                      <th style={{ borderBottom: '1px solid #ddd', textAlign: 'right', padding: 6 }}>Total</th>
+                      <th style={{ borderBottom: '1px solid #ddd', textAlign: 'right', padding: 6 }}>Total Marks</th>
+                      <th style={{ borderBottom: '1px solid #ddd', textAlign: 'left', padding: 6 }}>Result</th>
+                      <th style={{ borderBottom: '1px solid #ddd', textAlign: 'left', padding: 6 }}>Grade</th>
+                      <th style={{ borderBottom: '1px solid #ddd', textAlign: 'left', padding: 6 }}>Grade Point</th>
+                      <th style={{ borderBottom: '1px solid #ddd', textAlign: 'left', padding: 6 }}>Credits Assigned</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {Array.isArray(result.marks) && result.marks.map((m: any, i: number) => (
+                    {Array.isArray(result.marks) && result.marks.map((m: {subject: string, subject_code: string, cie?: number, see?: number, total?: number, status: string, credits?: number, credit?: number, credit_hours?: number, creditHours?: number, credit_hour?: number}, i: number) => {
+                      // Calculate grade and grade points based on total marks
+                      const total = m.total;
+                      let grade = '';
+                      let gradePoints = '';
+                      if (typeof total === 'number') {
+                        if (total >= 90) { grade = 'S'; gradePoints = '10'; }
+                        else if (total >= 80) { grade = 'A'; gradePoints = '9'; }
+                        else if (total >= 70) { grade = 'B'; gradePoints = '8'; }
+                        else if (total >= 60) { grade = 'C'; gradePoints = '7'; }
+                        else if (total >= 50) { grade = 'D'; gradePoints = '6'; }
+                        else if (total >= 40) { grade = 'E'; gradePoints = '5'; }
+                        else { grade = 'F'; gradePoints = '0'; }
+                      }
+                      
+                      // Determine credits based on pass/fail status
+                      const availableCredits = m.credits ?? m.credit ?? m.credit_hours ?? m.creditHours ?? m.credit_hour ?? 0;
+                      const credits = m.status === 'pass' ? availableCredits : 0;
+                      
+                      return (
                       <tr key={i}>
-                        <td style={{ padding: 6 }}>{m.subject}</td>
                         <td style={{ padding: 6 }}>{m.subject_code}</td>
+                        <td style={{ padding: 6 }}>{m.subject}</td>
                         <td style={{ padding: 6, textAlign: 'right' }}>{m.cie ?? '-'}</td>
                         <td style={{ padding: 6, textAlign: 'right' }}>{m.see ?? '-'}</td>
                         <td style={{ padding: 6, textAlign: 'right' }}>{m.total ?? '-'}</td>
+                        <td style={{ padding: 6 }}>{m.status?.toUpperCase() ?? '-'}</td>
+                        <td style={{ padding: 6 }}>{grade}</td>
+                        <td style={{ padding: 6 }}>{gradePoints}</td>
+                        <td style={{ padding: 6 }}>{credits}</td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
-                <div style={{ marginTop: 10, display: 'flex', justifyContent: 'space-between' }}>
-                  <div>
-                    <div><strong>Total:</strong> {result.aggregate?.total_marks ?? '-'}</div>
-                    <div><strong>CGPA:</strong> {cgpa ?? '-'}</div>
-                  </div>
-                  <div><strong>Status:</strong> {result.aggregate?.overall_status ?? '-'}</div>
-                </div>
+                <table style={{ width: '100%', marginTop: 10, borderCollapse: 'collapse' }}>
+                  <tbody>
+                    <tr>
+                      <td style={{ padding: 6, fontWeight: 'bold', textAlign: 'right' }}>Total Credits Earned:</td>
+                      <td style={{ padding: 6, fontWeight: 'bold' }}>
+                        {(result.marks || []).reduce((acc: number, m: {status: string, credits?: number, credit?: number, credit_hours?: number, creditHours?: number, credit_hour?: number}) => {
+                          const availableCredits = m.credits ?? m.credit ?? m.credit_hours ?? m.creditHours ?? m.credit_hour ?? 0;
+                          const credits = m.status === 'pass' ? availableCredits : 0;
+                          return acc + credits;
+                        }, 0)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: 6, fontWeight: 'bold', textAlign: 'right' }}>Total Marks Obtained:</td>
+                      <td style={{ padding: 6, fontWeight: 'bold' }}>
+                        {(result.marks || []).reduce((acc: number, m: {total?: number}) => {
+                          return acc + (typeof m.total === 'number' ? m.total : 0);
+                        }, 0)}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: 6, fontWeight: 'bold', textAlign: 'right' }}>SGPA:</td>
+                      <td style={{ padding: 6, fontWeight: 'bold' }}>
+                        {(() => {
+                          const marks = result.marks || [];
+                          let totalGradePoints = 0;
+                          let totalCredits = 0;
+                          
+                          marks.forEach((m: {total?: number, credits?: number, credit?: number, credit_hours?: number, creditHours?: number, credit_hour?: number, status: string}) => {
+                            const total = m.total;
+                            const credits = m.credits ?? m.credit ?? m.credit_hours ?? m.creditHours ?? m.credit_hour ?? 0;
+                            
+                            if (typeof total === 'number' && credits > 0 && m.status === 'pass') {
+                              let gradePoints = 0;
+                              if (total >= 90) gradePoints = 10;
+                              else if (total >= 80) gradePoints = 9;
+                              else if (total >= 70) gradePoints = 8;
+                              else if (total >= 60) gradePoints = 7;
+                              else if (total >= 50) gradePoints = 6;
+                              else if (total >= 40) gradePoints = 5;
+                              else gradePoints = 0;
+                              
+                              totalGradePoints += gradePoints * credits;
+                              totalCredits += credits;
+                            }
+                          });
+                          
+                          return totalCredits > 0 ? (totalGradePoints / totalCredits).toFixed(2) : '0.00';
+                        })()}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: 6, fontWeight: 'bold', textAlign: 'right' }}>CGPA:</td>
+                      <td style={{ padding: 6, fontWeight: 'bold' }}>{cgpa ?? '-'}</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: 6, fontWeight: 'bold', textAlign: 'right' }}>Overall Status:</td>
+                      <td style={{ padding: 6, fontWeight: 'bold' }}>{result.aggregate?.overall_status ?? '-'}</td>
+                    </tr>
+                  </tbody>
+                </table>
                 <div style={{ marginTop: 18, fontSize: 11 }}>This is an official marks card generated from AMC - Neuro Campus.</div>
               </div>
             </div>
