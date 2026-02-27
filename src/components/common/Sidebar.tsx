@@ -233,6 +233,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Timetable", page: "timetable" },
     { name: "Attendance", page: "attendance" },
     { name: "Internal Marks", page: "marks" },
+    { name: "Revaluation", page: "revaluation" },
+    { name: "Makeup Exam", page: "makeupexam" },
     { name: "Fees", page: "fees" },
 
     // Interview

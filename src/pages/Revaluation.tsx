@@ -7,6 +7,8 @@ type Filters = { usn: string; exam_period: string };
 const Revaluation = () => {
   const [filters, setFilters] = useState<Filters>({ usn: "", exam_period: "" });
   const [students, setStudents] = useState<any[]>([]);
+  const role = typeof window !== 'undefined' ? localStorage.getItem('role') : null;
+  const [selectionMap, setSelectionMap] = useState<Record<number, { revaluation: boolean; photocopy: boolean }>>({});
   const [loading, setLoading] = useState(false);
 
   const sanitizeMessage = (msg: any) => {
@@ -149,6 +151,7 @@ const Revaluation = () => {
                   <th className="p-2 border-b text-right">Total</th>
                   <th className="p-2 border-b">Status</th>
                   <th className="p-2 border-b">Action</th>
+                  {role === 'student' && <th className="p-2 border-b">Select</th>}
                 </tr>
               </thead>
               <tbody>
@@ -165,11 +168,19 @@ const Revaluation = () => {
                     </td>
                     <td className="p-2">
                       {sub.subject_mark_id ? (
-                        <button disabled={sub.applied} onClick={() => handleApply(sub.subject_mark_id, sub.subject_name)} className={`px-3 py-1 rounded ${sub.applied ? 'bg-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]' : 'bg-[hsl(var(--secondary))] text-[hsl(var(--secondary-foreground))]'}`}>
-                          {sub.applied ? 'Applied' : 'Apply for Revaluation'}
-                        </button>
+                        role === 'student' ? (
+                          <div className="flex gap-2 items-center">
+                            <label className="text-sm"><input type="checkbox" checked={!!selectionMap[sub.subject_mark_id]?.revaluation} onChange={(e)=>setSelectionMap(prev=>({ ...prev, [sub.subject_mark_id]: { ...(prev[sub.subject_mark_id]||{revaluation:false,photocopy:false}), revaluation: e.target.checked } }))} /> <span className="ml-1">Reval</span></label>
+                            <label className="text-sm"><input type="checkbox" checked={!!selectionMap[sub.subject_mark_id]?.photocopy} onChange={(e)=>setSelectionMap(prev=>({ ...prev, [sub.subject_mark_id]: { ...(prev[sub.subject_mark_id]||{revaluation:false,photocopy:false}), photocopy: e.target.checked } }))} /> <span className="ml-1">Photocopy</span></label>
+                          </div>
+                        ) : (
+                          <button disabled={sub.applied} onClick={() => handleApply(sub.subject_mark_id, sub.subject_name)} className={`px-3 py-1 rounded ${sub.applied ? 'bg-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]' : 'bg-[hsl(var(--secondary))] text-[hsl(var(--secondary-foreground))]'}`}>
+                            {sub.applied ? 'Applied' : 'Apply for Revaluation'}
+                          </button>
+                        )
                       ) : 'N/A'}
                     </td>
+                    {role === 'student' && <td className="p-2">&nbsp;</td>}
                   </tr>
                 ))}
               </tbody>
@@ -177,6 +188,33 @@ const Revaluation = () => {
           </div>
         </div>
       ))}
+
+      {role === 'student' && (
+        <div className="max-w-4xl mx-auto p-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm">Selected: {Object.keys(selectionMap).filter(k=>selectionMap[Number(k)].revaluation || selectionMap[Number(k)].photocopy).length}</div>
+            <div className="text-sm">Total: ₹{Object.keys(selectionMap).reduce((acc,k)=>{ const s = selectionMap[Number(k)]; if(!s) return acc; return acc + (s.revaluation?600:0) + (s.photocopy?400:0); }, 0)}</div>
+            <div>
+              <button onClick={async ()=>{
+                // prepare items
+                const items = Object.entries(selectionMap).map(([k,v])=>({ subject_mark_id: Number(k), revaluation: !!v.revaluation, photocopy: !!v.photocopy })).filter(it=>it.revaluation || it.photocopy);
+                if(items.length===0) return setMessageModal({ open: true, title: 'Error', message: 'Select at least one item to pay' });
+                setLoading(true);
+                try{
+                  const res = await fetchWithTokenRefresh(`${API_ENDPOINT}/revaluation/initiate-payment/`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items }) });
+                  const json = await res.json();
+                  if(json.success && json.checkout_url){
+                    window.location.href = json.checkout_url;
+                  } else {
+                    setMessageModal({ open: true, title: 'Error', message: json.message || 'Failed to initiate payment' });
+                  }
+                }catch(err){ console.error(err); setMessageModal({ open: true, title: 'Error', message: 'Network error' }); }
+                setLoading(false);
+              }} className="px-4 py-2 rounded bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]">Pay & Apply</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {confirmModal.open && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">

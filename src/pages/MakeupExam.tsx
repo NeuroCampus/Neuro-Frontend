@@ -14,6 +14,7 @@ const MakeupExam = () => {
   const [messageModal, setMessageModal] = useState<{ open: boolean; title?: string; message?: string }>({ open: false });
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectionMap, setSelectionMap] = useState<Record<number, boolean>>({});
   const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<number | null>(null);
   const [selectedSubjectName, setSelectedSubjectName] = useState<string | null>(null);
@@ -147,6 +148,7 @@ const MakeupExam = () => {
                   <th className="p-2 border-b text-right">Total</th>
                   <th className="p-2 border-b">Status</th>
                   <th className="p-2 border-b">Action</th>
+                  {role === 'student' && <th className="p-2 border-b">Select</th>}
                 </tr>
               </thead>
               <tbody>
@@ -159,11 +161,16 @@ const MakeupExam = () => {
                     <td className="p-2">{sub.applied ? <span className="text-[hsl(var(--muted-foreground))]">Applied</span> : (sub.status === 'pass' ? <span className="text-[hsl(140,50%,40%)]">Pass</span> : <span className="text-[hsl(0,70%,60%)]">Fail</span>)}</td>
                     <td className="p-2">
                       {sub.subject_id ? (
-                        <button disabled={sub.applied} onClick={() => { setSelectedStudent(s.student_id); setSelectedSubject(sub.subject_id); setSelectedSubjectName(sub.subject_name); setConfirmMakeup({ open: true, student_id: s.student_id, subject_id: sub.subject_id, subject_name: sub.subject_name }); }} className={`px-3 py-1 rounded ${sub.applied ? 'bg-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]' : 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'}`}>
-                          {sub.applied ? 'Applied' : 'Apply for Makeup'}
-                        </button>
+                        role === 'student' ? (
+                          <input type="checkbox" checked={!!selectionMap[sub.subject_id]} onChange={(e)=>setSelectionMap(prev=>({ ...prev, [sub.subject_id]: e.target.checked }))} />
+                        ) : (
+                          <button disabled={sub.applied} onClick={() => { setSelectedStudent(s.student_id); setSelectedSubject(sub.subject_id); setSelectedSubjectName(sub.subject_name); setConfirmMakeup({ open: true, student_id: s.student_id, subject_id: sub.subject_id, subject_name: sub.subject_name }); }} className={`px-3 py-1 rounded ${sub.applied ? 'bg-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]' : 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'}`}>
+                            {sub.applied ? 'Applied' : 'Apply for Makeup'}
+                          </button>
+                        )
                       ) : 'N/A'}
                     </td>
+                    {role === 'student' && <td className="p-2">&nbsp;</td>}
                   </tr>
                 ))}
               </tbody>
@@ -171,6 +178,30 @@ const MakeupExam = () => {
           </div>
         </div>
       ))}
+
+      {role === 'student' && (
+        <div className="max-w-4xl mx-auto p-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm">Selected: {Object.keys(selectionMap).filter(k=>selectionMap[Number(k)]).length}</div>
+            <div className="text-sm">Total: ₹{Object.keys(selectionMap).reduce((acc,k)=> acc + (selectionMap[Number(k)]?300:0), 0)}</div>
+            <div>
+              <button onClick={async ()=>{
+                const items = Object.entries(selectionMap).map(([k,v])=>({ subject_id: Number(k) })).filter((it:any)=>selectionMap[it.subject_id]);
+                if(items.length===0) return setMessageModal({ open: true, title: 'Error', message: 'Select at least one subject to pay' });
+                if(!filters.exam_period) return setMessageModal({ open: true, title: 'Error', message: 'Select exam period' });
+                setLoading(true);
+                try{
+                  const res = await fetchWithTokenRefresh(`${API_ENDPOINT}/makeup/initiate-payment/`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items, exam_period: filters.exam_period }) });
+                  const json = await res.json();
+                  if(json.success && json.checkout_url){ window.location.href = json.checkout_url; }
+                  else setMessageModal({ open: true, title: 'Error', message: json.message || 'Failed to initiate payment' });
+                }catch(err){ console.error(err); setMessageModal({ open: true, title: 'Error', message: 'Network error' }); }
+                setLoading(false);
+              }} className="px-4 py-2 rounded bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]">Pay & Apply</button>
+            </div>
+          </div>
+        </div>
+      )}
       {confirmMakeup.open && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
           <div className="w-11/12 max-w-md p-4 rounded shadow-lg bg-[hsl(var(--card))] border border-[hsl(var(--border))]">

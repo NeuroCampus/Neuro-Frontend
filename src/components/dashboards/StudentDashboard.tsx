@@ -26,6 +26,8 @@ const AIInterview = lazy(() => import("../student/AIInterview"));
 const StudentFees = lazy(() => import("../../pages/StudentFees"));
 const PaymentSuccess = lazy(() => import("../../pages/PaymentSuccess"));
 const PaymentCancel = lazy(() => import("../../pages/PaymentCancel"));
+const Revaluation = lazy(() => import("../../pages/Revaluation"));
+const MakeupExam = lazy(() => import("../../pages/MakeupExam"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -120,6 +122,10 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
         return <Chat role="student" />;
       case "ai-interview":
         return <AIInterview />;
+      case "revaluation":
+        return <Revaluation />;
+      case "makeupexam":
+        return <MakeupExam />;
       default:
         return <StudentDashboardOverview setPage={handlePageChange} user={user} />;
     }

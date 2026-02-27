@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, Loader2, Download, ArrowLeft } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface PaymentSuccessProps {
   setPage?: (page: string) => void;
@@ -12,6 +13,7 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ setPage }) => {
   const [paymentStatus, setPaymentStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [paymentDetails, setPaymentDetails] = useState<any>(null);
   const { theme } = useTheme();
+  const { toast } = useToast();
 
   // Get URL parameters from window.location
   const urlParams = new URLSearchParams(window.location.search);
@@ -41,12 +43,83 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ setPage }) => {
   };
 
   useEffect(() => {
-    if (sessionId) {
-      checkPaymentStatus();
-    } else {
-      // No session ID found, show error
+    if (!sessionId) {
       setPaymentStatus('error');
+      return;
     }
+
+    let stopped = false;
+    const intervalMs = 3000; // poll every 3s
+    const maxAttempts = 20; // ~60s timeout
+    let attempts = 0;
+
+    const poll = async () => {
+      attempts += 1;
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/api/payments/status/${sessionId}/`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+          },
+        });
+
+        if (!response.ok) {
+          if (attempts >= maxAttempts) {
+            setPaymentStatus('error');
+            stopped = true;
+          }
+          return;
+        }
+
+        const data = await response.json();
+        setPaymentDetails(data);
+
+        if (data.payment_status === 'paid') {
+          setPaymentStatus('success');
+          // show applied toast
+          try {
+            toast({ title: 'Applied successfully', description: 'Your application has been submitted after payment confirmation.' });
+          } catch (e) {
+            // ignore toast errors
+          }
+          // redirect after short delay: if parent provided setPage, use it; otherwise navigate to dashboard
+          const redirectTimer = setTimeout(() => {
+            if (setPage) {
+              try { setPage('fees'); } catch (e) { window.location.href = '/dashboard'; }
+            } else {
+              window.location.href = '/dashboard';
+            }
+          }, 2500);
+          stopped = true;
+          return () => clearTimeout(redirectTimer);
+        }
+
+        if (attempts >= maxAttempts) {
+          setPaymentStatus('error');
+          stopped = true;
+        }
+      } catch (err) {
+        console.error('Error checking payment status:', err);
+        if (attempts >= maxAttempts) {
+          setPaymentStatus('error');
+          stopped = true;
+        }
+      }
+    };
+
+    // start initial poll immediately then interval
+    poll();
+    const timer = setInterval(() => {
+      if (stopped) {
+        clearInterval(timer);
+        return;
+      }
+      poll();
+    }, intervalMs);
+
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+    };
   }, [sessionId]);
 
   const checkPaymentStatus = async () => {

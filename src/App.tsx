@@ -134,20 +134,26 @@ const App = () => {
             </ThemeProvider>
           } />
 
-          {/* Student routes */}
+          {/* Revaluation & Makeup routes: accessible to both teachers and students. Render appropriate dashboard based on current role. */}
           <Route path="/revaluation" element={
-            <ProtectedRoute allowedRoles={["teacher"]}>
+            <ProtectedRoute allowedRoles={["teacher","student"]}>
               <ThemeProvider>
-                <FacultyDashboard user={userData} setPage={() => {}} />
+                {(() => {
+                  const roleNow = localStorage.getItem('role');
+                  return roleNow === 'teacher' ? <FacultyDashboard user={userData} setPage={() => {}} /> : <StudentDashboard user={userData} setPage={() => {}} />;
+                })()}
                 {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
           } />
 
           <Route path="/makeupexam" element={
-            <ProtectedRoute allowedRoles={["teacher"]}>
+            <ProtectedRoute allowedRoles={["teacher","student"]}>
               <ThemeProvider>
-                <FacultyDashboard user={userData} setPage={() => {}} />
+                {(() => {
+                  const roleNow = localStorage.getItem('role');
+                  return roleNow === 'teacher' ? <FacultyDashboard user={userData} setPage={() => {}} /> : <StudentDashboard user={userData} setPage={() => {}} />;
+                })()}
                 {shouldShowFloatingAssistant() && <FloatingAssistant />}
               </ThemeProvider>
             </ProtectedRoute>
