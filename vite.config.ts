@@ -28,5 +28,20 @@ export default defineConfig(({ mode }) => ({
   optimizeDeps: {
     include: ['react', 'react-dom'],
     exclude: ['@zxing/library', '@zxing/browser']
-  }
+  },
+  // Build optimizations for production chunking
+  // - `chunkSizeWarningLimit` raised to avoid noisy warnings for larger legitimate chunks
+  // - `manualChunks` separates heavy third-party libs into their own bundles
+  build: {
+    chunkSizeWarningLimit: 800, // KB
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          pdf: ['jspdf', 'html2canvas'],
+          images: ['browser-image-compression'],
+        },
+      },
+    },
+  },
 }));
