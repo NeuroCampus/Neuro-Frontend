@@ -239,8 +239,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "AI Interview", page: "ai-interview" },
     
     // Leave Management
-    { name: "Leave Request", page: "leave-request" },
-    { name: "Leave Status", page: "leave-status" },
+    { name: "Leaves", page: "leave" },
     
     // Profile
     { name: "Profile", page: "profile" },

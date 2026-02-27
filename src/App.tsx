@@ -192,6 +192,14 @@ const App = () => {
               </ThemeProvider>
             </ProtectedRoute>
           } />
+          <Route path="/leave" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <ThemeProvider>
+                <StudentDashboard user={userData} setPage={() => {}} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </ThemeProvider>
+            </ProtectedRoute>
+          } />
           <Route path="/leave-status" element={
             <ProtectedRoute allowedRoles={["student"]}>
               <ThemeProvider>

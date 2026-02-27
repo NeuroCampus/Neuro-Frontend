@@ -52,6 +52,7 @@ import {
 import { fetchWithTokenRefresh } from '../utils/authService';
 import { API_ENDPOINT } from '../utils/config';
 import { usePagination, useInfiniteScroll, useOptimisticUpdate } from './useOptimizations';
+import { getLeaveRequests } from '../utils/student_api';
 
 // Custom hooks for data fetching
 export const useProctorStudentsQuery = (enabled: boolean = true, include?: string | string[], examPeriod?: string) => {
@@ -187,6 +188,20 @@ export const useStudentStudyMaterialsQuery = (enabled: boolean = false) => {
       return response;
     },
     enabled, // Only fetch when explicitly enabled (lazy loading)
+  });
+};
+
+// Student Leave Requests with react-query
+export const useStudentLeaveRequestsQuery = (enabled: boolean = true) => {
+  return useQuery({
+    queryKey: ['studentLeaveRequests'],
+    queryFn: async () => {
+      const response = await getLeaveRequests();
+      if (!response.success) throw new Error(response.message || 'Failed to fetch leave requests');
+      return response.leave_requests || [];
+    },
+    enabled,
+    staleTime: 1000 * 30, // 30s
   });
 };
 

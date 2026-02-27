@@ -369,6 +369,10 @@ export default function PublishResults() {
           <div className="space-y-4">
             {students.map((s) => {
               const studentMarks = (allMarks[String(s.student_id)]?.subs) || marks[String(s.student_id)] || {};
+              // Consistent pass/fail rule used across this student row
+              const meetsPassCriteria = (c: any, se: any, t: any) => {
+                return (typeof c === 'number' && typeof se === 'number' && typeof t === 'number') && (c >= 20 && se >= 18 && t >= 40);
+              };
               const incompleteCount = (s.subjects || []).reduce((acc: number, sub: any) => {
                 const e = studentMarks[String(sub.id)];
                 const cie = e?.cie;
@@ -406,9 +410,8 @@ export default function PublishResults() {
                         const cie = entry?.cie ?? '';
                         const see = entry?.see ?? '';
                         const total = (typeof cie === 'number' && typeof see === 'number') ? (cie + see) : '';
-                        const result = (typeof total === 'number' && total >= 40) ? 'Pass' : (total === '' ? 'Incomplete' : 'Fail');
-                        // Display actual total (CIE + SEE) for all cases
                         const displayTotal = total;
+                        const result = displayTotal === '' ? 'Incomplete' : (meetsPassCriteria(cie, see, total) ? 'Pass' : 'Fail');
                         
                         // Calculate grade based on total marks (assuming 100 max)
                         let grade = '';
@@ -446,10 +449,9 @@ export default function PublishResults() {
                             const entry = studentMarks[String(sub.id)];
                             const cie = entry?.cie;
                             const see = entry?.see;
-                            const total = (typeof cie === 'number' && typeof see === 'number') ? (cie + see) : 0;
-                            const result = (typeof total === 'number' && total >= 40) ? 'Pass' : 'Fail';
-                            // Add credits based on result: Pass = actual credits, Fail = 0
-                            const creditsToAdd = result === 'Pass' ? (sub.credits || 0) : 0;
+                            const total = (typeof cie === 'number' && typeof see === 'number') ? (cie + see) : null;
+                            const passed = meetsPassCriteria(cie, see, total);
+                            const creditsToAdd = passed ? (sub.credits || 0) : 0;
                             return acc + creditsToAdd;
                           }, 0)}
                         </td>
@@ -478,13 +480,11 @@ export default function PublishResults() {
                               const entry = studentMarks[String(sub.id)];
                               const cie = entry?.cie;
                               const see = entry?.see;
-                              const meetsMinCIE = typeof cie === 'number' && cie >= 20;
-                              const meetsMinSEE = typeof see === 'number' && see >= 18;
-                              const total = (typeof cie === 'number' && typeof see === 'number') ? (cie + see) : 0;
+                              const total = (typeof cie === 'number' && typeof see === 'number') ? (cie + see) : null;
                               const credits = sub.credits || 0;
-                              const result = (meetsMinCIE && meetsMinSEE) ? 'Pass' : 'Fail';
-                              
-                              if (typeof total === 'number' && credits > 0 && result === 'Pass') {
+                              const passed = meetsPassCriteria(cie, see, total);
+
+                              if (typeof total === 'number' && credits > 0 && passed) {
                                 let gradePoints = 0;
                                 if (total >= 90) gradePoints = 10;
                                 else if (total >= 80) gradePoints = 9;
@@ -493,7 +493,7 @@ export default function PublishResults() {
                                 else if (total >= 50) gradePoints = 6;
                                 else if (total >= 40) gradePoints = 5;
                                 else gradePoints = 0;
-                                
+
                                 totalGradePoints += gradePoints * credits;
                                 totalCredits += credits;
                               }

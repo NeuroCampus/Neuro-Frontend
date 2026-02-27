@@ -12,6 +12,7 @@ import { useStudentLeaveRequestMutation } from "@/hooks/useApiQueries";
 import { useTheme } from "@/context/ThemeContext";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { useToast } from '@/components/ui/use-toast';
 
 const MySwal = withReactContent(Swal);
 
@@ -42,10 +43,11 @@ const SubmitLeaveRequest = () => {
 
     try {
       await leaveRequestMutation.mutateAsync(requestData);
-      
-      // Show success alert with theme-aware styling
+      // Show success toast and a subtle modal for confirmation
+      const { toast } = useToast();
+      toast({ title: 'Leave Request Submitted', description: 'Your request was submitted successfully.' });
+
       const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-      
       await MySwal.fire({
         title: 'Leave Request Submitted!',
         text: 'Your leave request has been successfully submitted.',
@@ -59,13 +61,18 @@ const SubmitLeaveRequest = () => {
       // Reset form
       setDateRange(undefined);
       setReason("");
+
+      // Scroll to the leave status list to show the newly created request
+      const el = document.getElementById('leave-status-list');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (error) {
       console.error("Failed to submit leave request:", error);
       setError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
-      
-      // Show error alert with theme-aware styling
+
+      const { toast } = useToast();
+      toast({ variant: 'destructive', title: 'Failed to submit', description: error instanceof Error ? error.message : 'Please try again.' });
+
       const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-      
       await MySwal.fire({
         title: 'Error!',
         text: error instanceof Error ? error.message : 'Something went wrong. Please try again.',
