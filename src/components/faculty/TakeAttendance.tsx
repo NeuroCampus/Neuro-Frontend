@@ -29,6 +29,14 @@ import { useTheme } from "@/context/ThemeContext";
 
 const TakeAttendance = () => {
   const { data: assignments = [], isLoading: assignmentsLoading, error: assignmentsError } = useFacultyAssignmentsQuery();
+  // Normalize assignment IDs to numbers to avoid string/number mismatch from backend
+  const normalizedAssignments = assignments.map(a => ({
+    ...a,
+    subject_id: a.subject_id ? Number(a.subject_id) : null,
+    branch_id: a.branch_id ? Number(a.branch_id) : null,
+    semester_id: a.semester_id ? Number(a.semester_id) : null,
+    section_id: a.section_id ? Number(a.section_id) : null,
+  }));
   const { theme } = useTheme();
   const [branchId, setBranchId] = useState<number | null>(null);
   const [semesterId, setSemesterId] = useState<number | null>(null);
@@ -66,6 +74,8 @@ const TakeAttendance = () => {
   const inFlightRequests = useRef<Map<string, Promise<any>>>(new Map());
   // Mirror of lastBootstrapParams in a ref for synchronous checks (avoids state update timing races)
   const lastBootstrapParamsRef = useRef<any>(null);
+  // When auto-deriving branch/semester/section, suppress the branch-change clearing effect once
+  const suppressBranchClearRef = useRef(false);
 
   // Central runLoader function (moved to component scope so multiple effects can use it)
   const runLoader = (loader: any, paramsObj: any, mapStudents: boolean = true) => {
@@ -187,7 +197,12 @@ const TakeAttendance = () => {
     if (debouncedSubjectId && debouncedBranchId && !debouncedSemesterId && !debouncedSectionId) {
       // For elective subjects we require semester selection before calling the elective endpoint
       if (subjectType === 'elective') return;
-      const loader = subjectType === 'open_elective' ? getStudentsForOpenElective : getStudentsForRegular;
+
+      // For open_elective we DO NOT load students on branch-only selection; require branch+semester+section
+      if (subjectType === 'open_elective') return;
+
+      // Regular subject: call regular loader
+      const loader = getStudentsForRegular;
       runLoader(loader, { subject_id: debouncedSubjectId, branch_id: debouncedBranchId, page: debouncedPage, page_size: debouncedPageSize });
       return;
     }
@@ -200,20 +215,8 @@ const TakeAttendance = () => {
         return;
       }
 
-      if (subjectType === 'open_elective') {
-        // For open electives: avoid server call on semester-only selection when we already have subject-level registrations.
-        if (subjectStudents && subjectStudents.length) {
-          const filtered = subjectStudents.filter((s: any) => String(s.branch_id) === String(debouncedBranchId) && String(s.semester_id) === String(debouncedSemesterId));
-          setStudents(filtered.map((s: any) => ({ id: s.id, name: s.name, usn: s.usn })));
-          // Update pagination/counts based on filtered result
-          setTotalPages(1);
-          setTotalStudentsCount(filtered.length || 0);
-          return;
-        }
-        // Fallback: if we don't have subjectStudents cached, fetch from server
-        runLoader(getStudentsForOpenElective, { subject_id: debouncedSubjectId, branch_id: debouncedBranchId, semester_id: debouncedSemesterId, page: debouncedPage, page_size: debouncedPageSize });
-        return;
-      }
+      // For open_elective: still require section selection before loading students
+      if (subjectType === 'open_elective') return;
 
       // Regular subject: call regular loader
       const loader = getStudentsForRegular;
@@ -241,8 +244,57 @@ const TakeAttendance = () => {
     setErrorMsg("");
   }, [subjectId]);
 
+  // Auto-derive branch/semester/section from faculty assignments when subject selected
+  useEffect(() => {
+    if (!subjectId) return;
+    // Wait until subjectType is known (fetched by getSubjectDetail) to correctly
+    // decide behavior for elective vs open_elective. If unknown, skip auto-derive.
+    if (!subjectType) return;
+    try {
+      const subjectAssignments = normalizedAssignments.filter(a => a.subject_id === Number(subjectId));
+      if (!subjectAssignments || subjectAssignments.length === 0) return;
+
+      const uniqBranches = Array.from(new Set(subjectAssignments.map(a => a.branch_id))).filter(Boolean);
+      const uniqSemesters = Array.from(new Set(subjectAssignments.map(a => a.semester_id))).filter(Boolean);
+      const uniqSections = Array.from(new Set(subjectAssignments.map(a => a.section_id))).filter(Boolean);
+
+      // Behavior by subject type:
+      // - open_elective: do not auto-select anything; require manual picks
+      // - elective: auto-select branch & semester if unique; do NOT auto-select section (optional)
+      // - regular/other: keep existing behavior (auto-select branch/semester/section when unique)
+      if (subjectType === 'open_elective') {
+        return;
+      }
+
+      if (subjectType === 'elective') {
+        if (uniqBranches.length === 1 || uniqSemesters.length === 1) {
+          suppressBranchClearRef.current = true;
+          if (uniqBranches.length === 1) setBranchId(uniqBranches[0]);
+          if (uniqSemesters.length === 1) setSemesterId(uniqSemesters[0]);
+        }
+        return;
+      }
+
+      // regular or unknown subject_type: auto-select all unique values including section
+      if (uniqBranches.length === 1 || uniqSemesters.length === 1 || uniqSections.length === 1) {
+        suppressBranchClearRef.current = true;
+        if (uniqBranches.length === 1) setBranchId(uniqBranches[0]);
+        if (uniqSemesters.length === 1) setSemesterId(uniqSemesters[0]);
+        if (uniqSections.length === 1) setSectionId(uniqSections[0]);
+      }
+    } catch (e) {
+      // non-fatal
+      console.warn('Auto-derive subject -> branch/sem failed', e);
+    }
+  }, [subjectId, normalizedAssignments, subjectType]);
+
   // When branch changes, clear dependent selections so the UI recomputes semesters/sections
   useEffect(() => {
+    // If this change was triggered by auto-derive, skip clearing once
+    if (suppressBranchClearRef.current) {
+      suppressBranchClearRef.current = false;
+      return;
+    }
     setSemesterId(null);
     setSectionId(null);
     setStudents([]);
@@ -315,28 +367,13 @@ const TakeAttendance = () => {
           const subjType = subjRes.data.subject_type;
           setSubjectType(subjType);
           if (subjType === 'open_elective') {
-            // For open electives use the open-elective students endpoint (registration-driven)
-            const params = makeParams({ subject_id: subjectId, page, page_size: pageSize });
-            setBootstrapParams(params);
-            // Use runLoader (dedupes) and then set subjectStudents from the response
-            try {
-              const bsRes: any = await runLoader(getStudentsForOpenElective, params, false);
-              if (!cancelled && bsRes && bsRes.success && bsRes.data) {
-                setSubjectStudents(bsRes.data.students || []);
-                setRecentRecords(bsRes.data.recent_records || []);
-                if (bsRes.data.pagination) {
-                  setPage(bsRes.data.pagination.page);
-                  setPageSize(bsRes.data.pagination.page_size);
-                  setTotalPages(bsRes.data.pagination.total_pages);
-                  setTotalStudentsCount(bsRes.data.pagination.total_students);
-                } else {
-                  setTotalPages(1);
-                  setTotalStudentsCount(bsRes.data.students.length || 0);
-                }
-              }
-            } catch (e) {
-              // error already handled in runLoader
-            }
+            // For open electives: do NOT load students on subject-only selection.
+            // Wait for faculty to pick branch (and optionally semester/section) before loading.
+            setSubjectStudents([]);
+            setRecentRecords([]);
+            setBootstrapParams(null);
+            setTotalPages(1);
+            setTotalStudentsCount(0);
           } else {
             // normal subject: do not call subject-only bootstrap; wait for branch/sem/section selection
             setSubjectStudents([]);
@@ -354,10 +391,10 @@ const TakeAttendance = () => {
 
   // Dropdown options (deduplicated by id)
   // Subject-first behavior: list all subjects assigned to this faculty
-  const assignedSubjects = Array.from(new Map(assignments.map(a => [a.subject_id, { id: a.subject_id, name: a.subject_name }])).values());
+  const assignedSubjects = Array.from(new Map(normalizedAssignments.map(a => [a.subject_id, { id: a.subject_id, name: a.subject_name }])).values());
 
   // Branch options: if subjectStudents available (subject-only bootstrap), use branches from registrations; otherwise use assignment branches
-  const branchesFromAssignments = Array.from(new Map(assignments.map(a => [a.branch_id, { id: a.branch_id, name: a.branch }])).values());
+  const branchesFromAssignments = Array.from(new Map(normalizedAssignments.map(a => [a.branch_id, { id: a.branch_id, name: a.branch }])).values());
   // If registration entries don't include branch names, fall back to assignment labels
   const branchesFromRegistrations = subjectStudents.length ? Array.from(new Map(subjectStudents.filter(s => s.branch_id).map(s => [s.branch_id, { id: s.branch_id, name: s.branch || (branchesFromAssignments.find(b => b.id === s.branch_id)?.name) }])).values()) : [];
   // Prefer registrations-derived branches but ensure current selection remains available
@@ -369,26 +406,26 @@ const TakeAttendance = () => {
   }
 
   // Semesters: derive from subjectStudents when available for chosen branch, else fall back to assignments
-  const subjectAssignments = subjectId ? assignments.filter(a => a.subject_id === subjectId) : [];
+  const subjectAssignments = subjectId ? normalizedAssignments.filter(a => a.subject_id === Number(subjectId)) : [];
   const semestersFromRegistrations = (subjectStudents.length && branchId)
-    ? Array.from(new Map(subjectStudents.filter(s => s.branch_id === branchId && s.semester_id).map(s => [s.semester_id, { id: s.semester_id, name: s.semester || (subjectAssignments.length ? (subjectAssignments.find(a => a.semester_id === s.semester_id)?.semester?.toString()) : (assignments.find(a => a.semester_id === s.semester_id && a.branch_id === branchId)?.semester?.toString())) }])).values())
+    ? Array.from(new Map(subjectStudents.filter(s => s.branch_id === branchId && s.semester_id).map(s => [s.semester_id, { id: s.semester_id, name: s.semester || (subjectAssignments.length ? (subjectAssignments.find(a => a.semester_id === s.semester_id)?.semester?.toString()) : (normalizedAssignments.find(a => a.semester_id === s.semester_id && a.branch_id === branchId)?.semester?.toString())) }])).values())
     : [];
   // Prefer registrations-derived semesters but ensure current selection remains available
   const preferredSemesters = semestersFromRegistrations.length
     ? semestersFromRegistrations
     : (subjectAssignments.length
       ? Array.from(new Map(subjectAssignments.map(a => [a.semester_id, { id: a.semester_id, name: a.semester.toString() }])).values())
-      : (branchId ? Array.from(new Map(assignments.filter(a => a.branch_id === branchId).map(a => [a.semester_id, { id: a.semester_id, name: a.semester.toString() }])).values()) : []));
+      : (branchId ? Array.from(new Map(normalizedAssignments.filter(a => a.branch_id === branchId).map(a => [a.semester_id, { id: a.semester_id, name: a.semester.toString() }])).values()) : []));
   const semesters = preferredSemesters.slice();
   if (semesterId && !semesters.find(s => s.id === semesterId)) {
-    const match = subjectAssignments.length ? subjectAssignments.find(a => a.semester_id === semesterId) : assignments.find(a => a.semester_id === semesterId && a.branch_id === branchId);
+    const match = subjectAssignments.length ? subjectAssignments.find(a => a.semester_id === semesterId) : normalizedAssignments.find(a => a.semester_id === semesterId && a.branch_id === branchId);
     if (match) semesters.unshift({ id: match.semester_id, name: match.semester.toString() });
   }
 
   // Sections: derive from subjectStudents when available for chosen branch+semester, else fall back to assignments
   const sectionsFromRegistrations = (subjectStudents.length && branchId && semesterId)
     ? Array.from(new Map(subjectStudents.filter(s => s.branch_id === branchId && s.semester_id === semesterId && s.section_id).map(s => {
-      const assignLabel = assignments.find(a => a.section_id === s.section_id && a.branch_id === branchId && a.semester_id === semesterId)?.section;
+      const assignLabel = normalizedAssignments.find(a => a.section_id === s.section_id && a.branch_id === branchId && a.semester_id === semesterId)?.section;
       const label = s.section || assignLabel || `Section ${s.section_id}`;
       return [s.section_id, { id: s.section_id, name: label } as { id: number; name: string }];
     })).values())
@@ -401,14 +438,14 @@ const TakeAttendance = () => {
     sectionsPreferred = sectionsFromRegistrations.length
       ? sectionsFromRegistrations
       : ((subjectId && branchId && semesterId && subjectType === 'elective')
-        ? Array.from(new Map(assignments.filter(a => a.branch_id === branchId && a.semester_id === semesterId).map(a => [a.section_id, { id: a.section_id, name: a.section }])).values())
+        ? Array.from(new Map(normalizedAssignments.filter(a => a.branch_id === branchId && a.semester_id === semesterId).map(a => [a.section_id, { id: a.section_id, name: a.section }])).values())
         : ((subjectId && branchId && semesterId)
-          ? Array.from(new Map(assignments.filter(a => a.subject_id === subjectId && a.branch_id === branchId && a.semester_id === semesterId).map(a => [a.section_id, { id: a.section_id, name: a.section }])).values())
-          : (branchId && semesterId ? Array.from(new Map(assignments.filter(a => a.branch_id === branchId && a.semester_id === semesterId).map(a => [a.section_id, { id: a.section_id, name: a.section }])).values()) : [])));
+          ? Array.from(new Map(normalizedAssignments.filter(a => a.subject_id === Number(subjectId) && a.branch_id === branchId && a.semester_id === semesterId).map(a => [a.section_id, { id: a.section_id, name: a.section }])).values())
+          : (branchId && semesterId ? Array.from(new Map(normalizedAssignments.filter(a => a.branch_id === branchId && a.semester_id === semesterId).map(a => [a.section_id, { id: a.section_id, name: a.section }])).values()) : [])));
   }
   const sections = sectionsPreferred.slice();
   if (sectionId && !sections.find(s => s.id === sectionId)) {
-    const match = assignments.find(a => a.section_id === sectionId && a.branch_id === branchId && a.semester_id === semesterId);
+    const match = normalizedAssignments.find(a => a.section_id === sectionId && a.branch_id === branchId && a.semester_id === semesterId);
     if (match) sections.unshift({ id: match.section_id, name: match.section });
   }
 

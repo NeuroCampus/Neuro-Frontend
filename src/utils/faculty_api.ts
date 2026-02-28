@@ -179,6 +179,7 @@ export interface FacultyAssignment {
   subject_name: string;
   subject_code: string;
   subject_id: number;
+  subject_type?: string;
   section: string;
   section_id: number;
   semester: number;
