@@ -1180,13 +1180,60 @@ const UploadMarks = () => {
             setSelected(prev => ({ ...prev, branch: "", branch_id: undefined, semester: "", semester_id: undefined, section: "", section_id: undefined }));
           }
         } else {
+          // For regular/elective subjects: auto-select unique values like TakeAttendance.tsx
           const filteredBySubject = assignments.filter(a => a.subject_id === subjIdNum);
           const branches = Array.from(new Map(filteredBySubject.map(a => [a.branch_id, { id: a.branch_id, name: a.branch }])).values());
           const semesters = Array.from(new Map(filteredBySubject.map(a => [a.semester_id, { id: a.semester_id, number: a.semester }])).values());
           const sections = Array.from(new Map(filteredBySubject.map(a => [a.section_id, { id: a.section_id, name: a.section }])).values());
-          const subjects = Array.from(new Map(filteredBySubject.map(a => [a.subject_id, { id: a.subject_id, name: a.subject_name }])).values());
-          setDropdownData(prev => ({ ...prev, branch: branches, semester: semesters, section: sections, subject: subjects }));
-          setSelected(prev => ({ ...prev, branch: "", branch_id: undefined, semester: "", semester_id: undefined, section: "", section_id: undefined }));
+          
+          // Keep ALL subjects in dropdown, not just filtered ones
+          const allSubjects = Array.from(new Map(assignments.map(a => [a.subject_id, { id: a.subject_id, name: a.subject_name }])).values());
+          
+          setDropdownData(prev => ({ ...prev, branch: branches, semester: semesters, section: sections, subject: allSubjects }));
+          
+          // Auto-select if unique values exist (similar to TakeAttendance.tsx logic)
+          const uniqBranches = Array.from(new Set(filteredBySubject.map(a => a.branch_id))).filter(Boolean);
+          const uniqSemesters = Array.from(new Set(filteredBySubject.map(a => a.semester_id))).filter(Boolean);
+          const uniqSections = Array.from(new Set(filteredBySubject.map(a => a.section_id))).filter(Boolean);
+          
+          // Behavior by subject type:
+          // - elective: auto-select branch & semester if unique; do NOT auto-select section (optional)
+          // - regular/other: auto-select all unique values including section
+          if (localSubjectType === 'elective') {
+            const autoBranchId = uniqBranches.length === 1 ? uniqBranches[0] : undefined;
+            const autoSemesterId = uniqSemesters.length === 1 ? uniqSemesters[0] : undefined;
+            const autoBranchName = autoBranchId ? branches.find(b => b.id === autoBranchId)?.name || "" : "";
+            const autoSemesterNum = autoSemesterId ? semesters.find(s => s.id === autoSemesterId)?.number.toString() || "" : "";
+            
+            updated.branch_id = autoBranchId;
+            updated.branch = autoBranchName;
+            updated.semester_id = autoSemesterId;
+            updated.semester = autoSemesterNum;
+            // Auto-select default test type IA1
+            updated.testType = "IA1";
+            // section remains undefined for elective
+            
+            setSelected({ ...updated });
+          } else {
+            // regular or unknown subject_type: auto-select all unique values including section
+            const autoBranchId = uniqBranches.length === 1 ? uniqBranches[0] : undefined;
+            const autoSemesterId = uniqSemesters.length === 1 ? uniqSemesters[0] : undefined;
+            const autoSectionId = uniqSections.length === 1 ? uniqSections[0] : undefined;
+            const autoBranchName = autoBranchId ? branches.find(b => b.id === autoBranchId)?.name || "" : "";
+            const autoSemesterNum = autoSemesterId ? semesters.find(s => s.id === autoSemesterId)?.number.toString() || "" : "";
+            const autoSectionName = autoSectionId ? sections.find(s => s.id === autoSectionId)?.name || "" : "";
+            
+            updated.branch_id = autoBranchId;
+            updated.branch = autoBranchName;
+            updated.semester_id = autoSemesterId;
+            updated.semester = autoSemesterNum;
+            updated.section_id = autoSectionId;
+            updated.section = autoSectionName;
+            // Auto-select default test type IA1
+            updated.testType = "IA1";
+            
+            setSelected({ ...updated });
+          }
         }
       } catch (err) {
         // ignore
@@ -1465,7 +1512,7 @@ const UploadMarks = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <Select onValueChange={value => handleSelectChange('subject_id', Number(value))}>
+          <Select value={selected.subject_id?.toString()} onValueChange={value => handleSelectChange('subject_id', Number(value))}>
             <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               <SelectValue placeholder="Select Subject" />
             </SelectTrigger>
@@ -1477,7 +1524,7 @@ const UploadMarks = () => {
               ))}
             </SelectContent>
           </Select>
-          <Select onValueChange={value => handleSelectChange('branch_id', Number(value))}>
+          <Select value={selected.branch_id?.toString()} onValueChange={value => handleSelectChange('branch_id', Number(value))}>
             <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               <SelectValue placeholder="Select Branch" />
             </SelectTrigger>
@@ -1489,7 +1536,7 @@ const UploadMarks = () => {
               ))}
             </SelectContent>
           </Select>
-          <Select onValueChange={value => handleSelectChange('semester_id', Number(value))} disabled={effectiveType === 'open_elective'}>
+          <Select value={selected.semester_id?.toString()} onValueChange={value => handleSelectChange('semester_id', Number(value))} disabled={effectiveType === 'open_elective'}>
             <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               <SelectValue placeholder="Select Semester" />
             </SelectTrigger>
@@ -1501,7 +1548,7 @@ const UploadMarks = () => {
               ))}
             </SelectContent>
           </Select>
-          <Select onValueChange={value => handleSelectChange('section_id', Number(value))} disabled={effectiveType === 'elective' || effectiveType === 'open_elective'}>
+          <Select value={selected.section_id?.toString()} onValueChange={value => handleSelectChange('section_id', Number(value))} disabled={effectiveType === 'elective' || effectiveType === 'open_elective'}>
             <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               <SelectValue placeholder="Select Section" />
             </SelectTrigger>
@@ -1513,7 +1560,7 @@ const UploadMarks = () => {
               ))}
             </SelectContent>
           </Select>
-          <Select onValueChange={value => handleSelectChange('testType', value)}>
+          <Select value={selected.testType} onValueChange={value => handleSelectChange('testType', value)}>
             <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               <SelectValue placeholder="Select TestType" />
             </SelectTrigger>
