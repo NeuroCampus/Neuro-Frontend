@@ -23,7 +23,21 @@ db.sqlite3
 */migrations/*
 
 # Sensitive Credentials & Config Files
-*.env
+# Ignore all env files (local, staging, production). Keep `.env.example` in repo.
+.env
+.env.*
+!.env.example
+.env.local
+.env.development
+.env.staging
+.env.production
+
+# Vercel / Now
+.vercel
+.vercel/*
+.now
+
+# Secrets and credentials
 *.key
 *.pem
 *.crt

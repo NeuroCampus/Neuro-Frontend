@@ -23,6 +23,7 @@ const SubmitLeaveRequest = () => {
   const { theme } = useTheme();
   const leaveRequestMutation = useStudentLeaveRequestMutation();
   const today = new Date();
+  const { toast } = useToast();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -44,7 +45,6 @@ const SubmitLeaveRequest = () => {
     try {
       await leaveRequestMutation.mutateAsync(requestData);
       // Show success toast and a subtle modal for confirmation
-      const { toast } = useToast();
       toast({ title: 'Leave Request Submitted', description: 'Your request was submitted successfully.' });
 
       const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
@@ -69,7 +69,6 @@ const SubmitLeaveRequest = () => {
       console.error("Failed to submit leave request:", error);
       setError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
 
-      const { toast } = useToast();
       toast({ variant: 'destructive', title: 'Failed to submit', description: error instanceof Error ? error.message : 'Please try again.' });
 
       const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
