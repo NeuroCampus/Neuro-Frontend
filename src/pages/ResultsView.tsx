@@ -165,12 +165,25 @@ const ResultsView: React.FC = () => {
 
         {result && result.success && (
           <div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="text-sm text-gray-600">{result.declared_on ? 'Declared on: ' + result.declared_on : 'Results declared'}</div>
-              <div className="flex items-center gap-2">
-                <Button onClick={exportMarksCard} disabled={exporting} className="bg-indigo-600 hover:bg-indigo-700 text-white">{exporting ? 'Exporting...' : 'Export PDF'}</Button>
+            {result.withheld ? (
+              <div className="mb-6 p-6 bg-amber-50 border-l-4 border-amber-500 rounded">
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl">⚠️</div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-amber-800 mb-2">Result Withheld</h3>
+                    <p className="text-amber-700">{result.message || 'Your result has been withheld by the examination authorities.'}</p>
+                    <p className="text-sm text-amber-600 mt-3">Please contact the examination office for more information.</p>
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-sm text-gray-600">{result.declared_on ? 'Declared on: ' + result.declared_on : 'Results declared'}</div>
+                  <div className="flex items-center gap-2">
+                    <Button onClick={exportMarksCard} disabled={exporting} className="bg-indigo-600 hover:bg-indigo-700 text-white">{exporting ? 'Exporting...' : 'Export PDF'}</Button>
+                  </div>
+                </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div className="md:col-span-2">
@@ -381,6 +394,8 @@ const ResultsView: React.FC = () => {
               </div>
             </div>
           </div>
+          )}
+        </div>
         )}
       </div>
     </div>

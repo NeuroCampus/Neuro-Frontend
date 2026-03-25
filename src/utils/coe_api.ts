@@ -467,3 +467,19 @@ export const publicViewResultByToken = async (token: string, usn: string) => {
     return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
   }
 };
+
+/**
+ * Toggle withhold status for a published result
+ */
+export const toggleWithholdResult = async (resultId: number) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/published-results/${resultId}/toggle-withhold/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error toggling withhold status:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};

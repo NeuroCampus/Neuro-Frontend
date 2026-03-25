@@ -7,7 +7,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { AlertTriangle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { createResultUploadBatch, getStudentsForUpload, saveMarksForUpload, publishUploadBatch, unpublishUploadBatch } from '../../utils/coe_api';
+import { createResultUploadBatch, getStudentsForUpload, saveMarksForUpload, publishUploadBatch, unpublishUploadBatch, toggleWithholdResult } from '../../utils/coe_api';
 
 export default function PublishResults() {
   const { theme } = useTheme();
@@ -269,6 +269,29 @@ export default function PublishResults() {
     }
   };
 
+  const handleToggleWithhold = async (studentId: number, studentName: string, publishedResultId: number | null, currentWithheld: boolean) => {
+    if (!publishedResultId) {
+      toast({ variant: 'destructive', title: 'Cannot withhold', description: 'No published result found for this student' });
+      return;
+    }
+    
+    try {
+      const res = await toggleWithholdResult(publishedResultId);
+      if (res.success) {
+        const actionText = res.withheld ? 'withheld' : 'released';
+        toast({ title: 'Success', description: `Result ${actionText} for ${studentName}` });
+        // Refresh students list to update withheld status
+        if (upload) {
+          await fetchStudentsPage(upload.id, studentsPage, studentsPageSize, true);
+        }
+      } else {
+        toast({ variant: 'destructive', title: 'Failed to toggle withhold', description: res.message || 'Toggle failed' });
+      }
+    } catch (e: any) {
+      toast({ variant: 'destructive', title: 'Error', description: e?.message || 'Failed to toggle withhold status' });
+    }
+  };
+
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-4">Publish Exam Results (COE)</h2>
@@ -387,6 +410,23 @@ export default function PublishResults() {
                     <div>
                       <div className="font-medium">{s.name} <span className="text-sm text-muted-foreground">({s.usn})</span></div>
                       <div className="text-sm text-muted-foreground">Subjects: {(s.subjects || []).length} • Incomplete Entries: {incompleteCount}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {s.is_withheld && (
+                        <div className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded border border-amber-300">
+                          Withheld
+                        </div>
+                      )}
+                      {upload?.is_published && s.published_result_id && (
+                        <Button
+                          size="sm"
+                          variant={s.is_withheld ? "outline" : "destructive"}
+                          onClick={() => handleToggleWithhold(s.student_id, s.name, s.published_result_id, s.is_withheld)}
+                          className="text-xs"
+                        >
+                          {s.is_withheld ? "Release Result" : "Withhold Result"}
+                        </Button>
+                      )}
                     </div>
                   </div>
 
