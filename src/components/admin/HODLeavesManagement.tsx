@@ -85,7 +85,7 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
         const leaveData = Array.isArray(dataSource.leaves)
           ? dataSource.leaves.map((leave: any) => ({
               id: leave.id,
-              name: leave.hod?.username || "N/A",
+              name: leave.hod?.username || leave.hod_name || "N/A",
               department: leave.branch || "N/A",
               from: leave.start_date || "N/A",
               to: leave.end_date || "N/A",
