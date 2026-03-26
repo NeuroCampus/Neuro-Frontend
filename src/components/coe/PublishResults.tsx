@@ -264,6 +264,8 @@ export default function PublishResults() {
       toast({ title: 'Published', description: 'Published successfully' });
       // refresh upload info
       setUpload({ ...upload, is_published: true });
+      // refresh students in case published_result_id/is_withheld changed after publish
+      await fetchStudentsPage(upload.id, studentsPage, studentsPageSize);
     } else {
       toast({ variant: 'destructive', title: 'Publish failed', description: res.message || 'Publish failed' });
     }
@@ -417,11 +419,17 @@ export default function PublishResults() {
                           Withheld
                         </div>
                       )}
-                      {upload?.is_published && s.published_result_id && (
+                      {upload?.is_published && (
                         <Button
                           size="sm"
                           variant={s.is_withheld ? "outline" : "destructive"}
-                          onClick={() => handleToggleWithhold(s.student_id, s.name, s.published_result_id, s.is_withheld)}
+                          onClick={async () => {
+                            if (!s.published_result_id) {
+                              toast({ variant: 'destructive', title: 'Not Ready', description: 'Published result ID not found yet. Please refresh student list.' });
+                              return;
+                            }
+                            await handleToggleWithhold(s.student_id, s.name, s.published_result_id, s.is_withheld);
+                          }}
                           className="text-xs"
                         >
                           {s.is_withheld ? "Release Result" : "Withhold Result"}
