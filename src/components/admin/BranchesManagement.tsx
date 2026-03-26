@@ -65,13 +65,29 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
         if (dataSource && dataSource.success) {
           // Handle paginated response format
           const branchData = Array.isArray(dataSource.branches)
-            ? dataSource.branches.map((b: any) => ({
-                id: b.id,
-                name: b.name || "",
-                branch_code: b.branch_code || null,
-                hod: b.hod ? `${b.hod.first_name} ${b.hod.last_name}`.trim() : null,
-                hod_contact: b.hod ? (b.hod.mobile_number || b.hod.email || "--") : null,
-              }))
+            ? dataSource.branches.map((b: any) => {
+                // Support both compact response (hod as string + hod_contact) and full object
+                let hodName: string | null = null;
+                let hodContact: string | null = null;
+
+                if (b.hod) {
+                  if (typeof b.hod === 'string') {
+                    hodName = b.hod;
+                    hodContact = b.hod_contact || null;
+                  } else if (typeof b.hod === 'object') {
+                    hodName = `${b.hod.first_name || ''} ${b.hod.last_name || ''}`.trim() || null;
+                    hodContact = b.hod.mobile_number || b.hod.email || null;
+                  }
+                }
+
+                return {
+                  id: b.id,
+                  name: b.name || "",
+                  branch_code: b.branch_code || null,
+                  hod: hodName,
+                  hod_contact: hodContact || (b.hod ? "--" : null),
+                };
+              })
             : [];
           setBranches(branchData);
 

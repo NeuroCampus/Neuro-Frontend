@@ -320,13 +320,15 @@ export const getBranchesWithHODs = async (
   try {
     let url = `${API_ENDPOINT}/admin/branches-with-hods/`;
 
-    // Add pagination parameters for GET requests
+    // Build query params (include compact=true by default to reduce payload)
+    const params = new URLSearchParams();
+    params.append('compact', 'true');
     if (data) {
-      const params = new URLSearchParams();
       if (data.page) params.append('page', data.page.toString());
       if (data.page_size) params.append('page_size', data.page_size.toString());
-      if (params.toString()) url += `?${params.toString()}`;
     }
+    const qs = params.toString();
+    if (qs) url += `?${qs}`;
 
     const response = await fetchWithTokenRefresh(url, {
       method: "GET",
