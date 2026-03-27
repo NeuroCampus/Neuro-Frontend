@@ -24,12 +24,21 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
   const [userId, setUserId] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isPasswordResetFlow, setIsPasswordResetFlow] = useState(false);
 
   useEffect(() => {
     // Check if there's a stored temp_user_id from a previous session
     const tempUserId = localStorage.getItem("temp_user_id");
+    const passwordResetEmail = localStorage.getItem("password_reset_email");
+    
     if (tempUserId) {
       setUserId(String(tempUserId));
+      // If coming from password reset requirement, skip email step
+      if (passwordResetEmail) {
+        setEmail(passwordResetEmail);
+        setIsPasswordResetFlow(true);
+        setCurrentStep('otp');
+      }
     }
   }, []);
 
@@ -123,6 +132,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
       if (response.success) {
         setCurrentStep('success');
         localStorage.removeItem("temp_user_id");
+        localStorage.removeItem("password_reset_email");
         setTimeout(() => {
           setPage("login");
         }, 3000);
@@ -292,9 +302,14 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
             >
               <CheckCircle className="w-8 h-8 text-green-400" />
             </motion.div>
-            <h3 className="text-lg font-semibold text-white">Password Reset Successfully!</h3>
+            <h3 className="text-lg font-semibold text-white">
+              {isPasswordResetFlow ? 'Account Setup Complete!' : 'Password Reset Successfully!'}
+            </h3>
             <p className="text-gray-400 text-sm">
-              Your password has been reset. You'll be redirected to login in a moment.
+              {isPasswordResetFlow 
+                ? 'Your account is now active. You can login with your new password.'
+                : 'Your password has been reset. You\'ll be redirected to login in a moment.'
+              }
             </p>
           </motion.div>
         );
@@ -492,14 +507,17 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
             transition={{ duration: 0.8, delay: 0.6 }}
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Secure Password
+              {isPasswordResetFlow ? 'Complete Your' : 'Secure Password'}
               <br />
               <span className="bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-                Recovery
+                {isPasswordResetFlow ? 'Account Setup' : 'Recovery'}
               </span>
             </h2>
             <p className="text-lg text-white/90 mb-8">
-              Reset your password securely in just a few steps
+              {isPasswordResetFlow 
+                ? 'Set your new password to complete account activation'
+                : 'Reset your password securely in just a few steps'
+              }
             </p>
           </motion.div>
 

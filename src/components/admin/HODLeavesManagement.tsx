@@ -136,7 +136,19 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
       const response = await manageHODLeaves({ leave_id: id, action: "APPROVED" }, "POST");
       console.log("Approve API response:", response);
       if (response.success) {
-        await fetchLeaves(selectedMonth, currentPage);
+        // Update local state with returned leave data instead of making another GET call
+        if (response.leave) {
+          setLeaveRequests(prevRequests =>
+            prevRequests.map(leave =>
+              leave.id === id
+                ? {
+                    ...leave,
+                    status: response.leave.status === "APPROVED" ? "Approved" : leave.status
+                  }
+                : leave
+            )
+          );
+        }
         Swal.fire({
           icon: 'success',
           title: 'Leave Approved!',
@@ -174,7 +186,19 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
         const response = await manageHODLeaves({ leave_id: selectedId, action: "REJECTED" }, "POST");
         console.log("Reject API response:", response);
         if (response.success) {
-          await fetchLeaves(selectedMonth, currentPage);
+          // Update local state with returned leave data instead of making another GET call
+          if (response.leave) {
+            setLeaveRequests(prevRequests =>
+              prevRequests.map(leave =>
+                leave.id === selectedId
+                  ? {
+                      ...leave,
+                      status: response.leave.status === "REJECTED" ? "Rejected" : leave.status
+                    }
+                  : leave
+              )
+            );
+          }
           setShowModal(false);
           setSelectedId(null);
           Swal.fire({

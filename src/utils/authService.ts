@@ -20,6 +20,7 @@ interface LoginRequest {
 interface LoginResponse extends AuthResponse {
   access?: string;
   refresh?: string;
+  password_reset_required?: boolean;
   profile?: {
     user_id?: string;
     username?: string;

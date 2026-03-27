@@ -211,35 +211,22 @@ const filteredUsers = Array.isArray(users) ? users : [];
           updates
         });
         if (response.success) {
-          // Refresh the current page data
-          const refreshResponse = await manageUsers({
-            page: currentPage,
-            page_size: pageSize,
-            role: roleFilter !== "All" ? roleMap[roleFilter] : undefined,
-            is_active: statusFilter !== "All" ? statusFilter === "Active" : undefined,
-            search: searchQuery.trim() || undefined,
-          });
-          const hasRefreshResults = refreshResponse && typeof refreshResponse === 'object' && 'results' in refreshResponse;
-          const refreshDataSource = hasRefreshResults ? (refreshResponse as any).results : (refreshResponse as any);
-          
-          if (refreshDataSource && refreshDataSource.success) {
-            // Handle paginated response format
-            const usersArray = refreshDataSource.users || [];
-            const paginationInfo = hasRefreshResults ? (refreshResponse as any) : refreshDataSource;
-            
-            const refreshedUserData = Array.isArray(usersArray)
-              ? usersArray.map((user: any) => ({
-                  id: user.id,
-                  name: `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username || "N/A",
-                  email: user.email || "N/A",
-                  role: user.role || "N/A",
-                  status: user.is_active ? "Active" : "Inactive",
-                  username: user.username || "",
-                }))
-              : [];
-            setUsers(refreshedUserData);
-            setTotalUsers(paginationInfo.count || refreshedUserData.length);
-            setTotalPages(Math.ceil((paginationInfo.count || refreshedUserData.length) / pageSize));
+          // Update local state with returned user data instead of making another GET call
+          if (response.user) {
+            setUsers(prevUsers =>
+              prevUsers.map(user =>
+                user.id === editData.id
+                  ? {
+                      ...user,
+                      name: `${response.user.first_name || ""} ${response.user.last_name || ""}`.trim() || response.user.username || "N/A",
+                      email: response.user.email || "N/A",
+                      role: response.user.role || "N/A",
+                      status: response.user.is_active ? "Active" : "Inactive",
+                      username: response.user.username || "",
+                    }
+                  : user
+              )
+            );
           }
           setEditingId(null);
           setEditData(null);
@@ -280,41 +267,15 @@ const filteredUsers = Array.isArray(users) ? users : [];
           action: "delete"
         });
         if (response.success) {
-          // Refresh the current page data
-          const refreshResponse = await manageUsers({
-            page: currentPage,
-            page_size: pageSize,
-            role: roleFilter !== "All" ? roleMap[roleFilter] : undefined,
-            is_active: statusFilter !== "All" ? statusFilter === "Active" : undefined,
-            search: searchQuery.trim() || undefined,
-          });
-          const hasRefreshResults = refreshResponse && typeof refreshResponse === 'object' && 'results' in refreshResponse;
-          const refreshDataSource = hasRefreshResults ? (refreshResponse as any).results : (refreshResponse as any);
+          // Remove deleted user from local state instead of making another GET call
+          setUsers(prevUsers => prevUsers.filter(user => user.id !== deleteId));
+          setTotalUsers(prevTotal => prevTotal - 1);
           
-          if (refreshDataSource && refreshDataSource.success) {
-            // Handle paginated response format
-            const usersArray = refreshDataSource.users || [];
-            const paginationInfo = hasRefreshResults ? (refreshResponse as any) : refreshDataSource;
-            
-            const refreshedUserData = Array.isArray(usersArray)
-              ? usersArray.map((user: any) => ({
-                  id: user.id,
-                  name: `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username || "N/A",
-                  email: user.email || "N/A",
-                  role: user.role || "N/A",
-                  status: user.is_active ? "Active" : "Inactive",
-                  username: user.username || "",
-                }))
-              : [];
-            setUsers(refreshedUserData);
-            setTotalUsers(paginationInfo.count || refreshedUserData.length);
-            setTotalPages(Math.ceil((paginationInfo.count || refreshedUserData.length) / pageSize));
-            
-            // If we deleted the last item on the page and it's not the first page, go to previous page
-            if (refreshedUserData.length === 0 && currentPage > 1) {
-              setCurrentPage(currentPage - 1);
-            }
+          // If we deleted the last item on the page and it's not the first page, go to previous page
+          if (users.length === 1 && currentPage > 1) {
+            setCurrentPage(currentPage - 1);
           }
+          
           setDeleteId(null);
           toast({ title: "Success", description: "User deleted successfully" });
         } else {

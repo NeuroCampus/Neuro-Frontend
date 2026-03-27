@@ -306,21 +306,34 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
       const dataSource = hasResults ? (response as any).results : (response as any);
 
       if (dataSource && dataSource.success) {
-        const updatedBranchResponse = await manageBranches();
-        const hasUpdatedResults = updatedBranchResponse && typeof updatedBranchResponse === 'object' && 'results' in updatedBranchResponse;
-        const updatedDataSource = hasUpdatedResults ? (updatedBranchResponse as any).results : (updatedBranchResponse as any);
-        
-        if (updatedDataSource && updatedDataSource.success) {
-          const branchData = Array.isArray(updatedDataSource.branches)
-            ? updatedDataSource.branches.map((b: any) => ({
-                id: b.id,
-                name: b.name || "",
-                branch_code: b.branch_code || null,
-                hod: b.hod ? b.hod.username : null,
-                hod_contact: b.hod ? (b.hod.mobile_number || b.hod.email || "--") : null,
-              }))
-            : [];
-          setBranches(branchData);
+        // ✅ Use the returned branch data from POST response instead of making extra GET call
+        if (dataSource.branch) {
+          const newBranchData = {
+            id: dataSource.branch.id,
+            name: dataSource.branch.name || "",
+            branch_code: dataSource.branch.branch_code || null,
+            hod: dataSource.branch.hod ? dataSource.branch.hod.username : null,
+            hod_contact: dataSource.branch.hod ? (dataSource.branch.hod.mobile_number || dataSource.branch.hod.email || "--") : null,
+          };
+          setBranches(prevBranches => [...prevBranches, newBranchData]);
+        } else {
+          // Fallback: make GET call if branch data not returned (for backward compatibility)
+          const updatedBranchResponse = await manageBranches();
+          const hasUpdatedResults = updatedBranchResponse && typeof updatedBranchResponse === 'object' && 'results' in updatedBranchResponse;
+          const updatedDataSource = hasUpdatedResults ? (updatedBranchResponse as any).results : (updatedBranchResponse as any);
+          
+          if (updatedDataSource && updatedDataSource.success) {
+            const branchData = Array.isArray(updatedDataSource.branches)
+              ? updatedDataSource.branches.map((b: any) => ({
+                  id: b.id,
+                  name: b.name || "",
+                  branch_code: b.branch_code || null,
+                  hod: b.hod ? b.hod.username : null,
+                  hod_contact: b.hod ? (b.hod.mobile_number || b.hod.email || "--") : null,
+                }))
+              : [];
+            setBranches(branchData);
+          }
         }
         setIsAddDialogOpen(false);
         setNewBranch({ name: "", branch_code: "" });

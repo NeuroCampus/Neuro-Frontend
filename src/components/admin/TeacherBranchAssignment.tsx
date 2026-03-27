@@ -183,7 +183,18 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
         });
         setShowBranchDialog(false);
         setSelectedBranch("");
-        fetchTeacherAssignments();
+
+        // ✅ Use the returned teacher data instead of making extra GET call
+        if (result.teacher) {
+          setTeachers(prevTeachers =>
+            prevTeachers.map(teacher =>
+              teacher.id === result.teacher.id ? result.teacher : teacher
+            )
+          );
+        } else {
+          // Fallback: fetch data if teacher data not returned
+          fetchTeacherAssignments();
+        }
       } else {
         setError(result.message || "Failed to assign branch");
       }

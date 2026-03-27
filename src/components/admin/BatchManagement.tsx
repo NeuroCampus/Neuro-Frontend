@@ -94,7 +94,21 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
       const dataSource = hasResults ? (res as any).results : (res as any);
       
       if (dataSource && dataSource.success) {
-        fetchBatches();
+        // ✅ Use the returned batch data instead of making extra GET call
+        if (dataSource.batch) {
+          const newBatchData = {
+            id: dataSource.batch.id,
+            name: dataSource.batch.name,
+            start_year: dataSource.batch.start_year,
+            end_year: dataSource.batch.end_year,
+            student_count: 0, // New batch has no students yet
+            created_at: dataSource.batch.created_at
+          };
+          setBatches(prevBatches => [...prevBatches, newBatchData]);
+        } else {
+          // Fallback: fetch data if batch data not returned
+          fetchBatches();
+        }
         setNewBatch({ name: "", start_year: "", end_year: "" });
         if (toast) {
           toast({
@@ -138,7 +152,23 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
       const dataSource = hasResults ? (res as any).results : (res as any);
       
       if (dataSource && dataSource.success) {
-        fetchBatches();
+        // ✅ Use the returned batch data instead of making extra GET call
+        if (dataSource.batch) {
+          setBatches(prevBatches =>
+            prevBatches.map(batch =>
+              batch.id === dataSource.batch.id ? {
+                ...batch,
+                name: dataSource.batch.name,
+                start_year: dataSource.batch.start_year,
+                end_year: dataSource.batch.end_year,
+                student_count: dataSource.batch.student_count || batch.student_count
+              } : batch
+            )
+          );
+        } else {
+          // Fallback: fetch data if batch data not returned
+          fetchBatches();
+        }
         setEditingBatch(null);
         setEditForm({ start_year: "", end_year: "" });
         if (toast) {

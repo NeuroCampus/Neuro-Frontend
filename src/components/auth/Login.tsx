@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { loginUser } from "../../utils/authService";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { LockKeyhole, User, BookOpen, Users, GraduationCap } from "lucide-react";
+import { LockKeyhole, User, BookOpen, Users, GraduationCap, Shield } from "lucide-react";
 import { Eye, EyeOff } from "lucide-react";
 
 
@@ -68,6 +68,14 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
           }
         }
       } else {
+        // Check if password reset is required
+        if (response.password_reset_required) {
+          // Store user_id for password reset flow and redirect to forgot password
+          localStorage.setItem("temp_user_id", response.user_id || "");
+          localStorage.setItem("password_reset_email", trimmedUsername); // Store email for UX
+          setPage("forgot-password");
+          return;
+        }
         setError(response.message || "Login failed");
       }
     } catch (err) {
@@ -173,12 +181,23 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
           >
             {error && (
               <motion.div 
-                className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg text-sm"
+                className={`p-3 rounded-lg text-sm border ${
+                  error.includes('Password reset required') 
+                    ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                    : 'bg-red-500/10 border-red-500/20 text-red-400'
+                }`}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
               >
-                {error}
+                {error.includes('Password reset required') ? (
+                  <div className="flex items-center space-x-2">
+                    <Shield className="h-4 w-4" />
+                    <span>{error}</span>
+                  </div>
+                ) : (
+                  error
+                )}
               </motion.div>
             )}
 
