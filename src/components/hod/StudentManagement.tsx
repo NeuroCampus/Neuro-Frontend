@@ -96,6 +96,7 @@ const StudentManagement = () => {
     manualSemesters: [] as Semester[],
     totalStudents: 0,
     pageSize: 50,
+    successMessage: "",
   });
 
   const bootstrap = useHODBootstrap();
@@ -530,6 +531,10 @@ const StudentManagement = () => {
             currentPage: 1, // Reset to first page to show the new students
             isLoading: false,
           });
+            if (createdCount > 0) {
+              updateState({ successMessage: `${createdCount} student${createdCount !== 1 ? 's' : ''} added successfully.` });
+              setTimeout(() => updateState({ successMessage: "" }), 4000);
+            }
           if (fileInputRef.current) fileInputRef.current.value = "";
           // Fetch fresh students from server (force refresh to bypass suppression cache)
           await fetchStudents(state.branchId, 1, state.pageSize, '', '', true);
@@ -642,6 +647,8 @@ const StudentManagement = () => {
           uploadedCount: 1, // Show success message
           currentPage: 1, // Reset to first page to show the new student
         });
+        updateState({ successMessage: "Student added successfully." });
+        setTimeout(() => updateState({ successMessage: "" }), 3000);
         // Refresh full list in background to reconcile with server (force refresh to bypass cache)
         fetchStudents(state.branchId, 1, state.pageSize, '', '', true);
         // Clear success message after 3 seconds
@@ -688,6 +695,8 @@ const StudentManagement = () => {
             : s
         );
         updateState({ students: updated, editDialog: false, uploadErrors: [], editSections: [], currentPage: 1 });
+        updateState({ successMessage: "Student updated successfully." });
+        setTimeout(() => updateState({ successMessage: "" }), 3000);
         // Refresh in background (force refresh to bypass cache)
         fetchStudents(state.branchId, 1, state.pageSize, '', '', true);
       } else {
@@ -712,6 +721,8 @@ const StudentManagement = () => {
       // Force refresh after delete to ensure latest list
       await fetchStudents(state.branchId, 1, state.pageSize, '', '', true);
       updateState({ confirmDelete: false, uploadErrors: [], currentPage: 1 });
+      updateState({ successMessage: "Student deleted successfully." });
+      setTimeout(() => updateState({ successMessage: "" }), 3000);
       } else {
         updateState({ uploadErrors: [res.message || "Error deleting student"] });
       }
@@ -827,6 +838,9 @@ const StudentManagement = () => {
     <div className={`p-6 space-y-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <h2 className={`text-2xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Student Management</h2>
       {state.isLoading && <p className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Loading data...</p>}
+      {state.successMessage && (
+        <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{state.successMessage}</p>
+      )}
       {state.uploadErrors.length > 0 && (
         <ul className={`text-sm ${theme === 'dark' ? 'text-destructive' : 'text-red-500'} mb-4 list-disc list-inside`}>
           {state.uploadErrors.map((err, idx) => (

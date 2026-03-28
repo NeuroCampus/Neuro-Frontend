@@ -1587,25 +1587,29 @@ export const manageStudents = async (
       if ((data as any).page_size) params.append("page_size", (data as any).page_size.toString());
       url = `${API_ENDPOINT}/hod/students/?${params.toString()}`;
 
-      // Suppress immediate GETs that follow a recent POST to the students endpoint
-      const lastPost = Number(localStorage.getItem('last_students_post_ts') || '0');
-      const now = Date.now();
-      const key = studentsCacheKey(params.toString());
-      // Try in-memory cache first
-      if (lastPost && now - lastPost < 2000 && cacheStore.has(key)) {
-        return cacheStore.get(key);
-      }
-      // Fall back to localStorage cache (across tabs/reloads)
-      if (lastPost && now - lastPost < 2000) {
-        try {
-          const cached = localStorage.getItem(`students_cache:${params.toString()}`);
-          if (cached) {
-            const parsed = JSON.parse(cached);
-            cacheStore.set(key, parsed);
-            return parsed;
+      // Optionally suppress immediate GETs that follow a recent POST to the students endpoint
+      // If caller explicitly requests a force refresh (`force_refresh: true`) skip suppression and fetch fresh.
+      const forceRefresh = !!(data as any).force_refresh;
+      if (!forceRefresh) {
+        const lastPost = Number(localStorage.getItem('last_students_post_ts') || '0');
+        const now = Date.now();
+        const key = studentsCacheKey(params.toString());
+        // Try in-memory cache first
+        if (lastPost && now - lastPost < 2000 && cacheStore.has(key)) {
+          return cacheStore.get(key);
+        }
+        // Fall back to localStorage cache (across tabs/reloads)
+        if (lastPost && now - lastPost < 2000) {
+          try {
+            const cached = localStorage.getItem(`students_cache:${params.toString()}`);
+            if (cached) {
+              const parsed = JSON.parse(cached);
+              cacheStore.set(key, parsed);
+              return parsed;
+            }
+          } catch (e) {
+            // ignore
           }
-        } catch (e) {
-          // ignore
         }
       }
     }
@@ -1678,11 +1682,26 @@ export const manageStudents = async (
     }
 
     // Mark timestamp on successful POST to suppress immediate following GETs
+    // and invalidate any cached students results so subsequent GETs fetch fresh data.
     if (method === 'POST') {
       try {
-        console.debug('manageStudents: POST successful, setting last_students_post_ts');
+        console.debug('manageStudents: POST completed, invalidating students cache and setting last_students_post_ts');
         localStorage.setItem('last_students_post_ts', Date.now().toString());
       } catch (e) {}
+      try {
+        // Clear in-memory cache entries for students
+        for (const k of Array.from(cacheStore.keys())) {
+          if (k.startsWith('students:')) cacheStore.delete(k);
+        }
+        // Clear localStorage student caches (best-effort)
+        try {
+          for (const key of Object.keys(localStorage)) {
+            if (key.startsWith('students_cache:')) localStorage.removeItem(key);
+          }
+        } catch (e) {}
+      } catch (e) {
+        // ignore cache clear errors
+      }
     }
 
     return result;
