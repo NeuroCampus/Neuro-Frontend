@@ -1,0 +1,5 @@
+now we will test all endpoints correctly so the api url shodul not be changed because it is used in the frontend , and also the functionality and logic shoudl not be chnaged , there is hod_views , and hod_2 views , that are created there is logic but for code simplification  i splitted the logics into the views/hod folder files , 
+
+i want you to check the api calls i will give the calls so check that call if it production ready or not and the logic shoudl remain in the hod folder itself , in case if it is there in hod_views , and hod_2 views the move that correctly into the hod folder files correctly , because of code simplification 
+
+explain in short what you understand now correctly refer the folder structure files and expalin in short , 

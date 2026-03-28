@@ -166,10 +166,10 @@ const SemesterManagement = () => {
       }
       const response = await manageSemesters(data);
       if (response.success) {
-        // Refresh data using bootstrap endpoint - only fetch semesters
-        const bootstrapResponse = await getSemesterBootstrap(['semesters']);
-        if (bootstrapResponse.success && bootstrapResponse.data) {
-          setSemesters(bootstrapResponse.data.semesters.map((s: any) => ({ id: s.id.toString(), number: s.number })));
+        // Prefer server-returned semesters to avoid extra fetch
+        const returnedSemesters = (response as any).semesters || (response.data && (response.data.semesters as any[]));
+        if (returnedSemesters && Array.isArray(returnedSemesters)) {
+          setSemesters(returnedSemesters.map((s: any) => ({ id: s.id.toString(), number: s.number })));
         }
         toast({
           title: editingSemester ? "Updated" : "Created",
@@ -198,11 +198,14 @@ const SemesterManagement = () => {
       };
       const response = await manageSemesters(data);
       if (response.success) {
-        // Refresh data using bootstrap endpoint - fetch semesters and sections
-        const bootstrapResponse = await getSemesterBootstrap(['semesters', 'sections']);
-        if (bootstrapResponse.success && bootstrapResponse.data) {
-          setSemesters(bootstrapResponse.data.semesters.map((s: any) => ({ id: s.id.toString(), number: s.number })));
-          setSections(bootstrapResponse.data.sections.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id?.toString() })));
+        // Prefer server-returned semesters and sections to avoid extra fetch
+        const returnedSemesters = (response as any).semesters || (response.data && (response.data.semesters as any[]));
+        const returnedSections = (response as any).sections || (response.data && (response.data.sections as any[]));
+        if (returnedSemesters && Array.isArray(returnedSemesters)) {
+          setSemesters(returnedSemesters.map((s: any) => ({ id: s.id.toString(), number: s.number })));
+        }
+        if (returnedSections && Array.isArray(returnedSections)) {
+          setSections(returnedSections.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id?.toString() })));
         }
         toast({ title: "Deleted", description: "Semester deleted successfully!" });
         closeDeleteModal();
@@ -240,11 +243,11 @@ const SemesterManagement = () => {
         branch_id: branchId,
       };
       const response = await manageSections(data, "POST");
-      if (response.success && response.data) {
-        // Refresh data using bootstrap endpoint - only fetch sections
-        const bootstrapResponse = await getSemesterBootstrap(['sections']);
-        if (bootstrapResponse.success && bootstrapResponse.data) {
-          setSections(bootstrapResponse.data.sections.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id?.toString() })));
+      if (response.success) {
+        // Prefer server-returned sections to avoid an extra fetch
+        const returnedSections = (response as any).sections || (response.data && (response.data.sections as any));
+        if (returnedSections && Array.isArray(returnedSections)) {
+          setSections(returnedSections.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id?.toString() })));
         }
         toast({
           title: "Added",
@@ -273,10 +276,10 @@ const SemesterManagement = () => {
       };
       const response = await manageSections(data, "POST");
       if (response.success) {
-        // Refresh data using bootstrap endpoint - only fetch sections
-        const bootstrapResponse = await getSemesterBootstrap(['sections']);
-        if (bootstrapResponse.success && bootstrapResponse.data) {
-          setSections(bootstrapResponse.data.sections.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id?.toString() })));
+        // Prefer server-returned sections to avoid an extra fetch
+        const returnedSections = (response as any).sections || (response.data && (response.data as any));
+        if (returnedSections && Array.isArray(returnedSections)) {
+          setSections(returnedSections.map((s: any) => ({ id: s.id, name: s.name, semester_id: s.semester_id?.toString() })));
         }
         toast({ title: "Deleted", description: `Section ${deletingSection.name} deleted successfully!` });
         closeDeleteSectionModal();
