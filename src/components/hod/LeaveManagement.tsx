@@ -149,7 +149,8 @@ const LeaveManagement = () => {
     try {
       const res = await manageLeaves(payload, "PATCH");
       if (res.success) {
-        await fetchLeaveRequests(currentPage);
+        // Update local list without re-fetching
+        setLeaveRequests(prev => prev.map((item, idx) => item.id === leave.id ? { ...item, status: 'Approved' } : item));
         Swal.fire('Approved!', 'The leave request has been approved.', 'success');
       } else {
         setErrors([res.message || "Failed to approve leave"]);
@@ -188,7 +189,8 @@ const LeaveManagement = () => {
         try {
           const res = await manageLeaves(payload, "PATCH");
           if (res.success) {
-            await fetchLeaveRequests(currentPage);
+            // Update local list without re-fetching
+            setLeaveRequests(prev => prev.map((item, idx) => item.id === leave.id ? { ...item, status: 'Rejected' } : item));
             Swal.fire('Rejected!', 'The leave request has been rejected.', 'success');
           } else {
             setErrors([res.message || "Failed to reject leave"]);
