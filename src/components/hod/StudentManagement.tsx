@@ -109,7 +109,7 @@ const StudentManagement = () => {
   };
 
   // Fetch students
-  const fetchStudents = async (branchId: string, page: number = 1, pageSize: number = 50, search: string = '', sectionId: string = '') => {
+  const fetchStudents = async (branchId: string, page: number = 1, pageSize: number = 50, search: string = '', sectionId: string = '', forceRefresh: boolean = false) => {
     try {
       const params: any = { 
         branch_id: branchId,
@@ -118,6 +118,7 @@ const StudentManagement = () => {
       };
       if (search) params.search = search;
       if (sectionId) params.section_id = sectionId;
+      if (forceRefresh) params.force_refresh = true;
       const studentRes = await manageStudents(params, "GET");
       // Normalize different possible response shapes from backend
       // 1) { success: true, results: [...], count }
@@ -530,7 +531,8 @@ const StudentManagement = () => {
             isLoading: false,
           });
           if (fileInputRef.current) fileInputRef.current.value = "";
-          await fetchStudents(state.branchId);
+          // Fetch fresh students from server (force refresh to bypass suppression cache)
+          await fetchStudents(state.branchId, 1, state.pageSize, '', '', true);
         } else {
           updateState({ uploadErrors: [res.message || "Bulk upload failed"], uploadedCount: 0, updatedCount: 0, isLoading: false });
         }
@@ -640,8 +642,8 @@ const StudentManagement = () => {
           uploadedCount: 1, // Show success message
           currentPage: 1, // Reset to first page to show the new student
         });
-        // Refresh full list in background to reconcile with server
-        fetchStudents(state.branchId);
+        // Refresh full list in background to reconcile with server (force refresh to bypass cache)
+        fetchStudents(state.branchId, 1, state.pageSize, '', '', true);
         // Clear success message after 3 seconds
         setTimeout(() => {
           updateState({ uploadedCount: 0, updatedCount: 0 });
@@ -686,8 +688,8 @@ const StudentManagement = () => {
             : s
         );
         updateState({ students: updated, editDialog: false, uploadErrors: [], editSections: [], currentPage: 1 });
-        // Refresh in background
-        fetchStudents(state.branchId);
+        // Refresh in background (force refresh to bypass cache)
+        fetchStudents(state.branchId, 1, state.pageSize, '', '', true);
       } else {
         updateState({ uploadErrors: [res.message || "Error updating student"] });
       }
@@ -707,8 +709,9 @@ const StudentManagement = () => {
       }, "POST");
 
       if (res.success) {
-        await fetchStudents(state.branchId);
-        updateState({ confirmDelete: false, uploadErrors: [], currentPage: 1 });
+      // Force refresh after delete to ensure latest list
+      await fetchStudents(state.branchId, 1, state.pageSize, '', '', true);
+      updateState({ confirmDelete: false, uploadErrors: [], currentPage: 1 });
       } else {
         updateState({ uploadErrors: [res.message || "Error deleting student"] });
       }

@@ -37,6 +37,14 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
 
     try {
       const response = await loginUser({ username: trimmedUsername, password: trimmedPassword });
+      // Handle forced password reset on first login
+      if (response && (response as any).password_reset_required) {
+        localStorage.setItem("temp_user_id", (response as any).user_id || "");
+        localStorage.setItem("password_reset_email", trimmedUsername);
+        setPage("forgot-password");
+        setLoading(false);
+        return;
+      }
       if (response.success) {
         if (response.message === "OTP sent") {
           localStorage.setItem("temp_user_id", response.user_id || "");

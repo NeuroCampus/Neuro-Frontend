@@ -1567,6 +1567,12 @@ export const manageStudents = async (
   data: ManageStudentsRequest | { branch_id: string; semester_id?: string; section_id?: string; page?: number; page_size?: number },
   method: "GET" | "POST" = "GET"
 ): Promise<ManageStudentsResponse> => {
+  // Simple in-memory cache to avoid immediate GET after a recent POST
+  // Keyed by query string for GET requests
+  const studentsCacheKey = (paramsStr: string) => `students:${paramsStr}`;
+  // Load/store helpers
+  const cacheStore: Map<string, any> = (manageStudents as any)._cache || new Map();
+  (manageStudents as any)._cache = cacheStore;
   try {
     const branch_id = (data as { branch_id: string }).branch_id;
     if (!branch_id) throw new Error("Branch ID is required");
@@ -1580,6 +1586,28 @@ export const manageStudents = async (
       if ((data as any).page) params.append("page", (data as any).page.toString());
       if ((data as any).page_size) params.append("page_size", (data as any).page_size.toString());
       url = `${API_ENDPOINT}/hod/students/?${params.toString()}`;
+
+      // Suppress immediate GETs that follow a recent POST to the students endpoint
+      const lastPost = Number(localStorage.getItem('last_students_post_ts') || '0');
+      const now = Date.now();
+      const key = studentsCacheKey(params.toString());
+      // Try in-memory cache first
+      if (lastPost && now - lastPost < 2000 && cacheStore.has(key)) {
+        return cacheStore.get(key);
+      }
+      // Fall back to localStorage cache (across tabs/reloads)
+      if (lastPost && now - lastPost < 2000) {
+        try {
+          const cached = localStorage.getItem(`students_cache:${params.toString()}`);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            cacheStore.set(key, parsed);
+            return parsed;
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
     }
     if (method === "POST") {
       const req = data as ManageStudentsRequest;
@@ -1632,6 +1660,30 @@ export const manageStudents = async (
 
     });
     const result = await response.json();
+
+    // Cache GET responses for students endpoint (in-memory and localStorage)
+    if (method === 'GET') {
+      try {
+        const paramsStr = url.split('?')[1] || '';
+        const key = studentsCacheKey(paramsStr);
+        cacheStore.set(key, result);
+        try {
+          localStorage.setItem(`students_cache:${paramsStr}`, JSON.stringify(result));
+        } catch (e) {
+          // ignore localStorage write errors
+        }
+      } catch (e) {
+        // ignore cache errors
+      }
+    }
+
+    // Mark timestamp on successful POST to suppress immediate following GETs
+    if (method === 'POST') {
+      try {
+        console.debug('manageStudents: POST successful, setting last_students_post_ts');
+        localStorage.setItem('last_students_post_ts', Date.now().toString());
+      } catch (e) {}
+    }
 
     return result;
   } catch (error: unknown) {
