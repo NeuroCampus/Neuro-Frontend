@@ -3,3 +3,9 @@ now we will test all endpoints correctly so the api url shodul not be changed be
 i want you to check the api calls i will give the calls so check that call if it production ready or not and the logic shoudl remain in the hod folder itself , in case if it is there in hod_views , and hod_2 views the move that correctly into the hod folder files correctly , because of code simplification 
 
 explain in short what you understand now correctly refer the folder structure files and expalin in short , 
+
+
+API URLs must remain unchanged (no modifications to endpoints) since the frontend relies on them for integration.
+Functionality and logic must stay identical—no behavioral changes, just code reorganization for simplification.
+
+Task: Review the API calls you'll provide next. For each, verify if it's production-ready (e.g., proper error handling, security, performance). If logic resides in hod_views.py or hod2_views.py, move it correctly into the appropriate hod/ files without altering URLs or behavior.

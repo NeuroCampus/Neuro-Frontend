@@ -485,7 +485,8 @@ interface AssignProctorResponse {
 }
 
 interface AssignProctorsBulkRequest {
-  usns: string[];
+  usns?: string[];
+  student_ids?: string[];
   faculty_id: string;
   branch_id: string;
 }
@@ -2071,8 +2072,10 @@ export const assignProctor = async (data: AssignProctorRequest): Promise<AssignP
 
 export const assignProctorsBulk = async (data: AssignProctorsBulkRequest): Promise<AssignProctorsBulkResponse> => {
   try {
-    if (!data.branch_id || !data.usns.length || !data.faculty_id) {
-      throw new Error("Branch ID, USNs, and Faculty ID are required");
+    const hasUsns = Array.isArray((data as any).usns) && (data as any).usns.length > 0;
+    const hasStudentIds = Array.isArray((data as any).student_ids) && (data as any).student_ids.length > 0;
+    if (!data.branch_id || !(hasUsns || hasStudentIds) || !data.faculty_id) {
+      throw new Error("Branch ID, student IDs or USNs, and Faculty ID are required");
     }
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/proctors/bulk/`, {
       method: "POST",

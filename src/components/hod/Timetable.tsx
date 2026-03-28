@@ -533,7 +533,7 @@ const Timetable = () => {
             sectionsCache: newSectionsCache,
             subjectsCache: newSubjectsCache,
             facultyAssignmentsCache: newAssignmentsCache,
-            sectionId: sections.length > 0 ? sections[0].id : "",
+            sectionId: "",
             loading: false
           });
         } else {

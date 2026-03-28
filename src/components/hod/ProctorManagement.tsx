@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -70,43 +70,70 @@ const ProctorStudents = () => {
     setState((prev) => ({ ...prev, ...newState }));
   };
 
-  // Load metadata (semesters, sections, proctors) once
-  useEffect(() => {
-    const loadMetadata = async () => {
-      try {
-        const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/proctor-bootstrap/?include=profile,semesters,sections,proctors`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
+  // Load metadata (profile, semesters, sections) on mount
+  const loadMetadata = async () => {
+    try {
+      updateState({ loading: true });
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/proctor-bootstrap/?include=profile,semesters,sections`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
 
-        const data = await response.json();
+      const data = await response.json();
 
-        if (!data.success || !data.data) {
-          throw new Error(data.message || "Failed to fetch metadata");
-        }
-
-        updateState({
-          branchId: data.data.profile.branch_id,
-          branchName: data.data.profile.branch,
-          semesters: data.data.semesters,
-          sections: data.data.sections,
-          proctors: data.data.proctors.map((f: any) => ({
-            id: f.id,
-            name: f.name,
-          })),
-        });
-      } catch (error) {
-        const errorMessage = (error as Error).message || "Network error";
-        updateState({ error: errorMessage });
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: errorMessage,
-        });
+      if (!data.success || !data.data) {
+        throw new Error(data.message || "Failed to fetch metadata");
       }
-    };
-    loadMetadata();
-  }, [toast]);
+
+      updateState({
+        branchId: data.data.profile.branch_id,
+        branchName: data.data.profile.branch,
+        semesters: data.data.semesters,
+        sections: data.data.sections,
+      });
+    } catch (error) {
+      const errorMessage = (error as Error).message || "Network error";
+      updateState({ error: errorMessage });
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: errorMessage,
+      });
+    } finally {
+      updateState({ loading: false });
+    }
+  };
+
+  // Load proctors on demand (when Edit is opened)
+  const loadProctors = async () => {
+    try {
+      updateState({ loading: true });
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/proctor-bootstrap/?include=proctors`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = await response.json();
+
+      if (!data.success || !data.data) {
+        throw new Error(data.message || "Failed to fetch proctors");
+      }
+
+      updateState({
+        proctors: data.data.proctors.map((f: any) => ({ id: f.id, name: f.name })),
+      });
+    } catch (error) {
+      const errorMessage = (error as Error).message || "Network error";
+      updateState({ error: errorMessage });
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: errorMessage,
+      });
+    } finally {
+      updateState({ loading: false });
+    }
+  };
 
   // Separate function to load students
   const loadStudents = async (searchTerm?: string) => {
@@ -144,6 +171,7 @@ const ProctorStudents = () => {
 
       // Process students data
       const students = data.data.students.map((s: any) => ({
+        student_id: s.student_id || null,
         usn: s.usn,
         name: s.name,
         semester: s.semester ? `${s.semester}th Semester` : "N/A",
@@ -173,20 +201,39 @@ const ProctorStudents = () => {
   };
 
   // Load students with filters and pagination (but not on every search keystroke)
+  const mountedRef = useRef(false);
+
+  // Initial load on mount
   useEffect(() => {
-    // Only load students if we have metadata loaded
-    if (state.branchId && state.semesters.length > 0) {
+    loadMetadata().then(() => {
+      mountedRef.current = true;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Reload when pagination or filters change — only load students when both semester and section are selected
+  useEffect(() => {
+    if (!mountedRef.current) return;
+    const sem = state.filters.semester_id;
+    const sec = state.filters.section_id;
+    if (sem !== "all" && sec !== "all") {
       loadStudents();
+    } else {
+      // clear students if selection is incomplete
+      updateState({ students: [], totalCount: 0, totalAssigned: 0, totalUnassigned: 0 });
     }
-  }, [toast, state.currentPage, state.filters.semester_id, state.filters.section_id, state.branchId, state.branchName, state.semesters.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.currentPage, state.filters.semester_id, state.filters.section_id]);
 
   const handleFilterChange = (field: string, value: string) => {
+    const newFilters = {
+      ...state.filters,
+      [field]: value,
+      ...(field === "semester_id" && { section_id: "all" }),
+    };
+
     updateState({
-      filters: {
-        ...state.filters,
-        [field]: value,
-        ...(field === "semester_id" && { section_id: "all" }),
-      },
+      filters: newFilters,
       currentPage: 1,
     });
   };
@@ -194,9 +241,8 @@ const ProctorStudents = () => {
   const handleSearch = () => {
     // Trigger search with current search term
     updateState({ currentPage: 1 });
-    if (state.branchId && state.semesters.length > 0) {
-      loadStudents(state.search);
-    }
+    // Allow search regardless of semester/section selection — backend will apply filters if provided
+    loadStudents(state.search);
   };
 
   const handleCheckboxToggle = (usn: string) => {
@@ -208,14 +254,19 @@ const ProctorStudents = () => {
   };
 
   const handleSaveProctor = async () => {
-    if (state.selectedProctor && state.selectedUSNs.length > 0) {
-      updateState({ loading: true });
-      try {
-        const response = await assignProctorsBulk({
-          usns: state.selectedUSNs,
-          faculty_id: state.selectedProctor,
-          branch_id: state.branchId,
-        });
+        if (state.selectedProctor && state.selectedUSNs.length > 0) {
+        updateState({ loading: true });
+        try {
+          // prefer sending student IDs (user ids) to backend
+          const student_ids = state.students
+            .filter((s) => state.selectedUSNs.includes(s.usn))
+            .map((s) => s.student_id)
+            .filter(Boolean);
+          const response = await assignProctorsBulk({
+            student_ids,
+            faculty_id: state.selectedProctor,
+            branch_id: state.branchId,
+          });
         if (!response.success) {
           throw new Error(response.message || "Failed to assign proctors");
         }
@@ -266,14 +317,18 @@ const ProctorStudents = () => {
 
   const handleEditToggle = async () => {
     if (state.editMode) {
-      if (state.selectedProctor && state.selectedUSNs.length > 0) {
-        updateState({ loading: true });
-        try {
-          const response = await assignProctorsBulk({
-            usns: state.selectedUSNs,
-            faculty_id: state.selectedProctor,
-            branch_id: state.branchId,
-          });
+        if (state.selectedProctor && state.selectedUSNs.length > 0) {
+          updateState({ loading: true });
+          try {
+            const student_ids = state.students
+              .filter((s) => state.selectedUSNs.includes(s.usn))
+              .map((s) => s.student_id)
+              .filter(Boolean);
+            const response = await assignProctorsBulk({
+              student_ids,
+              faculty_id: state.selectedProctor,
+              branch_id: state.branchId,
+            });
           if (!response.success) {
             throw new Error(response.message || "Failed to assign proctors");
           }
@@ -387,7 +442,17 @@ const ProctorStudents = () => {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Proctor Assignment - {state.branchName.toUpperCase()}</CardTitle>
           <Button
-            onClick={() => updateState({ editMode: true })}
+            onClick={async () => {
+              // ensure metadata present
+              if (!state.semesters.length || !state.sections.length || !state.branchId) {
+                await loadMetadata();
+              }
+              // load proctors only when opening edit
+              if (!state.proctors.length) {
+                await loadProctors();
+              }
+              updateState({ editMode: true });
+            }}
             className={`min-w-fit text-sm font-medium px-4 py-2 rounded-md transition-all duration-200 ease-in-out transform hover:scale-105 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}
             disabled={state.loading || state.editMode}
           >
