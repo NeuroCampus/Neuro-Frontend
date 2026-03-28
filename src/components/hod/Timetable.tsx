@@ -156,6 +156,7 @@ interface EditModalProps {
   classDetails: ClassDetails;
   onSave: (newClassDetails: ClassDetails) => void;
   onCancel: () => void;
+  onDelete?: (timetableId?: string) => void;
   subjects: Subject[];
   facultyAssignments: FacultyAssignmentData[];
   semesterId: string;
@@ -179,7 +180,7 @@ function isErrorWithMessage(error: unknown): error is ErrorWithMessage {
 }
 
 // Edit Modal Component
-const EditModal = ({ classDetails, onSave, onCancel, subjects, facultyAssignments, semesterId, sectionId, branchId }: EditModalProps) => {
+const EditModal = ({ classDetails, onSave, onCancel, onDelete, subjects, facultyAssignments, semesterId, sectionId, branchId }: EditModalProps) => {
   const { theme } = useTheme();
   const [newClassDetails, setNewClassDetails] = useState({
     subject: classDetails.subject || "",
@@ -189,6 +190,7 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, facultyAssignment
     end_time: classDetails.end_time || "",
   });
   const [isLoadingAssignments, setIsLoadingAssignments] = useState(false);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
   useEffect(() => {
     const fetchFacultyAssignment = async () => {
@@ -244,11 +246,17 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, facultyAssignment
     }));
   };
 
+  const dayFullMap: Record<string,string> = {
+    'MON': 'Monday', 'TUE': 'Tuesday', 'WED': 'Wednesday', 'THU': 'Thursday', 'FRI': 'Friday', 'SAT': 'Saturday'
+  };
+
+  const dayFull = dayFullMap[classDetails.day] || classDetails.day;
+
   return (
-    <div className={`fixed inset-0 flex items-center justify-center z-50 ${theme === 'dark' ? 'bg-background/50' : 'bg-gray-900/50'} text-gray-200`}>
-      <div className={`p-6 rounded-md shadow-lg border-2 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
-        <h2 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-          {classDetails.timetable_id ? "Edit Class" : "Add Class"} for {classDetails.day}
+    <div className={`fixed inset-0 flex items-center justify-center z-50 ${theme === 'dark' ? 'bg-background/60' : 'bg-gray-900/60'} text-gray-200`}>
+      <div className={`w-11/12 md:w-3/4 lg:w-1/2 p-8 rounded-lg shadow-2xl border-2 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
+        <h2 className={`text-2xl md:text-3xl font-semibold mb-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+          {classDetails.timetable_id ? "Edit Class" : "Add Class"} — {dayFull}
         </h2>
 
         <div className="mb-4">
@@ -320,24 +328,61 @@ const EditModal = ({ classDetails, onSave, onCancel, subjects, facultyAssignment
           />
         </div>
 
-        <div className="flex justify-end space-x-4">
-          <Button
-            variant="outline"
-            className={theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-100'}
-            onClick={onCancel}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              onSave({ ...newClassDetails, day: classDetails.day || "" });
-            }}
-            className={theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-100'}
-          >
-            Save
-          </Button>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="destructive"
+              onClick={() => setShowConfirmDelete(true)}
+              disabled={!classDetails.timetable_id}
+              className={theme === 'dark' ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-red-600 text-white hover:bg-red-700'}
+            >
+              Delete
+            </Button>
+            {!classDetails.timetable_id && (
+              <span className="text-xs text-muted-foreground">No existing class to delete</span>
+            )}
+          </div>
+          <div className="flex justify-end space-x-4">
+            <Button
+              variant="outline"
+              className={theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-100'}
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                onSave({ ...newClassDetails, day: classDetails.day || "" });
+              }}
+              className={theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-100'}
+            >
+              Save
+            </Button>
+          </div>
         </div>
+        {showConfirmDelete && (
+          <div className="mt-4 p-4 border rounded bg-red-50 text-red-900">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div>
+                <strong>Delete class?</strong>
+                <div className="text-sm">This will delete the class for {dayFull} at {newClassDetails.start_time} - {newClassDetails.end_time}.</div>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setShowConfirmDelete(false)}>Cancel</Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    setShowConfirmDelete(false);
+                    onDelete && onDelete(classDetails.timetable_id);
+                  }}
+                >
+                  Confirm Delete
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -657,38 +702,46 @@ const Timetable = () => {
 
       const response = await manageTimetable(timetableRequest);
       if (response.success) {
-        // Re-fetch timetable to ensure consistency
-        const fetchTimetableResponse = await manageTimetable({
-          action: "GET" as const,
-          branch_id: state.branchId,
-          semester_id: state.semesterId,
-          section_id: state.sectionId,
-        });
-        if (fetchTimetableResponse.success && fetchTimetableResponse.data) {
-          const normalizedTimetable = Array.isArray(fetchTimetableResponse.data)
-            ? fetchTimetableResponse.data.map((entry: TimetableData) => ({
-              id: entry.id,
-              faculty_assignment: {
-                id: entry.faculty_assignment.id,
-                faculty: entry.faculty_assignment.faculty,
-                subject: entry.faculty_assignment.subject,
-                semester: entry.faculty_assignment.semester,
-                section: entry.faculty_assignment.section,
-              },
-              day: entry.day.toUpperCase(),
-              start_time: entry.start_time,
-              end_time: entry.end_time,
-              room: entry.room,
-            }))
-            : [];
-          updateState({
-            timetable: normalizedTimetable,
-            selectedClass: null,
-          });
-          console.log("Updated timetable:", normalizedTimetable);
-          toast({ title: "Success", description: "Timetable updated successfully" });
+        // Reconcile optimistic UI using server response without refetch
+        const timetableId = response.data?.timetable_id as string | undefined;
+        const day = state.selectedClass?.day || timetableRequest.day;
+        const start_time = timetableRequest.start_time;
+        const end_time = timetableRequest.end_time;
+        const room = timetableRequest.room || "";
+
+        // Build faculty_assignment details from local cache
+        const assignment = state.facultyAssignments.find(a => a.id === timetableRequest.assignment_id);
+        const facultyAssignment = assignment
+          ? {
+              id: assignment.id,
+              faculty: assignment.faculty,
+              subject: assignment.subject,
+              semester: assignment.semester,
+              section: assignment.section,
+            }
+          : { id: timetableRequest.assignment_id || "", faculty: "", subject: "", semester: 0, section: "" };
+
+        if (timetableRequest.action === 'create') {
+          const newEntry = {
+            id: timetableId || `temp-${Date.now()}`,
+            faculty_assignment: facultyAssignment,
+            day: day.toUpperCase(),
+            start_time,
+            end_time,
+            room,
+          };
+          updateState({ timetable: [...state.timetable, newEntry], selectedClass: null });
+          toast({ title: "Success", description: "Timetable created" });
         } else {
-          throw new Error("Failed to fetch updated timetable");
+          // update
+          if (timetableId) {
+            const updated = state.timetable.map((e) => (e.id === timetableId || e.id === state.selectedClass?.timetable_id)
+              ? { ...e, faculty_assignment: facultyAssignment, day: day.toUpperCase(), start_time, end_time, room }
+              : e
+            );
+            updateState({ timetable: updated, selectedClass: null });
+            toast({ title: "Success", description: "Timetable updated successfully" });
+          }
         }
       } else {
         throw new Error(response.message || "Failed to save timetable");
@@ -707,6 +760,26 @@ const Timetable = () => {
           description: "An unknown error occurred",
         });
       }
+    }
+  };
+
+  const handleDeleteClass = async (timetableId?: string) => {
+    if (!timetableId) return;
+    try {
+      updateState({ loading: true });
+      const response = await manageTimetable({ action: 'delete', timetable_id: timetableId, branch_id: state.branchId });
+      if (response.success) {
+        const filtered = state.timetable.filter((e) => e.id !== timetableId);
+        updateState({ timetable: filtered, selectedClass: null });
+        toast({ title: 'Deleted', description: 'Class deleted successfully' });
+      } else {
+        throw new Error(response.message || 'Failed to delete class');
+      }
+    } catch (err) {
+      console.error('Delete class error:', err);
+      toast({ variant: 'destructive', title: 'Error', description: (isErrorWithMessage(err) ? err.message : 'Network error') });
+    } finally {
+      updateState({ loading: false });
     }
   };
 
@@ -898,6 +971,7 @@ const Timetable = () => {
           classDetails={state.selectedClass}
           onSave={handleSaveClass}
           onCancel={handleCancelEdit}
+          onDelete={handleDeleteClass}
           subjects={state.subjects}
           facultyAssignments={state.facultyAssignments}
           semesterId={state.semesterId}
