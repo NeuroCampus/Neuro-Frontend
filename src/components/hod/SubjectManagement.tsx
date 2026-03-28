@@ -210,13 +210,43 @@ const SubjectManagement = () => {
     try {
       const response = await manageSubjects(data, "POST");
       if (response.success) {
-        updateState({
-          success: state.showModal === "add" ? "Course added successfully" : "Course updated successfully",
-          showModal: null,
-          newSubject: { code: "", name: "", semester_id: "", subject_type: "regular", credits: 3 },
-          currentSubject: null,
-        });
-        fetchSubjects(state.branchId, state.currentPage, state.pageSize); // Refresh subjects with current pagination
+        // Update local state to reflect create/update without refetching
+        const isCreate = data.action === 'create';
+        const createdId = response.data?.subject_id as unknown as string;
+        const updatedSubject: Subject = {
+          id: isCreate ? (createdId || `${Date.now()}`) : (state.currentSubject ? state.currentSubject.id : createdId || `${Date.now()}`),
+          name: state.newSubject.name,
+          subject_code: state.newSubject.code,
+          semester_id: state.newSubject.semester_id,
+          subject_type: state.newSubject.subject_type,
+          credits: state.newSubject.credits,
+        };
+
+        if (isCreate) {
+          // Prepend to current page; keep page size stable
+          const newSubjects = [updatedSubject, ...state.subjects].slice(0, state.pageSize);
+          const newTotalCount = state.totalCount + 1;
+          const newTotalPages = Math.ceil(newTotalCount / state.pageSize);
+          updateState({
+            subjects: newSubjects,
+            totalCount: newTotalCount,
+            totalPages: newTotalPages,
+            success: "Course added successfully",
+            showModal: null,
+            newSubject: { code: "", name: "", semester_id: "", subject_type: "regular", credits: 3 },
+            currentSubject: null,
+          });
+        } else {
+          // Update in-place
+          const newSubjects = state.subjects.map((s) => (s.id === updatedSubject.id ? updatedSubject : s));
+          updateState({
+            subjects: newSubjects,
+            success: "Course updated successfully",
+            showModal: null,
+            newSubject: { code: "", name: "", semester_id: "", subject_type: "regular", credits: 3 },
+            currentSubject: null,
+          });
+        }
       } else {
         updateState({ error: response.message });
       }
@@ -262,12 +292,21 @@ const SubjectManagement = () => {
       try {
         const response = await manageSubjects(data, "POST");
         if (response.success) {
-          updateState({ success: "Course deleted successfully" });
-          // If we're on a page that becomes empty after deletion, go to previous page
-          const newTotalCount = state.totalCount - 1;
+          // Remove locally and adjust pagination; only fetch if previous page must be loaded
+          const removedId = state.deleteConfirmation;
+          const newSubjectsList = state.subjects.filter((s) => s.id !== removedId);
+          const newTotalCount = Math.max(0, state.totalCount - 1);
           const newTotalPages = Math.ceil(newTotalCount / state.pageSize);
-          const newPage = state.currentPage > newTotalPages ? Math.max(1, newTotalPages) : state.currentPage;
-          fetchSubjects(state.branchId, newPage, state.pageSize);
+          let newPage = state.currentPage;
+          // If current page became empty and there is a previous page, go back one page and fetch it
+          if (newSubjectsList.length === 0 && state.currentPage > 1) {
+            newPage = Math.max(1, newTotalPages);
+            updateState({ loading: false, deleteConfirmation: null, success: "Course deleted successfully", currentPage: newPage, totalCount: newTotalCount, totalPages: newTotalPages });
+            // Load previous page because we don't have its items locally
+            await fetchSubjects(state.branchId, newPage, state.pageSize);
+          } else {
+            updateState({ subjects: newSubjectsList, totalCount: newTotalCount, totalPages: newTotalPages, success: "Course deleted successfully" });
+          }
         } else {
           updateState({ error: response.message });
         }
@@ -603,14 +642,42 @@ const SubjectManagement = () => {
                   try {
                     const response = await manageSubjects(data, "POST");
                     if (response.success) {
-                      updateState({
-                        success: state.showModal === "add" ? "Subject added successfully" : "Subject updated successfully",
-                        showModal: null,
-                        newSubject: { code: "", name: "", semester_id: "", subject_type: "regular", credits: 3 },
-                        currentSubject: null,
-                        modalError: null,
-                      });
-                      fetchSubjects(state.branchId, state.currentPage, state.pageSize);
+                      const isCreate = data.action === 'create';
+                      const createdId = response.data?.subject_id as unknown as string;
+                      const updatedSubject: Subject = {
+                        id: isCreate ? (createdId || `${Date.now()}`) : (state.currentSubject ? state.currentSubject.id : createdId || `${Date.now()}`),
+                        name: state.newSubject.name,
+                        subject_code: state.newSubject.code,
+                        semester_id: state.newSubject.semester_id,
+                        subject_type: state.newSubject.subject_type,
+                        credits: state.newSubject.credits,
+                      };
+
+                      if (isCreate) {
+                        const newSubjects = [updatedSubject, ...state.subjects].slice(0, state.pageSize);
+                        const newTotalCount = state.totalCount + 1;
+                        const newTotalPages = Math.ceil(newTotalCount / state.pageSize);
+                        updateState({
+                          subjects: newSubjects,
+                          totalCount: newTotalCount,
+                          totalPages: newTotalPages,
+                          success: "Subject added successfully",
+                          showModal: null,
+                          newSubject: { code: "", name: "", semester_id: "", subject_type: "regular", credits: 3 },
+                          currentSubject: null,
+                          modalError: null,
+                        });
+                      } else {
+                        const newSubjects = state.subjects.map((s) => (s.id === updatedSubject.id ? updatedSubject : s));
+                        updateState({
+                          subjects: newSubjects,
+                          success: "Subject updated successfully",
+                          showModal: null,
+                          newSubject: { code: "", name: "", semester_id: "", subject_type: "regular", credits: 3 },
+                          currentSubject: null,
+                          modalError: null,
+                        });
+                      }
                     } else {
                       updateState({ modalError: response.message });
                     }
