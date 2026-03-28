@@ -511,7 +511,7 @@ const StudentEnrollment = () => {
             )}
           </div>
 
-          <Dialog open={resultModalOpen} onOpenChange={(open) => { setResultModalOpen(open); if (!open) loadStudents(currentPage, searchTerm); }}>
+          <Dialog open={resultModalOpen} onOpenChange={(open) => { setResultModalOpen(open); }}>
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Enrollment Results</DialogTitle>
@@ -530,7 +530,7 @@ const StudentEnrollment = () => {
               </div>
               <DialogFooter>
                 <div className="w-full flex justify-end">
-                  <Button onClick={() => { setResultModalOpen(false); loadStudents(currentPage, searchTerm); }}>Close</Button>
+                  <Button onClick={() => { setResultModalOpen(false); }}>Close</Button>
                 </div>
               </DialogFooter>
             </DialogContent>
