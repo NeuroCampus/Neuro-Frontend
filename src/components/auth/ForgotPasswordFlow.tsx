@@ -173,7 +173,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
             className="space-y-4"
           >
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-gray-300">
+              <label htmlFor="email" className="text-sm font-medium text-gray-700">
                 Email Address
               </label>
               <div className="relative">
@@ -184,7 +184,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email address"
-                  className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
+                  className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
                   onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
                 />
               </div>
@@ -202,7 +202,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
             className="space-y-4"
           >
             <div className="space-y-2">
-              <label htmlFor="otp" className="text-sm font-medium text-gray-300">
+              <label htmlFor="otp" className="text-sm font-medium text-gray-700">
                 Verification Code
               </label>
               <div className="relative">
@@ -213,12 +213,12 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="Enter 6-digit code"
-                  className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 text-center text-lg tracking-widest transition-all duration-300"
+                  className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 text-center text-lg tracking-widest transition-all duration-300"
                   onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
                   maxLength={6}
                 />
               </div>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-600">
                 We sent a verification code to {email}
               </p>
             </div>
@@ -235,7 +235,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
             className="space-y-4"
           >
             <div className="space-y-2">
-              <label htmlFor="newPassword" className="text-sm font-medium text-gray-300">
+              <label htmlFor="newPassword" className="text-sm font-medium text-gray-700">
                 New Password
               </label>
               <div className="relative">
@@ -246,7 +246,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"
-                  className="pl-10 pr-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
+                  className="pl-10 pr-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
                 />
                 <button
                   type="button"
@@ -259,7 +259,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-300">
+              <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
                 Confirm Password
               </label>
               <div className="relative">
@@ -270,7 +270,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm new password"
-                  className="pl-10 pr-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
+                  className="pl-10 pr-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
                   onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
                 />
                 <button
@@ -302,10 +302,10 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
             >
               <CheckCircle className="w-8 h-8 text-green-400" />
             </motion.div>
-            <h3 className="text-lg font-semibold text-white">
+            <h3 className="text-lg font-semibold text-gray-900">
               {isPasswordResetFlow ? 'Account Setup Complete!' : 'Password Reset Successfully!'}
             </h3>
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-600 text-sm">
               {isPasswordResetFlow 
                 ? 'Your account is now active. You can login with your new password.'
                 : 'Your password has been reset. You\'ll be redirected to login in a moment.'
@@ -349,7 +349,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
     <div className="min-h-screen flex">
       {/* Left Section - Form */}
       <motion.div 
-        className="flex-1 bg-[#1c1c1e] flex items-center justify-center p-8"
+        className="flex-1 bg-white flex items-center justify-center p-8"
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
@@ -377,7 +377,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
                             ? isCurrent
                               ? 'bg-[#a259ff] border-[#a259ff] text-white'
                               : 'bg-[#a259ff]/20 border-[#a259ff] text-[#a259ff]'
-                            : 'bg-gray-800 border-gray-600 text-gray-500'
+                            : 'bg-gray-100 border-gray-200 text-gray-500'
                         }`}
                         animate={{
                           scale: isCurrent ? 1.1 : 1,
@@ -387,10 +387,10 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
                         <Icon className="w-4 h-4" />
                       </motion.div>
                       <div className="mt-2 text-center">
-                        <p className={`text-xs font-medium ${isActive ? 'text-white' : 'text-gray-500'}`}>
+                        <p className={`text-xs font-medium ${isActive ? 'text-gray-900' : 'text-gray-500'}`}>
                           {step.title}
                         </p>
-                        <p className={`text-xs ${isActive ? 'text-gray-300' : 'text-gray-600'}`}>
+                        <p className={`text-xs ${isActive ? 'text-gray-600' : 'text-gray-600'}`}>
                           {step.description}
                         </p>
                       </div>
@@ -398,7 +398,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
                     {index < steps.length - 1 && (
                       <div
                         className={`flex-1 h-0.5 mx-4 transition-all duration-500 ${
-                          index < currentStepIndex ? 'bg-[#a259ff]' : 'bg-gray-700'
+                          index < currentStepIndex ? 'bg-[#a259ff]' : 'bg-gray-200'
                         }`}
                       />
                     )}
@@ -415,13 +415,13 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <h1 className="text-2xl font-bold text-white mb-2">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
               {currentStep === 'email' && 'Reset Password'}
               {currentStep === 'otp' && 'Verify Identity'}
               {currentStep === 'password' && 'Create New Password'}
               {currentStep === 'success' && 'All Done!'}
             </h1>
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-600 text-sm">
               {currentStep === 'email' && 'Enter your email to receive a reset code'}
               {currentStep === 'otp' && 'Enter the verification code sent to your email'}
               {currentStep === 'password' && 'Choose a strong password for your account'}
@@ -438,7 +438,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
           >
             {error && (
               <motion.div 
-                className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg text-sm flex items-center gap-2"
+                className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-lg text-sm flex items-center gap-2"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
