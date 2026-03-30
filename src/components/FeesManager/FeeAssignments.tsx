@@ -221,7 +221,7 @@ const FeeAssignments: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="container mx-auto p-0">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Fee Assignments</h1>
