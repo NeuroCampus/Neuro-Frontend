@@ -291,6 +291,17 @@ export interface ManageProfileRequest {
   address?: string;
   bio?: string;
   profile_picture?: File;
+  // Faculty-specific fields
+  date_of_birth?: string; // YYYY-MM-DD
+  gender?: string;
+  department?: string;
+  designation?: string;
+  qualification?: string;
+  branch?: string | number;
+  branch_id?: number;
+  experience_years?: string | number;
+  office_location?: string;
+  office_hours?: string;
 }
 
 interface ManageProfileResponse {
@@ -788,6 +799,18 @@ export const manageProfile = async (
     if (data.address) formData.append("address", data.address);
     if (data.bio) formData.append("bio", data.bio);
     if (data.profile_picture) formData.append("profile_picture", data.profile_picture);
+    // Faculty-specific fields
+    if (data.date_of_birth) formData.append("date_of_birth", data.date_of_birth);
+    if (data.gender) formData.append("gender", data.gender);
+    if (data.department) formData.append("department", data.department);
+    if (data.designation) formData.append("designation", data.designation);
+    if (data.qualification) formData.append("qualification", data.qualification);
+    // prefer explicit branch_id when available
+    if (typeof data.branch_id !== 'undefined' && data.branch_id !== null) formData.append("branch_id", String(data.branch_id));
+    else if (typeof data.branch !== 'undefined' && data.branch !== null) formData.append("branch", String(data.branch));
+    if (typeof data.experience_years !== 'undefined' && data.experience_years !== null) formData.append("experience_years", String(data.experience_years));
+    if (data.office_location) formData.append("office_location", data.office_location);
+    if (data.office_hours) formData.append("office_hours", data.office_hours);
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/profile/`, {
       method: "POST",
       headers: {

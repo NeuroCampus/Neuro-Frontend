@@ -142,6 +142,17 @@ const FacultyProfile = () => {
         mobile: formData.mobile,
         address: formData.address,
         bio: formData.bio,
+        profile_picture: (formData.profile_picture as any) || undefined,
+        // faculty specific
+        department: formData.department || undefined,
+        designation: formData.designation || undefined,
+        qualification: formData.qualification || undefined,
+        branch: formData.branch || undefined,
+        experience_years: formData.experience_years || undefined,
+        office_location: formData.office_location || undefined,
+        office_hours: formData.office_hours || undefined,
+        date_of_birth: formData.date_of_birth || undefined,
+        gender: formData.gender || undefined,
       });
 
       // Backend may return updated profile under `profile` or `data`
@@ -150,7 +161,25 @@ const FacultyProfile = () => {
         showSuccessAlert("Success", "Profile updated successfully!");
         // Update local formData from returned payload when available
         if (payload) {
-          setFormData((prev) => ({ ...prev, firstName: payload.first_name || prev.firstName, lastName: payload.last_name || prev.lastName, email: payload.email || prev.email, mobile: payload.mobile_number || payload.mobile || prev.mobile, address: payload.address || prev.address, bio: payload.bio || prev.bio, profile_picture: payload.profile_picture || prev.profile_picture }));
+          setFormData((prev) => ({
+            ...prev,
+            firstName: payload.first_name || prev.firstName,
+            lastName: payload.last_name || prev.lastName,
+            email: payload.email || prev.email,
+            mobile: payload.mobile_number || payload.mobile || prev.mobile,
+            address: payload.address || prev.address,
+            bio: payload.bio || prev.bio,
+            profile_picture: payload.profile_picture || prev.profile_picture,
+            department: payload.department || prev.department,
+            designation: payload.designation || prev.designation,
+            qualification: payload.qualification || prev.qualification,
+            branch: payload.branch || prev.branch,
+            experience_years: payload.experience_years ? String(payload.experience_years) : prev.experience_years,
+            office_location: payload.office_location || prev.office_location,
+            office_hours: payload.office_hours || prev.office_hours,
+            date_of_birth: payload.date_of_birth || prev.date_of_birth,
+            gender: payload.gender || prev.gender,
+          }));
         }
         setIsEditing(false);
       } else {
