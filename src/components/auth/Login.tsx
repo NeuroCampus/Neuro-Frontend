@@ -165,7 +165,7 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
       </motion.div>
       {/* Left Section - Login Form */}
       <motion.div 
-        className="flex-1 bg-[#1c1c1e] flex items-center justify-center p-8"
+        className="flex-1 bg-white flex items-center justify-center p-8"
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
@@ -177,8 +177,8 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <h1 className="text-2xl font-bold text-white mb-2">Login</h1>
-            <p className="text-gray-400 text-sm">Sign in to access your account</p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Login</h1>
+            <p className="text-gray-600 text-sm">Sign in to access your account</p>
           </motion.div>
 
           <motion.div 
@@ -220,7 +220,7 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Enter your username"
-                  className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
+                  className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
                   onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
                 />
               </div>
@@ -243,7 +243,7 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="pl-10 pr-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
+                  className="pl-10 pr-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
                   onKeyPress={(e) => e.key === "Enter" && handleLogin()}
                 />
 
