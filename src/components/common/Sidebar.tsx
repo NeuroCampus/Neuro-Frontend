@@ -134,7 +134,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
 
   const menuItems: { [key: string]: { name: string; page: string }[] } = {
   fees_manager: [
-    { name: "Overview", page: "overview" },
+    { name: "Dashboard", page: "dashboard" },
     { name: "Components", page: "components" },
     { name: "Templates", page: "templates" },
     { name: "Assignments", page: "assignments" },
