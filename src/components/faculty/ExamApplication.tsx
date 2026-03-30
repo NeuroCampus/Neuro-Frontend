@@ -310,8 +310,18 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
       // Refresh the dialog data
       if (selectedStudent) {
         // Re-trigger the useEffect by closing and reopening
-        setOpen(false);
-        setTimeout(() => openFor(selectedStudent), 100);
+        // If server returned updated_student, update local status map instead of full refetch
+        if (result && result.updated_student) {
+          const usn = result.updated_student.usn;
+          const newStatus = result.updated_student.status || 'Not Applied';
+          setStudentStatuses((prev) => ({ ...prev, [usn]: newStatus }));
+          // Re-open to refresh dialog details
+          setOpen(false);
+          setTimeout(() => openFor(selectedStudent), 100);
+        } else {
+          setOpen(false);
+          setTimeout(() => openFor(selectedStudent), 100);
+        }
       }
 
     } catch (error) {
@@ -844,6 +854,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
                     const subjectIdsToCreate = Array.from(subjectIdsSet);
 
                     // First, cancel unchecked previously applied applications
+                    let cancelResults: Array<any> = [];
                     if (toCancelCodes.length > 0) {
                       const cancelPromises = toCancelCodes.map(async (code) => {
                         const app = existingMap[code];
@@ -870,7 +881,22 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
                           return null;
                         }
                       });
-                      await Promise.all(cancelPromises);
+                      cancelResults = await Promise.all(cancelPromises);
+                      // Apply cancellations locally
+                      cancelResults.forEach((r) => {
+                        if (r && r.data) {
+                          const app = r.data;
+                          const subjCode = app.subject_code;
+                          if (subjCode) {
+                            setSubjectStatuses((prev) => ({ ...prev, [subjCode]: app.status === 'applied' ? 'Applied' : 'Not Applied' }));
+                            setAppliedSubjects((prev) => ({ ...prev, [subjCode]: app.status === 'applied' }));
+                            // remove from existingApplications if status is not applied
+                            if (app.status !== 'applied') {
+                              setExistingApplications((prev) => prev.filter((x: any) => x.id !== app.id));
+                            }
+                          }
+                        }
+                      });
                     }
 
                     // Then, create new applications for newly checked subjects
@@ -890,19 +916,30 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
                       if (!response.ok && response.status !== 200 && response.status !== 207) {
                         throw new Error(result.message || 'Failed to submit applications');
                       }
-                    }
 
-                    // Refresh consolidated proctor students (which includes status)
-                    try {
-                      const fresh = await refetchProctor();
-                      const freshData = fresh?.data?.data || (fresh?.data ?? []);
-                      const statusMap: Record<string, string> = {};
-                      (Array.isArray(freshData) ? freshData : []).forEach((student: any) => {
-                        statusMap[student.usn] = student.status || 'Not Applied';
-                      });
-                      setStudentStatuses(statusMap);
-                    } catch (err) {
-                      console.error('Failed to refresh proctor students after apply:', err);
+                      // Update per-subject statuses and existingApplications from server response (POST returns created apps)
+                      if (result && Array.isArray(result.data)) {
+                        const createdApps = result.data;
+                        createdApps.forEach((app: any) => {
+                          const subjCode = app.subject_code;
+                          if (subjCode) {
+                            setSubjectStatuses((prev) => ({ ...prev, [subjCode]: app.status === 'applied' ? 'Applied' : 'Not Applied' }));
+                            setAppliedSubjects((prev) => ({ ...prev, [subjCode]: app.status === 'applied' }));
+                            setExistingApplications((prev) => {
+                              // avoid duplicates
+                              if (prev.find((p: any) => p.id === app.id)) return prev;
+                              return [...prev, app];
+                            });
+                          }
+                        });
+                      }
+
+                      // Also update student-level status if provided
+                      if (result && result.updated_student) {
+                        const usn = result.updated_student.usn;
+                        const newStatus = result.updated_student.status || 'Not Applied';
+                        setStudentStatuses((prev) => ({ ...prev, [usn]: newStatus }));
+                      }
                     }
 
                     toast({
