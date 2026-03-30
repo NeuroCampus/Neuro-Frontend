@@ -40,6 +40,7 @@ export const usePagination = (options: PaginationOptions) => {
       const hasPrev = p.has_prev ?? p.hasPrev ?? false;
       const totalPages = p.total_pages ?? p.totalPages ?? 0;
       const totalItems = p.total_items ?? p.totalItems ?? 0;
+      // Sync both the pagination state and the current page value so UI and hook stay consistent
       setPaginationState({
         page: currentPage,
         pageSize: pageSz,
@@ -48,6 +49,7 @@ export const usePagination = (options: PaginationOptions) => {
         totalPages,
         totalItems,
       });
+      setPage(currentPage);
     }
   }, [page, pageSize]);
 

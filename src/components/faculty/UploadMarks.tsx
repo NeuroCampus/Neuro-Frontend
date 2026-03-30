@@ -127,6 +127,14 @@ const UploadMarks = () => {
   const [students, setStudents] = useState<(ClassStudent & { marks: string; total: string; isEditing: boolean; totalEdited?: boolean })[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState<null | {
+    page: number;
+    page_size: number;
+    total: number;
+    total_pages: number;
+    has_next: boolean;
+    has_previous: boolean;
+  }>(null);
   const [savingMarks, setSavingMarks] = useState(false);
   const [bulkUploadCompleted, setBulkUploadCompleted] = useState(false);
 
@@ -189,6 +197,75 @@ const UploadMarks = () => {
     // If no valid combos but multiple questions attempted, sum all attempted main question marks
     const total = attended.reduce((sum, q) => sum + mainMarks[q], 0);
     return total.toString();
+  };
+
+  const fetchStudentsPage = async (page: number) => {
+    if (!selected.subject_id || !selected.testType) return;
+    const params: any = { subject_id: selected.subject_id.toString(), test_type: selected.testType, page, page_size: studentsPerPage };
+    if (selected.branch_id) params.branch_id = selected.branch_id.toString();
+    if (selected.semester_id) params.semester_id = selected.semester_id.toString();
+    if (selected.section_id) params.section_id = selected.section_id.toString();
+    setLoadingStudents(true);
+    try {
+      const response: StudentsForMarksResponse = await getStudentsForMarks(params);
+      if (response.success && response.data) {
+        const initialMarks: Record<string, Record<string, string>> = {};
+        const existingTotals: Record<number, number | null> = {};
+        response.data.forEach(s => {
+          existingTotals[s.id] = s.existing_mark ? (s.existing_mark.total_obtained || null) : null;
+          if (s.existing_mark && s.existing_mark.marks_detail) {
+            initialMarks[s.id.toString()] = {};
+            Object.keys(s.existing_mark.marks_detail).forEach(key => {
+              initialMarks[s.id.toString()][key] = s.existing_mark!.marks_detail[key].toString();
+            });
+          }
+        });
+        const newStudents = response.data.map(s => {
+          const marksForStudent = initialMarks[s.id?.toString()] || {};
+          const autoTotal = calculateTotal(marksForStudent) || '';
+          const existingTotal = existingTotals[s.id];
+          const totalValue = existingTotal != null ? String(existingTotal) : String(totalMarks);
+          const isEdited = existingTotal != null ? String(existingTotal) !== String(autoTotal) : false;
+          return {
+            id: s.id,
+            name: s.name,
+            usn: s.usn,
+            marks: (s.existing_mark && s.existing_mark.total_obtained) ? String(s.existing_mark.total_obtained) : '',
+            total: totalValue,
+            isEditing: false,
+            totalEdited: isEdited,
+          };
+        });
+        setStudents(newStudents);
+        setStudentMarks(initialMarks);
+        setActionModes(() => {
+          const m: Record<string, 'edit' | 'save' | 'view'> = {};
+          newStudents.forEach(st => { m[st.id] = 'view'; });
+          return m;
+        });
+        if (response.pagination) {
+          setPagination(response.pagination as any);
+          setCurrentPage(response.pagination.page);
+        } else {
+          setPagination({ page, page_size: studentsPerPage, total: newStudents.length, total_pages: Math.ceil(newStudents.length / studentsPerPage), has_next: false, has_previous: false });
+          setCurrentPage(1);
+        }
+      }
+    } catch (err) {
+      setErrorMessage('Failed to fetch students/marks');
+    } finally {
+      setLoadingStudents(false);
+    }
+  };
+
+  const handlePrevPage = async () => {
+    const target = pagination ? Math.max((pagination.page || currentPage) - 1, 1) : Math.max(currentPage - 1, 1);
+    await fetchStudentsPage(target);
+  };
+
+  const handleNextPage = async () => {
+    const target = pagination ? Math.min((pagination.page || currentPage) + 1, pagination.total_pages) : Math.min(currentPage + 1, totalPages);
+    await fetchStudentsPage(target);
   };
   const studentsPerPage = 10;
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -696,10 +773,10 @@ const UploadMarks = () => {
     }
   };
 
-  const indexOfLastStudent = currentPage * studentsPerPage;
+  const indexOfLastStudent = (pagination?.page || currentPage) * studentsPerPage;
   const indexOfFirstStudent = indexOfLastStudent - studentsPerPage;
-  const currentStudents = students.slice(indexOfFirstStudent, indexOfLastStudent);
-  const totalPages = Math.ceil(students.length / studentsPerPage);
+  const currentStudents = students; // server returns current page items
+  const totalPages = pagination ? pagination.total_pages : Math.ceil(students.length / studentsPerPage);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1158,7 +1235,7 @@ const UploadMarks = () => {
         const subjIdNum = Number(value);
         if (localSubjectType === 'open_elective') {
           // Try to derive branches from student registrations
-          const studentsResp = await getStudentsForMarks({ subject_id: subjIdNum.toString() });
+          const studentsResp = await getStudentsForMarks({ subject_id: subjIdNum.toString(), page: 1, page_size: 1000 });
           let branchesFromStudents: { id: number; name: string }[] = [];
           if (studentsResp && studentsResp.success && Array.isArray(studentsResp.data)) {
             branchesFromStudents = Array.from(
@@ -1329,7 +1406,7 @@ const UploadMarks = () => {
             params.section_id = section_id.toString();
           }
           console.log('UploadMarks: fetching students with params', params);
-          const response: StudentsForMarksResponse = await getStudentsForMarks(params);
+          const response: StudentsForMarksResponse = await getStudentsForMarks({ ...params, page: 1, page_size: studentsPerPage });
           console.log('UploadMarks: students-for-marks response', response);
           if (response.success && response.data) {
             // Build a map of initial marks and determine if backend has a stored total that differs
@@ -1365,7 +1442,14 @@ const UploadMarks = () => {
 
             console.log('Loaded students:', newStudents);
             setStudents(newStudents);
-            setCurrentPage(1);
+            // update pagination state from backend if present
+            if (response.pagination) {
+              setPagination(response.pagination as any);
+              setCurrentPage(response.pagination.page);
+            } else {
+              setPagination({ page: 1, page_size: studentsPerPage, total: newStudents.length, total_pages: Math.ceil(newStudents.length / studentsPerPage), has_next: false, has_previous: false });
+              setCurrentPage(1);
+            }
             console.log('Setting initial marks:', initialMarks);
             setStudentMarks(initialMarks);
             
@@ -1824,8 +1908,8 @@ const UploadMarks = () => {
                       variant="outline"
                       size="sm"
                       className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out"
-                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                      disabled={currentPage === 1}
+                      onClick={handlePrevPage}
+                      disabled={pagination ? !pagination.has_previous : currentPage === 1}
                     >
                       Previous
                     </Button>
@@ -1833,8 +1917,8 @@ const UploadMarks = () => {
                       variant="outline"
                       size="sm"
                       className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out"
-                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                      disabled={currentPage === totalPages}
+                      onClick={handleNextPage}
+                      disabled={pagination ? !pagination.has_next : currentPage === totalPages}
                     >
                       Next
                     </Button>

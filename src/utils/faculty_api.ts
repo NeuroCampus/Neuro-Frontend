@@ -1408,6 +1408,14 @@ export interface StudentsForMarksResponse {
     };
   }>;
   question_paper?: number;
+  pagination?: {
+    page: number;
+    page_size: number;
+    total: number;
+    total_pages: number;
+    has_next: boolean;
+    has_previous: boolean;
+  };
 }
 
 export interface UploadIAMarksRequest {
@@ -1495,6 +1503,8 @@ export const getStudentsForMarks = async (params: {
   section_id?: string;
   subject_id?: string;
   test_type?: string;
+  page?: number;
+  page_size?: number;
 }): Promise<StudentsForMarksResponse> => {
   try {
     const query = new URLSearchParams();
