@@ -122,7 +122,73 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
       if (!response.ok) {
         throw new Error('Failed to fetch fee data');
       }
-      return await response.json();
+      const raw = await response.json();
+
+      const toRupees = (centsOrAmount: any) => {
+        if (centsOrAmount === null || centsOrAmount === undefined) return 0;
+        // If backend returns cents (integer), convert to rupees
+        if (Number.isInteger(centsOrAmount)) return centsOrAmount / 100;
+        const n = Number(centsOrAmount);
+        return isNaN(n) ? 0 : n;
+      };
+
+      const transformed: FeeDataResponse = {
+        student: raw.student,
+        fee_summary: {
+          total_fees: toRupees(raw.fee_summary?.total_fees_cents ?? raw.fee_summary?.total_fees),
+          amount_paid: toRupees(raw.fee_summary?.amount_paid_cents ?? raw.fee_summary?.amount_paid),
+          remaining_fees: toRupees(raw.fee_summary?.remaining_fees_cents ?? raw.fee_summary?.remaining_fees),
+          due_date: raw.fee_summary?.due_date ?? null,
+          payment_status: raw.fee_summary?.payment_status ?? '',
+        },
+        fee_breakdown: raw.fee_breakdown || {},
+        invoices: (raw.invoices || []).map((inv: any) => ({
+          id: inv.id,
+          invoice_number: inv.invoice_number,
+          semester: inv.semester,
+          academic_year: inv.academic_year,
+          total_amount: toRupees(inv.total_amount_cents ?? inv.total_amount),
+          paid_amount: toRupees(inv.paid_amount_cents ?? inv.paid_amount),
+          balance_amount: toRupees(inv.balance_amount_cents ?? inv.balance_amount),
+          status: inv.status,
+          due_date: inv.due_date,
+          created_at: inv.created_at,
+          invoice_type: inv.invoice_type,
+          components: inv.components || [],
+        })),
+        payments: (raw.payments || []).map((p: any) => ({
+          id: p.id,
+          invoice_id: p.invoice_id,
+          amount: toRupees(p.amount_cents ?? p.amount),
+          mode: p.mode,
+          status: p.status,
+          timestamp: p.timestamp,
+          transaction_id: p.transaction_id,
+          payment_reference: p.payment_reference,
+        })),
+        receipts: (raw.receipts || []).map((r: any) => ({
+          id: r.id,
+          receipt_number: r.receipt_number,
+          amount: toRupees(r.amount_cents ?? r.amount),
+          payment_id: r.payment_id,
+          payment_date: r.payment_date,
+          payment_mode: r.payment_mode,
+          transaction_id: r.transaction_id,
+          invoice_id: r.invoice_id,
+          semester: r.semester || 0,
+          generated_at: r.generated_at,
+        })),
+        statistics: raw.statistics || {
+          total_invoices: 0,
+          total_payments: 0,
+          total_receipts: 0,
+          successful_payments: 0,
+          pending_payments: 0,
+          failed_payments: 0,
+        }
+      };
+
+      return transformed;
     },
     enabled: !!user,
   });
