@@ -364,6 +364,15 @@ const IndividualFeeAssignment: React.FC = () => {
                       </div>
                     ))}
                   </div>
+                  {/* Pagination controls for students */}
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="text-sm text-muted-foreground">Total Students: {studentsTotalCount}</div>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" onClick={() => handlePageChange(studentsPage - 1)} disabled={studentsPage <= 1}>Prev</Button>
+                      <div className="text-sm">Page {studentsPage} / {studentsTotalPages}</div>
+                      <Button size="sm" variant="outline" onClick={() => handlePageChange(studentsPage + 1)} disabled={studentsPage >= studentsTotalPages}>Next</Button>
+                    </div>
+                  </div>
                 </div>
                   ) : (
                 // Selected Student View with Custom Fee Components
