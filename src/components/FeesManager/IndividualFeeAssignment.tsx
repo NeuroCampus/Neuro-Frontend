@@ -101,7 +101,7 @@ const IndividualFeeAssignment: React.FC = () => {
         fetch(`http://127.0.0.1:8000/api/fees-manager/students/?page=${page}&page_size=${page_size}`, {
           headers: { 'Authorization': `Bearer ${token}` },
         }),
-        fetch('http://127.0.0.1:8000/api/fees-manager/components/', {
+        fetch(`http://127.0.0.1:8000/api/fees-manager/components/?page=1&page_size=200`, {
           headers: { 'Authorization': `Bearer ${token}` },
         }),
       ]);

@@ -34,6 +34,10 @@ interface FeeComponent {
 const FeeComponents: React.FC = () => {
   const { theme } = useTheme(); // Using theme context
   const [components, setComponents] = useState<FeeComponent[]>([]);
+  const [componentsPage, setComponentsPage] = useState(1);
+  const [componentsPageSize] = useState(25);
+  const [componentsTotalPages, setComponentsTotalPages] = useState(1);
+  const [componentsTotalCount, setComponentsTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -45,14 +49,14 @@ const FeeComponents: React.FC = () => {
   const [componentDescription, setComponentDescription] = useState('');
 
   useEffect(() => {
-    fetchComponents();
+    fetchComponents(componentsPage);
   }, []);
 
   const fetchComponents = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('access_token');
-      const response = await fetch('http://127.0.0.1:8000/api/fees-manager/components/', {
+      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/components/?page=${componentsPage}&page_size=${componentsPageSize}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -69,6 +73,10 @@ const FeeComponents: React.FC = () => {
         amount: (it.amount_cents != null ? Number(it.amount_cents) : (it.amount ? Math.round(it.amount * 100) : 0)) / 100,
       }));
       setComponents(items);
+      const meta = data.meta || {};
+      setComponentsPage(meta.page || componentsPage);
+      setComponentsTotalPages(meta.total_pages || Math.max(1, Math.ceil((meta.count || 0) / componentsPageSize)));
+      setComponentsTotalCount(meta.count || (data.data || []).length);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -116,6 +124,7 @@ const FeeComponents: React.FC = () => {
         amount: (created.amount_cents != null ? Number(created.amount_cents) / 100 : (created.amount ? Math.round(created.amount * 100) / 100 : 0)),
       };
       setComponents(prev => [item, ...prev]);
+      setComponentsTotalCount(c => c + 1);
       try { window.dispatchEvent(new CustomEvent('feeComponents:changed', { detail: { action: 'create', item } })); } catch (e) {}
       setIsCreateDialogOpen(false);
       resetForm();
@@ -164,6 +173,7 @@ const FeeComponents: React.FC = () => {
         amount: (updated.amount_cents != null ? Number(updated.amount_cents) / 100 : (updated.amount ? Math.round(updated.amount * 100) / 100 : 0)),
       };
       setComponents(prev => prev.map(c => (c.id === item.id ? item : c)));
+      // no change in total count for updates
       try { window.dispatchEvent(new CustomEvent('feeComponents:changed', { detail: { action: 'update', item } })); } catch (e) {}
       setIsCreateDialogOpen(false);
       resetForm();
@@ -190,6 +200,7 @@ const FeeComponents: React.FC = () => {
 
       // Remove locally without refetch
       setComponents(prev => prev.filter(c => c.id !== componentId));
+      setComponentsTotalCount(c => Math.max(0, c - 1));
       try { window.dispatchEvent(new CustomEvent('feeComponents:changed', { detail: { action: 'delete', id: componentId } })); } catch (e) {}
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete component');
@@ -304,7 +315,7 @@ const FeeComponents: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            Fee Components List
+            Fee Components List ({componentsTotalCount})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -367,6 +378,26 @@ const FeeComponents: React.FC = () => {
               )}
             </TableBody>
           </Table>
+          {/* Pagination controls */}
+          <div className="flex items-center justify-between mt-4">
+            <div className="text-sm text-gray-600">Page {componentsPage} of {componentsTotalPages}</div>
+            <div className="flex space-x-2">
+              <Button size="sm" variant="outline" onClick={() => {
+                if (componentsPage > 1) {
+                  const next = componentsPage - 1;
+                  setComponentsPage(next);
+                  fetchComponents(next);
+                }
+              }} disabled={componentsPage === 1}>Prev</Button>
+              <Button size="sm" variant="outline" onClick={() => {
+                if (componentsPage < componentsTotalPages) {
+                  const next = componentsPage + 1;
+                  setComponentsPage(next);
+                  fetchComponents(next);
+                }
+              }} disabled={componentsPage === componentsTotalPages}>Next</Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

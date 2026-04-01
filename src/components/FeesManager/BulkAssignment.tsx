@@ -116,7 +116,7 @@ const BulkAssignment: React.FC = () => {
         fetch('http://127.0.0.1:8000/api/fees-manager/bulk-assignment-stats/', {
           headers: { 'Authorization': `Bearer ${token}` },
         }),
-        fetch('http://127.0.0.1:8000/api/fees-manager/fee-templates/', {
+        fetch('http://127.0.0.1:8000/api/fees-manager/fee-templates/?page=1&page_size=200', {
           headers: { 'Authorization': `Bearer ${token}` },
         }),
       ]);

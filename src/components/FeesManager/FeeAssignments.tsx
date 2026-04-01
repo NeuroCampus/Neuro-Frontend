@@ -50,6 +50,10 @@ interface FeeAssignment {
 
 const FeeAssignments: React.FC = () => {
   const [assignments, setAssignments] = useState<FeeAssignment[]>([]);
+  const [assignmentsPage, setAssignmentsPage] = useState(1);
+  const [assignmentsPageSize] = useState(50);
+  const [assignmentsTotalPages, setAssignmentsTotalPages] = useState(1);
+  const [assignmentsTotalCount, setAssignmentsTotalCount] = useState(0);
   const [students, setStudents] = useState<Student[]>([]);
   const [studentsPage, setStudentsPage] = useState(1);
   const [studentsTotalPages, setStudentsTotalPages] = useState(1);
@@ -75,13 +79,13 @@ const FeeAssignments: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState('all');
 
   useEffect(() => {
-    fetchAssignments();
+    fetchAssignments(assignmentsPage);
   }, []);
-  const fetchAssignments = async () => {
+  const fetchAssignments = async (page: number = 1) => {
     try {
       setLoading(true);
       const token = localStorage.getItem('access_token');
-      const res = await fetch('http://127.0.0.1:8000/api/fees-manager/fee-assignments/?page=1&page_size=50', {
+      const res = await fetch(`http://127.0.0.1:8000/api/fees-manager/fee-assignments/?page=${page}&page_size=${assignmentsPageSize}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
@@ -90,10 +94,30 @@ const FeeAssignments: React.FC = () => {
       const data = await res.json();
       // API returns { data: [...], meta: {count,page,page_size,...} }
       setAssignments(data.data || []);
+      const meta = data.meta || {};
+      setAssignmentsPage(meta.page || page);
+      setAssignmentsTotalPages(meta.total_pages || Math.max(1, Math.ceil((meta.count || 0) / assignmentsPageSize)));
+      setAssignmentsTotalCount(meta.count || (data.data || []).length);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAssignmentsPrev = () => {
+    if (assignmentsPage > 1) {
+      const next = assignmentsPage - 1;
+      setAssignmentsPage(next);
+      fetchAssignments(next);
+    }
+  };
+
+  const handleAssignmentsNext = () => {
+    if (assignmentsPage < assignmentsTotalPages) {
+      const next = assignmentsPage + 1;
+      setAssignmentsPage(next);
+      fetchAssignments(next);
     }
   };
 
@@ -148,7 +172,7 @@ const FeeAssignments: React.FC = () => {
   const fetchTemplates = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const res = await fetch('http://127.0.0.1:8000/api/fees-manager/fee-templates/', {
+      const res = await fetch('http://127.0.0.1:8000/api/fees-manager/fee-templates/?page=1&page_size=100', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Failed to fetch templates');
@@ -199,6 +223,7 @@ const FeeAssignments: React.FC = () => {
       const created = respJson?.data ?? respJson?.assignment ?? respJson;
       if (created && created.id) {
         setAssignments(prev => [created as unknown as FeeAssignment, ...prev]);
+        setAssignmentsTotalCount(c => c + 1);
       } else {
         // Server didn't return created object — perform optimistic update using local data
         const studentObj = students.find(s => s.id === parseInt(selectedStudent));
@@ -253,6 +278,7 @@ const FeeAssignments: React.FC = () => {
       const createdList = respJson?.data ?? respJson?.assignments ?? respJson?.created_assignments ?? null;
       if (Array.isArray(createdList) && createdList.length) {
         setAssignments(prev => [...(createdList as FeeAssignment[]), ...prev]);
+        setAssignmentsTotalCount(c => c + createdList.length);
       } else {
         // Server didn't return created list — optimistically add assignments for students
         // Use current `students` page as best-effort candidates matching batch/department/semester
@@ -273,6 +299,7 @@ const FeeAssignments: React.FC = () => {
         }));
         if (optimisticList.length) {
           setAssignments(prev => [...optimisticList, ...prev]);
+          setAssignmentsTotalCount(c => c + optimisticList.length);
         }
         // If no matched students available locally, just show success and avoid immediate GET
       }
@@ -585,7 +612,7 @@ const FeeAssignments: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserCheck className="h-5 w-5" />
-            Fee Assignments ({filteredAssignments.length})
+            Fee Assignments ({assignmentsTotalCount ?? filteredAssignments.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -656,6 +683,14 @@ const FeeAssignments: React.FC = () => {
               </Table>
             </div>
           )}
+          {/* Pagination Controls */}
+          <div className="flex items-center justify-between mt-4">
+            <div className="text-sm text-gray-600">Page {assignmentsPage} of {assignmentsTotalPages}</div>
+            <div className="flex space-x-2">
+              <Button size="sm" variant="outline" onClick={handleAssignmentsPrev} disabled={assignmentsPage === 1}>Prev</Button>
+              <Button size="sm" variant="outline" onClick={handleAssignmentsNext} disabled={assignmentsPage === assignmentsTotalPages}>Next</Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -139,6 +139,14 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
     }).format(amount);
   };
 
+  const toRupees = (centsOrAmount: any) => {
+    if (centsOrAmount === null || centsOrAmount === undefined) return 0;
+    // Prefer integer cents
+    if (Number.isInteger(centsOrAmount)) return centsOrAmount / 100;
+    const n = Number(centsOrAmount);
+    return isNaN(n) ? 0 : n;
+  };
+
   // Do not block rendering of child pages — only show dashboard loading/error within dashboard view
 
   return (
@@ -256,7 +264,7 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Total Collections</p>
                           <p className="text-2xl font-bold text-green-600">
-                            {formatCurrency(dashboardData?.stats?.total_collections || 0)}
+                            {formatCurrency(toRupees(dashboardData?.stats?.total_collections_cents ?? dashboardData?.stats?.total_collections))}
                           </p>
                         </div>
                         <IndianRupee className="h-8 w-8 text-green-600" />
@@ -266,11 +274,11 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
                 </div>
 
                 {/* Outstanding Amount Alert */}
-                {(dashboardData?.stats?.outstanding_amount || 0) > 0 && (
+                {(toRupees(dashboardData?.stats?.outstanding_amount_cents ?? dashboardData?.stats?.outstanding_amount) || 0) > 0 && (
                   <Alert className="mb-6">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertDescription>
-                      <strong>Outstanding Amount:</strong> {formatCurrency(dashboardData.stats.outstanding_amount)}
+                      <strong>Outstanding Amount:</strong> {formatCurrency(toRupees(dashboardData.stats.outstanding_amount_cents ?? dashboardData.stats.outstanding_amount))}
                       {' '}from pending invoices. Monitor closely and follow up with students.
                     </AlertDescription>
                   </Alert>
