@@ -68,6 +68,16 @@ const IndividualFeeAssignment: React.FC = () => {
   const [studentsTotalCount, setStudentsTotalCount] = useState(0);
   const studentsPerPage = 10; // local page size for UI list; server page size will be used for fetching
 
+  // Track active tab and only load students when All Students tab is activated
+  const [activeTab, setActiveTab] = useState<'with-custom' | 'all-students'>('with-custom');
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value as any);
+    if (value === 'all-students' && (students.length === 0 || studentsTotalCount === 0)) {
+      fetchStudentsPage(1);
+    }
+  };
+
   useEffect(() => {
     fetchData();
     const onComponentsChanged = (e: any) => {
@@ -94,77 +104,128 @@ const IndividualFeeAssignment: React.FC = () => {
       setLoading(true);
       const token = localStorage.getItem('access_token');
 
-      // Fetch first page of students and components in parallel
-      const page = 1;
-      const page_size = 50;
-      const [studentsRes, componentsRes] = await Promise.all([
-        fetch(`http://127.0.0.1:8000/api/fees-manager/students/?page=${page}&page_size=${page_size}`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }),
+      // Fetch components and fee assignments (do NOT fetch students yet)
+      const [componentsRes, assignmentsRes] = await Promise.all([
         fetch(`http://127.0.0.1:8000/api/fees-manager/components/?page=1&page_size=200`, {
           headers: { 'Authorization': `Bearer ${token}` },
         }),
+        fetch(`http://127.0.0.1:8000/api/fees-manager/assignments/?page=1&page_size=200`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        }),
       ]);
 
-      if (!studentsRes.ok || !componentsRes.ok) {
+      if (!componentsRes.ok || !assignmentsRes.ok) {
         throw new Error('Failed to fetch data');
       }
 
-      const [studentsData, componentsData] = await Promise.all([
-        studentsRes.json(),
+      const [componentsData, assignmentsData] = await Promise.all([
         componentsRes.json(),
+        assignmentsRes.json(),
       ]);
 
-      setStudents(studentsData.data || []);
-      const meta = studentsData.meta || {};
-      setStudentsPage(meta.page || 1);
-      setStudentsTotalPages(meta.total_pages || 1);
-      setStudentsTotalCount(meta.count || 0);
       setAvailableComponents((componentsData.data || []).map((it: any) => ({
         ...it,
         amount: (it.amount_cents != null ? Number(it.amount_cents) : (it.amount ? Math.round(it.amount * 100) : 0)) / 100,
       })));
 
-      // Fetch individual assignments for students on this server page
-      await fetchIndividualAssignments(studentsData.data || []);
+      // Populate assignments from assignments endpoint (avoids per-student profile calls)
+      const assignmentItems = (assignmentsData.data || []).map((a: any) => ({
+        id: a.id,
+        student: a.student,
+        custom_fee_structure: a.custom_fee_structure || null,
+        total_amount: a.template?.total_amount_cents ? (a.template.total_amount_cents / 100) : (a.total_amount || 0),
+        assigned_at: a.assigned_at,
+        is_active: a.is_active,
+      } as IndividualFeeAssignment));
+      setAssignments(assignmentItems);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
+
   };
 
   const fetchIndividualAssignments = async (studentsList?: Student[]) => {
     try {
       const token = localStorage.getItem('access_token');
-      const assignmentsData: IndividualFeeAssignment[] = [];
-
       const studentsToFetch = studentsList || students;
+      const ids = (studentsToFetch || []).map(s => s.id).filter(Boolean);
 
-      for (const student of studentsToFetch) {
-        try {
-          const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/students/${student.id}/fee-profile/`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-          });
+      if (ids.length === 0) {
+        setAssignments([]);
+        return;
+      }
 
-          if (response.ok) {
-            const data = await response.json();
-            if (data.data?.custom_fee_structure) {
-              assignmentsData.push({
-                id: student.id,
-                student: student,
-                custom_fee_structure: data.data.custom_fee_structure,
-                total_amount: data.data.total_amount || 0,
-                assigned_at: data.data.assigned_at || new Date().toISOString(),
-                is_active: true,
-              });
+      // Bulk fetch to avoid N+1 requests
+      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/students/fee-profiles/?ids=${ids.join(',')}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (response.status === 404) {
+        // Bulk endpoint not available on this backend. Fall back to controlled batch fetches
+        console.warn('Bulk student fee-profiles endpoint not found, falling back to batched fetch');
+        const batchSize = 8;
+        const profiles: any[] = [];
+
+        for (let i = 0; i < ids.length; i += batchSize) {
+          const batchIds = ids.slice(i, i + batchSize);
+          // fetch each student's fee-profile in parallel within the batch
+          const promises = batchIds.map(id =>
+            fetch(`http://127.0.0.1:8000/api/fees-manager/students/${id}/fee-profile/`, { headers: { 'Authorization': `Bearer ${token}` } })
+              .then(res => (res.ok ? res.json().catch(() => null) : null))
+              .catch(() => null)
+          );
+
+          const results = await Promise.all(promises);
+          for (let idx = 0; idx < results.length; idx++) {
+            const r = results[idx];
+            if (r && r.data) {
+              profiles.push({ student_id: batchIds[idx], ...r.data });
             }
           }
-        } catch (err) {
-          // Skip if no individual assignment for this student
-          continue;
         }
+
+        const assignmentsData: IndividualFeeAssignment[] = profiles
+          .filter(p => p.custom_fee_structure)
+          .map(p => {
+            const student = studentsToFetch.find(s => s.id === p.student_id) || { id: p.student_id, name: '', usn: '', department: '', semester: 0 } as Student;
+            return {
+              id: p.student_id,
+              student,
+              custom_fee_structure: p.custom_fee_structure,
+              total_amount: p.total_amount || 0,
+              assigned_at: p.assigned_at || new Date().toISOString(),
+              is_active: p.is_active || false,
+            } as IndividualFeeAssignment;
+          });
+
+        setAssignments(assignmentsData);
+        return;
       }
+
+      if (!response.ok) {
+        console.error('Failed to fetch bulk student fee profiles');
+        setAssignments([]);
+        return;
+      }
+
+      const data = await response.json();
+      const profiles: any[] = data.data || [];
+
+      const assignmentsData: IndividualFeeAssignment[] = profiles
+        .filter(p => p.custom_fee_structure)
+        .map(p => {
+          const student = studentsToFetch.find(s => s.id === p.student_id) || { id: p.student_id, name: '', usn: '', department: '', semester: 0 } as Student;
+          return {
+            id: p.student_id,
+            student,
+            custom_fee_structure: p.custom_fee_structure,
+            total_amount: p.total_amount || 0,
+            assigned_at: p.assigned_at || new Date().toISOString(),
+            is_active: p.is_active || false,
+          } as IndividualFeeAssignment;
+        });
 
       setAssignments(assignmentsData);
     } catch (err) {
@@ -201,46 +262,9 @@ const IndividualFeeAssignment: React.FC = () => {
     setCustomFees({});
   };
 
-  const handleAssignIndividualFees = async () => {
-    if (!selectedStudent || Object.keys(customFees).length === 0) return;
-
-    try {
-      const token = localStorage.getItem('access_token');
-
-      // Convert component IDs to component names for the API
-      const components: Record<string, number> = {};
-      Object.entries(customFees).forEach(([componentId, amount]) => {
-        const component = availableComponents.find(c => c.id === parseInt(componentId));
-        if (component && amount > 0) {
-          components[component.name] = amount;
-        }
-      });
-
-      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/students/${selectedStudent.id}/assign-individual-fees/`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ components }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to assign individual fees');
-      }
-
-      await fetchData();
-      setIsAssignDialogOpen(false);
-      resetForm();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to assign individual fees');
-    }
-  };
 
   const handleRemoveIndividualFees = async (studentId: number) => {
     if (!confirm('Are you sure you want to remove individual fee assignment for this student?')) return;
-
     try {
       const token = localStorage.getItem('access_token');
       const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/students/${studentId}/remove-individual-fees/`, {
@@ -285,6 +309,13 @@ const IndividualFeeAssignment: React.FC = () => {
     }
   };
 
+  const openAssignDialog = async () => {
+    if (students.length === 0) {
+      await fetchStudentsPage(1);
+    }
+    setIsAssignDialogOpen(true);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -310,7 +341,7 @@ const IndividualFeeAssignment: React.FC = () => {
             </DialogHeader>
 
             <div className="space-y-6">
-              {!selectedStudent ? (
+                  {!selectedStudent ? (
                 // Student Selection View
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Select Student</h3>
@@ -334,7 +365,7 @@ const IndividualFeeAssignment: React.FC = () => {
                     ))}
                   </div>
                 </div>
-              ) : (
+                  ) : (
                 // Selected Student View with Custom Fee Components
                 <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                   {/* Selected Student Header with Back Button */}
@@ -493,7 +524,7 @@ const IndividualFeeAssignment: React.FC = () => {
                       {availableComponents.map((component) => {
                         // Get existing custom fee amount for this component if it exists
                         const existingAssignment = getStudentCustomFees(selectedStudent.id);
-                        const existingAmount = existingAssignment?.custom_fee_structure[component.name] || 0;
+                        const existingAmount = existingAssignment?.custom_fee_structure?.[component.name] || 0;
                         const currentAmount = customFees[component.id] !== undefined ? customFees[component.id] : existingAmount;
 
                         return (
@@ -618,7 +649,7 @@ const IndividualFeeAssignment: React.FC = () => {
       </Card>
 
       {/* Students with Individual Fees */}
-      <Tabs defaultValue="with-custom" className="space-y-6">
+      <Tabs defaultValue="with-custom" onValueChange={handleTabChange} className="space-y-6">
         <TabsList>
           <TabsTrigger 
             value="with-custom" 
@@ -651,7 +682,7 @@ const IndividualFeeAssignment: React.FC = () => {
                     No students have custom fee structures assigned yet.
                   </p>
                   <Button 
-                    onClick={() => setIsAssignDialogOpen(true)}
+                    onClick={openAssignDialog}
                     className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -684,7 +715,7 @@ const IndividualFeeAssignment: React.FC = () => {
                           <TableCell>{assignment.student.semester}</TableCell>
                           <TableCell>
                             <div className="text-sm max-w-xs">
-                              {Object.entries(assignment.custom_fee_structure).map(([name, amount]) => (
+                              {Object.entries(assignment.custom_fee_structure || {}).map(([name, amount]) => (
                                 <div key={name} className="flex justify-between">
                                   <span>{name}:</span>
                                   <span>{formatCurrency(amount)}</span>
@@ -778,7 +809,7 @@ const IndividualFeeAssignment: React.FC = () => {
                                 if (existingAssignment) {
                                   const fees: Record<number, number> = {};
                                   availableComponents.forEach(component => {
-                                    const amount = existingAssignment.custom_fee_structure[component.name];
+                                    const amount = existingAssignment.custom_fee_structure?.[component.name];
                                     if (amount) {
                                       fees[component.id] = amount;
                                     }

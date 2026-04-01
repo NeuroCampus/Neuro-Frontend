@@ -52,11 +52,11 @@ const FeeComponents: React.FC = () => {
     fetchComponents(componentsPage);
   }, []);
 
-  const fetchComponents = async () => {
+  const fetchComponents = async (page: number = componentsPage) => {
     try {
       setLoading(true);
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/components/?page=${componentsPage}&page_size=${componentsPageSize}`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/components/?page=${page}&page_size=${componentsPageSize}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -74,7 +74,7 @@ const FeeComponents: React.FC = () => {
       }));
       setComponents(items);
       const meta = data.meta || {};
-      setComponentsPage(meta.page || componentsPage);
+      setComponentsPage(meta.page || page);
       setComponentsTotalPages(meta.total_pages || Math.max(1, Math.ceil((meta.count || 0) / componentsPageSize)));
       setComponentsTotalCount(meta.count || (data.data || []).length);
     } catch (err) {
