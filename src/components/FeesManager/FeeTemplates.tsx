@@ -71,7 +71,23 @@ const FeeTemplates: React.FC = () => {
 
   useEffect(() => {
     fetchTemplates();
-    fetchAvailableComponents();
+    const onComponentsChanged = (e: any) => {
+      const detail = e?.detail || {};
+      const action = detail.action;
+      if (!action) return;
+      if (action === 'create' && detail.item) {
+        setAvailableComponents(prev => [{
+          ...detail.item,
+          amount: (detail.item.amount_cents != null ? Number(detail.item.amount_cents) / 100 : (detail.item.amount ? Math.round(detail.item.amount * 100) / 100 : 0))
+        }, ...prev]);
+      } else if (action === 'update' && detail.item) {
+        setAvailableComponents(prev => prev.map(c => (c.id === detail.item.id ? { ...detail.item, amount: (detail.item.amount_cents != null ? Number(detail.item.amount_cents) / 100 : (detail.item.amount ? Math.round(detail.item.amount * 100) / 100 : 0)) } : c)));
+      } else if (action === 'delete' && detail.id) {
+        setAvailableComponents(prev => prev.filter(c => c.id !== detail.id));
+      }
+    };
+    window.addEventListener('feeComponents:changed', onComponentsChanged);
+    return () => window.removeEventListener('feeComponents:changed', onComponentsChanged);
   }, []);
 
   const fetchAvailableComponents = async () => {
@@ -89,7 +105,10 @@ const FeeTemplates: React.FC = () => {
       }
 
       const data = await response.json();
-      setAvailableComponents(data.data || []);
+      setAvailableComponents((data.data || []).map((it: any) => ({
+        ...it,
+        amount: (it.amount_cents != null ? Number(it.amount_cents) : (it.amount ? Math.round(it.amount * 100) : 0)) / 100,
+      })));
     } catch (err) {
       console.error('Error fetching components:', err);
     }
@@ -111,7 +130,17 @@ const FeeTemplates: React.FC = () => {
       }
 
       const data = await response.json();
-      setTemplates(data.data || []);
+      const items = (data.data || []).map((t: any) => ({
+        ...t,
+        total_amount: (t.total_amount_cents != null ? Number(t.total_amount_cents) / 100 : (t.total_amount || 0)),
+        components: (t.components || []).map((c: any) => ({
+          id: c.component,
+          component_name: c.component_name,
+          amount: (c.component_amount_cents != null ? Number(c.component_amount_cents) / 100 : (c.component?.amount ? Math.round(c.component.amount * 100)/100 : 0)),
+          amount_override: (c.amount_override_cents != null ? Number(c.amount_override_cents) / 100 : (c.amount_override != null ? Number(c.amount_override) : null)),
+        })),
+      }));
+      setTemplates(items);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -177,7 +206,21 @@ const FeeTemplates: React.FC = () => {
         throw new Error(errorData.message || 'Failed to create fee template');
       }
 
-      await fetchTemplates();
+      // Use response to update local state without refetching entire list
+      const resp = await response.json();
+      const created = resp.data;
+      const item = {
+        ...created,
+        total_amount: (created.total_amount_cents != null ? Number(created.total_amount_cents) / 100 : (created.total_amount || 0)),
+        components: (created.components || []).map((c: any) => ({
+          id: c.component,
+          component_name: c.component_name,
+          amount: (c.component_amount_cents != null ? Number(c.component_amount_cents) / 100 : (c.component?.amount ? Math.round(c.component.amount * 100)/100 : 0)),
+          amount_override: (c.amount_override_cents != null ? Number(c.amount_override_cents) / 100 : (c.amount_override != null ? Number(c.amount_override) : null)),
+        })),
+      };
+      setTemplates(prev => [item, ...prev]);
+      try { window.dispatchEvent(new CustomEvent('feeTemplates:changed', { detail: { action: 'create', item } })); } catch (e) {}
       setIsCreateDialogOpen(false);
       resetForm();
     } catch (err) {
@@ -200,8 +243,9 @@ const FeeTemplates: React.FC = () => {
       if (!response.ok) {
         throw new Error('Failed to delete fee template');
       }
-
-      await fetchTemplates();
+      // Remove locally to avoid an extra GET
+      setTemplates(prev => prev.filter(t => t.id !== templateId));
+      try { window.dispatchEvent(new CustomEvent('feeTemplates:changed', { detail: { action: 'delete', id: templateId } })); } catch (e) {}
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete template');
     }
@@ -252,13 +296,19 @@ const FeeTemplates: React.FC = () => {
 
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button 
-              onClick={() => {
-                resetForm();
-                setIsCreateDialogOpen(true);
-              }}
-              className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
-            >
+              <Button 
+                onClick={async () => {
+                  resetForm();
+                  // fetch available components only when opening create dialog
+                  try {
+                    await fetchAvailableComponents();
+                  } catch (e) {
+                    // ignore - fetchAvailableComponents already logs errors
+                  }
+                  setIsCreateDialogOpen(true);
+                }}
+                className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+              >
               <Plus className="h-4 w-4 mr-2" />
               Create Template
             </Button>

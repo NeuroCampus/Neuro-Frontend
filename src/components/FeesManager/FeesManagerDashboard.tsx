@@ -67,7 +67,7 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
   const navigate = useNavigate();
   const location = useLocation();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { theme } = useTheme();
@@ -81,8 +81,11 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
   const activePage = getActivePageFromPath(location.pathname);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    // Only fetch dashboard summary when the active page is the dashboard
+    if (activePage === 'dashboard') {
+      fetchDashboardData();
+    }
+  }, [activePage]);
 
   const fetchDashboardData = async () => {
     try {
@@ -136,25 +139,7 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
     }).format(amount);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2">Loading dashboard...</span>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Alert className="max-w-2xl mx-auto mt-8">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>
-          {error}
-        </AlertDescription>
-      </Alert>
-    );
-  }
+  // Do not block rendering of child pages — only show dashboard loading/error within dashboard view
 
   return (
     <div className={`flex min-h-screen ${theme === 'dark' ? 'dark bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
@@ -198,10 +183,29 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
               >
+                {/* Dashboard loading / error shown only when dashboard is active */}
+                {loading && (
+                  <div className="flex items-center justify-center min-h-[200px]">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span className="ml-2">Loading dashboard...</span>
+                  </div>
+                )}
+
+                {error && (
+                  <Alert className="max-w-2xl mx-auto mb-6">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      {error}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {!loading && !error && (
                 <div className="mb-8">
                   <h1 className="text-3xl font-bold text-foreground">Fees Manager Dashboard</h1>
                   <p className="text-muted-foreground mt-2">Manage fee structures, assignments, and monitor collections</p>
                 </div>
+                )}
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                   <Card className="bg-card text-card-foreground">

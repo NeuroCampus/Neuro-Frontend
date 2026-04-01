@@ -72,44 +72,52 @@ const FeeAssignments: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState('all');
 
   useEffect(() => {
-    fetchData();
+    fetchAssignments();
   }, []);
-
-  const fetchData = async () => {
+  const fetchAssignments = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('access_token');
+      const res = await fetch('http://127.0.0.1:8000/api/fees-manager/fee-assignments/', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
 
-      // Fetch assignments, students, and templates in parallel
-      const [assignmentsRes, studentsRes, templatesRes] = await Promise.all([
-        fetch('http://127.0.0.1:8000/api/fees-manager/fee-assignments/', {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }),
-        fetch('http://127.0.0.1:8000/api/fees-manager/students/', {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }),
-        fetch('http://127.0.0.1:8000/api/fees-manager/fee-templates/', {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }),
-      ]);
+      if (!res.ok) throw new Error('Failed to fetch fee assignments');
 
-      if (!assignmentsRes.ok || !studentsRes.ok || !templatesRes.ok) {
-        throw new Error('Failed to fetch data');
-      }
-
-      const [assignmentsData, studentsData, templatesData] = await Promise.all([
-        assignmentsRes.json(),
-        studentsRes.json(),
-        templatesRes.json(),
-      ]);
-
-      setAssignments(assignmentsData.data || []);
-      setStudents(studentsData.data || []);
-      setTemplates(templatesData.data || []);
+      const data = await res.json();
+      setAssignments(data.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchStudents = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch('http://127.0.0.1:8000/api/fees-manager/students/', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to fetch students');
+      const data = await res.json();
+      setStudents(data.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchTemplates = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch('http://127.0.0.1:8000/api/fees-manager/fee-templates/', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to fetch templates');
+      const data = await res.json();
+      setTemplates(data.data || []);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -148,7 +156,7 @@ const FeeAssignments: React.FC = () => {
         throw new Error(errorData.message || 'Failed to create assignment');
       }
 
-      await fetchData();
+      await fetchAssignments();
       setIsAssignDialogOpen(false);
       resetForm();
     } catch (err) {
@@ -183,7 +191,7 @@ const FeeAssignments: React.FC = () => {
         throw new Error(errorData.message || 'Failed to create batch assignment');
       }
 
-      await fetchData();
+      await fetchAssignments();
       setIsAssignDialogOpen(false);
       resetForm();
     } catch (err) {
@@ -230,10 +238,19 @@ const FeeAssignments: React.FC = () => {
 
         <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
           <DialogTrigger asChild>
-            <Button 
-              onClick={() => { resetForm(); setIsAssignDialogOpen(true); }}
-              className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
-            >
+              <Button 
+                onClick={async () => {
+                  resetForm();
+                  // fetch students and templates only when opening the assign dialog
+                  try {
+                    await Promise.all([fetchStudents(), fetchTemplates()]);
+                  } catch (e) {
+                    // errors are logged in fetch helpers; continue to open dialog
+                  }
+                  setIsAssignDialogOpen(true);
+                }}
+                className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+              >
               <Plus className="h-4 w-4 mr-2" />
               Assign Fees
             </Button>

@@ -64,7 +64,11 @@ const FeeComponents: React.FC = () => {
       }
 
       const data = await response.json();
-      setComponents(data.data || []);
+      const items = (data.data || []).map((it: any) => ({
+        ...it,
+        amount: (it.amount_cents != null ? Number(it.amount_cents) : (it.amount ? Math.round(it.amount * 100) : 0)) / 100,
+      }));
+      setComponents(items);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -86,7 +90,7 @@ const FeeComponents: React.FC = () => {
       const token = localStorage.getItem('access_token');
       const componentData = {
         name: componentName.trim(),
-        amount: parseFloat(componentAmount),
+        amount_cents_write: Math.round(parseFloat(componentAmount) * 100),
         description: componentDescription.trim() || undefined,
       };
 
@@ -104,7 +108,15 @@ const FeeComponents: React.FC = () => {
         throw new Error(errorData.message || 'Failed to create fee component');
       }
 
-      await fetchComponents();
+      // Update local state from response to avoid extra GET
+      const resp = await response.json();
+      const created = resp.data;
+      const item = {
+        ...created,
+        amount: (created.amount_cents != null ? Number(created.amount_cents) / 100 : (created.amount ? Math.round(created.amount * 100) / 100 : 0)),
+      };
+      setComponents(prev => [item, ...prev]);
+      try { window.dispatchEvent(new CustomEvent('feeComponents:changed', { detail: { action: 'create', item } })); } catch (e) {}
       setIsCreateDialogOpen(false);
       resetForm();
     } catch (err) {
@@ -127,7 +139,7 @@ const FeeComponents: React.FC = () => {
       const token = localStorage.getItem('access_token');
       const componentData = {
         name: componentName.trim(),
-        amount: parseFloat(componentAmount),
+        amount_cents_write: Math.round(parseFloat(componentAmount) * 100),
         description: componentDescription.trim() || undefined,
       };
 
@@ -145,7 +157,14 @@ const FeeComponents: React.FC = () => {
         throw new Error(errorData.message || 'Failed to update fee component');
       }
 
-      await fetchComponents();
+      const resp = await response.json();
+      const updated = resp.data;
+      const item = {
+        ...updated,
+        amount: (updated.amount_cents != null ? Number(updated.amount_cents) / 100 : (updated.amount ? Math.round(updated.amount * 100) / 100 : 0)),
+      };
+      setComponents(prev => prev.map(c => (c.id === item.id ? item : c)));
+      try { window.dispatchEvent(new CustomEvent('feeComponents:changed', { detail: { action: 'update', item } })); } catch (e) {}
       setIsCreateDialogOpen(false);
       resetForm();
     } catch (err) {
@@ -169,7 +188,9 @@ const FeeComponents: React.FC = () => {
         throw new Error('Failed to delete fee component');
       }
 
-      await fetchComponents();
+      // Remove locally without refetch
+      setComponents(prev => prev.filter(c => c.id !== componentId));
+      try { window.dispatchEvent(new CustomEvent('feeComponents:changed', { detail: { action: 'delete', id: componentId } })); } catch (e) {}
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete component');
     }

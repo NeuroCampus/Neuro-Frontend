@@ -68,6 +68,23 @@ const IndividualFeeAssignment: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+    const onComponentsChanged = (e: any) => {
+      const detail = e?.detail || {};
+      const action = detail.action;
+      if (!action) return;
+      if (action === 'create' && detail.item) {
+        setAvailableComponents(prev => [{
+          ...detail.item,
+          amount: (detail.item.amount_cents != null ? Number(detail.item.amount_cents) / 100 : (detail.item.amount ? Math.round(detail.item.amount * 100) / 100 : 0))
+        }, ...prev]);
+      } else if (action === 'update' && detail.item) {
+        setAvailableComponents(prev => prev.map(c => (c.id === detail.item.id ? { ...detail.item, amount: (detail.item.amount_cents != null ? Number(detail.item.amount_cents) / 100 : (detail.item.amount ? Math.round(detail.item.amount * 100) / 100 : 0)) } : c)));
+      } else if (action === 'delete' && detail.id) {
+        setAvailableComponents(prev => prev.filter(c => c.id !== detail.id));
+      }
+    };
+    window.addEventListener('feeComponents:changed', onComponentsChanged);
+    return () => window.removeEventListener('feeComponents:changed', onComponentsChanged);
   }, []);
 
   const fetchData = async () => {
@@ -95,7 +112,10 @@ const IndividualFeeAssignment: React.FC = () => {
       ]);
 
       setStudents(studentsData.data || []);
-      setAvailableComponents(componentsData.data || []);
+      setAvailableComponents((componentsData.data || []).map((it: any) => ({
+        ...it,
+        amount: (it.amount_cents != null ? Number(it.amount_cents) : (it.amount ? Math.round(it.amount * 100) : 0)) / 100,
+      })));
 
       // Fetch individual assignments for all students
       await fetchIndividualAssignments();
