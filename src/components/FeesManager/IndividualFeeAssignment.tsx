@@ -42,6 +42,11 @@ interface IndividualFeeAssignment {
   student: Student;
   custom_fee_structure: Record<string, number>;
   total_amount: number;
+  template?: {
+    id?: number;
+    name?: string;
+    total_amount_cents?: number;
+  } | null;
   assigned_at: string;
   is_active: boolean;
 }
@@ -133,6 +138,7 @@ const IndividualFeeAssignment: React.FC = () => {
         id: a.id,
         student: a.student,
         custom_fee_structure: a.custom_fee_structure || null,
+        template: a.template || null,
         total_amount: a.template?.total_amount_cents ? (a.template.total_amount_cents / 100) : (a.total_amount || 0),
         assigned_at: a.assigned_at,
         is_active: a.is_active,
@@ -260,6 +266,51 @@ const IndividualFeeAssignment: React.FC = () => {
   const resetForm = () => {
     setSelectedStudent(null);
     setCustomFees({});
+  };
+
+  const handleAssignIndividualFees = async () => {
+    if (!selectedStudent) return;
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('access_token');
+
+      // Build components payload keyed by component name (backend expects names)
+      const components_payload: Record<string, number> = {};
+      availableComponents.forEach((comp) => {
+        const val = customFees[comp.id];
+        if (val !== undefined && val !== null && Number(val) > 0) {
+          components_payload[comp.name] = Number(val);
+        }
+      });
+
+      if (Object.keys(components_payload).length === 0) {
+        setError('No fee components selected');
+        return;
+      }
+
+      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/students/${selectedStudent.id}/assign-individual-fees/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ components: components_payload }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => null);
+        throw new Error(err?.message || 'Failed to assign custom fees');
+      }
+
+      await fetchData();
+      setIsAssignDialogOpen(false);
+      setIsEditDialogOpen(false);
+      resetForm();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to assign custom fees');
+    } finally {
+      setLoading(false);
+    }
   };
 
 
@@ -720,16 +771,28 @@ const IndividualFeeAssignment: React.FC = () => {
                             {assignment.student.name}
                           </TableCell>
                           <TableCell>{assignment.student.usn}</TableCell>
-                          <TableCell>{assignment.student.department}</TableCell>
-                          <TableCell>{assignment.student.semester}</TableCell>
+                          <TableCell>{assignment.student.department || '-'}</TableCell>
+                          <TableCell>{assignment.student.semester || '-'}</TableCell>
                           <TableCell>
                             <div className="text-sm max-w-xs">
-                              {Object.entries(assignment.custom_fee_structure || {}).map(([name, amount]) => (
-                                <div key={name} className="flex justify-between">
-                                  <span>{name}:</span>
-                                  <span>{formatCurrency(amount)}</span>
-                                </div>
-                              ))}
+                              {assignment.custom_fee_structure && Object.entries(assignment.custom_fee_structure || {}).length > 0 ? (
+                                Object.entries(assignment.custom_fee_structure || {}).map(([name, amount]) => (
+                                  <div key={name} className="flex justify-between">
+                                    <span>{name}:</span>
+                                    <span>{formatCurrency(amount)}</span>
+                                  </div>
+                                ))
+                              ) : (
+                                // Fallback to template info when no custom structure
+                                assignment.template ? (
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{assignment.template.name}</span>
+                                    <span className="text-sm text-muted-foreground">{formatCurrency(assignment.total_amount)}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-muted-foreground">-</span>
+                                )
+                              )}
                             </div>
                           </TableCell>
                           <TableCell className="font-semibold text-green-600">
@@ -819,9 +882,9 @@ const IndividualFeeAssignment: React.FC = () => {
                                   const fees: Record<number, number> = {};
                                   availableComponents.forEach(component => {
                                     const amount = existingAssignment.custom_fee_structure?.[component.name];
-                                    if (amount) {
-                                      fees[component.id] = amount;
-                                    }
+                                        if (amount !== undefined && amount !== null) {
+                                          fees[component.id] = amount;
+                                        }
                                   });
                                   setCustomFees(fees);
                                 }
