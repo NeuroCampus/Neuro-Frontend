@@ -499,7 +499,7 @@ const FeeTemplates: React.FC = () => {
                     </Badge>
                   </TableCell>
                   <TableCell>{template.semester || '-'}</TableCell>
-                  <TableCell>{formatCurrency(template.total_amount)}</TableCell>
+                  <TableCell>{formatCurrency(template.total_amount_cents != null ? Number(template.total_amount_cents) / 100 : (template.total_amount != null ? Number(template.total_amount) : 0))}</TableCell>
                   <TableCell>
                     <Badge variant={template.is_active ? "default" : "secondary"}>
                       {template.is_active ? 'Active' : 'Inactive'}

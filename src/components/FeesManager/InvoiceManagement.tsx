@@ -91,7 +91,22 @@ const InvoiceManagement: React.FC = () => {
       }
 
       const data = await response.json();
-      setInvoices(data.data || []);
+      // Normalize monetary fields: prefer *_cents when present
+      const toRupees = (centsOrAmount: any) => {
+        if (centsOrAmount === null || centsOrAmount === undefined) return 0;
+        if (Number.isInteger(centsOrAmount)) return centsOrAmount / 100;
+        const n = Number(centsOrAmount);
+        return isNaN(n) ? 0 : n;
+      };
+
+      const normalized = (data.data || []).map((inv: any) => ({
+        ...inv,
+        total_amount: toRupees(inv.total_amount_cents ?? inv.total_amount),
+        paid_amount: toRupees(inv.paid_amount_cents ?? inv.paid_amount),
+        pending_amount: toRupees(inv.pending_amount_cents ?? inv.pending_amount),
+      }));
+
+      setInvoices(normalized);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -112,8 +127,30 @@ const InvoiceManagement: React.FC = () => {
       }
 
       const data = await response.json();
-      setSelectedInvoice(data.data);
-      setPayments(data.data.payments || []);
+      // Normalize invoice and payments amounts
+      const toRupees = (centsOrAmount: any) => {
+        if (centsOrAmount === null || centsOrAmount === undefined) return 0;
+        if (Number.isInteger(centsOrAmount)) return centsOrAmount / 100;
+        const n = Number(centsOrAmount);
+        return isNaN(n) ? 0 : n;
+      };
+
+      const inv = data.data || {};
+      const normalizedInvoice = {
+        ...inv,
+        total_amount: toRupees(inv.total_amount_cents ?? inv.total_amount),
+        paid_amount: toRupees(inv.paid_amount_cents ?? inv.paid_amount),
+        pending_amount: toRupees(inv.pending_amount_cents ?? inv.pending_amount),
+      };
+
+      const normalizedPayments = (inv.payments || []).map((p: any) => ({
+        ...p,
+        amount: toRupees(p.amount_cents ?? p.amount),
+        payment_date: p.payment_date,
+      }));
+
+      setSelectedInvoice(normalizedInvoice);
+      setPayments(normalizedPayments || []);
       setIsDetailsDialogOpen(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch invoice details');

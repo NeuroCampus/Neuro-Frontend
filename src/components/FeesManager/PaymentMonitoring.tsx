@@ -109,8 +109,30 @@ const PaymentMonitoring: React.FC = () => {
         statsRes.json(),
       ]);
 
-      setPayments(paymentsData.data || []);
-      setStats(statsData.data);
+      // Normalize monetary fields from cents when present
+      const toRupees = (centsOrAmount: any) => {
+        if (centsOrAmount === null || centsOrAmount === undefined) return 0;
+        if (Number.isInteger(centsOrAmount)) return centsOrAmount / 100;
+        const n = Number(centsOrAmount);
+        return isNaN(n) ? 0 : n;
+      };
+
+      const normalizedPayments = (paymentsData.data || []).map((p: any) => ({
+        ...p,
+        amount: toRupees(p.amount_cents ?? p.amount),
+      }));
+
+      const s = statsData.data || {};
+      const normalizedStats = {
+        ...s,
+        total_amount: toRupees(s.total_amount_cents ?? s.total_amount),
+        today_amount: toRupees(s.today_amount_cents ?? s.today_amount),
+        monthly_amount: toRupees(s.monthly_amount_cents ?? s.monthly_amount),
+        refunded_amount: toRupees(s.refunded_amount_cents ?? s.refunded_amount),
+      };
+
+      setPayments(normalizedPayments || []);
+      setStats(normalizedStats);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

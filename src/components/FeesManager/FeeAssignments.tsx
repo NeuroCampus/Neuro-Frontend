@@ -51,6 +51,9 @@ interface FeeAssignment {
 const FeeAssignments: React.FC = () => {
   const [assignments, setAssignments] = useState<FeeAssignment[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
+  const [studentsPage, setStudentsPage] = useState(1);
+  const [studentsTotalPages, setStudentsTotalPages] = useState(1);
+  const [studentsTotalCount, setStudentsTotalCount] = useState(0);
   const [templates, setTemplates] = useState<FeeTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,13 +81,14 @@ const FeeAssignments: React.FC = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('access_token');
-      const res = await fetch('http://127.0.0.1:8000/api/fees-manager/fee-assignments/', {
+      const res = await fetch('http://127.0.0.1:8000/api/fees-manager/fee-assignments/?page=1&page_size=50', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
       if (!res.ok) throw new Error('Failed to fetch fee assignments');
 
       const data = await res.json();
+      // API returns { data: [...], meta: {count,page,page_size,...} }
       setAssignments(data.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -96,15 +100,49 @@ const FeeAssignments: React.FC = () => {
   const fetchStudents = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const res = await fetch('http://127.0.0.1:8000/api/fees-manager/students/', {
+      // Fetch a reasonably sized page for select lists (paginated)
+      const page = 1;
+      const page_size = 50;
+      const res = await fetch(`http://127.0.0.1:8000/api/fees-manager/students/?page=${page}&page_size=${page_size}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Failed to fetch students');
       const data = await res.json();
       setStudents(data.data || []);
+      const meta = data.meta || {};
+      setStudentsPage(meta.page || 1);
+      setStudentsTotalPages(meta.total_pages || 1);
+      setStudentsTotalCount(meta.count || 0);
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const fetchStudentsPage = async (page: number) => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const page_size = 50;
+      const res = await fetch(`http://127.0.0.1:8000/api/fees-manager/students/?page=${page}&page_size=${page_size}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to fetch students');
+      const data = await res.json();
+      setStudents(data.data || []);
+      const meta = data.meta || {};
+      setStudentsPage(meta.page || 1);
+      setStudentsTotalPages(meta.total_pages || 1);
+      setStudentsTotalCount(meta.count || 0);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleStudentsPrev = () => {
+    if (studentsPage > 1) fetchStudentsPage(studentsPage - 1);
+  };
+
+  const handleStudentsNext = () => {
+    if (studentsPage < studentsTotalPages) fetchStudentsPage(studentsPage + 1);
   };
 
   const fetchTemplates = async () => {
@@ -156,7 +194,26 @@ const FeeAssignments: React.FC = () => {
         throw new Error(errorData.message || 'Failed to create assignment');
       }
 
-      await fetchAssignments();
+      // Try to update UI locally without an extra GET
+      const respJson = await response.json().catch(() => null);
+      const created = respJson?.data ?? respJson?.assignment ?? respJson;
+      if (created && created.id) {
+        setAssignments(prev => [created as unknown as FeeAssignment, ...prev]);
+      } else {
+        // Server didn't return created object — perform optimistic update using local data
+        const studentObj = students.find(s => s.id === parseInt(selectedStudent));
+        const templateObj = templates.find(t => t.id === parseInt(selectedTemplate));
+        const optimistic: FeeAssignment = {
+          id: -Date.now(),
+          student: studentObj || { id: parseInt(selectedStudent), name: 'Student', usn: '', department: '', semester: 0 },
+          template: templateObj || { id: parseInt(selectedTemplate), name: 'Template', total_amount: 0, fee_type: '' },
+          academic_year: academicYear,
+          assignment_type: assignmentType,
+          assigned_at: new Date().toISOString(),
+          is_active: true,
+        };
+        setAssignments(prev => [optimistic, ...prev]);
+      }
       setIsAssignDialogOpen(false);
       resetForm();
     } catch (err) {
@@ -191,7 +248,34 @@ const FeeAssignments: React.FC = () => {
         throw new Error(errorData.message || 'Failed to create batch assignment');
       }
 
-      await fetchAssignments();
+      // If server returns created assignments, merge them into current list to avoid re-fetch.
+      const respJson = await response.json().catch(() => null);
+      const createdList = respJson?.data ?? respJson?.assignments ?? respJson?.created_assignments ?? null;
+      if (Array.isArray(createdList) && createdList.length) {
+        setAssignments(prev => [...(createdList as FeeAssignment[]), ...prev]);
+      } else {
+        // Server didn't return created list — optimistically add assignments for students
+        // Use current `students` page as best-effort candidates matching batch/department/semester
+        const matched = students.filter(s => {
+          const matchesBatch = selectedBatch ? (s.batch ? s.batch === selectedBatch : false) : true;
+          const matchesDept = selectedDepartment ? s.department === selectedDepartment : true;
+          const matchesSem = selectedSemester ? s.semester === parseInt(selectedSemester) : true;
+          return matchesBatch && matchesDept && matchesSem;
+        });
+        const optimisticList: FeeAssignment[] = matched.map(s => ({
+          id: -Date.now() - Math.floor(Math.random() * 1000),
+          student: s,
+          template: templates.find(t => t.id === parseInt(selectedTemplate)) || { id: parseInt(selectedTemplate), name: 'Template', total_amount: 0, fee_type: '' },
+          academic_year: academicYear,
+          assignment_type: 'batch',
+          assigned_at: new Date().toISOString(),
+          is_active: true,
+        }));
+        if (optimisticList.length) {
+          setAssignments(prev => [...optimisticList, ...prev]);
+        }
+        // If no matched students available locally, just show success and avoid immediate GET
+      }
       setIsAssignDialogOpen(false);
       resetForm();
     } catch (err) {
@@ -213,6 +297,13 @@ const FeeAssignments: React.FC = () => {
       style: 'currency',
       currency: 'INR',
     }).format(amount);
+  };
+
+  const templateAmount = (t: any) => {
+    if (!t) return 0;
+    if (t.total_amount_cents != null) return Number(t.total_amount_cents) / 100;
+    if (t.total_amount != null) return Number(t.total_amount);
+    return 0;
   };
 
   const getUniqueValues = <T,>(array: T[], key: keyof T): T[keyof T][] => {
@@ -292,6 +383,13 @@ const FeeAssignments: React.FC = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    <div className="flex items-center justify-between mt-2">
+                      <div className="text-sm text-gray-600">Page {studentsPage} of {studentsTotalPages}</div>
+                      <div className="flex space-x-2">
+                        <Button size="sm" variant="outline" onClick={handleStudentsPrev} disabled={studentsPage === 1}>Prev</Button>
+                        <Button size="sm" variant="outline" onClick={handleStudentsNext} disabled={studentsPage === studentsTotalPages}>Next</Button>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -303,7 +401,7 @@ const FeeAssignments: React.FC = () => {
                       <SelectContent>
                         {templates.map((template) => (
                           <SelectItem key={template.id} value={template.id.toString()}>
-                            {template.name} - {formatCurrency(template.total_amount)}
+                            {template.name} - {formatCurrency(templateAmount(template))}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -398,7 +496,7 @@ const FeeAssignments: React.FC = () => {
                         <SelectContent>
                           {templates.map((template) => (
                             <SelectItem key={template.id} value={template.id.toString()}>
-                              {template.name} - {formatCurrency(template.total_amount)}
+                              {template.name} - {formatCurrency(templateAmount(template))}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -541,7 +639,7 @@ const FeeAssignments: React.FC = () => {
                         </div>
                       </TableCell>
                       <TableCell className="font-semibold text-green-600">
-                        {formatCurrency(assignment.template.total_amount)}
+                        {formatCurrency(templateAmount(assignment.template))}
                       </TableCell>
                       <TableCell>{assignment.academic_year}</TableCell>
                       <TableCell>

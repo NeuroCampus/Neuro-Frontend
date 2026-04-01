@@ -316,11 +316,11 @@ const BulkAssignment: React.FC = () => {
                       <SelectValue placeholder="Select template" />
                     </SelectTrigger>
                     <SelectContent>
-                      {templates.map((template) => (
-                        <SelectItem key={template.id} value={template.id.toString()}>
-                          {template.name} - {formatCurrency(template.total_amount)}
-                        </SelectItem>
-                      ))}
+                          {templates.map((template) => (
+                            <SelectItem key={template.id} value={template.id.toString()}>
+                              {template.name} - {formatCurrency((template.total_amount_cents != null ? Number(template.total_amount_cents) / 100 : (template.total_amount != null ? Number(template.total_amount) : 0)))}
+                            </SelectItem>
+                          ))}
                     </SelectContent>
                   </Select>
                 </div>

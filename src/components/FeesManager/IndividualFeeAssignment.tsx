@@ -62,9 +62,11 @@ const IndividualFeeAssignment: React.FC = () => {
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
-  const studentsPerPage = 10;
+  // Pagination states (driven by server)
+  const [studentsPage, setStudentsPage] = useState(1);
+  const [studentsTotalPages, setStudentsTotalPages] = useState(1);
+  const [studentsTotalCount, setStudentsTotalCount] = useState(0);
+  const studentsPerPage = 10; // local page size for UI list; server page size will be used for fetching
 
   useEffect(() => {
     fetchData();
@@ -92,9 +94,11 @@ const IndividualFeeAssignment: React.FC = () => {
       setLoading(true);
       const token = localStorage.getItem('access_token');
 
-      // Fetch students and components in parallel
+      // Fetch first page of students and components in parallel
+      const page = 1;
+      const page_size = 50;
       const [studentsRes, componentsRes] = await Promise.all([
-        fetch('http://127.0.0.1:8000/api/fees-manager/students/', {
+        fetch(`http://127.0.0.1:8000/api/fees-manager/students/?page=${page}&page_size=${page_size}`, {
           headers: { 'Authorization': `Bearer ${token}` },
         }),
         fetch('http://127.0.0.1:8000/api/fees-manager/components/', {
@@ -112,13 +116,17 @@ const IndividualFeeAssignment: React.FC = () => {
       ]);
 
       setStudents(studentsData.data || []);
+      const meta = studentsData.meta || {};
+      setStudentsPage(meta.page || 1);
+      setStudentsTotalPages(meta.total_pages || 1);
+      setStudentsTotalCount(meta.count || 0);
       setAvailableComponents((componentsData.data || []).map((it: any) => ({
         ...it,
         amount: (it.amount_cents != null ? Number(it.amount_cents) : (it.amount ? Math.round(it.amount * 100) : 0)) / 100,
       })));
 
-      // Fetch individual assignments for all students
-      await fetchIndividualAssignments();
+      // Fetch individual assignments for students on this server page
+      await fetchIndividualAssignments(studentsData.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -126,13 +134,14 @@ const IndividualFeeAssignment: React.FC = () => {
     }
   };
 
-  const fetchIndividualAssignments = async () => {
+  const fetchIndividualAssignments = async (studentsList?: Student[]) => {
     try {
       const token = localStorage.getItem('access_token');
       const assignmentsData: IndividualFeeAssignment[] = [];
 
-      // Fetch individual assignments for each student
-      for (const student of students) {
+      const studentsToFetch = studentsList || students;
+
+      for (const student of studentsToFetch) {
         try {
           const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/students/${student.id}/fee-profile/`, {
             headers: { 'Authorization': `Bearer ${token}` },
@@ -160,6 +169,30 @@ const IndividualFeeAssignment: React.FC = () => {
       setAssignments(assignmentsData);
     } catch (err) {
       console.error('Error fetching individual assignments:', err);
+    }
+  };
+
+  const fetchStudentsPage = async (page: number) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('access_token');
+      const page_size = 50;
+      const res = await fetch(`http://127.0.0.1:8000/api/fees-manager/students/?page=${page}&page_size=${page_size}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to fetch students');
+      const data = await res.json();
+      setStudents(data.data || []);
+      const meta = data.meta || {};
+      setStudentsPage(meta.page || 1);
+      setStudentsTotalPages(meta.total_pages || 1);
+      setStudentsTotalCount(meta.count || 0);
+      // Refresh assignments for this page using returned students
+      await fetchIndividualAssignments(data.data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -242,14 +275,14 @@ const IndividualFeeAssignment: React.FC = () => {
     return assignments.find(assignment => assignment.student.id === studentId);
   };
 
-  // Calculate pagination values
-  const indexOfLastStudent = currentPage * studentsPerPage;
-  const indexOfFirstStudent = indexOfLastStudent - studentsPerPage;
-  const currentStudents = filteredStudents.slice(indexOfFirstStudent, indexOfLastStudent);
-  const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
+  // Server-driven pagination: current page items are in `students` (already filtered by server page)
+  const SERVER_PAGE_SIZE = 50;
+  const currentStudents = filteredStudents; // filtered within current server page
 
   const handlePageChange = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
+    if (pageNumber >= 1 && pageNumber <= studentsTotalPages) {
+      fetchStudentsPage(pageNumber);
+    }
   };
 
   if (loading) {
@@ -766,30 +799,30 @@ const IndividualFeeAssignment: React.FC = () => {
                   </TableBody>
                 </Table>
 
-                {/* Pagination */}
-                {filteredStudents.length > studentsPerPage && (
+                {/* Pagination (server-driven) */}
+                {studentsTotalPages > 1 && (
                   <div className="flex justify-between items-center mt-4">
                     <div className="text-sm text-gray-600">
-                      Showing {indexOfFirstStudent + 1} to {Math.min(indexOfLastStudent, filteredStudents.length)} of {filteredStudents.length} students
+                      Showing {(studentsPage - 1) * SERVER_PAGE_SIZE + 1} to {(studentsPage - 1) * SERVER_PAGE_SIZE + students.length} of {studentsTotalCount} students
                     </div>
                     <div className="flex space-x-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
+                        onClick={() => handlePageChange(studentsPage - 1)}
+                        disabled={studentsPage === 1}
                         className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
                       >
                         Previous
                       </Button>
                       <span className="px-3 py-1 text-sm">
-                        Page {currentPage} of {totalPages}
+                        Page {studentsPage} of {studentsTotalPages}
                       </span>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
+                        onClick={() => handlePageChange(studentsPage + 1)}
+                        disabled={studentsPage === studentsTotalPages}
                         className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
                       >
                         Next
