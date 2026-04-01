@@ -34,14 +34,14 @@ const DashboardCard = ({
   if (variant === "admin") {
     const adminCardClasses =
       theme === "dark"
-        ? "border-white/10 bg-slate-900/90 text-slate-50 shadow-[0_18px_38px_rgba(2,6,23,0.36)]"
-        : "border-[#eff4ff] bg-white/92 text-slate-900 shadow-[0_18px_40px_rgba(186,205,243,0.38)]";
+        ? "border-white/10 bg-slate-900/90 text-slate-50"
+        : "border-gray-200 bg-white text-slate-900";
 
     const adminIconClasses =
       iconWrapperClassName ||
       (theme === "dark"
         ? "border-white/10 bg-white/5 text-slate-100"
-        : "border-[#edf3ff] bg-[#f7faff] text-[#6d8ec7]");
+        : "border-gray-200 bg-gray-50 text-slate-700");
 
     return (
       <motion.div
@@ -53,14 +53,8 @@ const DashboardCard = ({
         whileTap={{ scale: 0.985 }}
         transition={{ duration: 0.2, ease: "easeInOut" }}
       >
-        <div
-          className={`pointer-events-none absolute inset-x-6 top-0 h-16 rounded-b-[1.75rem] blur-xl ${
-            theme === "dark" ? "bg-blue-500/10" : "bg-blue-100/90"
-          }`}
-        />
-
         <div className="relative flex items-start justify-between gap-4">
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className={`text-sm font-semibold ${theme === "dark" ? "text-slate-100" : "text-slate-900"}`}>
               {title}
             </p>
@@ -75,7 +69,7 @@ const DashboardCard = ({
               </motion.div>
             )}
             {description && (
-              <p className={`mt-2 text-sm leading-6 ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}>
+              <p className={`mt-2 text-sm leading-6 truncate ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}>
                 {description}
               </p>
             )}

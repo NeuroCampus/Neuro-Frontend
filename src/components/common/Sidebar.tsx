@@ -284,8 +284,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     : "text-slate-800 hover:bg-[#f4f8ff] hover:text-slate-900";
 
   const itemActiveClasses = isDark
-    ? "bg-[linear-gradient(135deg,#8b5cf6,#7c3aed)] text-white shadow-[0_16px_28px_rgba(124,58,237,0.32)]"
-    : "bg-[linear-gradient(135deg,#d8c9ff,#8b5cf6)] text-white shadow-[0_18px_30px_rgba(124,58,237,0.28)]";
+    ? "bg-[#8b5cf6] text-white shadow-[0_16px_28px_rgba(124,58,237,0.32)]"
+    : "bg-[#8b5cf6] text-white shadow-[0_18px_30px_rgba(124,58,237,0.28)]";
 
   const iconIdleClasses = isDark
     ? "bg-white/6 text-slate-200"
@@ -447,8 +447,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
                 variant="ghost"
                 className={`w-full rounded-full ${effectiveCollapsed ? "h-12 justify-center px-0" : "h-11 justify-center gap-2"} ${
                   isDark
-                    ? "bg-[linear-gradient(135deg,#8b5cf6,#7c3aed)] text-white hover:bg-[linear-gradient(135deg,#8b5cf6,#7c3aed)]"
-                      : "bg-[linear-gradient(135deg,#d8c9ff,#8b5cf6)] text-white hover:bg-[linear-gradient(135deg,#d8c9ff,#8b5cf6)]"
+                    ? "bg-[#8b5cf6] text-white hover:bg-[#7c3aed]"
+                      : "bg-[#8b5cf6] text-white hover:bg-[#7c3aed]"
                     } shadow-[0_16px_28px_rgba(124,58,237,0.25)]`}
                 onClick={() => setShowLogoutDialog(true)}
               >
