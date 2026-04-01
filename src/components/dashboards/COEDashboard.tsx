@@ -103,7 +103,7 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
   return (
     <div className="min-h-screen">
       {/* Sidebar (fixed left) */}
-      <div className={`fixed top-0 left-0 h-full z-30 transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
+      <div className={`fixed top-0 left-0 h-full z-30 transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-72'}`}>
         <Sidebar
           role="coe"
           setPage={handlePageChange}
@@ -113,9 +113,9 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
           toggleCollapse={toggleSidebar}
         />
       </div>
-      <div className={`flex-1 flex flex-col ${sidebarCollapsed ? 'pl-16' : 'pl-64'}`}>
+      <div className={`flex-1 flex flex-col ${sidebarCollapsed ? 'pl-16' : 'pl-72'}`}>
         {/* Navbar (fixed) */}
-        <div className={`fixed top-0 ${sidebarCollapsed ? 'left-16' : 'left-64'} right-0 z-10 shadow-sm`}>
+        <div className={`fixed top-0 ${sidebarCollapsed ? 'left-16' : 'left-72'} right-0 z-10 shadow-sm`}>
           <Navbar
             user={currentUser}
             role="coe"

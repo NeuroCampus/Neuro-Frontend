@@ -266,12 +266,12 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
   return (
     <HODBootstrapProvider value={bootstrap}>
     <motion.div 
-      className={`flex min-h-screen pt-16 ${theme === 'dark' ? 'dark bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}
+      className={`flex min-h-screen ${theme === 'dark' ? 'dark bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <div className={`fixed top-0 left-0 h-full z-10 transition-all duration-300 ${isSidebarCollapsed ? 'w-16' : 'w-64'}`}>
+      <div className={`fixed top-0 left-0 h-full z-10 transition-all duration-300 ${isSidebarCollapsed ? 'w-16' : 'w-72'}`}>
         <Sidebar
           role="hod"
           setPage={handlePageChange}
@@ -283,10 +283,10 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
       </div>
       <div
         className={`flex-1 overflow-y-auto transition-all duration-300 scroll-smooth ${
-          isSidebarCollapsed ? "ml-16" : "ml-64"
+              isSidebarCollapsed ? "ml-16" : "ml-72"
         } ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}
       >
-        <div className={`sticky top-0 z-20 ${theme === 'dark' ? 'bg-background border-b border-border' : 'bg-white border-b border-gray-200'}`}>
+        <div className={`sticky top-0 z-20 ${theme === 'dark' ? 'bg-background border-b border-border' : 'bg-white border-b border-gray-200 right-0 z-10 shadow-sm rounded-[20px] '}`}>
           <Navbar role="hod" user={user} setPage={handlePageChange} onNotificationClick={handleNotificationClick}/>
         </div>
         <div className={`p-6 w-full ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>

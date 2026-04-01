@@ -144,9 +144,9 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
   />
 
   {/* Main Content */}
-  <div className={`flex-1 flex flex-col ${sidebarCollapsed ? 'pl-16' : 'pl-64'}`}>
+  <div className={`flex-1 flex flex-col ${sidebarCollapsed ? 'pl-16' : 'pl-72'}`}>
     {/* Navbar (fixed) */}
-    <div className={`fixed top-0 ${sidebarCollapsed ? 'left-16' : 'left-64'} right-0 z-10 shadow-sm`}>
+    <div className={`fixed top-0 ${sidebarCollapsed ? 'left-16' : 'left-72'} right-0 z-10 shadow-sm`}>
       <Navbar
         role="student"
         user={user}
