@@ -15,6 +15,7 @@ import {
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import DashboardCard from "../common/DashboardCard";
+import { User, ClipboardList, GitBranch, UserCheck, Bell, Users } from "lucide-react";
 import { getAdminStats } from "../../utils/admin_api";
 import { useToast } from "../../hooks/use-toast";
 import { useTheme } from "../../context/ThemeContext";
@@ -24,6 +25,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Le
 
 interface AdminStatsProps {
   setError: (error: string | null) => void;
+  setPage?: (page: string) => void;
 }
 
 const AdminStats = ({ setError }: AdminStatsProps) => {
@@ -207,8 +209,7 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
-      >
-        
+      > 
         {/* Dashboard Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <motion.div variants={cardVariants} initial="hidden" animate="visible">
@@ -453,8 +454,60 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
               </tbody>
             </table>
           </div>
+          
         </motion.div>
       </motion.div>
+      {/* Action Cards (moved from AdminDashboard) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <DashboardCard
+            title="Enroll User"
+            description="Add new HOD or faculty"
+            icon={<User size={20} />}
+            onClick={() => setPage?.("enroll-user")}
+          />
+          <DashboardCard
+            title="Bulk Upload Faculty"
+            description="Upload faculty list"
+            icon={<ClipboardList size={20} />}
+            onClick={() => setPage?.("bulk-upload")}
+          />
+          <DashboardCard
+            title="Manage Branches"
+            description="View or edit branches"
+            icon={<GitBranch size={20} />}
+            onClick={() => setPage?.("branches")}
+          />
+          <DashboardCard
+            title="Faculty Assignments"
+            description="Assign teachers to branches & subjects"
+            icon={<UserCheck size={20} />}
+            onClick={() => setPage?.("teacher-assignments")}
+          />
+          <DashboardCard
+            title="Manage Batches"
+            description="View or manage batches"
+            icon={<ClipboardList size={20} />}
+            onClick={() => setPage?.("batches")}
+          />
+          <DashboardCard
+            title="Notifications"
+            description="Send or view notifications"
+            icon={<Bell size={20} />}
+            onClick={() => setPage?.("notifications")}
+          />
+          <DashboardCard
+            title="HOD Leaves"
+            description="Manage HOD leave requests"
+            icon={<UserCheck size={20} />}
+            onClick={() => setPage?.("hod-leaves")}
+          />
+          <DashboardCard
+            title="Users Management"
+            description="Manage all system users"
+            icon={<Users size={20} />}
+            onClick={() => setPage?.("users")}
+          />
+        </div>
     </div>
   );
 };

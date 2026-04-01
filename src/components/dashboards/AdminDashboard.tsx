@@ -100,62 +100,7 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <AdminStats setError={setError} />
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <DashboardCard
-                title="Enroll User"
-                description="Add new HOD or faculty"
-                icon={<User size={20} />}
-                onClick={() => handlePageChange("enroll-user")}
-              />
-              <DashboardCard
-                title="Bulk Upload Faculty"
-                description="Upload faculty list"
-                icon={<ClipboardList size={20} />}
-                onClick={() => handlePageChange("bulk-upload")}
-              />
-              <DashboardCard
-                title="Manage Branches"
-                description="View or edit branches"
-                icon={<GitBranch size={20} />}
-                onClick={() => handlePageChange("branches")}
-              />
-              <DashboardCard
-                title="Faculty Assignments"
-                description="Assign teachers to branches & subjects"
-                icon={<UserCheck size={20} />}
-                onClick={() => handlePageChange("teacher-assignments")}
-              />
-              <DashboardCard
-                title="Manage Batches"
-                description="View or manage batches"
-                icon={<ClipboardList size={20} />}
-                onClick={() => handlePageChange("batches")}
-              />
-              <DashboardCard
-                title="Notifications"
-                description="Send or view notifications"
-                icon={<Bell size={20} />}
-                onClick={() => handlePageChange("notifications")}
-              />
-              <DashboardCard
-                title="HOD Leaves"
-                description="Manage HOD leave requests"
-                icon={<UserCheck size={20} />}
-                onClick={() => handlePageChange("hod-leaves")}
-              />
-              <DashboardCard
-                title="Users Management"
-                description="Manage all system users"
-                icon={<Users size={20} />}
-                onClick={() => handlePageChange("users")}
-              />
-            </motion.div>
+            <AdminStats setError={setError} setPage={handlePageChange} />
           </motion.div>
         );
       case "enroll-user":
