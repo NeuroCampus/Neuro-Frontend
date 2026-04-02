@@ -4,6 +4,7 @@ import DashboardLayout from "../common/DashboardLayout";
 import FacultyStats from "../faculty/FacultyStats";
 import TakeAttendance from "../faculty/TakeAttendance";
 import UploadMarks from "../faculty/UploadMarks";
+import UploadQP from "../faculty/UploadQP";
 import COAttainment from "../faculty/COAttainment";
 import ApplyLeave from "../faculty/ApplyLeave";
 import AttendanceRecords from "../faculty/AttendanceRecords";
@@ -109,6 +110,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'dashboard': '/faculty/dashboard',
       'take-attendance': '/faculty/take-attendance',
       'upload-marks': '/faculty/upload-marks',
+      'upload-qp': '/faculty/upload-qp',
       'co-attainment': '/faculty/co-attainment',
       'apply-leave': '/faculty/apply-leave',
       'attendance-records': '/faculty/attendance-records',
@@ -160,6 +162,8 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
         return <TakeAttendance />;
       case "upload-marks":
         return <UploadMarks />;
+      case "upload-qp":
+        return <UploadQP />;
       case "co-attainment":
         return <COAttainment />;
       case "apply-leave":

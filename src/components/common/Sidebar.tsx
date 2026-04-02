@@ -208,6 +208,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Attendance Records", page: "attendance-records" },
     { name: "My Attendance", page: "faculty-attendance" },
     { name: "Upload Marks", page: "upload-marks" },
+    { name: "Upload QP", page: "upload-qp" },
     { name: "CO Attainment", page: "co-attainment" },
     { name: "Generate Statistics", page: "statistics" },
     
