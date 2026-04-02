@@ -23,6 +23,7 @@ import { logoutUser } from "../../utils/authService";
 import StudyMaterial from "../hod/StudyMaterial";
 import PromotionManagement from "../hod/PromotionManagement";
 import FacultyAttendanceView from "../hod/FacultyAttendanceView";
+import HODMyAttendance from "../hod/HODMyAttendance";
 import StudentInfoScanner from "../hod/StudentInfoScanner";
 import StudentEnrollment from "../hod/StudentEnrollment";
 import { HODBootstrapProvider } from "../../context/HODBootstrapContext";
@@ -118,6 +119,7 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
       'apply-leaves': 'apply-leaves',
       'attendance': 'attendance',
       'faculty-attendance': 'faculty-attendance',
+      'my-attendance': 'my-attendance',
       'marks': 'marks',
       'notifications': 'notifications',
       'proctors': 'proctors',
@@ -177,6 +179,7 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
       'apply-leaves': '/hod/apply-leaves',
       'attendance': '/hod/attendance',
       'faculty-attendance': '/hod/faculty-attendance',
+      'my-attendance': '/hod/my-attendance',
       'marks': '/hod/marks',
       'notifications': '/hod/notifications',
       'proctors': '/hod/proctors',
@@ -244,6 +247,8 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
         return <AttendanceView />;
       case "faculty-attendance":
         return <FacultyAttendanceView />;
+      case "my-attendance":
+        return <HODMyAttendance />;
       case "marks":
         return <MarksView />;
       case "notifications":

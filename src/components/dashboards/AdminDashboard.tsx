@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "../common/Sidebar";
 import Navbar from "../common/Navbar";
 import AdminStats from "../admin/AdminStats";
+import AdminHODAttendance from "../admin/HODAttendanceView";
 import EnrollUser from "../admin/EnrollUser";
 import BulkUpload from "../admin/BulkUpload";
 import BranchesManagement from "../admin/BranchesManagement";
@@ -233,6 +234,17 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
             transition={{ duration: 0.3 }}
           >
             <HODLeavesManagement setError={setError} toast={toast} />
+          </motion.div>
+        );
+      case "hod-attendance":
+        return (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <AdminHODAttendance setError={setError} />
           </motion.div>
         );
       case "users":

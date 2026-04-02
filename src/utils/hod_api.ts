@@ -731,6 +731,7 @@ interface UploadStudyMaterialRequest {
   subject_code?: string;
   semester_id: string;
   branch_id: string;
+  section_id?: string;
   file: File;
 }
 
@@ -741,6 +742,8 @@ interface StudyMaterial {
   subject_code: string;
   semester_id: string;
   branch_id: string;
+  section_id?: string | null;
+  section?: string | null;
   uploaded_by: string;
   uploaded_at: string;
   file_url: string;
@@ -2145,6 +2148,7 @@ export const uploadStudyMaterial = async (data: UploadStudyMaterialRequest): Pro
     formData.append("subject_code", data.subject_code || "");
     formData.append("semester_id", data.semester_id);
     formData.append("branch_id", data.branch_id);
+    if (data.section_id) formData.append("section_id", data.section_id);
     formData.append("file", data.file);
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/study-materials/`, {
       method: "POST",

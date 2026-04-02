@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Download, FileText, UploadCloud, X } from "lucide-react";
-import { uploadStudyMaterial, getStudyMaterials } from "../../utils/hod_api";
+import { uploadStudyMaterial, getStudyMaterials, getBranches, manageSections } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
 
 // Interface for study material from API
@@ -17,6 +17,8 @@ interface ApiStudyMaterial {
   file_url: string;
   drive_file_id?: string | null;
   drive_web_view_link?: string | null;
+  section?: string | null;
+  section_id?: string | null;
 }
 
 // Interface for display study material
@@ -30,32 +32,54 @@ interface StudyMaterial {
   uploaded_by: string;
   uploaded_at: string;
   file_url: string;
+  section?: string | null;
+  section_id?: string | null;
 }
 
-// Hook for managing study materials
-const useStudyMaterials = () => {
+// Hook for managing study materials (loads by branch)
+const useStudyMaterials = (branchId: string | null) => {
   const [studyMaterials, setStudyMaterials] = useState<StudyMaterial[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchMaterials = async () => {
+      if (!branchId) {
+        setStudyMaterials([]);
+        return;
+      }
       setLoading(true);
       try {
-        // We need to pass branch_id to getStudyMaterials, but we don't have it here
-        // For now, we'll just initialize with an empty array
-        // In a real implementation, this would be fetched from the user's profile or context
-        setStudyMaterials([]);
+        const resp = await getStudyMaterials(branchId);
+        if (resp && resp.success && Array.isArray(resp.data)) {
+          const mapped = resp.data.map((m: any) => ({
+            id: m.id,
+            title: m.title,
+            subject_name: m.subject_name,
+            subject_code: m.subject_code,
+            semester: m.semester ? parseInt(m.semester as any) || null : null,
+            branch: m.branch || null,
+            section: m.section || null,
+            section_id: m.section_id || null,
+            uploaded_by: m.uploaded_by || '',
+            uploaded_at: m.uploaded_at || '',
+            file_url: m.drive_web_view_link || m.file_url,
+          }));
+          setStudyMaterials(mapped);
+        } else {
+          setStudyMaterials([]);
+        }
       } catch (error) {
         console.error("Error fetching study materials:", error);
+        setStudyMaterials([]);
       } finally {
         setLoading(false);
       }
     };
     fetchMaterials();
-  }, []);
+  }, [branchId]);
 
   const addStudyMaterial = (material: StudyMaterial) => {
-    setStudyMaterials([...studyMaterials, material]);
+    setStudyMaterials((s) => [...s, material]);
   };
 
   return { studyMaterials, addStudyMaterial, loading };
@@ -70,6 +94,7 @@ const useUploadModal = () => {
   const [subjectCode, setSubjectCode] = useState("");
   const [semesterId, setSemesterId] = useState("");
   const [branchId, setBranchId] = useState("");
+  const [sectionId, setSectionId] = useState("");
   const [uploading, setUploading] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,6 +110,7 @@ const useUploadModal = () => {
     setSubjectCode("");
     setSemesterId("");
     setBranchId("");
+    setSectionId("");
   };
 
   return {
@@ -132,7 +158,14 @@ const StudyMaterialRow = ({ material, theme }: { material: StudyMaterial; theme:
 // Main component
 const StudyMaterials = () => {
   const { theme } = useTheme();
-  const { studyMaterials, addStudyMaterial, loading } = useStudyMaterials();
+  const [selectedBranchFilter, setSelectedBranchFilter] = useState<string>("All Branches");
+  const [selectedSectionFilter, setSelectedSectionFilter] = useState<string>("All Sections");
+  const [branches, setBranches] = useState<Array<{ id: string; name: string }>>([]);
+  const [sections, setSections] = useState<Array<{ id: string; name: string }>>([]);
+
+  // Pass null when 'All Branches' to hook; but hook expects branch id, so use null to represent none
+  const branchIdForHook = selectedBranchFilter === "All Branches" ? null : selectedBranchFilter;
+  const { studyMaterials, addStudyMaterial, loading } = useStudyMaterials(branchIdForHook);
   const {
     showUploadModal,
     setShowUploadModal,
@@ -142,6 +175,7 @@ const StudyMaterials = () => {
     subjectCode,
     semesterId,
     branchId,
+    sectionId,
     uploading,
     setUploading,
     handleFileChange,
@@ -150,6 +184,7 @@ const StudyMaterials = () => {
     setSubjectCode,
     setSemesterId,
     setBranchId,
+    setSectionId,
     resetForm,
   } = useUploadModal();
 
@@ -159,6 +194,41 @@ const StudyMaterials = () => {
   // Mock semester options
   const semesters = ["All Semesters", "1", "2", "3", "4", "5", "6", "7", "8"];
   // TODO: Fetch semesters from API in production
+
+  // Load branches on mount
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const resp = await getBranches();
+        if (resp && resp.success && Array.isArray(resp.data)) {
+          setBranches(resp.data);
+        }
+      } catch (e) {
+        console.error("Failed to load branches", e);
+      }
+    };
+    load();
+  }, []);
+
+  // Load sections when branch filter changes (only when a concrete branch selected)
+  useEffect(() => {
+    const loadSections = async () => {
+      if (!selectedBranchFilter || selectedBranchFilter === "All Branches") {
+        setSections([]);
+        setSelectedSectionFilter("All Sections");
+        return;
+      }
+      try {
+        const resp = await manageSections({ branch_id: selectedBranchFilter }, "GET");
+        if (resp && resp.success && Array.isArray(resp.data)) {
+          setSections(resp.data.map((s) => ({ id: s.id, name: s.name })));
+        }
+      } catch (e) {
+        console.error("Failed to load sections", e);
+      }
+    };
+    loadSections();
+  }, [selectedBranchFilter]);
 
   const handleUpload = async () => {
     if (!file || !title) {
@@ -171,6 +241,13 @@ const StudyMaterials = () => {
       return;
     }
 
+    // Validate file size <= 50MB
+    const MAX_SIZE = 50 * 1024 * 1024;
+    if (file.size > MAX_SIZE) {
+      alert("File size must not exceed 50MB.");
+      return;
+    }
+
     setUploading(true);
     try {
       const response = await uploadStudyMaterial({
@@ -179,6 +256,7 @@ const StudyMaterials = () => {
         subject_code: subjectCode,
         semester_id: semesterId,
         branch_id: branchId,
+        section_id: sectionId,
         file,
       });
 
@@ -218,7 +296,9 @@ const StudyMaterials = () => {
         material.subject_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (material.semester?.toString() || "").includes(searchQuery.toLowerCase()) ||
         material.uploaded_by.toLowerCase().includes(searchQuery.toLowerCase())) &&
-      (semesterFilter === "All Semesters" || material.semester?.toString() === semesterFilter)
+      (semesterFilter === "All Semesters" || material.semester?.toString() === semesterFilter) &&
+      (selectedBranchFilter === "All Branches" || material.branch === selectedBranchFilter) &&
+      (selectedSectionFilter === "All Sections" || (material as any).section_id === selectedSectionFilter)
   );
 
   return (
@@ -243,6 +323,32 @@ const StudyMaterials = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
           className={`flex-1 px-3 py-2 rounded outline-none focus:ring-2 border ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
         />
+        <select
+          value={selectedBranchFilter}
+          onChange={(e) => setSelectedBranchFilter(e.target.value)}
+          className={`border rounded px-3 py-2 ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
+        >
+          <option value="All Branches">All Branches</option>
+          {branches.map((b) => (
+            <option key={b.id} value={b.id} className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>
+              {b.name}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={selectedSectionFilter}
+          onChange={(e) => setSelectedSectionFilter(e.target.value)}
+          className={`border rounded px-3 py-2 ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
+        >
+          <option value="All Sections">All Sections</option>
+          {sections.map((s) => (
+            <option key={s.id} value={s.id} className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+
         <select
           value={semesterFilter}
           onChange={(e) => setSemesterFilter(e.target.value)}
@@ -332,6 +438,14 @@ const StudyMaterials = () => {
                 placeholder="Branch ID"
                 value={branchId}
                 onChange={(e) => setBranchId(e.target.value)}
+                className={`px-3 py-2 rounded outline-none focus:ring-2 ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
+                disabled={uploading}
+              />
+              <input
+                type="text"
+                placeholder="Section ID (optional)"
+                value={sectionId}
+                onChange={(e) => setSectionId(e.target.value)}
                 className={`px-3 py-2 rounded outline-none focus:ring-2 ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
                 disabled={uploading}
               />

@@ -159,6 +159,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     
     // Leaves
     { name: "HOD Leaves", page: "hod-leaves" },
+    { name: "HOD Attendance", page: "hod-attendance" },
     
     // User & Profile
     { name: "Users", page: "users" },
@@ -183,6 +184,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
  
     { name: "Low Attendance", page: "low-attendance" },
     { name: "Faculty Attendance", page: "faculty-attendance" },
+    { name: "My Attendance", page: "my-attendance" },
     { name: "Promotion Management", page: "promotion-management" },
     
     // Leaves
