@@ -72,6 +72,21 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { theme } = useTheme();
 
+  // Match DashboardLayout behavior: expanded on desktop (>=1024), collapsed on smaller
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setSidebarCollapsed(false);
+      } else {
+        setSidebarCollapsed(true);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Get active page from URL path
   const getActivePageFromPath = (pathname: string) => {
     const path = pathname.replace('/fees-manager', '').replace('/', '');
@@ -130,7 +145,19 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const toggleSidebar = () => setSidebarCollapsed(!sidebarCollapsed);
+  const toggleSidebar = () => {
+    // Only allow toggling on mobile/tablet (< 1024px)
+    if (window.innerWidth < 1024) {
+      setSidebarCollapsed(!sidebarCollapsed);
+    }
+  };
+
+  // Close sidebar when page changes on mobile/tablet only
+  useEffect(() => {
+    if (window.innerWidth < 1024) {
+      setSidebarCollapsed(true);
+    }
+  }, [activePage]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -151,21 +178,19 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
 
   return (
     <div className={`flex min-h-screen ${theme === 'dark' ? 'dark bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      {/* Sidebar (fixed left) */}
-      <div className={`fixed top-0 left-0 h-full z-30 transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
-        <Sidebar
-          role="fees_manager"
-          setPage={handlePageChange}
-          activePage={activePage}
-          logout={handleLogout}
-          collapsed={sidebarCollapsed}
-          toggleCollapse={toggleSidebar}
-        />
-      </div>
+      {/* Sidebar (fixed left) - let Sidebar component control fixed positioning */}
+      <Sidebar
+        role="fees_manager"
+        setPage={handlePageChange}
+        activePage={activePage}
+        logout={handleLogout}
+        collapsed={sidebarCollapsed}
+        toggleCollapse={toggleSidebar}
+      />
 
-      <div className={`flex-1 flex flex-col ${sidebarCollapsed ? 'pl-16' : 'pl-64'}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'ml-0' : 'ml-64'}`}>
         {/* Navbar (fixed) */}
-        <div className={`fixed top-0 ${sidebarCollapsed ? 'left-16' : 'left-64'} right-0 z-10 shadow-sm`}>
+        <div className={`fixed top-0 ${sidebarCollapsed ? 'left-0' : 'left-64'} right-0 z-10 shadow-sm`}>
           <Navbar
             role="fees_manager"
             user={{
@@ -177,6 +202,8 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
               profile_picture: user?.profile_picture || null
             }}
             setPage={handlePageChange}
+            showHamburger={sidebarCollapsed && window.innerWidth < 1024}
+            onHamburgerClick={toggleSidebar}
           />
         </div>
 

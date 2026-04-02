@@ -398,7 +398,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     </motion.div>
   );
  
-  if (isMobile) {
+  // For mobile/tablet - use overlay approach
+  if (window.innerWidth < 1024) {
     return (
       <>
         <AnimatePresence>
@@ -421,69 +422,123 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
         >
           {sidebarContent}
         </motion.div>
+        {/* Logout Dialog - rendered at root level for proper z-index */}
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none">
+          <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+            <DialogContent 
+              className={`w-[90%] sm:w-full max-w-md mx-auto rounded-lg ${
+                theme === 'dark' 
+                  ? "bg-background border-border text-foreground" 
+                  : "bg-white border-gray-200 text-gray-900"
+              }`}
+            >
+              <DialogHeader className="space-y-2">
+                <DialogTitle className={`text-lg md:text-xl font-semibold ${
+                  theme === 'dark' ? "text-foreground" : "text-gray-900"
+                }`}>
+                  Confirm Logout
+                </DialogTitle>
+                <DialogDescription className={`text-sm md:text-base ${
+                  theme === 'dark' ? "text-muted-foreground" : "text-gray-500"
+                }`}>
+                  Are you sure you want to log out?
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowLogoutDialog(false)}
+                  className={`w-full sm:w-auto ${
+                    theme === 'dark' 
+                      ? "border-border text-foreground hover:bg-accent" 
+                      : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={confirmLogout}
+                  className={`w-full sm:w-auto ${
+                    theme === 'dark' 
+                      ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground" 
+                      : "bg-red-600 hover:bg-red-700 text-white"
+                  }`}
+                >
+                  Logout
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </>
+    );
+  }
+ 
+  // For desktop - show collapsible sidebar
+  return (
+    <>
+      <AnimatePresence>
+        {!collapsed && (
+          <motion.div
+            className="fixed top-0 left-0 h-screen w-64 z-30 shadow-xl overflow-hidden"
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            {sidebarContent}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* Logout Dialog - rendered at root level for proper z-index */}
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none">
         <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-          <DialogContent className={theme === 'dark' ? "bg-background border-border text-foreground" : "bg-white border-gray-200 text-gray-900"}>
-            <DialogHeader>
-              <DialogTitle className={theme === 'dark' ? "text-foreground" : "text-gray-900"}>Confirm Logout</DialogTitle>
-              <DialogDescription className={theme === 'dark' ? "text-muted-foreground" : "text-gray-500"}>Are you sure you want to log out?</DialogDescription>
+          <DialogContent 
+            className={`w-[90%] sm:w-full max-w-md mx-auto rounded-lg ${
+              theme === 'dark' 
+                ? "bg-background border-border text-foreground" 
+                : "bg-white border-gray-200 text-gray-900"
+            }`}
+          >
+            <DialogHeader className="space-y-2">
+              <DialogTitle className={`text-lg md:text-xl font-semibold ${
+                theme === 'dark' ? "text-foreground" : "text-gray-900"
+              }`}>
+                Confirm Logout
+              </DialogTitle>
+              <DialogDescription className={`text-sm md:text-base ${
+                theme === 'dark' ? "text-muted-foreground" : "text-gray-500"
+              }`}>
+                Are you sure you want to log out?
+              </DialogDescription>
             </DialogHeader>
-            <DialogFooter>
-              <Button 
-                variant="outline" 
-                onClick={() => setShowLogoutDialog(false)} 
-                className={theme === 'dark' ? "border-border text-foreground hover:bg-accent" : "border-gray-300 text-gray-700 hover:bg-gray-100"}
+            <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowLogoutDialog(false)}
+                className={`w-full sm:w-auto ${
+                  theme === 'dark' 
+                    ? "border-border text-foreground hover:bg-accent" 
+                    : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                }`}
               >
                 Cancel
               </Button>
-              <Button 
-                onClick={confirmLogout} 
-                className={theme === 'dark' ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground" : "bg-red-600 hover:bg-red-700 text-white"}
+              <Button
+                onClick={confirmLogout}
+                className={`w-full sm:w-auto ${
+                  theme === 'dark' 
+                    ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground" 
+                    : "bg-red-600 hover:bg-red-700 text-white"
+                }`}
               >
                 Logout
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </>
-    );
-  }
- 
-  return (
-    <motion.div
-      className={`fixed top-0 left-0 h-screen z-40 shadow-xl transition-all duration-300 ${
-        collapsed ? "w-16" : "w-64"
-      } ${theme === 'dark' ? 'bg-background' : 'bg-white'}`}
-      initial={{ x: -100 }}
-      animate={{ x: 0 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-    >
-      {sidebarContent}
-      <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-        <DialogContent className={theme === 'dark' ? "bg-background border-border text-foreground" : "bg-white border-gray-200 text-gray-900"}>
-          <DialogHeader>
-        <DialogTitle className={theme === 'dark' ? "text-foreground" : "text-gray-900"}>Confirm Logout</DialogTitle>
-        <DialogDescription className={theme === 'dark' ? "text-muted-foreground" : "text-gray-500"}>
-          Are you sure you want to log out?
-        </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-        <Button
-          variant="outline"
-          onClick={() => setShowLogoutDialog(false)}
-          className={theme === 'dark' ? "border-border text-foreground hover:bg-accent" : "border-gray-300 text-gray-700 hover:bg-gray-100"}
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={confirmLogout}
-          className={theme === 'dark' ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground" : "bg-red-600 hover:bg-red-700 text-white"}
-        >
-          Logout
-        </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </motion.div>
+      </div>
+    </>
   );
 };
  

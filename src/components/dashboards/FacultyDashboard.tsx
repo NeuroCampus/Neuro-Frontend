@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import Sidebar from "../common/Sidebar";
-import Navbar from "../common/Navbar";
+import DashboardLayout from "../common/DashboardLayout";
 import FacultyStats from "../faculty/FacultyStats";
 import TakeAttendance from "../faculty/TakeAttendance";
 import UploadMarks from "../faculty/UploadMarks";
@@ -197,45 +196,21 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
   };
 
   return (
-    <div className={`flex min-h-screen pt-16 ${theme === 'dark' ? 'dark bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <Sidebar
-        role="faculty"
-        setPage={handlePageChange}
-        activePage={activePage}
-        logout={handleLogout}
-        collapsed={isSidebarCollapsed}
-        toggleCollapse={toggleSidebar}
-      />
-      <div
-        className={`flex-1 overflow-y-auto transition-all duration-300 scroll-smooth ${isSidebarCollapsed ? "ml-16" : "ml-64"
-          } ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}
-      >
-        {/* Navbar same as HOD, but role="faculty" */}
-        <div className={`sticky top-0 z-20 ${theme === 'dark' ? 'bg-background border-b border-border' : 'bg-white border-b border-gray-200'}`}>
-          <Navbar
-            role="faculty"
-            user={currentUser}
-            onNotificationClick={handleNotificationClick}
-            setPage={handlePageChange}
-          />
+    <DashboardLayout
+      role="faculty"
+      user={currentUser}
+      activePage={activePage}
+      onPageChange={handlePageChange}
+      onNotificationClick={handleNotificationClick}
+      pageTitle="Faculty Dashboard"
+    >
+      {error && (
+        <div className={`p-3 rounded-lg mb-4 ${theme === 'dark' ? 'bg-destructive/10 border border-destructive/20 text-destructive-foreground' : 'bg-red-100 border border-red-200 text-red-700'}`}>
+          {error}
         </div>
-        <div className={`p-6 w-full ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
-          {activePage === "dashboard" && (
-            <div className="mb-6">
-              <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                Dashboard Overview
-              </h1>
-            </div>
-          )}
-          {error && (
-            <div className={`p-3 rounded-lg mb-4 ${theme === 'dark' ? 'bg-destructive/10 border border-destructive/20 text-destructive-foreground' : 'bg-red-100 border border-red-200 text-red-700'}`}>
-              {error}
-            </div>
-          )}
-          {renderContent()}
-        </div>
-      </div>
-    </div>
+      )}
+      {renderContent()}
+    </DashboardLayout>
   );
 };
 
