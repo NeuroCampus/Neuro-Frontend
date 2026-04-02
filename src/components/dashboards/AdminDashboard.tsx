@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
-import Sidebar from "../common/Sidebar";
-import Navbar from "../common/Navbar";
+import DashboardLayout from "../common/DashboardLayout";
 import AdminStats from "../admin/AdminStats";
 import EnrollUser from "../admin/EnrollUser";
 import BulkUpload from "../admin/BulkUpload";
@@ -38,7 +37,6 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [error, setError] = useState<string | null>(null);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { toast } = useToast();
   const { theme } = useTheme();
 
@@ -57,9 +55,7 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const toggleSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
-  };
+
 
   const handleNotificationClick = () => {
     navigate('/admin/notifications');
@@ -80,15 +76,7 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
     }
   };
 
-  useEffect(() => {
-  if (error) {
-    const timer = setTimeout(() => {
-      setError(null); // clear the error after 3s
-    }, 3000);
 
-    return () => clearTimeout(timer); // cleanup
-  }
-}, [error]);
 
   const renderContent = () => {
     switch (activePage) {
@@ -100,62 +88,7 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <AdminStats setError={setError} />
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <DashboardCard
-                title="Enroll User"
-                description="Add new HOD or faculty"
-                icon={<User size={20} />}
-                onClick={() => handlePageChange("enroll-user")}
-              />
-              <DashboardCard
-                title="Bulk Upload Faculty"
-                description="Upload faculty list"
-                icon={<ClipboardList size={20} />}
-                onClick={() => handlePageChange("bulk-upload")}
-              />
-              <DashboardCard
-                title="Manage Branches"
-                description="View or edit branches"
-                icon={<GitBranch size={20} />}
-                onClick={() => handlePageChange("branches")}
-              />
-              <DashboardCard
-                title="Faculty Assignments"
-                description="Assign teachers to branches & subjects"
-                icon={<UserCheck size={20} />}
-                onClick={() => handlePageChange("teacher-assignments")}
-              />
-              <DashboardCard
-                title="Manage Batches"
-                description="View or manage batches"
-                icon={<ClipboardList size={20} />}
-                onClick={() => handlePageChange("batches")}
-              />
-              <DashboardCard
-                title="Notifications"
-                description="Send or view notifications"
-                icon={<Bell size={20} />}
-                onClick={() => handlePageChange("notifications")}
-              />
-              <DashboardCard
-                title="HOD Leaves"
-                description="Manage HOD leave requests"
-                icon={<UserCheck size={20} />}
-                onClick={() => handlePageChange("hod-leaves")}
-              />
-              <DashboardCard
-                title="Users Management"
-                description="Manage all system users"
-                icon={<Users size={20} />}
-                onClick={() => handlePageChange("users")}
-              />
-            </motion.div>
+            <AdminStats setError={setError} onNavigate={handlePageChange} />
           </motion.div>
         );
       case "enroll-user":
@@ -263,75 +196,24 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
   };
 
   return (
-    <motion.div 
-      className={`flex min-h-screen ${theme === 'dark' ? 'dark bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
+    <DashboardLayout
+      role="admin"
+      user={user}
+      activePage={activePage}
+      onPageChange={handlePageChange}
+      onNotificationClick={handleNotificationClick}
+      pageTitle="Admin Dashboard"
     >
-      {/* Sidebar (fixed left) */}
-      <div className={`fixed top-0 left-0 h-full z-30 transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
-        <Sidebar 
-          role="admin" 
-          setPage={handlePageChange} 
-          activePage={activePage} 
-          logout={handleLogout}
-          collapsed={sidebarCollapsed}
-          toggleCollapse={toggleSidebar}
-        />
-      </div>
-      <div className={`flex-1 flex flex-col ${sidebarCollapsed ? 'pl-16' : 'pl-64'}`}>
-        {/* Navbar (fixed) */}
-        <div className={`fixed top-0 ${sidebarCollapsed ? 'left-16' : 'left-64'} right-0 z-10 shadow-sm`}>
-          <Navbar
-            role="admin"
-            user={user}
-            onNotificationClick={handleNotificationClick}
-            setPage={handlePageChange}
-          />
-        </div>
-        <motion.main 
-          className={`flex-1 mt-16 p-6 overflow-y-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-        >
-          <motion.div 
-            className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.3 }}
-          >
-            <motion.h1 
-              className={`text-xl md:text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4, delay: 0.4 }}
-            >
-              {activePage === "dashboard"
-                ? "Admin Dashboard"
-                : activePage
-                    .split("-")
-                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(" ")}
-            </motion.h1>
-          </motion.div>
-          {error && (
-            <motion.div 
-              className={`p-3 rounded-lg mb-4 ${theme === 'dark' ? 'bg-destructive/10 border border-destructive/20 text-destructive-foreground' : 'bg-red-100 border border-red-200 text-red-700'}`}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              {error}
-            </motion.div>
-          )}
-          <AnimatePresence mode="wait">
-            {renderContent()}
-          </AnimatePresence>
-        </motion.main>
-      </div>
-    </motion.div>
+      <motion.div
+        key={activePage}
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -20 }}
+        transition={{ duration: 0.3 }}
+      >
+        {renderContent()}
+      </motion.div>
+    </DashboardLayout>
   );
 };
 

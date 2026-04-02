@@ -8,25 +8,22 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<string>('light');
-
-  useEffect(() => {
-    // Check localStorage for saved theme preference
-    // Check for role-specific theme first, then general theme keys for backward compatibility
-    const savedTheme = localStorage.getItem('fees-manager-theme') || 
-                      localStorage.getItem('hod-theme') || 
-                      localStorage.getItem('admin-theme') ||
-                      localStorage.getItem('theme');
+  // Initialize with value from localStorage immediately (synchronously)
+  const getInitialTheme = () => {
+    const savedTheme = localStorage.getItem('user-theme-preference');
+    console.log('ThemeContext - getInitialTheme:', { savedTheme });
     if (savedTheme) {
-      setTheme(savedTheme);
-    } else {
-      // Check system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setTheme(prefersDark ? 'dark' : 'light');
+      return savedTheme;
     }
-  }, []);
+    // Default to light theme, fallback to system preference
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return 'light';
+  };
+  
+  const [theme, setTheme] = useState<string>(getInitialTheme());
 
   useEffect(() => {
+    console.log('ThemeContext - Applying theme:', theme);
     // Apply theme to document
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
@@ -48,11 +45,9 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }
     }
     
-    // Save theme preference for all roles
-    localStorage.setItem('theme', theme);
-    localStorage.setItem('admin-theme', theme);
-    localStorage.setItem('hod-theme', theme);
-    localStorage.setItem('fees-manager-theme', theme);
+    // Save theme preference (persists across login sessions)
+    localStorage.setItem('user-theme-preference', theme);
+    console.log('ThemeContext - Saved to localStorage:', theme, 'Current value:', localStorage.getItem('user-theme-preference'));
   }, [theme]);
 
   const toggleTheme = () => {

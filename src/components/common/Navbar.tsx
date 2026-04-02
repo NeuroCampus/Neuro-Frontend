@@ -3,6 +3,7 @@ import { FiBell, FiMoon, FiSun, FiMenu } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTheme } from "../../context/ThemeContext";
+import { Button } from "../ui/button";
 
 interface User {
   username: string;
@@ -11,6 +12,7 @@ interface User {
   last_name: string;
   role: string;
   profile_picture?: string | null;
+  profile_image?: string | null;
   branch?: string;
 }
 
@@ -19,6 +21,8 @@ interface NavbarProps {
   user?: User;
   onNotificationClick?: () => void;
   setPage: (page: string) => void;
+  showHamburger?: boolean;
+  onHamburgerClick?: () => void;
 }
 
 interface NotificationBellProps {
@@ -26,9 +30,18 @@ interface NotificationBellProps {
   onClick?: () => void;
 }
 
-const Navbar = ({ role, user, onNotificationClick, setPage }: NavbarProps) => {
+const Navbar = ({ role, user, onNotificationClick, setPage, showHamburger = false, onHamburgerClick }: NavbarProps) => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleNotificationClick = () => {
     if (onNotificationClick) {
@@ -58,7 +71,7 @@ const handleProfileClick = () => {
 
   return (
     <motion.div 
-      className={`fixed top-0 left-64 right-0 z-50 flex items-center justify-between px-6 py-3 backdrop-blur-sm ${
+      className={`w-full flex items-center justify-between px-4 md:px-6 lg:px-8 py-3 backdrop-blur-sm ${
         theme === 'dark' 
           ? 'bg-background border-b border-border' 
           : 'bg-white border-b border-gray-200'
@@ -67,13 +80,30 @@ const handleProfileClick = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      {/* Left section: Brand */}
-      <motion.div 
-        className="flex items-center gap-4"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
-      >
+      {/* Left section: Hamburger + Brand */}
+      <div className="flex items-center gap-4">
+        {/* Hamburger Menu Button - Always show when sidebar is collapsed */}
+        {showHamburger && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`${
+              theme === "dark"
+                ? "hover:bg-accent"
+                : "hover:bg-gray-100"
+            }`}
+            onClick={onHamburgerClick}
+          >
+            <FiMenu size={20} />
+          </Button>
+        )}
+        
+        <motion.div 
+          className="flex items-center gap-4"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+        >
         <div className="flex items-center gap-3">
           <div>
             <motion.div 
@@ -110,7 +140,8 @@ const handleProfileClick = () => {
 
 
         </div>
-      </motion.div>
+        </motion.div>
+      </div>
 
       {/* Right section */}
       <motion.div 
@@ -128,13 +159,13 @@ const handleProfileClick = () => {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.3 }}
         >
-          {new Date().toLocaleDateString("en-US", {
+          {currentTime.toLocaleDateString("en-US", {
             weekday: "short",
             month: "short",
             day: "numeric",
           })}
           <div className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`}>
-            {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            {currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </div>
         </motion.div>
 
