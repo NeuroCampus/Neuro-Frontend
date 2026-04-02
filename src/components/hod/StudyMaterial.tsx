@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Download, FileText, UploadCloud, X } from "lucide-react";
-import { uploadStudyMaterial, getStudyMaterials, getBranches, manageSections } from "../../utils/hod_api";
+import { uploadStudyMaterial, getStudyMaterials, getBranches, manageSections, getSemesters, manageSubjects } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
 
 // Interface for study material from API
@@ -29,6 +29,7 @@ interface StudyMaterial {
   subject_code: string;
   semester: number | null;
   branch: string | null;
+  branch_id?: string | null;
   uploaded_by: string;
   uploaded_at: string;
   file_url: string;
@@ -58,6 +59,7 @@ const useStudyMaterials = (branchId: string | null) => {
             subject_code: m.subject_code,
             semester: m.semester ? parseInt(m.semester as any) || null : null,
             branch: m.branch || null,
+            branch_id: m.branch_id || null,
             section: m.section || null,
             section_id: m.section_id || null,
             uploaded_by: m.uploaded_by || '',
@@ -92,6 +94,7 @@ const useUploadModal = () => {
   const [title, setTitle] = useState("");
   const [subjectName, setSubjectName] = useState("");
   const [subjectCode, setSubjectCode] = useState("");
+  const [subjectId, setSubjectId] = useState("");
   const [semesterId, setSemesterId] = useState("");
   const [branchId, setBranchId] = useState("");
   const [sectionId, setSectionId] = useState("");
@@ -108,6 +111,7 @@ const useUploadModal = () => {
     setTitle("");
     setSubjectName("");
     setSubjectCode("");
+    setSubjectId("");
     setSemesterId("");
     setBranchId("");
     setSectionId("");
@@ -122,14 +126,17 @@ const useUploadModal = () => {
     subjectCode,
     semesterId,
     branchId,
+    sectionId,
     uploading,
     setUploading,
     handleFileChange,
     setTitle,
     setSubjectName,
     setSubjectCode,
+    setSubjectId,
     setSemesterId,
     setBranchId,
+    setSectionId,
     resetForm,
   };
 };
@@ -162,6 +169,10 @@ const StudyMaterials = () => {
   const [selectedSectionFilter, setSelectedSectionFilter] = useState<string>("All Sections");
   const [branches, setBranches] = useState<Array<{ id: string; name: string }>>([]);
   const [sections, setSections] = useState<Array<{ id: string; name: string }>>([]);
+  // Modal-specific lists
+  const [modalSemesters, setModalSemesters] = useState<Array<{ id: string; number: number }>>([]);
+  const [modalSections, setModalSections] = useState<Array<{ id: string; name: string }>>([]);
+  const [modalSubjects, setModalSubjects] = useState<Array<{ id: string; name: string; subject_code: string }>>([]);
 
   // Pass null when 'All Branches' to hook; but hook expects branch id, so use null to represent none
   const branchIdForHook = selectedBranchFilter === "All Branches" ? null : selectedBranchFilter;
@@ -173,6 +184,7 @@ const StudyMaterials = () => {
     title,
     subjectName,
     subjectCode,
+    subjectId,
     semesterId,
     branchId,
     sectionId,
@@ -182,6 +194,7 @@ const StudyMaterials = () => {
     setTitle,
     setSubjectName,
     setSubjectCode,
+    setSubjectId,
     setSemesterId,
     setBranchId,
     setSectionId,
@@ -230,6 +243,69 @@ const StudyMaterials = () => {
     loadSections();
   }, [selectedBranchFilter]);
 
+  // Load semesters when branchId (upload modal) changes
+  useEffect(() => {
+    const loadSemesters = async () => {
+      if (!branchId) {
+        setModalSemesters([]);
+        setSemesterId("");
+        setSectionId("");
+        setModalSubjects([]);
+        setSubjectCode("");
+        return;
+      }
+      try {
+        const resp = await getSemesters(branchId);
+        if (resp && resp.success && Array.isArray(resp.data)) {
+          setModalSemesters(resp.data);
+        } else {
+          setModalSemesters([]);
+        }
+      } catch (e) {
+        console.error("Failed to load semesters for branch (modal)", e);
+        setModalSemesters([]);
+      }
+    };
+    loadSemesters();
+  }, [branchId]);
+
+  // Load sections and subjects when semester changes in modal
+  useEffect(() => {
+    const loadSectionsAndSubjects = async () => {
+      if (!branchId || !semesterId) {
+        setModalSections([]);
+        setModalSubjects([]);
+        setSectionId("");
+        setSubjectCode("");
+        return;
+      }
+      try {
+        const secsResp = await manageSections({ branch_id: branchId, semester_id: semesterId }, "GET");
+        if (secsResp && secsResp.success && Array.isArray(secsResp.data)) {
+          setModalSections(secsResp.data.map((s) => ({ id: s.id, name: s.name })));
+        } else {
+          setModalSections([]);
+        }
+      } catch (e) {
+        console.error("Failed to load modal sections", e);
+        setModalSections([]);
+      }
+
+      try {
+        const subjResp = await manageSubjects({ branch_id: branchId, semester_id: semesterId }, "GET");
+        if (subjResp && subjResp.success && Array.isArray(subjResp.data)) {
+          setModalSubjects(subjResp.data);
+        } else {
+          setModalSubjects([]);
+        }
+      } catch (e) {
+        console.error("Failed to load modal subjects", e);
+        setModalSubjects([]);
+      }
+    };
+    loadSectionsAndSubjects();
+  }, [branchId, semesterId]);
+
   const handleUpload = async () => {
     if (!file || !title) {
       alert("Please provide a title and select a file.");
@@ -238,6 +314,11 @@ const StudyMaterials = () => {
 
     if (!branchId || !semesterId) {
       alert("Please provide branch ID and semester ID.");
+      return;
+    }
+
+    if (!subjectId && !subjectName) {
+      alert("Please select a course (Course Name).");
       return;
     }
 
@@ -296,9 +377,9 @@ const StudyMaterials = () => {
         material.subject_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (material.semester?.toString() || "").includes(searchQuery.toLowerCase()) ||
         material.uploaded_by.toLowerCase().includes(searchQuery.toLowerCase())) &&
-      (semesterFilter === "All Semesters" || material.semester?.toString() === semesterFilter) &&
-      (selectedBranchFilter === "All Branches" || material.branch === selectedBranchFilter) &&
-      (selectedSectionFilter === "All Sections" || (material as any).section_id === selectedSectionFilter)
+        (semesterFilter === "All Semesters" || material.semester?.toString() === semesterFilter) &&
+        (selectedBranchFilter === "All Branches" || material.branch === selectedBranchFilter || material.branch_id === selectedBranchFilter) &&
+        (selectedSectionFilter === "All Sections" || (material as any).section_id === selectedSectionFilter)
   );
 
   return (
@@ -409,43 +490,79 @@ const StudyMaterials = () => {
                 className={`px-3 py-2 rounded outline-none focus:ring-2 ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
                 disabled={uploading}
               />
-              <input
-                type="text"
-                placeholder="Course Name"
-                value={subjectName}
-                onChange={(e) => setSubjectName(e.target.value)}
-                className={`px-3 py-2 rounded outline-none focus:ring-2 ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
-                disabled={uploading}
-              />
-              <input
-                type="text"
-                placeholder="Course Code"
-                value={subjectCode}
-                onChange={(e) => setSubjectCode(e.target.value)}
-                className={`px-3 py-2 rounded outline-none focus:ring-2 ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
-                disabled={uploading}
-              />
-              <input
-                type="text"
-                placeholder="Semester ID"
-                value={semesterId}
-                onChange={(e) => setSemesterId(e.target.value)}
-                className={`px-3 py-2 rounded outline-none focus:ring-2 ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
-                disabled={uploading}
-              />
-              <input
-                type="text"
-                placeholder="Branch ID"
+
+              <select
                 value={branchId}
                 onChange={(e) => setBranchId(e.target.value)}
                 className={`px-3 py-2 rounded outline-none focus:ring-2 ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
                 disabled={uploading}
-              />
-              <input
-                type="text"
-                placeholder="Section ID (optional)"
+              >
+                <option value="">Select Branch</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={semesterId}
+                onChange={(e) => setSemesterId(e.target.value)}
+                className={`px-3 py-2 rounded outline-none focus:ring-2 ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
+                disabled={uploading || !branchId}
+              >
+                <option value="">Select Semester</option>
+                {modalSemesters.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.number}
+                  </option>
+                ))}
+              </select>
+
+              <select
                 value={sectionId}
                 onChange={(e) => setSectionId(e.target.value)}
+                className={`px-3 py-2 rounded outline-none focus:ring-2 ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
+                disabled={uploading || !semesterId}
+              >
+                <option value="">Section (optional)</option>
+                {modalSections.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={subjectId}
+                onChange={(e) => {
+                  const sid = e.target.value;
+                  setSubjectId(sid);
+                  const subj = modalSubjects.find((m) => m.id === sid);
+                  if (subj) {
+                    setSubjectName(subj.name);
+                    setSubjectCode(subj.subject_code || "");
+                  } else {
+                    setSubjectName("");
+                    setSubjectCode("");
+                  }
+                }}
+                className={`px-3 py-2 rounded outline-none focus:ring-2 ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
+                disabled={uploading || !semesterId}
+              >
+                <option value="">Select Course</option>
+                {modalSubjects.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                type="text"
+                placeholder="Course Code"
+                value={subjectCode}
+                readOnly
                 className={`px-3 py-2 rounded outline-none focus:ring-2 ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
                 disabled={uploading}
               />
