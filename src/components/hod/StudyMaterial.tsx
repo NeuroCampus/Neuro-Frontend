@@ -28,6 +28,7 @@ interface StudyMaterial {
   subject_name: string;
   subject_code: string;
   semester: number | null;
+  semester_id?: string | null;
   branch: string | null;
   branch_id?: string | null;
   uploaded_by: string;
@@ -37,20 +38,25 @@ interface StudyMaterial {
   section_id?: string | null;
 }
 
-// Hook for managing study materials (loads by branch)
-const useStudyMaterials = (branchId: string | null) => {
+// Hook for managing study materials (loads by branch/semester/section)
+const useStudyMaterials = (branchId: string | null, semesterFilter: string, sectionFilter: string, sectionsLoaded: boolean) => {
   const [studyMaterials, setStudyMaterials] = useState<StudyMaterial[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchMaterials = async () => {
-      if (!branchId) {
+      // Only fetch when branch, semester and section are explicitly selected
+      // and after page sections have finished loading (so section options are available)
+      if (!branchId || semesterFilter === 'All Semesters' || sectionFilter === 'All Sections' || !sectionsLoaded) {
         setStudyMaterials([]);
+        setLoading(false);
         return;
       }
       setLoading(true);
       try {
-        const resp = await getStudyMaterials(branchId);
+        const sem = semesterFilter === 'All Semesters' ? undefined : semesterFilter;
+        const sec = sectionFilter === 'All Sections' ? undefined : sectionFilter;
+        const resp = await getStudyMaterials(branchId, sem, sec);
         if (resp && resp.success && Array.isArray(resp.data)) {
           const mapped = resp.data.map((m: any) => ({
             id: m.id,
@@ -58,6 +64,7 @@ const useStudyMaterials = (branchId: string | null) => {
             subject_name: m.subject_name,
             subject_code: m.subject_code,
             semester: m.semester ? parseInt(m.semester as any) || null : null,
+            semester_id: m.semester_id || m.semester || null,
             branch: m.branch || null,
             branch_id: m.branch_id || null,
             section: m.section || null,
@@ -78,7 +85,7 @@ const useStudyMaterials = (branchId: string | null) => {
       }
     };
     fetchMaterials();
-  }, [branchId]);
+  }, [branchId, semesterFilter, sectionFilter, sectionsLoaded]);
 
   const addStudyMaterial = (material: StudyMaterial) => {
     setStudyMaterials((s) => [...s, material]);
@@ -169,14 +176,20 @@ const StudyMaterials = () => {
   const [selectedSectionFilter, setSelectedSectionFilter] = useState<string>("All Sections");
   const [branches, setBranches] = useState<Array<{ id: string; name: string }>>([]);
   const [sections, setSections] = useState<Array<{ id: string; name: string }>>([]);
+  const [pageSectionsLoaded, setPageSectionsLoaded] = useState<boolean>(false);
+  const [pageSemesters, setPageSemesters] = useState<Array<{ id: string; number: number }>>([]);
   // Modal-specific lists
   const [modalSemesters, setModalSemesters] = useState<Array<{ id: string; number: number }>>([]);
   const [modalSections, setModalSections] = useState<Array<{ id: string; name: string }>>([]);
   const [modalSubjects, setModalSubjects] = useState<Array<{ id: string; name: string; subject_code: string }>>([]);
 
   // Pass null when 'All Branches' to hook; but hook expects branch id, so use null to represent none
+  const [searchQuery, setSearchQuery] = useState("");
+  const [semesterFilter, setSemesterFilter] = useState("All Semesters");
+
+  // Pass null when 'All Branches' to hook; but hook expects branch id, so use null to represent none
   const branchIdForHook = selectedBranchFilter === "All Branches" ? null : selectedBranchFilter;
-  const { studyMaterials, addStudyMaterial, loading } = useStudyMaterials(branchIdForHook);
+  const { studyMaterials, addStudyMaterial, loading } = useStudyMaterials(branchIdForHook, semesterFilter, selectedSectionFilter, pageSectionsLoaded);
   const {
     showUploadModal,
     setShowUploadModal,
@@ -201,12 +214,7 @@ const StudyMaterials = () => {
     resetForm,
   } = useUploadModal();
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [semesterFilter, setSemesterFilter] = useState("All Semesters");
-
-  // Mock semester options
-  const semesters = ["All Semesters", "1", "2", "3", "4", "5", "6", "7", "8"];
-  // TODO: Fetch semesters from API in production
+  
 
   // Load branches on mount
   useEffect(() => {
@@ -222,26 +230,60 @@ const StudyMaterials = () => {
     };
     load();
   }, []);
-
-  // Load sections when branch filter changes (only when a concrete branch selected)
+  // Load semesters for the page and sections when branch/semester filters change
   useEffect(() => {
-    const loadSections = async () => {
+    const loadPageSemesters = async () => {
       if (!selectedBranchFilter || selectedBranchFilter === "All Branches") {
+        setPageSemesters([]);
+        setSemesterFilter("All Semesters");
         setSections([]);
         setSelectedSectionFilter("All Sections");
         return;
       }
       try {
-        const resp = await manageSections({ branch_id: selectedBranchFilter }, "GET");
+        const resp = await getSemesters(selectedBranchFilter);
+        if (resp && resp.success && Array.isArray(resp.data)) {
+          setPageSemesters(resp.data);
+        } else {
+          setPageSemesters([]);
+        }
+      } catch (e) {
+        console.error("Failed to load semesters for branch", e);
+        setPageSemesters([]);
+      }
+      setSemesterFilter("All Semesters");
+      setSelectedSectionFilter("All Sections");
+    };
+    loadPageSemesters();
+  }, [selectedBranchFilter]);
+
+  useEffect(() => {
+    const loadSections = async () => {
+      // Only load sections when a branch AND a semester are selected
+      setPageSectionsLoaded(false);
+      if (!selectedBranchFilter || selectedBranchFilter === "All Branches" || semesterFilter === 'All Semesters') {
+        setSections([]);
+        setSelectedSectionFilter("All Sections");
+        setPageSectionsLoaded(true);
+        return;
+      }
+      try {
+        const params: any = { branch_id: selectedBranchFilter, semester_id: semesterFilter };
+        const resp = await manageSections(params, "GET");
         if (resp && resp.success && Array.isArray(resp.data)) {
           setSections(resp.data.map((s) => ({ id: s.id, name: s.name })));
+        } else {
+          setSections([]);
         }
       } catch (e) {
         console.error("Failed to load sections", e);
+        setSections([]);
       }
+      setSelectedSectionFilter("All Sections");
+      setPageSectionsLoaded(true);
     };
     loadSections();
-  }, [selectedBranchFilter]);
+  }, [selectedBranchFilter, semesterFilter]);
 
   // Load semesters when branchId (upload modal) changes
   useEffect(() => {
@@ -307,6 +349,7 @@ const StudyMaterials = () => {
   }, [branchId, semesterId]);
 
   const handleUpload = async () => {
+    console.log('handleUpload invoked', { title, branchId, semesterId, sectionId, subjectId, subjectName, subjectCode, file });
     if (!file || !title) {
       alert("Please provide a title and select a file.");
       return;
@@ -372,12 +415,12 @@ const StudyMaterials = () => {
   // Filter materials
   const filteredMaterials = studyMaterials.filter(
     (material) =>
-      (material.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (material.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         material.subject_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         material.subject_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (material.semester?.toString() || "").includes(searchQuery.toLowerCase()) ||
+        (material.semester_id || "").toString().includes(searchQuery.toLowerCase()) ||
         material.uploaded_by.toLowerCase().includes(searchQuery.toLowerCase())) &&
-        (semesterFilter === "All Semesters" || material.semester?.toString() === semesterFilter) &&
+        (semesterFilter === "All Semesters" || material.semester_id === semesterFilter) &&
         (selectedBranchFilter === "All Branches" || material.branch === selectedBranchFilter || material.branch_id === selectedBranchFilter) &&
         (selectedSectionFilter === "All Sections" || (material as any).section_id === selectedSectionFilter)
   );
@@ -418,6 +461,27 @@ const StudyMaterials = () => {
         </select>
 
         <select
+          value={semesterFilter}
+          onChange={(e) => setSemesterFilter(e.target.value)}
+          className={`border rounded px-3 py-2 ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
+        >
+          <option value="All Semesters">All Semesters</option>
+          {pageSemesters && pageSemesters.length > 0 ? (
+            pageSemesters.map((s) => (
+              <option key={s.id} value={s.id} className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>
+                {`Semester ${s.number}`}
+              </option>
+            ))
+          ) : (
+            ["1","2","3","4","5","6","7","8"].map((semester) => (
+              <option key={semester} value={semester} className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>
+                {semester}
+              </option>
+            ))
+          )}
+        </select>
+
+        <select
           value={selectedSectionFilter}
           onChange={(e) => setSelectedSectionFilter(e.target.value)}
           className={`border rounded px-3 py-2 ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
@@ -426,18 +490,6 @@ const StudyMaterials = () => {
           {sections.map((s) => (
             <option key={s.id} value={s.id} className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>
               {s.name}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={semesterFilter}
-          onChange={(e) => setSemesterFilter(e.target.value)}
-          className={`border rounded px-3 py-2 ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
-        >
-          {semesters.map((semester) => (
-            <option key={semester} value={semester} className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>
-              {semester}
             </option>
           ))}
         </select>

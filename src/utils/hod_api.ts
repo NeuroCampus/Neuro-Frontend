@@ -2161,13 +2161,20 @@ export const uploadStudyMaterial = async (data: UploadStudyMaterialRequest): Pro
   }
 };
 
-export const getStudyMaterials = async (branch_id: string): Promise<GetStudyMaterialsResponse> => {
+export const getStudyMaterials = async (
+  branch_id?: string,
+  semester_id?: string,
+  section_id?: string
+): Promise<GetStudyMaterialsResponse> => {
   try {
-    if (!branch_id) throw new Error("Branch ID is required");
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/study-materials/?branch_id=${branch_id}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-
+    const params = new URLSearchParams();
+    if (branch_id) params.append('branch_id', branch_id);
+    if (semester_id) params.append('semester_id', semester_id);
+    if (section_id) params.append('section_id', section_id);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/study-materials/${qs}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
     });
     return await response.json();
   } catch (error: unknown) {
