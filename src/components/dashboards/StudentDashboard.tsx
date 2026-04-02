@@ -1,7 +1,6 @@
 import { useState, useEffect, Suspense, lazy } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import Sidebar from "../common/Sidebar";
-import Navbar from "../common/Navbar";
+import DashboardLayout from "../common/DashboardLayout";
 import Chat from "../common/Chat";
 import { logoutUser } from "../../utils/authService";
 import { useTheme } from "../../context/ThemeContext";
@@ -132,70 +131,23 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
   };
 
   return (
-   <div className={`flex min-h-screen ${theme === 'dark' ? 'bg-background text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
-  {/* Sidebar (fixed left) */}
-  <Sidebar
-    role="student"
-    setPage={handlePageChange}
-    activePage={activePage}
-    logout={handleLogout}
-    collapsed={sidebarCollapsed}
-    toggleCollapse={toggleSidebar}
-  />
-
-  {/* Main Content */}
-  <div className={`flex-1 flex flex-col ${sidebarCollapsed ? 'pl-16' : 'pl-64'}`}>
-    {/* Navbar (fixed) */}
-    <div className={`fixed top-0 ${sidebarCollapsed ? 'left-16' : 'left-64'} right-0 z-10 shadow-sm`}>
-      <Navbar
-        role="student"
-        user={user}
-        onNotificationClick={handleNotificationClick}
-        setPage={handlePageChange}
-      />
-    </div>
-
-    {/* Main Page Content */}
-    <main className={`flex-1 mt-16 p-6 overflow-y-auto ${theme === 'dark' ? 'bg-background text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
-      {/* Page Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-0 gap-4">
-        <h1 className={`text-2xl font-bold tracking-tight ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-          Student Dashboard – Overview
-        </h1>
-
-        <div className={`text-base ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
-          <span className={`text-lg font-semibold ${theme === 'dark' ? 'text-primary' : 'text-blue-600'}`}>
-            Welcome, {user?.username || "Student"}
-          </span>
-          {user?.branch && (
-            <span className={`ml-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>| {user.branch}</span>
-          )}
-          {user?.semester && (
-            <span className={`ml-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>| Semester: {user.semester}</span>
-          )}
-          {user?.section && (
-            <span className={`ml-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>| Section: {user.section}</span>
-          )}
-        </div>
-      </div>
-
-
-      {/* Error Message */}
+    <DashboardLayout
+      role="student"
+      user={user}
+      activePage={activePage}
+      onPageChange={handlePageChange}
+      onNotificationClick={handleNotificationClick}
+      pageTitle="Student Dashboard"
+    >
       {error && (
         <div className={`p-3 rounded-lg mb-4 shadow ${theme === 'dark' ? 'bg-destructive/20 text-destructive-foreground border border-destructive' : 'bg-red-100 text-red-700 border border-red-200'}`}>
           {error}
         </div>
       )}
-
-      {/* Dashboard Content */}
       <Suspense fallback={<LoadingFallback />}>
         <div className="grid gap-6">{renderContent()}</div>
       </Suspense>
-    </main>
-  </div>
-</div>
-
-
+    </DashboardLayout>
   );
 };
 

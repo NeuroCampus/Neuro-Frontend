@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import Sidebar from "../common/Sidebar";
-import Navbar from "../common/Navbar";
+import DashboardLayout from "../common/DashboardLayout";
 import StudentStatus from "../coe/StudentStatus";
 import CourseStatistics from "../coe/CourseStatistics";
 import COEDashboardStats from "../coe/COEDashboardStats";
@@ -101,37 +100,20 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
   };
 
   return (
-    <div className="min-h-screen">
-      {/* Sidebar (fixed left) */}
-      <div className={`fixed top-0 left-0 h-full z-30 transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
-        <Sidebar
-          role="coe"
-          setPage={handlePageChange}
-          activePage={activePage}
-          logout={handleLogout}
-          collapsed={sidebarCollapsed}
-          toggleCollapse={toggleSidebar}
-        />
-      </div>
-      <div className={`flex-1 flex flex-col ${sidebarCollapsed ? 'pl-16' : 'pl-64'}`}>
-        {/* Navbar (fixed) */}
-        <div className={`fixed top-0 ${sidebarCollapsed ? 'left-16' : 'left-64'} right-0 z-10 shadow-sm`}>
-          <Navbar
-            user={currentUser}
-            role="coe"
-            setPage={handlePageChange}
-          />
+    <DashboardLayout
+      role="coe"
+      user={currentUser}
+      activePage={activePage}
+      onPageChange={handlePageChange}
+      pageTitle="COE Dashboard"
+    >
+      {error && (
+        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
         </div>
-        <main className="flex-1 p-6 mt-16">
-          {error && (
-            <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-              {error}
-            </div>
-          )}
-          {renderContent()}
-        </main>
-      </div>
-    </div>
+      )}
+      {renderContent()}
+    </DashboardLayout>
   );
 };
 

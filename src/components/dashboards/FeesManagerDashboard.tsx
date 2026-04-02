@@ -1,34 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import DashboardLayout from "../common/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  LogOut,
-  Settings,
-  User,
-  DollarSign,
-  Users,
-  FileText,
-  CreditCard,
-  TrendingUp,
-  BarChart3,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Calendar,
-  Receipt,
-  UserCheck
-} from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import FeesManagerDashboard from "../FeesManager/FeesManagerDashboard";
 
 interface FeesManagerDashboardProps {
@@ -112,72 +86,20 @@ const FeesManagerDashboardWrapper: React.FC<FeesManagerDashboardProps> = ({ user
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <DollarSign className="h-8 w-8 text-green-600 mr-3" />
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Fees Management System</h1>
-                <p className="text-sm text-gray-600">College Fee Management Portal</p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <Badge variant="outline" className="px-3 py-1">
-                Fees Manager
-              </Badge>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user?.profile_picture} alt={user?.first_name} />
-                      <AvatarFallback>
-                        {user?.first_name?.charAt(0)}{user?.last_name?.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {user?.first_name} {user?.last_name}
-                      </p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user?.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
+    <DashboardLayout
+      role="fees_manager"
+      user={user}
+      activePage="dashboard"
+      onPageChange={() => {}}
+      pageTitle="Fees Manager Dashboard"
+    >
+      {error && (
+        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <FeesManagerDashboard user={user} />
-      </main>
-    </div>
+      )}
+      <FeesManagerDashboard user={user} setPage={setPage} />
+    </DashboardLayout>
   );
 };
 

@@ -18,20 +18,35 @@ import DashboardCard from "../common/DashboardCard";
 import { getAdminStats } from "../../utils/admin_api";
 import { useToast } from "../../hooks/use-toast";
 import { useTheme } from "../../context/ThemeContext";
+import {
+  Users,
+  User,
+  ClipboardList,
+  Bell,
+  GitBranch,
+  UserCheck,
+} from "lucide-react";
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
 interface AdminStatsProps {
   setError: (error: string | null) => void;
+  onNavigate?: (page: string) => void;
 }
 
-const AdminStats = ({ setError }: AdminStatsProps) => {
+const AdminStats = ({ setError, onNavigate }: AdminStatsProps) => {
   const [search, setSearch] = useState("");
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { theme } = useTheme();
+  
+  const handleCardClick = (page: string) => {
+    if (onNavigate) {
+      onNavigate(page);
+    }
+  };
   const normalize = (str: string) => str.toLowerCase().trim();
   const allLabels = Array.isArray(stats?.branch_distribution)
     ? stats.branch_distribution.map((b: any) => b.name || "N/A")
@@ -455,6 +470,62 @@ const AdminStats = ({ setError }: AdminStatsProps) => {
           </div>
         </motion.div>
       </motion.div>
+      {/* Action Cards */}
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          <DashboardCard
+            title="Enroll User"
+            description="Add new HOD or faculty"
+            icon={<User size={20} />}
+            onClick={() => handleCardClick("enroll-user")}
+          />
+          <DashboardCard
+            title="Bulk Upload Faculty"
+            description="Upload faculty list"
+            icon={<ClipboardList size={20} />}
+            onClick={() => handleCardClick("bulk-upload")}
+          />
+          <DashboardCard
+            title="Manage Branches"
+            description="View or edit branches"
+            icon={<GitBranch size={20} />}
+            onClick={() => handleCardClick("branches")}
+          />
+          <DashboardCard
+            title="Faculty Assignments"
+            description="Assign teachers to branches & subjects"
+            icon={<UserCheck size={20} />}
+            onClick={() => handleCardClick("teacher-assignments")}
+          />
+          <DashboardCard
+            title="Manage Batches"
+            description="View or manage batches"
+            icon={<ClipboardList size={20} />}
+            onClick={() => handleCardClick("batches")}
+          />
+          <DashboardCard
+            title="Notifications"
+            description="Send or view notifications"
+            icon={<Bell size={20} />}
+            onClick={() => handleCardClick("notifications")}
+          />
+          <DashboardCard
+            title="HOD Leaves"
+            description="Manage HOD leave requests"
+            icon={<UserCheck size={20} />}
+            onClick={() => handleCardClick("hod-leaves")}
+          />
+          <DashboardCard
+            title="Users Management"
+            description="Manage all system users"
+            icon={<Users size={20} />}
+            onClick={() => handleCardClick("users")}
+          />
+        </motion.div>
     </div>
   );
 };
