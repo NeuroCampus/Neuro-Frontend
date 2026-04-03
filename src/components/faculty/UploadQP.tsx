@@ -7,7 +7,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import jsPDF from 'jspdf';
 import { useFacultyAssignmentsQuery } from "../../hooks/useApiQueries";
-import { createQuestionPaper, updateQuestionPaper, getQuestionPapers } from "../../utils/faculty_api";
+import { createQuestionPaper, updateQuestionPaper, getQuestionPapers, submitQPForApproval } from "../../utils/faculty_api";
 import { useTheme } from "@/context/ThemeContext";
 
 interface QuestionRow {
@@ -206,6 +206,22 @@ const UploadQP = () => {
     doc.save('question-paper.pdf');
   };
 
+  const handleSubmitForApproval = async () => {
+    if (!qpId) return;
+    
+    try {
+      const result = await submitQPForApproval(qpId);
+      if (result.success) {
+        alert("QP submitted for approval successfully!");
+      } else {
+        alert(result.message || "Failed to submit QP for approval");
+      }
+    } catch (error) {
+      console.error("Error submitting QP:", error);
+      alert("Network error while submitting QP");
+    }
+  };
+
   return (
     <div>
       <Card>
@@ -284,6 +300,11 @@ const UploadQP = () => {
                   <h3 className="font-semibold">Question Paper Preview</h3>
                   <div>
                     <Button onClick={downloadPDF} className="mr-2">Download PDF</Button>
+                    {qpId && (
+                      <Button onClick={handleSubmitForApproval} variant="outline" className="bg-green-600 text-white hover:bg-green-700">
+                        Submit for Approval
+                      </Button>
+                    )}
                   </div>
                 </div>
                 <div className="mt-4">

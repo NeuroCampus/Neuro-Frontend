@@ -5,8 +5,7 @@ import StudentStatus from "../coe/StudentStatus";
 import CourseStatistics from "../coe/CourseStatistics";
 import COEDashboardStats from "../coe/COEDashboardStats";
 import COEProfile from "../coe/COEProfile";
-import PublishResults from "../coe/PublishResults";
-import { logoutUser, fetchWithTokenRefresh } from "../../utils/authService";
+import COEQPApprovals from "../coe/COEQPApprovals";
 import { API_ENDPOINT } from "../../utils/config";
 
 interface COEDashboardProps {
@@ -36,6 +35,7 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
       'student-status': 'student-status',
       'course-statistics': 'course-statistics',
       'publish-results': 'publish-results',
+      'qp-approvals': 'qp-approvals',
       'profile': 'profile',
     };
 
@@ -65,6 +65,7 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
       'student-status': '/coe/student-status',
       'course-statistics': '/coe/course-statistics',
       'publish-results': '/coe/publish-results',
+      'qp-approvals': '/coe/qp-approvals',
       'profile': '/coe/profile',
     };
 
@@ -92,6 +93,8 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
         return <CourseStatistics />;
       case 'publish-results':
         return <PublishResults />;
+      case 'qp-approvals':
+        return <COEQPApprovals />;
       case 'profile':
         return <COEProfile />;
       default:

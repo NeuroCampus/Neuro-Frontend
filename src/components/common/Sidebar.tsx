@@ -155,6 +155,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // Academic Structure
     { name: "Branches", page: "branches" },
     { name: "Faculty Assignments", page: "teacher-assignments" },
+    { name: "Question Paper Approvals", page: "qp-approvals" },
     { name: "Batches", page: "batches" },
     
     // Leaves
@@ -176,6 +177,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Elective Course Enrollment", page: "student-enrollment" },
     { name: "Courses", page: "subjects" },
     { name: "Faculty Assignments", page: "faculty-assignments" },
+    { name: "Question Paper Approvals", page: "qp-approvals" },
     { name: "Timetable", page: "timetable" },
     { name: "Proctors", page: "proctors" },
     
@@ -257,6 +259,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // Exam Management
     { name: "Student Status", page: "student-status" },
     { name: "Course Statistics", page: "course-statistics" },
+    { name: "Question Paper Approvals", page: "qp-approvals" },
     { name: "Publish Results", page: "publish-results" },
 
     // Profile

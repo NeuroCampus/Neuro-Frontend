@@ -13,8 +13,7 @@ import HODLeavesManagement from "../admin/HODLeavesManagement";
 import UsersManagement from "../admin/UsersManagement";
 import AdminProfile from "../admin/AdminProfile";
 import CampusLocationManager from "../admin/CampusLocationManager";
-import TeacherBranchAssignment from "../admin/TeacherBranchAssignment";
-import DashboardCard from "../common/DashboardCard";
+import AdminQPApprovals from "../admin/AdminQPApprovals";
 import { useToast } from "../../hooks/use-toast";
 import {
   Users,
@@ -189,6 +188,17 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
             transition={{ duration: 0.3 }}
           >
             <UsersManagement setError={setError} toast={toast} />
+          </motion.div>
+        );
+      case "qp-approvals":
+        return (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <AdminQPApprovals />
           </motion.div>
         );
       case "profile":

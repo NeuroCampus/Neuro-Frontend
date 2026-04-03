@@ -25,6 +25,7 @@ import FacultyAttendanceView from "../hod/FacultyAttendanceView";
 import HODMyAttendance from "../hod/HODMyAttendance";
 import StudentInfoScanner from "../hod/StudentInfoScanner";
 import StudentEnrollment from "../hod/StudentEnrollment";
+import QPApprovals from "../hod/QPApprovals";
 import { HODBootstrapProvider } from "../../context/HODBootstrapContext";
 import { useTheme } from "../../context/ThemeContext";
 import { motion } from "framer-motion";
@@ -125,7 +126,8 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
       'chat': 'chat',
       'study-materials': 'study-materials',
       'scan-student-info': 'scan-student-info',
-      'hod-profile': 'hod-profile'
+      'hod-profile': 'hod-profile',
+      'qp-approvals': 'qp-approvals'
     };
     
     return pathMap[lastPart] || 'dashboard';
@@ -185,7 +187,8 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
       'chat': '/hod/chat',
       'study-materials': '/hod/study-materials',
       'scan-student-info': '/hod/scan-student-info',
-      'hod-profile': '/hod/hod-profile'
+      'hod-profile': '/hod/hod-profile',
+      'qp-approvals': '/hod/qp-approvals'
     };
     
     const path = pathMap[page] || '/hod/dashboard';
@@ -260,6 +263,8 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
         return <StudentInfoScanner />;
       case "hod-profile":
         return <HodProfile user={user} setError={setError} />;
+      case "qp-approvals":
+        return <QPApprovals />;
       default:
       return <HODStats setError={setError} setPage={handlePageChange} />;
     }

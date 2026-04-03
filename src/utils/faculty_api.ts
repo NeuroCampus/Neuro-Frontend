@@ -1583,3 +1583,28 @@ export const updateQuestionPaper = async (id: number, data: CreateQPRequest): Pr
     return { success: false };
   }
 };
+
+export const submitQPForApproval = async (qpId: number, comment?: string): Promise<{ success: boolean; message: string }> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/qps/${qpId}/submit/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      },
+      body: JSON.stringify({ comment: comment || "" }),
+    });
+
+    const result = await response.json();
+    return {
+      success: response.ok,
+      message: result.message || (response.ok ? "QP submitted for approval" : "Failed to submit QP"),
+    };
+  } catch (error) {
+    console.error("Submit QP Error:", error);
+    return {
+      success: false,
+      message: "Network error while submitting QP",
+    };
+  }
+};
