@@ -235,7 +235,7 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
   }
 
   return (
-    <div className={`p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`p-4 sm:p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -249,16 +249,55 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
                 type="month"
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className={theme === 'dark' 
-                  ? 'w-40 bg-card border border-border text-foreground' 
-                  : 'w-40 bg-white border border-gray-300 text-gray-900'}
+                className={theme === 'dark'
+                  ? 'w-full sm:w-40 bg-card border border-border text-foreground'
+                  : 'w-full sm:w-40 bg-white border border-gray-300 text-gray-900'}
               />
             </div>
           </div>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           <div className="overflow-x-auto max-w-full thin-scrollbar">
-            <table className="w-full text-sm text-left border-collapse">
+            {/* Mobile: stacked cards */}
+            <div className="md:hidden space-y-3">
+              {Array.isArray(leaveRequests) && leaveRequests.length > 0 ? (
+                leaveRequests.map((leave) => (
+                  <div key={leave.id} className={`p-3 rounded-md border ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-200 text-gray-900'}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="font-medium">{leave.name}</div>
+                        <div className="text-xs text-muted-foreground">{leave.department}</div>
+                        <div className="text-sm mt-1">{leave.from} <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>to</span> {leave.to}</div>
+                      </div>
+                      <div className="shrink-0">{getStatusBadge(leave.status, theme)}</div>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between">
+                      <button
+                        onClick={() => setViewReason(leave.reason)}
+                        className={theme === 'dark' ? 'text-primary hover:underline text-sm' : 'text-blue-600 hover:underline text-sm'}
+                      >
+                        View
+                      </button>
+                      <div>
+                        {leave.status === "Pending" ? (
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => handleApprove(leave.id)}>Approve</Button>
+                            <Button size="sm" variant="destructive" className="w-full sm:w-auto" onClick={() => { setSelectedId(leave.id); setShowModal(true); }}>Reject</Button>
+                          </div>
+                        ) : (
+                          <span className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No action needed</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className={`text-center py-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No leave requests available.</div>
+              )}
+            </div>
+
+            {/* Desktop / Tablet: table */}
+            <table className="hidden md:table w-full text-sm text-left border-collapse">
               <thead className={`border-b ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-200 bg-gray-50'}`}>
                 <tr>
                   <th className={`py-2 px-2 md:px-4 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>HOD</th>
@@ -408,7 +447,7 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
 
       {/* View Reason Dialog */}
       <Dialog open={!!viewReason} onOpenChange={() => setViewReason(null)}>
-        <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'}>
+        <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border border-border max-w-[92%] sm:max-w-md mx-auto' : 'bg-white text-gray-900 border border-gray-200 max-w-[92%] sm:max-w-md mx-auto'}>
           <DialogHeader>
             <DialogTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Reason</DialogTitle>
           </DialogHeader>
@@ -435,17 +474,15 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
       </Dialog>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'}>
+        <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border border-border max-w-[92%] sm:max-w-md mx-auto rounded-lg p-4 sm:p-6' : 'bg-white text-gray-900 border border-gray-200 max-w-[92%] sm:max-w-md mx-auto rounded-lg p-4 sm:p-6'}>
           <DialogHeader>
             <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Reject Leave Request</DialogTitle>
           </DialogHeader>
           <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Are you sure you want to reject this leave request?</p>
-          <DialogFooter className="pt-4 flex justify-end gap-2">
+          <DialogFooter className="pt-4 flex flex-col sm:flex-row justify-end gap-2">
             <Button
               variant="outline"
-              className={theme === 'dark' 
-                ? 'border-border text-foreground bg-card hover:bg-accent' 
-                : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'}
+              className={(theme === 'dark' ? 'border-border text-foreground bg-card hover:bg-accent' : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50') + ' w-full sm:w-auto'}
               onClick={() => setShowModal(false)}
               disabled={loading}
               style={{ boxShadow: "none" }}
@@ -453,15 +490,13 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
               Cancel
             </Button>
             <Button
-              className={theme === 'dark' 
-                ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90 border border-destructive' 
-                : 'bg-red-600 text-white hover:bg-red-700 border border-red-600'}
+              className={(theme === 'dark' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90 border border-destructive' : 'bg-red-600 text-white hover:bg-red-700 border border-red-600') + ' w-full sm:w-auto'}
               onClick={handleConfirmReject}
               disabled={loading}
               style={{ boxShadow: "none" }}
             >
-          {loading ? "Rejecting..." : "Confirm Reject"}
-        </Button>
+              {loading ? "Rejecting..." : "Confirm Reject"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
