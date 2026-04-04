@@ -128,7 +128,11 @@ const StudentFeeReports: React.FC = () => {
 
   const handleIndividualSearch = async (usn?: string) => {
     const termToSearch = usn || searchTerm.trim();
-    if (!termToSearch) {
+    
+    // Ensure termToSearch is a string
+    const searchTermStr = typeof termToSearch === 'string' ? termToSearch : String(termToSearch);
+    
+    if (!searchTermStr.trim()) {
       setSearchError('Please enter a USN or student name');
       return;
     }
@@ -137,7 +141,7 @@ const StudentFeeReports: React.FC = () => {
     setSearchError('');
     setStudentReport(null);
 
-    const response = await getStudentFeeReport(termToSearch);
+    const response = await getStudentFeeReport(searchTermStr.trim());
     setSearchLoading(false);
 
     if (response.success) {
@@ -145,7 +149,7 @@ const StudentFeeReports: React.FC = () => {
       setShowStudentDetails(true);
       if (!usn) {
         // Only update searchTerm if it wasn't passed as a parameter
-        setSearchTerm(termToSearch);
+        setSearchTerm(searchTermStr.trim());
       }
     } else {
       setSearchError(response.message || 'Student not found');
@@ -244,14 +248,14 @@ const StudentFeeReports: React.FC = () => {
                   <Input
                     id="searchTerm"
                     placeholder="Enter USN or student name"
-                    value={searchTerm}
+                    value={typeof searchTerm === 'string' ? searchTerm : ''}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleIndividualSearch()}
                   />
                 </div>
                 <div className="flex items-end">
                   <Button
-                    onClick={handleIndividualSearch}
+                    onClick={() => handleIndividualSearch()}
                     disabled={searchLoading}
                     className="w-full"
                   >
