@@ -1,6 +1,115 @@
 import { API_ENDPOINT } from "./config";
 import { fetchWithTokenRefresh } from "./authService";
 
+export interface AssignedSubject {
+  subject_id: string;
+  subject_name: string;
+  subject_code: string;
+  sections: Array<{ section: string; section_id: string; semester: number; semester_id: string; branch: string; branch_id: string }>;
+}
+
+export const getAssignedSubjectsGrouped = async (): Promise<{ success: boolean; data?: any; grouped?: AssignedSubject[]; message?: string }> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/assigned-subjects/`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return { success: false, message: (error as any).toString() };
+  }
+};
+
+export interface UploadStudyMaterialRequest {
+  title: string;
+  subject_id?: string;
+  subject_name?: string;
+  subject_code?: string;
+  semester_id: string;
+  branch_id: string;
+  section_id?: string;
+  file: File;
+}
+
+export const uploadStudyMaterial = async (data: UploadStudyMaterialRequest) => {
+  try {
+    if (!data.branch_id || !data.semester_id || !data.title || !data.file) {
+      throw new Error("Branch ID, Semester ID, Title, and File are required");
+    }
+    const formData = new FormData();
+    formData.append('title', data.title);
+    if (data.subject_id) formData.append('subject_id', data.subject_id);
+    formData.append('subject_name', data.subject_name || '');
+    formData.append('subject_code', data.subject_code || '');
+    formData.append('semester_id', data.semester_id);
+    formData.append('branch_id', data.branch_id);
+    if (data.section_id) formData.append('section_id', data.section_id);
+    formData.append('file', data.file);
+
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/study-materials/`, {
+      method: 'POST',
+      body: formData,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return { success: false, message: (error as any).toString() };
+  }
+};
+
+export const getStudyMaterials = async (branch_id?: string, semester_id?: string, section_id?: string, search?: string) => {
+  try {
+    const params = new URLSearchParams();
+    if (branch_id) params.append('branch_id', branch_id);
+    if (semester_id) params.append('semester_id', semester_id);
+    if (section_id) params.append('section_id', section_id);
+    if (search) params.append('search', search);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/study-materials/${qs}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return { success: false, message: (error as any).toString() };
+  }
+};
+
+export const getBranches = async (): Promise<{ success: boolean; data?: { id: string; name: string }[]; message?: string }> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/branches/`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return { success: false, message: (error as any).toString() };
+  }
+};
+
+export const getSemesters = async (branch_id: string): Promise<{ success: boolean; data?: { id: string; number: number }[]; message?: string }> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/semesters/?branch_id=${branch_id}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return { success: false, message: (error as any).toString() };
+  }
+};
+
+export const getSections = async (branch_id: string, semester_id: string): Promise<{ success: boolean; data?: { id: string; name: string }[]; message?: string }> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/sections/?branch_id=${branch_id}&semester_id=${semester_id}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return { success: false, message: (error as any).toString() };
+  }
+};
+
 // In-flight request deduplication map to avoid duplicate network calls (useful in React StrictMode)
 const inflightRequests: Map<string, Promise<any>> = new Map();
 

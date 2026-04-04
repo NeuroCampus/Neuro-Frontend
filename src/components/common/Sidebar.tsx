@@ -128,6 +128,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       reports: <BarChart2 size={20} />,
       "study-mode": <BookOpen size={20} />,
       "ai-interview": <Mic size={20} />,
+      "student-study-material": <FileText size={20} />,
+      "student-assignment": <ClipboardList size={20} />,
     };
     return iconMap[page] || <LayoutDashboard size={20} />;
   };
@@ -225,6 +227,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Makeup Exam", page: "makeupexam" },
     { name: "Proctor Students", page: "proctor-students" },
     { name: "Scan for Student Info", page: "scan-student-info" },
+    { name: "Study Material", page: "study-materials" },
     
     // Profile
     { name: "Profile", page: "faculty-profile" },
@@ -238,6 +241,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Timetable", page: "timetable" },
     { name: "Attendance", page: "attendance" },
     { name: "Internal Marks", page: "marks" },
+    { name: "Study Materials", page: "student-study-material" },
+    { name: "Assignments", page: "student-assignment" },
     { name: "Revaluation", page: "revaluation" },
     { name: "Makeup Exam", page: "makeupexam" },
     { name: "Fees", page: "fees" },

@@ -20,6 +20,7 @@ import FacultyProfile from "../faculty/facultyProfile";
 import GenerateStatistics from "../faculty/GenerateStatistics";
 import FacultyAttendance from "../faculty/FacultyAttendance";
 import StudentInfoScanner from "../hod/StudentInfoScanner";
+import StudyMaterial from "../faculty/StudyMaterial";
 import { logoutUser, fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
 import { useTheme } from "../../context/ThemeContext";
@@ -65,11 +66,14 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'faculty-profile': 'faculty-profile',
       'statistics': 'statistics',
       'scan-student-info': 'scan-student-info'
+      ,
+      'study-materials': 'study-materials'
     };
 
     // Add direct mappings for additional top-level routes
     pathMap['revaluation'] = 'revaluation';
     pathMap['makeupexam'] = 'makeupexam';
+    pathMap['study-materials'] = 'study-materials';
 
     return pathMap[lastPart] || 'dashboard';
   };
@@ -125,7 +129,8 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'chat': '/faculty/chat',
       'faculty-profile': '/faculty/faculty-profile',
       'statistics': '/faculty/statistics',
-      'scan-student-info': '/faculty/scan-student-info'
+      'scan-student-info': '/faculty/scan-student-info',
+      'study-materials': '/faculty/study-materials'
     };
 
     const path = pathMap[page] || '/faculty/dashboard';
@@ -194,6 +199,8 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
         return <GenerateStatistics />;
       case "scan-student-info":
         return <StudentInfoScanner />;
+      case "study-materials":
+        return <StudyMaterial />;
       default:
         return <FacultyStats setActivePage={handlePageChange} />;
     }

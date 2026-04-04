@@ -20,6 +20,7 @@ const StudentNotifications = lazy(() => import("../student/StudentNotifications"
 const FaceRecognition = lazy(() => import("../student/FaceRecognition"));
 const StudentDashboardOverview = lazy(() => import("../student/StudentDashboardOverview"));
 const StudentStudyMaterial = lazy(() => import("../student/StudentStudyMaterial"));
+const StudyMaterialsStudent = lazy(() => import("../student/StudyMaterial"));
 const StudentAssignments = lazy(() => import("../student/StudentAssignments"));
 const AIInterview = lazy(() => import("../student/AIInterview"));
 const StudentFees = lazy(() => import("../../pages/StudentFees"));
@@ -114,7 +115,7 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
       case "face-recognition":
         return <FaceRecognition />;
       case "student-study-material":
-        return <StudentStudyMaterial />;
+        return <StudyMaterialsStudent />;
       case "student-assignment":
         return <StudentAssignments />;
       case "study-mode":
