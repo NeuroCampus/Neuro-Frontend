@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, Eye, Download } from "lucide-react";
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import { useTheme } from "../../context/ThemeContext";
 import { API_ENDPOINT } from "../../utils/config";
 import jsPDF from 'jspdf';
@@ -14,7 +16,10 @@ interface QPPending {
   test_type: string;
   faculty: string;
   submitted_at: string;
-  questions_count: number;
+  branch?: { id: number | null; name: string | null };
+  status?: string;
+  current_holder?: string | null;
+  last_action?: { actor?: string; role?: string; action?: string; comment?: string } | null;
 }
 
 interface QPDetail {
@@ -161,23 +166,44 @@ const QPApprovals = () => {
       });
       const data = await response.json();
       if (data.success) {
-        alert("QP approved and forwarded to Admin.");
+        const MySwal = withReactContent(Swal);
+        MySwal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Approved',
+          text: data.message || 'QP approved and forwarded to Admin.',
+          showConfirmButton: false,
+          timer: 2500,
+        });
         setPendingQPs(pendingQPs.filter(qp => qp.id !== qpId));
         setSelectedQP(null);
         setQpDetail(null);
         setComment("");
       } else {
-        alert(data.message || "Failed to approve QP.");
+        Swal.fire('Error', data.message || 'Failed to approve QP.', 'error');
       }
     } catch (error) {
       console.error("Error approving QP:", error);
-      alert("Network error while approving QP.");
+      Swal.fire('Network error', 'Network error while approving QP.', 'error');
     } finally {
       setActionLoading(false);
     }
   };
 
+  const MySwal = withReactContent(Swal);
+
   const handleReject = async (qpId: number) => {
+    const result = await MySwal.fire({
+      title: 'Confirm rejection',
+      text: 'Are you sure you want to reject this question paper and send it back to Faculty?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, reject',
+      cancelButtonText: 'Cancel'
+    });
+    if (!result.isConfirmed) return;
+
     setActionLoading(true);
     try {
       const response = await fetch(`${API_ENDPOINT}/admin/qps/${qpId}/hod-reject/`, {
@@ -190,17 +216,25 @@ const QPApprovals = () => {
       });
       const data = await response.json();
       if (data.success) {
-        alert("QP rejected and sent back to faculty.");
+        MySwal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Rejected',
+          text: data.message || 'QP rejected and sent back to Faculty for edits.',
+          showConfirmButton: false,
+          timer: 3000,
+        });
         setPendingQPs(pendingQPs.filter(qp => qp.id !== qpId));
         setSelectedQP(null);
         setQpDetail(null);
         setComment("");
       } else {
-        alert(data.message || "Failed to reject QP.");
+        MySwal.fire('Error', data.message || 'Failed to reject QP.', 'error');
       }
     } catch (error) {
       console.error("Error rejecting QP:", error);
-      alert("Network error while rejecting QP.");
+      MySwal.fire('Network error', 'Network error while rejecting QP.', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -225,10 +259,31 @@ const QPApprovals = () => {
                 <Card key={qp.id} className="p-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="font-semibold">{qp.subject} - {qp.test_type}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{qp.subject} - {qp.test_type}</h3>
+                        {qp.status && (
+                          (() => {
+                            const s = qp.status;
+                            if (s === 'rejected') return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
+                            if (s === 'approved') return <Badge className="bg-green-100 text-green-800">Approved</Badge>;
+                            if (s.startsWith('pending')) return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+                            return <Badge className="bg-gray-100 text-gray-800">{s}</Badge>;
+                          })()
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground">Faculty: {qp.faculty}</p>
                       <p className="text-sm text-muted-foreground">Submitted: {new Date(qp.submitted_at).toLocaleDateString()}</p>
-                      <p className="text-sm text-muted-foreground">Questions: {qp.questions_count}</p>
+                      {qp.branch && (
+                        <p className="text-sm text-muted-foreground">Branch: {qp.branch.name}</p>
+                      )}
+                      {qp.last_action ? (
+                        <div>
+                          <p className="text-sm text-muted-foreground">Last: {qp.last_action.action} by {qp.last_action.actor} ({qp.last_action.role})</p>
+                          {qp.last_action.comment ? (
+                            <p className="text-sm text-muted-foreground">Comment: {qp.last_action.comment}</p>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
                     <div className="flex gap-2">
                       <Button

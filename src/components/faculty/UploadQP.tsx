@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import jsPDF from 'jspdf';
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import { useFacultyAssignmentsQuery } from "../../hooks/useApiQueries";
-import { createQuestionPaper, updateQuestionPaper, getQuestionPapers, submitQPForApproval } from "../../utils/faculty_api";
+import { createQuestionPaper, updateQuestionPaper, getQuestionPapers, submitQPForApproval, getQuestionPaperDetail } from "../../utils/faculty_api";
 import { useTheme } from "@/context/ThemeContext";
 
 interface QuestionRow {
@@ -39,10 +41,13 @@ const UploadQP = () => {
 
   // start empty; populate only after Branch+Subject+TestType selection
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
+  const [currentQPMeta, setCurrentQPMeta] = useState<any | null>(null);
 
   const [tabValue, setTabValue] = useState('questionFormat');
   const [questionFormatSaved, setQuestionFormatSaved] = useState(false);
   const [qpId, setQpId] = useState<number | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [rejectedQPs, setRejectedQPs] = useState<any[]>([]);
   const { theme } = useTheme();
 
   useEffect(() => {
@@ -63,7 +68,7 @@ const UploadQP = () => {
       ];
       try {
         const res = await getQuestionPapers({ branch_id: selected.branch_id?.toString(), semester_id: selected.semester_id?.toString(), section_id: selected.section_id?.toString(), subject_id: selected.subject_id?.toString(), test_type: selected.testType, detail: true });
-        if (res && res.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
+          if (res && res.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
           // prefer exact match on subject+test_type; do NOT fallback to first result
           const qp = res.data.find((q: any) => q.subject === selected.subject_id && q.test_type === selected.testType);
           if (qp) {
@@ -82,11 +87,14 @@ const UploadQP = () => {
               setQuestions(rows);
               setQpId(qp.id);
               setQuestionFormatSaved(true);
+              // capture meta (status/last_action) to show rejection info if any
+              setCurrentQPMeta({ status: qp.status, last_action: qp.last_action });
             } else {
               // treat as no saved QP for this selection
               setQuestions(defaultTemplate);
               setQpId(null);
               setQuestionFormatSaved(false);
+              setCurrentQPMeta(null);
             }
           } else {
             // server returned QPs but none matched the requested test_type — treat as no saved QP
@@ -99,6 +107,7 @@ const UploadQP = () => {
           setQuestions(defaultTemplate);
           setQpId(null);
           setQuestionFormatSaved(false);
+          setCurrentQPMeta(null);
         }
       } catch (err) {
         console.error('Error loading QP:', err);
@@ -106,6 +115,22 @@ const UploadQP = () => {
     };
     loadIfReady();
   }, [selected.branch_id, selected.subject_id, selected.testType]);
+
+  // Load rejected QPs for this faculty to show editable items on the page
+  useEffect(() => {
+    const loadRejected = async () => {
+      try {
+        const res = await getQuestionPapers({});
+        if (res && res.success && Array.isArray(res.data)) {
+          const rejected = res.data.filter((q: any) => q.status === 'rejected');
+          setRejectedQPs(rejected);
+        }
+      } catch (err) {
+        console.error('Error loading rejected QPs:', err);
+      }
+    };
+    loadRejected();
+  }, []);
 
   useEffect(() => {
     // update total marks when questions change
@@ -210,15 +235,39 @@ const UploadQP = () => {
     if (!qpId) return;
     
     try {
+      setSubmitting(true);
       const result = await submitQPForApproval(qpId);
       if (result.success) {
-        alert("QP submitted for approval successfully!");
+        const MySwal = withReactContent(Swal);
+        MySwal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Submitted',
+          text: result.message || 'QP submitted for approval successfully!',
+          showConfirmButton: false,
+          timer: 2500,
+        });
+        // optimistically set pending status so submit button disables immediately
+        setCurrentQPMeta({ status: 'pending_hod', last_action: { actor: null, role: 'faculty', action: 'submitted', comment: '' } });
+        // refresh metadata from server to reflect pending status
+        try {
+          const detail = await getQuestionPaperDetail(qpId);
+          if (detail && detail.success && Array.isArray(detail.data) && detail.data.length > 0) {
+            const qp = detail.data[0];
+            setCurrentQPMeta({ status: qp.status, last_action: qp.last_action });
+          }
+        } catch (err) {
+          console.error('Error refreshing QP after submit:', err);
+        }
       } else {
-        alert(result.message || "Failed to submit QP for approval");
+        Swal.fire('Error', result.message || 'Failed to submit QP for approval', 'error');
       }
     } catch (error) {
       console.error("Error submitting QP:", error);
-      alert("Network error while submitting QP");
+      Swal.fire('Network error', 'Network error while submitting QP', 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -232,7 +281,7 @@ const UploadQP = () => {
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div>
               <label className="text-sm">Branch</label>
-              <Select onValueChange={(v) => setSelected(s => ({ ...s, branch_id: Number(v) }))}>
+              <Select value={selected.branch_id ? String(selected.branch_id) : undefined} onValueChange={(v) => setSelected(s => ({ ...s, branch_id: Number(v) }))}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select Branch" />
                 </SelectTrigger>
@@ -243,7 +292,7 @@ const UploadQP = () => {
             </div>
             <div>
               <label className="text-sm">Subject</label>
-              <Select onValueChange={(v) => setSelected(s => ({ ...s, subject_id: Number(v) }))}>
+              <Select value={selected.subject_id ? String(selected.subject_id) : undefined} onValueChange={(v) => setSelected(s => ({ ...s, subject_id: Number(v) }))}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select Subject" />
                 </SelectTrigger>
@@ -254,7 +303,7 @@ const UploadQP = () => {
             </div>
             <div>
               <label className="text-sm">Test Type</label>
-              <Select onValueChange={(v) => setSelected(s => ({ ...s, testType: String(v) }))}>
+              <Select value={selected.testType} onValueChange={(v) => setSelected(s => ({ ...s, testType: String(v) }))}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select Test Type" />
                 </SelectTrigger>
@@ -264,6 +313,38 @@ const UploadQP = () => {
               </Select>
             </div>
           </div>
+          {rejectedQPs.length > 0 && (
+            <div className="mb-4 space-y-2">
+              <div className="font-semibold">Rejected Question Papers</div>
+              <div className="grid grid-cols-1 gap-2">
+                {rejectedQPs.map(qp => (
+                  <div key={qp.id} className="p-3 border rounded flex justify-between items-start">
+                    <div>
+                      <div className="font-medium">{qp.subject_name || qp.subject} - {qp.test_type}</div>
+                      <div className="text-sm text-muted-foreground">Branch: {qp.branch?.name || qp.branch || 'N/A'}</div>
+                      <div className="text-sm text-muted-foreground">Last: {qp.last_action?.action || 'reject'} by {qp.last_action?.actor || 'N/A'} ({qp.last_action?.role || 'N/A'})</div>
+                      <div className="text-sm text-muted-foreground">Comment: {qp.last_action?.comment || 'No comment provided'}</div>
+                    </div>
+                    <div>
+                      <Button onClick={() => {
+                        // preselect and open question format tab for editing
+                        setSelected(s => ({ ...s, branch_id: qp.branch?.id || qp.branch, subject_id: qp.subject, testType: qp.test_type }));
+                        setTabValue('questionFormat');
+                        // ensure QP id is set so save/update operates on this qp
+                        setQpId(qp.id);
+                      }}>Edit</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {currentQPMeta && currentQPMeta.status === 'rejected' && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
+              <div className="font-semibold text-sm text-red-700">Rejected</div>
+              <div className="text-sm text-muted-foreground">{currentQPMeta.last_action?.comment || 'No comment provided'}</div>
+            </div>
+          )}
 
           <Tabs value={tabValue} onValueChange={(v) => setTabValue(v)}>
             <TabsList>
@@ -296,15 +377,40 @@ const UploadQP = () => {
             </TabsContent>
             <TabsContent value="questionPaper">
               <div className="mb-4">
-                <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center">
                   <h3 className="font-semibold">Question Paper Preview</h3>
-                  <div>
-                    <Button onClick={downloadPDF} className="mr-2">Download PDF</Button>
-                    {qpId && (
-                      <Button onClick={handleSubmitForApproval} variant="outline" className="bg-green-600 text-white hover:bg-green-700">
-                        Submit for Approval
-                      </Button>
-                    )}
+                  <div className="flex items-center gap-3">
+                    <div className="text-sm">
+                      {currentQPMeta?.status ? (
+                        <div>
+                          <div className="font-medium">Status: {(() => {
+                            const s = currentQPMeta.status;
+                            if (s === 'rejected') return 'Rejected';
+                            if (s === 'approved') return 'Approved';
+                            if (s.startsWith('pending')) return 'Pending';
+                            return s;
+                          })()}</div>
+                          <div className="text-muted-foreground">Last: {currentQPMeta.last_action?.action || 'N/A'} by {currentQPMeta.last_action?.actor || 'N/A'} ({currentQPMeta.last_action?.role || 'N/A'})</div>
+                          <div className="text-sm text-muted-foreground">Comment: {currentQPMeta.last_action?.comment || 'No comment provided'}</div>
+                        </div>
+                      ) : (
+                        <div className="text-sm text-muted-foreground">Not submitted</div>
+                      )}
+                    </div>
+                    <div>
+                      <Button onClick={downloadPDF} className="mr-2">Download PDF</Button>
+                      {qpId && (
+                        (() => {
+                          const status = currentQPMeta?.status;
+                          const isPendingOrApproved = status && (status.startsWith('pending') || status === 'approved');
+                          return (
+                            <Button onClick={handleSubmitForApproval} variant="outline" className="bg-green-600 text-white hover:bg-green-700" disabled={isPendingOrApproved || submitting}>
+                              {submitting ? 'Submitting...' : (isPendingOrApproved ? (status === 'approved' ? 'Approved' : 'Submitted') : 'Submit for Approval')}
+                            </Button>
+                          );
+                        })()
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="mt-4">

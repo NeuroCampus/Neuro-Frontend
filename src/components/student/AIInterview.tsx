@@ -8,7 +8,9 @@ const AIInterview: React.FC = () => {
 
   const handleTakeInterview = () => {
     // Open the external interview website in a new tab
-    window.open('http://localhost:3000/', '_blank');
+    // Use current origin or configured partner URL to avoid hardcoded localhost
+    const partnerUrl = (window as any).__AI_PARTNER_URL || window.location.origin;
+    window.open(partnerUrl, '_blank');
   };
 
   return (
