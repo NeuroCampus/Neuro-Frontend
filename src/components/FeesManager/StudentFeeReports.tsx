@@ -39,7 +39,8 @@ import {
   StudentFeeSummary,
   Branch,
   Semester,
-  Section
+  Section,
+  sendFeeReminder
 } from '../../utils/fees_manager_api';
 
 const StudentFeeReports: React.FC = () => {
@@ -71,6 +72,8 @@ const StudentFeeReports: React.FC = () => {
   // UI state
   const [activeTab, setActiveTab] = useState('individual');
   const [showStudentDetails, setShowStudentDetails] = useState(false);
+  const [sendingReminder, setSendingReminder] = useState(false);
+  const [reminderMessage, setReminderMessage] = useState('');
 
   // Load branches when bulk tab is selected
   useEffect(() => {
@@ -191,6 +194,24 @@ const StudentFeeReports: React.FC = () => {
     } else {
       // Handle error - maybe set an error state
       console.error('Failed to load bulk reports:', response.message);
+    }
+  };
+
+  const handleSendReminder = async (studentId: number, studentName: string) => {
+    setSendingReminder(true);
+    setReminderMessage('');
+
+    const response = await sendFeeReminder(studentId);
+
+    setSendingReminder(false);
+
+    if (response.success) {
+      setReminderMessage(`Fee reminder sent successfully to ${studentName}`);
+      // Clear message after 5 seconds
+      setTimeout(() => setReminderMessage(''), 5000);
+    } else {
+      setReminderMessage(`Failed to send reminder: ${response.message}`);
+      setTimeout(() => setReminderMessage(''), 5000);
     }
   };
 
@@ -341,6 +362,36 @@ const StudentFeeReports: React.FC = () => {
                           <p className="text-sm text-muted-foreground">Custom Fee</p>
                         </div>
                       </div>
+
+                      {/* Send Notification Button - Only show if there's pending amount */}
+                      {studentReport.fee_summary.total_pending > 0 && (
+                        <div className="mt-4 flex justify-center">
+                          <Button
+                            onClick={() => handleSendReminder(studentReport.student.id, studentReport.student.name)}
+                            disabled={sendingReminder}
+                            className="bg-orange-600 hover:bg-orange-700"
+                          >
+                            {sendingReminder ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                Sending...
+                              </>
+                            ) : (
+                              <>
+                                <AlertCircle className="w-4 h-4 mr-2" />
+                                Send Fee Reminder
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Reminder Message */}
+                      {reminderMessage && (
+                        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <p className="text-sm text-green-800">{reminderMessage}</p>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
 

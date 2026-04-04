@@ -205,3 +205,19 @@ export const getFeesManagerSections = async (branchId: string, semesterId: strin
     return { success: false, message: "Network error" };
   }
 };
+
+export const sendFeeReminder = async (studentId: number) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/students/${studentId}/send-reminder/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Send Fee Reminder Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
