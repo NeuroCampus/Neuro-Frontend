@@ -72,10 +72,12 @@ const StudentFeeReports: React.FC = () => {
   const [activeTab, setActiveTab] = useState('individual');
   const [showStudentDetails, setShowStudentDetails] = useState(false);
 
-  // Load branches on component mount
+  // Load branches when bulk tab is selected
   useEffect(() => {
-    loadBranches();
-  }, []);
+    if (activeTab === 'bulk' && branches.length === 0) {
+      loadBranches();
+    }
+  }, [activeTab, branches.length]);
 
   // Load semesters when branch changes
   useEffect(() => {
