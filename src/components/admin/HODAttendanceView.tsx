@@ -54,14 +54,11 @@ const AdminHODAttendance: React.FC = () => {
   const [recordsPagination, setRecordsPagination] = useState({ page: 1, page_size: 50, total_pages: 1, total_items: 0, has_next: false, has_prev: false });
 
   const getStatusIcon = (status: string) => {
-    switch ((status || '').toLowerCase()) {
-      case 'present':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
-      case 'absent':
-        return <XCircle className="w-5 h-5 text-red-500" />;
-      default:
-        return <Clock className="w-5 h-5 text-gray-400" />;
-    }
+    const s = (status || '').toLowerCase();
+    if (s === 'present') return <CheckCircle className="w-5 h-5 text-green-500" />;
+    // Do not show XCircle for 'absent' to keep UI cleaner on smaller screens
+    if (s === 'absent') return null;
+    return <Clock className="w-5 h-5 text-gray-400" />;
   };
 
   const getStatusBadge = (status: string) => {
@@ -146,9 +143,9 @@ const AdminHODAttendance: React.FC = () => {
   const handleRecordsPageSizeChange = (newSize: number) => setRecordsPagination(prev => ({ ...prev, page_size: newSize, page: 1 }));
 
   return (
-    <div className={`p-6 space-y-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`p-4 sm:p-6 space-y-4 sm:space-y-6 text-sm sm:text-base ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <div className="flex justify-between items-center">
-        <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>HOD Attendance</h1>
+        <h1 className={`text-xl sm:text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>HOD Attendance</h1>
       </div>
 
       {/* Tabs */}
@@ -161,7 +158,7 @@ const AdminHODAttendance: React.FC = () => {
 
       {activeTab === 'today' && !isLoading && (
         <>
-          <div className={`grid grid-cols-1 md:grid-cols-4 gap-4`}>
+          <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4`}>
             <div className={`p-4 rounded-lg shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
               <div className="flex items-center justify-between">
                 <div>
@@ -202,33 +199,55 @@ const AdminHODAttendance: React.FC = () => {
 
           <div className={`rounded-lg shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} overflow-hidden`}>
             <div className="px-6 py-4 border-b border-gray-200"><h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Today's HOD Attendance ({new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })})</h3></div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            {/* Desktop / Tablet (md+) Table; show cards on sm and below */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full table-fixed">
                 <thead className={`sticky top-0 ${theme === 'dark' ? 'bg-card' : 'bg-gray-50'}`}>
                   <tr className={`border-b ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Branch</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">HOD</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Contact</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Marked At</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Notes</th>
+                    <th className="px-3 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Branch</th>
+                    <th className="px-3 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">HOD</th>
+                    <th className="px-3 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500 hidden lg:table-cell">Contact</th>
+                    <th className="px-3 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
+                    <th className="px-3 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Marked At</th>
+                    <th className="px-3 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500 hidden lg:table-cell">Notes</th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${theme === 'dark' ? 'divide-border' : 'divide-gray-200'}`}>
                   {todayRows.length === 0 ? (<tr><td colSpan={6} className={`px-6 py-4 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No HOD attendance records for today</td></tr>) : (
                     todayRows.map((r, idx) => (
                       <tr key={idx} className={`hover:${theme === 'dark' ? 'bg-accent' : 'bg-gray-50'}`}>
-                        <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{r.branch}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-gray-900">{r.hod_name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{r.contact || '-'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap"><div className="flex items-center gap-2">{getStatusIcon(r.status)}<span className={getStatusBadge(r.status)}>{r.status}</span></div></td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{r.marked_at ? formatTime(r.marked_at) : 'Not marked'}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{r.notes || '-'}</td>
+                        <td className="px-3 py-4 font-medium text-gray-900 truncate md:whitespace-normal md:break-words">{r.branch}</td>
+                        <td className="px-3 py-4 text-gray-900 truncate md:whitespace-normal md:break-words">{r.hod_name}</td>
+                        <td className="px-3 py-4 hidden lg:table-cell text-sm text-gray-600 truncate md:whitespace-normal md:break-words">{r.contact || '-'}</td>
+                        <td className="px-3 py-4"><div className="flex items-center gap-2">{getStatusIcon(r.status)}<span className={getStatusBadge(r.status)}>{r.status}</span></div></td>
+                        <td className="px-3 py-4 text-sm text-gray-600 truncate md:whitespace-normal md:break-words">{r.marked_at ? formatTime(r.marked_at) : 'Not marked'}</td>
+                        <td className="px-3 py-4 hidden lg:table-cell text-sm text-gray-600 truncate md:whitespace-normal md:break-words">{r.notes || '-'}</td>
                       </tr>
                     ))
                   )}
                 </tbody>
               </table>
+            </div>
+            {/* Card List for sm and below */}
+            <div className="md:hidden p-4 space-y-3">
+              {todayRows.length === 0 ? (
+                <div className={`text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No HOD attendance records for today</div>
+              ) : (
+                todayRows.map((r, idx) => (
+                  <div key={idx} className={`p-3 rounded-lg border ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-200 bg-white'}`}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm text-gray-500">{r.branch}</div>
+                        <div className="font-medium text-gray-900 truncate">{r.hod_name}</div>
+                      </div>
+                      <div className="text-sm text-right">
+                        <div className="mt-1">{getStatusIcon(r.status)}<span className={`ml-2 ${getStatusBadge(r.status)}`}>{r.status}</span></div>
+                      </div>
+                    </div>
+                    <div className="mt-2 text-sm text-gray-600">Marked: {r.marked_at ? formatTime(r.marked_at) : 'Not marked'}</div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </>
@@ -237,17 +256,17 @@ const AdminHODAttendance: React.FC = () => {
       {activeTab === 'records' && !isLoading && (
         <>
           <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
-            <div className="flex gap-4 items-end">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
               <div>
                 <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>Start Date</label>
-                <input type="date" value={dateRange.start_date} onChange={(e) => setDateRange(prev => ({ ...prev, start_date: e.target.value }))} className={`px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-background border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`} />
+                <input type="date" value={dateRange.start_date} onChange={(e) => setDateRange(prev => ({ ...prev, start_date: e.target.value }))} className={`w-full sm:w-auto px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-background border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`} />
               </div>
               <div>
                 <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>End Date</label>
-                <input type="date" value={dateRange.end_date} onChange={(e) => setDateRange(prev => ({ ...prev, end_date: e.target.value }))} className={`px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-background border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`} />
+                <input type="date" value={dateRange.end_date} onChange={(e) => setDateRange(prev => ({ ...prev, end_date: e.target.value }))} className={`w-full sm:w-auto px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-background border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`} />
               </div>
               <div>
-                <button onClick={() => { setRecords([]); setRecordsPagination(prev => ({ ...prev, page: 1 })); fetchRecords(1, recordsPagination.page_size); }} className="px-4 py-2 bg-blue-600 text-white rounded-md">Filter</button>
+                <button onClick={() => { setRecords([]); setRecordsPagination(prev => ({ ...prev, page: 1 })); fetchRecords(1, recordsPagination.page_size); }} className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md">Filter</button>
               </div>
             </div>
           </div>
@@ -255,60 +274,100 @@ const AdminHODAttendance: React.FC = () => {
           {facultySummary.length > 0 && (
             <div className={`rounded-lg shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} overflow-hidden`}>
               <div className="px-6 py-4 border-b border-gray-200"><h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Faculty Attendance Summary</h3></div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
+              {/* Desktop / Tablet (md+) Table; show cards on sm and below */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full table-fixed">
                   <thead className={`sticky top-0 ${theme === 'dark' ? 'bg-card' : 'bg-gray-50'}`}>
                     <tr className={`border-b ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Faculty</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Total Days</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Present</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Absent</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Attendance %</th>
+                      <th className="px-6 py-3 w-2/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Faculty</th>
+                      <th className="px-6 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Total Days</th>
+                      <th className="px-6 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Present</th>
+                      <th className="px-6 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Absent</th>
+                      <th className="px-6 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Attendance %</th>
                     </tr>
                   </thead>
                   <tbody className={`divide-y ${theme === 'dark' ? 'divide-border' : 'divide-gray-200'}`}>
                     {facultySummary.map((s, idx) => (
                       <tr key={idx} className={`hover:${theme === 'dark' ? 'bg-accent' : 'bg-gray-50'}`}>
-                        <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{s.hod_name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-gray-900">{s.total_days}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-green-600 font-medium">{s.present_days}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-red-600 font-medium">{s.absent_days}</td>
-                        <td className={`px-6 py-4 whitespace-nowrap font-medium ${s.attendance_percentage >= 75 ? 'text-green-600' : s.attendance_percentage >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>{s.attendance_percentage.toFixed(1)}%</td>
+                        <td className="px-6 py-4 font-medium text-gray-900 truncate md:whitespace-normal md:break-words">{s.hod_name}</td>
+                        <td className="px-6 py-4 text-gray-900">{s.total_days}</td>
+                        <td className="px-6 py-4 text-green-600 font-medium">{s.present_days}</td>
+                        <td className="px-6 py-4 text-red-600 font-medium">{s.absent_days}</td>
+                        <td className={`px-6 py-4 font-medium ${s.attendance_percentage >= 75 ? 'text-green-600' : s.attendance_percentage >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>{s.attendance_percentage.toFixed(1)}%</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+              </div>
+              {/* Card List for sm and below */}
+              <div className="md:hidden p-4 space-y-3">
+                {facultySummary.map((s, idx) => (
+                  <div key={idx} className={`p-3 rounded-lg border ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-200 bg-white'}`}>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-medium text-gray-900 truncate">{s.hod_name}</div>
+                        <div className="text-sm text-gray-500">{s.branch}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-600">{s.attendance_percentage.toFixed(1)}%</div>
+                      </div>
+                    </div>
+                    <div className="mt-2 text-sm">Present: <span className="font-medium text-green-600">{s.present_days}</span> • Absent: <span className="font-medium text-red-600">{s.absent_days}</span></div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
 
           <div className={`rounded-lg shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} overflow-hidden`}>
             <div className="px-6 py-4 border-b border-gray-200"><h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Detailed Attendance Records</h3></div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            {/* Desktop / Tablet (md+) Table; show cards on sm and below */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full table-fixed">
                 <thead className={`sticky top-0 ${theme === 'dark' ? 'bg-card' : 'bg-gray-50'}`}>
                   <tr className={`border-b ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Faculty</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Marked At</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Notes</th>
+                    <th className="px-6 py-3 w-2/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Faculty</th>
+                    <th className="px-6 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Date</th>
+                    <th className="px-6 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
+                    <th className="px-6 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Marked At</th>
+                    <th className="px-6 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500 hidden lg:table-cell">Notes</th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${theme === 'dark' ? 'divide-border' : 'divide-gray-200'}`}>
                   {records.length === 0 ? (<tr><td colSpan={5} className={`px-6 py-4 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No attendance records found for the selected date range</td></tr>) : (
                     records.map((r, idx) => (
                       <tr key={idx} className={`hover:${theme === 'dark' ? 'bg-accent' : 'bg-gray-50'}`}>
-                        <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{r.faculty_name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-gray-900">{formatDate(r.date)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap"><div className="flex items-center gap-2">{getStatusIcon(r.status)}<span className={getStatusBadge(r.status)}>{r.status}</span></div></td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{r.marked_at ? formatTime(r.marked_at) : 'Not marked'}</td>
-                        <td className="px-6 py-4 text-sm text-gray-500">{r.notes || '-'}</td>
+                        <td className="px-6 py-4 font-medium text-gray-900 truncate md:whitespace-normal md:break-words">{r.faculty_name}</td>
+                        <td className="px-6 py-4 text-gray-900">{formatDate(r.date)}</td>
+                        <td className="px-6 py-4"><div className="flex items-center gap-2">{getStatusIcon(r.status)}<span className={getStatusBadge(r.status)}>{r.status}</span></div></td>
+                        <td className="px-6 py-4 text-sm text-gray-500">{r.marked_at ? formatTime(r.marked_at) : 'Not marked'}</td>
+                        <td className="px-6 py-4 hidden lg:table-cell text-sm text-gray-500 truncate md:whitespace-normal md:break-words">{r.notes || '-'}</td>
                       </tr>
                     ))
                   )}
                 </tbody>
               </table>
+            </div>
+            {/* Card List for sm and below */}
+            <div className="md:hidden p-4 space-y-3">
+              {records.length === 0 ? (
+                <div className={`text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No attendance records found for the selected date range</div>
+              ) : (
+                records.map((r, idx) => (
+                  <div key={idx} className={`p-3 rounded-lg border ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-200 bg-white'}`}>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-medium text-gray-900 truncate">{r.faculty_name}</div>
+                        <div className="text-sm text-gray-500">{formatDate(r.date)}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="flex items-center justify-end gap-2">{getStatusIcon(r.status)}<span className={getStatusBadge(r.status)}>{r.status}</span></div>
+                      </div>
+                    </div>
+                    <div className="mt-2 text-sm text-gray-600">Marked: {r.marked_at ? formatTime(r.marked_at) : 'Not marked'}</div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -317,7 +376,9 @@ const AdminHODAttendance: React.FC = () => {
               <div className="text-sm">Showing {records.length > 0 ? ((recordsPagination.page - 1) * recordsPagination.page_size) + 1 : 0} to {Math.min(recordsPagination.page * recordsPagination.page_size, recordsPagination.total_items)} of {recordsPagination.total_items} records</div>
               <div className="flex items-center gap-2">
                 <button onClick={() => handleRecordsPageChange(recordsPagination.page - 1)} disabled={!recordsPagination.has_prev || isLoading} className={`px-3 py-1 text-sm border rounded-md ${recordsPagination.has_prev ? 'border-blue-500 text-blue-600' : 'border-gray-300 text-gray-400'}`}>Previous</button>
-                <div className="flex items-center gap-1">{Array.from({ length: Math.min(5, recordsPagination.total_pages) }, (_, i) => { const pageNum = Math.max(1, Math.min(recordsPagination.total_pages - 4, recordsPagination.page - 2)) + i; if (pageNum > recordsPagination.total_pages) return null; return (<button key={pageNum} onClick={() => handleRecordsPageChange(pageNum)} disabled={isLoading} className={`px-3 py-1 text-sm border rounded-md ${pageNum === recordsPagination.page ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 text-gray-700'}`}>{pageNum}</button>); })}</div>
+                <div className="flex items-center gap-1 overflow-x-auto py-1">
+                  {Array.from({ length: Math.min(5, recordsPagination.total_pages) }, (_, i) => { const pageNum = Math.max(1, Math.min(recordsPagination.total_pages - 4, recordsPagination.page - 2)) + i; if (pageNum > recordsPagination.total_pages) return null; return (<button key={pageNum} onClick={() => handleRecordsPageChange(pageNum)} disabled={isLoading} className={`px-2 sm:px-3 py-1 text-sm border rounded-md ${pageNum === recordsPagination.page ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 text-gray-700'}`}>{pageNum}</button>); })}
+                </div>
                 <button onClick={() => handleRecordsPageChange(recordsPagination.page + 1)} disabled={!recordsPagination.has_next || isLoading} className={`px-3 py-1 text-sm border rounded-md ${recordsPagination.has_next ? 'border-blue-500 text-blue-600' : 'border-gray-300 text-gray-400'}`}>Next</button>
               </div>
             </div>
