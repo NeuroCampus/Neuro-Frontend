@@ -159,6 +159,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Branches", page: "branches" },
     { name: "Faculty Assignments", page: "teacher-assignments" },
     { name: "Question Paper Approvals", page: "qp-approvals" },
+    { name: "Campus Locations", page: "campus-locations" },
     { name: "Batches", page: "batches" },
     
     // Leaves
