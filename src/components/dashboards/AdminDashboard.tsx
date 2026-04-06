@@ -236,7 +236,7 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
           />
         </div>
         <motion.main 
-          className={`flex-1 mt-20 p-6 overflow-y-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}
+          className={`flex-1 mt-12 p-6 pl-0 overflow-y-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
@@ -254,7 +254,7 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
               transition={{ duration: 0.4, delay: 0.4 }}
             >
               {activePage === "dashboard"
-                ? "Admin Dashboard"
+                ? ""
                 : activePage
                     .split("-")
                     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
