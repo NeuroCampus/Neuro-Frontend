@@ -1430,6 +1430,15 @@ export interface FacultyAttendanceRecord {
   status: string;
   marked_at: string;
   notes: string;
+  location?: AttendanceLocation | null;
+}
+
+export interface AttendanceLocation {
+  latitude?: number | null;
+  longitude?: number | null;
+  inside?: boolean | null;
+  distance_meters?: number | null;
+  campus_name?: string | null;
 }
 
 export interface GetFacultyAttendanceRecordsResponse {
@@ -1456,13 +1465,16 @@ export const markFacultyAttendance = async (
   data: MarkFacultyAttendanceRequest
 ): Promise<MarkFacultyAttendanceResponse> => {
   try {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+    };
+    const bodyPayload = JSON.stringify(data);
+    if (bodyPayload) headers['Content-Type'] = 'application/json';
+
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/mark-attendance/`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
+      headers,
+      body: bodyPayload,
     });
     return await response.json();
   } catch (error) {

@@ -121,6 +121,25 @@ const CampusLocationManager: React.FC = () => {
     }
   }, []);
 
+  const reloadGoogleMaps = () => {
+    // Remove existing maps script and retry loading
+    const existing = document.querySelectorAll('script[src*="maps.googleapis.com"]');
+    existing.forEach(s => s.remove());
+    setMapLoaded(false);
+    setMapError(null);
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    if (!apiKey || apiKey === 'your_google_maps_api_key_here') {
+      setMapError('Google Maps API key is not configured. Please add a valid API key to your .env file.');
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initMap`;
+    script.async = true;
+    script.defer = true;
+    script.onerror = () => setMapError('Failed to load Google Maps. Check API key, billing, referer restrictions, or disable adblockers.');
+    document.head.appendChild(script);
+  };
+
   // Initialize map when component mounts and Google Maps is loaded
   useEffect(() => {
     if (mapLoaded && mapRef.current && !mapInstanceRef.current && !mapError) {
@@ -310,8 +329,23 @@ const CampusLocationManager: React.FC = () => {
     setLoading(true);
     try {
       const response = await manageCampusLocation();
-      if (response.success && response.locations) {
-        setLocations(response.locations);
+      // Support multiple response shapes:
+      // - { success, locations: [...] }
+      // - paginated: { count, next, previous, results: [...] }
+      // - paginated with wrapped results: { count, ..., results: { success, locations: [...] } }
+      let locationsData: any[] = [];
+      if (response.locations && Array.isArray(response.locations)) {
+        locationsData = response.locations;
+      } else if (response.results) {
+        if (Array.isArray(response.results)) {
+          locationsData = response.results;
+        } else if (response.results.locations && Array.isArray(response.results.locations)) {
+          locationsData = response.results.locations;
+        }
+      }
+
+      if (locationsData.length > 0) {
+        setLocations(locationsData);
       } else {
         toast.error(response.message || 'Failed to load campus locations');
       }
@@ -443,12 +477,14 @@ const CampusLocationManager: React.FC = () => {
             errorMessage = 'Location access denied. Please enable location permissions.';
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Location information is unavailable.';
+            errorMessage = 'Location information is unavailable. On macOS, enable Location Services for your browser (System Settings → Privacy & Security → Location Services). Also ensure Wi‑Fi is on or test on a mobile device.';
             break;
           case error.TIMEOUT:
             errorMessage = 'Location request timed out.';
             break;
         }
+        // Also show a persistent hint in the map area
+        setMapError(prev => prev || errorMessage);
         toast.error(errorMessage);
       },
       {
@@ -565,7 +601,15 @@ const CampusLocationManager: React.FC = () => {
                       <div className="text-red-600 text-center p-4">
                         <MapPin className="w-12 h-12 mx-auto mb-4" />
                         <h3 className="text-lg font-semibold mb-2">Google Maps Error</h3>
-                        <p className="text-sm mb-4">{mapError}</p>
+                            <p className="text-sm mb-4">{mapError}</p>
+                            <div className="flex gap-2 justify-center mt-2">
+                              <Button size="sm" variant="ghost" onClick={() => setUseIframe(true)}>Open Simple Map View</Button>
+                              <Button size="sm" variant="outline" onClick={() => reloadGoogleMaps()}>Retry Maps</Button>
+                              <Button size="sm" variant="ghost" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${formData.center_latitude},${formData.center_longitude}`, '_blank')}>Open Google Maps</Button>
+                            </div>
+                            <div className="text-xs text-left mt-3 text-gray-600">
+                              <p>If you have an adblocker or privacy extension, try disabling it for this site. Ensure the Maps API key has the Maps JavaScript API and Places API enabled and allows localhost in referer restrictions while testing.</p>
+                            </div>
                       </div>
                     </div>
                   ) : (

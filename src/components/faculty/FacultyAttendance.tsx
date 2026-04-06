@@ -83,12 +83,69 @@ const FacultyAttendance = () => {
     setIsAnimating(true);
 
     try {
-      // Location is not required; do not collect or send it.
+      let latitude: number | undefined = undefined;
+      let longitude: number | undefined = undefined;
+      let device_info: any = undefined;
 
-      const requestData: MarkFacultyAttendanceRequest = {
+      if (status === 'present') {
+        // Require geolocation for marking present
+        if (!navigator.geolocation) {
+          toast.error('Geolocation not supported by this browser. Cannot mark present.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error('Location timeout')), 10000);
+          navigator.geolocation.getCurrentPosition((p) => { clearTimeout(timer); resolve(p); }, (err) => { clearTimeout(timer); reject(err); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+        }).catch((err) => {
+          console.error('Error getting geolocation:', err);
+          if (err && err.code === 1) toast.error('Location permission denied. Enable location to mark present.');
+          else toast.error('Unable to get device location. Cannot mark present.');
+          return null;
+        });
+
+        if (!pos) {
+          setIsSubmitting(false);
+          return;
+        }
+
+        latitude = pos.coords.latitude;
+        longitude = pos.coords.longitude;
+        device_info = {
+          accuracy: pos.coords.accuracy,
+          altitude: pos.coords.altitude,
+          heading: pos.coords.heading,
+          speed: pos.coords.speed,
+          timestamp: pos.timestamp,
+          userAgent: navigator.userAgent
+        };
+      } else {
+        // For absent, try to capture location if available but do not block
+        try {
+          const pos = await new Promise<GeolocationPosition | null>((resolve) => {
+            if (!navigator.geolocation) return resolve(null);
+            navigator.geolocation.getCurrentPosition((p) => resolve(p), () => resolve(null), { enableHighAccuracy: true, timeout: 5000, maximumAge: 300000 });
+          });
+          if (pos) {
+            latitude = pos.coords.latitude;
+            longitude = pos.coords.longitude;
+            device_info = { userAgent: navigator.userAgent };
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      const requestData: MarkFacultyAttendanceRequest & any = {
         status,
-        notes: notes.trim() || undefined
+        notes: notes.trim() || undefined,
       };
+      if (latitude !== undefined && longitude !== undefined) {
+        requestData.latitude = latitude;
+        requestData.longitude = longitude;
+      }
+      if (device_info) requestData.device_info = device_info;
 
       const response = await markFacultyAttendance(requestData);
 
@@ -298,9 +355,20 @@ const FacultyAttendance = () => {
                   <div>
                     <p className="font-semibold capitalize">{todayRecord.status}</p>
                     <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                      Marked at {new Date(todayRecord.marked_at).toLocaleTimeString()}
+                      Marked at {todayRecord.marked_at ? new Date(todayRecord.marked_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '—'}
                     </p>
-                    {/* Location removed from UI */}
+                    {todayRecord.location ? (
+                      <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                        {todayRecord.location.inside ? (
+                          <>On campus • {todayRecord.location.distance_meters ? `${Math.round(todayRecord.location.distance_meters)} m` : 'distance unknown'}</>
+                        ) : (
+                          <>Outside campus • {todayRecord.location.distance_meters ? `${Math.round(todayRecord.location.distance_meters)} m` : 'distance unknown'}</>
+                        )}
+                        {todayRecord.location.campus_name ? ` • ${todayRecord.location.campus_name}` : ''}
+                      </p>
+                    ) : (
+                      <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Location not recorded</p>
+                    )}
                     {todayRecord.notes && (
                       <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                         Notes: {todayRecord.notes}
