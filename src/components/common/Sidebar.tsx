@@ -165,6 +165,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // Leaves
     { name: "HOD Leaves", page: "hod-leaves" },
     { name: "HOD Attendance", page: "hod-attendance" },
+    { name: "HOD Attendance (Mark)", page: "hod-attendance-mark" },
     
     // User & Profile
     { name: "Users", page: "users" },

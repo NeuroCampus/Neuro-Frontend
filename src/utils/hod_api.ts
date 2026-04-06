@@ -2403,6 +2403,13 @@ export interface FacultyAttendanceTodayRecord {
   marked_at: string | null;
   notes: string | null;
 }
+export interface AttendanceLocation {
+  latitude?: number | null;
+  longitude?: number | null;
+  inside?: boolean | null;
+  distance_meters?: number | null;
+  campus_name?: string | null;
+}
 
 export interface GetFacultyAttendanceTodayResponse {
   success: boolean;
@@ -2434,6 +2441,7 @@ export interface FacultyAttendanceRecord {
   status: string;
   marked_at: string;
   notes: string;
+  location?: AttendanceLocation | null;
 }
 
 export interface GetFacultyAttendanceRecordsResponse {

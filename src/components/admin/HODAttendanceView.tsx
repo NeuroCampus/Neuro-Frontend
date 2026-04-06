@@ -13,6 +13,13 @@ interface TodayRow {
   status: string;
   marked_at: string | null;
   notes: string | null;
+  location?: {
+    inside: boolean;
+    distance_meters?: number | null;
+    campus_name?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+  } | null;
 }
 
 interface SummaryRow {
@@ -33,6 +40,13 @@ interface RecordRow {
   status: string;
   marked_at: string | null;
   notes: string | null;
+  location?: {
+    inside: boolean;
+    distance_meters?: number | null;
+    campus_name?: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
+  } | null;
 }
 
 const AdminHODAttendance: React.FC = () => {
@@ -204,22 +218,32 @@ const AdminHODAttendance: React.FC = () => {
               <table className="w-full table-fixed">
                 <thead className={`sticky top-0 ${theme === 'dark' ? 'bg-card' : 'bg-gray-50'}`}>
                   <tr className={`border-b ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
-                    <th className="px-3 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Branch</th>
-                    <th className="px-3 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">HOD</th>
-                    <th className="px-3 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500 hidden lg:table-cell">Contact</th>
-                    <th className="px-3 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                    <th className="px-3 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Marked At</th>
-                    <th className="px-3 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500 hidden lg:table-cell">Notes</th>
+                    <th className="px-3 py-3 w-1/6 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Branch</th>
+                    <th className="px-3 py-3 w-1/6 text-left text-xs font-medium uppercase tracking-wider text-gray-500">HOD</th>
+                    <th className="px-3 py-3 w-1/6 text-left text-xs font-medium uppercase tracking-wider text-gray-500 hidden lg:table-cell">Contact</th>
+                    <th className="px-3 py-3 w-1/6 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
+                    <th className="px-3 py-3 w-1/6 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Location</th>
+                    <th className="px-3 py-3 w-1/6 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Marked At</th>
+                    <th className="px-3 py-3 w-1/6 text-left text-xs font-medium uppercase tracking-wider text-gray-500 hidden lg:table-cell">Notes</th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${theme === 'dark' ? 'divide-border' : 'divide-gray-200'}`}>
-                  {todayRows.length === 0 ? (<tr><td colSpan={6} className={`px-6 py-4 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No HOD attendance records for today</td></tr>) : (
+                  {todayRows.length === 0 ? (<tr><td colSpan={7} className={`px-6 py-4 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No HOD attendance records for today</td></tr>) : (
                     todayRows.map((r, idx) => (
                       <tr key={idx} className={`hover:${theme === 'dark' ? 'bg-accent' : 'bg-gray-50'}`}>
                         <td className="px-3 py-4 font-medium text-gray-900 truncate md:whitespace-normal md:break-words">{r.branch}</td>
                         <td className="px-3 py-4 text-gray-900 truncate md:whitespace-normal md:break-words">{r.hod_name}</td>
                         <td className="px-3 py-4 hidden lg:table-cell text-sm text-gray-600 truncate md:whitespace-normal md:break-words">{r.contact || '-'}</td>
                         <td className="px-3 py-4"><div className="flex items-center gap-2">{getStatusIcon(r.status)}<span className={getStatusBadge(r.status)}>{r.status}</span></div></td>
+                        <td className="px-3 py-4 text-sm text-gray-600 truncate md:whitespace-normal md:break-words">
+                          {r.location ? (
+                            <>
+                              {r.location.inside ? 'On campus' : 'Outside campus'}
+                              {r.location.distance_meters ? ` • ${Math.round(r.location.distance_meters)} m` : ''}
+                              {r.location.campus_name ? ` • ${r.location.campus_name}` : ''}
+                            </>
+                          ) : '-'}
+                        </td>
                         <td className="px-3 py-4 text-sm text-gray-600 truncate md:whitespace-normal md:break-words">{r.marked_at ? formatTime(r.marked_at) : 'Not marked'}</td>
                         <td className="px-3 py-4 hidden lg:table-cell text-sm text-gray-600 truncate md:whitespace-normal md:break-words">{r.notes || '-'}</td>
                       </tr>
@@ -245,6 +269,7 @@ const AdminHODAttendance: React.FC = () => {
                       </div>
                     </div>
                     <div className="mt-2 text-sm text-gray-600">Marked: {r.marked_at ? formatTime(r.marked_at) : 'Not marked'}</div>
+                    <div className="mt-1 text-sm text-gray-600">Location: {r.location ? (`${r.location.inside ? 'On campus' : 'Outside campus'}${r.location.distance_meters ? ` • ${Math.round(r.location.distance_meters)} m` : ''}${r.location.campus_name ? ` • ${r.location.campus_name}` : ''}`) : 'Not recorded'}</div>
                   </div>
                 ))
               )}
@@ -326,20 +351,22 @@ const AdminHODAttendance: React.FC = () => {
               <table className="w-full table-fixed">
                 <thead className={`sticky top-0 ${theme === 'dark' ? 'bg-card' : 'bg-gray-50'}`}>
                   <tr className={`border-b ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
-                    <th className="px-6 py-3 w-2/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Faculty</th>
-                    <th className="px-6 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Date</th>
-                    <th className="px-6 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
-                    <th className="px-6 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Marked At</th>
-                    <th className="px-6 py-3 w-1/5 text-left text-xs font-medium uppercase tracking-wider text-gray-500 hidden lg:table-cell">Notes</th>
+                    <th className="px-6 py-3 w-2/6 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Faculty</th>
+                    <th className="px-6 py-3 w-1/6 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Date</th>
+                    <th className="px-6 py-3 w-1/6 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Status</th>
+                    <th className="px-6 py-3 w-1/6 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Location</th>
+                    <th className="px-6 py-3 w-1/6 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Marked At</th>
+                    <th className="px-6 py-3 w-1/6 text-left text-xs font-medium uppercase tracking-wider text-gray-500 hidden lg:table-cell">Notes</th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${theme === 'dark' ? 'divide-border' : 'divide-gray-200'}`}>
-                  {records.length === 0 ? (<tr><td colSpan={5} className={`px-6 py-4 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No attendance records found for the selected date range</td></tr>) : (
+                  {records.length === 0 ? (<tr><td colSpan={6} className={`px-6 py-4 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No attendance records found for the selected date range</td></tr>) : (
                     records.map((r, idx) => (
                       <tr key={idx} className={`hover:${theme === 'dark' ? 'bg-accent' : 'bg-gray-50'}`}>
                         <td className="px-6 py-4 font-medium text-gray-900 truncate md:whitespace-normal md:break-words">{r.faculty_name}</td>
                         <td className="px-6 py-4 text-gray-900">{formatDate(r.date)}</td>
                         <td className="px-6 py-4"><div className="flex items-center gap-2">{getStatusIcon(r.status)}<span className={getStatusBadge(r.status)}>{r.status}</span></div></td>
+                        <td className="px-6 py-4 text-sm text-gray-600 truncate md:whitespace-normal md:break-words">{r.location ? (`${r.location.inside ? 'On campus' : 'Outside campus'}${r.location.distance_meters ? ` • ${Math.round(r.location.distance_meters)} m` : ''}${r.location.campus_name ? ` • ${r.location.campus_name}` : ''}`) : '-'}</td>
                         <td className="px-6 py-4 text-sm text-gray-500">{r.marked_at ? formatTime(r.marked_at) : 'Not marked'}</td>
                         <td className="px-6 py-4 hidden lg:table-cell text-sm text-gray-500 truncate md:whitespace-normal md:break-words">{r.notes || '-'}</td>
                       </tr>
@@ -365,6 +392,7 @@ const AdminHODAttendance: React.FC = () => {
                       </div>
                     </div>
                     <div className="mt-2 text-sm text-gray-600">Marked: {r.marked_at ? formatTime(r.marked_at) : 'Not marked'}</div>
+                    <div className="mt-1 text-sm text-gray-600">Location: {r.location ? (`${r.location.inside ? 'On campus' : 'Outside campus'}${r.location.distance_meters ? ` • ${Math.round(r.location.distance_meters)} m` : ''}${r.location.campus_name ? ` • ${r.location.campus_name}` : ''}`) : 'Not recorded'}</div>
                   </div>
                 ))
               )}
