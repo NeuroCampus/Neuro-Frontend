@@ -14,6 +14,7 @@ import { CheckCircle, XCircle, Eye, Download } from "lucide-react";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { useTheme } from "../../context/ThemeContext";
+import { useToast } from "../../hooks/use-toast";
 import { API_ENDPOINT } from "../../utils/config";
 
 interface QPPending {
@@ -39,6 +40,7 @@ const AdminQPApprovals = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const { theme } = useTheme();
+  const { toast } = useToast();
 
   const toggleExpanded = (key: string) => {
     setExpanded((p) => ({ ...p, [key]: !p[key] }));
@@ -46,6 +48,26 @@ const AdminQPApprovals = () => {
 
   useEffect(() => {
     fetchPendingQPs();
+  }, []);
+
+  // Ensure SweetAlert appears above the dialog and is interactive
+  useEffect(() => {
+    try {
+      const styleId = 'swal2-global-fix';
+      if (!document.getElementById(styleId)) {
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.innerHTML = `
+          .swal2-container, .swal2-popup {
+            z-index: 99999 !important;
+            pointer-events: auto !important;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    } catch (e) {
+      // ignore when DOM not available
+    }
   }, []);
 
   const fetchQPDetail = async (qpId: number) => {
@@ -184,6 +206,25 @@ const AdminQPApprovals = () => {
   };
 
   const handleApprove = async (qpId: number) => {
+    const result = await MySwal.fire({
+      title: 'Confirm approval',
+      text: 'Are you sure you want to approve and forward this question paper to COE?',
+      icon: 'question',
+      showCancelButton: true,
+      showCloseButton: true,
+      confirmButtonText: 'Yes, approve',
+      cancelButtonText: 'Cancel',
+      allowOutsideClick: true,
+      allowEscapeKey: true,
+      reverseButtons: true,
+      target: document.body,
+    });
+
+    if (!result || result.isDismissed || !result.isConfirmed) {
+      try { MySwal.close(); } catch (e) {}
+      return;
+    }
+
     setActionLoading(true);
     try {
       const response = await fetch(`${API_ENDPOINT}/admin/qps/${qpId}/admin-approve/`, {
@@ -196,16 +237,25 @@ const AdminQPApprovals = () => {
       });
       const data = await response.json();
       if (data.success) {
-        alert("QP approved and forwarded to COE.");
+        try { MySwal.close(); } catch (e) {}
+        const t = toast({
+          title: 'Approved',
+          description: data.message || 'QP approved and forwarded to COE.',
+          variant: 'default',
+        });
+        // auto-dismiss after 3s
+        setTimeout(() => t.dismiss(), 3000);
         setPendingQPs(pendingQPs.filter(qp => qp.id !== qpId));
+        try { setDialogOpen(false); } catch (e) {}
+        setQpDetail(null);
         setSelectedQP(null);
         setComment("");
       } else {
-        alert(data.message || "Failed to approve QP.");
+        MySwal.fire('Error', data.message || 'Failed to approve QP.', 'error');
       }
     } catch (error) {
       console.error("Error approving QP:", error);
-      alert("Network error while approving QP.");
+      MySwal.fire('Network error', 'Network error while approving QP.', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -219,10 +269,21 @@ const AdminQPApprovals = () => {
       text: 'Are you sure you want to reject this question paper and send it back to HOD?',
       icon: 'warning',
       showCancelButton: true,
+      showCloseButton: true,
+      allowOutsideClick: true,
+      allowEscapeKey: true,
+      reverseButtons: true,
       confirmButtonText: 'Yes, reject',
-      cancelButtonText: 'Cancel'
+      cancelButtonText: 'Cancel',
+      // ensure swal renders at document.body so it isn't nested under other portals
+      target: document.body,
     });
-    if (!result.isConfirmed) return;
+
+    // if dismissed or cancelled, just close the alert and do nothing
+    if (!result || result.isDismissed || !result.isConfirmed) {
+      try { MySwal.close(); } catch (e) {}
+      return;
+    }
 
     setActionLoading(true);
     try {
@@ -236,16 +297,18 @@ const AdminQPApprovals = () => {
       });
       const data = await response.json();
       if (data.success) {
-        MySwal.fire({
-          toast: true,
-          position: 'top-end',
-          icon: 'success',
+        try { MySwal.close(); } catch (e) {}
+        const t = toast({
           title: 'Rejected',
-          text: data.message || 'QP rejected and sent back to HOD for review.',
-          showConfirmButton: false,
-          timer: 3000,
+          description: data.message || 'QP rejected and sent back to HOD for review.',
+          variant: 'default',
         });
+        // auto-dismiss after 3s
+        setTimeout(() => t.dismiss(), 3000);
+        // close review dialog and clear details
         setPendingQPs(pendingQPs.filter(qp => qp.id !== qpId));
+        try { setDialogOpen(false); } catch (e) {}
+        setQpDetail(null);
         setSelectedQP(null);
         setComment("");
       } else {
