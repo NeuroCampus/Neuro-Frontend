@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "../ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, Eye, Download } from "lucide-react";
@@ -29,7 +36,13 @@ const AdminQPApprovals = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [comment, setComment] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const { theme } = useTheme();
+
+  const toggleExpanded = (key: string) => {
+    setExpanded((p) => ({ ...p, [key]: !p[key] }));
+  };
 
   useEffect(() => {
     fetchPendingQPs();
@@ -55,55 +68,101 @@ const AdminQPApprovals = () => {
     }
   };
 
-  const downloadPDF = () => {
+  const downloadPDF = async () => {
     if (!qpDetail) return;
-    // reuse simple jsPDF-based exporter like HOD view
-    // Lazy-import to avoid adding dependency here if not present
-    // But project already uses jsPDF in HOD; assume available
-    // @ts-ignore
-    const jsPDF = require('jspdf').jsPDF || require('jspdf');
-    const doc = new jsPDF();
-    let y = 10;
-    doc.setFontSize(14);
-    doc.text('Question Paper', 14, y);
-    y += 10;
-    doc.setFontSize(12);
-    doc.text(`Subject: ${qpDetail.subject}`, 14, y);
-    y += 6;
-    doc.text(`Test Type: ${qpDetail.test_type}`, 14, y);
-    y += 6;
-    doc.text(`Faculty: ${qpDetail.faculty}`, 14, y);
-    y += 10;
+    try {
+      const jspdfModule: any = await import('jspdf');
+      const jsPDF = jspdfModule.jsPDF || jspdfModule.default?.jsPDF || jspdfModule.default || jspdfModule;
+      const doc: any = new jsPDF();
+      let y = 14;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 14;
+      const maxWidth = pageWidth - margin * 2;
 
-    let totalMarks = 0;
-    (qpDetail.questions || []).forEach((q: any) => {
-      (q.subparts || []).forEach((s: any) => {
-        totalMarks += s.max_marks || 0;
+      doc.setFontSize(16);
+      doc.text('Question Paper', margin, y);
+      y += 10;
+
+      doc.setFontSize(12);
+      const headerLines = [
+        `Subject: ${qpDetail.subject}`,
+        `Test Type: ${qpDetail.test_type}`,
+        `Faculty: ${qpDetail.faculty}`,
+      ];
+      headerLines.forEach((ln: string) => {
+        const lines = doc.splitTextToSize(ln, maxWidth);
+        doc.text(lines, margin, y);
+        y += lines.length * 6;
       });
-    });
 
-    (qpDetail.questions || []).forEach((q: any) => {
-      (q.subparts || []).forEach((s: any) => {
-        doc.setFontSize(12);
-        doc.text(`${q.question_number}${s.subpart_label}. ${s.content}`, 14, y);
-        y += 6;
-        doc.setFontSize(10);
-        doc.text(`(${s.max_marks} marks)`, 14, y);
-        y += 6;
-        doc.text(`CO: ${q.co}`, 14, y);
-        y += 6;
-        doc.text(`Blooms: ${q.blooms_level}`, 14, y);
-        y += 8;
-        if (y > 270) {
-          doc.addPage();
-          y = 10;
-        }
+      y += 4;
+
+      let totalMarks = 0;
+      (qpDetail.questions || []).forEach((q: any) => {
+        (q.subparts || []).forEach((s: any) => {
+          totalMarks += s.max_marks || 0;
+        });
       });
-    });
 
-    doc.setFontSize(12);
-    doc.text(`Total Marks: ${totalMarks}`, 14, y);
-    doc.save(`qp-${qpDetail.subject}-${qpDetail.test_type}.pdf`);
+      (qpDetail.questions || []).forEach((q: any, qi: number) => {
+        (q.subparts || []).forEach((s: any, si: number) => {
+          const qLabel = `${q.question_number}${s.subpart_label}. `;
+          const content = qLabel + (s.content || '');
+          const contentLines = doc.splitTextToSize(content, maxWidth);
+
+          // add page if not enough space
+          if (y + Math.max(1, contentLines.length) * 6 + 60 > doc.internal.pageSize.getHeight()) {
+            doc.addPage();
+            y = margin;
+          }
+
+          doc.setFontSize(12);
+          const lineHeight = 6;
+
+          if (contentLines.length > 0) {
+            // write first line and place marks at the right end of the same line
+            doc.text(contentLines[0], margin, y);
+            try {
+              doc.setFont(undefined, 'bold');
+            } catch (e) {
+              // ignore if font style not supported
+            }
+            doc.text(`${s.max_marks}m`, pageWidth - margin, y, { align: 'right' });
+            try {
+              doc.setFont(undefined, 'normal');
+            } catch (e) {}
+            y += lineHeight;
+          }
+
+          if (contentLines.length > 1) {
+            const remaining = contentLines.slice(1);
+            doc.text(remaining, margin, y);
+            y += remaining.length * lineHeight;
+          }
+
+          // CO and Blooms on next line(s)
+          doc.setFontSize(10);
+          const metaText = `CO: ${q.co}  Blooms: ${q.blooms_level}`;
+          const metaLines = doc.splitTextToSize(metaText, maxWidth);
+          doc.text(metaLines, margin, y);
+          y += metaLines.length * lineHeight + 6;
+        });
+      });
+
+      // total
+      if (y + 20 > doc.internal.pageSize.getHeight()) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.setFontSize(12);
+      doc.text(`Total Marks: ${totalMarks}`, margin, y);
+
+      const fileName = `qp-${(qpDetail.subject || 'qp').replace(/\s+/g, '_')}-${(qpDetail.test_type || 'test').replace(/\s+/g, '_')}.pdf`;
+      doc.save(fileName);
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+      alert('Failed to generate PDF. Ensure jsPDF is installed.');
+    }
   };
 
   const fetchPendingQPs = async () => {
@@ -250,7 +309,7 @@ const AdminQPApprovals = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => { setSelectedQP(qp); setQpDetail(null); fetchQPDetail(qp.id); }}
+                        onClick={() => { setSelectedQP(qp); setQpDetail(null); fetchQPDetail(qp.id); setDialogOpen(true); }}
                       >
                         <Eye className="w-4 h-4 mr-1" />
                         Review
@@ -263,13 +322,19 @@ const AdminQPApprovals = () => {
           )}
         </CardContent>
       </Card>
-
-      {selectedQP && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Review QP: {selectedQP.subject} - {selectedQP.test_type}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      <Dialog open={dialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          setSelectedQP(null);
+          setQpDetail(null);
+          setComment("");
+        }
+        setDialogOpen(open);
+      }}>
+        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[720px] w-[90vw] mx-4 rounded-lg flex flex-col max-h-[92vh]`}> 
+          <DialogHeader>
+            <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Review QP: {selectedQP?.subject} - {selectedQP?.test_type}</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-auto px-4 py-2 space-y-4 flex-1">
             {detailLoading ? (
               <div className="text-center py-4">Loading QP details...</div>
             ) : qpDetail ? (
@@ -277,18 +342,40 @@ const AdminQPApprovals = () => {
                 <h4 className="font-semibold mb-4">Question Paper Preview</h4>
                 <div className="space-y-4">
                   {qpDetail.questions.map((q: any, qIndex: number) => (
-                    <div key={qIndex}>
-                      {q.subparts.map((s: any, sIndex: number) => (
-                        <div key={sIndex} className="mb-3">
-                          <div className="font-medium">
-                            {q.question_number}{s.subpart_label}.
+                    <div key={qIndex} className="space-y-3">
+                      {q.subparts.map((s: any, sIndex: number) => {
+                        const key = `${qIndex}-${sIndex}`;
+                        const isExpanded = !!expanded[key];
+                        const shortContent = (s.content || '').length > 160 ? (s.content || '').slice(0, 160) + '…' : (s.content || '');
+                        return (
+                          <div key={sIndex} className="border rounded-md p-3 bg-white dark:bg-gray-900">
+                            <div className="flex items-start gap-3">
+                              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center font-medium text-sm">
+                                {q.question_number}{s.subpart_label}
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex justify-between items-start gap-4">
+                                  <div className="text-sm text-gray-900 dark:text-gray-100 mb-1 flex-1">
+                                    {isExpanded ? s.content : shortContent}
+                                  </div>
+                                  <div className="ml-2 flex-shrink-0">
+                                    <Badge className="text-black font-semibold text-sm bg-transparent">{s.max_marks}m</Badge>
+                                  </div>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-2 mt-2">
+                                  <Badge className="text-black bg-transparent">CO: {q.co}</Badge>
+                                  <Badge className="text-black bg-transparent">{q.blooms_level}</Badge>
+                                  {((s.content || '').length > 160) && (
+                                    <button onClick={() => toggleExpanded(key)} className="text-sm text-primary-600 dark:text-primary-400 ml-2">
+                                      {isExpanded ? 'Show less' : 'Show more'}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                          <div className="mt-1">{s.content}</div>
-                          <div className="mt-1 text-sm">({s.max_marks} marks)</div>
-                          <div className="text-sm mt-1">CO: {q.co}</div>
-                          <div className="text-sm">Blooms: {q.blooms_level}</div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ))}
                   <div className="font-semibold pt-2 border-t">
@@ -309,41 +396,39 @@ const AdminQPApprovals = () => {
               <Textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                placeholder="Add a comment for the faculty..."
+                placeholder="Add comment..."
                 rows={3}
               />
             </div>
-            <div className="flex gap-2">
+          </div>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
               <Button
-                onClick={() => handleApprove(selectedQP.id)}
+                onClick={() => selectedQP && handleApprove(selectedQP.id)}
                 disabled={actionLoading}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-600 text-white w-full sm:w-auto justify-center transition-none"
               >
-                <CheckCircle className="w-4 h-4 mr-1" />
-                Approve & Forward to COE
+                <CheckCircle className="w-4 h-4 mr-1 hidden sm:inline-block" />
+                <span className="whitespace-normal">Approve</span>
               </Button>
               <Button
-                variant="destructive"
-                onClick={() => handleReject(selectedQP.id)}
+                onClick={() => selectedQP && handleReject(selectedQP.id)}
                 disabled={actionLoading}
+                className="bg-red-600 hover:bg-red-600 text-white w-full sm:w-auto justify-center transition-none"
               >
-                <XCircle className="w-4 h-4 mr-1" />
-                Reject & Send Back
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSelectedQP(null);
-                  setComment("");
-                  setQpDetail(null);
-                }}
-              >
-                Cancel
+                <XCircle className="w-4 h-4 mr-1 hidden sm:inline-block" />
+                <span className="whitespace-normal">Reject</span>
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      )}
+            <div className="ml-auto">
+              <Button variant="outline" onClick={() => downloadPDF()} className="bg-transparent hover:bg-transparent w-full sm:w-auto justify-center transition-none">
+                <Download className="w-4 h-4 mr-1 hidden sm:inline-block" />
+                <span className="whitespace-normal">Download</span>
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
