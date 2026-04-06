@@ -230,6 +230,18 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
     }
   };
 
+  // Show reason in modal (use SweetAlert2 to match HODStats)
+  const openReasonModal = (reason: string) => {
+    Swal.fire({
+      title: "Leave Reason",
+      html: `<div style="white-space:pre-wrap;text-align:left">${reason || 'No reason provided'}</div>`,
+      background: theme === 'dark' ? '#1c1c1e' : '#fff',
+      color: theme === 'dark' ? '#e5e7eb' : '#000',
+      confirmButtonText: 'Close',
+      width: '600px',
+    });
+  };
+
   if (loading && leaveRequests.length === 0) {
     return <div className={`text-center py-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading...</div>;
   }
@@ -324,7 +336,7 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
                       <td className="py-3 px-2 md:px-4 text-sm">
                         <button
                           onClick={() => setViewReason(leave.reason)}
-                          className={theme === 'dark' ? 'text-primary hover:underline' : 'text-blue-600 hover:underline'}
+                          className={`text-sm font-medium px-2 py-1 rounded-md ${theme === 'dark' ? 'bg-muted/10 text-foreground border border-border' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
                         >
                           View
                         </button>

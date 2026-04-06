@@ -250,6 +250,18 @@ const handleApprove = async (index: number) => {
     }
   };
 
+  // Show reason in modal (reuses SweetAlert2 for a simple modal)
+  const openReasonModal = (reason: string) => {
+    Swal.fire({
+      title: "Leave Reason",
+      html: `<div style="white-space:pre-wrap;text-align:left">${reason || 'No reason provided'}</div>`,
+      background: theme === 'dark' ? '#1c1c1e' : '#fff',
+      color: theme === 'dark' ? '#e5e7eb' : '#000',
+      confirmButtonText: 'Close',
+      width: '600px',
+    });
+  };
+
   // Initial data fetch
   useEffect(() => {
     fetchDashboardBootstrap();
@@ -288,7 +300,7 @@ const handleApprove = async (index: number) => {
       )}
 
       {/* Stats Cards */}
-      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+      <div className={`grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
         {[
           {
             title: "Total Faculty",
@@ -422,79 +434,164 @@ const handleApprove = async (index: number) => {
         </div>
 
         <div className="max-h-64 overflow-y-auto custom-scrollbar scroll-smooth"> 
-          <table className="w-full">
-            <thead className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-card' : 'bg-white'}`}>
-              <tr className={`text-center border-b ${theme === 'dark' ? 'border-border text-foreground' : 'border-gray-200 text-gray-900'} text-xs`}>
-                <th className="pb-2">Faculty</th>
-                <th>Period</th>
-                <th>Reason</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leaveRequests.length === 0 && !isLoading ? (
-                <tr>
-                  <td colSpan={5} className={`py-3 text-center ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                    No leave requests found
-                  </td>
-                </tr>
-              ) : (
-                leaveRequests.slice(0, 20).map((row, index) => (   // limit to first 20 rows for example
-                  <tr
-                    key={row.id}
-                    className={`border-b last:border-none text-sm hover:${theme === 'dark' ? 'bg-accent' : 'bg-gray-50'} text-center`}
-                  >
-                    <td className="py-3">
-                      <div>
-                        <p className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{row.name}</p>
-                        <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{row.dept}</p>
-                      </div>
-                    </td>
-                    <td>{row.period}</td>
-                    <td>{row.reason}</td>
-                    <td>
+          {/* Mobile-only card list */}
+          <div className={`block md:hidden space-y-3`}> 
+            {leaveRequests.length === 0 && !isLoading ? (
+              <div className={`py-3 text-center ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                No leave requests found
+              </div>
+            ) : (
+              leaveRequests.slice(0, 20).map((row, index) => (
+                <div
+                  key={row.id}
+                  className={`p-3 rounded-md border ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-200 text-gray-900'}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">{row.name}</div>
+                      <div className="text-xs text-gray-500">{row.dept}</div>
+                    </div>
+                    <div>
                       <span
-                        className={`px-2 py-0.5 rounded-full text-xs font-medium align-middle ${
-                          row.status === "Pending"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : row.status === "Approved"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                          row.status === 'Pending'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : row.status === 'Approved'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-red-100 text-red-700'
                         }`}
                       >
                         {row.status}
                       </span>
-                    </td>
-                    <td>
-                      {row.status === "Pending" ? (
-                        <div className="flex gap-2 align-middle text-center px-1 justify-center">
-                          <button
-                            onClick={() => handleApprove(index)}
-                            className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-green-500 text-green-400 bg-green-500/10 hover:bg-green-500/20' : 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100'}`}
-                            disabled={isLoading}
-                          >
-                            <CheckCircle className={`w-4 h-4 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleReject(index)}
-                            className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-red-500 text-red-400 bg-red-500/10 hover:bg-red-500/20' : 'border-red-500 text-red-700 bg-red-50 hover:bg-red-100'}`}
-                            disabled={isLoading}
-                          >
-                            <XCircle className={`w-4 h-4 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`} />
-                            Reject
-                          </button>
-                        </div>
-                      ) : (
-                        <span className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No action needed</span>
-                      )}
+                    </div>
+                  </div>
+
+                  {/* Period (date range) on separate line */}
+                  <div className="mt-2 text-xs text-gray-500">{row.period}</div>
+
+                  {/* View reason via modal instead of showing text */}
+                  <div className="mt-2">
+                    <button
+                      onClick={() => openReasonModal(row.reason)}
+                      className={`text-sm font-medium px-2 py-1 rounded-md ${theme === 'dark' ? 'bg-muted/10 text-foreground border border-border' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                    >
+                      View Reason
+                    </button>
+                  </div>
+
+                  {/* Buttons on their own line - make them flex so they expand evenly */}
+                  <div className="mt-3 flex gap-2">
+                    {row.status === 'Pending' ? (
+                      <>
+                        <button
+                          onClick={() => handleApprove(index)}
+                          className={`flex-1 flex items-center justify-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-green-500 text-green-400 bg-green-500/10 hover:bg-green-500/20' : 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100'}`}
+                          disabled={isLoading}
+                        >
+                          <CheckCircle className={`w-4 h-4 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleReject(index)}
+                          className={`flex-1 flex items-center justify-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-red-500 text-red-400 bg-red-500/10 hover:bg-red-500/20' : 'border-red-500 text-red-700 bg-red-50 hover:bg-red-100'}`}
+                          disabled={isLoading}
+                        >
+                          <XCircle className={`w-4 h-4 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`} />
+                          Reject
+                        </button>
+                      </>
+                    ) : (
+                      <div className="text-sm text-gray-500">Reviewed</div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop/table view for md+ screens (restored to original desktop markup) */}
+          <div className="hidden md:block">
+            <table className="w-full">
+              <thead className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-card' : 'bg-white'}`}>
+                <tr className={`text-center border-b ${theme === 'dark' ? 'border-border text-foreground' : 'border-gray-200 text-gray-900'} text-xs`}>
+                  <th className="pb-2">Faculty</th>
+                  <th>Period</th>
+                  <th>Reason</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaveRequests.length === 0 && !isLoading ? (
+                  <tr>
+                    <td colSpan={5} className={`py-3 text-center ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                      No leave requests found
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  leaveRequests.slice(0, 20).map((row, index) => (
+                    <tr
+                      key={row.id}
+                      className={`border-b last:border-none text-sm hover:${theme === 'dark' ? 'bg-accent' : 'bg-gray-50'} text-center`}
+                    >
+                      <td className="py-3">
+                        <div>
+                          <p className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{row.name}</p>
+                          <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{row.dept}</p>
+                        </div>
+                      </td>
+                      <td>{row.period}</td>
+                      <td>
+                        <button
+                          onClick={() => openReasonModal(row.reason)}
+                          className={`text-sm font-medium px-2 py-1 rounded-md ${theme === 'dark' ? 'bg-muted/10 text-foreground border border-border' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                        >
+                          View
+                        </button>
+                      </td>
+                      <td>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-xs font-medium align-middle ${
+                            row.status === "Pending"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : row.status === "Approved"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {row.status}
+                        </span>
+                      </td>
+                      <td>
+                        {row.status === "Pending" ? (
+                          <div className="flex gap-2 align-middle text-center px-1 justify-center">
+                            <button
+                              onClick={() => handleApprove(index)}
+                              className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-green-500 text-green-400 bg-green-500/10 hover:bg-green-500/20' : 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100'}`}
+                              disabled={isLoading}
+                            >
+                              <CheckCircle className={`w-4 h-4 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleReject(index)}
+                              className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-red-500 text-red-400 bg-red-500/10 hover:bg-red-500/20' : 'border-red-500 text-red-700 bg-red-50 hover:bg-red-100'}`}
+                              disabled={isLoading}
+                            >
+                              <XCircle className={`w-4 h-4 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`} />
+                              Reject
+                            </button>
+                          </div>
+                        ) : (
+                          <span className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No action needed</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
