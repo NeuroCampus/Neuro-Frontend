@@ -62,6 +62,8 @@ interface Payment {
 
 const InvoiceManagement: React.FC = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [invoicesMeta, setInvoicesMeta] = useState<any | null>(null);
+  const [statsData, setStatsData] = useState<any | null>(null);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,15 +76,64 @@ const InvoiceManagement: React.FC = () => {
   const [dateRange, setDateRange] = useState('all');
 
   useEffect(() => {
-    fetchInvoices();
+    fetchInvoices(1);
+    fetchStats();
   }, []);
 
-  const fetchInvoices = async () => {
+  const fetchStats = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch('http://127.0.0.1:8000/api/fees-manager/stats/', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const d = await res.json();
+      // backend returns totals and counts; prefer *_cents keys for amounts
+      let sd = d.data || d || null;
+
+      // If server stats don't include pending/overdue monetary sums, fetch fees_reports summary
+      const needsPending = !(sd && (sd.pending_amount !== undefined || sd.pending_amount_cents !== undefined));
+      const needsOverdue = !(sd && (sd.overdue_amount !== undefined || sd.overdue_amount_cents !== undefined));
+
+      if ((needsPending || needsOverdue)) {
+        try {
+          const rr = await fetch('http://127.0.0.1:8000/api/fees-manager/fees-reports/?date_range=all', {
+            headers: { 'Authorization': `Bearer ${token}` },
+          });
+          if (rr.ok) {
+            const rd = await rr.json();
+            const summary = rd?.summary || rd?.data?.summary || rd?.report_data?.summary || rd?.report_data || rd;
+            if (summary) {
+              sd = sd || {};
+              if (summary.pending_amount !== undefined) sd.pending_amount = summary.pending_amount;
+              if (summary.overdue_amount !== undefined) sd.overdue_amount = summary.overdue_amount;
+            }
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      // normalize to cents where useful
+      if (sd) {
+        if (sd.pending_amount !== undefined && sd.pending_amount_cents === undefined) sd.pending_amount_cents = Math.round(Number(sd.pending_amount) * 100);
+        if (sd.overdue_amount !== undefined && sd.overdue_amount_cents === undefined) sd.overdue_amount_cents = Math.round(Number(sd.overdue_amount) * 100);
+        if (sd.total_revenue !== undefined && sd.total_revenue_cents === undefined) sd.total_revenue_cents = Math.round(Number(sd.total_revenue) * 100);
+      }
+
+      setStatsData(sd);
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  const fetchInvoices = async (page: number = 1, page_size: number = 50) => {
     try {
       setLoading(true);
       const token = localStorage.getItem('access_token');
 
-      const response = await fetch('http://127.0.0.1:8000/api/fees-manager/invoices/', {
+      const url = `http://127.0.0.1:8000/api/fees-manager/invoices/?page=${page}&page_size=${page_size}`;
+      const response = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
@@ -91,12 +142,38 @@ const InvoiceManagement: React.FC = () => {
       }
 
       const data = await response.json();
-      setInvoices(data.data || []);
+      // Normalize monetary fields: prefer *_cents when present
+      const toRupees = (centsOrAmount: any) => {
+        if (centsOrAmount === null || centsOrAmount === undefined) return 0;
+        if (Number.isInteger(centsOrAmount)) return centsOrAmount / 100;
+        const n = Number(centsOrAmount);
+        return isNaN(n) ? 0 : n;
+      };
+      // Support different response shapes:
+      // - { data: [...], meta: {...} }
+      // - { invoices: [...], meta: {...} } (safe view)
+      const list = data.data ?? data.invoices ?? [];
+      const meta = data.meta ?? null;
+
+      const normalized = (list || []).map((inv: any) => ({
+        ...inv,
+        total_amount: toRupees(inv.total_amount_cents ?? inv.total_amount),
+        paid_amount: toRupees(inv.paid_amount_cents ?? inv.paid_amount),
+        pending_amount: toRupees(inv.pending_amount_cents ?? inv.pending_amount),
+      }));
+
+      setInvoices(normalized);
+      setInvoicesMeta(meta);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleInvoicesPageChange = (newPage: number) => {
+    const page = Math.max(1, newPage);
+    fetchInvoices(page);
   };
 
   const fetchInvoiceDetails = async (invoiceId: number) => {
@@ -112,8 +189,30 @@ const InvoiceManagement: React.FC = () => {
       }
 
       const data = await response.json();
-      setSelectedInvoice(data.data);
-      setPayments(data.data.payments || []);
+      // Normalize invoice and payments amounts
+      const toRupees = (centsOrAmount: any) => {
+        if (centsOrAmount === null || centsOrAmount === undefined) return 0;
+        if (Number.isInteger(centsOrAmount)) return centsOrAmount / 100;
+        const n = Number(centsOrAmount);
+        return isNaN(n) ? 0 : n;
+      };
+      // invoice detail may be returned as { data: {...} } or { ... }
+      const inv = data.data ?? data ?? {};
+      const normalizedInvoice = {
+        ...inv,
+        total_amount: toRupees(inv.total_amount_cents ?? inv.total_amount),
+        paid_amount: toRupees(inv.paid_amount_cents ?? inv.paid_amount),
+        pending_amount: toRupees(inv.pending_amount_cents ?? inv.pending_amount),
+      };
+
+      const normalizedPayments = (inv.payments || []).map((p: any) => ({
+        ...p,
+        amount: toRupees(p.amount_cents ?? p.amount),
+        payment_date: p.payment_date,
+      }));
+
+      setSelectedInvoice(normalizedInvoice);
+      setPayments(normalizedPayments || []);
       setIsDetailsDialogOpen(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch invoice details');
@@ -228,7 +327,16 @@ const InvoiceManagement: React.FC = () => {
     return stats;
   };
 
-  const stats = getStatusStats();
+  const stats = statsData
+    ? {
+        // prefer server-provided invoice count, otherwise use paginator count or client list length
+        total: statsData.total_invoices ?? invoicesMeta?.count ?? invoices.length,
+        paid: statsData.completed_payments ?? invoices.filter(i => i.status === 'paid').length,
+        unpaid: invoices.filter(i => i.status === 'unpaid').length,
+        partially_paid: invoices.filter(i => i.status === 'partially_paid').length,
+        overdue: invoices.filter(i => i.status === 'overdue').length,
+      }
+    : getStatusStats();
 
   if (loading) {
     return (
@@ -240,7 +348,7 @@ const InvoiceManagement: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="container mx-auto p-0">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Invoice Management</h1>
@@ -267,6 +375,7 @@ const InvoiceManagement: React.FC = () => {
               <FileText className="h-8 w-8 text-blue-600" />
             </div>
           </CardContent>
+          
         </Card>
 
         <Card>
@@ -286,7 +395,11 @@ const InvoiceManagement: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Unpaid</p>
-                <p className="text-2xl font-bold text-red-600">{stats.unpaid}</p>
+                {statsData && (statsData.outstanding_amount_cents ?? statsData.outstanding_amount) ? (
+                  <p className="text-2xl font-bold text-red-600">{formatCurrency(((statsData.outstanding_amount_cents ?? statsData.outstanding_amount) || 0) / 100)}</p>
+                ) : (
+                  <p className="text-2xl font-bold text-red-600">{stats.unpaid}</p>
+                )}
               </div>
               <Clock className="h-8 w-8 text-red-600" />
             </div>
@@ -298,7 +411,12 @@ const InvoiceManagement: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Partial</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.partially_paid}</p>
+                {/* show pending monetary total when available, otherwise show count */}
+                {statsData && (statsData.pending_amount_cents ?? statsData.pending_amount) ? (
+                  <p className="text-2xl font-bold text-yellow-600">{formatCurrency(((statsData.pending_amount_cents ?? statsData.pending_amount) || 0) / 100)}</p>
+                ) : (
+                  <p className="text-2xl font-bold text-yellow-600">{stats.partially_paid}</p>
+                )}
               </div>
               <AlertTriangle className="h-8 w-8 text-yellow-600" />
             </div>
@@ -310,7 +428,11 @@ const InvoiceManagement: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Overdue</p>
-                <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
+                {statsData && (statsData.overdue_amount_cents ?? statsData.overdue_amount) ? (
+                  <p className="text-2xl font-bold text-red-600">{formatCurrency(((statsData.overdue_amount_cents ?? statsData.overdue_amount) || 0) / 100)}</p>
+                ) : (
+                  <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
+                )}
               </div>
               <AlertTriangle className="h-8 w-8 text-red-600" />
             </div>
@@ -413,11 +535,13 @@ const InvoiceManagement: React.FC = () => {
                       <TableCell>
                         <div>
                           <p className="font-medium text-foreground">
-                            {invoice.fee_assignment?.template?.name || 'N/A'}
+                            {invoice.fee_assignment?.template?.name || '-'}
                           </p>
-                          <p className="text-sm text-muted-foreground">
-                            {invoice.fee_assignment?.template?.fee_type || 'N/A'}
-                          </p>
+                          {invoice.fee_assignment?.template?.fee_type ? (
+                            <p className="text-sm text-muted-foreground">
+                              {invoice.fee_assignment.template.fee_type}
+                            </p>
+                          ) : null}
                         </div>
                       </TableCell>
                       <TableCell className="font-semibold">
@@ -430,7 +554,7 @@ const InvoiceManagement: React.FC = () => {
                         {formatCurrency(invoice.pending_amount)}
                       </TableCell>
                       <TableCell>
-                        {new Date(invoice.due_date).toLocaleDateString()}
+                        {invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : '-'}
                       </TableCell>
                       <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                       <TableCell>
@@ -468,6 +592,30 @@ const InvoiceManagement: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination controls for invoices (placed under the table) */}
+      {invoicesMeta && (
+        <div className="flex items-center justify-end gap-2 p-4 mt-4 container mx-auto">
+          <div className="text-sm text-muted-foreground mr-auto">Total: {invoicesMeta.count}</div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleInvoicesPageChange((invoicesMeta.page || 1) - 1)}
+            disabled={!invoicesMeta.has_previous}
+          >
+            Prev
+          </Button>
+          <div className="px-3 text-sm">Page {invoicesMeta.page} of {invoicesMeta.total_pages}</div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleInvoicesPageChange((invoicesMeta.page || 1) + 1)}
+            disabled={!invoicesMeta.has_next}
+          >
+            Next
+          </Button>
+        </div>
+      )}
 
       {/* Invoice Details Dialog */}
       <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>

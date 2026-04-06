@@ -188,7 +188,14 @@ const handleApprove = async (index: number) => {
       Swal.fire("Error!", "Failed to approve the leave request.", "error");
     } else {
       Swal.fire("Approved!", "The leave request has been approved.", "success");
-      await fetchDashboardBootstrap(); // ✅ Refresh dashboard data
+      // Update local dashboard state using PATCH response to avoid full GET
+      if (res.pending_leaves_count !== undefined) {
+        setStats(prev => prev ? { ...prev, pending_leaves: res.pending_leaves_count } : prev);
+      }
+      if (res.updated_leave) {
+        // ensure UI shows reviewed status
+        updateLeaveStatus(index, res.updated_leave.status === 'APPROVED' ? 'Approved' : res.updated_leave.status === 'REJECTED' ? 'Rejected' : 'Pending');
+      }
     }
   } catch (err) {
     updateLeaveStatus(index, leave.status); // rollback
@@ -228,7 +235,13 @@ const handleApprove = async (index: number) => {
         Swal.fire("Error!", "Failed to reject the leave request.", "error");
       } else {
       Swal.fire("Rejected!", "The leave request has been rejected.", "success");
-      await fetchDashboardBootstrap(); // ✅ Refresh dashboard data
+      // Update local dashboard state using PATCH response to avoid full GET
+      if (res.pending_leaves_count !== undefined) {
+        setStats(prev => prev ? { ...prev, pending_leaves: res.pending_leaves_count } : prev);
+      }
+      if (res.updated_leave) {
+        updateLeaveStatus(index, res.updated_leave.status === 'APPROVED' ? 'Approved' : res.updated_leave.status === 'REJECTED' ? 'Rejected' : 'Pending');
+      }
       }
     } catch (err) {
       updateLeaveStatus(index, leave.status);

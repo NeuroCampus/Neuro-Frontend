@@ -1,6 +1,115 @@
 import { API_ENDPOINT } from "./config";
 import { fetchWithTokenRefresh } from "./authService";
 
+export interface AssignedSubject {
+  subject_id: string;
+  subject_name: string;
+  subject_code: string;
+  sections: Array<{ section: string; section_id: string; semester: number; semester_id: string; branch: string; branch_id: string }>;
+}
+
+export const getAssignedSubjectsGrouped = async (): Promise<{ success: boolean; data?: any; grouped?: AssignedSubject[]; message?: string }> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/assigned-subjects/`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return { success: false, message: (error as any).toString() };
+  }
+};
+
+export interface UploadStudyMaterialRequest {
+  title: string;
+  subject_id?: string;
+  subject_name?: string;
+  subject_code?: string;
+  semester_id: string;
+  branch_id: string;
+  section_id?: string;
+  file: File;
+}
+
+export const uploadStudyMaterial = async (data: UploadStudyMaterialRequest) => {
+  try {
+    if (!data.branch_id || !data.semester_id || !data.title || !data.file) {
+      throw new Error("Branch ID, Semester ID, Title, and File are required");
+    }
+    const formData = new FormData();
+    formData.append('title', data.title);
+    if (data.subject_id) formData.append('subject_id', data.subject_id);
+    formData.append('subject_name', data.subject_name || '');
+    formData.append('subject_code', data.subject_code || '');
+    formData.append('semester_id', data.semester_id);
+    formData.append('branch_id', data.branch_id);
+    if (data.section_id) formData.append('section_id', data.section_id);
+    formData.append('file', data.file);
+
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/study-materials/`, {
+      method: 'POST',
+      body: formData,
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return { success: false, message: (error as any).toString() };
+  }
+};
+
+export const getStudyMaterials = async (branch_id?: string, semester_id?: string, section_id?: string, search?: string) => {
+  try {
+    const params = new URLSearchParams();
+    if (branch_id) params.append('branch_id', branch_id);
+    if (semester_id) params.append('semester_id', semester_id);
+    if (section_id) params.append('section_id', section_id);
+    if (search) params.append('search', search);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/study-materials/${qs}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return { success: false, message: (error as any).toString() };
+  }
+};
+
+export const getBranches = async (): Promise<{ success: boolean; data?: { id: string; name: string }[]; message?: string }> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/branches/`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return { success: false, message: (error as any).toString() };
+  }
+};
+
+export const getSemesters = async (branch_id: string): Promise<{ success: boolean; data?: { id: string; number: number }[]; message?: string }> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/semesters/?branch_id=${branch_id}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return { success: false, message: (error as any).toString() };
+  }
+};
+
+export const getSections = async (branch_id: string, semester_id: string): Promise<{ success: boolean; data?: { id: string; name: string }[]; message?: string }> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/sections/?branch_id=${branch_id}&semester_id=${semester_id}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return { success: false, message: (error as any).toString() };
+  }
+};
+
 // In-flight request deduplication map to avoid duplicate network calls (useful in React StrictMode)
 const inflightRequests: Map<string, Promise<any>> = new Map();
 
@@ -291,6 +400,17 @@ export interface ManageProfileRequest {
   address?: string;
   bio?: string;
   profile_picture?: File;
+  // Faculty-specific fields
+  date_of_birth?: string; // YYYY-MM-DD
+  gender?: string;
+  department?: string;
+  designation?: string;
+  qualification?: string;
+  branch?: string | number;
+  branch_id?: number;
+  experience_years?: string | number;
+  office_location?: string;
+  office_hours?: string;
 }
 
 interface ManageProfileResponse {
@@ -788,6 +908,18 @@ export const manageProfile = async (
     if (data.address) formData.append("address", data.address);
     if (data.bio) formData.append("bio", data.bio);
     if (data.profile_picture) formData.append("profile_picture", data.profile_picture);
+    // Faculty-specific fields
+    if (data.date_of_birth) formData.append("date_of_birth", data.date_of_birth);
+    if (data.gender) formData.append("gender", data.gender);
+    if (data.department) formData.append("department", data.department);
+    if (data.designation) formData.append("designation", data.designation);
+    if (data.qualification) formData.append("qualification", data.qualification);
+    // prefer explicit branch_id when available
+    if (typeof data.branch_id !== 'undefined' && data.branch_id !== null) formData.append("branch_id", String(data.branch_id));
+    else if (typeof data.branch !== 'undefined' && data.branch !== null) formData.append("branch", String(data.branch));
+    if (typeof data.experience_years !== 'undefined' && data.experience_years !== null) formData.append("experience_years", String(data.experience_years));
+    if (data.office_location) formData.append("office_location", data.office_location);
+    if (data.office_hours) formData.append("office_hours", data.office_hours);
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/profile/`, {
       method: "POST",
       headers: {
@@ -1298,6 +1430,15 @@ export interface FacultyAttendanceRecord {
   status: string;
   marked_at: string;
   notes: string;
+  location?: AttendanceLocation | null;
+}
+
+export interface AttendanceLocation {
+  latitude?: number | null;
+  longitude?: number | null;
+  inside?: boolean | null;
+  distance_meters?: number | null;
+  campus_name?: string | null;
 }
 
 export interface GetFacultyAttendanceRecordsResponse {
@@ -1324,13 +1465,16 @@ export const markFacultyAttendance = async (
   data: MarkFacultyAttendanceRequest
 ): Promise<MarkFacultyAttendanceResponse> => {
   try {
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+    };
+    const bodyPayload = JSON.stringify(data);
+    if (bodyPayload) headers['Content-Type'] = 'application/json';
+
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/mark-attendance/`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
+      headers,
+      body: bodyPayload,
     });
     return await response.json();
   } catch (error) {
@@ -1408,6 +1552,14 @@ export interface StudentsForMarksResponse {
     };
   }>;
   question_paper?: number;
+  pagination?: {
+    page: number;
+    page_size: number;
+    total: number;
+    total_pages: number;
+    has_next: boolean;
+    has_previous: boolean;
+  };
 }
 
 export interface UploadIAMarksRequest {
@@ -1495,6 +1647,8 @@ export const getStudentsForMarks = async (params: {
   section_id?: string;
   subject_id?: string;
   test_type?: string;
+  page?: number;
+  page_size?: number;
 }): Promise<StudentsForMarksResponse> => {
   try {
     const query = new URLSearchParams();
@@ -1548,5 +1702,30 @@ export const updateQuestionPaper = async (id: number, data: CreateQPRequest): Pr
   } catch (error) {
     console.error("Update QP Error:", error);
     return { success: false };
+  }
+};
+
+export const submitQPForApproval = async (qpId: number, comment?: string): Promise<{ success: boolean; message: string }> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/qps/${qpId}/submit/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      },
+      body: JSON.stringify({ comment: comment || "" }),
+    });
+
+    const result = await response.json();
+    return {
+      success: response.ok,
+      message: result.message || (response.ok ? "QP submitted for approval" : "Failed to submit QP"),
+    };
+  } catch (error) {
+    console.error("Submit QP Error:", error);
+    return {
+      success: false,
+      message: "Network error while submitting QP",
+    };
   }
 };

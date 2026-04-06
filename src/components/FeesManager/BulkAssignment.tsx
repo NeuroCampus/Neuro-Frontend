@@ -116,7 +116,7 @@ const BulkAssignment: React.FC = () => {
         fetch('http://127.0.0.1:8000/api/fees-manager/bulk-assignment-stats/', {
           headers: { 'Authorization': `Bearer ${token}` },
         }),
-        fetch('http://127.0.0.1:8000/api/fees-manager/fee-templates/', {
+        fetch('http://127.0.0.1:8000/api/fees-manager/fee-templates/?page=1&page_size=200', {
           headers: { 'Authorization': `Bearer ${token}` },
         }),
       ]);
@@ -246,7 +246,7 @@ const BulkAssignment: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="container mx-auto p-0">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Bulk Fee Assignment</h1>
@@ -316,11 +316,11 @@ const BulkAssignment: React.FC = () => {
                       <SelectValue placeholder="Select template" />
                     </SelectTrigger>
                     <SelectContent>
-                      {templates.map((template) => (
-                        <SelectItem key={template.id} value={template.id.toString()}>
-                          {template.name} - {formatCurrency(template.total_amount)}
-                        </SelectItem>
-                      ))}
+                          {templates.map((template) => (
+                            <SelectItem key={template.id} value={template.id.toString()}>
+                              {template.name} - {formatCurrency((template.total_amount_cents != null ? Number(template.total_amount_cents) / 100 : (template.total_amount != null ? Number(template.total_amount) : 0)))}
+                            </SelectItem>
+                          ))}
                     </SelectContent>
                   </Select>
                 </div>

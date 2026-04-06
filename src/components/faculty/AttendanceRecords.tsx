@@ -100,11 +100,8 @@ const AttendanceRecords = () => {
     setAbsentList([]);
     setPdfUrl(null);
 
-    if (!record.branch_id || !record.section_id || !record.subject_id) {
-      setDetailsError("Missing class or subject ID for this record.");
-      setLoadingDetails(false);
-      return;
-    }
+    // Allow viewing details using the record id even when branch/section/subject IDs
+    // are not present (open electives or legacy records may omit them).
 
     getAttendanceRecordDetails(record.id)
       .then((res) => {
@@ -316,19 +313,21 @@ const AttendanceRecords = () => {
                                       Download PDF
                                     </a>
                                   )}
-                                  <Button
-                                    className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out text-sm px-3 py-1.5"
-                                    onClick={handleExportPdf}
-                                    disabled={exporting}
-                                  >
-                                    {exporting ? (
-                                      <div className="flex items-center">
-                                        <Loader2 className="animate-spin mr-1 h-3 w-3" size={12} /> Exporting...
-                                      </div>
-                                    ) : (
-                                      "Export to PDF"
-                                    )}
-                                  </Button>
+                                  {selectedRecord && selectedRecord.summary && selectedRecord.summary.total_count > 0 && (
+                                    <Button
+                                      className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out text-sm px-3 py-1.5"
+                                      onClick={handleExportPdf}
+                                      disabled={exporting}
+                                    >
+                                      {exporting ? (
+                                        <div className="flex items-center">
+                                          <Loader2 className="animate-spin mr-1 h-3 w-3" size={12} /> Exporting...
+                                        </div>
+                                      ) : (
+                                        "Export to PDF"
+                                      )}
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
                             </div>

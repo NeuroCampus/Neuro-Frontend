@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -74,12 +74,21 @@ const PaymentMonitoring: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [methodFilter, setMethodFilter] = useState('all');
   const [dateRange, setDateRange] = useState('all');
+
+  // Helper to normalize amounts (cents or direct amounts) to rupees
+  const toRupees = (centsOrAmount: any) => {
+    if (centsOrAmount === null || centsOrAmount === undefined) return 0;
+    if (Number.isInteger(centsOrAmount)) return centsOrAmount / 100;
+    const n = Number(centsOrAmount);
+    return isNaN(n) ? 0 : n;
+  };
 
   useEffect(() => {
     fetchData();
@@ -109,8 +118,29 @@ const PaymentMonitoring: React.FC = () => {
         statsRes.json(),
       ]);
 
-      setPayments(paymentsData.data || []);
-      setStats(statsData.data);
+      // Normalize monetary fields from cents when present
+      const normalize = (p: any) => ({
+        ...p,
+        amount: toRupees(p.amount_cents ?? p.amount),
+        payment_method: p.mode ?? p.payment_method ?? 'N/A',
+        payment_date: p.timestamp ?? p.payment_date ?? p.created_at ?? null,
+        created_at: p.created_at ?? p.timestamp ?? null,
+        updated_at: p.updated_at ?? p.timestamp ?? null,
+      });
+
+      const normalizedPayments = (paymentsData.data || []).map((p: any) => normalize(p));
+
+      const s = statsData.data || {};
+      const normalizedStats = {
+        ...s,
+        total_amount: toRupees(s.total_amount_cents ?? s.total_amount),
+        today_amount: toRupees(s.today_amount_cents ?? s.today_amount),
+        monthly_amount: toRupees(s.monthly_amount_cents ?? s.monthly_amount),
+        refunded_amount: toRupees(s.refunded_amount_cents ?? s.refunded_amount),
+      };
+
+      setPayments(normalizedPayments || []);
+      setStats(normalizedStats);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -119,7 +149,13 @@ const PaymentMonitoring: React.FC = () => {
   };
 
   const fetchPaymentDetails = async (paymentId: number) => {
+    // Open dialog immediately so the button always responds and user sees loading
+    console.debug('fetchPaymentDetails start for', paymentId);
+    setSelectedPayment(null);
+    setIsDetailLoading(true);
+    setIsDetailsDialogOpen(true);
     try {
+      console.debug('fetchPaymentDetails called for', paymentId);
       const token = localStorage.getItem('access_token');
 
       const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/payments/${paymentId}/`, {
@@ -127,16 +163,55 @@ const PaymentMonitoring: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch payment details');
+        const text = await response.text();
+        console.error('Failed to fetch payment details', response.status, text);
+        throw new Error(`Failed to fetch payment details: ${response.status}`);
       }
 
-      const data = await response.json();
-      setSelectedPayment(data.data);
-      setIsDetailsDialogOpen(true);
+      const rawText = await response.text();
+      console.debug('payment detail raw response text:', rawText);
+      let data = null;
+      try { data = rawText ? JSON.parse(rawText) : null; } catch (e) { data = null; }
+      // Normalize detail response to match UI expectations
+      const p = (data && data.data) ? data.data : (data ?? {});
+      const normalized = {
+        ...p,
+        amount: toRupees(p.amount_cents ?? p.amount),
+        payment_method: p.mode ?? p.payment_method ?? 'N/A',
+        payment_date: p.timestamp ?? p.payment_date ?? p.created_at ?? null,
+        created_at: p.created_at ?? p.timestamp ?? null,
+        updated_at: p.updated_at ?? p.timestamp ?? null,
+      };
+      // Ensure invoice and nested fields exist to avoid render crashes
+      if (!normalized.invoice) {
+        normalized.invoice = {
+          id: null,
+          invoice_number: 'N/A',
+          student: { id: null, name: 'N/A', usn: '', department: '', semester: '' },
+          fee_assignment: { template: { name: 'N/A', fee_type: '' } },
+        } as any;
+      } else {
+        normalized.invoice.student = normalized.invoice.student || { id: null, name: 'N/A', usn: '', department: '', semester: '' };
+        normalized.invoice.fee_assignment = normalized.invoice.fee_assignment || { template: { name: 'N/A', fee_type: '' } };
+        normalized.invoice.student.department = normalized.invoice.student.department || normalized.invoice.student.branch || '';
+        normalized.invoice.student.semester = normalized.invoice.student.semester || '';
+      }
+
+      console.debug('normalized payment detail:', normalized);
+      setSelectedPayment(normalized);
+      setIsDetailLoading(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch payment details');
+      // Close the dialog if we couldn't fetch details
+      setIsDetailLoading(false);
+      setIsDetailsDialogOpen(false);
     }
   };
+
+  // debug: log when dialog open state or selected payment changes
+  useEffect(() => {
+    console.debug('Details dialog open:', isDetailsDialogOpen, 'selectedPayment:', selectedPayment, 'loading:', isDetailLoading);
+  }, [isDetailsDialogOpen, selectedPayment, isDetailLoading]);
 
   const processRefund = async (paymentId: number) => {
     if (!confirm('Are you sure you want to process a refund for this payment?')) return;
@@ -259,7 +334,7 @@ const PaymentMonitoring: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="container mx-auto p-0">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Payment Monitoring</h1>
@@ -530,6 +605,7 @@ const PaymentMonitoring: React.FC = () => {
               <CreditCard className="h-5 w-5" />
               Payment Details
             </DialogTitle>
+                <DialogDescription className="sr-only">Details for the selected payment</DialogDescription>
           </DialogHeader>
 
           {selectedPayment && (
@@ -545,10 +621,10 @@ const PaymentMonitoring: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-2 text-foreground">Payment Information</h3>
-                  <p className="text-foreground"><strong>Invoice:</strong> {selectedPayment.invoice.invoice_number}</p>
-                  <p className="text-foreground"><strong>Fee Type:</strong> {selectedPayment.invoice.fee_assignment.template.name}</p>
-                  <p className="text-foreground"><strong>Amount:</strong> {formatCurrency(selectedPayment.amount)}</p>
-                  <p className="text-foreground"><strong>Status:</strong> {getStatusBadge(selectedPayment.status)}</p>
+                  <div className="text-foreground"><strong>Invoice:</strong> {selectedPayment.invoice?.invoice_number || 'N/A'}</div>
+                  <div className="text-foreground"><strong>Fee Type:</strong> {selectedPayment.invoice?.fee_assignment?.template?.name || 'N/A'}</div>
+                  <div className="text-foreground"><strong>Amount:</strong> {formatCurrency(selectedPayment.amount)}</div>
+                  <div className="text-foreground"><strong>Status:</strong> {getStatusBadge(selectedPayment.status)}</div>
                 </div>
               </div>
 

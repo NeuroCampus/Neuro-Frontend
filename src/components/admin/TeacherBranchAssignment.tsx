@@ -23,6 +23,7 @@ import { Badge } from "../ui/badge";
 import { fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
 import { useToast } from "../../hooks/use-toast";
+import { useTheme } from "../../context/ThemeContext";
 
 // Custom SelectContent components without scroll arrows
 const CustomSelectContent = forwardRef<
@@ -83,6 +84,7 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
+  const { theme } = useTheme();
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [showBranchDialog, setShowBranchDialog] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<string>("");
@@ -193,6 +195,7 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
         }
         setShowBranchDialog(false);
         setSelectedBranch("");
+        fetchTeacherAssignments();
       } else {
         setError(result.message || "Failed to assign branch");
       }
@@ -204,133 +207,149 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <div className={`text-center py-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+        Loading...
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Faculty-Branch Assignments</h2>
-        <Button
-          onClick={() => setShowBranchDialog(true)}
-          className="flex items-center gap-2 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white"
-        >
-          <Building className="h-4 w-4" />
-          Assign Primary Branch
-        </Button>
-      </div>
-
-      {/* Search and Filter Controls */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
-        <div className="flex gap-2">
-          <Input
-            placeholder="Search teachers by name or email..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyPress={handleSearchKeyPress}
-            className="w-64"
-          />
-          <Button
-            onClick={performSearch}
-            variant="outline"
-            size="sm"
-            className="px-3"
-          >
-            <Search className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="sm:w-48">
-          <Select value={branchFilter || "all"} onValueChange={(value) => setBranchFilter(value === "all" ? "" : value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by branch" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Branches</SelectItem>
-              {branches.map((branch) => (
-                <SelectItem key={branch.id} value={branch.id.toString()}>
-                  {branch.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="max-h-[calc(100vh-28rem)] sm:max-h-[calc(100vh-26rem)] md:max-h-[calc(100vh-24rem)] lg:max-h-[calc(100vh-22rem)] overflow-y-auto custom-scrollbar pr-2">
-        <div className="grid gap-4">
-          {teachers.map((teacher) => (
-            <Card key={teacher.id} className="p-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-lg font-semibold">
-                    {teacher.first_name} {teacher.last_name}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{teacher.email}</p>
-                  <p className="text-sm font-medium mt-1">
-                    Branch: {teacher.primary_branch ? teacher.primary_branch.name : "Not Assigned"}
-                  </p>
-                </div>
-                <Badge variant={teacher.primary_branch ? "default" : "secondary"}>
-                  {teacher.primary_branch ? teacher.primary_branch.name : "No Primary Branch"}
-                </Badge>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* Pagination Info - moved to bottom */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-600 mt-4">
-        <div>
-          Showing {Math.min((currentPage - 1) * 10 + 1, totalCount)} to {Math.min(currentPage * 10, totalCount)} of {totalCount} teachers
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </Button>
-
-          {/* Page Numbers */}
-          <div className="flex gap-1">
-            {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
-              const startPage = Math.max(1, Math.min(totalPages - 6, currentPage - 3));
-              const pageNum = startPage + i;
-              if (pageNum > totalPages) return null;
-              return (
-                <Button
-                  key={pageNum}
-                  variant={currentPage === pageNum ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setCurrentPage(pageNum)}
-                  className={`w-8 h-8 p-0 ${currentPage === pageNum ? 'bg-[#a259ff] hover:bg-[#a259ff]/90 text-white' : ''}`}
-                >
-                  {pageNum}
-                </Button>
-              );
-            })}
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+      <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}>
+        <CardHeader>
+          <div className="w-full flex items-start justify-between">
+            <div>
+              <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Faculty-Branch Assignments</CardTitle>
+              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Assign primary branches to faculty members</p>
+            </div>
+            <div>
+              <Button
+                onClick={() => setShowBranchDialog(true)}
+                className="flex items-center gap-2 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white"
+              >
+                <Building className="h-4 w-4" />
+                Assign Primary Branch
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Search and Filter Controls */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Search teachers by name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={handleSearchKeyPress}
+                className="w-64"
+              />
+              <Button
+                onClick={performSearch}
+                variant="outline"
+                size="sm"
+                className="px-3"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="sm:w-48">
+              <Select value={branchFilter || "all"} onValueChange={(value) => setBranchFilter(value === "all" ? "" : value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filter by branch" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Branches</SelectItem>
+                  {branches.map((branch) => (
+                    <SelectItem key={branch.id} value={branch.id.toString()}>
+                      {branch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+          <div className="max-h-[calc(100vh-28rem)] sm:max-h-[calc(100vh-26rem)] md:max-h-[calc(100vh-24rem)] lg:max-h-[calc(100vh-22rem)] overflow-y-auto custom-scrollbar pr-2">
+            <div className="grid grid-cols-1 gap-2 sm:gap-4">
+              {teachers.map((teacher) => (
+                <Card key={teacher.id} className="p-2 sm:p-4">
+                  <div className="flex flex-col sm:flex-row sm:justify-between items-start gap-2">
+                    <div>
+                      <h3 className="text-sm sm:text-lg font-semibold">
+                        {teacher.first_name} {teacher.last_name}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{teacher.email}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Branch: {teacher.primary_branch && teacher.primary_branch.name ? teacher.primary_branch.name : "Not Assigned"}
+                      </p>
+                    </div>
+                    {teacher.primary_branch && teacher.primary_branch.name ? (
+                      <Badge className={theme === 'dark' ? 'bg-purple-700 text-white border-transparent text-xs' : 'bg-purple-100 text-purple-800 border-transparent text-xs'}>
+                        {teacher.primary_branch.name}
+                      </Badge>
+                    ) : (
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${theme === 'dark' ? 'bg-gray-700 text-gray-200' : 'bg-purple-50 text-purple-700'}`}>
+                        Not Assigned
+                      </span>
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          {/* Pagination Info - moved to bottom */}
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-600 mt-4">
+            <div>
+              Showing {Math.min((currentPage - 1) * 10 + 1, totalCount)} to {Math.min(currentPage * 10, totalCount)} of {totalCount} teachers
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+
+              {/* Page Numbers */}
+              <div className="flex gap-1">
+                {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
+                  const startPage = Math.max(1, Math.min(totalPages - 6, currentPage - 3));
+                  const pageNum = startPage + i;
+                  if (pageNum > totalPages) return null;
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-8 h-8 p-0 ${currentPage === pageNum ? 'bg-[#a259ff] hover:bg-[#a259ff]/90 text-white' : ''}`}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Primary Branch Assignment Dialog */}
       <Dialog open={showBranchDialog} onOpenChange={setShowBranchDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-full max-w-[320px] mx-4 rounded-lg sm:rounded-md sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Assign Primary Branch</DialogTitle>
           </DialogHeader>
@@ -374,7 +393,11 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
             <Button variant="outline" onClick={() => setShowBranchDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAssignPrimaryBranch} disabled={!selectedTeacher || !selectedBranch} className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white">
+            <Button
+              onClick={handleAssignPrimaryBranch}
+              disabled={!selectedTeacher || !selectedBranch}
+              className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white"
+            >
               Assign Branch
             </Button>
           </DialogFooter>

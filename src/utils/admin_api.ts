@@ -137,6 +137,16 @@ interface ManageHODLeavesResponse {
   success: boolean;
   message?: string;
   leaves?: HODLeave[];
+  leave?: {
+    id: number;
+    hod_name: string;
+    branch: string;
+    start_date: string;
+    end_date: string;
+    reason: string;
+    status: string;
+    submitted_at: string;
+  };
   calendar?: { date: string; leaves: { id: number; hod: string; status: string }[] }[];
 }
 
@@ -275,13 +285,16 @@ export const manageBranches = async (
       if (params.toString()) url += `?${params.toString()}`;
     }
     
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+    };
+    const bodyPayload = (method !== "GET" && data) ? JSON.stringify(data) : undefined;
+    if (bodyPayload) headers['Content-Type'] = 'application/json';
+
     const response = await fetchWithTokenRefresh(url, {
       method,
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        "Content-Type": "application/json",
-      },
-      body: (method !== "GET" && data) ? JSON.stringify(data) : undefined,
+      headers,
+      body: bodyPayload,
     });
     const result = await response.json();
     if (!response.ok) {
@@ -514,6 +527,20 @@ interface ManageUserActionRequest {
 interface ManageUserActionResponse {
   success: boolean;
   message?: string;
+  user?: {
+    id: number;
+    username: string;
+    email: string;
+    role: string;
+    first_name: string;
+    last_name: string;
+    is_active: boolean;
+    extra: {
+      usn?: string;
+      branch?: string;
+      branches?: string[];
+    };
+  };
 }
 
 export const manageUserAction = async (data: ManageUserActionRequest): Promise<ManageUserActionResponse> => {

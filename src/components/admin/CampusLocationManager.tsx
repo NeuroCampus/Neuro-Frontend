@@ -9,6 +9,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, MapPin, Save, Plus, Edit, Trash2 } from 'lucide-react';
 import { manageCampusLocation } from '@/utils/admin_api';
 import { toast } from 'sonner';
+import { useTheme } from '../../context/ThemeContext';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 interface CampusLocation {
   id: number;
@@ -60,7 +62,6 @@ const CampusLocationManager: React.FC = () => {
   const markerRef = useRef<any>(null);
   const circleRef = useRef<any>(null);
 
-  const [searchAvailable, setSearchAvailable] = useState(false);
 
   const [useIframe, setUseIframe] = useState(false);
   const [iframeUrl, setIframeUrl] = useState('');
@@ -119,6 +120,25 @@ const CampusLocationManager: React.FC = () => {
       setMapError(null);
     }
   }, []);
+
+  const reloadGoogleMaps = () => {
+    // Remove existing maps script and retry loading
+    const existing = document.querySelectorAll('script[src*="maps.googleapis.com"]');
+    existing.forEach(s => s.remove());
+    setMapLoaded(false);
+    setMapError(null);
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    if (!apiKey || apiKey === 'your_google_maps_api_key_here') {
+      setMapError('Google Maps API key is not configured. Please add a valid API key to your .env file.');
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initMap`;
+    script.async = true;
+    script.defer = true;
+    script.onerror = () => setMapError('Failed to load Google Maps. Check API key, billing, referer restrictions, or disable adblockers.');
+    document.head.appendChild(script);
+  };
 
   // Initialize map when component mounts and Google Maps is loaded
   useEffect(() => {
@@ -309,8 +329,23 @@ const CampusLocationManager: React.FC = () => {
     setLoading(true);
     try {
       const response = await manageCampusLocation();
-      if (response.success && response.locations) {
-        setLocations(response.locations);
+      // Support multiple response shapes:
+      // - { success, locations: [...] }
+      // - paginated: { count, next, previous, results: [...] }
+      // - paginated with wrapped results: { count, ..., results: { success, locations: [...] } }
+      let locationsData: any[] = [];
+      if (response.locations && Array.isArray(response.locations)) {
+        locationsData = response.locations;
+      } else if (response.results) {
+        if (Array.isArray(response.results)) {
+          locationsData = response.results;
+        } else if (response.results.locations && Array.isArray(response.results.locations)) {
+          locationsData = response.results.locations;
+        }
+      }
+
+      if (locationsData.length > 0) {
+        setLocations(locationsData);
       } else {
         toast.error(response.message || 'Failed to load campus locations');
       }
@@ -442,12 +477,14 @@ const CampusLocationManager: React.FC = () => {
             errorMessage = 'Location access denied. Please enable location permissions.';
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Location information is unavailable.';
+            errorMessage = 'Location information is unavailable. On macOS, enable Location Services for your browser (System Settings → Privacy & Security → Location Services). Also ensure Wi‑Fi is on or test on a mobile device.';
             break;
           case error.TIMEOUT:
             errorMessage = 'Location request timed out.';
             break;
         }
+        // Also show a persistent hint in the map area
+        setMapError(prev => prev || errorMessage);
         toast.error(errorMessage);
       },
       {
@@ -458,273 +495,191 @@ const CampusLocationManager: React.FC = () => {
     );
   };
 
+  const { theme } = useTheme();
+
   useEffect(() => {
     loadLocations();
   }, []);
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Campus Location Management</h2>
-          <p className="text-gray-600">Set and manage campus boundaries for geolocation-based attendance</p>
+    <div className={`p-4 sm:p-6 min-h-screen text-sm sm:text-base max-w-[390px] sm:max-w-none mx-auto ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200 rounded-lg'}`}>
+      <div className="space-y-6">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className={`text-lg sm:text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Campus Location Management</h2>
+            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Set and manage campus boundaries for geolocation-based attendance</p>
+          </div>
+          <div>
+            <Button onClick={() => setShowForm(true)} className="flex items-center gap-2 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white">
+              <Plus className="h-4 w-4" />
+              Add Location
+            </Button>
+          </div>
         </div>
-        <Button onClick={() => setShowForm(true)} disabled={showForm}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Location
-        </Button>
-      </div>
 
-      {showForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{editingLocation ? 'Edit' : 'Add'} Campus Location</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">Name *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    required
-                  />
+        <Dialog open={showForm} onOpenChange={setShowForm}>
+          <DialogContent className={theme === 'dark' ? 'bg-card border border-border text-foreground w-[92%] max-w-[720px] rounded-lg mx-auto max-h-[90vh] sm:max-h-[80vh] md:max-h-[70vh] overflow-auto' : 'bg-white border border-gray-200 text-gray-900 w-[92%] max-w-[720px] rounded-lg mx-auto max-h-[90vh] sm:max-h-[80vh] md:max-h-[70vh] overflow-auto'}>
+            <DialogHeader>
+              <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{editingLocation ? 'Edit' : 'Add'} Campus Location</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name">Name *</Label>
+                    <Input id="name" value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} required />
+                  </div>
+                  <div>
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea id="description" value={formData.description} onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))} rows={2} />
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    rows={2}
-                  />
-                </div>
-              </div>
 
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="is_active"
-                  checked={formData.is_active}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
-                />
-                <Label htmlFor="is_active">Active Location</Label>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="center_latitude">Center Latitude *</Label>
-                  <Input
-                    id="center_latitude"
-                    type="number"
-                    step="any"
-                    value={formData.center_latitude}
-                    onChange={(e) => setFormData(prev => ({ ...prev, center_latitude: parseFloat(e.target.value) || 0 }))}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="center_longitude">Center Longitude *</Label>
-                  <Input
-                    id="center_longitude"
-                    type="number"
-                    step="any"
-                    value={formData.center_longitude}
-                    onChange={(e) => setFormData(prev => ({ ...prev, center_longitude: parseFloat(e.target.value) || 0 }))}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="radius_meters">Radius (meters) *</Label>
-                  <Input
-                    id="radius_meters"
-                    type="number"
-                    min="10"
-                    max="5000"
-                    value={formData.radius_meters}
-                    onChange={(e) => handleRadiusChange(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <Alert>
-                <MapPin className="h-4 w-4" />
-                <AlertDescription>
-                  {useIframe ? (
-                    "Use the coordinate fields above to set the campus center location. The map shows the current location."
-                  ) : (
-                    "Use the map below to set the campus center location. Click on the map or drag the marker to position it. The red circle shows the attendance boundary area."
-                  )}
-                </AlertDescription>
-              </Alert>
-
-              {/* Map Mode Toggle */}
-              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
-                  <Switch
-                    id="map-mode"
-                    checked={useIframe}
-                    onCheckedChange={setUseIframe}
-                  />
-                  <Label htmlFor="map-mode">Use Simple Map View (Iframe)</Label>
+                  <Switch id="is_active" checked={formData.is_active} onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))} />
+                  <Label htmlFor="is_active">Active Location</Label>
                 </div>
-                {useIframe && (
-                  <div className="text-sm text-gray-600">
-                    Note: Iframe mode has limited interactivity. Use coordinates above to set location.
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="center_latitude">Center Latitude *</Label>
+                    <Input id="center_latitude" type="number" step="any" value={formData.center_latitude} onChange={(e) => setFormData(prev => ({ ...prev, center_latitude: parseFloat(e.target.value) || 0 }))} required />
+                  </div>
+                  <div>
+                    <Label htmlFor="center_longitude">Center Longitude *</Label>
+                    <Input id="center_longitude" type="number" step="any" value={formData.center_longitude} onChange={(e) => setFormData(prev => ({ ...prev, center_longitude: parseFloat(e.target.value) || 0 }))} required />
+                  </div>
+                  <div>
+                    <Label htmlFor="radius_meters">Radius (meters) *</Label>
+                    <Input id="radius_meters" type="number" min="10" max="5000" value={formData.radius_meters} onChange={(e) => handleRadiusChange(e.target.value)} required />
+                  </div>
+                </div>
+
+                <Alert>
+                  <MapPin className="h-4 w-4" />
+                  <AlertDescription>
+                    {useIframe ? (
+                      "Use the coordinate fields above to set the campus center location. The map shows the current location."
+                    ) : (
+                      "Use the map below to set the campus center location. Click on the map or drag the marker to position it. The red circle shows the attendance boundary area."
+                    )}
+                  </AlertDescription>
+                </Alert>
+
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch id="map-mode" checked={useIframe} onCheckedChange={setUseIframe} />
+                    <Label htmlFor="map-mode">Use Simple Map View (Iframe)</Label>
+                  </div>
+                  {useIframe && (
+                    <div className="text-sm text-gray-600">Note: Iframe mode has limited interactivity. Use coordinates above to set location.</div>
+                  )}
+                </div>
+
+                {!useIframe && (
+                  <div className="flex gap-2 mb-4">
+                    <div className="flex-1 relative">
+                      <Input ref={searchBoxRef} type="text" placeholder="Search for a location (e.g., 'Bangalore University')..." className="w-full pr-10" />
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <Button type="button" variant="outline" onClick={getCurrentLocation} className="flex items-center gap-2 whitespace-nowrap">
+                      <MapPin className="w-4 h-4" />
+                      Current Location
+                    </Button>
                   </div>
                 )}
-              </div>
 
-              {/* Search and Location Controls - Only show when not using iframe */}
-              {!useIframe && (
-                <div className="flex gap-2 mb-4">
-                  <div className="flex-1 relative">
-                    <Input
-                      ref={searchBoxRef}
-                      type="text"
-                      placeholder="Search for a location (e.g., 'Bangalore University')..."
-                      className="w-full pr-10"
-                    />
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
+                <div className="w-full border rounded-lg overflow-hidden h-[40vh] sm:h-[50vh] md:h-[60vh]">
+                  {useIframe ? (
+                    <iframe src={iframeUrl} width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" title="Campus Location Map" />
+                  ) : mapError ? (
+                    <div className="flex flex-col items-center justify-center h-full bg-red-50 border-2 border-red-200 rounded-lg">
+                      <div className="text-red-600 text-center p-4">
+                        <MapPin className="w-12 h-12 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">Google Maps Error</h3>
+                            <p className="text-sm mb-4">{mapError}</p>
+                            <div className="flex gap-2 justify-center mt-2">
+                              <Button size="sm" variant="ghost" onClick={() => setUseIframe(true)}>Open Simple Map View</Button>
+                              <Button size="sm" variant="outline" onClick={() => reloadGoogleMaps()}>Retry Maps</Button>
+                              <Button size="sm" variant="ghost" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${formData.center_latitude},${formData.center_longitude}`, '_blank')}>Open Google Maps</Button>
+                            </div>
+                            <div className="text-xs text-left mt-3 text-gray-600">
+                              <p>If you have an adblocker or privacy extension, try disabling it for this site. Ensure the Maps API key has the Maps JavaScript API and Places API enabled and allows localhost in referer restrictions while testing.</p>
+                            </div>
+                      </div>
                     </div>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={getCurrentLocation}
-                    className="flex items-center gap-2 whitespace-nowrap"
-                  >
-                    <MapPin className="w-4 h-4" />
-                    Current Location
+                  ) : (
+                    <>
+                      <div ref={mapRef} className="h-full w-full" />
+                      {!mapLoaded && !mapError && (
+                        <div className="flex items-center justify-center h-full bg-gray-100">
+                          <Loader2 className="w-8 h-8 animate-spin" />
+                          <span className="ml-2">Loading Google Maps...</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                <div className="flex justify-end space-x-2">
+                  <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+                  <Button type="submit" disabled={saving}>
+                    {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    <Save className="w-4 h-4 mr-2" />
+                    {editingLocation ? 'Update' : 'Create'} Location
                   </Button>
                 </div>
-              )}
+              </form>
+            </div>
+            <DialogFooter />
+          </DialogContent>
+        </Dialog>
 
-              <div className="h-96 w-full border rounded-lg overflow-hidden">
-                {useIframe ? (
-                  <iframe
-                    src={iframeUrl}
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title="Campus Location Map"
-                  />
-                ) : mapError ? (
-                  <div className="flex flex-col items-center justify-center h-full bg-red-50 border-2 border-red-200 rounded-lg">
-                    <div className="text-red-600 text-center p-4">
-                      <MapPin className="w-12 h-12 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">Google Maps Error</h3>
-                      <p className="text-sm mb-4">{mapError}</p>
-                      <div className="text-xs text-gray-600 space-y-1">
-                        <p><strong>To fix this:</strong></p>
-                        <ol className="list-decimal list-inside text-left">
-                          <li>Get a Google Maps API key from <a href="https://console.cloud.google.com/google/maps-apis" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Google Cloud Console</a></li>
-                          <li>Enable Maps JavaScript API for your project</li>
-                          <li>Add the API key to your .env file as VITE_GOOGLE_MAPS_API_KEY</li>
-                          <li>Restrict the API key to your domain for security</li>
-                          <li>See <code className="bg-gray-100 px-1 rounded">GOOGLE_MAPS_SETUP.md</code> for detailed instructions</li>
-                        </ol>
+        <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}>
+          <CardHeader>
+            <CardTitle className={`text-base sm:text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Campus Locations</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin" />
+                <span className="ml-2">Loading locations...</span>
+              </div>
+            ) : locations.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">No campus locations configured yet.</div>
+            ) : (
+              <div className="space-y-4">
+                {locations.map((location) => (
+                  <div key={location.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <h3 className="font-semibold">{location.name}</h3>
+                          {location.is_active && <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Active</span>}
+                        </div>
+                        {location.description && <p className="text-gray-600 mt-1">{location.description}</p>}
+                        <div className="mt-2 text-sm text-gray-500">
+                          <p>Center: {location.center_latitude.toFixed(6)}, {location.center_longitude.toFixed(6)}</p>
+                          <p>Radius: {location.radius_meters} meters</p>
+                          <p>Created: {new Date(location.created_at).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button variant="outline" size="sm" onClick={() => handleEdit(location)} disabled={showForm}><Edit className="w-4 h-4" /></Button>
+                        <Button variant="outline" size="sm" onClick={() => handleDelete(location)} className="text-red-600 hover:text-red-700"><Trash2 className="w-4 h-4" /></Button>
                       </div>
                     </div>
                   </div>
-                ) : (
-                  <>
-                    <div ref={mapRef} className="h-full w-full" />
-                    {!mapLoaded && !mapError && (
-                      <div className="flex items-center justify-center h-full bg-gray-100">
-                        <Loader2 className="w-8 h-8 animate-spin" />
-                        <span className="ml-2">Loading Google Maps...</span>
-                      </div>
-                    )}
-                  </>
-                )}
+                ))}
               </div>
-
-              <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={handleCancel}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={saving}>
-                  {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  <Save className="w-4 h-4 mr-2" />
-                  {editingLocation ? 'Update' : 'Create'} Location
-                </Button>
-              </div>
-            </form>
+            )}
           </CardContent>
         </Card>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Campus Locations</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-8 h-8 animate-spin" />
-              <span className="ml-2">Loading locations...</span>
-            </div>
-          ) : locations.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No campus locations configured yet.
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {locations.map((location) => (
-                <div key={location.id} className="border rounded-lg p-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <h3 className="font-semibold">{location.name}</h3>
-                        {location.is_active && (
-                          <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                            Active
-                          </span>
-                        )}
-                      </div>
-                      {location.description && (
-                        <p className="text-gray-600 mt-1">{location.description}</p>
-                      )}
-                      <div className="mt-2 text-sm text-gray-500">
-                        <p>Center: {location.center_latitude.toFixed(6)}, {location.center_longitude.toFixed(6)}</p>
-                        <p>Radius: {location.radius_meters} meters</p>
-                        <p>Created: {new Date(location.created_at).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(location)}
-                        disabled={showForm}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(location)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      </div>
     </div>
   );
 };

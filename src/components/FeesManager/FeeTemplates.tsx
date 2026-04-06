@@ -47,6 +47,10 @@ interface FeeTemplate {
 const FeeTemplates: React.FC = () => {
   const { theme } = useTheme(); // Using theme context
   const [templates, setTemplates] = useState<FeeTemplate[]>([]);
+  const [templatesPage, setTemplatesPage] = useState(1);
+  const [templatesPageSize] = useState(25);
+  const [templatesTotalPages, setTemplatesTotalPages] = useState(1);
+  const [templatesTotalCount, setTemplatesTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -70,14 +74,30 @@ const FeeTemplates: React.FC = () => {
   const [availableComponents, setAvailableComponents] = useState<FeeComponent[]>([]);
 
   useEffect(() => {
-    fetchTemplates();
-    fetchAvailableComponents();
+    fetchTemplates(templatesPage);
+    const onComponentsChanged = (e: any) => {
+      const detail = e?.detail || {};
+      const action = detail.action;
+      if (!action) return;
+      if (action === 'create' && detail.item) {
+        setAvailableComponents(prev => [{
+          ...detail.item,
+          amount: (detail.item.amount_cents != null ? Number(detail.item.amount_cents) / 100 : (detail.item.amount ? Math.round(detail.item.amount * 100) / 100 : 0))
+        }, ...prev]);
+      } else if (action === 'update' && detail.item) {
+        setAvailableComponents(prev => prev.map(c => (c.id === detail.item.id ? { ...detail.item, amount: (detail.item.amount_cents != null ? Number(detail.item.amount_cents) / 100 : (detail.item.amount ? Math.round(detail.item.amount * 100) / 100 : 0)) } : c)));
+      } else if (action === 'delete' && detail.id) {
+        setAvailableComponents(prev => prev.filter(c => c.id !== detail.id));
+      }
+    };
+    window.addEventListener('feeComponents:changed', onComponentsChanged);
+    return () => window.removeEventListener('feeComponents:changed', onComponentsChanged);
   }, []);
 
   const fetchAvailableComponents = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch('http://127.0.0.1:8000/api/fees-manager/components/', {
+      const response = await fetch('http://127.0.0.1:8000/api/fees-manager/components/?page=1&page_size=200', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -89,17 +109,20 @@ const FeeTemplates: React.FC = () => {
       }
 
       const data = await response.json();
-      setAvailableComponents(data.data || []);
+      setAvailableComponents((data.data || []).map((it: any) => ({
+        ...it,
+        amount: (it.amount_cents != null ? Number(it.amount_cents) : (it.amount ? Math.round(it.amount * 100) : 0)) / 100,
+      })));
     } catch (err) {
       console.error('Error fetching components:', err);
     }
   };
 
-  const fetchTemplates = async () => {
+  const fetchTemplates = async (page: number = 1) => {
     try {
       setLoading(true);
       const token = localStorage.getItem('access_token');
-      const response = await fetch('http://127.0.0.1:8000/api/fees-manager/fee-templates/', {
+      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/fee-templates/?page=${page}&page_size=${templatesPageSize}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -111,7 +134,21 @@ const FeeTemplates: React.FC = () => {
       }
 
       const data = await response.json();
-      setTemplates(data.data || []);
+      const items = (data.data || []).map((t: any) => ({
+        ...t,
+        total_amount: (t.total_amount_cents != null ? Number(t.total_amount_cents) / 100 : (t.total_amount || 0)),
+        components: (t.components || []).map((c: any) => ({
+          id: c.component,
+          component_name: c.component_name,
+          amount: (c.component_amount_cents != null ? Number(c.component_amount_cents) / 100 : (c.component?.amount ? Math.round(c.component.amount * 100)/100 : 0)),
+          amount_override: (c.amount_override_cents != null ? Number(c.amount_override_cents) / 100 : (c.amount_override != null ? Number(c.amount_override) : null)),
+        })),
+      }));
+      setTemplates(items);
+      const meta = data.meta || {};
+      setTemplatesPage(meta.page || page);
+      setTemplatesTotalPages(meta.total_pages || Math.max(1, Math.ceil((meta.count || 0) / templatesPageSize)));
+      setTemplatesTotalCount(meta.count || (data.data || []).length);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -177,7 +214,22 @@ const FeeTemplates: React.FC = () => {
         throw new Error(errorData.message || 'Failed to create fee template');
       }
 
-      await fetchTemplates();
+      // Use response to update local state without refetching entire list
+      const resp = await response.json();
+      const created = resp.data;
+      const item = {
+        ...created,
+        total_amount: (created.total_amount_cents != null ? Number(created.total_amount_cents) / 100 : (created.total_amount || 0)),
+        components: (created.components || []).map((c: any) => ({
+          id: c.component,
+          component_name: c.component_name,
+          amount: (c.component_amount_cents != null ? Number(c.component_amount_cents) / 100 : (c.component?.amount ? Math.round(c.component.amount * 100)/100 : 0)),
+          amount_override: (c.amount_override_cents != null ? Number(c.amount_override_cents) / 100 : (c.amount_override != null ? Number(c.amount_override) : null)),
+        })),
+      };
+      setTemplates(prev => [item, ...prev]);
+      setTemplatesTotalCount(c => c + 1);
+      try { window.dispatchEvent(new CustomEvent('feeTemplates:changed', { detail: { action: 'create', item } })); } catch (e) {}
       setIsCreateDialogOpen(false);
       resetForm();
     } catch (err) {
@@ -200,8 +252,10 @@ const FeeTemplates: React.FC = () => {
       if (!response.ok) {
         throw new Error('Failed to delete fee template');
       }
-
-      await fetchTemplates();
+      // Remove locally to avoid an extra GET
+      setTemplates(prev => prev.filter(t => t.id !== templateId));
+      setTemplatesTotalCount(c => Math.max(0, c - 1));
+      try { window.dispatchEvent(new CustomEvent('feeTemplates:changed', { detail: { action: 'delete', id: templateId } })); } catch (e) {}
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete template');
     }
@@ -243,22 +297,28 @@ const FeeTemplates: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="container mx-auto p-0">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Fee Templates</h1>
-          <p className={`mt-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Manage fee structure templates for different semesters and programs</p>
+          <p className={`mt-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Manage fee structure templates for different semesters and programs — {templatesTotalCount} total</p>
         </div>
 
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button 
-              onClick={() => {
-                resetForm();
-                setIsCreateDialogOpen(true);
-              }}
-              className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
-            >
+              <Button 
+                onClick={async () => {
+                  resetForm();
+                  // fetch available components only when opening create dialog
+                  try {
+                    await fetchAvailableComponents();
+                  } catch (e) {
+                    // ignore - fetchAvailableComponents already logs errors
+                  }
+                  setIsCreateDialogOpen(true);
+                }}
+                className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+              >
               <Plus className="h-4 w-4 mr-2" />
               Create Template
             </Button>
@@ -449,7 +509,7 @@ const FeeTemplates: React.FC = () => {
                     </Badge>
                   </TableCell>
                   <TableCell>{template.semester || '-'}</TableCell>
-                  <TableCell>{formatCurrency(template.total_amount)}</TableCell>
+                  <TableCell>{formatCurrency((template.total_amount != null ? Number(template.total_amount) : (template.total_amount_cents != null ? Number(template.total_amount_cents) / 100 : 0)))}</TableCell>
                   <TableCell>
                     <Badge variant={template.is_active ? "default" : "secondary"}>
                       {template.is_active ? 'Active' : 'Inactive'}
@@ -493,6 +553,26 @@ const FeeTemplates: React.FC = () => {
             </TableBody>
           </Table>
         </CardContent>
+        {/* Pagination Controls */}
+        <div className="p-4 border-t flex items-center justify-between">
+          <div className="text-sm text-gray-600">Page {templatesPage} of {templatesTotalPages}</div>
+          <div className="flex space-x-2">
+            <Button size="sm" variant="outline" onClick={() => {
+              if (templatesPage > 1) {
+                const next = templatesPage - 1;
+                setTemplatesPage(next);
+                fetchTemplates(next);
+              }
+            }} disabled={templatesPage === 1}>Prev</Button>
+            <Button size="sm" variant="outline" onClick={() => {
+              if (templatesPage < templatesTotalPages) {
+                const next = templatesPage + 1;
+                setTemplatesPage(next);
+                fetchTemplates(next);
+              }
+            }} disabled={templatesPage === templatesTotalPages}>Next</Button>
+          </div>
+        </div>
       </Card>
     </div>
   );

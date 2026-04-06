@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { loginUser } from "../../utils/authService";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { LockKeyhole, User, BookOpen, Users, GraduationCap } from "lucide-react";
+import { LockKeyhole, User, BookOpen, Users, GraduationCap, Shield } from "lucide-react";
 import { Eye, EyeOff } from "lucide-react";
 
 
@@ -37,6 +37,14 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
 
     try {
       const response = await loginUser({ username: trimmedUsername, password: trimmedPassword });
+      // Handle forced password reset on first login
+      if (response && (response as any).password_reset_required) {
+        localStorage.setItem("temp_user_id", (response as any).user_id || "");
+        localStorage.setItem("password_reset_email", trimmedUsername);
+        setPage("forgot-password");
+        setLoading(false);
+        return;
+      }
       if (response.success) {
         if (response.message === "OTP sent") {
           localStorage.setItem("temp_user_id", response.user_id || "");
@@ -68,6 +76,14 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
           }
         }
       } else {
+        // Check if password reset is required
+        if (response.password_reset_required) {
+          // Store user_id for password reset flow and redirect to forgot password
+          localStorage.setItem("temp_user_id", response.user_id || "");
+          localStorage.setItem("password_reset_email", trimmedUsername); // Store email for UX
+          setPage("forgot-password");
+          return;
+        }
         setError(response.message || "Login failed");
       }
     } catch (err) {
@@ -149,7 +165,7 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
       </motion.div>
       {/* Left Section - Login Form */}
       <motion.div 
-        className="flex-1 bg-[#1c1c1e] flex items-center justify-center p-8"
+        className="flex-1 bg-white flex items-center justify-center p-8"
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
@@ -161,8 +177,8 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <h1 className="text-2xl font-bold text-white mb-2">Login</h1>
-            <p className="text-gray-400 text-sm">Sign in to access your account</p>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Login</h1>
+            <p className="text-gray-600 text-sm">Sign in to access your account</p>
           </motion.div>
 
           <motion.div 
@@ -173,12 +189,23 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
           >
             {error && (
               <motion.div 
-                className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg text-sm"
+                className={`p-3 rounded-lg text-sm border ${
+                  error.includes('Password reset required') 
+                    ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                    : 'bg-red-500/10 border-red-500/20 text-red-400'
+                }`}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.3 }}
               >
-                {error}
+                {error.includes('Password reset required') ? (
+                  <div className="flex items-center space-x-2">
+                    <Shield className="h-4 w-4" />
+                    <span>{error}</span>
+                  </div>
+                ) : (
+                  error
+                )}
               </motion.div>
             )}
 
@@ -193,7 +220,7 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Enter your username"
-                  className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
+                  className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
                   onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
                 />
               </div>
@@ -216,7 +243,7 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="pl-10 pr-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
+                  className="pl-10 pr-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
                   onKeyPress={(e) => e.key === "Enter" && handleLogin()}
                 />
 

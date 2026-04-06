@@ -700,3 +700,78 @@ export const getStudentStudyMaterials = async () => {
     return { success: false, message: "Network error" };
   }
 };
+
+export const getAllStudyMaterials = async (
+  branchId?: string,
+  semesterId?: string,
+  sectionId?: string,
+  search?: string
+) => {
+  try {
+    const params = new URLSearchParams();
+    if (branchId) params.append('branch_id', branchId);
+    if (semesterId) params.append('semester_id', semesterId);
+    if (sectionId) params.append('section_id', sectionId);
+    if (search) params.append('search', search);
+
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/all-study-materials/?${params.toString()}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get All Study Materials Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const getBranches = async () => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/branches/`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Branches Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const getSemesters = async (branchId: string) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/semesters/?branch_id=${branchId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Semesters Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const getSections = async (branchId: string, semesterId: string) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/sections/?branch_id=${branchId}&semester_id=${semesterId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Sections Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};

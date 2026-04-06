@@ -270,6 +270,8 @@ const FacultyAttendanceView: React.FC = () => {
         </h1>
       </div>
 
+      
+
       {/* Tab Navigation */}
       <div className={`flex space-x-1 p-1 rounded-lg ${theme === 'dark' ? 'bg-card' : 'bg-white'} border ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
         <button

@@ -17,7 +17,7 @@ const StudentEnrollment = () => {
   const [sectionsBySemester, setSectionsBySemester] = useState<Record<string, any[]>>({});
   const [semesterId, setSemesterId] = useState<string>("");
   const [sectionId, setSectionId] = useState<string>("");
-  const [subjectType, setSubjectType] = useState<string>("elective");
+  const [subjectType, setSubjectType] = useState<string>("");
   const [electiveSubjects, setElectiveSubjects] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
@@ -36,6 +36,11 @@ const StudentEnrollment = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalStudents, setTotalStudents] = useState(0);
   const studentsPerPage = 20; // Frontend pagination
+
+  // Elective subjects pagination state
+  const [electivePage, setElectivePage] = useState(1);
+  const [electiveTotalPages, setElectiveTotalPages] = useState(1);
+  const [electiveLoading, setElectiveLoading] = useState(false);
 
 
 
@@ -56,9 +61,7 @@ const StudentEnrollment = () => {
             });
             setSectionsBySemester(map);
           }
-          if (Array.isArray(boot.data.elective_subjects)) {
-            setElectiveSubjects(boot.data.elective_subjects.map((s: any) => ({ ...s, id: String(s.id) })));
-          }
+          // Removed: elective_subjects loading - now loaded on demand
         }
       } catch (e) {
         console.error(e);
@@ -69,26 +72,61 @@ const StudentEnrollment = () => {
 
   useEffect(() => {
     const loadSubjects = async () => {
-      if (!semesterId) return;
+      if (!semesterId || !subjectType || !sectionId) return;
+      setElectiveLoading(true);
       try {
-        // Map selected semester id to its semester number (semester objects are branch-scoped)
-        const semObj = semesters.find((s: any) => String(s.id) === String(semesterId));
-        const semNumber = semObj ? String(semObj.number) : null;
-        // Filter elective subjects by semester number and subject type so we include open electives from other branches
-        const filteredSubjects = electiveSubjects.filter((s: any) => {
-          const subjSemNum = s.semester_number ? String(s.semester_number) : String(s.semester_id);
-          return subjSemNum === semNumber && s.subject_type === subjectType;
+        const params = new URLSearchParams({
+          subject_type: subjectType,
+          semester_id: semesterId,
+          section_id: sectionId,
+          page: electivePage.toString(),
+          page_size: '20' // Load 20 subjects per page
         });
-        setSubjects(filteredSubjects);
+
+        const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/elective-enrollment-bootstrap/?${params}`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        const data = await response.json();
+        if (data.success && data.data) {
+          const newSubjects = (data.data.elective_subjects || []).map((s: any) => ({ ...s, id: String(s.id) }));
+          if (electivePage === 1) {
+            setElectiveSubjects(newSubjects);
+          } else {
+            setElectiveSubjects(prev => [...prev, ...newSubjects]);
+          }
+          setElectiveTotalPages(data.data.elective_pagination?.num_pages || 1);
+        }
       } catch (e) {
-        console.error(e);
+        console.error('Error loading elective subjects:', e);
       }
+      setElectiveLoading(false);
     };
     loadSubjects();
-  }, [electiveSubjects, semesterId, subjectType]);
+  }, [semesterId, subjectType, sectionId, electivePage]);
 
-  // NOTE: search is performed on demand by clicking Search button.
-  // Do not auto-reset page when typing into the search box.
+  // Reset elective subjects when semester or subject type changes
+  useEffect(() => {
+    setElectiveSubjects([]);
+    setSubjects([]);
+    setSelectedSubjectId("");
+    setElectivePage(1);
+    setElectiveTotalPages(1);
+  }, [semesterId, subjectType]);
+  // Reset when section changes as well
+  useEffect(() => {
+    setElectiveSubjects([]);
+    setSubjects([]);
+    setSelectedSubjectId("");
+    setElectivePage(1);
+    setElectiveTotalPages(1);
+  }, [sectionId]);
+
+  // Set subjects to the loaded elective subjects
+  useEffect(() => {
+    setSubjects(electiveSubjects);
+  }, [electiveSubjects]);
 
   const loadStudents = async (page = 1, search?: string) => {
     if (!branchId || !selectedSubjectId) return;
@@ -284,11 +322,23 @@ const StudentEnrollment = () => {
                   ))}
                 </SelectContent>
               </Select>
+              {electiveLoading && <div className="text-sm text-muted-foreground mt-1">Loading subjects...</div>}
+              {electivePage < electiveTotalPages && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setElectivePage(prev => prev + 1)}
+                  disabled={electiveLoading}
+                  className="w-full mt-2"
+                >
+                  {electiveLoading ? "Loading..." : "Load More Subjects"}
+                </Button>
+              )}
             </div>
             <div className="flex items-end">
               <Button 
                 onClick={() => loadStudents(1)} 
-                disabled={!selectedSubjectId || isLoading || !branchId}
+                disabled={!selectedSubjectId || isLoading || !branchId || subjects.length === 0}
                 className="w-full"
               >
                 {isLoading ? "Loading..." : "Load Students"}
@@ -461,7 +511,7 @@ const StudentEnrollment = () => {
             )}
           </div>
 
-          <Dialog open={resultModalOpen} onOpenChange={(open) => { setResultModalOpen(open); if (!open) loadStudents(currentPage, searchTerm); }}>
+          <Dialog open={resultModalOpen} onOpenChange={(open) => { setResultModalOpen(open); }}>
             <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Enrollment Results</DialogTitle>
@@ -480,7 +530,7 @@ const StudentEnrollment = () => {
               </div>
               <DialogFooter>
                 <div className="w-full flex justify-end">
-                  <Button onClick={() => { setResultModalOpen(false); loadStudents(currentPage, searchTerm); }}>Close</Button>
+                  <Button onClick={() => { setResultModalOpen(false); }}>Close</Button>
                 </div>
               </DialogFooter>
             </DialogContent>

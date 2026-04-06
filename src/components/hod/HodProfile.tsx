@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -43,9 +43,18 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
   const [error, setLocalError] = useState<string | null>(null);
   const { theme } = useTheme();
   const [fetchedUser, setFetchedUser] = useState<User | null>(null);
+  // ref used to skip one fetch immediately after a successful PATCH
+  const skipFetch = useRef(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
+      // If we just performed a PATCH and set the skip flag,
+      // avoid the immediate refetch to keep UI snappy.
+      if (skipFetch.current) {
+        skipFetch.current = false;
+        setLoading(false);
+        return;
+      }
       let currentUser = propUser;
 
       if (!currentUser || !currentUser.user_id) {
@@ -187,6 +196,8 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
         return;
       }
 
+      // set skip flag to avoid immediate refetch triggered elsewhere
+      skipFetch.current = true;
       const response = await manageProfile(updates, "PATCH");
       if (response.success && response.data) {
         const updatedProfile: Profile = {

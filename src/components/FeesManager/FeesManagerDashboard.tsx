@@ -1,17 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from '@/components/common/Sidebar';
 import { useTheme } from '@/context/ThemeContext';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from '@/components/ui/badge';
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Users,
   FileText,
-  CreditCard,
-  TrendingUp,
   AlertTriangle,
   Calendar,
   IndianRupee,
@@ -20,8 +15,7 @@ import {
   UserCheck,
   Receipt,
   DollarSign,
-  Plus,
-  LogOut
+  Plus
 } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import FeeTemplates from './FeeTemplates';
@@ -32,7 +26,9 @@ import BulkAssignment from './BulkAssignment';
 import InvoiceManagement from './InvoiceManagement';
 import PaymentMonitoring from './PaymentMonitoring';
 import Reports from './Reports';
-import Navbar from '@/components/common/Navbar'; // Added Navbar import
+import StudentFeeReports from './StudentFeeReports';
+import Navbar from '@/components/common/Navbar';
+import { motion } from "framer-motion";
 
 interface User {
   username?: string;
@@ -72,15 +68,40 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
   const navigate = useNavigate();
   const location = useLocation();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('overview'); // Add this state for tab management
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { theme } = useTheme();
 
+  // Match DashboardLayout behavior: expanded on desktop (>=1024), collapsed on smaller
   useEffect(() => {
-    fetchDashboardData();
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setSidebarCollapsed(false);
+      } else {
+        setSidebarCollapsed(true);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Get active page from URL path
+  const getActivePageFromPath = (pathname: string) => {
+    const path = pathname.replace('/fees-manager', '').replace('/', '');
+    return path || 'dashboard';
+  };
+
+  const activePage = getActivePageFromPath(location.pathname);
+
+  useEffect(() => {
+    // Only fetch dashboard summary when the active page is the dashboard
+    if (activePage === 'dashboard') {
+      fetchDashboardData();
+    }
+  }, [activePage]);
 
   const fetchDashboardData = async () => {
     try {
@@ -119,12 +140,25 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
   };
 
   const handlePageChange = (page: string) => {
-    // Sidebar will call this with page keys matching tab values
-    setActiveTab(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const path = page === 'dashboard' ? '/fees-manager' : `/fees-manager/${page}`;
+    navigate(path);
+    setError(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const toggleSidebar = () => setSidebarCollapsed(!sidebarCollapsed);
+  const toggleSidebar = () => {
+    // Only allow toggling on mobile/tablet (< 1024px)
+    if (window.innerWidth < 1024) {
+      setSidebarCollapsed(!sidebarCollapsed);
+    }
+  };
+
+  // Close sidebar when page changes on mobile/tablet only
+  useEffect(() => {
+    if (window.innerWidth < 1024) {
+      setSidebarCollapsed(true);
+    }
+  }, [activePage]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -133,43 +167,31 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
     }).format(amount);
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2">Loading dashboard...</span>
-      </div>
-    );
-  }
+  const toRupees = (centsOrAmount: any) => {
+    if (centsOrAmount === null || centsOrAmount === undefined) return 0;
+    // Prefer integer cents
+    if (Number.isInteger(centsOrAmount)) return centsOrAmount / 100;
+    const n = Number(centsOrAmount);
+    return isNaN(n) ? 0 : n;
+  };
 
-  if (error) {
-    return (
-      <Alert className="max-w-2xl mx-auto mt-8">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>
-          {error}
-        </AlertDescription>
-      </Alert>
-    );
-  }
+  // Do not block rendering of child pages — only show dashboard loading/error within dashboard view
 
   return (
     <div className={`flex min-h-screen ${theme === 'dark' ? 'dark bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      {/* Sidebar (fixed left) */}
-      <div className={`fixed top-0 left-0 h-full z-30 transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
-        <Sidebar
-          role="fees_manager"
-          setPage={handlePageChange}
-          activePage={activeTab}
-          logout={handleLogout}
-          collapsed={sidebarCollapsed}
-          toggleCollapse={toggleSidebar}
-        />
-      </div>
+      {/* Sidebar (fixed left) - let Sidebar component control fixed positioning */}
+      <Sidebar
+        role="fees_manager"
+        setPage={handlePageChange}
+        activePage={activePage}
+        logout={handleLogout}
+        collapsed={sidebarCollapsed}
+        toggleCollapse={toggleSidebar}
+      />
 
-      <div className={`flex-1 flex flex-col ${sidebarCollapsed ? 'pl-16' : 'pl-64'}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarCollapsed ? 'ml-0' : 'ml-64'}`}>
         {/* Navbar (fixed) */}
-        <div className={`fixed top-0 ${sidebarCollapsed ? 'left-16' : 'left-64'} right-0 z-10 shadow-sm`}>
+        <div className={`fixed top-0 ${sidebarCollapsed ? 'left-0' : 'left-64'} right-0 z-10 shadow-sm`}>
           <Navbar
             role="fees_manager"
             user={{
@@ -181,136 +203,116 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
               profile_picture: user?.profile_picture || null
             }}
             setPage={handlePageChange}
+            showHamburger={sidebarCollapsed && window.innerWidth < 1024}
+            onHamburgerClick={toggleSidebar}
           />
         </div>
 
         <main className={`flex-1 mt-16 p-6 overflow-y-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
-          <div className="container mx-auto p-6 max-w-7xl pt-4 mt-6">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-foreground">Fees Manager Dashboard</h1>
-              <p className="text-muted-foreground mt-2">Manage fee structures, assignments, and monitor collections</p>
-            </div>
+          <div>
+            
+            {/* Dashboard Content based on active page */}
+            {activePage === 'dashboard' && (
+              <motion.div 
+                className="space-y-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+              >
+                {/* Dashboard loading / error shown only when dashboard is active */}
+                {loading && (
+                  <div className="flex items-center justify-center min-h-[200px]">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <span className="ml-2">Loading dashboard...</span>
+                  </div>
+                )}
 
-            {/* Welcome Section */}
-            <Card className="mb-6 bg-gradient-to-r from-purple-500 to-indigo-600 text-white">
-              <CardContent className="p-6">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="bg-white/20 p-3 rounded-full">
-                      <IndianRupee className="h-8 w-8" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold">
-                        Welcome back, {dashboardData?.user?.name || user?.first_name}!
-                      </h2>
-                      <p className="text-purple-100">
-                        {dashboardData?.profile?.designation} • {dashboardData?.profile?.department}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Badge variant="secondary" className="bg-white/20 text-white px-3 py-1">
-                      Fees Manager
-                    </Badge>
-                    <Button 
-                      variant="secondary" 
-                      size="sm" 
-                      onClick={handleLogout}
-                      className="bg-white text-purple-600 hover:bg-gray-100 border-white"
-                    >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Logout
-                    </Button>
-                  </div>
+                {error && (
+                  <Alert className="max-w-2xl mx-auto mb-6">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      {error}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {!loading && !error && (
+                <div className="mb-8">
+                  <h1 className="text-3xl font-bold text-foreground">Fees Manager Dashboard</h1>
+                  <p className="text-muted-foreground mt-2">Manage fee structures, assignments, and monitor collections</p>
                 </div>
-              </CardContent>
-            </Card>
+                )}
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                  <Card className="bg-card text-card-foreground">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Total Students</p>
+                          <p className="text-2xl font-bold text-foreground">
+                            {dashboardData?.stats?.total_students || 0}
+                          </p>
+                        </div>
+                        <Users className="h-8 w-8 text-blue-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <Card className="bg-card text-card-foreground">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Students</p>
-                      <p className="text-2xl font-bold text-foreground">
-                        {dashboardData?.stats?.total_students || 0}
-                      </p>
-                    </div>
-                    <Users className="h-8 w-8 text-blue-600" />
-                  </div>
-                </CardContent>
-              </Card>
+                  <Card className="bg-card text-card-foreground">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Active Fee Templates</p>
+                          <p className="text-2xl font-bold text-foreground">
+                            {dashboardData?.stats?.active_fee_structures || 0}
+                          </p>
+                        </div>
+                        <FileText className="h-8 w-8 text-green-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
 
-              <Card className="bg-card text-card-foreground">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Active Fee Templates</p>
-                      <p className="text-2xl font-bold text-foreground">
-                        {dashboardData?.stats?.active_fee_structures || 0}
-                      </p>
-                    </div>
-                    <FileText className="h-8 w-8 text-green-600" />
-                  </div>
-                </CardContent>
-              </Card>
+                  <Card className="bg-card text-card-foreground">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Pending Invoices</p>
+                          <p className="text-2xl font-bold text-orange-600">
+                            {dashboardData?.stats?.pending_invoices || 0}
+                          </p>
+                        </div>
+                        <AlertTriangle className="h-8 w-8 text-orange-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
 
-              <Card className="bg-card text-card-foreground">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Pending Invoices</p>
-                      <p className="text-2xl font-bold text-orange-600">
-                        {dashboardData?.stats?.pending_invoices || 0}
-                      </p>
-                    </div>
-                    <AlertTriangle className="h-8 w-8 text-orange-600" />
-                  </div>
-                </CardContent>
-              </Card>
+                  <Card className="bg-card text-card-foreground">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Total Collections</p>
+                          <p className="text-2xl font-bold text-green-600">
+                            {formatCurrency(toRupees(dashboardData?.stats?.total_collections_cents ?? dashboardData?.stats?.total_collections))}
+                          </p>
+                        </div>
+                        <IndianRupee className="h-8 w-8 text-green-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
 
-              <Card className="bg-card text-card-foreground">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Collections</p>
-                      <p className="text-2xl font-bold text-green-600">
-                        {formatCurrency(dashboardData?.stats?.total_collections || 0)}
-                      </p>
-                    </div>
-                    <IndianRupee className="h-8 w-8 text-green-600" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                {/* Outstanding Amount Alert */}
+                {(toRupees(dashboardData?.stats?.outstanding_amount_cents ?? dashboardData?.stats?.outstanding_amount) || 0) > 0 && (
+                  <Alert className="mb-6">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>Outstanding Amount:</strong> {formatCurrency(toRupees(dashboardData.stats.outstanding_amount_cents ?? dashboardData.stats.outstanding_amount))}
+                      {' '}from pending invoices. Monitor closely and follow up with students.
+                    </AlertDescription>
+                  </Alert>
+                )}
 
-            {/* Outstanding Amount Alert */}
-            {(dashboardData?.stats?.outstanding_amount || 0) > 0 && (
-              <Alert className="mb-6">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>Outstanding Amount:</strong> {formatCurrency(dashboardData.stats.outstanding_amount)}
-                  {' '}from pending invoices. Monitor closely and follow up with students.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {/* Main Dashboard Tabs */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid w-full grid-cols-9 bg-muted border border-border">
-                <TabsTrigger value="overview" className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white border border-border">Overview</TabsTrigger>
-                <TabsTrigger value="components" className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white border border-border">Components</TabsTrigger>
-                <TabsTrigger value="templates" className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white border border-border">Templates</TabsTrigger>
-                <TabsTrigger value="assignments" className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white border border-border">Assignments</TabsTrigger>
-                <TabsTrigger value="individual-fees" className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white border border-border">Individual Fees</TabsTrigger>
-                <TabsTrigger value="bulk-assignment" className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white border border-border">Bulk Assignment</TabsTrigger>
-                <TabsTrigger value="invoices" className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white border border-border">Invoices</TabsTrigger>
-                <TabsTrigger value="payments" className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white border border-border">Payments</TabsTrigger>
-                <TabsTrigger value="reports" className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white border border-border">Reports</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="overview" className="space-y-6">
+                {/* Recent Activity & Quick Actions */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Recent Activity */}
                   <Card className="bg-card text-card-foreground">
@@ -329,129 +331,196 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
                             <p className="text-xs text-muted-foreground">Library Fee Component</p>
                           </div>
                           <span className="text-xs text-muted-foreground">2h ago</span>
-                      </div>
-                      <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">Fee template updated</p>
-                          <p className="text-xs text-muted-foreground">B.Tech Semester Template</p>
                         </div>
-                        <span className="text-xs text-muted-foreground">4h ago</span>
-                      </div>
-                      <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                        <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">Payment received</p>
-                          <p className="text-xs text-muted-foreground">₹25,000 from John Doe</p>
+                        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">Fee template updated</p>
+                            <p className="text-xs text-muted-foreground">B.Tech Semester Template</p>
+                          </div>
+                          <span className="text-xs text-muted-foreground">4h ago</span>
                         </div>
-                        <span className="text-xs text-muted-foreground">1d ago</span>
+                        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                          <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">Payment received</p>
+                            <p className="text-xs text-muted-foreground">₹25,000 from John Doe</p>
+                          </div>
+                          <span className="text-xs text-muted-foreground">1d ago</span>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
 
-                {/* Quick Actions */}
-                <Card className="bg-card text-card-foreground">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Settings className="h-5 w-5" />
-                      Quick Actions
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <Button 
-                      className="w-full justify-start" 
-                      variant="outline"
-                      onClick={() => setActiveTab("components")}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Fee Component
-                    </Button>
-                    <Button 
-                      className="w-full justify-start" 
-                      variant="outline"
-                      onClick={() => setActiveTab("templates")}
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      Create Fee Template
-                    </Button>
-                    <Button 
-                      className="w-full justify-start" 
-                      variant="outline"
-                      onClick={() => setActiveTab("individual-fees")}
-                    >
-                      <UserCheck className="h-4 w-4 mr-2" />
-                      Assign Fees to Students
-                    </Button>
-                    <Button 
-                      className="w-full justify-start" 
-                      variant="outline"
-                      onClick={() => setActiveTab("bulk-assignment")}
-                    >
-                      <Users className="h-4 w-4 mr-2" />
-                      Bulk Fee Assignment
-                    </Button>
-                    <Button 
-                      className="w-full justify-start" 
-                      variant="outline"
-                      onClick={() => setActiveTab("invoices")}
-                    >
-                      <Receipt className="h-4 w-4 mr-2" />
-                      Generate Invoices
-                    </Button>
-                    <Button 
-                      className="w-full justify-start" 
-                      variant="outline"
-                      onClick={() => setActiveTab("reports")}
-                    >
-                      <BarChart3 className="h-4 w-4 mr-2" />
-                      View Reports
-                    </Button>
-                    <Button 
-                      className="w-full justify-start" 
-                      variant="outline"
-                      onClick={() => setActiveTab("payments")}
-                    >
-                      <DollarSign className="h-4 w-4 mr-2" />
-                      Process Refunds
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
+                  {/* Quick Actions */}
+                  <Card className="bg-card text-card-foreground">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Settings className="h-5 w-5" />
+                        Quick Actions
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <Button 
+                        className="w-full justify-start" 
+                        variant="outline"
+                        onClick={() => handlePageChange("components")}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Fee Component
+                      </Button>
+                      <Button 
+                        className="w-full justify-start" 
+                        variant="outline"
+                        onClick={() => handlePageChange("templates")}
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Create Fee Template
+                      </Button>
+                      <Button 
+                        className="w-full justify-start" 
+                        variant="outline"
+                        onClick={() => handlePageChange("individual-fees")}
+                      >
+                        <UserCheck className="h-4 w-4 mr-2" />
+                        Assign Fees to Students
+                      </Button>
+                      <Button 
+                        className="w-full justify-start" 
+                        variant="outline"
+                        onClick={() => handlePageChange("bulk-assignment")}
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Bulk Fee Assignment
+                      </Button>
+                      <Button 
+                        className="w-full justify-start" 
+                        variant="outline"
+                        onClick={() => handlePageChange("invoices")}
+                      >
+                        <Receipt className="h-4 w-4 mr-2" />
+                        Generate Invoices
+                      </Button>
+                      <Button 
+                        className="w-full justify-start" 
+                        variant="outline"
+                        onClick={() => handlePageChange("reports")}
+                      >
+                        <BarChart3 className="h-4 w-4 mr-2" />
+                        View Reports
+                      </Button>
+                      <Button 
+                        className="w-full justify-start" 
+                        variant="outline"
+                        onClick={() => handlePageChange("student-reports")}
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Student Fee Reports
+                      </Button>
+                      <Button 
+                        className="w-full justify-start" 
+                        variant="outline"
+                        onClick={() => handlePageChange("payments")}
+                      >
+                        <DollarSign className="h-4 w-4 mr-2" />
+                        Process Refunds
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              </motion.div>
+            )}
 
-            <TabsContent value="components">
-              <FeeComponents />
-            </TabsContent>
+            {/* Other pages rendered based on activePage */}
+            {activePage === 'components' && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <FeeComponents />
+              </motion.div>
+            )}
 
-            <TabsContent value="templates">
-              <FeeTemplates />
-            </TabsContent>
+            {activePage === 'templates' && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <FeeTemplates />
+              </motion.div>
+            )}
 
-        <TabsContent value="assignments">
-          <FeeAssignments />
-        </TabsContent>
+            {activePage === 'assignments' && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <FeeAssignments />
+              </motion.div>
+            )}
 
-        <TabsContent value="individual-fees">
-          <IndividualFeeAssignment />
-        </TabsContent>
+            {activePage === 'individual-fees' && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <IndividualFeeAssignment />
+              </motion.div>
+            )}
 
-        <TabsContent value="bulk-assignment">
-          <BulkAssignment />
-        </TabsContent>
+            {activePage === 'bulk-assignment' && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <BulkAssignment />
+              </motion.div>
+            )}
 
-        <TabsContent value="invoices">
-          <InvoiceManagement />
-        </TabsContent>
+            {activePage === 'invoices' && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <InvoiceManagement />
+              </motion.div>
+            )}
 
-        <TabsContent value="payments">
-          <PaymentMonitoring />
-        </TabsContent>
+            {activePage === 'payments' && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <PaymentMonitoring />
+              </motion.div>
+            )}
 
-        <TabsContent value="reports">
-          <Reports />
-        </TabsContent>
-      </Tabs>
+            {activePage === 'reports' && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Reports />
+              </motion.div>
+            )}
+
+            {activePage === 'student-reports' && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <StudentFeeReports />
+              </motion.div>
+            )}
             </div>
           </main>
         </div>

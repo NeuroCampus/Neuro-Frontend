@@ -94,7 +94,21 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
       const dataSource = hasResults ? (res as any).results : (res as any);
       
       if (dataSource && dataSource.success) {
-        fetchBatches();
+        // ✅ Use the returned batch data instead of making extra GET call
+        if (dataSource.batch) {
+          const newBatchData = {
+            id: dataSource.batch.id,
+            name: dataSource.batch.name,
+            start_year: dataSource.batch.start_year,
+            end_year: dataSource.batch.end_year,
+            student_count: 0, // New batch has no students yet
+            created_at: dataSource.batch.created_at
+          };
+          setBatches(prevBatches => [...prevBatches, newBatchData]);
+        } else {
+          // Fallback: fetch data if batch data not returned
+          fetchBatches();
+        }
         setNewBatch({ name: "", start_year: "", end_year: "" });
         if (toast) {
           toast({
@@ -138,7 +152,23 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
       const dataSource = hasResults ? (res as any).results : (res as any);
       
       if (dataSource && dataSource.success) {
-        fetchBatches();
+        // ✅ Use the returned batch data instead of making extra GET call
+        if (dataSource.batch) {
+          setBatches(prevBatches =>
+            prevBatches.map(batch =>
+              batch.id === dataSource.batch.id ? {
+                ...batch,
+                name: dataSource.batch.name,
+                start_year: dataSource.batch.start_year,
+                end_year: dataSource.batch.end_year,
+                student_count: dataSource.batch.student_count || batch.student_count
+              } : batch
+            )
+          );
+        } else {
+          // Fallback: fetch data if batch data not returned
+          fetchBatches();
+        }
         setEditingBatch(null);
         setEditForm({ start_year: "", end_year: "" });
         if (toast) {
@@ -252,58 +282,46 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
             <Skeleton className="h-8 w-full" />
           ) : (
             <div className="max-h-[22rem] overflow-y-auto thin-scrollbar">
-              <table className="w-full text-sm md:text-base text-left border-collapse">
-                <thead className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-card border-b border-border' : 'bg-gray-50 border-b border-gray-200'}`}>
-                  <tr>
-                    <th className={`py-2 px-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Name</th>
-                    <th className={`py-2 px-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Start Year</th>
-                    <th className={`py-2 px-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>End Year</th>
-                    <th className={`py-2 px-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Student Count</th>
-                    <th className={`py-2 px-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Created At</th>
-                    <th className={`py-2 px-3 text-right ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {batches.map((batch) => (
-                    <tr
-                      key={batch.id}
-                      className={`border-b transition-colors duration-200 ${
-                        theme === 'dark' 
-                          ? 'border-border hover:bg-accent text-foreground' 
-                          : 'border-gray-200 hover:bg-gray-50 text-gray-900'
-                      }`}
-                    >
-                      <td className="py-3 px-3">{batch.name}</td>
-                      <td className="py-3 px-3">{batch.start_year}</td>
-                      <td className="py-3 px-3">{batch.end_year}</td>
-                      <td className="py-3 px-3">{batch.student_count}</td>
-                      <td className="py-3 px-3">
-                        {new Date(batch.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="py-3 px-3 text-right space-x-2">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => handleEditBatch(batch)}
-                          disabled={loading}
-                          className={theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-100'}
-                        >
-                          <Edit className={theme === 'dark' ? 'w-4 h-4 text-primary' : 'w-4 h-4 text-blue-600'} />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => handleDeleteBatch(batch)}
-                          disabled={loading}
-                          className={theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-100'}
-                        >
-                          <Trash2 className={theme === 'dark' ? 'w-4 h-4 text-destructive' : 'w-4 h-4 text-red-600'} />
-                        </Button>
-                      </td>
+              <div className="w-full max-w-[320px] mx-auto md:max-w-none md:mx-0">
+                <table className="w-full text-[11px] md:text-sm text-left border-collapse table-auto align-middle">
+                  <thead className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-card border-b border-border' : 'bg-gray-50 border-b border-gray-200'}`}>
+                    <tr>
+                      <th className={`py-1 px-2 md:py-2 md:px-3 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Name</th>
+                      <th className={`py-1 px-2 md:py-2 md:px-3 hidden sm:table-cell ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} text-center`}>Start</th>
+                      <th className={`py-1 px-2 md:py-2 md:px-3 hidden sm:table-cell ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} text-center`}>End</th>
+                      <th className={`py-1 px-2 md:py-2 md:px-3 w-16 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} text-center`}>Students</th>
+                      <th className={`py-1 px-2 md:py-2 md:px-3 w-20 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} text-center`}>Created</th>
+                      <th className={`py-1 px-2 md:py-2 md:px-3 w-20 text-right ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {batches.map((batch) => (
+                      <tr
+                        key={batch.id}
+                        className={`border-b transition-colors duration-200 ${theme === 'dark' ? 'border-border hover:bg-accent text-foreground' : 'border-gray-200 hover:bg-gray-50 text-gray-900'}`} 
+                      >
+                        <td className="py-1 px-2 md:py-2 md:px-3 min-w-0 align-middle">
+                          <div className="truncate">{batch.name}</div>
+                        </td>
+                        <td className="py-1 px-2 md:py-2 md:px-3 hidden sm:table-cell text-center align-middle">{batch.start_year}</td>
+                        <td className="py-1 px-2 md:py-2 md:px-3 hidden sm:table-cell text-center align-middle">{batch.end_year}</td>
+                        <td className="py-1 px-2 md:py-2 md:px-3 w-16 text-center align-middle">{batch.student_count}</td>
+                        <td className="py-1 px-2 md:py-2 md:px-3 w-20 min-w-0 text-center align-middle">
+                          <div className="truncate">{new Date(batch.created_at).toLocaleDateString()}</div>
+                        </td>
+                        <td className="py-1 px-2 md:py-2 md:px-3 w-20 text-right space-x-2 whitespace-nowrap align-middle">
+                          <Button size="icon" variant="ghost" onClick={() => handleEditBatch(batch)} disabled={loading} className={theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-100'}>
+                            <Edit className={theme === 'dark' ? 'w-4 h-4 text-primary' : 'w-4 h-4 text-blue-600'} />
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={() => handleDeleteBatch(batch)} disabled={loading} className={theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-100'}>
+                            <Trash2 className={theme === 'dark' ? 'w-4 h-4 text-destructive' : 'w-4 h-4 text-red-600'} />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
           )}
@@ -312,7 +330,7 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
 
       {/* Edit Batch Dialog */}
       <Dialog open={!!editingBatch} onOpenChange={() => setEditingBatch(null)}>
-        <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'}>
+        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[320px] w-[calc(100%-32px)] mx-4 rounded-lg` }>
           <DialogHeader>
             <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Edit Batch</DialogTitle>
           </DialogHeader>
@@ -344,20 +362,18 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
               />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
               onClick={() => setEditingBatch(null)}
-              className={theme === 'dark' 
-                ? 'text-foreground bg-card border border-border hover:bg-accent' 
-                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
+              className={`${theme === 'dark' ? 'text-foreground bg-card border border-border hover:bg-accent' : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'} w-full sm:w-auto`}
             >
               Cancel
             </Button>
             <Button
               onClick={handleUpdateBatch}
               disabled={loading}
-              className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+              className={`text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white w-full sm:w-auto`}
             >
               {loading ? "Updating..." : "Update Batch"}
             </Button>
@@ -367,7 +383,7 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'}>
+        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[320px] w-[calc(100%-32px)] mx-4 rounded-lg` }>
           <DialogHeader>
             <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Delete Batch</DialogTitle>
           </DialogHeader>
@@ -376,13 +392,11 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
             <span className="font-semibold">"{batchToDelete?.name}"</span>? This
             action cannot be undone.
           </p>
-          <DialogFooter>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
               onClick={() => setDeleteDialogOpen(false)}
-              className={theme === 'dark' 
-                ? 'border-border text-foreground bg-card hover:bg-accent' 
-                : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'}
+              className={`${theme === 'dark' ? 'border-border text-foreground bg-card hover:bg-accent' : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'} w-full sm:w-auto`}
             >
               Cancel
             </Button>
@@ -390,7 +404,7 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
               variant="destructive"
               onClick={confirmDelete}
               disabled={loading}
-              className={theme === 'dark' ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 'bg-red-600 hover:bg-red-700 text-white'}
+              className={`${theme === 'dark' ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 'bg-red-600 hover:bg-red-700 text-white'} w-full sm:w-auto`}
             >
               {loading ? "Deleting..." : "Delete"}
             </Button>

@@ -6,7 +6,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from ".
 import { useToast } from "../ui/use-toast";
 import { Pencil, Trash2, Loader2, CheckCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "../ui/dialog";
-import { manageFacultyAssignments, manageSubjects, manageSections, manageProfile, getSemesters, manageFaculties, getFacultyAssignmentsBootstrap } from "../../utils/hod_api";
+import { manageFacultyAssignments, manageSubjects, manageSections, manageProfile, getSemesters, manageFaculties, getFacultyAssignmentsBootstrap, getHODTimetableSemesterData } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
 
 // Interfaces
@@ -232,15 +232,11 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
 
       updateState({ loading: true });
       try {
-        const [subjectsRes, sectionsRes] = await Promise.all([
-          manageSubjects({ branch_id: state.branchId, semester_id: state.semesterId }, "GET"),
-          manageSections({ branch_id: state.branchId, semester_id: state.semesterId }, "GET")
-        ]);
-
-        if (subjectsRes.success && sectionsRes.success) {
+        const res = await getHODTimetableSemesterData(state.semesterId);
+        if (res.success && res.data) {
           updateState({
-            subjects: subjectsRes.data || [],
-            sections: sectionsRes.data || []
+            subjects: res.data.subjects || [],
+            sections: res.data.sections || []
           });
         }
       } catch (err) {
@@ -459,20 +455,17 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
       const response = await manageFacultyAssignments(data, "POST");
 
       if (response.success) {
-        // Refresh assignments list to get real data
-        const assignmentsResponse = await manageFacultyAssignments(
-          {
-            branch_id: state.branchId,
-            semester_id: state.filterSemesterId || undefined,
-            section_id: state.filterSectionId || undefined,
-          },
-          "GET"
-        );
-
-        if (assignmentsResponse.success && assignmentsResponse.data?.assignments) {
-          updateState({ assignments: assignmentsResponse.data.assignments });
+        // Use POST response to reconcile optimistic UI without refetching
+        const createdId = response.data?.assignment_id as unknown as string;
+        if (!isEditing && createdId) {
+          // Replace temporary ID with real ID
+          const replaced = state.assignments.map((a) => (a.id && String(a.id).startsWith('temp-') && a.faculty_id === originalFormState.facultyId && a.subject_id === originalFormState.subjectId && a.section_id === originalFormState.sectionId && a.semester_id === originalFormState.semesterId)
+            ? { ...a, id: createdId }
+            : a
+          );
+          updateState({ assignments: replaced });
         }
-        // Success toast already shown optimistically
+        // For updates we already applied optimistic update; no further action required
       } else {
         throw new Error(response.message || "Failed to save assignment");
       }
@@ -548,16 +541,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
       };
       const response = await manageFacultyAssignments(data, "POST");
       if (response.success) {
-        // Refresh assignments list to get real data (in case there were any issues)
-        const assignmentsResponse = await manageFacultyAssignments({
-          branch_id: state.branchId,
-          semester_id: state.filterSemesterId || undefined,
-          section_id: state.filterSectionId || undefined,
-        }, "GET");
-        if (assignmentsResponse.success && assignmentsResponse.data?.assignments) {
-          updateState({ assignments: assignmentsResponse.data.assignments });
-        }
-        // Success toast already shown optimistically
+        // Deletion succeeded on server; we already removed it optimistically
       } else {
         throw new Error(response.message || "Failed to delete assignment");
       }

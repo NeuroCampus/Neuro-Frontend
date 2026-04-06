@@ -128,13 +128,15 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       reports: <BarChart2 size={20} />,
       "study-mode": <BookOpen size={20} />,
       "ai-interview": <Mic size={20} />,
+      "student-study-material": <FileText size={20} />,
+      "student-assignment": <ClipboardList size={20} />,
     };
     return iconMap[page] || <LayoutDashboard size={20} />;
   };
 
   const menuItems: { [key: string]: { name: string; page: string }[] } = {
   fees_manager: [
-    { name: "Overview", page: "overview" },
+    { name: "Dashboard", page: "dashboard" },
     { name: "Components", page: "components" },
     { name: "Templates", page: "templates" },
     { name: "Assignments", page: "assignments" },
@@ -143,6 +145,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Invoices", page: "invoices" },
     { name: "Payments", page: "payments" },
     { name: "Reports", page: "reports" },
+    { name: "Student Fee Reports", page: "student-reports" },
   ],
   admin: [
     // Main
@@ -155,10 +158,13 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // Academic Structure
     { name: "Branches", page: "branches" },
     { name: "Faculty Assignments", page: "teacher-assignments" },
+    { name: "Question Paper Approvals", page: "qp-approvals" },
+    { name: "Campus Locations", page: "campus-locations" },
     { name: "Batches", page: "batches" },
     
     // Leaves
     { name: "HOD Leaves", page: "hod-leaves" },
+    { name: "HOD Attendance", page: "hod-attendance" },
     
     // User & Profile
     { name: "Users", page: "users" },
@@ -175,6 +181,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Elective Course Enrollment", page: "student-enrollment" },
     { name: "Courses", page: "subjects" },
     { name: "Faculty Assignments", page: "faculty-assignments" },
+    { name: "Question Paper Approvals", page: "qp-approvals" },
     { name: "Timetable", page: "timetable" },
     { name: "Proctors", page: "proctors" },
     
@@ -183,6 +190,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
  
     { name: "Low Attendance", page: "low-attendance" },
     { name: "Faculty Attendance", page: "faculty-attendance" },
+    { name: "My Attendance", page: "my-attendance" },
     { name: "Promotion Management", page: "promotion-management" },
     
     // Leaves
@@ -206,6 +214,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Attendance Records", page: "attendance-records" },
     { name: "My Attendance", page: "faculty-attendance" },
     { name: "Upload Marks", page: "upload-marks" },
+    { name: "Upload QP", page: "upload-qp" },
     { name: "CO Attainment", page: "co-attainment" },
     { name: "Generate Statistics", page: "statistics" },
     
@@ -220,6 +229,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Makeup Exam", page: "makeupexam" },
     { name: "Proctor Students", page: "proctor-students" },
     { name: "Scan for Student Info", page: "scan-student-info" },
+    { name: "Study Material", page: "study-materials" },
     
     // Profile
     { name: "Profile", page: "faculty-profile" },
@@ -233,6 +243,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Timetable", page: "timetable" },
     { name: "Attendance", page: "attendance" },
     { name: "Internal Marks", page: "marks" },
+    { name: "Study Materials", page: "student-study-material" },
+    { name: "Assignments", page: "student-assignment" },
     { name: "Revaluation", page: "revaluation" },
     { name: "Makeup Exam", page: "makeupexam" },
     { name: "Fees", page: "fees" },
@@ -254,6 +266,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // Exam Management
     { name: "Student Status", page: "student-status" },
     { name: "Course Statistics", page: "course-statistics" },
+    { name: "Question Paper Approvals", page: "qp-approvals" },
     { name: "Publish Results", page: "publish-results" },
 
     // Profile
@@ -396,7 +409,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     </motion.div>
   );
  
-  if (isMobile) {
+  // For mobile/tablet - use overlay approach
+  if (window.innerWidth < 1024) {
     return (
       <>
         <AnimatePresence>
@@ -419,69 +433,123 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
         >
           {sidebarContent}
         </motion.div>
+        {/* Logout Dialog - rendered at root level for proper z-index */}
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none">
+          <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+            <DialogContent 
+              className={`w-[90%] sm:w-full max-w-md mx-auto rounded-lg ${
+                theme === 'dark' 
+                  ? "bg-background border-border text-foreground" 
+                  : "bg-white border-gray-200 text-gray-900"
+              }`}
+            >
+              <DialogHeader className="space-y-2">
+                <DialogTitle className={`text-lg md:text-xl font-semibold ${
+                  theme === 'dark' ? "text-foreground" : "text-gray-900"
+                }`}>
+                  Confirm Logout
+                </DialogTitle>
+                <DialogDescription className={`text-sm md:text-base ${
+                  theme === 'dark' ? "text-muted-foreground" : "text-gray-500"
+                }`}>
+                  Are you sure you want to log out?
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowLogoutDialog(false)}
+                  className={`w-full sm:w-auto ${
+                    theme === 'dark' 
+                      ? "border-border text-foreground hover:bg-accent" 
+                      : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={confirmLogout}
+                  className={`w-full sm:w-auto ${
+                    theme === 'dark' 
+                      ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground" 
+                      : "bg-red-600 hover:bg-red-700 text-white"
+                  }`}
+                >
+                  Logout
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </>
+    );
+  }
+ 
+  // For desktop - show collapsible sidebar
+  return (
+    <>
+      <AnimatePresence>
+        {!collapsed && (
+          <motion.div
+            className="fixed top-0 left-0 h-screen w-64 z-30 shadow-xl overflow-hidden"
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            {sidebarContent}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* Logout Dialog - rendered at root level for proper z-index */}
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none">
         <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-          <DialogContent className={theme === 'dark' ? "bg-background border-border text-foreground" : "bg-white border-gray-200 text-gray-900"}>
-            <DialogHeader>
-              <DialogTitle className={theme === 'dark' ? "text-foreground" : "text-gray-900"}>Confirm Logout</DialogTitle>
-              <DialogDescription className={theme === 'dark' ? "text-muted-foreground" : "text-gray-500"}>Are you sure you want to log out?</DialogDescription>
+          <DialogContent 
+            className={`w-[90%] sm:w-full max-w-md mx-auto rounded-lg ${
+              theme === 'dark' 
+                ? "bg-background border-border text-foreground" 
+                : "bg-white border-gray-200 text-gray-900"
+            }`}
+          >
+            <DialogHeader className="space-y-2">
+              <DialogTitle className={`text-lg md:text-xl font-semibold ${
+                theme === 'dark' ? "text-foreground" : "text-gray-900"
+              }`}>
+                Confirm Logout
+              </DialogTitle>
+              <DialogDescription className={`text-sm md:text-base ${
+                theme === 'dark' ? "text-muted-foreground" : "text-gray-500"
+              }`}>
+                Are you sure you want to log out?
+              </DialogDescription>
             </DialogHeader>
-            <DialogFooter>
-              <Button 
-                variant="outline" 
-                onClick={() => setShowLogoutDialog(false)} 
-                className={theme === 'dark' ? "border-border text-foreground hover:bg-accent" : "border-gray-300 text-gray-700 hover:bg-gray-100"}
+            <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowLogoutDialog(false)}
+                className={`w-full sm:w-auto ${
+                  theme === 'dark' 
+                    ? "border-border text-foreground hover:bg-accent" 
+                    : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                }`}
               >
                 Cancel
               </Button>
-              <Button 
-                onClick={confirmLogout} 
-                className={theme === 'dark' ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground" : "bg-red-600 hover:bg-red-700 text-white"}
+              <Button
+                onClick={confirmLogout}
+                className={`w-full sm:w-auto ${
+                  theme === 'dark' 
+                    ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground" 
+                    : "bg-red-600 hover:bg-red-700 text-white"
+                }`}
               >
                 Logout
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </>
-    );
-  }
- 
-  return (
-    <motion.div
-      className={`fixed top-0 left-0 h-screen z-40 shadow-xl transition-all duration-300 ${
-        collapsed ? "w-16" : "w-64"
-      } ${theme === 'dark' ? 'bg-background' : 'bg-white'}`}
-      initial={{ x: -100 }}
-      animate={{ x: 0 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-    >
-      {sidebarContent}
-      <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-        <DialogContent className={theme === 'dark' ? "bg-background border-border text-foreground" : "bg-white border-gray-200 text-gray-900"}>
-          <DialogHeader>
-        <DialogTitle className={theme === 'dark' ? "text-foreground" : "text-gray-900"}>Confirm Logout</DialogTitle>
-        <DialogDescription className={theme === 'dark' ? "text-muted-foreground" : "text-gray-500"}>
-          Are you sure you want to log out?
-        </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-        <Button
-          variant="outline"
-          onClick={() => setShowLogoutDialog(false)}
-          className={theme === 'dark' ? "border-border text-foreground hover:bg-accent" : "border-gray-300 text-gray-700 hover:bg-gray-100"}
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={confirmLogout}
-          className={theme === 'dark' ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground" : "bg-red-600 hover:bg-red-700 text-white"}
-        >
-          Logout
-        </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </motion.div>
+      </div>
+    </>
   );
 };
  

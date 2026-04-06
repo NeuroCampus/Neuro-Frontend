@@ -2,8 +2,7 @@
  
 import { useState, useEffect, Component, ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import Sidebar from "../common/Sidebar";
-import Navbar from "../common/Navbar";
+import DashboardLayout from "../common/DashboardLayout";
 import HODStats from "../hod/HODStats";
 import LowAttendance from "../hod/LowAttendance";
 import SemesterManagement from "../hod/SemesterManagement";
@@ -23,8 +22,10 @@ import { logoutUser } from "../../utils/authService";
 import StudyMaterial from "../hod/StudyMaterial";
 import PromotionManagement from "../hod/PromotionManagement";
 import FacultyAttendanceView from "../hod/FacultyAttendanceView";
+import HODMyAttendance from "../hod/HODMyAttendance";
 import StudentInfoScanner from "../hod/StudentInfoScanner";
 import StudentEnrollment from "../hod/StudentEnrollment";
+import QPApprovals from "../hod/QPApprovals";
 import { HODBootstrapProvider } from "../../context/HODBootstrapContext";
 import { useTheme } from "../../context/ThemeContext";
 import { motion } from "framer-motion";
@@ -118,13 +119,15 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
       'apply-leaves': 'apply-leaves',
       'attendance': 'attendance',
       'faculty-attendance': 'faculty-attendance',
+      'my-attendance': 'my-attendance',
       'marks': 'marks',
       'notifications': 'notifications',
       'proctors': 'proctors',
       'chat': 'chat',
       'study-materials': 'study-materials',
       'scan-student-info': 'scan-student-info',
-      'hod-profile': 'hod-profile'
+      'hod-profile': 'hod-profile',
+      'qp-approvals': 'qp-approvals'
     };
     
     return pathMap[lastPart] || 'dashboard';
@@ -177,13 +180,15 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
       'apply-leaves': '/hod/apply-leaves',
       'attendance': '/hod/attendance',
       'faculty-attendance': '/hod/faculty-attendance',
+      'my-attendance': '/hod/my-attendance',
       'marks': '/hod/marks',
       'notifications': '/hod/notifications',
       'proctors': '/hod/proctors',
       'chat': '/hod/chat',
       'study-materials': '/hod/study-materials',
       'scan-student-info': '/hod/scan-student-info',
-      'hod-profile': '/hod/hod-profile'
+      'hod-profile': '/hod/hod-profile',
+      'qp-approvals': '/hod/qp-approvals'
     };
     
     const path = pathMap[page] || '/hod/dashboard';
@@ -212,9 +217,7 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
     }
   };
 
-  const toggleSidebar = () => {
-    setIsSidebarCollapsed(!isSidebarCollapsed);
-  };
+
 
   const renderContent = () => {
     switch (activePage) {
@@ -244,6 +247,8 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
         return <AttendanceView />;
       case "faculty-attendance":
         return <FacultyAttendanceView />;
+      case "my-attendance":
+        return <HODMyAttendance />;
       case "marks":
         return <MarksView />;
       case "notifications":
@@ -258,55 +263,32 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
         return <StudentInfoScanner />;
       case "hod-profile":
         return <HodProfile user={user} setError={setError} />;
+      case "qp-approvals":
+        return <QPApprovals />;
       default:
       return <HODStats setError={setError} setPage={handlePageChange} />;
     }
   };
 
   return (
-    <HODBootstrapProvider value={bootstrap}>
-    <motion.div 
-      className={`flex min-h-screen pt-16 ${theme === 'dark' ? 'dark bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className={`fixed top-0 left-0 h-full z-10 transition-all duration-300 ${isSidebarCollapsed ? 'w-16' : 'w-64'}`}>
-        <Sidebar
-          role="hod"
-          setPage={handlePageChange}
-          activePage={activePage}
-          logout={handleLogout}
-          collapsed={isSidebarCollapsed}
-          toggleCollapse={toggleSidebar}
-        />
-      </div>
-      <div
-        className={`flex-1 overflow-y-auto transition-all duration-300 scroll-smooth ${
-          isSidebarCollapsed ? "ml-16" : "ml-64"
-        } ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}
+    <HODBootstrapProvider>
+      <DashboardLayout
+        role="hod"
+        user={user}
+        activePage={activePage}
+        onPageChange={handlePageChange}
+        onNotificationClick={handleNotificationClick}
+        pageTitle="HOD Dashboard"
       >
-        <div className={`sticky top-0 z-20 ${theme === 'dark' ? 'bg-background border-b border-border' : 'bg-white border-b border-gray-200'}`}>
-          <Navbar role="hod" user={user} setPage={handlePageChange} onNotificationClick={handleNotificationClick}/>
-        </div>
-        <div className={`p-6 w-full ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
-          {activePage === "dashboard" && (
-            <div className="mb-6">
-              <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Dashboard Overview</h1>
-              
-            </div>
-          )}
-          {error && (
-            <div className={`p-3 rounded-lg mb-4 ${theme === 'dark' ? 'bg-destructive/10 border border-destructive/20 text-destructive-foreground' : 'bg-red-100 border border-red-200 text-red-700'}`}>
-              {error}
-            </div>
-          )}
-          <ErrorBoundary>
-            {renderContent()}
-          </ErrorBoundary>
-        </div>
-      </div>
-    </motion.div>
+        {error && (
+          <div className={`p-3 rounded-lg mb-4 ${theme === 'dark' ? 'bg-destructive/10 border border-destructive/20 text-destructive-foreground' : 'bg-red-100 border border-red-200 text-red-700'}`}>
+            {error}
+          </div>
+        )}
+        <ErrorBoundary>
+          {renderContent()}
+        </ErrorBoundary>
+      </DashboardLayout>
     </HODBootstrapProvider>
   );
 };

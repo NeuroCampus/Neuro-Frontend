@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import Sidebar from "../common/Sidebar";
-import Navbar from "../common/Navbar";
+import DashboardLayout from "../common/DashboardLayout";
 import FacultyStats from "../faculty/FacultyStats";
 import TakeAttendance from "../faculty/TakeAttendance";
 import UploadMarks from "../faculty/UploadMarks";
+import UploadQP from "../faculty/UploadQP";
 import COAttainment from "../faculty/COAttainment";
 import ApplyLeave from "../faculty/ApplyLeave";
 import AttendanceRecords from "../faculty/AttendanceRecords";
@@ -20,6 +20,7 @@ import FacultyProfile from "../faculty/facultyProfile";
 import GenerateStatistics from "../faculty/GenerateStatistics";
 import FacultyAttendance from "../faculty/FacultyAttendance";
 import StudentInfoScanner from "../hod/StudentInfoScanner";
+import StudyMaterial from "../faculty/StudyMaterial";
 import { logoutUser, fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
 import { useTheme } from "../../context/ThemeContext";
@@ -65,11 +66,14 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'faculty-profile': 'faculty-profile',
       'statistics': 'statistics',
       'scan-student-info': 'scan-student-info'
+      ,
+      'study-materials': 'study-materials'
     };
 
     // Add direct mappings for additional top-level routes
     pathMap['revaluation'] = 'revaluation';
     pathMap['makeupexam'] = 'makeupexam';
+    pathMap['study-materials'] = 'study-materials';
 
     return pathMap[lastPart] || 'dashboard';
   };
@@ -110,6 +114,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'dashboard': '/faculty/dashboard',
       'take-attendance': '/faculty/take-attendance',
       'upload-marks': '/faculty/upload-marks',
+      'upload-qp': '/faculty/upload-qp',
       'co-attainment': '/faculty/co-attainment',
       'apply-leave': '/faculty/apply-leave',
       'attendance-records': '/faculty/attendance-records',
@@ -124,7 +129,8 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'chat': '/faculty/chat',
       'faculty-profile': '/faculty/faculty-profile',
       'statistics': '/faculty/statistics',
-      'scan-student-info': '/faculty/scan-student-info'
+      'scan-student-info': '/faculty/scan-student-info',
+      'study-materials': '/faculty/study-materials'
     };
 
     const path = pathMap[page] || '/faculty/dashboard';
@@ -161,6 +167,8 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
         return <TakeAttendance />;
       case "upload-marks":
         return <UploadMarks />;
+      case "upload-qp":
+        return <UploadQP />;
       case "co-attainment":
         return <COAttainment />;
       case "apply-leave":
@@ -191,51 +199,29 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
         return <GenerateStatistics />;
       case "scan-student-info":
         return <StudentInfoScanner />;
+      case "study-materials":
+        return <StudyMaterial />;
       default:
         return <FacultyStats setActivePage={handlePageChange} />;
     }
   };
 
   return (
-    <div className={`flex min-h-screen pt-16 ${theme === 'dark' ? 'dark bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <Sidebar
-        role="faculty"
-        setPage={handlePageChange}
-        activePage={activePage}
-        logout={handleLogout}
-        collapsed={isSidebarCollapsed}
-        toggleCollapse={toggleSidebar}
-      />
-      <div
-        className={`flex-1 overflow-y-auto transition-all duration-300 scroll-smooth ${isSidebarCollapsed ? "ml-16" : "ml-64"
-          } ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}
-      >
-        {/* Navbar same as HOD, but role="faculty" */}
-        <div className={`sticky top-0 z-20 ${theme === 'dark' ? 'bg-background border-b border-border' : 'bg-white border-b border-gray-200'}`}>
-          <Navbar
-            role="faculty"
-            user={currentUser}
-            onNotificationClick={handleNotificationClick}
-            setPage={handlePageChange}
-          />
+    <DashboardLayout
+      role="faculty"
+      user={currentUser}
+      activePage={activePage}
+      onPageChange={handlePageChange}
+      onNotificationClick={handleNotificationClick}
+      pageTitle="Faculty Dashboard"
+    >
+      {error && (
+        <div className={`p-3 rounded-lg mb-4 ${theme === 'dark' ? 'bg-destructive/10 border border-destructive/20 text-destructive-foreground' : 'bg-red-100 border border-red-200 text-red-700'}`}>
+          {error}
         </div>
-        <div className={`p-6 w-full ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
-          {activePage === "dashboard" && (
-            <div className="mb-6">
-              <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                Dashboard Overview
-              </h1>
-            </div>
-          )}
-          {error && (
-            <div className={`p-3 rounded-lg mb-4 ${theme === 'dark' ? 'bg-destructive/10 border border-destructive/20 text-destructive-foreground' : 'bg-red-100 border border-red-200 text-red-700'}`}>
-              {error}
-            </div>
-          )}
-          {renderContent()}
-        </div>
-      </div>
-    </div>
+      )}
+      {renderContent()}
+    </DashboardLayout>
   );
 };
 

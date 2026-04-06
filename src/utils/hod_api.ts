@@ -485,7 +485,8 @@ interface AssignProctorResponse {
 }
 
 interface AssignProctorsBulkRequest {
-  usns: string[];
+  usns?: string[];
+  student_ids?: string[];
   faculty_id: string;
   branch_id: string;
 }
@@ -730,6 +731,7 @@ interface UploadStudyMaterialRequest {
   subject_code?: string;
   semester_id: string;
   branch_id: string;
+  section_id?: string;
   file: File;
 }
 
@@ -740,6 +742,8 @@ interface StudyMaterial {
   subject_code: string;
   semester_id: string;
   branch_id: string;
+  section_id?: string | null;
+  section?: string | null;
   uploaded_by: string;
   uploaded_at: string;
   file_url: string;
@@ -1567,6 +1571,12 @@ export const manageStudents = async (
   data: ManageStudentsRequest | { branch_id: string; semester_id?: string; section_id?: string; page?: number; page_size?: number },
   method: "GET" | "POST" = "GET"
 ): Promise<ManageStudentsResponse> => {
+  // Simple in-memory cache to avoid immediate GET after a recent POST
+  // Keyed by query string for GET requests
+  const studentsCacheKey = (paramsStr: string) => `students:${paramsStr}`;
+  // Load/store helpers
+  const cacheStore: Map<string, any> = (manageStudents as any)._cache || new Map();
+  (manageStudents as any)._cache = cacheStore;
   try {
     const branch_id = (data as { branch_id: string }).branch_id;
     if (!branch_id) throw new Error("Branch ID is required");
@@ -1580,6 +1590,32 @@ export const manageStudents = async (
       if ((data as any).page) params.append("page", (data as any).page.toString());
       if ((data as any).page_size) params.append("page_size", (data as any).page_size.toString());
       url = `${API_ENDPOINT}/hod/students/?${params.toString()}`;
+
+      // Optionally suppress immediate GETs that follow a recent POST to the students endpoint
+      // If caller explicitly requests a force refresh (`force_refresh: true`) skip suppression and fetch fresh.
+      const forceRefresh = !!(data as any).force_refresh;
+      if (!forceRefresh) {
+        const lastPost = Number(localStorage.getItem('last_students_post_ts') || '0');
+        const now = Date.now();
+        const key = studentsCacheKey(params.toString());
+        // Try in-memory cache first
+        if (lastPost && now - lastPost < 2000 && cacheStore.has(key)) {
+          return cacheStore.get(key);
+        }
+        // Fall back to localStorage cache (across tabs/reloads)
+        if (lastPost && now - lastPost < 2000) {
+          try {
+            const cached = localStorage.getItem(`students_cache:${params.toString()}`);
+            if (cached) {
+              const parsed = JSON.parse(cached);
+              cacheStore.set(key, parsed);
+              return parsed;
+            }
+          } catch (e) {
+            // ignore
+          }
+        }
+      }
     }
     if (method === "POST") {
       const req = data as ManageStudentsRequest;
@@ -1632,6 +1668,45 @@ export const manageStudents = async (
 
     });
     const result = await response.json();
+
+    // Cache GET responses for students endpoint (in-memory and localStorage)
+    if (method === 'GET') {
+      try {
+        const paramsStr = url.split('?')[1] || '';
+        const key = studentsCacheKey(paramsStr);
+        cacheStore.set(key, result);
+        try {
+          localStorage.setItem(`students_cache:${paramsStr}`, JSON.stringify(result));
+        } catch (e) {
+          // ignore localStorage write errors
+        }
+      } catch (e) {
+        // ignore cache errors
+      }
+    }
+
+    // Mark timestamp on successful POST to suppress immediate following GETs
+    // and invalidate any cached students results so subsequent GETs fetch fresh data.
+    if (method === 'POST') {
+      try {
+        console.debug('manageStudents: POST completed, invalidating students cache and setting last_students_post_ts');
+        localStorage.setItem('last_students_post_ts', Date.now().toString());
+      } catch (e) {}
+      try {
+        // Clear in-memory cache entries for students
+        for (const k of Array.from(cacheStore.keys())) {
+          if (k.startsWith('students:')) cacheStore.delete(k);
+        }
+        // Clear localStorage student caches (best-effort)
+        try {
+          for (const key of Object.keys(localStorage)) {
+            if (key.startsWith('students_cache:')) localStorage.removeItem(key);
+          }
+        } catch (e) {}
+      } catch (e) {
+        // ignore cache clear errors
+      }
+    }
 
     return result;
   } catch (error: unknown) {
@@ -2000,8 +2075,10 @@ export const assignProctor = async (data: AssignProctorRequest): Promise<AssignP
 
 export const assignProctorsBulk = async (data: AssignProctorsBulkRequest): Promise<AssignProctorsBulkResponse> => {
   try {
-    if (!data.branch_id || !data.usns.length || !data.faculty_id) {
-      throw new Error("Branch ID, USNs, and Faculty ID are required");
+    const hasUsns = Array.isArray((data as any).usns) && (data as any).usns.length > 0;
+    const hasStudentIds = Array.isArray((data as any).student_ids) && (data as any).student_ids.length > 0;
+    if (!data.branch_id || !(hasUsns || hasStudentIds) || !data.faculty_id) {
+      throw new Error("Branch ID, student IDs or USNs, and Faculty ID are required");
     }
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/proctors/bulk/`, {
       method: "POST",
@@ -2071,6 +2148,7 @@ export const uploadStudyMaterial = async (data: UploadStudyMaterialRequest): Pro
     formData.append("subject_code", data.subject_code || "");
     formData.append("semester_id", data.semester_id);
     formData.append("branch_id", data.branch_id);
+    if (data.section_id) formData.append("section_id", data.section_id);
     formData.append("file", data.file);
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/study-materials/`, {
       method: "POST",
@@ -2083,13 +2161,20 @@ export const uploadStudyMaterial = async (data: UploadStudyMaterialRequest): Pro
   }
 };
 
-export const getStudyMaterials = async (branch_id: string): Promise<GetStudyMaterialsResponse> => {
+export const getStudyMaterials = async (
+  branch_id?: string,
+  semester_id?: string,
+  section_id?: string
+): Promise<GetStudyMaterialsResponse> => {
   try {
-    if (!branch_id) throw new Error("Branch ID is required");
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/study-materials/?branch_id=${branch_id}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-
+    const params = new URLSearchParams();
+    if (branch_id) params.append('branch_id', branch_id);
+    if (semester_id) params.append('semester_id', semester_id);
+    if (section_id) params.append('section_id', section_id);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/study-materials/${qs}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
     });
     return await response.json();
   } catch (error: unknown) {

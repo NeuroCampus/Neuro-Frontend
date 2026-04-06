@@ -211,35 +211,22 @@ const filteredUsers = Array.isArray(users) ? users : [];
           updates
         });
         if (response.success) {
-          // Refresh the current page data
-          const refreshResponse = await manageUsers({
-            page: currentPage,
-            page_size: pageSize,
-            role: roleFilter !== "All" ? roleMap[roleFilter] : undefined,
-            is_active: statusFilter !== "All" ? statusFilter === "Active" : undefined,
-            search: searchQuery.trim() || undefined,
-          });
-          const hasRefreshResults = refreshResponse && typeof refreshResponse === 'object' && 'results' in refreshResponse;
-          const refreshDataSource = hasRefreshResults ? (refreshResponse as any).results : (refreshResponse as any);
-          
-          if (refreshDataSource && refreshDataSource.success) {
-            // Handle paginated response format
-            const usersArray = refreshDataSource.users || [];
-            const paginationInfo = hasRefreshResults ? (refreshResponse as any) : refreshDataSource;
-            
-            const refreshedUserData = Array.isArray(usersArray)
-              ? usersArray.map((user: any) => ({
-                  id: user.id,
-                  name: `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username || "N/A",
-                  email: user.email || "N/A",
-                  role: user.role || "N/A",
-                  status: user.is_active ? "Active" : "Inactive",
-                  username: user.username || "",
-                }))
-              : [];
-            setUsers(refreshedUserData);
-            setTotalUsers(paginationInfo.count || refreshedUserData.length);
-            setTotalPages(Math.ceil((paginationInfo.count || refreshedUserData.length) / pageSize));
+          // Update local state with returned user data instead of making another GET call
+          if (response.user) {
+            setUsers(prevUsers =>
+              prevUsers.map(user =>
+                user.id === editData.id
+                  ? {
+                      ...user,
+                      name: `${response.user.first_name || ""} ${response.user.last_name || ""}`.trim() || response.user.username || "N/A",
+                      email: response.user.email || "N/A",
+                      role: response.user.role || "N/A",
+                      status: response.user.is_active ? "Active" : "Inactive",
+                      username: response.user.username || "",
+                    }
+                  : user
+              )
+            );
           }
           setEditingId(null);
           setEditData(null);
@@ -280,41 +267,15 @@ const filteredUsers = Array.isArray(users) ? users : [];
           action: "delete"
         });
         if (response.success) {
-          // Refresh the current page data
-          const refreshResponse = await manageUsers({
-            page: currentPage,
-            page_size: pageSize,
-            role: roleFilter !== "All" ? roleMap[roleFilter] : undefined,
-            is_active: statusFilter !== "All" ? statusFilter === "Active" : undefined,
-            search: searchQuery.trim() || undefined,
-          });
-          const hasRefreshResults = refreshResponse && typeof refreshResponse === 'object' && 'results' in refreshResponse;
-          const refreshDataSource = hasRefreshResults ? (refreshResponse as any).results : (refreshResponse as any);
+          // Remove deleted user from local state instead of making another GET call
+          setUsers(prevUsers => prevUsers.filter(user => user.id !== deleteId));
+          setTotalUsers(prevTotal => prevTotal - 1);
           
-          if (refreshDataSource && refreshDataSource.success) {
-            // Handle paginated response format
-            const usersArray = refreshDataSource.users || [];
-            const paginationInfo = hasRefreshResults ? (refreshResponse as any) : refreshDataSource;
-            
-            const refreshedUserData = Array.isArray(usersArray)
-              ? usersArray.map((user: any) => ({
-                  id: user.id,
-                  name: `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username || "N/A",
-                  email: user.email || "N/A",
-                  role: user.role || "N/A",
-                  status: user.is_active ? "Active" : "Inactive",
-                  username: user.username || "",
-                }))
-              : [];
-            setUsers(refreshedUserData);
-            setTotalUsers(paginationInfo.count || refreshedUserData.length);
-            setTotalPages(Math.ceil((paginationInfo.count || refreshedUserData.length) / pageSize));
-            
-            // If we deleted the last item on the page and it's not the first page, go to previous page
-            if (refreshedUserData.length === 0 && currentPage > 1) {
-              setCurrentPage(currentPage - 1);
-            }
+          // If we deleted the last item on the page and it's not the first page, go to previous page
+          if (users.length === 1 && currentPage > 1) {
+            setCurrentPage(currentPage - 1);
           }
+          
           setDeleteId(null);
           toast({ title: "Success", description: "User deleted successfully" });
         } else {
@@ -353,7 +314,7 @@ const filteredUsers = Array.isArray(users) ? users : [];
     <div className="flex flex-col">
       <label className={`text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>{label}</label>
       <Select.Root value={value} onValueChange={onChange}>
-        <Select.Trigger className={`inline-flex items-center justify-between px-3 py-2 rounded w-48 text-sm shadow-sm outline-none focus:ring-2 ${
+        <Select.Trigger className={`inline-flex items-center justify-between px-3 py-2 rounded w-full sm:w-48 text-sm shadow-sm outline-none focus:ring-2 ${
           theme === 'dark' 
             ? 'bg-card border border-border text-foreground focus:ring-primary' 
             : 'bg-white border border-gray-300 text-gray-900 focus:ring-blue-500'
@@ -398,17 +359,17 @@ const filteredUsers = Array.isArray(users) ? users : [];
   }
 
   return (
-    <div className={`p-6 min-h-screen ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+    <div className={`p-4 sm:p-6 min-h-screen text-sm sm:text-base max-w-[390px] sm:max-w-none mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
       <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}>
         <CardHeader>
-          <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>User Management</CardTitle>
+          <CardTitle className={`text-base sm:text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>User Management</CardTitle>
           <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Manage all users in the system</p>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-col lg:flex-row md:items-start lg:items-end md:justify-start lg:justify-between gap-4 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
             {/* Filters */}
-            <div className="flex flex-col md:w-full lg:flex-row lg:gap-4">
-              <div className="w-full md:w-full lg:w-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:flex md:gap-4 lg:flex lg:gap-4">
+              <div className="w-full md:w-auto lg:w-auto">
                 <span className={`block text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Filter by Role</span>
                 <SelectMenu
                   label=""
@@ -417,7 +378,7 @@ const filteredUsers = Array.isArray(users) ? users : [];
                   options={roles}
                 />
               </div>
-              <div className="w-full md:w-full lg:w-auto">
+              <div className="w-full md:w-auto lg:w-auto">
                 <span className={`block text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Filter by Status</span>
                 <SelectMenu
                   label=""
@@ -429,7 +390,7 @@ const filteredUsers = Array.isArray(users) ? users : [];
             </div>
 
             {/* Search */}
-            <div className="w-full md:w-full lg:w-auto flex flex-col">
+            <div className="w-full md:w-auto lg:w-auto flex flex-col">
               <label className={`text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Search</label>
               <div className="flex gap-2">
                 <Input
@@ -438,8 +399,8 @@ const filteredUsers = Array.isArray(users) ? users : [];
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={handleSearchKeyPress}
                   className={theme === 'dark' 
-                    ? 'flex-1 md:flex-1 lg:w-52 rounded bg-card border border-border text-foreground' 
-                    : 'flex-1 md:flex-1 lg:w-52 rounded bg-white border border-gray-300 text-gray-900'}
+                    ? 'w-full md:w-52 rounded bg-card border border-border text-foreground px-2 py-1' 
+                    : 'w-full md:w-52 rounded bg-white border border-gray-300 text-gray-900 px-2 py-1'}
                 />
                 <Button
                   onClick={performSearch}
@@ -455,8 +416,8 @@ const filteredUsers = Array.isArray(users) ? users : [];
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
+          <div className="block overflow-x-auto">
+            <table className="w-full text-xs sm:text-sm text-left">
               <thead className={`border-b ${theme === 'dark' ? 'border-border text-foreground' : 'border-gray-200 text-gray-900'}`}>
                 <tr>
                   <th className="py-2">Full Name</th>
@@ -477,7 +438,7 @@ const filteredUsers = Array.isArray(users) ? users : [];
                           : 'border-gray-200 hover:bg-gray-50'
                       }`}
                     >
-                      <td className="py-3 px-2 w-[150px]">
+                      <td className="py-2 px-1 break-words whitespace-normal md:w-[150px]">
                         {editingId === user.id ? (
                           <Input
                             name="name"
@@ -491,7 +452,7 @@ const filteredUsers = Array.isArray(users) ? users : [];
                           user.name
                         )}
                       </td>
-                      <td className="py-3 px-2 w-[200px]">
+                      <td className="py-2 px-1 break-words whitespace-normal md:w-[200px]">
                         {editingId === user.id ? (
                           <Input
                             name="email"
@@ -505,9 +466,9 @@ const filteredUsers = Array.isArray(users) ? users : [];
                           user.email
                         )}
                       </td>
-                      <td className="py-3 w-[120px]">{getRoleBadge(user.role, theme)}</td>
-                      <td className="py-3 w-[120px]">{getStatusBadge(user.status, theme)}</td>
-                      <td className="py-3 text-right">
+                      <td className="py-2 px-1 break-words whitespace-normal md:w-[120px]">{getRoleBadge(user.role, theme)}</td>
+                      <td className="py-2 px-1 break-words whitespace-normal md:w-[120px]">{getStatusBadge(user.status, theme)}</td>
+                      <td className="py-2 text-right">
                         <div className="flex flex-wrap sm:flex-nowrap justify-end gap-2">
                           {editingId === user.id ? (
                             <Button
@@ -561,10 +522,48 @@ const filteredUsers = Array.isArray(users) ? users : [];
             </table>
           </div>
 
+          {/* Compact mobile list (hidden - showing table instead) */}
+          <div className="hidden">
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map((user) => (
+                <div key={user.id} className={`p-2 rounded border ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-200 bg-white'}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <div className="font-medium text-sm truncate">{user.name}</div>
+                      <div className="text-xs text-gray-500 truncate">{user.email}</div>
+                      <div className="mt-1 flex items-center gap-2">
+                        <div className="text-xs">{getRoleBadge(user.role, theme)}</div>
+                        <div className="text-xs">{getStatusBadge(user.status, theme)}</div>
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0 ml-2 flex items-center gap-1">
+                      {editingId === user.id ? (
+                        <Button size="sm" onClick={saveEdit} disabled={loading} className="px-2 py-1 text-xs">
+                          {loading ? 'Saving' : 'Save'}
+                        </Button>
+                      ) : (
+                        <>
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(user)} className="p-1">
+                            <Pencil1Icon className={theme === 'dark' ? 'w-4 h-4 text-primary' : 'w-4 h-4 text-blue-500'} />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => confirmDelete(user.id)} className="p-1">
+                            <TrashIcon className={theme === 'dark' ? 'w-4 h-4 text-destructive' : 'w-4 h-4 text-red-500'} />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className={`py-4 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No users found.</div>
+            )}
+          </div>
+
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6">
-              <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+            <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-2">
+              <div className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                 Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalUsers)} of {totalUsers} users
               </div>
               <div className="flex items-center space-x-2">
@@ -573,42 +572,30 @@ const filteredUsers = Array.isArray(users) ? users : [];
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1 || loading}
-                  className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                  className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white px-2 py-1 text-xs sm:px-3 sm:py-1 sm:text-sm"
                 >
                   Previous
                 </Button>
-                
-                {/* Page numbers */}
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
-                  if (pageNum > totalPages) return null;
-                  return (
-                    <Button
-                      key={pageNum}
-                      variant={currentPage === pageNum ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setCurrentPage(pageNum)}
-                      disabled={loading}
-                      className={currentPage === pageNum 
-                        ? (theme === 'dark' 
-                            ? 'bg-primary text-primary-foreground' 
-                            : 'bg-blue-600 text-white')
-                        : (theme === 'dark' 
-                            ? 'text-foreground bg-card border border-border hover:bg-accent' 
-                            : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50')
-                      }
-                    >
-                      {pageNum}
-                    </Button>
-                  );
-                })}
-                
+
+                {/* Single current page indicator (all viewports) */}
+                <div className="flex items-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled
+                    className={theme === 'dark' ? 'text-muted-foreground bg-card border border-border px-2 py-1 text-xs sm:px-3 sm:py-1 sm:text-sm' : 'text-gray-700 bg-white border border-gray-300 px-2 py-1 text-xs sm:px-3 sm:py-1 sm:text-sm'}
+                    aria-label={`Current page ${currentPage} of ${totalPages}`}
+                  >
+                    {currentPage}
+                  </Button>
+                </div>
+
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages || loading}
-                  className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                  className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white px-2 py-1 text-xs sm:px-3 sm:py-1 sm:text-sm"
                 >
                   Next
                 </Button>
@@ -619,7 +606,13 @@ const filteredUsers = Array.isArray(users) ? users : [];
       </Card>
 
       <Dialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
-        <DialogContent className={theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-200 text-gray-900'}>
+        <DialogContent
+          className={
+            theme === 'dark'
+              ? 'bg-card border border-border text-foreground w-[92%] max-w-[420px] sm:max-w-md rounded-lg mx-auto'
+              : 'bg-white border border-gray-200 text-gray-900 w-[92%] max-w-[420px] sm:max-w-md rounded-lg mx-auto'
+          }
+        >
           <DialogHeader>
             <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Confirm Deletion</DialogTitle>
           </DialogHeader>

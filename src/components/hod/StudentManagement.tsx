@@ -96,6 +96,7 @@ const StudentManagement = () => {
     manualSemesters: [] as Semester[],
     totalStudents: 0,
     pageSize: 50,
+    successMessage: "",
   });
 
   const bootstrap = useHODBootstrap();
@@ -109,7 +110,7 @@ const StudentManagement = () => {
   };
 
   // Fetch students
-  const fetchStudents = async (branchId: string, page: number = 1, pageSize: number = 50, search: string = '', sectionId: string = '') => {
+  const fetchStudents = async (branchId: string, page: number = 1, pageSize: number = 50, search: string = '', sectionId: string = '', forceRefresh: boolean = false) => {
     try {
       const params: any = { 
         branch_id: branchId,
@@ -118,6 +119,7 @@ const StudentManagement = () => {
       };
       if (search) params.search = search;
       if (sectionId) params.section_id = sectionId;
+      if (forceRefresh) params.force_refresh = true;
       const studentRes = await manageStudents(params, "GET");
       // Normalize different possible response shapes from backend
       // 1) { success: true, results: [...], count }
@@ -529,8 +531,13 @@ const StudentManagement = () => {
             currentPage: 1, // Reset to first page to show the new students
             isLoading: false,
           });
+            if (createdCount > 0) {
+              updateState({ successMessage: `${createdCount} student${createdCount !== 1 ? 's' : ''} added successfully.` });
+              setTimeout(() => updateState({ successMessage: "" }), 4000);
+            }
           if (fileInputRef.current) fileInputRef.current.value = "";
-          await fetchStudents(state.branchId);
+          // Fetch fresh students from server (force refresh to bypass suppression cache)
+          await fetchStudents(state.branchId, 1, state.pageSize, '', '', true);
         } else {
           updateState({ uploadErrors: [res.message || "Bulk upload failed"], uploadedCount: 0, updatedCount: 0, isLoading: false });
         }
@@ -640,8 +647,10 @@ const StudentManagement = () => {
           uploadedCount: 1, // Show success message
           currentPage: 1, // Reset to first page to show the new student
         });
-        // Refresh full list in background to reconcile with server
-        fetchStudents(state.branchId);
+        updateState({ successMessage: "Student added successfully." });
+        setTimeout(() => updateState({ successMessage: "" }), 3000);
+        // Refresh full list in background to reconcile with server (force refresh to bypass cache)
+        fetchStudents(state.branchId, 1, state.pageSize, '', '', true);
         // Clear success message after 3 seconds
         setTimeout(() => {
           updateState({ uploadedCount: 0, updatedCount: 0 });
@@ -686,8 +695,10 @@ const StudentManagement = () => {
             : s
         );
         updateState({ students: updated, editDialog: false, uploadErrors: [], editSections: [], currentPage: 1 });
-        // Refresh in background
-        fetchStudents(state.branchId);
+        updateState({ successMessage: "Student updated successfully." });
+        setTimeout(() => updateState({ successMessage: "" }), 3000);
+        // Refresh in background (force refresh to bypass cache)
+        fetchStudents(state.branchId, 1, state.pageSize, '', '', true);
       } else {
         updateState({ uploadErrors: [res.message || "Error updating student"] });
       }
@@ -707,8 +718,11 @@ const StudentManagement = () => {
       }, "POST");
 
       if (res.success) {
-        await fetchStudents(state.branchId);
-        updateState({ confirmDelete: false, uploadErrors: [], currentPage: 1 });
+      // Force refresh after delete to ensure latest list
+      await fetchStudents(state.branchId, 1, state.pageSize, '', '', true);
+      updateState({ confirmDelete: false, uploadErrors: [], currentPage: 1 });
+      updateState({ successMessage: "Student deleted successfully." });
+      setTimeout(() => updateState({ successMessage: "" }), 3000);
       } else {
         updateState({ uploadErrors: [res.message || "Error deleting student"] });
       }
@@ -824,6 +838,9 @@ const StudentManagement = () => {
     <div className={`p-6 space-y-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <h2 className={`text-2xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Student Management</h2>
       {state.isLoading && <p className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Loading data...</p>}
+      {state.successMessage && (
+        <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{state.successMessage}</p>
+      )}
       {state.uploadErrors.length > 0 && (
         <ul className={`text-sm ${theme === 'dark' ? 'text-destructive' : 'text-red-500'} mb-4 list-disc list-inside`}>
           {state.uploadErrors.map((err, idx) => (

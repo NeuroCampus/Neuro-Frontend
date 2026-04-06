@@ -42,6 +42,11 @@ interface IndividualFeeAssignment {
   student: Student;
   custom_fee_structure: Record<string, number>;
   total_amount: number;
+  template?: {
+    id?: number;
+    name?: string;
+    total_amount_cents?: number;
+  } | null;
   assigned_at: string;
   is_active: boolean;
 }
@@ -62,12 +67,41 @@ const IndividualFeeAssignment: React.FC = () => {
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
-  const studentsPerPage = 10;
+  // Pagination states (driven by server)
+  const [studentsPage, setStudentsPage] = useState(1);
+  const [studentsTotalPages, setStudentsTotalPages] = useState(1);
+  const [studentsTotalCount, setStudentsTotalCount] = useState(0);
+  const studentsPerPage = 10; // local page size for UI list; server page size will be used for fetching
+
+  // Track active tab and only load students when All Students tab is activated
+  const [activeTab, setActiveTab] = useState<'with-custom' | 'all-students'>('with-custom');
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value as any);
+    if (value === 'all-students' && (students.length === 0 || studentsTotalCount === 0)) {
+      fetchStudentsPage(1);
+    }
+  };
 
   useEffect(() => {
     fetchData();
+    const onComponentsChanged = (e: any) => {
+      const detail = e?.detail || {};
+      const action = detail.action;
+      if (!action) return;
+      if (action === 'create' && detail.item) {
+        setAvailableComponents(prev => [{
+          ...detail.item,
+          amount: (detail.item.amount_cents != null ? Number(detail.item.amount_cents) / 100 : (detail.item.amount ? Math.round(detail.item.amount * 100) / 100 : 0))
+        }, ...prev]);
+      } else if (action === 'update' && detail.item) {
+        setAvailableComponents(prev => prev.map(c => (c.id === detail.item.id ? { ...detail.item, amount: (detail.item.amount_cents != null ? Number(detail.item.amount_cents) / 100 : (detail.item.amount ? Math.round(detail.item.amount * 100) / 100 : 0)) } : c)));
+      } else if (action === 'delete' && detail.id) {
+        setAvailableComponents(prev => prev.filter(c => c.id !== detail.id));
+      }
+    };
+    window.addEventListener('feeComponents:changed', onComponentsChanged);
+    return () => window.removeEventListener('feeComponents:changed', onComponentsChanged);
   }, []);
 
   const fetchData = async () => {
@@ -75,71 +109,157 @@ const IndividualFeeAssignment: React.FC = () => {
       setLoading(true);
       const token = localStorage.getItem('access_token');
 
-      // Fetch students and components in parallel
-      const [studentsRes, componentsRes] = await Promise.all([
-        fetch('http://127.0.0.1:8000/api/fees-manager/students/', {
+      // Fetch components and fee assignments (do NOT fetch students yet)
+      const [componentsRes, assignmentsRes] = await Promise.all([
+        fetch(`http://127.0.0.1:8000/api/fees-manager/components/?page=1&page_size=200`, {
           headers: { 'Authorization': `Bearer ${token}` },
         }),
-        fetch('http://127.0.0.1:8000/api/fees-manager/components/', {
+        fetch(`http://127.0.0.1:8000/api/fees-manager/assignments/?page=1&page_size=200`, {
           headers: { 'Authorization': `Bearer ${token}` },
         }),
       ]);
 
-      if (!studentsRes.ok || !componentsRes.ok) {
+      if (!componentsRes.ok || !assignmentsRes.ok) {
         throw new Error('Failed to fetch data');
       }
 
-      const [studentsData, componentsData] = await Promise.all([
-        studentsRes.json(),
+      const [componentsData, assignmentsData] = await Promise.all([
         componentsRes.json(),
+        assignmentsRes.json(),
       ]);
 
-      setStudents(studentsData.data || []);
-      setAvailableComponents(componentsData.data || []);
+      setAvailableComponents((componentsData.data || []).map((it: any) => ({
+        ...it,
+        amount: (it.amount_cents != null ? Number(it.amount_cents) : (it.amount ? Math.round(it.amount * 100) : 0)) / 100,
+      })));
 
-      // Fetch individual assignments for all students
-      await fetchIndividualAssignments();
+      // Populate assignments from assignments endpoint (avoids per-student profile calls)
+      const assignmentItems = (assignmentsData.data || []).map((a: any) => ({
+        id: a.id,
+        student: a.student,
+        custom_fee_structure: a.custom_fee_structure || null,
+        template: a.template || null,
+        total_amount: a.template?.total_amount_cents ? (a.template.total_amount_cents / 100) : (a.total_amount || 0),
+        assigned_at: a.assigned_at,
+        is_active: a.is_active,
+      } as IndividualFeeAssignment));
+      setAssignments(assignmentItems);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
+
   };
 
-  const fetchIndividualAssignments = async () => {
+  const fetchIndividualAssignments = async (studentsList?: Student[]) => {
     try {
       const token = localStorage.getItem('access_token');
-      const assignmentsData: IndividualFeeAssignment[] = [];
+      const studentsToFetch = studentsList || students;
+      const ids = (studentsToFetch || []).map(s => s.id).filter(Boolean);
 
-      // Fetch individual assignments for each student
-      for (const student of students) {
-        try {
-          const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/students/${student.id}/fee-profile/`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-          });
+      if (ids.length === 0) {
+        setAssignments([]);
+        return;
+      }
 
-          if (response.ok) {
-            const data = await response.json();
-            if (data.data?.custom_fee_structure) {
-              assignmentsData.push({
-                id: student.id,
-                student: student,
-                custom_fee_structure: data.data.custom_fee_structure,
-                total_amount: data.data.total_amount || 0,
-                assigned_at: data.data.assigned_at || new Date().toISOString(),
-                is_active: true,
-              });
+      // Bulk fetch to avoid N+1 requests
+      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/students/fee-profiles/?ids=${ids.join(',')}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (response.status === 404) {
+        // Bulk endpoint not available on this backend. Fall back to controlled batch fetches
+        console.warn('Bulk student fee-profiles endpoint not found, falling back to batched fetch');
+        const batchSize = 8;
+        const profiles: any[] = [];
+
+        for (let i = 0; i < ids.length; i += batchSize) {
+          const batchIds = ids.slice(i, i + batchSize);
+          // fetch each student's fee-profile in parallel within the batch
+          const promises = batchIds.map(id =>
+            fetch(`http://127.0.0.1:8000/api/fees-manager/students/${id}/fee-profile/`, { headers: { 'Authorization': `Bearer ${token}` } })
+              .then(res => (res.ok ? res.json().catch(() => null) : null))
+              .catch(() => null)
+          );
+
+          const results = await Promise.all(promises);
+          for (let idx = 0; idx < results.length; idx++) {
+            const r = results[idx];
+            if (r && r.data) {
+              profiles.push({ student_id: batchIds[idx], ...r.data });
             }
           }
-        } catch (err) {
-          // Skip if no individual assignment for this student
-          continue;
         }
+
+        const assignmentsData: IndividualFeeAssignment[] = profiles
+          .filter(p => p.custom_fee_structure)
+          .map(p => {
+            const student = studentsToFetch.find(s => s.id === p.student_id) || { id: p.student_id, name: '', usn: '', department: '', semester: 0 } as Student;
+            return {
+              id: p.student_id,
+              student,
+              custom_fee_structure: p.custom_fee_structure,
+              total_amount: p.total_amount || 0,
+              assigned_at: p.assigned_at || new Date().toISOString(),
+              is_active: p.is_active || false,
+            } as IndividualFeeAssignment;
+          });
+
+        setAssignments(assignmentsData);
+        return;
       }
+
+      if (!response.ok) {
+        console.error('Failed to fetch bulk student fee profiles');
+        setAssignments([]);
+        return;
+      }
+
+      const data = await response.json();
+      const profiles: any[] = data.data || [];
+
+      const assignmentsData: IndividualFeeAssignment[] = profiles
+        .filter(p => p.custom_fee_structure)
+        .map(p => {
+          const student = studentsToFetch.find(s => s.id === p.student_id) || { id: p.student_id, name: '', usn: '', department: '', semester: 0 } as Student;
+          return {
+            id: p.student_id,
+            student,
+            custom_fee_structure: p.custom_fee_structure,
+            total_amount: p.total_amount || 0,
+            assigned_at: p.assigned_at || new Date().toISOString(),
+            is_active: p.is_active || false,
+          } as IndividualFeeAssignment;
+        });
 
       setAssignments(assignmentsData);
     } catch (err) {
       console.error('Error fetching individual assignments:', err);
+    }
+  };
+
+  const fetchStudentsPage = async (page: number) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('access_token');
+      const page_size = 50;
+      const res = await fetch(`http://127.0.0.1:8000/api/fees-manager/students/?page=${page}&page_size=${page_size}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to fetch students');
+      const data = await res.json();
+      setStudents(data.data || []);
+      const meta = data.meta || {};
+      setStudentsPage(meta.page || 1);
+      setStudentsTotalPages(meta.total_pages || 1);
+      setStudentsTotalCount(meta.count || 0);
+      // Refresh assignments for this page using returned students
+      await fetchIndividualAssignments(data.data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -149,19 +269,24 @@ const IndividualFeeAssignment: React.FC = () => {
   };
 
   const handleAssignIndividualFees = async () => {
-    if (!selectedStudent || Object.keys(customFees).length === 0) return;
-
+    if (!selectedStudent) return;
     try {
+      setLoading(true);
       const token = localStorage.getItem('access_token');
 
-      // Convert component IDs to component names for the API
-      const components: Record<string, number> = {};
-      Object.entries(customFees).forEach(([componentId, amount]) => {
-        const component = availableComponents.find(c => c.id === parseInt(componentId));
-        if (component && amount > 0) {
-          components[component.name] = amount;
+      // Build components payload keyed by component name (backend expects names)
+      const components_payload: Record<string, number> = {};
+      availableComponents.forEach((comp) => {
+        const val = customFees[comp.id];
+        if (val !== undefined && val !== null && Number(val) > 0) {
+          components_payload[comp.name] = Number(val);
         }
       });
+
+      if (Object.keys(components_payload).length === 0) {
+        setError('No fee components selected');
+        return;
+      }
 
       const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/students/${selectedStudent.id}/assign-individual-fees/`, {
         method: 'POST',
@@ -169,25 +294,28 @@ const IndividualFeeAssignment: React.FC = () => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ components }),
+        body: JSON.stringify({ components: components_payload }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to assign individual fees');
+        const err = await response.json().catch(() => null);
+        throw new Error(err?.message || 'Failed to assign custom fees');
       }
 
       await fetchData();
       setIsAssignDialogOpen(false);
+      setIsEditDialogOpen(false);
       resetForm();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to assign individual fees');
+      setError(err instanceof Error ? err.message : 'Failed to assign custom fees');
+    } finally {
+      setLoading(false);
     }
   };
 
+
   const handleRemoveIndividualFees = async (studentId: number) => {
     if (!confirm('Are you sure you want to remove individual fee assignment for this student?')) return;
-
     try {
       const token = localStorage.getItem('access_token');
       const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/students/${studentId}/remove-individual-fees/`, {
@@ -222,14 +350,21 @@ const IndividualFeeAssignment: React.FC = () => {
     return assignments.find(assignment => assignment.student.id === studentId);
   };
 
-  // Calculate pagination values
-  const indexOfLastStudent = currentPage * studentsPerPage;
-  const indexOfFirstStudent = indexOfLastStudent - studentsPerPage;
-  const currentStudents = filteredStudents.slice(indexOfFirstStudent, indexOfLastStudent);
-  const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
+  // Server-driven pagination: current page items are in `students` (already filtered by server page)
+  const SERVER_PAGE_SIZE = 50;
+  const currentStudents = filteredStudents; // filtered within current server page
 
   const handlePageChange = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
+    if (pageNumber >= 1 && pageNumber <= studentsTotalPages) {
+      fetchStudentsPage(pageNumber);
+    }
+  };
+
+  const openAssignDialog = async () => {
+    if (students.length === 0) {
+      await fetchStudentsPage(1);
+    }
+    setIsAssignDialogOpen(true);
   };
 
   if (loading) {
@@ -242,7 +377,7 @@ const IndividualFeeAssignment: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-7xl">
+    <div className="container mx-auto p-0">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Individual Fee Assignment</h1>
@@ -257,7 +392,7 @@ const IndividualFeeAssignment: React.FC = () => {
             </DialogHeader>
 
             <div className="space-y-6">
-              {!selectedStudent ? (
+                  {!selectedStudent ? (
                 // Student Selection View
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Select Student</h3>
@@ -280,8 +415,17 @@ const IndividualFeeAssignment: React.FC = () => {
                       </div>
                     ))}
                   </div>
+                  {/* Pagination controls for students */}
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="text-sm text-muted-foreground">Total Students: {studentsTotalCount}</div>
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" onClick={() => handlePageChange(studentsPage - 1)} disabled={studentsPage <= 1}>Prev</Button>
+                      <div className="text-sm">Page {studentsPage} / {studentsTotalPages}</div>
+                      <Button size="sm" variant="outline" onClick={() => handlePageChange(studentsPage + 1)} disabled={studentsPage >= studentsTotalPages}>Next</Button>
+                    </div>
+                  </div>
                 </div>
-              ) : (
+                  ) : (
                 // Selected Student View with Custom Fee Components
                 <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                   {/* Selected Student Header with Back Button */}
@@ -440,7 +584,7 @@ const IndividualFeeAssignment: React.FC = () => {
                       {availableComponents.map((component) => {
                         // Get existing custom fee amount for this component if it exists
                         const existingAssignment = getStudentCustomFees(selectedStudent.id);
-                        const existingAmount = existingAssignment?.custom_fee_structure[component.name] || 0;
+                        const existingAmount = existingAssignment?.custom_fee_structure?.[component.name] || 0;
                         const currentAmount = customFees[component.id] !== undefined ? customFees[component.id] : existingAmount;
 
                         return (
@@ -565,7 +709,7 @@ const IndividualFeeAssignment: React.FC = () => {
       </Card>
 
       {/* Students with Individual Fees */}
-      <Tabs defaultValue="with-custom" className="space-y-6">
+      <Tabs defaultValue="with-custom" onValueChange={handleTabChange} className="space-y-6">
         <TabsList>
           <TabsTrigger 
             value="with-custom" 
@@ -598,7 +742,7 @@ const IndividualFeeAssignment: React.FC = () => {
                     No students have custom fee structures assigned yet.
                   </p>
                   <Button 
-                    onClick={() => setIsAssignDialogOpen(true)}
+                    onClick={openAssignDialog}
                     className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -627,16 +771,28 @@ const IndividualFeeAssignment: React.FC = () => {
                             {assignment.student.name}
                           </TableCell>
                           <TableCell>{assignment.student.usn}</TableCell>
-                          <TableCell>{assignment.student.department}</TableCell>
-                          <TableCell>{assignment.student.semester}</TableCell>
+                          <TableCell>{assignment.student.department || '-'}</TableCell>
+                          <TableCell>{assignment.student.semester || '-'}</TableCell>
                           <TableCell>
                             <div className="text-sm max-w-xs">
-                              {Object.entries(assignment.custom_fee_structure).map(([name, amount]) => (
-                                <div key={name} className="flex justify-between">
-                                  <span>{name}:</span>
-                                  <span>{formatCurrency(amount)}</span>
-                                </div>
-                              ))}
+                              {assignment.custom_fee_structure && Object.entries(assignment.custom_fee_structure || {}).length > 0 ? (
+                                Object.entries(assignment.custom_fee_structure || {}).map(([name, amount]) => (
+                                  <div key={name} className="flex justify-between">
+                                    <span>{name}:</span>
+                                    <span>{formatCurrency(amount)}</span>
+                                  </div>
+                                ))
+                              ) : (
+                                // Fallback to template info when no custom structure
+                                assignment.template ? (
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{assignment.template.name}</span>
+                                    <span className="text-sm text-muted-foreground">{formatCurrency(assignment.total_amount)}</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-muted-foreground">-</span>
+                                )
+                              )}
                             </div>
                           </TableCell>
                           <TableCell className="font-semibold text-green-600">
@@ -725,10 +881,10 @@ const IndividualFeeAssignment: React.FC = () => {
                                 if (existingAssignment) {
                                   const fees: Record<number, number> = {};
                                   availableComponents.forEach(component => {
-                                    const amount = existingAssignment.custom_fee_structure[component.name];
-                                    if (amount) {
-                                      fees[component.id] = amount;
-                                    }
+                                    const amount = existingAssignment.custom_fee_structure?.[component.name];
+                                        if (amount !== undefined && amount !== null) {
+                                          fees[component.id] = amount;
+                                        }
                                   });
                                   setCustomFees(fees);
                                 }
@@ -746,30 +902,30 @@ const IndividualFeeAssignment: React.FC = () => {
                   </TableBody>
                 </Table>
 
-                {/* Pagination */}
-                {filteredStudents.length > studentsPerPage && (
+                {/* Pagination (server-driven) */}
+                {studentsTotalPages > 1 && (
                   <div className="flex justify-between items-center mt-4">
                     <div className="text-sm text-gray-600">
-                      Showing {indexOfFirstStudent + 1} to {Math.min(indexOfLastStudent, filteredStudents.length)} of {filteredStudents.length} students
+                      Showing {(studentsPage - 1) * SERVER_PAGE_SIZE + 1} to {(studentsPage - 1) * SERVER_PAGE_SIZE + students.length} of {studentsTotalCount} students
                     </div>
                     <div className="flex space-x-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
+                        onClick={() => handlePageChange(studentsPage - 1)}
+                        disabled={studentsPage === 1}
                         className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
                       >
                         Previous
                       </Button>
                       <span className="px-3 py-1 text-sm">
-                        Page {currentPage} of {totalPages}
+                        Page {studentsPage} of {studentsTotalPages}
                       </span>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
+                        onClick={() => handlePageChange(studentsPage + 1)}
+                        disabled={studentsPage === studentsTotalPages}
                         className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
                       >
                         Next
