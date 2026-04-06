@@ -357,7 +357,8 @@ const SubjectManagement = () => {
           <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Manage Courses</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          {/* Desktop/Table for md+ */}
+          <div className="overflow-x-auto hidden md:block">
             <table className="w-full table-auto text-sm">
               <thead className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-gray-100 text-gray-900'}>
                 <tr>
@@ -379,12 +380,8 @@ const SubjectManagement = () => {
                   >
                     <td className="px-4 py-3">{subject.subject_code}</td>
                     <td className="px-4 py-3">{subject.name}</td>
-                    <td className="px-4 py-3">
-                      {getSemesterNumber(subject.semester_id)}
-                    </td>
-                    <td className="px-4 py-3">
-                      {subject.subject_type === 'regular' ? 'Regular' : subject.subject_type === 'elective' ? 'Elective Subjects' : 'Open Elective Subjects'}
-                    </td>
+                    <td className="px-4 py-3">{getSemesterNumber(subject.semester_id)}</td>
+                    <td className="px-4 py-3">{subject.subject_type === 'regular' ? 'Regular' : subject.subject_type === 'elective' ? 'Elective Subjects' : 'Open Elective Subjects'}</td>
                     <td className="px-4 py-3">{subject.credits ?? 0}</td>
                     <td className="px-4 py-3 flex gap-5">
                       <Pencil
@@ -402,65 +399,114 @@ const SubjectManagement = () => {
             </table>
           </div>
 
-          {/* Info + Pagination */}
-          <div className="flex justify-between items-center mt-4">
-            {/* Showing count */}
-            <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-              Showing {state.subjects.length} out of {state.totalCount} Courses
+          {/* Mobile: card list (only visible on small screens) */}
+          <div className="md:hidden space-y-3">
+            {state.subjects.map((subject) => (
+              <div
+                key={subject.id}
+                className={`p-3 rounded-md border ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-200 text-gray-900'}`}
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex-1 pr-3">
+                    <div className="text-xs text-gray-500 mb-1">{subject.subject_code} • {getSemesterNumber(subject.semester_id)}</div>
+                    <div className="font-medium text-sm mb-1">{subject.name}</div>
+                    <div className="text-sm text-gray-500">{subject.subject_type === 'regular' ? 'Regular' : subject.subject_type === 'elective' ? 'Elective' : 'Open Elective'} • {subject.credits ?? 0} credits</div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Pencil
+                      className={`w-5 h-5 cursor-pointer ${theme === 'dark' ? 'text-primary hover:text-primary/80' : 'text-blue-600 hover:text-blue-800'}`}
+                      onClick={() => handleEdit(subject)}
+                    />
+                    <Trash2
+                      className={`w-5 h-5 cursor-pointer ${theme === 'dark' ? 'text-destructive hover:text-destructive/80' : 'text-red-600 hover:text-red-800'}`}
+                      onClick={() => handleDelete(subject.id)}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Info + Pagination: desktop and mobile variants */}
+          <div className="mt-4">
+            {/* Desktop/tablet (md+) */}
+            <div className="hidden md:flex justify-between items-center">
+              <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                Showing {state.subjects.length} out of {state.totalCount} Courses
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Per page:</span>
+                  <select
+                    value={state.pageSize}
+                    onChange={(e) => updateState({ pageSize: Number(e.target.value), currentPage: 1 })}
+                    className={`text-sm px-2 py-1 rounded-md border ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}
+                    disabled={state.loading}
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => updateState({ currentPage: Math.max(state.currentPage - 1, 1) })}
+                    disabled={state.currentPage === 1 || state.loading}
+                    className="w-24 flex items-center justify-center gap-1 text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                  >
+                    Previous
+                  </Button>
+                  <div className={`px-4 text-center text-sm font-medium py-1.5 rounded-md ${theme === 'dark' ? 'text-foreground bg-card border border-border' : 'text-gray-900 bg-white border border-gray-300'}`}>
+                    Page {state.currentPage} of {totalPages || 1}
+                  </div>
+                  <Button
+                    onClick={() => updateState({ currentPage: Math.min(state.currentPage + 1, totalPages) })}
+                    disabled={state.currentPage === totalPages || state.loading || totalPages === 0}
+                    className="w-24 flex items-center justify-center gap-1 text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
             </div>
 
-            
+            {/* Mobile (smaller screens) */}
+            <div className="md:hidden flex flex-col gap-3">
+              <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Showing {state.subjects.length} out of {state.totalCount} Courses</div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => updateState({ currentPage: Math.max(state.currentPage - 1, 1) })}
+                    disabled={state.currentPage === 1 || state.loading}
+                    className="flex items-center justify-center gap-1 text-sm font-medium py-1 px-3 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                  >
+                    Prev
+                  </Button>
+                  <div className={`px-3 text-sm font-medium py-1 rounded-md ${theme === 'dark' ? 'text-foreground bg-card border border-border' : 'text-gray-900 bg-white border border-gray-300'}`}>
+                    {state.currentPage}/{totalPages || 1}
+                  </div>
+                  <Button
+                    onClick={() => updateState({ currentPage: Math.min(state.currentPage + 1, totalPages) })}
+                    disabled={state.currentPage === totalPages || state.loading || totalPages === 0}
+                    className="flex items-center justify-center gap-1 text-sm font-medium py-1 px-3 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                  >
+                    Next
+                  </Button>
+                </div>
 
-            {/* Pagination Controls */}
-            <div className="flex items-center gap-4">
-              {/* Page Size Selector */}
-              <div className="flex items-center gap-2">
-                <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                  Per page:
-                </span>
                 <select
                   value={state.pageSize}
-                  onChange={(e) => {
-                    updateState({ pageSize: Number(e.target.value), currentPage: 1 });
-                  }}
-                  className={`text-sm px-2 py-1 rounded-md border ${theme === 'dark'
-                    ? 'bg-card text-foreground border-border'
-                    : 'bg-white text-gray-900 border-gray-300'
-                    }`}
+                  onChange={(e) => updateState({ pageSize: Number(e.target.value), currentPage: 1 })}
+                  className={`text-sm px-2 py-1 rounded-md border ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}
                   disabled={state.loading}
                 >
                   <option value={5}>5</option>
                   <option value={10}>10</option>
                   <option value={25}>25</option>
-                  <option value={50}>50</option>
                 </select>
-              </div>
-
-              {/* Page Navigation */}
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={() => {
-                    const newPage = Math.max(state.currentPage - 1, 1);
-                    updateState({ currentPage: newPage });
-                  }}
-                  disabled={state.currentPage === 1 || state.loading}
-                  className="w-24 flex items-center justify-center gap-1 text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
-                >
-                  Previous
-                </Button>
-                <div className={`px-4 text-center text-sm font-medium py-1.5 rounded-md ${theme === 'dark' ? 'text-foreground bg-card border border-border' : 'text-gray-900 bg-white border border-gray-300'}`}>
-                  Page {state.currentPage} of {totalPages || 1}
-                </div>
-                <Button
-                  onClick={() => {
-                    const newPage = Math.min(state.currentPage + 1, totalPages);
-                    updateState({ currentPage: newPage });
-                  }}
-                  disabled={state.currentPage === totalPages || state.loading || totalPages === 0}
-                  className="w-24 flex items-center justify-center gap-1 text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
-                >
-                  Next
-                </Button>
               </div>
             </div>
           </div>
@@ -497,7 +543,7 @@ const SubjectManagement = () => {
       {/* Add/Edit Subject Modal */}
       {state.showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <div className={`p-6 rounded-lg shadow-lg w-96 ${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-300'}`}>
+          <div className={`p-6 rounded-lg shadow-lg w-96 max-h-[70vh] overflow-y-auto md:max-h-none md:overflow-visible ${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-300'}`}>
             <h3 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               {state.showModal === "add" ? "Add New Subject" : "Edit Subject"}
             </h3>
@@ -614,7 +660,7 @@ const SubjectManagement = () => {
                     modalError: null,
                   });
                 }}
-                className={`${theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-900 bg-white border-gray-300 hover:bg-gray-100'}`}
+                className={`${theme === 'dark' ? 'text-foreground bg-card border border-border hover:bg-accent' : 'text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 bottom-1 '}`}
                 disabled={state.loading}
               >
                 Cancel
@@ -687,7 +733,7 @@ const SubjectManagement = () => {
                     updateState({ loading: false });
                   }
                 }}
-                className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+                className="bg-[#a259ff] text-white border border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
                 disabled={state.loading}
               >
                 {state.showModal === "add" ? "Add Course" : "Update Course"}
