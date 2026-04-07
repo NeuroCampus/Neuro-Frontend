@@ -65,6 +65,9 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
             case "teacher":
               navigate("/faculty", { replace: true });
               break;
+            case "dean":
+              navigate("/dean", { replace: true });
+              break;
             case "coe":
               navigate("/coe", { replace: true });
               break;

@@ -164,6 +164,7 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
                   <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-300'}>
                     <SelectItem value="hod">HOD</SelectItem>
                     <SelectItem value="teacher">Faculty/Teacher</SelectItem>
+                    <SelectItem value="dean">Dean</SelectItem>
                     <SelectItem value="coe">COE</SelectItem>
                   </SelectContent>
                 </Select>

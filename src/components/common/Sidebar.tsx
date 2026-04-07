@@ -274,6 +274,11 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // Profile
     { name: "Profile", page: "profile" },
   ],
+  dean: [
+    { name: "Dashboard", page: "dashboard" },
+    { name: "Reports", page: "reports" },
+    { name: "Profile", page: "profile" },
+  ],
 };
 
  
