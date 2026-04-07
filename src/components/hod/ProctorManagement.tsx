@@ -282,6 +282,7 @@ const ProctorStudents = () => {
           editMode: false,
           selectedUSNs: [],
           selectedProctor: "",
+          showProctorSelector: false,
         });
 
         toast({
@@ -344,6 +345,7 @@ const ProctorStudents = () => {
             editMode: false,
             selectedUSNs: [],
             selectedProctor: "",
+            showProctorSelector: false,
           });
           toast({
             title: "Success",
@@ -385,207 +387,272 @@ const ProctorStudents = () => {
   }
 
   return (
-    <div className={`min-h-screen p-6 space-y-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <div className="grid grid-cols-3 gap-4 ">
-        <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}><CardHeader><CardTitle>Total Students</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{state.totalCount}</CardContent></Card>
-        <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}><CardHeader><CardTitle className={theme === 'dark' ? 'text-green-400' : 'text-green-600'}>Assigned</CardTitle></CardHeader><CardContent className={`text-2xl font-bold ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{assigned}</CardContent></Card>
-        <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}><CardHeader><CardTitle className={theme === 'dark' ? 'text-red-400' : 'text-red-600'}>Unassigned</CardTitle></CardHeader><CardContent className={`text-2xl font-bold ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{unassigned}</CardContent></Card>
+    <div className={`p-4 sm:p-6 min-h-screen text-sm sm:text-base max-w-[390px] sm:max-w-none mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <Card className={theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'}>
+          <CardHeader className="pb-2">
+            <CardTitle className={`text-sm sm:text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Total Students</CardTitle>
+          </CardHeader>
+          <CardContent className={`text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+            {state.totalCount}
+          </CardContent>
+        </Card>
+
+        <Card className={theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'}>
+          <CardHeader className="pb-2">
+            <CardTitle className={`text-sm sm:text-base ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>Assigned</CardTitle>
+          </CardHeader>
+          <CardContent className={`text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+            {assigned}
+          </CardContent>
+        </Card>
+
+        <Card className={theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'}>
+          <CardHeader className="pb-2">
+            <CardTitle className={`text-sm sm:text-base ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>Unassigned</CardTitle>
+          </CardHeader>
+          <CardContent className={`text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
+            {unassigned}
+          </CardContent>
+        </Card>
       </div>
 
-      <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
-        <CardHeader><CardTitle>Student-Proctor Management</CardTitle></CardHeader>
-        <CardContent className="flex items-center gap-4">
-          <div className="flex-1" />
-          {state.editMode && (
-            <Select onValueChange={(value) => updateState({ selectedProctor: value })} disabled={state.proctors.length === 0}>
-              <SelectTrigger className={theme === 'dark' ? 'w-64 bg-background text-foreground border-border' : 'w-64 bg-white text-gray-900 border-gray-300'}>
-                <SelectValue placeholder={state.proctors.length === 0 ? "No proctors available" : "Select Proctor"} />
-              </SelectTrigger>
-              <SelectContent className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
-                {state.proctors.map((proctor) => (
-                  <SelectItem key={proctor.id} value={proctor.id} className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>{proctor.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          {state.editMode && (
-            <div className="flex gap-2">
-              <Button
-              className={`min-w-fit text-sm font-medium px-4 py-2 rounded-md transition-all duration-200 ease-in-out transform hover:scale-105 flex items-center gap-2 ${theme === 'dark' ? 'text-foreground bg-green-700 hover:bg-green-800' : 'text-gray-200 bg-green-600 hover:bg-green-700'}`}
-                onClick={async () => {
-                  updateState({ saving: true });
-                  await handleEditToggle(); // your save logic
-                  updateState({ saving: false });
-                }}
-                disabled={state.saving || state.selectedUSNs.length === 0 || !state.selectedProctor}
-              >
-                {state.saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : "Save Changes"}
-              </Button>
-              <Button
-              className={`min-w-fit text-sm font-medium px-4 py-2 rounded-md transition-all duration-200 ease-in-out transform hover:scale-105 flex items-center gap-2 ${theme === 'dark' ? 'text-foreground bg-gray-700 hover:bg-gray-800' : 'text-gray-200 bg-gray-500 hover:bg-gray-600'}`}
-                onClick={async () => {
-                  updateState({ cancelling: true });
-                  await handleCancelEdit();
-                  updateState({ cancelling: false });
-                }}
-                disabled={state.cancelling}
-              >
-                {state.cancelling ? <><Loader2 className="w-4 h-4 animate-spin" /> Cancelling...</> : "Cancel"}
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Proctor Assignment - {state.branchName.toUpperCase()}</CardTitle>
+      {/* Main Management Card */}
+      <Card className={theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'}>
+        <CardHeader className="pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex-1">
+            <CardTitle className={`text-lg sm:text-xl ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+              Proctor Assignment - {state.branchName}
+            </CardTitle>
+            <p className={`text-xs sm:text-sm mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+              View and manage student-proctor assignments
+            </p>
+          </div>
           <Button
             onClick={async () => {
-              // ensure metadata present
               if (!state.semesters.length || !state.sections.length || !state.branchId) {
                 await loadMetadata();
               }
-              // load proctors only when opening edit
               if (!state.proctors.length) {
                 await loadProctors();
               }
               updateState({ editMode: true });
             }}
-            className={`min-w-fit text-sm font-medium px-4 py-2 rounded-md transition-all duration-200 ease-in-out transform hover:scale-105 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}
-            disabled={state.loading || state.editMode}
+            className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-sm transition-all duration-200 w-full sm:w-auto"
+            disabled={state.loading}
           >
-            Edit Proctors
+            Manage Assignments
           </Button>
         </CardHeader>
-        <CardContent>
-          <div className="flex justify-between items-center mb-4">
-            {/* Left side: Search input and button */}
-            <div className="flex gap-2">
-              <Input
-                placeholder="Search students..."
-                className={`w-64 ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'}`}
-                value={state.search}
-                onChange={(e) => updateState({ search: e.target.value })}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                disabled={state.loading}
-              />
-              <Button onClick={handleSearch} variant="outline" disabled={state.loading}>
-                Search
-              </Button>
-            </div>
-            <div className="flex-1" />
-          </div>
-          <div className="grid grid-cols-4 gap-4 mb-4">
-            <Select
-              value={state.filters.semester_id}
-              onValueChange={(value) => handleFilterChange("semester_id", value)}
-              disabled={state.loading || state.semesters.length === 0}
-            >
-              <SelectTrigger className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
-                <SelectValue placeholder={state.semesters.length === 0 ? "No semesters available" : "All Semesters"} />
-              </SelectTrigger>
-              <SelectContent className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
-                <SelectItem value="all" className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>All Semesters</SelectItem>
-                {state.semesters.map((semester) => (
-                  <SelectItem key={semester.id} value={semester.id} className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>
-                    Semester {semester.number}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={state.filters.section_id}
-              onValueChange={(value) => handleFilterChange("section_id", value)}
-              disabled={state.loading || state.sections.length === 0}
-            >
-              <SelectTrigger className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
-                <SelectValue placeholder={state.sections.length === 0 ? "No sections available" : "All Sections"} />
-              </SelectTrigger>
-              <SelectContent className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
-                <SelectItem value="all" className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>All Sections</SelectItem>
-                {state.sections
-                  .filter((section) => state.filters.semester_id === "all" || section.semester_id === state.filters.semester_id)
-                  .map((section) => (
-                    <SelectItem key={section.id} value={section.id} className={theme === 'dark' ? 'focus:bg-accent' : 'focus:bg-gray-100'}>
-                      Section {section.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-          </div>
 
-          <table className={`w-full mt-4 text-left text-sm ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}>
-            <thead className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-gray-100 text-gray-900'}>
-              <tr>
-                {state.editMode && <th className="py-2 px-4">Select</th>}
-                <th className="py-2 px-4">USN</th>
-                <th className="py-2 px-4">Name</th>
-                <th className="py-2 px-4">Semester</th>
-                <th className="py-2 px-4">Section</th>
-                <th className="py-2 px-4">Proctor</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentStudents.length === 0 ? (
-                <tr>
-                  <td colSpan={state.editMode ? 6 : 5} className={`text-center py-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>No students found</td>
-                </tr>
-              ) : (
-                currentStudents.map((student) => (
-                  <tr
-                    key={student.usn}
-                    className={`border-t ${state.editMode ? (theme === 'dark' ? 'cursor-pointer hover:bg-accent' : 'cursor-pointer hover:bg-gray-100') : ''} ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}
-                    onClick={() => state.editMode && handleCheckboxToggle(student.usn)}
+        {/* Edit Mode Controls */}
+        {state.editMode && (
+          <div className={`px-4 sm:px-6 py-3 border-t ${theme === 'dark' ? 'border-border bg-card/50' : 'border-gray-200 bg-gray-50'}`}>
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
+              <div className="w-full sm:flex-1">
+                <label className={`block text-xs sm:text-sm mb-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                  Choose a Proctor
+                </label>
+                <Select onValueChange={(value) => updateState({ selectedProctor: value })} disabled={state.proctors.length === 0}>
+                  <SelectTrigger className={`text-sm ${theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-300 text-gray-900'}`}>
+                    <SelectValue placeholder={state.proctors.length === 0 ? "No proctors" : "Choose a proctor"} />
+                  </SelectTrigger>
+                  <SelectContent className={theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
+                    {state.proctors.map((proctor) => (
+                      <SelectItem key={proctor.id} value={proctor.id}>{proctor.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="w-full sm:w-auto flex gap-2 sm:mt-6">
+                <Button
+                  onClick={async () => {
+                    updateState({ saving: true });
+                    await handleEditToggle();
+                    updateState({ saving: false });
+                  }}
+                  disabled={state.saving || state.selectedUSNs.length === 0 || !state.selectedProctor}
+                  className="flex-1 sm:flex-none text-white bg-green-600 hover:bg-green-700 text-sm font-medium shadow-sm transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  {state.saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving</> : "Save Changes"}
+                </Button>
+                <Button
+                  onClick={async () => {
+                    updateState({ cancelling: true });
+                    await handleCancelEdit();
+                    updateState({ cancelling: false });
+                  }}
+                  disabled={state.cancelling}
+                  variant="outline"
+                  className={`flex-1 sm:flex-none text-sm font-medium px-4 py-2 ${theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-100'}`}
+                >
+                  {state.cancelling ? <><Loader2 className="w-4 h-4 animate-spin" /> Cancelling</> : "Cancel"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!state.editMode && (
+          <div className={`px-4 sm:px-6 py-3 border-t ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
+            <div className="flex flex-col md:flex-row gap-3 items-start md:items-end w-full md:flex-wrap md:justify-between">
+              {/* Filters on the left */}
+              <div className="flex flex-row gap-3 items-start md:items-end w-full md:w-auto">
+                {/* Semester Filter */}
+                <div className="flex flex-col flex-1 sm:flex-none sm:w-56">
+                  <label className={`text-xs sm:text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Semester</label>
+                  <Select
+                    value={state.filters.semester_id}
+                    onValueChange={(value) => handleFilterChange("semester_id", value)}
+                    disabled={state.loading || state.semesters.length === 0}
                   >
-                    {state.editMode && (
-                      <td className="py-2 px-4">
-                        <input
-                          type="checkbox"
-                          checked={state.selectedUSNs.includes(student.usn)}
-                          onChange={() => handleCheckboxToggle(student.usn)}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </td>
-                    )}
-                    <td className={`py-2 px-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.usn}</td>
-                    <td className={`py-2 px-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.name}</td>
-                    <td className={`py-2 px-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.semester}</td>
-                    <td className={`py-2 px-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.section}</td>
-                    <td className="py-2 px-4">
-                      {student.proctor ? (
-                        <span className={theme === 'dark' ? 'text-blue-400' : 'text-blue-700'}>{student.proctor}</span>
-                      ) : (
-                        <span className={theme === 'dark' ? 'text-red-400' : 'text-red-500'}>Not assigned</span>
-                      )}
+                    <SelectTrigger className={`text-sm ${theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-300 text-gray-900'}`}>
+                      <SelectValue placeholder="All Semesters" />
+                    </SelectTrigger>
+                    <SelectContent className={theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
+                      <SelectItem value="all">All Semesters</SelectItem>
+                      {state.semesters.map((semester) => (
+                        <SelectItem key={semester.id} value={semester.id}>
+                          Sem {semester.number}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Section Filter */}
+                <div className="flex flex-col flex-1 sm:flex-none sm:w-56">
+                  <label className={`text-xs sm:text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Section</label>
+                  <Select
+                    value={state.filters.section_id}
+                    onValueChange={(value) => handleFilterChange("section_id", value)}
+                    disabled={state.loading || state.sections.length === 0}
+                  >
+                    <SelectTrigger className={`text-sm ${theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-300 text-gray-900'}`}>
+                      <SelectValue placeholder="All Sections" />
+                    </SelectTrigger>
+                    <SelectContent className={theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
+                      <SelectItem value="all">All Sections</SelectItem>
+                      {state.sections
+                        .filter((section) => state.filters.semester_id === "all" || section.semester_id === state.filters.semester_id)
+                        .map((section) => (
+                          <SelectItem key={section.id} value={section.id}>
+                            Section {section.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Search on the right */}
+              <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                <Input
+                  placeholder="Search students by name or USN..."
+                  className={`w-full sm:w-48 text-sm ${theme === 'dark' ? 'bg-card text-foreground border border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border border-gray-300 placeholder:text-gray-500'}`}
+                  value={state.search}
+                  onChange={(e) => updateState({ search: e.target.value })}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  disabled={state.loading}
+                />
+                <Button
+                  onClick={handleSearch}
+                  variant="outline"
+                  disabled={state.loading}
+                  className={`text-sm font-medium px-4 whitespace-nowrap ${theme === 'dark' ? 'bg-card text-foreground border border-border hover:bg-accent' : 'bg-white text-gray-900 border border-gray-300 hover:bg-gray-100'}`}
+                >
+                  Search
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <CardContent className="pt-4">
+          {/* Table */}
+          <div className="overflow-x-auto mb-4">
+            <table className={`w-full text-[11px] sm:text-sm text-left border-collapse table-auto align-middle`}>
+              <thead className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-card border-b border-border' : 'bg-gray-50 border-b border-gray-200'}`}>
+                <tr>
+                  {state.editMode && <th className={`py-2 px-2 sm:px-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Select</th>}
+                  <th className={`py-2 px-2 sm:px-3 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>USN</th>
+                  <th className={`py-2 px-2 sm:px-3 font-semibold hidden sm:table-cell ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Name</th>
+                  <th className={`py-2 px-2 sm:px-3 font-semibold text-center ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Sem</th>
+                  <th className={`py-2 px-2 sm:px-3 font-semibold text-center hidden sm:table-cell ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Section</th>
+                  <th className={`py-2 px-2 sm:px-3 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Proctor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentStudents.length === 0 ? (
+                  <tr>
+                    <td colSpan={state.editMode ? 6 : 5} className={`text-center py-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                      No students found
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  currentStudents.map((student) => (
+                    <tr
+                      key={student.usn}
+                      className={`border-t ${state.editMode ? (theme === 'dark' ? 'cursor-pointer hover:bg-accent' : 'cursor-pointer hover:bg-gray-50') : ''} ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}
+                      onClick={() => state.editMode && handleCheckboxToggle(student.usn)}
+                    >
+                      {state.editMode && (
+                        <td className="py-2 px-2 sm:px-3">
+                          <input
+                            type="checkbox"
+                            checked={state.selectedUSNs.includes(student.usn)}
+                            onChange={() => handleCheckboxToggle(student.usn)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-4 h-4 rounded"
+                          />
+                        </td>
+                      )}
+                      <td className={`py-2 px-2 sm:px-3 font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.usn}</td>
+                      <td className={`py-2 px-2 sm:px-3 hidden sm:table-cell ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.name}</td>
+                      <td className={`py-2 px-2 sm:px-3 text-center ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.semester.split('th')[0]}</td>
+                      <td className={`py-2 px-2 sm:px-3 text-center hidden sm:table-cell ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.section}</td>
+                      <td className="py-2 px-2 sm:px-3">
+                        {student.proctor ? (
+                          <span className={`text-xs sm:text-sm font-medium px-2 py-1 rounded ${theme === 'dark' ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700'}`}>
+                            {student.proctor}
+                          </span>
+                        ) : (
+                          <span className={`text-xs sm:text-sm font-medium px-2 py-1 rounded ${theme === 'dark' ? 'bg-red-900/30 text-red-300' : 'bg-red-100 text-red-700'}`}>
+                            Unassigned
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
-          <div className="flex justify-between items-center mt-4">
-            <div className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-              Showing {Math.min((state.currentPage - 1) * studentsPerPage + 1, state.totalCount)} to{" "}
-              {Math.min(state.currentPage * studentsPerPage, state.totalCount)} of {state.totalCount}
+          {/* Pagination */}
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mt-6">
+            <div className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+              Showing {Math.min((state.currentPage - 1) * studentsPerPage + 1, state.totalCount)} to {Math.min(state.currentPage * studentsPerPage, state.totalCount)} of {state.totalCount}
             </div>
-            <div className="flex space-x-2 items-center">
+            <div className="flex gap-2 items-center justify-center sm:justify-end">
               <Button
                 variant="outline"
                 disabled={state.currentPage === 1 || state.loading}
                 onClick={() => updateState({ currentPage: Math.max(state.currentPage - 1, 1) })}
-                className={`text-sm font-medium px-4 py-2 rounded-md bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}
+                className={`text-sm font-medium px-3 py-2 ${theme === 'dark' ? 'bg-card text-foreground border-border hover:bg-accent' : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-100'}`}
               >
-                Previous
+                Prev
               </Button>
-              <span className={`px-4 text-lg font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{state.currentPage}</span>
+              <span className={`px-3 text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                {state.currentPage}
+              </span>
               <Button
                 variant="outline"
                 disabled={state.currentPage === state.totalPages || state.loading}
                 onClick={() => updateState({ currentPage: Math.min(state.currentPage + 1, state.totalPages) })}
-                className={`text-sm font-medium px-4 py-2 rounded-md bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}
+                className={`text-sm font-medium px-3 py-2 ${theme === 'dark' ? 'bg-card text-foreground border-border hover:bg-accent' : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-100'}`}
               >
                 Next
               </Button>

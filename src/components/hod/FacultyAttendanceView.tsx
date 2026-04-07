@@ -277,9 +277,9 @@ const FacultyAttendanceView: React.FC = () => {
   };
 
   return (
-    <div className={`p-6 space-y-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`p-3 sm:p-6 space-y-4 sm:space-y-6 min-h-screen max-w-[390px] sm:max-w-none mx-auto ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <div className="flex justify-between items-center">
-        <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+        <h1 className={`text-xl sm:text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
           Faculty Attendance Management
         </h1>
       </div>
@@ -287,10 +287,10 @@ const FacultyAttendanceView: React.FC = () => {
       
 
       {/* Tab Navigation */}
-      <div className={`flex space-x-1 p-1 rounded-lg ${theme === 'dark' ? 'bg-card' : 'bg-white'} border ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
+      <div className={`flex space-x-1 p-1 rounded-lg ${theme === 'dark' ? 'bg-card' : 'bg-white'} border ${theme === 'dark' ? 'border-border' : 'border-gray-200'} overflow-x-auto`}>
         <button
           onClick={() => setActiveTab('today')}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+          className={`flex-1 py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
             activeTab === 'today'
               ? 'bg-[#a259ff] text-white'
               : theme === 'dark'
@@ -302,7 +302,7 @@ const FacultyAttendanceView: React.FC = () => {
         </button>
         <button
           onClick={() => setActiveTab('records')}
-          className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+          className={`flex-1 py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
             activeTab === 'records'
               ? 'bg-[#a259ff] text-white'
               : theme === 'dark'
@@ -323,41 +323,41 @@ const FacultyAttendanceView: React.FC = () => {
       {activeTab === 'today' && !isLoading && todaySummary.total_faculty > 0 && (
         <>
           {/* Today's Stats Cards */}
-          <div className={`grid grid-cols-1 md:grid-cols-4 gap-4 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
-            <div className={`p-4 rounded-lg shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
-              <div className="flex items-center justify-between">
+          <div className={`grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+            <div className={`p-3 sm:p-4 rounded-lg shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
                 <div>
-                  <p className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Total Faculty</p>
-                  <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{todaySummary.total_faculty}</p>
+                  <p className={`text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Total Faculty</p>
+                  <p className={`text-lg sm:text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{todaySummary.total_faculty}</p>
                 </div>
-                <Users className="w-8 h-8 text-blue-600" />
+                <Users className="w-6 sm:w-8 h-6 sm:h-8 text-blue-600 flex-shrink-0" />
               </div>
             </div>
-            <div className={`p-4 rounded-lg shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
-              <div className="flex items-center justify-between">
+            <div className={`p-3 sm:p-4 rounded-lg shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
                 <div>
-                  <p className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Present</p>
-                  <p className={`text-2xl font-bold text-green-600`}>{todaySummary.present}</p>
+                  <p className={`text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Present</p>
+                  <p className={`text-lg sm:text-2xl font-bold text-green-600`}>{todaySummary.present}</p>
                 </div>
-                <CheckCircle className="w-8 h-8 text-green-600" />
+                <CheckCircle className="w-6 sm:w-8 h-6 sm:h-8 text-green-600 flex-shrink-0" />
               </div>
             </div>
-            <div className={`p-4 rounded-lg shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
-              <div className="flex items-center justify-between">
+            <div className={`p-3 sm:p-4 rounded-lg shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
                 <div>
-                  <p className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Absent</p>
-                  <p className={`text-2xl font-bold text-red-600`}>{todaySummary.absent}</p>
+                  <p className={`text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Absent</p>
+                  <p className={`text-lg sm:text-2xl font-bold text-red-600`}>{todaySummary.absent}</p>
                 </div>
-                <XCircle className="w-8 h-8 text-red-600" />
+                <XCircle className="w-6 sm:w-8 h-6 sm:h-8 text-red-600 flex-shrink-0" />
               </div>
             </div>
-            <div className={`p-4 rounded-lg shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
-              <div className="flex items-center justify-between">
+            <div className={`p-3 sm:p-4 rounded-lg shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
                 <div>
-                  <p className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Not Marked</p>
-                  <p className={`text-2xl font-bold text-gray-600`}>{todaySummary.not_marked}</p>
+                  <p className={`text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Not Marked</p>
+                  <p className={`text-lg sm:text-2xl font-bold text-gray-600`}>{todaySummary.not_marked}</p>
                 </div>
-                <Clock className="w-8 h-8 text-gray-600" />
+                <Clock className="w-6 sm:w-8 h-6 sm:h-8 text-gray-600 flex-shrink-0" />
               </div>
             </div>
           </div>
@@ -366,8 +366,8 @@ const FacultyAttendanceView: React.FC = () => {
 
           {/* Today's Attendance Table */}
           <div className={`rounded-lg shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} overflow-hidden`}>
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+            <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+              <h3 className={`text-sm sm:text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                 Today's Faculty Attendance ({new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })})
               </h3>
             </div>
@@ -375,10 +375,10 @@ const FacultyAttendanceView: React.FC = () => {
               <table className="w-full">
                 <thead className={`sticky top-0 ${theme === 'dark' ? 'bg-card' : 'bg-gray-50'}`}>
                   <tr className={`border-b ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Faculty</th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Status</th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Marked At</th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Notes</th>
+                    <th className={`px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Faculty</th>
+                    <th className={`px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Status</th>
+                    <th className={`px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Marked At</th>
+                    <th className={`px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium uppercase tracking-wider hidden sm:table-cell ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Notes</th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${theme === 'dark' ? 'divide-border' : 'divide-gray-200'}`}>
@@ -391,13 +391,13 @@ const FacultyAttendanceView: React.FC = () => {
                   ) : (
                     todayAttendance.map((record) => (
                       <tr key={record.id} className={`hover:${theme === 'dark' ? 'bg-accent' : 'bg-gray-50'}`}>
-                        <td className={`px-6 py-4 whitespace-nowrap ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                        <td className={`px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                           <div className="font-medium">{record.faculty_name}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
+                        <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-1 sm:gap-2">
                             {getStatusIcon(record.status)}
-                            <span className={getStatusBadge(record.status)}>{record.status}</span>
+                            <span className={`${getStatusBadge(record.status)} text-xs sm:text-sm`}>{record.status}</span>
                           </div>
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
@@ -430,21 +430,21 @@ const FacultyAttendanceView: React.FC = () => {
 
       {/* Today's Pagination Controls (moved to bottom) */}
       {activeTab === 'today' && !isLoading && (
-        <div className={`flex flex-col sm:flex-row justify-between items-center gap-4 p-4 ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} rounded-lg mt-4`}>
-          <div className="flex items-center gap-4">
-            <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+        <div className={`flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 p-3 sm:p-4 ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} rounded-lg mt-4`}>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <div className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
               Showing {todayAttendance.length > 0 ? ((todayPagination.page - 1) * todayPagination.page_size) + 1 : 0} to{' '}
               {Math.min(todayPagination.page * todayPagination.page_size, todayPagination.total_items)} of{' '}
               {todayPagination.total_items} faculty
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
             {todayPagination.total_items > todayPagination.page_size && (
               <button
                 onClick={loadAllData}
                 disabled={isLoading}
-                className={`px-3 py-1 text-sm border border-green-500 text-green-600 rounded-md hover:bg-green-50 transition-colors disabled:opacity-50 ${
+                className={`px-2 sm:px-3 py-1 text-xs sm:text-sm border border-green-500 text-green-600 rounded-md hover:bg-green-50 transition-colors disabled:opacity-50 whitespace-nowrap ${
                   theme === 'dark' ? 'hover:bg-accent' : ''
                 }`}
               >
@@ -455,9 +455,9 @@ const FacultyAttendanceView: React.FC = () => {
             <button
               onClick={() => handlePageChange(todayPagination.page - 1)}
               disabled={!todayPagination.has_prev || isLoading}
-              className={`px-3 py-1 text-sm border rounded-md transition-colors ${
+              className={`px-2 sm:px-3 py-1 text-xs sm:text-sm border rounded-md transition-colors whitespace-nowrap ${
                 todayPagination.has_prev && !isLoading
-                  ? 'border-blue-500 text-blue-600 hover:bg-blue-50 disabled:opacity-50'
+                  ? 'border-[#a259ff] text-[#a259ff] hover:bg-purple-50 disabled:opacity-50'
                   : 'border-gray-300 text-gray-400 cursor-not-allowed'
               } ${theme === 'dark' ? 'hover:bg-accent' : ''}`}
             >
@@ -474,9 +474,9 @@ const FacultyAttendanceView: React.FC = () => {
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
                     disabled={isLoading}
-                    className={`px-3 py-1 text-sm border rounded-md transition-colors disabled:opacity-50 ${
+                    className={`px-2 sm:px-3 py-1 text-xs sm:text-sm border rounded-md transition-colors disabled:opacity-50 ${
                       pageNum === todayPagination.page
-                        ? 'bg-blue-600 text-white border-blue-600'
+                        ? 'bg-[#a259ff] text-white border-[#a259ff]'
                         : `border-gray-300 text-gray-700 hover:bg-gray-50 ${theme === 'dark' ? 'hover:bg-accent' : ''}`
                     }`}
                   >
@@ -489,9 +489,9 @@ const FacultyAttendanceView: React.FC = () => {
             <button
               onClick={() => handlePageChange(todayPagination.page + 1)}
               disabled={!todayPagination.has_next || isLoading}
-              className={`px-3 py-1 text-sm border rounded-md transition-colors ${
+              className={`px-2 sm:px-3 py-1 text-xs sm:text-sm border rounded-md transition-colors whitespace-nowrap ${
                 todayPagination.has_next && !isLoading
-                  ? 'border-blue-500 text-blue-600 hover:bg-blue-50'
+                  ? 'border-[#a259ff] text-[#a259ff] hover:bg-purple-50'
                   : 'border-gray-300 text-gray-400 cursor-not-allowed'
               } ${theme === 'dark' ? 'hover:bg-accent' : ''}`}
             >
@@ -504,32 +504,32 @@ const FacultyAttendanceView: React.FC = () => {
       {activeTab === 'records' && !isLoading && (
         <>
           {/* Date Range Filter */}
-          <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
-            <div className="flex gap-4 items-end">
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
+          <div className={`p-3 sm:p-4 rounded-lg ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-end">
+              <div className="w-full sm:w-auto">
+                <label className={`block text-xs sm:text-sm font-medium mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
                   Start Date
                 </label>
                 <input
                   type="date"
                   value={dateRange.start_date}
                   onChange={(e) => setDateRange(prev => ({ ...prev, start_date: e.target.value }))}
-                  className={`px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full sm:w-auto px-2 sm:px-3 py-1 sm:py-2 border text-xs sm:text-sm rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     theme === 'dark'
                       ? 'bg-background border-border text-foreground'
                       : 'bg-white border-gray-300 text-gray-900'
                   }`}
                 />
               </div>
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
+              <div className="w-full sm:w-auto">
+                <label className={`block text-xs sm:text-sm font-medium mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
                   End Date
                 </label>
                 <input
                   type="date"
                   value={dateRange.end_date}
                   onChange={(e) => setDateRange(prev => ({ ...prev, end_date: e.target.value }))}
-                  className={`px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full sm:w-auto px-2 sm:px-3 py-1 sm:py-2 border text-xs sm:text-sm rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                     theme === 'dark'
                       ? 'bg-background border-border text-foreground'
                       : 'bg-white border-gray-300 text-gray-900'
@@ -670,7 +670,7 @@ const FacultyAttendanceView: React.FC = () => {
                   disabled={!recordsPagination.has_prev || isLoading}
                   className={`px-3 py-1 text-sm border rounded-md transition-colors ${
                     recordsPagination.has_prev && !isLoading
-                      ? 'border-blue-500 text-blue-600 hover:bg-blue-50 disabled:opacity-50'
+                      ? 'border-[#a259ff] text-[#a259ff] hover:bg-purple-50 disabled:opacity-50'
                       : 'border-gray-300 text-gray-400 cursor-not-allowed'
                   } ${theme === 'dark' ? 'hover:bg-accent' : ''}`}
                 >
@@ -689,7 +689,7 @@ const FacultyAttendanceView: React.FC = () => {
                         disabled={isLoading}
                         className={`px-3 py-1 text-sm border rounded-md transition-colors disabled:opacity-50 ${
                           pageNum === recordsPagination.page
-                            ? 'bg-blue-600 text-white border-blue-600'
+                            ? 'bg-[#a259ff] text-white border-[#a259ff]'
                             : `border-gray-300 text-gray-700 hover:bg-gray-50 ${theme === 'dark' ? 'hover:bg-accent' : ''}`
                         }`}
                       >
@@ -704,7 +704,7 @@ const FacultyAttendanceView: React.FC = () => {
                   disabled={!recordsPagination.has_next || isLoading}
                   className={`px-3 py-1 text-sm border rounded-md transition-colors ${
                     recordsPagination.has_next && !isLoading
-                      ? 'border-blue-500 text-blue-600 hover:bg-blue-50'
+                      ? 'border-[#a259ff] text-[#a259ff] hover:bg-purple-50'
                       : 'border-gray-300 text-gray-400 cursor-not-allowed'
                   } ${theme === 'dark' ? 'hover:bg-accent' : ''}`}
                 >

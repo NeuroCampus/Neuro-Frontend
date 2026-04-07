@@ -1,9 +1,9 @@
-import React, { useState, useEffect, ReactNode } from "react";
+import React, { useState, useEffect, ReactNode, Component } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, FileDown, Loader2, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { FileDown, Loader2, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Select,
   SelectTrigger,
@@ -12,8 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { getAttendance, getSemesters, manageSections, manageSubjects, manageProfile, sendNotification, getLowAttendanceBootstrap, getLowAttendanceStudents, getHODDashboardBootstrap } from "../../utils/hod_api";
-import { Component } from "react";
+import { manageSections, sendNotification, getLowAttendanceStudents, getHODDashboardBootstrap } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
 import { useVirtualizer } from '@tanstack/react-virtual';
 
@@ -131,17 +130,17 @@ const VirtualizedSectionTable = React.memo(({
   return (
     <div
       ref={parentRef}
-      className="h-96 overflow-auto custom-scrollbar"
+      className="h-96 overflow-auto overflow-x-auto custom-scrollbar"
       style={{ contain: 'strict' }}
     >
       {/* Fixed Header */}
       <div className={`sticky top-0 z-10 border-b ${theme === 'dark' ? 'border-gray-600 bg-card' : 'border-gray-300 bg-white'}`}>
-        <div className={`grid grid-cols-5 gap-4 p-3 text-xs font-medium ${theme === 'dark' ? 'text-gray-200 bg-card' : 'text-gray-900 bg-white'}`}>
-          <div>USN</div>
-          <div>Name</div>
-          <div>Course</div>
-          <div>Attendance %</div>
-          <div>Actions</div>
+        <div className={`grid grid-cols-5 gap-2 sm:gap-4 p-2 sm:p-3 text-xs font-medium min-w-max ${theme === 'dark' ? 'text-gray-200 bg-card' : 'text-gray-900 bg-white'}`}>
+          <div className={`w-20 sm:w-auto border-r text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}>USN</div>
+          <div className={`w-24 sm:w-auto border-r text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}>Name</div>
+          <div className={`w-24 sm:w-auto border-r text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}>Course</div>
+          <div className={`w-28 sm:w-auto border-r text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}>Attendance %</div>
+          <div className="w-20 sm:w-auto text-center">Actions</div>
         </div>
       </div>
 
@@ -158,7 +157,7 @@ const VirtualizedSectionTable = React.memo(({
           return (
             <div
               key={virtualItem.key}
-              className={`grid grid-cols-5 gap-4 p-3 text-sm border-b ${theme === 'dark' ? 'border-gray-600 text-card-foreground hover:bg-accent' : 'border-gray-200 text-gray-900 hover:bg-gray-50'}`}
+              className={`grid grid-cols-5 gap-2 sm:gap-4 p-2 sm:p-3 text-xs sm:text-sm border-b min-w-max ${theme === 'dark' ? 'border-gray-600 text-card-foreground hover:bg-accent' : 'border-gray-200 text-gray-900 hover:bg-gray-50'} items-center content-center`}
               style={{
                 position: 'absolute',
                 top: 0,
@@ -168,19 +167,19 @@ const VirtualizedSectionTable = React.memo(({
                 transform: `translateY(${virtualItem.start}px)`,
               }}
             >
-              <div className="truncate">{student.usn}</div>
-              <div className="truncate">{student.name}</div>
-              <div className="truncate">{student.subject}</div>
+              <div className={`truncate text-xs sm:text-sm w-20 sm:w-auto border-r text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}>{student.usn}</div>
+              <div className={`truncate text-xs sm:text-sm w-24 sm:w-auto border-r text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}>{student.name}</div>
+              <div className={`truncate text-xs sm:text-sm w-24 sm:w-auto border-r text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}>{student.subject}</div>
               <div
-                className={`font-medium ${getAttendanceColorClass(student.attendance_percentage)}`}
+                className={`font-medium text-xs sm:text-sm w-28 sm:w-auto border-r text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} ${getAttendanceColorClass(student.attendance_percentage)}`}
               >
                 {formatAttendancePercentage(student.attendance_percentage)}
               </div>
-              <div>
+              <div className="flex items-center justify-center w-20 sm:w-auto">
                 <Button
                   size="sm"
                   onClick={() => onNotifyStudent(student)}
-                  className={`px-3 py-1 text-xs flex items-center gap-1 rounded-md shadow-sm border transition-all duration-200 ease-in-out transform hover:scale-105
+                  className={`px-4 py-1 text-xs flex items-center gap-1 rounded-md shadow-sm border transition-all duration-200 ease-in-out transform hover:scale-105
                     ${
                       notifiedStudents?.[student.student_id]
                         ? "bg-green-700 border-green-600 text-white cursor-default"
@@ -532,152 +531,204 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
     return "text-green-500";
   };
 
+  // Calculate stats
+  const totalStudents = state.totalCount;
+  const lowAttendanceCount = state.students.length;
+  const avgAttendance = state.students.length > 0 
+    ? Math.round(state.students.reduce((sum, s) => sum + (typeof s.attendance_percentage === 'number' ? s.attendance_percentage : 0), 0) / state.students.filter(s => typeof s.attendance_percentage === 'number').length)
+    : 0;
+
   return (
     <ErrorBoundary>
-      <div className="pt-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Low Attendance Management</h1>
-            <p className="text-muted-foreground">Monitor and notify students with low attendance</p>
-          </div>
-          <div className="flex gap-2">
+      <div className={`p-4 sm:p-6 min-h-screen text-sm sm:text-base max-w-[390px] sm:max-w-none mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <Card className={theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'}>
+            <CardHeader className="pb-2">
+              <CardTitle className={`text-sm sm:text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Total Students</CardTitle>
+            </CardHeader>
+            <CardContent className={`text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+              {totalStudents}
+            </CardContent>
+          </Card>
+
+          <Card className={theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'}>
+            <CardHeader className="pb-2">
+              <CardTitle className={`text-sm sm:text-base ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>Low Attendance</CardTitle>
+            </CardHeader>
+            <CardContent className={`text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
+              {lowAttendanceCount}
+            </CardContent>
+          </Card>
+
+          <Card className={theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'}>
+            <CardHeader className="pb-2">
+              <CardTitle className={`text-sm sm:text-base ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>Avg Attendance</CardTitle>
+            </CardHeader>
+            <CardContent className={`text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+              {avgAttendance}%
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Management Card */}
+        <Card className={theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'}>
+          <CardHeader className="pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex-1">
+              <CardTitle className={`text-lg sm:text-xl ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                Low Attendance Management
+              </CardTitle>
+              <p className={`text-xs sm:text-sm mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                Monitor and notify students with low attendance
+              </p>
+            </div>
             <Button
               onClick={exportPDF}
               disabled={state.loading || state.students.length === 0}
-              className="flex items-center gap-2"
+              className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-sm transition-all duration-200 w-full sm:w-auto"
             >
-              <FileDown className="w-4 h-4" />
+              <FileDown className="w-4 h-4 mr-2" />
               Export PDF
             </Button>
-          </div>
-        </div>
+          </CardHeader>
 
-        {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Semester</label>
-            <Select
-              value={state.selectedSemester}
-              onValueChange={handleSemesterChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select Semester" />
-              </SelectTrigger>
-              <SelectContent>
-                {state.semesters.map((semester) => (
-                  <SelectItem key={semester.id} value={semester.id}>
-                    Semester {semester.number}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Section</label>
-            <Select
-              value={state.selectedSection}
-              onValueChange={handleSectionChange}
-              disabled={!state.selectedSemester}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select Section" />
-              </SelectTrigger>
-              <SelectContent>
-                {state.sections.map((section) => (
-                  <SelectItem key={section.id} value={section.id}>
-                    {section.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Students Table */}
-        {state.loading ? (
-          <div className="flex justify-center items-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin" />
-            <span className="ml-2">Loading students...</span>
-          </div>
-        ) : state.students.length > 0 ? (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">
-                Students ({state.totalCount > 0 ? `${(state.currentPage - 1) * state.pageSize + 1}-${Math.min(state.currentPage * state.pageSize, state.totalCount)} of ${state.totalCount}` : state.students.length})
-              </h2>
-            </div>
-            <div className="border rounded-lg overflow-hidden">
-              <VirtualizedSectionTable
-                students={state.students}
-                theme={theme}
-                notifyingStudents={state.notifyingStudents}
-                notifiedStudents={state.notifiedStudents}
-                onNotifyStudent={notifyStudent}
-              />
-            </div>
-            
-            {/* Pagination Controls */}
-            {state.totalCount > state.pageSize && (
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">
-                  Showing {state.students.length} of {state.totalCount} students
+          {/* Filters */}
+          <div className={`px-4 sm:px-6 py-3 border-t ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
+            <div className="flex flex-col md:flex-row gap-3 items-start md:items-end">
+              <div className="flex flex-row gap-3 items-start md:items-end w-full sm:w-auto">
+                {/* Semester Filter */}
+                <div className="flex flex-col flex-1 sm:flex-none sm:w-56">
+                  <label className={`text-xs sm:text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Semester</label>
+                  <Select
+                    value={state.selectedSemester}
+                    onValueChange={handleSemesterChange}
+                  >
+                    <SelectTrigger className={`text-sm ${theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-300 text-gray-900'}`}>
+                      <SelectValue placeholder="Select Semester" />
+                    </SelectTrigger>
+                    <SelectContent className={theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
+                      {state.semesters.map((semester) => (
+                        <SelectItem key={semester.id} value={semester.id}>
+                          Sem {semester.number}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={goToPreviousPage}
-                    disabled={!state.previous || state.loading}
+
+                {/* Section Filter */}
+                <div className="flex flex-col flex-1 sm:flex-none sm:w-56">
+                  <label className={`text-xs sm:text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Section</label>
+                  <Select
+                    value={state.selectedSection}
+                    onValueChange={handleSectionChange}
+                    disabled={!state.selectedSemester}
                   >
-                    <ChevronLeft className="w-4 h-4 mr-1" />
-                    Previous
-                  </Button>
-                  
-                  <div className="flex items-center space-x-1">
-                    {Array.from(
-                      { length: Math.min(5, Math.ceil(state.totalCount / state.pageSize)) },
-                      (_, i) => {
-                        const pageNum = Math.max(1, state.currentPage - 2) + i;
-                        if (pageNum > Math.ceil(state.totalCount / state.pageSize)) return null;
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={pageNum === state.currentPage ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => goToPage(pageNum)}
-                            disabled={state.loading}
-                          >
-                            {pageNum}
-                          </Button>
-                        );
-                      }
-                    )}
-                  </div>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={goToNextPage}
-                    disabled={!state.next || state.loading}
-                  >
-                    Next
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </Button>
+                    <SelectTrigger className={`text-sm ${theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-300 text-gray-900'}`}>
+                      <SelectValue placeholder="Select Section" />
+                    </SelectTrigger>
+                    <SelectContent className={theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
+                      {state.sections.map((section) => (
+                        <SelectItem key={section.id} value={section.id}>
+                          {section.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <CardContent className="pt-4">
+            {/* Students Table */}
+            {state.loading ? (
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin" />
+                <span className={`ml-2 text-sm sm:text-base ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading students...</span>
+              </div>
+            ) : state.students.length > 0 ? (
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                  <h2 className={`text-base sm:text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                    Students ({state.totalCount > 0 ? `${(state.currentPage - 1) * state.pageSize + 1}-${Math.min(state.currentPage * state.pageSize, state.totalCount)} of ${state.totalCount}` : state.students.length})
+                  </h2>
+                </div>
+                <div className="border rounded-lg overflow-hidden">
+                  <VirtualizedSectionTable
+                    students={state.students}
+                    theme={theme}
+                    notifyingStudents={state.notifyingStudents}
+                    notifiedStudents={state.notifiedStudents}
+                    onNotifyStudent={notifyStudent}
+                  />
+                </div>
+                
+                {/* Pagination Controls */}
+                {state.totalCount > state.pageSize && (
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mt-6">
+                    <div className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                      Showing {state.students.length} of {state.totalCount} students
+                    </div>
+                    <div className="flex gap-2 items-center justify-center sm:justify-end flex-wrap">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToPreviousPage}
+                        disabled={!state.previous || state.loading}
+                        className={`text-xs sm:text-sm ${theme === 'dark' ? 'bg-card text-foreground border-border hover:bg-accent' : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-100'}`}
+                      >
+                        <ChevronLeft className="w-3 h-3 mr-1" />
+                        Prev
+                      </Button>
+                      
+                      <div className="flex items-center space-x-1">
+                        {Array.from(
+                          { length: Math.min(5, Math.ceil(state.totalCount / state.pageSize)) },
+                          (_, i) => {
+                            const pageNum = Math.max(1, state.currentPage - 2) + i;
+                            if (pageNum > Math.ceil(state.totalCount / state.pageSize)) return null;
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={pageNum === state.currentPage ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => goToPage(pageNum)}
+                                disabled={state.loading}
+                                className="text-xs"
+                              >
+                                {pageNum}
+                              </Button>
+                            );
+                          }
+                        )}
+                      </div>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToNextPage}
+                        disabled={!state.next || state.loading}
+                        className={`text-xs sm:text-sm ${theme === 'dark' ? 'bg-card text-foreground border-border hover:bg-accent' : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-100'}`}
+                      >
+                        Next
+                        <ChevronRight className="w-3 h-3 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : state.selectedSemester && state.selectedSection ? (
+              <div className={`text-center py-12 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                No students with low attendance found for the selected semester and section.
+              </div>
+            ) : (
+              <div className={`text-center py-12 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                Please select a semester and section to view students with low attendance.
+              </div>
             )}
-          </div>
-        ) : state.selectedSemester && state.selectedSection ? (
-          <div className="text-center py-12 text-muted-foreground">
-            No students with low attendance found for the selected semester and section.
-          </div>
-        ) : (
-          <div className="text-center py-12 text-muted-foreground">
-            Please select a semester and section to view students with low attendance.
-          </div>
-        )}
+          </CardContent>
+        </Card>
       </div>
     </ErrorBoundary>
   );
