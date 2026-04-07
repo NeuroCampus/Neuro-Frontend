@@ -2,6 +2,7 @@ import { useState, useEffect, Component, ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import DashboardLayout from "../common/DashboardLayout";
 import DeanReports from "../dean/DeanReports";
+import DeanStats from "../dean/DeanStats";
 import { useTheme } from "../../context/ThemeContext";
 
 interface DeanUser {
@@ -50,7 +51,7 @@ const DeanDashboard = ({ user, setPage }: { user: DeanUser; setPage: (p: string)
   const renderContent = () => {
     switch (activePage) {
       case 'dashboard':
-        return <div className="p-4">Welcome, Dean {user?.first_name || ''}.</div>;
+        return <div className="p-4"><DeanStats /></div>;
       case 'reports':
         return <DeanReports />;
       case 'profile':
