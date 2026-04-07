@@ -283,6 +283,11 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     </motion.div>
   );
  
+                      dean: [
+                        { name: "Dashboard", page: "dashboard" },
+                        { name: "Reports", page: "reports" },
+                        { name: "Profile", page: "profile" },
+                      ],
   if (isMobile) {
     return (
       <>

@@ -11,6 +11,13 @@ interface FacultyAttendanceTodayRecord {
   status: string;
   marked_at: string | null;
   notes: string | null;
+  location?: {
+    latitude?: number | null;
+    longitude?: number | null;
+    inside?: boolean | null;
+    distance_meters?: number | null;
+    campus_name?: string | null;
+  } | null;
 }
 
 interface FacultyAttendanceRecord {
@@ -21,6 +28,13 @@ interface FacultyAttendanceRecord {
   status: string;
   marked_at: string;
   notes: string;
+  location?: {
+    latitude?: number | null;
+    longitude?: number | null;
+    inside?: boolean | null;
+    distance_meters?: number | null;
+    campus_name?: string | null;
+  } | null;
 }
 
 interface FacultySummary {
@@ -386,10 +400,22 @@ const FacultyAttendanceView: React.FC = () => {
                             <span className={`${getStatusBadge(record.status)} text-xs sm:text-sm`}>{record.status}</span>
                           </div>
                         </td>
-                        <td className={`px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                          {record.marked_at ? formatTime(record.marked_at) : 'Not marked'}
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                          {record.marked_at ? new Date(record.marked_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'Not marked'}
+                          {record.location ? (
+                            <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                              {record.location.inside ? (
+                                <>On campus • {record.location.distance_meters ? `${Math.round(record.location.distance_meters)} m` : 'distance unknown'}</>
+                              ) : (
+                                <>Outside campus • {record.location.distance_meters ? `${Math.round(record.location.distance_meters)} m` : 'distance unknown'}</>
+                              )}
+                              {record.location.campus_name ? ` • ${record.location.campus_name}` : ''}
+                            </div>
+                          ) : (
+                            <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Location not recorded</div>
+                          )}
                         </td>
-                        <td className={`px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm hidden sm:table-cell ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                        <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                           {record.notes || '-'}
                         </td>
                       </tr>
@@ -602,7 +628,19 @@ const FacultyAttendanceView: React.FC = () => {
                           </div>
                         </td>
                         <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                          {record.marked_at ? formatTime(record.marked_at) : 'Not marked'}
+                          {record.marked_at ? new Date(record.marked_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'Not marked'}
+                          {record.location ? (
+                            <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                              {record.location.inside ? (
+                                <>On campus • {record.location.distance_meters ? `${Math.round(record.location.distance_meters)} m` : 'distance unknown'}</>
+                              ) : (
+                                <>Outside campus • {record.location.distance_meters ? `${Math.round(record.location.distance_meters)} m` : 'distance unknown'}</>
+                              )}
+                              {record.location.campus_name ? ` • ${record.location.campus_name}` : ''}
+                            </div>
+                          ) : (
+                            <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Location not recorded</div>
+                          )}
                         </td>
                         <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                           {record.notes || '-'}

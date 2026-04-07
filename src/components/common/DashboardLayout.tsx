@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 import { useIsMobile } from "../../hooks/use-mobile";
 import { useTheme } from "../../context/ThemeContext";
-import { stopTokenRefresh } from "../../utils/authService";
+import { stopTokenRefresh, logoutUser } from "../../utils/authService";
 
 interface User {
   username: string;
@@ -17,7 +18,7 @@ interface User {
 }
 
 interface DashboardLayoutProps {
-  role: "admin" | "hod" | "faculty" | "student" | "fees_manager" | "coe";
+  role: "admin" | "hod" | "faculty" | "student" | "fees_manager" | "coe" | "dean";
   user: User;
   activePage: string;
   onPageChange: (page: string) => void;
@@ -41,6 +42,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const { theme } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(window.innerWidth < 1024); // Start expanded on desktop, collapsed on mobile
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   // Lock sidebar open on desktop, collapsible only on mobile/tablet
   useEffect(() => {
@@ -79,13 +81,22 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleLogout = () => {
-    // Clear all authentication data
-    localStorage.clear();
-    // Stop token refresh
-    stopTokenRefresh();
-    // Redirect to login page
-    window.location.href = "/";
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+    } catch (err) {
+      console.error("Logout backend error:", err);
+    } finally {
+      localStorage.clear();
+      stopTokenRefresh();
+      // Use client-side navigation to avoid reloading from backend server
+      try {
+        navigate("/", { replace: true });
+      } catch (e) {
+        // Fallback to full reload if router not available
+        window.location.href = "/";
+      }
+    }
   };
 
   // Format page title
