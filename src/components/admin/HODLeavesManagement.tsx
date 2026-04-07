@@ -286,7 +286,7 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
                     <div className="mt-3 flex items-center justify-between">
                       <button
                         onClick={() => setViewReason(leave.reason)}
-                        className={theme === 'dark' ? 'text-primary hover:underline text-sm' : 'text-blue-600 hover:underline text-sm'}
+                        className={`text-sm font-medium px-2 py-1 rounded-md ${theme === 'dark' ? 'bg-muted/10 text-foreground border border-border' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
                       >
                         View
                       </button>
@@ -459,7 +459,7 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
 
       {/* View Reason Dialog */}
       <Dialog open={!!viewReason} onOpenChange={() => setViewReason(null)}>
-        <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border border-border max-w-[92%] sm:max-w-md mx-auto' : 'bg-white text-gray-900 border border-gray-200 max-w-[92%] sm:max-w-md mx-auto'}>
+        <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border border-border max-w-[70%] sm:max-w-md mx-auto rounded-xl p-4 sm:p-6' : 'bg-white text-gray-900 border border-gray-200 max-w-[70%] sm:max-w-md mx-auto rounded-xl p-4 sm:p-6'}>
           <DialogHeader>
             <DialogTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Reason</DialogTitle>
           </DialogHeader>

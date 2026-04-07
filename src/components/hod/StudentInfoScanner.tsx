@@ -289,96 +289,81 @@ const StudentInfoScanner = () => {
   };
 
   return (
-    <motion.div
-      className={`pt-6 space-y-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      {/* Header */}
-      <motion.div
-        className="text-center space-y-2"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-            <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-              Student Information Scanner
-            </h1>
-            <p className={`text-lg ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-              Enter USN to retrieve comprehensive student details
-            </p>
-          </motion.div>
+    <div className={`p-4 sm:p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <h1 className={`text-3xl font-bold mb-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+        Student Information Scanner
+      </h1>
 
-      {/* Search Section */}
-      <motion.div
-        className="flex flex-col sm:flex-row gap-4 items-center justify-center max-w-md mx-auto"
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            type="text"
-            placeholder="Enter USN (e.g.,1AM22CI079 )"
-            value={usn}
-            onChange={(e) => setUsn(e.target.value.toUpperCase())}
-            onKeyPress={handleKeyPress}
-            className={`pl-10 h-12 text-lg font-mono ${theme === 'dark' ? 'bg-background border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`}
-          />
-        </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={toggleScanner}
-            variant="outline"
-            className={`h-12 px-4 ${theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
-          >
-            <QrCode className="h-4 w-4" />
-          </Button>
-          <Button
-            onClick={toggleFaceScanner}
-            variant="outline"
-            className={`h-12 px-4 ${theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
-          >
-            <Camera className="h-4 w-4" />
-          </Button>
-          <Button
-            onClick={() => fetchStudentData()}
-            disabled={loading}
-            className="h-12 px-8 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white"
-          >
-            {loading ? (
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+      {/* Search Card */}
+      <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm mb-6' : 'bg-white text-gray-900 border-gray-200 shadow-sm mb-6'}`}>
+        <CardHeader>
+          <CardTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Search Student</CardTitle>
+          <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Enter USN or use scanner to find student information</p>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                type="text"
+                placeholder="Enter USN (e.g., 1AM22CI079)"
+                value={usn}
+                onChange={(e) => setUsn(e.target.value.toUpperCase())}
+                onKeyPress={handleKeyPress}
+                className={`pl-10 h-11 ${theme === 'dark' ? 'bg-background border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={toggleScanner}
+                variant="outline"
+                size="sm"
+                className={`h-11 ${theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
               >
-                <Search className="h-4 w-4" />
-              </motion.div>
-            ) : (
-              "Scan"
-            )}
-          </Button>
-        </div>
-      </motion.div>
+                <QrCode className="h-4 w-4" />
+              </Button>
+              <Button
+                onClick={toggleFaceScanner}
+                variant="outline"
+                size="sm"
+                className={`h-11 ${theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+              >
+                <Camera className="h-4 w-4" />
+              </Button>
+              <Button
+                onClick={() => fetchStudentData()}
+                disabled={loading}
+                className="h-11 bg-[#a259ff] hover:bg-[#9147e0] text-white px-6 sm:px-8"
+              >
+                {loading ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Search className="h-4 w-4" />
+                  </motion.div>
+                ) : (
+                  "Search"
+                )}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Error Message */}
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className={`p-4 rounded-lg border text-center max-w-md mx-auto ${
-              theme === 'dark'
-                ? 'bg-destructive/10 border-destructive/20 text-destructive-foreground'
-                : 'bg-red-50 border-red-200 text-red-700'
-            }`}
-          >
+      {error && (
+        <div className={`p-4 rounded-lg border mb-6 ${
+          theme === 'dark'
+            ? 'bg-destructive/10 border-destructive/20 text-destructive-foreground'
+            : 'bg-red-50 border-red-200 text-red-700'
+        }`}>
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4" />
             {error}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      )}
 
       {/* Barcode Scanner Modal */}
       <AnimatePresence>
@@ -394,7 +379,7 @@ const StudentInfoScanner = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className={`relative ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'} rounded-lg shadow-xl max-w-md w-full p-6`}
+              className={`relative ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} max-w-[90%] sm:max-w-md mx-auto rounded-3xl shadow-xl p-4 sm:p-6`}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
@@ -471,18 +456,10 @@ const StudentInfoScanner = () => {
       </AnimatePresence>
 
       {/* Student Data Display */}
-      <AnimatePresence>
-        {studentData && studentData.success && (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            exit={{ opacity: 0, y: 20 }}
-            className="space-y-6"
-          >
-            {/* Basic Information */}
-            <motion.div variants={cardVariants}>
-              <Card className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
+      {studentData && studentData.success && (
+        <div className="space-y-6">
+          {/* Basic Information */}
+          <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <User className="h-5 w-5 text-[#a259ff]" />
@@ -594,11 +571,9 @@ const StudentInfoScanner = () => {
                   </div>
                 </CardContent>
               </Card>
-            </motion.div>
 
-            {/* Contact Information */}
-            <motion.div variants={cardVariants}>
-              <Card className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
+          {/* Contact Information */}
+          <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Phone className="h-5 w-5 text-[#a259ff]" />
@@ -647,11 +622,9 @@ const StudentInfoScanner = () => {
                   </div>
                 </CardContent>
               </Card>
-            </motion.div>
 
-            {/* Class Schedule */}
-            <motion.div variants={cardVariants}>
-              <Card className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
+          {/* Class Schedule */}
+          <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Clock className="h-5 w-5 text-[#a259ff]" />
@@ -764,11 +737,9 @@ const StudentInfoScanner = () => {
                   </div>
                 </CardContent>
               </Card>
-            </motion.div>
 
-            {/* Attendance Overview */}
-            <motion.div variants={cardVariants}>
-              <Card className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
+          {/* Attendance Overview */}
+          <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5 text-[#a259ff]" />
@@ -821,11 +792,9 @@ const StudentInfoScanner = () => {
                   </div>
                 </CardContent>
               </Card>
-            </motion.div>
 
-            {/* Fee Summary */}
-            <motion.div variants={cardVariants}>
-              <Card className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
+          {/* Fee Summary */}
+          <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CreditCard className="h-5 w-5 text-[#a259ff]" />
@@ -872,12 +841,10 @@ const StudentInfoScanner = () => {
                   )}
                 </CardContent>
               </Card>
-            </motion.div>
 
-            {/* Internal Marks */}
-            {Object.keys(studentData.internal_marks).length > 0 && (
-              <motion.div variants={cardVariants}>
-                <Card className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
+          {/* Internal Marks */}
+          {Object.keys(studentData.internal_marks).length > 0 && (
+            <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <BookOpen className="h-5 w-5 text-[#a259ff]" />
@@ -908,19 +875,17 @@ const StudentInfoScanner = () => {
                     </div>
                   </CardContent>
                 </Card>
-              </motion.div>
             )}
 
             {/* Registered Subjects */}
             {studentData.subjects_registered.length > 0 && (
-              <motion.div variants={cardVariants}>
-                <Card className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <BookOpen className="h-5 w-5 text-[#a259ff]" />
-                      Registered Subjects
-                    </CardTitle>
-                  </CardHeader>
+              <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="h-5 w-5 text-[#a259ff]" />
+                    Registered Subjects
+                  </CardTitle>
+                </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {studentData.subjects_registered.map((subject, index) => (
@@ -941,11 +906,9 @@ const StudentInfoScanner = () => {
                     </div>
                   </CardContent>
                 </Card>
-              </motion.div>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
+      )}
 
       {/* Face Scanner Modal */}
       <AnimatePresence>
@@ -964,7 +927,7 @@ const StudentInfoScanner = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className={`relative ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'} rounded-lg shadow-xl max-w-md w-full p-6`}
+              className={`relative ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} max-w-[90%] sm:max-w-md mx-auto rounded-3xl shadow-xl p-4 sm:p-6`}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
@@ -1048,7 +1011,7 @@ const StudentInfoScanner = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 };
 

@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CheckCircle, XCircle, Filter } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CheckCircle, XCircle } from "lucide-react";
 import Swal from 'sweetalert2';
 import { manageLeaves, manageProfile, getFacultyLeavesBootstrap } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
@@ -46,14 +47,15 @@ const LeaveManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [open, setOpen] = useState(false);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [branchId, setBranchId] = useState("");
+  const [viewReason, setViewReason] = useState<string | null>(null);
   const { theme } = useTheme();
   const hasFetchedRef = useRef(false);
   const initialLoadRef = useRef(true);
+  const isSilentOperationRef = useRef(false);
 
   // Format date range to "MMM DD, YYYY to MMM DD, YYYY"
   const formatPeriod = (startDate: string, endDate: string): string => {
@@ -133,6 +135,7 @@ const LeaveManagement = () => {
       setLeaveRequests([]);
     } finally {
       setIsLoading(false);
+      isSilentOperationRef.current = false;
     }
   };
 
@@ -223,6 +226,7 @@ const LeaveManagement = () => {
   useEffect(() => {
     if (initialLoadRef.current) return; // Don't search on initial load
     
+    isSilentOperationRef.current = true;
     const timeoutId = setTimeout(() => {
       setCurrentPage(1);
       fetchLeaveRequests(1);
@@ -236,228 +240,281 @@ const LeaveManagement = () => {
     initialLoadRef.current = false;
   }, []);
 
-  // Handle filter changes - only when user clicks Apply Filters
-  const handleFilterChange = () => {
+  // Handle filter changes
+  useEffect(() => {
+    if (initialLoadRef.current) return; // Don't filter on initial load
+    
+    isSilentOperationRef.current = true;
     setCurrentPage(1);
     fetchLeaveRequests(1);
-  };
+  }, [filterStatus, dateFrom, dateTo]);
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     fetchLeaveRequests(page);
   };
 
   return (
-    <div className={`p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      {/* Header */}
-      <h2 className={`text-2xl font-semibold mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Approvals</h2>
-      <p className={`mb-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`}>Review and manage faculty leave requests.</p>
+    <div className={`p-4 sm:p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <Card className={`${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
+        <CardHeader className="border-b">
+          <CardTitle>Leave Approvals</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6">
+          {/* Search Bar */}
+          <div className="flex flex-col sm:flex-row items-center gap-2 mb-6">
+            <Input
+              placeholder="Search faculty..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className={`flex-1 w-full text-sm ${theme === 'dark' ? 'bg-card border-border text-foreground placeholder:text-muted-foreground' : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-500'}`}
+            />
+            <select
+              value={filterStatus}
+              onChange={(e) => {
+                setFilterStatus(e.target.value as "All" | "Pending" | "Approved" | "Rejected");
+              }}
+              className={`w-full sm:w-auto px-4 py-2 rounded-md text-sm font-medium border ${theme === 'dark' ? 'bg-card text-foreground border-border hover:bg-accent' : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50'}`}
+            >
+              <option value="All">All Status</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
 
-      {/* Loading and Errors */}
-      {isLoading && <p className={`mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`}>Loading leave requests...</p>}
-      {errors.length > 0 && (
-        <ul className={`text-sm mb-4 list-disc list-inside ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>
-          {errors.map((err, idx) => (
-            <li key={idx}>{err}</li>
-          ))}
-        </ul>
-      )}
-
-      {/* Search and Filters */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <Input
-          placeholder="Search faculty..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className={`w-64 text-sm ${theme === 'dark' ? 'bg-card border-border text-foreground placeholder:text-muted-foreground' : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-500'}`}
-        />
-        
-        <div className="flex gap-2">
-          <Input
-            type="date"
-            placeholder="From date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className={`w-40 text-sm ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`}
-          />
-          <Input
-            type="date"
-            placeholder="To date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className={`w-40 text-sm ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`}
-          />
-        </div>
-
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <div className="flex justify-end items-center">
-              <Button
-                variant="outline"
-                className="flex items-center gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md text-sm font-medium"
-              >
-                <Filter className="w-4 h-4" />
-                Status: {filterStatus}
-              </Button>
+          {/* Errors */}
+          {errors.length > 0 && (
+            <div className={`mb-4 p-3 rounded-md ${theme === 'dark' ? 'bg-red-900/30 border border-red-700' : 'bg-red-50 border border-red-200'}`}>
+              <ul className={`text-sm list-disc list-inside ${theme === 'dark' ? 'text-red-300' : 'text-red-700'}`}>
+                {errors.map((err, idx) => (
+                  <li key={idx}>{err}</li>
+                ))}
+              </ul>
             </div>
-          </PopoverTrigger>
-          <PopoverContent className={`w-48 p-4 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
-            <div className="flex flex-col gap-2">
-              <h4 className={`text-sm font-semibold mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Filter by Status</h4>
-              <Button
-                variant={filterStatus === "All" ? "default" : "outline"}
-                size="sm"
-                className={`${theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-900 bg-white border-gray-300 hover:bg-gray-100'}`}
-                onClick={() => {
-                  setFilterStatus("All");
-                  setOpen(false);
-                }}
-              >
-                All
-              </Button>
-              <Button
-                variant={filterStatus === "Pending" ? "default" : "outline"}
-                size="sm"
-                className={`${theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-900 bg-white border-gray-300 hover:bg-gray-100'}`}
-                onClick={() => {
-                  setFilterStatus("Pending");
-                  setOpen(false);
-                }}
-              >
-                Pending
-              </Button>
-              <Button
-                variant={filterStatus === "Approved" ? "default" : "outline"}
-                size="sm"
-                className={`${theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-900 bg-white border-gray-300 hover:bg-gray-100'}`}
-                onClick={() => {
-                  setFilterStatus("Approved");
-                  setOpen(false);
-                }}
-              >
-                Approved
-              </Button>
-              <Button
-                variant={filterStatus === "Rejected" ? "default" : "outline"}
-                size="sm"
-                className={`${theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-900 bg-white border-gray-300 hover:bg-gray-100'}`}
-                onClick={() => {
-                  setFilterStatus("Rejected");
-                  setOpen(false);
-                }}
-              >
-                Rejected
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
-      </div>
+          )}
 
-      {/* Leave Requests Table */}
-      <div className={`p-4 rounded-md shadow text-sm border custom-scrollbar ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`} style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-        <div className="flex justify-between items-center mb-4">
-          <h3 className={`text-base font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Requests ({totalCount} total)</h3>
-        </div>
-        <table className="w-full">
-          <thead>
-            <tr className={`text-left text-xs ${theme === 'dark' ? 'border-b text-foreground' : 'border-b text-gray-900'}`}>
-              <th className="pb-2">Faculty</th>
-              <th>Period</th>
-              <th>Reason</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
+          {/* Mobile: Stacked Cards View */}
+          <div className="md:hidden space-y-3">
             {leaveRequests.length === 0 ? (
-              <tr>
-                <td colSpan={5} className={`py-3 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`}>
-                  No leave requests found
-                </td>
-              </tr>
+              <div className={`text-center py-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                No leave requests found
+              </div>
             ) : (
               leaveRequests.map((row, index) => (
-                <tr key={row.id} className={`border-b last:border-none text-sm ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
-                  <td className="py-3">
+                <div key={row.id} className={`p-3 sm:p-4 rounded-md border ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-200 text-gray-900'}`}>
+                  <div className="flex items-start justify-between gap-3 mb-3">
                     <div>
-                      <p className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{row.name}</p>
-                      <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`}>{row.dept}</p>
+                      <div className="font-medium">{row.name}</div>
+                      <div className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{row.dept}</div>
+                      <div className={`text-sm mt-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{row.period}</div>
                     </div>
-                  </td>
-                  <td>{row.period}</td>
-                  <td>{row.reason}</td>
-                  <td>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                        row.status === "Pending"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : row.status === "Approved"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {row.status}
-                    </span>
-                  </td>
-                  <td>
-                    {row.status === "Pending" ? (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleApprove(index)}
-                          className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-green-500 text-green-400 bg-green-500/10 hover:bg-green-500/20' : 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100'}`}
-                          disabled={isLoading}
-                        >
-                          <CheckCircle className={`w-4 h-4 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
-                          Approve
-                        </button>
+                    <div className="shrink-0">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          row.status === "Pending"
+                            ? theme === 'dark' ? 'bg-yellow-900 text-yellow-200' : 'bg-yellow-100 text-yellow-800'
+                            : row.status === "Approved"
+                            ? theme === 'dark' ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-700'
+                            : theme === 'dark' ? 'bg-red-900 text-red-200' : 'bg-red-100 text-red-700'
+                        }`}
+                      >
+                        {row.status}
+                      </span>
+                    </div>
+                  </div>
 
-                        <button
-                          onClick={() => handleReject(index)}
-                          className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-red-500 text-red-400 bg-red-500/10 hover:bg-red-500/20' : 'border-red-500 text-red-700 bg-red-50 hover:bg-red-100'}`}
-                          disabled={isLoading}
-                        >
-                          <XCircle className={`w-4 h-4 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`} />
-                          Reject
-                        </button>
-                      </div>
-                    ) : (
-                      <span className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No action needed</span>
-                    )}
-                  </td>
-                </tr>
+                  <div className="flex items-center justify-between mb-3">
+                    <button
+                      onClick={() => setViewReason(row.reason)}
+                      className={`text-sm font-medium px-2 py-1 rounded-md ${theme === 'dark' ? 'bg-muted/10 text-foreground border border-border' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                    >
+                      View
+                    </button>
+                  </div>
+
+                  {row.status === "Pending" ? (
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        variant="outline"
+                        className={`px-3 py-1 text-xs flex items-center justify-center gap-1 w-full ${
+                          theme === 'dark' 
+                            ? 'text-green-400 border-green-400 hover:bg-green-900/20' 
+                            : 'text-green-700 border-green-600 hover:bg-green-100'
+                        }`}
+                        onClick={() => handleApprove(index)}
+                        disabled={isLoading}
+                      >
+                        <CheckCircle size={16} /> Approve
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className={`px-3 py-1 text-xs flex items-center justify-center gap-1 w-full ${
+                          theme === 'dark' 
+                            ? 'text-red-400 border-red-400 hover:bg-red-900/20' 
+                            : 'text-red-700 border-red-600 hover:bg-red-100'
+                        }`}
+                        onClick={() => handleReject(index)}
+                        disabled={isLoading}
+                      >
+                        <XCircle size={16} /> Reject
+                      </Button>
+                    </div>
+                  ) : (
+                    <span className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No action needed</span>
+                  )}
+                </div>
               ))
             )}
-          </tbody>
-        </table>
-      </div>
+          </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-6">
-          <Button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1 || isLoading}
-            variant="outline"
-            size="sm"
-            className={`${theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-900 hover:bg-gray-100'}`}
+          {/* Desktop / Tablet: Table View */}
+          <div className={`hidden md:block overflow-x-auto border rounded-lg ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
+            <table className="w-full text-sm">
+              <thead className={`${theme === 'dark' ? 'bg-card text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+                <tr className={`border-b ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
+                  <th className="px-4 py-3 text-left font-semibold">Faculty</th>
+                  <th className="px-4 py-3 text-left font-semibold">Period</th>
+                  <th className="px-4 py-3 text-left font-semibold">Reason</th>
+                  <th className="px-4 py-3 text-left font-semibold">Status</th>
+                  <th className="px-4 py-3 text-left font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaveRequests.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className={`px-4 py-6 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                      No leave requests found
+                    </td>
+                  </tr>
+                ) : (
+                  leaveRequests.map((row, index) => (
+                    <tr key={row.id} className={`border-b transition-colors duration-200 ${theme === 'dark' ? 'border-border hover:bg-accent' : 'border-gray-200 hover:bg-gray-50'}`}>
+                      <td className={`px-4 py-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                        <div>
+                          <p className="font-medium">{row.name}</p>
+                          <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{row.dept}</p>
+                        </div>
+                      </td>
+                      <td className={`px-4 py-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{row.period}</td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => setViewReason(row.reason)}
+                          className={`text-sm font-medium px-2 py-1 rounded-md ${theme === 'dark' ? 'bg-muted/10 text-foreground border border-border' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                        >
+                          View
+                        </button>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            row.status === "Pending"
+                              ? theme === 'dark' ? 'bg-yellow-900 text-yellow-200' : 'bg-yellow-100 text-yellow-800'
+                              : row.status === "Approved"
+                              ? theme === 'dark' ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-700'
+                              : theme === 'dark' ? 'bg-red-900 text-red-200' : 'bg-red-100 text-red-700'
+                          }`}
+                        >
+                          {row.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {row.status === "Pending" ? (
+                          <div className="flex flex-col md:flex-row gap-2">
+                            <Button
+                              variant="outline"
+                              className={`px-3 py-1 text-xs flex items-center gap-1 w-full md:w-auto ${
+                                theme === 'dark' 
+                                  ? 'text-green-400 border-green-400 hover:bg-green-900/20' 
+                                  : 'text-green-700 border-green-600 hover:bg-green-100'
+                              }`}
+                              onClick={() => handleApprove(index)}
+                              disabled={isLoading}
+                            >
+                              <CheckCircle size={16} /> Approve
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className={`px-3 py-1 text-xs flex items-center gap-1 w-full md:w-auto ${
+                                theme === 'dark' 
+                                  ? 'text-red-400 border-red-400 hover:bg-red-900/20' 
+                                  : 'text-red-700 border-red-600 hover:bg-red-100'
+                              }`}
+                              onClick={() => handleReject(index)}
+                              disabled={isLoading}
+                            >
+                              <XCircle size={16} /> Reject
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No action needed</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 mt-6 pt-6 border-t">
+              <Button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1 || isLoading}
+                variant="outline"
+                size="sm"
+                className={`w-full sm:w-auto ${theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-900 hover:bg-gray-100'}`}
+              >
+                Previous
+              </Button>
+
+              <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                Page {currentPage} of {totalPages}
+              </span>
+
+              <Button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages || isLoading}
+                variant="outline"
+                size="sm"
+                className={`w-full sm:w-auto ${theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-900 hover:bg-gray-100'}`}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* View Reason Dialog */}
+      <Dialog open={!!viewReason} onOpenChange={() => setViewReason(null)}>
+        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[80%] sm:max-w-md mx-auto rounded-2xl p-4 sm:p-6`}>
+          <DialogHeader>
+            <DialogTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Reason</DialogTitle>
+          </DialogHeader>
+
+          <div
+            className={`p-3 text-base leading-relaxed whitespace-pre-wrap break-words 
+                      max-h-64 overflow-y-auto rounded-md ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
           >
-            Previous
-          </Button>
-          
-          <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-            Page {currentPage} of {totalPages}
-          </span>
-          
-          <Button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages || isLoading}
-            variant="outline"
-            size="sm"
-            className={`${theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-900 hover:bg-gray-100'}`}
-          >
-            Next
-          </Button>
-        </div>
-      )}
+            {viewReason}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              className={theme === 'dark' 
+                ? 'text-foreground bg-card border border-border hover:bg-accent' 
+                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
+              onClick={() => setViewReason(null)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

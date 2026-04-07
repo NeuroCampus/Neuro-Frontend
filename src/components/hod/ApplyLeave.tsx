@@ -256,8 +256,10 @@ const ApplyLeave = () => {
     <div className={`p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <h2 className={`text-3xl font-bold mb-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Apply Leave</h2>
 
-      {/* Leave Application Form */}
-      <Card className={theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm mb-6' : 'bg-white text-gray-900 border-gray-200 shadow-sm mb-6'}>
+      {/* Main Container with Flex Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Leave Application Form - Left Side */}
+        <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
         <CardHeader>
           <CardTitle className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Application Form</CardTitle>
         </CardHeader>
@@ -335,7 +337,7 @@ const ApplyLeave = () => {
           {/* Submit Button */}
           <Button 
             onClick={handleSubmit} 
-            className={theme === 'dark' ? 'w-full text-foreground bg-muted hover:bg-accent border-border' : 'w-full text-gray-900 bg-gray-200 hover:bg-gray-300 border-gray-300'} 
+            className={theme === 'dark' ? 'w-full text-white bg-[#a259ff] hover:bg-[#9147e0] border-border' : 'w-full text-white bg-[#a259ff] hover:bg-[#9147e0] border-[#a259ff]'} 
             disabled={loading || !branchId}
           >
             {loading ? "Submitting..." : "Submit Request"}
@@ -343,11 +345,14 @@ const ApplyLeave = () => {
         </CardContent>
       </Card>
 
-      {/* Recent Leave Applications */}
-      <Card className={theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}>
+        {/* Recent Leave Applications - Right Side */}
+        <Card className={theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Recent Leave Applications</CardTitle>
+            <div>
+              <CardTitle className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Recent Leave Applications</CardTitle>
+              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>View and track your leave requests</p>
+            </div>
             <div className="relative" ref={filterRef}>
               <button
                 onClick={() => setShowFilter((prev) => !prev)}
@@ -379,62 +384,121 @@ const ApplyLeave = () => {
           </div>
         </CardHeader>
 
-        <CardContent className="divide-y">
-          {loading ? (
-            <p className={`text-sm py-6 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Loading...</p>
-          ) : filteredLeaves.length === 0 ? (
-            <p className={`text-sm py-6 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No applications found.</p>
-          ) : (
-            filteredLeaves.map((leave) => (
-              <div key={leave.id} className="flex items-start justify-between py-4">
-                <div className="pr-4 space-y-1">
-                  {/* Title / Subject */}
-                  <p className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>📌 {leave.title}</p>
+        <CardContent className="overflow-x-auto">
+          <div className="overflow-x-auto max-w-full thin-scrollbar">
+            {/* Mobile: stacked cards */}
+            <div className="md:hidden space-y-3">
+              {loading ? (
+                <p className={`text-sm py-6 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Loading...</p>
+              ) : filteredLeaves.length === 0 ? (
+                <p className={`text-sm py-6 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No applications found.</p>
+              ) : (
+                filteredLeaves.map((leave) => (
+                  <div key={leave.id} className={`p-3 rounded-md border ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-200 text-gray-900'}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="font-medium">{leave.title}</div>
+                        <div className="text-xs text-muted-foreground">{leave.start_date} to {leave.end_date}</div>
+                      </div>
+                      <div className="shrink-0">
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${statusColors[leave.status]}`}>
+                          {leave.status}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={`flex-1 ${theme === 'dark' ? 'bg-muted/10 text-foreground border border-border' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                        onClick={() => setSelectedReason(leave.reason)}
+                      >
+                        View Reason
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
 
-                  {/* Date Range */}
-                  <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                    🗓 {leave.start_date} to {leave.end_date}
-                  </p>
-
-                  {/* Reason Button */}
-                  <button
-                    onClick={() => setSelectedReason(leave.reason)}
-                    className={`text-sm hover:underline ${theme === 'dark' ? 'text-primary' : 'text-blue-600'}`}
-                  >
-                    📝 View Reason
-                  </button>
-                </div>
-
-                <span
-                  className={`px-3 py-1 text-xs font-semibold rounded-full h-fit mt-1 ${statusColors[leave.status]}`}
-                >
-                  {leave.status}
-                </span>
-              </div>
-            ))
-          )}
+            {/* Desktop / Tablet: table */}
+            <table className="hidden md:table w-full text-sm text-left border-collapse">
+              <thead className={`border-b ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-200 bg-gray-50'}`}>
+                <tr>
+                  <th className={`py-2 px-4 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Title</th>
+                  <th className={`py-2 px-4 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Period</th>
+                  <th className={`py-2 px-4 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Reason</th>
+                  <th className={`py-2 px-4 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan={4} className={`text-center py-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                      Loading...
+                    </td>
+                  </tr>
+                ) : filteredLeaves.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className={`text-center py-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                      No applications found.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredLeaves.map((leave) => (
+                    <tr
+                      key={leave.id}
+                      className={`border-b transition-colors duration-200 ${theme === 'dark' ? 'border-border hover:bg-accent' : 'border-gray-200 hover:bg-gray-50'}`}
+                    >
+                      <td className={`py-3 px-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{leave.title}</td>
+                      <td className={`py-3 px-4 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                        {leave.start_date} to {leave.end_date}
+                      </td>
+                      <td className="py-3 px-4 text-sm">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className={`${theme === 'dark' ? 'bg-muted/10 text-foreground border border-border' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                          onClick={() => setSelectedReason(leave.reason)}
+                        >
+                          View
+                        </Button>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${statusColors[leave.status]}`}>
+                          {leave.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
 
         {/* Popup Modal */}
         <Dialog open={!!selectedReason} onOpenChange={() => setSelectedReason(null)}>
-          <DialogContent className={`max-w-md ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
+          <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border border-border max-w-[70%] sm:max-w-md mx-auto rounded-3xl p-4 sm:p-6' : 'bg-white text-gray-900 border border-gray-200 max-w-[70%] sm:max-w-md mx-auto rounded-3xl p-4 sm:p-6'}>
             <DialogHeader>
               <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Leave Reason</DialogTitle>
-              <DialogDescription className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>
-                The full reason provided by the applicant:
-              </DialogDescription>
             </DialogHeader>
 
             {/* Scrollable reason */}
-            <div className="mt-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-              <p className={`text-sm whitespace-pre-line ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{selectedReason}</p>
+            <div
+              className={`p-3 text-base leading-relaxed whitespace-pre-wrap break-words 
+                        max-h-64 overflow-y-auto rounded-md ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
+            >
+              {selectedReason}
             </div>
 
             <div className="flex justify-end mt-4">
               <Button
-                variant="secondary"
+                variant="outline"
                 onClick={() => setSelectedReason(null)}
-                className={theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-900 bg-white border-gray-300 hover:bg-gray-100'}
+                className={theme === 'dark' 
+                  ? 'text-foreground bg-card border border-border hover:bg-accent' 
+                  : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
               >
                 Close
               </Button>
@@ -442,6 +506,7 @@ const ApplyLeave = () => {
           </DialogContent>
         </Dialog>
       </Card>
+      </div>
     </div>
   );
 };
