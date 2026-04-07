@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Login from "../components/auth/Login";
+import LoginWrapper from "../components/auth/LoginWrapper";
 import OTPPage from "../components/auth/OTPPage";
 import ForgotPasswordFlow from "../components/auth/ForgotPasswordFlow";
 import ResetPassword from "../components/auth/ResetPassword";
@@ -100,7 +100,7 @@ const Index = () => {
   }
 
   // Authentication pages
-  if (page === "login") return <Login setRole={setRole} setPage={setPage} setUser={setUser} />;
+  if (page === "login") return <LoginWrapper setRole={setRole} setPage={setPage} setUser={setUser} />;
   if (page === "otp") return <OTPPage setRole={setRole} setPage={setPage} setUser={setUser} />;
   if (page === "forgot-password") return <ForgotPasswordFlow setPage={setPage} />;
   if (page === "reset-password") return <ResetPassword setPage={setPage} />;
