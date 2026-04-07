@@ -183,20 +183,19 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
           description: result.message,
           variant: "default",
         });
-        setShowBranchDialog(false);
-        setSelectedBranch("");
-
-        // ✅ Use the returned teacher data instead of making extra GET call
+        // Update local state using returned teacher payload to avoid extra GET
         if (result.teacher) {
-          setTeachers(prevTeachers =>
-            prevTeachers.map(teacher =>
-              teacher.id === result.teacher.id ? result.teacher : teacher
+          setTeachers((prev) =>
+            prev.map((t) =>
+              t.id === result.teacher.id
+                ? { ...t, primary_branch: result.teacher.primary_branch }
+                : t
             )
           );
-        } else {
-          // Fallback: fetch data if teacher data not returned
-          fetchTeacherAssignments();
         }
+        setShowBranchDialog(false);
+        setSelectedBranch("");
+        fetchTeacherAssignments();
       } else {
         setError(result.message || "Failed to assign branch");
       }
