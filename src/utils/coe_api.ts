@@ -16,6 +16,29 @@ export interface DashboardStats {
     type: string;
     status: string;
   }>;
+  qp_stats?: {
+    total_qps: number;
+    pending_coe_qps: number;
+    finalized_qps: number;
+    recent_qp_activity: Array<{
+      description: string;
+      timestamp: string;
+      type: string;
+      status: string;
+    }>;
+  };
+
+  published_results_summary?: {
+    total_published_results: number;
+    recent_published_results: Array<{
+      student_name: string;
+      usn: string;
+      upload_batch: string;
+      published_at: string;
+      withheld: boolean;
+      overall_status: string;
+    }>;
+  };
 }
 
 export interface DashboardStatsResponse {
