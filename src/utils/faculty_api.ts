@@ -1596,10 +1596,18 @@ export interface GetQPsParams {
   test_type?: string;
   qp_id?: string | number;
   detail?: boolean;
+  approved_only?: boolean;
 }
 
 export const getQuestionPapers = async (params: GetQPsParams = {}): Promise<any> => {
   try {
+    // If caller is not requesting a specific qp (`qp_id`), require branch, subject and test_type
+    // to avoid unnecessary empty calls from pages before filters are selected.
+    if (!params.qp_id) {
+      if (!params.branch_id || !params.subject_id || !params.test_type) {
+        return { success: true, data: [] };
+      }
+    }
     const query = new URLSearchParams();
     Object.entries(params).forEach(([k, v]) => {
       if (v === undefined || v === null) return;

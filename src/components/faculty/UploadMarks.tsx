@@ -332,12 +332,13 @@ const UploadMarks = () => {
     setTotalMarks(total);
   }, [questions]);
 
-  // Load existing QP when all dropdowns are selected
+  // Load existing QP when branch, semester, subject and testType are selected.
+  // Section is optional: if not selected, we'll try to find a QP across sections.
   useEffect(() => {
-    if (areAllDropdownsSelected()) {
+    if (selected.branch_id && selected.semester_id && selected.subject_id && selected.testType) {
       loadExistingQP();
     }
-  }, [selected.branch_id, selected.semester_id, selected.section_id, selected.subject_id, selected.testType]);
+  }, [selected.branch_id, selected.semester_id, selected.subject_id, selected.testType]);
 
   // Load full QP detail only when user opens the Question Format or Question Paper tab
   useEffect(() => {
@@ -490,7 +491,8 @@ const UploadMarks = () => {
 
   // Load existing QP if available
   const loadExistingQP = async () => {
-    if (!areAllDropdownsSelected()) return;
+    // Require branch, semester, subject and testType (section optional)
+    if (!selected.branch_id || !selected.semester_id || !selected.subject_id || !selected.testType) return;
     
     try {
       const qpResponse = await getQuestionPapers({
@@ -500,6 +502,7 @@ const UploadMarks = () => {
         subject_id: selected.subject_id?.toString(),
         test_type: selected.testType,
         detail: false,
+        approved_only: true,
       });
       if (qpResponse.success && qpResponse.data) {
         const existingQp = qpResponse.data.find((q: any) => {
@@ -510,19 +513,62 @@ const UploadMarks = () => {
           if (effectiveType === 'elective') {
             return q.branch === selected.branch_id && q.semester === selected.semester_id && q.subject === selected.subject_id && q.test_type === selected.testType;
           }
-          // regular
-          return q.branch === selected.branch_id && q.semester === selected.semester_id && q.section === selected.section_id && q.subject === selected.subject_id && q.test_type === selected.testType;
+          // regular: if section not selected, match across sections for the same branch+semester+subject+test_type
+          if (selected.section_id) {
+            return q.branch === selected.branch_id && q.semester === selected.semester_id && q.section === selected.section_id && q.subject === selected.subject_id && q.test_type === selected.testType;
+          }
+          return q.branch === selected.branch_id && q.semester === selected.semester_id && q.subject === selected.subject_id && q.test_type === selected.testType;
         });
         
-        if (existingQp) {
-          // Keep only the summary for now; defer loading full QP until user opens the format/paper tab
+        // Only consider the QP usable for marks upload if it is COE-finalized (approved)
+        if (existingQp && existingQp.status === 'approved') {
+          // Load full QP details immediately and replace default questions
           setQpId(existingQp.id);
           setQuestionFormatSaved(true);
           setExistingQpSummary(existingQp);
+          try {
+            const detailRes = await getQuestionPaperDetail(existingQp.id);
+            if (detailRes && detailRes.success && detailRes.data && Array.isArray(detailRes.data) && detailRes.data.length > 0) {
+              const full = detailRes.data[0];
+              const loadedQuestions: Question[] = [];
+              (full.questions || []).forEach((q: any) => {
+                if (q.subparts && q.subparts.length > 0) {
+                  q.subparts.forEach((sub: any) => {
+                    loadedQuestions.push({
+                      id: `${q.question_number}${sub.subpart_label}`,
+                      number: `${q.question_number}${sub.subpart_label}`,
+                      content: sub.content || '',
+                      maxMarks: String(sub.max_marks || 0),
+                      co: q.co || 'UNMAPPED',
+                      bloomsLevel: q.blooms_level || ''
+                    });
+                  });
+                } else {
+                  loadedQuestions.push({
+                    id: `${q.question_number}`,
+                    number: `${q.question_number}`,
+                    content: q.content || '',
+                    maxMarks: String(q.max_marks || 0),
+                    co: q.co || 'UNMAPPED',
+                    bloomsLevel: q.blooms_level || ''
+                  });
+                }
+              });
+              if (loadedQuestions.length > 0) setQuestions(loadedQuestions);
+            }
+          } catch (err) {
+            console.error('Failed to fetch QP detail in loadExistingQP:', err);
+          }
         } else {
-          // Reset to default if no existing QP
+          // If a QP exists but is not finalized, reset and surface a helpful message
+          const foundButNotFinalized = existingQp && existingQp.status !== 'approved';
           setQpId(null);
           setQuestionFormatSaved(false);
+          setExistingQpSummary(null);
+          if (foundButNotFinalized) {
+            setErrorMessage('A question paper exists for the selected criteria but is not finalized by COE. It will not be available for marks upload.');
+          }
+          // Reset to default if no existing QP
           setQuestions([
             { id: "1a", number: "1a", content: "Question 1a", maxMarks: "7", co: "CO2", bloomsLevel: "Apply" },
             { id: "1b", number: "1b", content: "Question 1b", maxMarks: "7", co: "CO2", bloomsLevel: "Apply" },
@@ -572,6 +618,7 @@ const UploadMarks = () => {
       subject_id: selected.subject_id?.toString(),
       test_type: selected.testType,
       detail: false,
+      approved_only: true,
     });
     let existingQp = null;
     if (qpResponse.success && qpResponse.data) {
@@ -583,8 +630,11 @@ const UploadMarks = () => {
         if (effectiveType === 'elective') {
           return q.branch === selected.branch_id && q.semester === selected.semester_id && q.subject === selected.subject_id && q.test_type === selected.testType;
         }
-        // regular
-        return q.branch === selected.branch_id && q.semester === selected.semester_id && q.section === selected.section_id && q.subject === selected.subject_id && q.test_type === selected.testType;
+        // regular: if section not selected, match across sections for same branch+semester+subject+test_type
+        if (selected.section_id) {
+          return q.branch === selected.branch_id && q.semester === selected.semester_id && q.section === selected.section_id && q.subject === selected.subject_id && q.test_type === selected.testType;
+        }
+        return q.branch === selected.branch_id && q.semester === selected.semester_id && q.subject === selected.subject_id && q.test_type === selected.testType;
       });
     }
     
@@ -710,7 +760,8 @@ const UploadMarks = () => {
       }
       return q.branch === branch_id && q.semester === semester_id && q.section === section_id && q.subject === subject_id && q.test_type === testType;
     });
-    if (!qp) {
+    // Ensure the matched QP is COE-approved/finalized before proceeding
+    if (!qp || qp.status !== 'approved') {
       MySwal.fire({
         title: "Question Paper not found",
         icon: "error",
