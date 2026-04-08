@@ -25,6 +25,8 @@ interface FacultyLeaveData {
   end_date: string;
   reason: string;
   status: string;
+  submitted_at?: string | null;
+  reviewed_at?: string | null;
 }
 
 interface ProfileData {
@@ -113,21 +115,57 @@ const LeaveManagement = () => {
       setBranchId(data.profile.branch_id);
 
       // Set leave requests
-      const requests = data.leaves.map((req: FacultyLeaveData) => ({
-        id: req.id.toString(),
-        name: req.faculty_name || "Unknown",
-        dept: req.department || "Unknown",
-        period: formatPeriod(req.start_date, req.end_date),
-        reason: req.reason || "No reason provided",
-        status: req.status === "APPROVED" ? "Approved" : req.status === "REJECTED" ? "Rejected" : "Pending",
-      })) as LeaveRequest[];
-      
-      setLeaveRequests(requests);
+      // Client-side safety filtering according to FINAL RULE:
+      const today = new Date();
+      const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const sevenDaysAgo = new Date(todayDateOnly);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      const processed = data.leaves
+        .map((req: FacultyLeaveData) => ({
+          raw: req,
+          mapped: {
+            id: req.id.toString(),
+            name: req.faculty_name || "Unknown",
+            dept: req.department || "Unknown",
+            period: formatPeriod(req.start_date, req.end_date),
+            reason: req.reason || "No reason provided",
+            status: req.status === "APPROVED" ? "Approved" : req.status === "REJECTED" ? "Rejected" : "Pending",
+          } as LeaveRequest
+        }))
+        .filter(item => {
+          const r = item.raw;
+          const status = (r.status || '').toUpperCase();
+
+          if (status === 'PENDING') {
+            try {
+              const end = new Date(r.end_date);
+              const endDateOnly = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+              return endDateOnly >= todayDateOnly; // show only active/future pending
+            } catch {
+              return false;
+            }
+          }
+
+          if (status === 'APPROVED' || status === 'REJECTED') {
+            // Use reviewed_at if available else submitted_at
+            const refDateStr = r.reviewed_at || r.submitted_at;
+            if (!refDateStr) return false;
+            const ref = new Date(refDateStr);
+            const refDateOnly = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate());
+            return refDateOnly >= sevenDaysAgo; // only recent approvals/rejections
+          }
+
+          return false;
+        })
+        .map(item => item.mapped) as LeaveRequest[];
+
+      setLeaveRequests(processed);
       setTotalCount(response.count || 0);
       setTotalPages(Math.ceil((response.count || 0) / 50));
       setCurrentPage(page);
       setErrors([]);
-      console.log("Processed leave requests:", requests);
+      console.log("Processed leave requests:", processed);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch data";
       console.error("Error fetching data:", err);
