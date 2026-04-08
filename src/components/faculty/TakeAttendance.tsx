@@ -538,7 +538,7 @@ const TakeAttendance = () => {
   };
 
   return (
-    <div className={`p-3 sm:p-6 w-full max-w-full min-h-screen md:min-h-screen h-screen md:h-auto overflow-hidden md:overflow-visible ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`p-3 sm:p-6 w-full max-w-full min-h-screen md:min-h-screen h-auto md:h-auto overflow-visible ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <Card className={`${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'} w-full max-w-full` }>
         <CardHeader>
           <CardTitle className="text-base sm:text-lg">Take Attendance</CardTitle>
@@ -609,8 +609,8 @@ const TakeAttendance = () => {
                   <div className={`border rounded-md mt-4 w-full max-w-full overflow-hidden min-h-0 ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
                     <div className={`p-3 sm:p-4 font-semibold border-b ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}>Student Attendance</div>
 
-                    {/* Scrollable area - ONLY the table lives inside this */}
-                    <div className="overflow-y-auto w-full overscroll-contain min-h-0 sm:max-h-none" style={{ WebkitOverflowScrolling: 'touch', height: 'calc(100vh - 220px)', touchAction: 'pan-y' }}>
+                    {/* Scrollable area - ONLY the table lives inside this (mobile-only max height) */}
+                    <div className="overflow-y-auto w-full overscroll-contain min-h-0 max-h-[50vh] md:max-h-none md:overflow-visible" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
                       <div className="w-full overflow-x-auto">
                         <table className="w-full text-sm sm:text-base">
                           <thead className={theme === 'dark' ? 'bg-muted' : 'bg-gray-50'}>

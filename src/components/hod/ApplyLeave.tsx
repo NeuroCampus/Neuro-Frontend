@@ -63,6 +63,8 @@ interface LeaveData {
   reason: string;
   status: string;
   title?: string; // Make title optional since it might not be in the response
+  submitted_at?: string | null;
+  reviewed_at?: string | null;
 }
 
 interface LeaveBootstrapResponse {
@@ -117,16 +119,51 @@ const ApplyLeave = () => {
         // Set branch ID from profile
         setBranchId(data.profile.branch_id);
 
-        // Set leaves data
-        const leavesData = data.leaves.map((leave: LeaveData) => ({
-          id: leave.id.toString(),
-          title: leave.title || leave.faculty_name || "Leave Application",
-          start_date: leave.start_date,
-          end_date: leave.end_date,
-          reason: leave.reason,
-          status: leave.status
-        })) as Leave[];
-        setLeaves(leavesData);
+        // Client-side safety filtering according to FINAL RULE
+        const today = new Date();
+        const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const sevenDaysAgo = new Date(todayDateOnly);
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const processed = data.leaves
+          .map((leave: LeaveData) => ({
+            raw: leave,
+            mapped: {
+              id: leave.id.toString(),
+              title: leave.title || leave.faculty_name || "Leave Application",
+              start_date: leave.start_date,
+              end_date: leave.end_date,
+              reason: leave.reason,
+              status: leave.status
+            } as Leave
+          }))
+          .filter(item => {
+            const r = item.raw;
+            const status = (r.status || '').toUpperCase();
+
+            if (status === 'PENDING') {
+              try {
+                const end = new Date(r.end_date);
+                const endDateOnly = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+                return endDateOnly >= todayDateOnly;
+              } catch {
+                return false;
+              }
+            }
+
+            if (status === 'APPROVED' || status === 'REJECTED') {
+              const refStr = r.reviewed_at || r.submitted_at;
+              if (!refStr) return false;
+              const ref = new Date(refStr);
+              const refDateOnly = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate());
+              return refDateOnly >= sevenDaysAgo;
+            }
+
+            return false;
+          })
+          .map(item => item.mapped) as Leave[];
+
+        setLeaves(processed);
         setError("");
       } catch (err) {
         if (isErrorWithMessage(err)) {
