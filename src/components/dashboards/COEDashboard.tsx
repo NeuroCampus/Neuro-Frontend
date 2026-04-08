@@ -6,7 +6,9 @@ import CourseStatistics from "../coe/CourseStatistics";
 import COEDashboardStats from "../coe/COEDashboardStats";
 import COEProfile from "../coe/COEProfile";
 import COEQPApprovals from "../coe/COEQPApprovals";
+import PublishResults from "../coe/PublishResults";
 import { API_ENDPOINT } from "../../utils/config";
+import { logoutUser } from "../../utils/authService";
 
 interface COEDashboardProps {
   user: {

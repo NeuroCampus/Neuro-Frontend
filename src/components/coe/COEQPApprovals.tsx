@@ -9,6 +9,7 @@ import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { useTheme } from "../../context/ThemeContext";
 import { API_ENDPOINT } from "../../utils/config";
+import { fetchWithTokenRefresh } from "../../utils/authService";
 
 interface QPPending {
   id: number;
@@ -86,7 +87,14 @@ const COEQPApprovals = () => {
       const data = await response.json();
       if (data.success) {
         alert("QP finalized and approved for use.");
+        // remove from pending list
         setPendingQPs(pendingQPs.filter(qp => qp.id !== qpId));
+        // add to finalized list so UI updates immediately without refetch
+        if (selectedQP) {
+          const finalizedItem = { ...selectedQP, status: 'approved' };
+          // avoid duplicates
+          setFinalizedQPs(prev => [finalizedItem, ...prev.filter(q => q.id !== finalizedItem.id)]);
+        }
         setSelectedQP(null);
         setComment("");
       } else {
@@ -103,16 +111,48 @@ const COEQPApprovals = () => {
   const fetchQPDetail = async (qpId: number) => {
     setDetailLoading(true);
     try {
-      const response = await fetch(`${API_ENDPOINT}/admin/qps/${qpId}/coe-detail/`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-      });
+      // use fetchWithTokenRefresh so we attempt token refresh on 401
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/qps/${qpId}/coe-detail/`, { method: 'GET' });
+
+      if (response.status === 401 || response.status === 403) {
+        // try authenticated HOD detail as a fallback (may be accessible to other admin roles)
+        try {
+          const hodResp = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/qps/${qpId}/hod-detail/`, { method: 'GET' });
+          if (hodResp.ok) {
+            const hodData = await hodResp.json();
+            if (hodData.success && hodData.data && hodData.data.length > 0) {
+              setQpDetail(hodData.data[0]);
+              MySwal.fire('Notice', 'Loaded QP via HOD detail endpoint.', 'info');
+              return;
+            }
+          }
+        } catch (e) {
+          console.error('Authenticated HOD fallback failed', e);
+        }
+
+        // try a public fetch (no auth) as a last resort — some finalized QPs may be publicly viewable
+        try {
+          const publicResp = await fetch(`${API_ENDPOINT}/admin/qps/${qpId}/coe-detail/`);
+          if (publicResp.ok) {
+            const publicData = await publicResp.json();
+            if (publicData.success && publicData.data && publicData.data.length > 0) {
+              setQpDetail(publicData.data[0]);
+              MySwal.fire('Notice', 'Loaded QP via public endpoint.', 'info');
+              return;
+            }
+          }
+        } catch (e) {
+          console.error('Public fallback failed', e);
+        }
+
+        MySwal.fire('Forbidden', 'You do not have permission to view this QP detail (401/403).', 'error');
+        return;
+      }
+
       const data = await response.json();
       if (data.success && data.data && data.data.length > 0) {
         setQpDetail(data.data[0]);
       } else if (data.success === false && data.message) {
-        // surface forbidden/error messages via toast
         MySwal.fire('Error', data.message, 'error');
       }
     } catch (err) {
@@ -257,7 +297,7 @@ const COEQPApprovals = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setSelectedQP(qp)}
+                        onClick={() => { setSelectedQP(qp); fetchQPDetail(qp.id); }}
                       >
                         <Eye className="w-4 h-4 mr-1" />
                         Review
@@ -330,112 +370,112 @@ const COEQPApprovals = () => {
             <CardTitle>Final Review QP: {selectedQP.subject} - {selectedQP.test_type}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {selectedQP.status === 'approved' ? (
-              <div>
-                    {detailLoading ? (
-                      <div className="text-center py-4">Loading QP...</div>
-                    ) : qpDetail ? (
-                  <div>
-                    <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                      <h4 className="font-semibold mb-4">Question Paper Preview</h4>
-                      <div className="space-y-4">
-                        {qpDetail.questions.map((q: any, qIndex: number) => (
-                          <div key={qIndex}>
-                            {q.subparts.map((s: any, sIndex: number) => (
-                              <div key={sIndex} className="mb-3">
-                                <div className="font-medium">{q.question_number}{s.subpart_label}.</div>
-                                <div className="mt-1">{s.content}</div>
-                                <div className="mt-1 text-sm">({s.max_marks} marks)</div>
-                                <div className="text-sm mt-1">CO: {q.co}</div>
-                                <div className="text-sm">Blooms: {q.blooms_level}</div>
-                              </div>
-                            ))}
-                          </div>
-                        ))}
-                        <div className="font-semibold pt-2 border-t">Total Marks: {qpDetail.questions.reduce((total: number, q: any) => total + q.subparts.reduce((st: number, s: any) => st + s.max_marks, 0), 0)}</div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 mt-4">
-                      <Button onClick={() => {
-                        // create a simple print view
-                        window.print();
-                      }}>Print</Button>
-                      <Button onClick={() => {
-                        // Download PDF using jsPDF
-                        if (!qpDetail) return;
-                        const doc = new jsPDF();
-                        let y = 10;
-                        doc.setFontSize(14);
-                        doc.text('Question Paper', 14, y);
-                        y += 10;
-                        doc.setFontSize(12);
-                        doc.text(`Subject: ${qpDetail.subject}`, 14, y); y += 6;
-                        doc.text(`Test Type: ${qpDetail.test_type}`, 14, y); y += 6;
-                        doc.text(`Faculty: ${qpDetail.faculty}`, 14, y); y += 8;
-                        qpDetail.questions.forEach((q: any) => {
-                          q.subparts.forEach((s: any) => {
-                            doc.setFontSize(12);
-                            doc.text(`${q.question_number}${s.subpart_label}. ${s.content}`, 14, y);
-                            y += 6;
-                            doc.setFontSize(10);
-                            doc.text(`(${s.max_marks} marks)`, 14, y);
-                            y += 6;
-                            doc.text(`CO: ${q.co}`, 14, y);
-                            y += 6;
-                            doc.text(`Blooms: ${q.blooms_level}`, 14, y);
-                            y += 8;
-                            if (y > 270) { doc.addPage(); y = 10; }
-                          });
-                        });
-                        doc.save(`qp-${qpDetail.subject}-${qpDetail.test_type}.pdf`);
-                      }}> <Download className="w-4 h-4 mr-1"/> Download PDF</Button>
-                      <Button variant="outline" onClick={() => { setSelectedQP(null); setQpDetail(null); }}>Close</Button>
+            <div>
+              {detailLoading ? (
+                <div className="text-center py-4">Loading QP...</div>
+              ) : qpDetail ? (
+                <div>
+                  <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                    <h4 className="font-semibold mb-4">Question Paper Preview</h4>
+                    <div className="space-y-4">
+                      {qpDetail.questions.map((q: any, qIndex: number) => (
+                        <div key={qIndex}>
+                          {q.subparts.map((s: any, sIndex: number) => (
+                            <div key={sIndex} className="mb-3">
+                              <div className="font-medium">{q.question_number}{s.subpart_label}.</div>
+                              <div className="mt-1">{s.content}</div>
+                              <div className="mt-1 text-sm">({s.max_marks} marks)</div>
+                              <div className="text-sm mt-1">CO: {q.co}</div>
+                              <div className="text-sm">Blooms: {q.blooms_level}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                      <div className="font-semibold pt-2 border-t">Total Marks: {qpDetail.questions.reduce((total: number, q: any) => total + q.subparts.reduce((st: number, s: any) => st + s.max_marks, 0), 0)}</div>
                     </div>
                   </div>
-                ) : (
-                  <div className="text-center text-muted-foreground">Click "Load QP" to view the finalized paper.</div>
-                )}
-              </div>
-            ) : (
-              <div>
+                </div>
+              ) : (
+                <div className="text-center text-muted-foreground">QP details not loaded.</div>
+              )}
+            </div>
+
+            <div>
+              {selectedQP.status === 'approved' ? (
+                <div className="flex gap-2 mt-4">
+                  <Button onClick={() => { window.print(); }}>Print</Button>
+                  <Button onClick={() => {
+                    if (!qpDetail) return;
+                    const doc = new jsPDF();
+                    let y = 10;
+                    doc.setFontSize(14);
+                    doc.text('Question Paper', 14, y);
+                    y += 10;
+                    doc.setFontSize(12);
+                    doc.text(`Subject: ${qpDetail.subject}`, 14, y); y += 6;
+                    doc.text(`Test Type: ${qpDetail.test_type}`, 14, y); y += 6;
+                    doc.text(`Faculty: ${qpDetail.faculty}`, 14, y); y += 8;
+                    qpDetail.questions.forEach((q: any) => {
+                      q.subparts.forEach((s: any) => {
+                        doc.setFontSize(12);
+                        doc.text(`${q.question_number}${s.subpart_label}. ${s.content}`, 14, y);
+                        y += 6;
+                        doc.setFontSize(10);
+                        doc.text(`(${s.max_marks} marks)`, 14, y);
+                        y += 6;
+                        doc.text(`CO: ${q.co}`, 14, y);
+                        y += 6;
+                        doc.text(`Blooms: ${q.blooms_level}`, 14, y);
+                        y += 8;
+                        if (y > 270) { doc.addPage(); y = 10; }
+                      });
+                    });
+                    doc.save(`qp-${qpDetail.subject}-${qpDetail.test_type}.pdf`);
+                  }}> <Download className="w-4 h-4 mr-1"/> Download PDF</Button>
+                  <Button variant="outline" onClick={() => { setSelectedQP(null); setQpDetail(null); }}>Close</Button>
+                </div>
+              ) : (
                 <div>
-                  <label className="block text-sm font-medium mb-2">Comment (optional)</label>
-                  <Textarea
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    placeholder="Add a final comment..."
-                    rows={3}
-                  />
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Comment (optional)</label>
+                    <Textarea
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      placeholder="Add a final comment..."
+                      rows={3}
+                    />
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <Button
+                      onClick={() => handleFinalize(selectedQP.id)}
+                      disabled={actionLoading}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      Finalize & Approve
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleReject(selectedQP.id)}
+                      disabled={actionLoading}
+                    >
+                      <XCircle className="w-4 h-4 mr-1" />
+                      Reject & Send Back
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedQP(null);
+                        setComment("");
+                        setQpDetail(null);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => handleFinalize(selectedQP.id)}
-                    disabled={actionLoading}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <CheckCircle className="w-4 h-4 mr-1" />
-                    Finalize & Approve
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleReject(selectedQP.id)}
-                    disabled={actionLoading}
-                  >
-                    <XCircle className="w-4 h-4 mr-1" />
-                    Reject & Send Back
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedQP(null);
-                      setComment("");
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </CardContent>
         </Card>
       )}

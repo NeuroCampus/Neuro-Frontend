@@ -299,6 +299,8 @@ const UploadMarks = () => {
   const [qpId, setQpId] = useState<number | null>(null);
   // Store lightweight summary returned from list endpoint
   const [existingQpSummary, setExistingQpSummary] = useState<any | null>(null);
+  // Computed flag: treat backend-provided QP as available even if local "saved" flag wasn't toggled
+  const qpReady = questionFormatSaved || Boolean(existingQpSummary);
   const [studentMarks, setStudentMarks] = useState<Record<string, Record<string, string>>>({});
   const [subjectType, setSubjectType] = useState<string | null>(null);
   // Effective subject type for rendering (prefer current state, fall back to stored selection)
@@ -342,7 +344,7 @@ const UploadMarks = () => {
 
   // Load full QP detail only when user opens the Question Format or Question Paper tab
   useEffect(() => {
-    const shouldLoad = (tabValue === 'questionFormat' || tabValue === 'questionPaper') && questionFormatSaved && existingQpSummary && (!questions || questions.length === 0);
+    const shouldLoad = (tabValue === 'questionFormat' || tabValue === 'questionPaper') && (questionFormatSaved || existingQpSummary) && existingQpSummary && (!questions || questions.length === 0);
     if (!shouldLoad) return;
 
     let mounted = true;
@@ -1738,7 +1740,7 @@ const UploadMarks = () => {
           
           <TabsContent value="manual">
             {/* Students Table - only shown after saving question format */}
-            {questionFormatSaved && areAllDropdownsSelected() && (
+            {qpReady && areAllDropdownsSelected() && (
               <div className={`border rounded-lg overflow-hidden ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
                 {/* Header */}
                 <div className={`p-4 border-b ${theme === 'dark' ? 'border-border bg-muted' : 'border-gray-300 bg-gray-50'}`}>
@@ -1979,7 +1981,7 @@ const UploadMarks = () => {
             )}
             
             {/* Message to configure question format first */}
-            {areAllDropdownsSelected() && !questionFormatSaved && (
+            {areAllDropdownsSelected() && !qpReady && (
               <div className={`p-6 text-center rounded-lg ${theme === 'dark' ? 'bg-card border border-border' : 'bg-gray-50 border border-gray-200'}`}>
                 <p className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
                   Please configure the question paper format first.
@@ -2091,7 +2093,7 @@ const UploadMarks = () => {
           
           {/* Question Paper Tab - For viewing the saved format */}
           <TabsContent value="questionPaper">
-            {questionFormatSaved && areAllDropdownsSelected() ? (
+            {qpReady && areAllDropdownsSelected() ? (
               <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-card border border-border' : 'bg-gray-50 border border-gray-200'}`}>
                 <div className={`p-6 rounded-lg ${theme === 'dark' ? 'bg-background border border-border' : 'bg-white border border-gray-300'}`}>
                   <div className="flex justify-between items-center mb-6">
