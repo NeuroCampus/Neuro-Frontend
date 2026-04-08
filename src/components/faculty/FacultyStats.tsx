@@ -117,20 +117,20 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
   }
 
   return (
-    <div className={`p-4 md:p-6 space-y-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`p-4 md:p-6 space-y-6 min-h-screen w-full max-w-full overflow-x-hidden ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Top Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 ">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map((stat, idx) => (
-          <Card key={idx} className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
-            <CardContent className="p-4 flex items-center space-x-4">
-              <div className={`p-2 rounded-full ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
+          <Card key={idx} className={`${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'} overflow-hidden w-full max-w-full` }>
+            <CardContent className="p-4 flex items-center space-x-4 w-full min-w-0 overflow-hidden break-words">
+              <div className={`p-2 rounded-full flex-shrink-0 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
                 {stat.icon}
               </div>
-              <div>
-                <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{stat.label}</p>
-                <h2 className="text-2xl font-bold">{stat.value}</h2>
+              <div className="w-full min-w-0">
+                <p className={`text-sm sm:text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{stat.label}</p>
+                <h2 className="text-2xl sm:text-3xl font-bold truncate">{stat.value}</h2>
                 {stat.sub && (
-                  <p className="text-xs text-green-600 mt-1">{stat.sub}</p>
+                  <p className="text-xs text-green-600 mt-1 truncate">{stat.sub}</p>
                 )}
               </div>
             </CardContent>
@@ -141,28 +141,28 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
       {/* Courses (Assigned Subjects) + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Assigned Subjects */}
-        <Card className={`lg:col-span-2 ${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}`}>
+        <Card className={`lg:col-span-2 ${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'} overflow-hidden w-full max-w-full` }>
           <CardHeader className="flex flex-row justify-between items-center">
-            <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Assigned Subjects</CardTitle>
+            <CardTitle className={`${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} text-sm sm:text-base`}>Assigned Subjects</CardTitle>
             <Button 
               variant="outline" 
               onClick={() => setActivePage("timetable")}
-              className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+              className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white min-w-0"
             >
               View All
             </Button>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="max-h-80 overflow-y-auto">
+            <div className="max-h-[250px] overflow-y-auto w-full max-w-full thin-scrollbar p-1">
               {subjects.length > 0 ? (
                 subjects.map((subj, idx) => (
                   <div 
                     key={idx} 
-                    className={`p-4 rounded-lg mb-2 ${theme === 'dark' ? 'bg-card' : 'bg-gray-50'}`}
+                    className={`p-4 rounded-lg mb-2 w-full break-words overflow-hidden ${theme === 'dark' ? 'bg-card' : 'bg-gray-50'}`}
                   >
-                    <div className="flex justify-between items-center mb-1">
-                      <h3 className="font-semibold">{subj.subject_name} ({subj.subject_code})</h3>
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${theme === 'dark' ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-800'}`}>
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-1 w-full">
+                      <h3 className="font-semibold text-sm sm:text-base break-words truncate">{subj.subject_name} ({subj.subject_code})</h3>
+                      <span className={`mt-2 sm:mt-0 text-xs px-2 py-1 rounded-full font-medium ${theme === 'dark' ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-800'}`}>
                         {subj.branch} - Sem {subj.semester} - Sec {subj.section}
                       </span>
                     </div>
@@ -176,25 +176,25 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
         </Card>
 
         {/* Quick Actions */}
-        <Card className={`h-full flex flex-col shadow-sm rounded-2xl border ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
+        <Card className={`h-full flex flex-col shadow-sm rounded-2xl border ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'} overflow-hidden w-full max-w-full`}>
           <CardHeader className="pb-3 pt-4 px-4">
             <CardTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Quick Actions</CardTitle>
           </CardHeader>
-          <div className="flex-grow grid grid-cols-2 grid-rows-2 gap-4 p-4">
+          <div className="flex-grow grid grid-cols-2 grid-rows-2 gap-4 p-4 w-full">
             {[
               { label: "Take Attendance", icon: CheckSquare, page: "take-attendance" },
               { label: "Schedule Class", icon: PlusCircle, page: "timetable" },
               { label: "Mentoring", icon: GraduationCap, page: "proctor-students" },
               { label: "View Reports", icon: FileBarChart, page: "statistics" },
             ].map((action, idx) => (
-              <div key={idx} className="flex flex-col items-center justify-center">
+              <div key={idx} className="flex flex-col items-center justify-center w-full">
                 <button
-                  className={`flex items-center justify-center w-12 h-12 rounded-lg transition-colors ${theme === 'dark' ? 'bg-accent hover:bg-accent/80' : 'bg-indigo-100 hover:bg-indigo-200'}`}
+                  className={`flex items-center justify-center w-12 sm:w-14 h-12 sm:h-14 rounded-lg transition-colors flex-shrink-0 ${theme === 'dark' ? 'bg-accent hover:bg-accent/80' : 'bg-indigo-100 hover:bg-indigo-200'}`}
                   onClick={() => setActivePage(action.page)}
                 >
                   <action.icon className={`w-6 h-6 ${theme === 'dark' ? 'text-foreground' : 'text-indigo-600'}`} />
                 </button>
-                <span className={`mt-2 text-sm font-semibold ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>{action.label}</span>
+                <span className={`mt-2 text-sm sm:text-base font-semibold break-words text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>{action.label}</span>
               </div>
             ))}
           </div>
@@ -208,12 +208,12 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
         </CardHeader>
         <CardContent>
           {/* Filters */}
-          <div className="flex flex-wrap gap-4 mb-4">
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
             {/* Class */}
             <div className="flex flex-col">
               <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-700'}`}>Class</label>
               <Select value={selectedClass} onValueChange={setSelectedClass}>
-                <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
+                <SelectTrigger className={`${theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'} w-full` }>
                   <SelectValue placeholder="Select Class" />
                 </SelectTrigger>
                 <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
@@ -230,7 +230,7 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
             <div className="flex flex-col">
               <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-700'}`}>Section</label>
               <Select value={selectedSection} onValueChange={setSelectedSection}>
-                <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
+                <SelectTrigger className={`${theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'} w-full` }>
                   <SelectValue placeholder="Select Section" />
                 </SelectTrigger>
                 <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>

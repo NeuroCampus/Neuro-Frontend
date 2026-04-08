@@ -501,10 +501,26 @@ const CampusLocationManager: React.FC = () => {
     loadLocations();
   }, []);
 
+  // Inject thin scrollbar styles once for desktop/laptop views
+  useEffect(() => {
+    if (document.getElementById('thin-scrollbar-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'thin-scrollbar-styles';
+    style.innerHTML = `
+      .thin-scrollbar { scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.25) transparent; }
+      .thin-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+      .thin-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .thin-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.25); border-radius: 9999px; }
+      @media (max-width: 767px) { .thin-scrollbar::-webkit-scrollbar { width: 6px; } }
+    `;
+    document.head.appendChild(style);
+  }, []);
+
   return (
-    <div className={`p-4 sm:p-6 min-h-screen text-sm sm:text-base max-w-[390px] sm:max-w-none mx-auto ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200 rounded-lg'}`}>
-      <div className="space-y-6">
-        <div className="flex items-start justify-between">
+    <div className={`flex flex-col h-[100dvh] overflow-hidden p-4 sm:p-6 text-sm sm:text-base w-full max-w-[412px] sm:max-w-none sm:min-h-screen mx-auto ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200 rounded-lg'}`}>
+      {/* Header area (fixed) */}
+      <div className="shrink-0 space-y-6">
+        <div className="flex items-start justify-between w-full">
           <div>
             <h2 className={`text-lg sm:text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Campus Location Management</h2>
             <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Set and manage campus boundaries for geolocation-based attendance</p>
@@ -516,15 +532,18 @@ const CampusLocationManager: React.FC = () => {
             </Button>
           </div>
         </div>
+      </div>
 
+      <div className="flex-1 overflow-hidden w-full min-h-0">
         <Dialog open={showForm} onOpenChange={setShowForm}>
-          <DialogContent className={theme === 'dark' ? 'bg-card border border-border text-foreground w-[92%] max-w-[720px] rounded-lg mx-auto max-h-[90vh] sm:max-h-[80vh] md:max-h-[70vh] overflow-auto' : 'bg-white border border-gray-200 text-gray-900 w-[92%] max-w-[720px] rounded-lg mx-auto max-h-[90vh] sm:max-h-[80vh] md:max-h-[70vh] overflow-auto'}>
-            <DialogHeader>
+          <DialogContent className={theme === 'dark' ? 'bg-card border border-border text-foreground w-[95%] max-w-[400px] sm:max-w-[720px] max-h-[90dvh] flex flex-col overflow-hidden rounded-lg mx-auto' : 'bg-white border border-gray-200 text-gray-900 w-[95%] max-w-[400px] sm:max-w-[720px] max-h-[90dvh] flex flex-col overflow-hidden rounded-lg mx-auto'}>
+            <DialogHeader className="shrink-0">
               <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{editingLocation ? 'Edit' : 'Add'} Campus Location</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            <div className="flex-1 overflow-y-auto min-h-0 w-full min-w-0 p-4 sm:p-6 overscroll-contain thin-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <form onSubmit={handleSubmit} className="space-y-4 w-full min-w-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full min-w-0">
                   <div>
                     <Label htmlFor="name">Name *</Label>
                     <Input id="name" value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} required />
@@ -535,12 +554,12 @@ const CampusLocationManager: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 w-full min-w-0">
                   <Switch id="is_active" checked={formData.is_active} onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))} />
                   <Label htmlFor="is_active">Active Location</Label>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full min-w-0">
                   <div>
                     <Label htmlFor="center_latitude">Center Latitude *</Label>
                     <Input id="center_latitude" type="number" step="any" value={formData.center_latitude} onChange={(e) => setFormData(prev => ({ ...prev, center_latitude: parseFloat(e.target.value) || 0 }))} required />
@@ -566,7 +585,7 @@ const CampusLocationManager: React.FC = () => {
                   </AlertDescription>
                 </Alert>
 
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-4 w-full min-w-0">
                   <div className="flex items-center space-x-2">
                     <Switch id="map-mode" checked={useIframe} onCheckedChange={setUseIframe} />
                     <Label htmlFor="map-mode">Use Simple Map View (Iframe)</Label>
@@ -577,8 +596,8 @@ const CampusLocationManager: React.FC = () => {
                 </div>
 
                 {!useIframe && (
-                  <div className="flex gap-2 mb-4">
-                    <div className="flex-1 relative">
+                  <div className="flex gap-2 mb-4 w-full min-w-0">
+                    <div className="flex-1 relative min-w-0">
                       <Input ref={searchBoxRef} type="text" placeholder="Search for a location (e.g., 'Bangalore University')..." className="w-full pr-10" />
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -593,30 +612,30 @@ const CampusLocationManager: React.FC = () => {
                   </div>
                 )}
 
-                <div className="w-full border rounded-lg overflow-hidden h-[40vh] sm:h-[50vh] md:h-[60vh]">
+                <div className="w-full h-[180px] sm:h-[260px] md:h-[360px] border rounded-lg overflow-hidden relative min-w-0">
                   {useIframe ? (
-                    <iframe src={iframeUrl} width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" title="Campus Location Map" />
+                    <iframe src={iframeUrl} className="absolute inset-0 w-full h-full" style={{ border: 0, objectFit: 'cover' }} allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" title="Campus Location Map" />
                   ) : mapError ? (
-                    <div className="flex flex-col items-center justify-center h-full bg-red-50 border-2 border-red-200 rounded-lg">
-                      <div className="text-red-600 text-center p-4">
-                        <MapPin className="w-12 h-12 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold mb-2">Google Maps Error</h3>
-                            <p className="text-sm mb-4">{mapError}</p>
-                            <div className="flex gap-2 justify-center mt-2">
-                              <Button size="sm" variant="ghost" onClick={() => setUseIframe(true)}>Open Simple Map View</Button>
-                              <Button size="sm" variant="outline" onClick={() => reloadGoogleMaps()}>Retry Maps</Button>
-                              <Button size="sm" variant="ghost" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${formData.center_latitude},${formData.center_longitude}`, '_blank')}>Open Google Maps</Button>
-                            </div>
-                            <div className="text-xs text-left mt-3 text-gray-600">
-                              <p>If you have an adblocker or privacy extension, try disabling it for this site. Ensure the Maps API key has the Maps JavaScript API and Places API enabled and allows localhost in referer restrictions while testing.</p>
-                            </div>
+                    <div className="absolute inset-0 bg-red-50 border-2 border-red-200 rounded-lg p-2">
+                      <div className="h-full w-full overflow-auto flex flex-col items-center justify-center text-center gap-3 p-3">
+                        <MapPin className="w-12 h-12 mb-2 text-red-600" />
+                        <h3 className="text-lg font-semibold">Google Maps Error</h3>
+                        <p className="text-sm text-gray-700 max-w-full break-words">{mapError}</p>
+                        <div className="flex flex-wrap gap-2 justify-center mt-2">
+                          <Button size="sm" variant="ghost" onClick={() => setUseIframe(true)}>Open Simple Map View</Button>
+                          <Button size="sm" variant="outline" onClick={() => reloadGoogleMaps()}>Retry Maps</Button>
+                          <Button size="sm" variant="ghost" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${formData.center_latitude},${formData.center_longitude}`, '_blank')}>Open Google Maps</Button>
+                        </div>
+                        <div className="text-xs text-left mt-3 text-gray-600 w-full max-w-full break-words">
+                          <p>If you have an adblocker or privacy extension, try disabling it for this site. Ensure the Maps API key has the Maps JavaScript API and Places API enabled and allows localhost in referer restrictions while testing.</p>
+                        </div>
                       </div>
                     </div>
                   ) : (
                     <>
-                      <div ref={mapRef} className="h-full w-full" />
+                      <div ref={mapRef} className="absolute inset-0 w-full h-full" />
                       {!mapLoaded && !mapError && (
-                        <div className="flex items-center justify-center h-full bg-gray-100">
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
                           <Loader2 className="w-8 h-8 animate-spin" />
                           <span className="ml-2">Loading Google Maps...</span>
                         </div>
@@ -635,7 +654,9 @@ const CampusLocationManager: React.FC = () => {
                 </div>
               </form>
             </div>
-            <DialogFooter />
+            <div className="shrink-0">
+              <DialogFooter />
+            </div>
           </DialogContent>
         </Dialog>
 
@@ -643,40 +664,44 @@ const CampusLocationManager: React.FC = () => {
           <CardHeader>
             <CardTitle className={`text-base sm:text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Campus Locations</CardTitle>
           </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin" />
-                <span className="ml-2">Loading locations...</span>
-              </div>
-            ) : locations.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">No campus locations configured yet.</div>
-            ) : (
-              <div className="space-y-4">
-                {locations.map((location) => (
-                  <div key={location.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2">
-                          <h3 className="font-semibold">{location.name}</h3>
-                          {location.is_active && <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Active</span>}
-                        </div>
-                        {location.description && <p className="text-gray-600 mt-1">{location.description}</p>}
-                        <div className="mt-2 text-sm text-gray-500">
-                          <p>Center: {location.center_latitude.toFixed(6)}, {location.center_longitude.toFixed(6)}</p>
-                          <p>Radius: {location.radius_meters} meters</p>
-                          <p>Created: {new Date(location.created_at).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => handleEdit(location)} disabled={showForm}><Edit className="w-4 h-4" /></Button>
-                        <Button variant="outline" size="sm" onClick={() => handleDelete(location)} className="text-red-600 hover:text-red-700"><Trash2 className="w-4 h-4" /></Button>
-                      </div>
-                    </div>
+          <CardContent className="h-[50vh] sm:h-auto">{/* mobile: constrained height; desktop/tablet keep auto */}
+            <div className="flex flex-col h-full w-full min-h-0">
+              <div className="flex-1 overflow-auto w-full min-w-0 min-h-0 overflow-y-auto overscroll-contain thin-scrollbar">
+                {loading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-8 h-8 animate-spin" />
+                    <span className="ml-2">Loading locations...</span>
                   </div>
-                ))}
+                ) : locations.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">No campus locations configured yet.</div>
+                ) : (
+                  <div className="space-y-4 w-full">
+                    {locations.map((location) => (
+                      <div key={location.id} className="border rounded-lg p-4 w-full">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2">
+                              <h3 className="font-semibold">{location.name}</h3>
+                              {location.is_active && <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Active</span>}
+                            </div>
+                            {location.description && <p className="text-gray-600 mt-1">{location.description}</p>}
+                            <div className="mt-2 text-sm text-gray-500">
+                              <p>Center: {location.center_latitude.toFixed(6)}, {location.center_longitude.toFixed(6)}</p>
+                              <p>Radius: {location.radius_meters} meters</p>
+                              <p>Created: {new Date(location.created_at).toLocaleDateString()}</p>
+                            </div>
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button variant="outline" size="sm" onClick={() => handleEdit(location)} disabled={showForm}><Edit className="w-4 h-4" /></Button>
+                            <Button variant="outline" size="sm" onClick={() => handleDelete(location)} className="text-red-600 hover:text-red-700"><Trash2 className="w-4 h-4" /></Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -538,17 +538,17 @@ const TakeAttendance = () => {
   };
 
   return (
-    <div className={`space-y-4 p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
+    <div className={`p-3 sm:p-6 w-full max-w-full min-h-screen md:min-h-screen h-screen md:h-auto overflow-hidden md:overflow-visible ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <Card className={`${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'} w-full max-w-full` }>
         <CardHeader>
-          <CardTitle>Take Attendance</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Take Attendance</CardTitle>
           <CardDescription className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Record student attendance for your classes</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-6">
-            <div className="grid grid-cols-4 gap-4">
+          <div className="space-y-4 w-full max-w-full">
+            <div className="flex flex-col gap-3 sm:grid sm:grid-cols-2 md:grid-cols-4 w-full">
               <Select value={subjectId?.toString()} onValueChange={v => setSubjectId(Number(v))}>
-                <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
+                <SelectTrigger className={`${theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'} w-full` }>
                   <SelectValue placeholder="Select Subject" />
                 </SelectTrigger>
                 <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
@@ -556,7 +556,7 @@ const TakeAttendance = () => {
                 </SelectContent>
               </Select>
               <Select value={branchId?.toString()} onValueChange={v => setBranchId(Number(v))} disabled={!subjectId}>
-                <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'} disabled={!subjectId}>
+                <SelectTrigger className={`${theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'} w-full`} disabled={!subjectId}>
                   <SelectValue placeholder="Select Branch" />
                 </SelectTrigger>
                 <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
@@ -564,7 +564,7 @@ const TakeAttendance = () => {
                 </SelectContent>
               </Select>
               <Select value={semesterId?.toString()} onValueChange={v => setSemesterId(Number(v))} disabled={!branchId || semesters.length === 0}>
-                <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'} disabled={!branchId || semesters.length === 0}>
+                <SelectTrigger className={`${theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'} w-full`} disabled={!branchId || semesters.length === 0}>
                   <SelectValue placeholder="Select Semester" />
                 </SelectTrigger>
                 <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
@@ -572,7 +572,7 @@ const TakeAttendance = () => {
                 </SelectContent>
               </Select>
               <Select value={sectionId?.toString() || ""} onValueChange={v => setSectionId(v ? Number(v) : null)} disabled={!semesterId || sections.length === 0}>
-                <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'} disabled={!semesterId || sections.length === 0}>
+                <SelectTrigger className={`${theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'} w-full`} disabled={!semesterId || sections.length === 0}>
                   <SelectValue placeholder={subjectType === 'elective' ? "Select Section (Optional)" : "Select Section"} />
                 </SelectTrigger>
                 <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
@@ -580,8 +580,9 @@ const TakeAttendance = () => {
                 </SelectContent>
               </Select>
             </div>
+
             <Tabs defaultValue="manual">
-              <TabsList className={`inline-flex h-10 items-center justify-center rounded-md p-1 ${theme === 'dark' ? 'bg-muted text-muted-foreground' : 'bg-gray-100 text-gray-500'}`}>
+              <TabsList className={`inline-flex h-10 items-center justify-start gap-2 rounded-md p-1 overflow-auto ${theme === 'dark' ? 'bg-muted text-muted-foreground' : 'bg-gray-100 text-gray-500'}`}>
                 <TabsTrigger 
                   value="manual" 
                   className={`inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm ${theme === 'dark' 
@@ -603,147 +604,157 @@ const TakeAttendance = () => {
               {/* Manual Entry Tab */}
               <TabsContent value="manual">
                 {loadingStudents ? (
-                  <div className={theme === 'dark' ? 'text-muted-foreground mt-6' : 'text-gray-500 mt-6'}>Loading students...</div>
+                  <div className={theme === 'dark' ? 'text-muted-foreground mt-4' : 'text-gray-500 mt-4'}>Loading students...</div>
                 ) : students.length > 0 ? (
-                  <div className={`border rounded-md mt-4 ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
-                    <div className={`p-4 font-semibold border-b ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}>Student Attendance</div>
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full text-sm">
-                        <thead className={theme === 'dark' ? 'bg-muted' : 'bg-gray-50'}>
-                          <tr>
-                            <th className={`text-left px-4 py-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>#</th>
-                            <th className={`text-left px-4 py-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>USN</th>
-                            <th className={`text-left px-4 py-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Name</th>
-                            <th className={`text-left px-4 py-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Attendance</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {students.map((s, idx) => (
-                            <tr 
-                              key={s.id} 
-                              className={`border-t ${theme === 'dark' ? 'border-border hover:bg-accent' : 'border-gray-200 hover:bg-gray-50'}`}
-                            >
-                              <td className="px-4 py-3">{idx + 1}</td>
-                              <td className="px-4 py-3 font-medium">{s.usn}</td>
-                              <td className="px-4 py-3">{s.name}</td>
-                              <td className="px-4 py-3">
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    onClick={() => handleAttendance(s.id, true)}
-                                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 ${
-                                      attendance[s.id] === true 
-                                        ? (theme === 'dark' 
-                                            ? "bg-green-500/20 text-green-400 border-2 border-green-500/50" 
-                                            : "bg-green-100 text-green-600 border-2 border-green-200")
-                                        : (theme === 'dark' 
-                                            ? "bg-muted text-muted-foreground hover:bg-green-500/10 hover:text-green-400 border border-border" 
-                                            : "bg-gray-100 text-gray-500 hover:bg-green-50 hover:text-green-600 border border-gray-200")
-                                    }`}
-                                    title="Mark Present"
-                                  >
-                                    <Check size={18} />
-                                  </button>
-                                  <button
-                                    onClick={() => handleAttendance(s.id, false)}
-                                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-all duration-200 ${
-                                      attendance[s.id] === false 
-                                        ? (theme === 'dark' 
-                                            ? "bg-red-500/20 text-red-400 border-2 border-red-500/50" 
-                                            : "bg-red-100 text-red-600 border-2 border-red-200")
-                                        : (theme === 'dark' 
-                                            ? "bg-muted text-muted-foreground hover:bg-red-500/10 hover:text-red-400 border border-border" 
-                                            : "bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-600 border border-gray-200")
-                                    }`}
-                                    title="Mark Absent"
-                                  >
-                                    <X size={18} />
-                                  </button>
-                                  {attendance[s.id] === true && (
-                                    <span className={`ml-2 text-xs px-2 py-1 rounded-full ${theme === 'dark' ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-800'}`}>
-                                      Present
-                                    </span>
-                                  )}
-                                  {attendance[s.id] === false && (
-                                    <span className={`ml-2 text-xs px-2 py-1 rounded-full ${theme === 'dark' ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-800'}`}>
-                                      Absent
-                                    </span>
-                                  )}
-                                  {attendance[s.id] === undefined && (
-                                    <span className={`ml-2 text-xs px-2 py-1 rounded-full ${theme === 'dark' ? 'bg-muted text-muted-foreground' : 'bg-gray-100 text-gray-500'}`}>
-                                      Not marked
-                                    </span>
-                                  )}
-                                </div>
-                              </td>
+                  <div className={`border rounded-md mt-4 w-full max-w-full overflow-hidden min-h-0 ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
+                    <div className={`p-3 sm:p-4 font-semibold border-b ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}>Student Attendance</div>
+
+                    {/* Scrollable area - ONLY the table lives inside this */}
+                    <div className="overflow-y-auto w-full overscroll-contain min-h-0 sm:max-h-none" style={{ WebkitOverflowScrolling: 'touch', height: 'calc(100vh - 220px)', touchAction: 'pan-y' }}>
+                      <div className="w-full overflow-x-auto">
+                        <table className="w-full text-sm sm:text-base">
+                          <thead className={theme === 'dark' ? 'bg-muted' : 'bg-gray-50'}>
+                            <tr>
+                              <th className={`text-left px-4 py-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} sm:hidden`}>Student</th>
+                              <th className={`text-left px-4 py-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} hidden sm:table-cell`}>#</th>
+                              <th className={`text-left px-4 py-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} hidden sm:table-cell`}>USN</th>
+                              <th className={`text-left px-4 py-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} hidden sm:table-cell`}>Name</th>
+                              <th className={`text-left px-4 py-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Attendance</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {students.map((s, idx) => (
+                              <tr 
+                                key={s.id} 
+                                className={`border-t ${theme === 'dark' ? 'border-border hover:bg-accent' : 'border-gray-200 hover:bg-gray-50'}`}
+                              >
+                                {/* Mobile stacked student cell */}
+                                <td className="px-3 py-3 sm:hidden w-[65%] align-top">
+                                  <div className="text-sm font-medium">{s.usn}</div>
+                                  <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{s.name}</div>
+                                </td>
+                                <td className="px-4 py-3 text-sm sm:text-base hidden sm:table-cell">{idx + 1}</td>
+                                <td className="px-4 py-3 font-medium text-sm sm:text-base hidden sm:table-cell">{s.usn}</td>
+                                <td className="px-4 py-3 text-sm sm:text-base break-words truncate hidden sm:table-cell">{s.name}</td>
+                                <td className="px-3 py-3 w-[35%] align-top">
+                                  <div className="flex items-center gap-2 flex-wrap justify-end sm:justify-start">
+                                    <button
+                                      onClick={() => handleAttendance(s.id, true)}
+                                      className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all duration-200 ${
+                                        attendance[s.id] === true 
+                                          ? (theme === 'dark' 
+                                              ? "bg-green-500/20 text-green-400 border-2 border-green-500/50" 
+                                              : "bg-green-100 text-green-600 border-2 border-green-200")
+                                          : (theme === 'dark' 
+                                              ? "bg-muted text-muted-foreground hover:bg-green-500/10 hover:text-green-400 border border-border" 
+                                              : "bg-gray-100 text-gray-500 hover:bg-green-50 hover:text-green-600 border border-gray-200")
+                                      }`}
+                                      title="Mark Present"
+                                    >
+                                      <Check size={16} />
+                                    </button>
+                                    <button
+                                      onClick={() => handleAttendance(s.id, false)}
+                                      className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all duration-200 ${
+                                        attendance[s.id] === false 
+                                          ? (theme === 'dark' 
+                                              ? "bg-red-500/20 text-red-400 border-2 border-red-500/50" 
+                                              : "bg-red-100 text-red-600 border-2 border-red-200")
+                                          : (theme === 'dark' 
+                                              ? "bg-muted text-muted-foreground hover:bg-red-500/10 hover:text-red-400 border border-border" 
+                                              : "bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-600 border border-gray-200")
+                                      }`}
+                                      title="Mark Absent"
+                                    >
+                                      <X size={16} />
+                                    </button>
+                                    <div className="ml-2 text-xs sm:text-sm">
+                                      {attendance[s.id] === true ? (
+                                        <span className={`px-2 py-1 rounded-full ${theme === 'dark' ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-800'}`}>Present</span>
+                                      ) : attendance[s.id] === false ? (
+                                        <span className={`px-2 py-1 rounded-full ${theme === 'dark' ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-800'}`}>Absent</span>
+                                      ) : (
+                                        <span className={`px-2 py-1 rounded-full ${theme === 'dark' ? 'bg-muted text-muted-foreground' : 'bg-gray-100 text-gray-500'}`}>Not marked</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                    {totalPages && totalPages > 1 && (
-                      <div className="p-3 flex items-center justify-between gap-4">
-                        <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                          Showing page {page} of {totalPages} {totalStudentsCount !== null && `— ${totalStudentsCount} students`}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Prev</Button>
-                          <Button disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Next</Button>
-                          <div className="flex items-center gap-2 ml-4">
-                            <label className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Per page:</label>
-                            <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className="border rounded px-2 py-1">
-                              <option value={25}>25</option>
-                              <option value={50}>50</option>
-                              <option value={100}>100</option>
-                            </select>
+
+                    {/* Fixed controls outside scroll area */}
+                    <div className="p-3 sm:p-4 space-y-4">
+                      {totalPages && totalPages > 1 && (
+                        <div className="flex items-center justify-between gap-3">
+                          <div className={`text-sm sm:text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                            Showing page {page} of {totalPages} {totalStudentsCount !== null && `— ${totalStudentsCount} students`}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button className="w-auto" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Prev</Button>
+                            <Button className="w-auto" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>Next</Button>
+                            <div className="flex items-center gap-2 ml-4">
+                              <label className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Per page:</label>
+                              <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className="border rounded px-2 py-1">
+                                <option value={25}>25</option>
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
+                              </select>
+                            </div>
                           </div>
                         </div>
+                      )}
+
+                      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
+                        <div className={`text-sm sm:text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                          {Object.keys(attendance).filter(key => attendance[Number(key)] === true).length} Present, 
+                          {Object.keys(attendance).filter(key => attendance[Number(key)] === false).length} Absent
+                        </div>
+                        <Button 
+                          onClick={handleSubmit} 
+                          disabled={submitting}
+                          className="w-full sm:w-auto flex items-center justify-center gap-2 text-sm sm:text-base font-medium px-4 py-2 rounded-md transition bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-md"
+                        >
+                          {submitting ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                              Submitting...
+                            </>
+                          ) : (
+                            "Submit Attendance"
+                          )}
+                        </Button>
                       </div>
-                    )}
-                    <div className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                      <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                        {Object.keys(attendance).filter(key => attendance[Number(key)] === true).length} Present, 
-                        {Object.keys(attendance).filter(key => attendance[Number(key)] === false).length} Absent
-                      </div>
-                      <Button 
-                        onClick={handleSubmit} 
-                        disabled={submitting}
-                        className="flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-md transition bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-md"
-                      >
-                        {submitting ? (
-                          <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            Submitting...
-                          </>
-                        ) : (
-                          "Submit Attendance"
-                        )}
-                      </Button>
+
+                      {successMsg && <div className={`text-green-400 text-sm p-3 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{successMsg}</div>}
+                      {errorMsg && <div className={`text-red-400 text-sm p-3 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{errorMsg}</div>}
                     </div>
-                    {successMsg && <div className={`text-green-400 text-sm p-4 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{successMsg}</div>}
-                    {errorMsg && <div className={`text-red-400 text-sm p-4 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{errorMsg}</div>}
                   </div>
                 ) : (
-                  <div className={theme === 'dark' ? 'text-muted-foreground mt-6' : 'text-gray-500 mt-6'}>Select class details to load students.</div>
+                  <div className={theme === 'dark' ? 'text-muted-foreground mt-4' : 'text-gray-500 mt-4'}>Select class details to load students.</div>
                 )}
               </TabsContent>
               
               {/* AI Tab */}
               <TabsContent value="ai">
                 {loadingStudents ? (
-                  <div className={theme === 'dark' ? 'text-muted-foreground mt-6' : 'text-gray-500 mt-6'}>Loading students...</div>
+                  <div className={theme === 'dark' ? 'text-muted-foreground mt-4' : 'text-gray-500 mt-4'}>Loading students...</div>
                 ) : students.length > 0 ? (
-                  <div className={`border rounded-md mt-4 ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
-                    <div className={`p-4 font-semibold border-b ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}>AI Attendance Processing</div>
-                    <div className="p-6">
-                      <div className="flex flex-col items-center justify-center py-8">
-                        <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16 flex items-center justify-center mb-4">
+                  <div className={`border rounded-md mt-4 w-full max-w-full ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
+                    <div className={`p-3 font-semibold border-b ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}>AI Attendance Processing</div>
+                    <div className="p-4">
+                      <div className="flex flex-col items-center justify-center py-6">
+                        <div className="bg-gray-200 border-2 border-dashed rounded-xl w-14 h-14 flex items-center justify-center mb-4">
                           <UploadCloud className={`w-8 h-8 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} />
                         </div>
-                        <h3 className={`text-lg font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>AI Attendance Processing</h3>
-                        <p className={`text-sm mb-6 text-center max-w-md ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                        <h3 className={`text-base font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>AI Attendance Processing</h3>
+                        <p className={`text-sm mb-4 text-center max-w-full ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                           Upload a class photo for automatic attendance marking using facial recognition technology.
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+                        <div className="flex flex-col sm:flex-row gap-3 w-full">
                           <input
                             type="file"
                             accept="image/*"
@@ -753,7 +764,7 @@ const TakeAttendance = () => {
                           />
                           <label
                             htmlFor="photo-upload"
-                            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer text-center transition ${
+                            className={`w-full flex-1 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer text-center transition ${
                               theme === 'dark'
                                 ? 'border-border text-foreground hover:bg-accent'
                                 : 'border-gray-300 text-gray-700 hover:bg-gray-100'
@@ -764,7 +775,7 @@ const TakeAttendance = () => {
                           <Button
                             onClick={handleAIProcess}
                             disabled={processingAI || !aiPhoto}
-                            className="flex-1 flex items-center gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
                           >
                             {processingAI ? (
                               <>
@@ -779,9 +790,9 @@ const TakeAttendance = () => {
                       </div>
 
                       {aiResults && (
-                        <div className={`mt-8 p-4 rounded-lg ${theme === 'dark' ? 'bg-muted' : 'bg-gray-50'}`}>
-                          <h4 className={`font-medium mb-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>AI Processing Results:</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div className={`mt-6 p-3 rounded-lg ${theme === 'dark' ? 'bg-muted' : 'bg-gray-50'}`}>
+                          <h4 className={`font-medium mb-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>AI Processing Results:</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                             <div className={`p-3 rounded ${theme === 'dark' ? 'bg-background' : 'bg-white'}`}>
                               <div className="text-2xl font-bold text-green-600">{aiResults.present_count}</div>
                               <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Present</div>
@@ -796,13 +807,13 @@ const TakeAttendance = () => {
                             </div>
                           </div>
 
-                          <div className="space-y-4">
+                          <div className="space-y-3">
                             <div>
                               <h5 className={`font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Present Students:</h5>
                               <div className={`max-h-32 overflow-y-auto p-2 rounded ${theme === 'dark' ? 'bg-background' : 'bg-white'}`}>
                                 {aiResults.present_students.length > 0 ? (
                                   aiResults.present_students.map((student: any) => (
-                                    <div key={student.id} className="text-sm">
+                                    <div key={student.id} className="text-sm break-words">
                                       {student.name} ({student.usn})
                                     </div>
                                   ))
@@ -817,7 +828,7 @@ const TakeAttendance = () => {
                               <div className={`max-h-32 overflow-y-auto p-2 rounded ${theme === 'dark' ? 'bg-background' : 'bg-white'}`}>
                                 {aiResults.absent_students.length > 0 ? (
                                   aiResults.absent_students.map((student: any) => (
-                                    <div key={student.id} className="text-sm">
+                                    <div key={student.id} className="text-sm break-words">
                                       {student.name} ({student.usn})
                                     </div>
                                   ))
@@ -830,7 +841,7 @@ const TakeAttendance = () => {
                         </div>
                       )}
 
-                      <div className={`mt-8 p-4 rounded-lg ${theme === 'dark' ? 'bg-muted' : 'bg-gray-50'}`}>
+                      <div className={`mt-6 p-3 rounded-lg ${theme === 'dark' ? 'bg-muted' : 'bg-gray-50'}`}>
                         <h4 className={`font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>How it works:</h4>
                         <ul className={`text-sm space-y-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                           <li>• Take a clear photo of your entire class</li>
@@ -840,18 +851,19 @@ const TakeAttendance = () => {
                         </ul>
                       </div>
                     </div>
-                    {successMsg && <div className={`text-green-400 text-sm p-4 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{successMsg}</div>}
-                    {errorMsg && <div className={`text-red-400 text-sm p-4 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{errorMsg}</div>}
+                    {successMsg && <div className={`text-green-400 text-sm p-3 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{successMsg}</div>}
+                    {errorMsg && <div className={`text-red-400 text-sm p-3 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{errorMsg}</div>}
                   </div>
                 ) : (
-                  <div className={`border rounded-md mt-4 p-8 text-center ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
-                    <h3 className={`text-lg font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>No Students Found</h3>
+                  <div className={`border rounded-md mt-4 p-6 text-center ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
+                    <h3 className={`text-base font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>No Students Found</h3>
                     <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                       Please select class details above to load students for AI processing.
                     </p>
                   </div>
                 )}
               </TabsContent>
+
             </Tabs>
 
           </div>
@@ -859,6 +871,6 @@ const TakeAttendance = () => {
       </Card>
     </div>
   );
-};
+}
 
 export default TakeAttendance;
