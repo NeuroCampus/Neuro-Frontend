@@ -117,16 +117,19 @@ export default function HODStats({ setError, setPage, onBootstrapData }: HODStat
           });
         }
 
-        // Set leave requests
+        // Set leave requests — ensure dashboard shows only pending items (safeguard)
         if (Array.isArray(res.data.leaves)) {
-          const requests = res.data.leaves.map((req: DashboardLeave) => ({
-            id: req.id.toString(),
-            name: req.faculty_name || "Unknown",
-            dept: req.department || "Unknown",
-            period: formatPeriod(req.start_date, req.end_date),
-            reason: req.reason || "No reason provided",
-            status: req.status === "APPROVED" ? "Approved" : req.status === "REJECTED" ? "Rejected" : "Pending",
-          })) as LeaveRequest[];
+          const requests = res.data.leaves
+            .filter((req: DashboardLeave) => ((req.status || "").toString().toUpperCase() === "PENDING"))
+            .map((req: DashboardLeave) => ({
+              id: req.id.toString(),
+              name: req.faculty_name || "Unknown",
+              dept: req.department || "Unknown",
+              period: formatPeriod(req.start_date, req.end_date),
+              reason: req.reason || "No reason provided",
+              status: "Pending",
+            })) as LeaveRequest[];
+
           setLeaveRequests(requests);
         }
 
