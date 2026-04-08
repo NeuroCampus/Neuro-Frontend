@@ -1,12 +1,8 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { loginUser } from "../../utils/authService";
+import { useLoginLogic } from "../../hooks/useLoginLogic";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
-import { LockKeyhole, User, BookOpen, Users, GraduationCap, Shield } from "lucide-react";
-import { Eye, EyeOff } from "lucide-react";
-
+import { LockKeyhole, User, Shield, Eye, EyeOff } from "lucide-react";
 
 interface LoginProps {
   setRole: (role: string) => void;
@@ -15,87 +11,18 @@ interface LoginProps {
 }
 
 const Login = ({ setRole, setPage, setUser }: LoginProps) => {
-  const navigate = useNavigate();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-
-
-  const handleLogin = async () => {
-    const trimmedUsername = username.trim();
-    const trimmedPassword = password.trim();
-
-    if (!trimmedUsername || !trimmedPassword) {
-      setError("Please enter both username and password");
-      return;
-    }
-
-    setError(null);
-    setLoading(true);
-
-    try {
-      const response = await loginUser({ username: trimmedUsername, password: trimmedPassword });
-      // Handle forced password reset on first login
-      if (response && (response as any).password_reset_required) {
-        localStorage.setItem("temp_user_id", (response as any).user_id || "");
-        localStorage.setItem("password_reset_email", trimmedUsername);
-        setPage("forgot-password");
-        setLoading(false);
-        return;
-      }
-      if (response.success) {
-        if (response.message === "OTP sent") {
-          localStorage.setItem("temp_user_id", response.user_id || "");
-          setPage("otp");
-        } else {
-          // Authentication successful - navigate directly to appropriate dashboard
-          const userRole = response.role;
-          switch (userRole) {
-            case "admin":
-              navigate("/admin", { replace: true });
-              break;
-            case "hod":
-              navigate("/hod", { replace: true });
-              break;
-            case "fees_manager":
-              navigate("/fees-manager", { replace: true });
-              break;
-            case "teacher":
-              navigate("/faculty", { replace: true });
-              break;
-            case "dean":
-              navigate("/dean", { replace: true });
-              break;
-            case "coe":
-              navigate("/coe", { replace: true });
-              break;
-            case "student":
-              navigate("/dashboard", { replace: true });
-              break;
-            default:
-              navigate("/", { replace: true });
-          }
-        }
-      } else {
-        // Check if password reset is required
-        if (response.password_reset_required) {
-          // Store user_id for password reset flow and redirect to forgot password
-          localStorage.setItem("temp_user_id", response.user_id || "");
-          localStorage.setItem("password_reset_email", trimmedUsername); // Store email for UX
-          setPage("forgot-password");
-          return;
-        }
-        setError(response.message || "Login failed");
-      }
-    } catch (err) {
-      setError("Network error. Please try again.");
-      console.error("Login Error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    username,
+    setUsername,
+    password,
+    setPassword,
+    error,
+    loading,
+    showPassword,
+    setShowPassword,
+    handleLogin,
+    handleForgotPassword,
+  } = useLoginLogic({ setRole, setPage, setUser });
 
   return (
     <div className="min-h-screen flex font-sans">
@@ -222,21 +149,17 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter your username"
-                  className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
                   onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                  placeholder="Enter your username"
+                  disabled={loading}
+                  className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300 disabled:opacity-50"
                 />
               </div>
             </div>
 
             {/* Password */}
             <div className="space-y-2">
-              <label
-                htmlFor="password"
-                className="text-sm font-medium text-gray-300"
-              >
-                Password
-              </label>
+              <label htmlFor="password" className="text-sm font-medium text-gray-300">Password</label>
               <div className="relative">
                 <LockKeyhole className="absolute left-3 top-4 h-4 w-4 text-gray-500" />
 
@@ -245,16 +168,18 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  className="pl-10 pr-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
                   onKeyPress={(e) => e.key === "Enter" && handleLogin()}
+                  placeholder="Enter your password"
+                  disabled={loading}
+                  className="pl-10 pr-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300 disabled:opacity-50"
                 />
 
                 {/* Eye Icon Toggle */}
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-4 text-gray-500 "
+                  disabled={loading}
+                  className="absolute right-3 top-4 text-gray-500 disabled:opacity-50"
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -268,8 +193,9 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
             <div className="text-right">
               <button
                 type="button"
-                onClick={() => setPage("forgot-password")}
-                className="text-[#a259ff] hover:text-[#a259ff]/80 text-sm transition-colors duration-300"
+                onClick={handleForgotPassword}
+                disabled={loading}
+                className="text-[#a259ff] hover:text-[#a259ff]/80 text-sm transition-colors duration-300 disabled:opacity-50"
               >
                 Forgot Password?
               </button>
@@ -278,7 +204,7 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
             <Button
               onClick={handleLogin}
               disabled={loading}
-              className="w-full bg-[#a259ff] hover:bg-[#a259ff]/90 text-white font-medium rounded-lg h-12 shadow-lg shadow-[#a259ff]/20 hover:shadow-[#a259ff]/40 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full bg-[#a259ff] hover:bg-[#a259ff]/90 text-white font-medium rounded-lg h-12 shadow-lg shadow-[#a259ff]/20 hover:shadow-[#a259ff]/40 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70"
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
