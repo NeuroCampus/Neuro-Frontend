@@ -76,16 +76,17 @@ interface RefreshTokenResponse {
 }
 
 // Wrapper function to handle token refresh on 401 errors
-export const fetchWithTokenRefresh = async (url: string, options: RequestInit): Promise<Response> => {
+export const fetchWithTokenRefresh = async (url: string, options: RequestInit = {}): Promise<Response> => {
   try {
     const accessToken = localStorage.getItem("access_token");
     if (!accessToken) {
       throw new Error("No access token available");
     }
-    options.headers = {
-      ...options.headers,
+    const safeHeaders = {
+      ...(options.headers as Record<string, string> | undefined),
       Authorization: `Bearer ${accessToken}`,
     };
+    options.headers = safeHeaders;
     const response = await fetch(url, options);
 
     if (response.status === 401) {
