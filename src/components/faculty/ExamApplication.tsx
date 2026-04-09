@@ -532,7 +532,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
         )}
 
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="max-w-[80vw] max-h-[80vh] overflow-y-auto custom-scrollbar">
+          <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-[70vw] max-h-[90vh] sm:max-h-[85vh] overflow-y-auto custom-scrollbar">
             <div className="flex justify-between items-center mt-5">
               <DialogHeader>
                 <DialogTitle>Exam Application</DialogTitle>
@@ -543,12 +543,12 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
                 </Button>
               </div>
             </div>
-            <div className="p-1">
+            <div className="p-1 md:p-2 lg:p-4">
               {/* Existing Applications UI removed — statuses shown via checkboxes */}
 
               {/* Edit Mode Banner - NOT in PDF */}
               {isEditMode && editingApplication && (
-                <div className="mb-6 p-4 border rounded-lg bg-blue-50 border-blue-200">
+                <div className="mb-4 md:mb-5 lg:mb-6 p-2 md:p-3 lg:p-4 border rounded-lg bg-blue-50 border-blue-200">
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-lg font-semibold text-blue-800">Editing Application</h3>
@@ -573,7 +573,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
 
               <div ref={printRef} className="mt-4">
                 {/* Printable application form */}
-                <div id="exam-application-printable" className="p-6 bg-white text-black" style={{ minWidth: '800px', width: 'auto', margin: '0 auto' }}>
+                <div id="exam-application-printable" className="p-3 md:p-4 lg:p-6 bg-white text-black" style={{ minWidth: '100%', maxWidth: '800px', width: 'auto', margin: '0 auto' }}>
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <img src="/logo.jpeg" alt="Logo" style={{ height: 96, width: 96, objectFit: 'contain', borderRadius: 6 }} />
@@ -593,10 +593,10 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
                     <div className="font-bold text-lg">Exam Application Form</div>
                   </div>
 
-                  <div className="flex items-center gap-4 mb-4">
+                  <div className="flex items-center gap-2 md:gap-3 lg:gap-4 mb-3 md:mb-4 lg:mb-4">
 
                     <div>
-                      <Avatar className="w-20 h-20 rounded-md overflow-hidden">
+                      <Avatar className="w-16 md:w-16 lg:w-20 h-16 md:h-16 lg:h-20 rounded-md overflow-hidden">
                         {(
                             (studentDetails?.student_info && studentDetails.student_info.photo_url) ||
                             (studentDetails?.student && (studentDetails.student.profile_picture || studentDetails.student.photo_url)) ||
@@ -616,24 +616,24 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
                               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />
                           ) : (
-                          <AvatarFallback className="text-2xl font-medium">
+                          <AvatarFallback className="text-xl md:text-lg lg:text-2xl font-medium\">
                             {(selectedStudent?.name || studentDetails?.name || 'U')[0]?.toUpperCase()}
                           </AvatarFallback>
                         )}
                       </Avatar>
                     </div>
-                    <div className="flex-1 grid grid-cols-2 gap-4">
+                    <div className="flex-1 grid grid-cols-2 gap-2 md:gap-3 lg:gap-4">
                       <div>
                         <div className="text-xs text-muted-foreground">Name</div>
-                        <div className="font-semibold">{selectedStudent?.name || studentDetails?.student_info?.name || ''}</div>
+                        <div className="font-semibold text-sm md:text-sm lg:text-base">{selectedStudent?.name || studentDetails?.student_info?.name || ''}</div>
                         <div className="text-xs text-muted-foreground">USN</div>
-                        <div className="font-semibold">{selectedStudent?.usn || ''}</div>
+                        <div className="font-semibold text-sm md:text-sm lg:text-base">{selectedStudent?.usn || ''}</div>
                       </div>
                       <div>
                         <div className="text-xs text-muted-foreground">Department</div>
-                        <div className="font-semibold">{selectedStudent?.branch || ''}</div>
+                        <div className="font-semibold text-sm md:text-sm lg:text-base">{selectedStudent?.branch || ''}</div>
                         <div className="text-xs text-muted-foreground">Semester</div>
-                        <div className="font-semibold">{selectedStudent?.semester || ''}</div>
+                        <div className="font-semibold text-sm md:text-sm lg:text-base">{selectedStudent?.semester || ''}</div>
                       </div>
                     </div>
                   </div>

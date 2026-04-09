@@ -86,13 +86,13 @@ const ProctorStudents = ({ proctorStudents, proctorStudentsLoading, pagination }
           <button
             onClick={() => pagination?.goToPage?.(Math.max(1, (currentPage || 1) - 1))}
             disabled={currentPage <= 1}
-            className="px-3 py-1 rounded border"
+            className="px-3 py-1 rounded border bg-[#a259ff] hover:bg-[#8a4dde] text-white disabled:bg-[#d4a5f2] disabled:text-white disabled:border-[#d4a5f2]"
           >Previous</button>
-          <span className="text-sm">Page {currentPage} / {totalPages}</span>
+          <span className="text-sm">{currentPage}</span>
           <button
             onClick={() => pagination?.goToPage?.(Math.min(totalPages, (currentPage || 1) + 1))}
             disabled={currentPage >= totalPages}
-            className="px-3 py-1 rounded border"
+            className="px-3 py-1 rounded border bg-[#a259ff] hover:bg-[#8a4dde] text-white disabled:bg-[#d4a5f2] disabled:text-white disabled:border-[#d4a5f2]"
           >Next</button>
         </div>
       </CardContent>

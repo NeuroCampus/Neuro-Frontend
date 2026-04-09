@@ -33,20 +33,37 @@ interface AssignedSection {
 }
 
 const StudyMaterialRow = ({ material, theme }: { material: StudyMaterial; theme: string }) => (
-  <div className={`grid grid-cols-1 sm:grid-cols-7 gap-2 items-center text-sm py-2`}>
-    <div className="flex items-center">
-      <FileText className="text-red-500" size={20} />
+  <div className={`grid md:grid-cols-6 gap-2 md:gap-3 items-start md:items-center text-xs sm:text-sm py-2 md:py-3 border-b md:border-b ${theme === 'dark' ? 'border-border' : 'border-gray-200'} last:border-b-0`}>
+    <div className="hidden md:flex items-center">
+      <FileText className="text-red-500" size={18} />
     </div>
-    <div className={`${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'} font-medium cursor-pointer hover:underline truncate`}>
-      {material.title}
+    <div className="flex items-start gap-2 md:flex-col md:gap-0">
+      <FileText className="text-red-500 flex-shrink-0 md:hidden" size={16} />
+      <div>
+        <div className="text-xs text-gray-500 md:hidden font-semibold">Title</div>
+        <div className={`${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'} font-medium cursor-pointer hover:underline break-words`}>
+          {material.title}
+        </div>
+      </div>
     </div>
-    <div className={`truncate`}>{material.subject_name}</div>
-    <div className={`truncate`}>{material.subject_code}</div>
-    <div className="">{material.semester || "N/A"}</div>
-    <div className="">{material.uploaded_by}</div>
-    <div>
+    <div className="flex items-start gap-2 md:flex-col md:gap-0">
+      <div className="text-xs text-gray-500 md:hidden font-semibold min-w-fit">Course</div>
+      <div className="flex flex-col md:gap-0.5">
+        <div className={`truncate`}>{material.subject_name}</div>
+        <div className="hidden md:block text-gray-500 text-xs">({material.subject_code})</div>
+      </div>
+    </div>
+    <div className="flex items-start gap-2 md:flex-col md:gap-0">
+      <div className="text-xs text-gray-500 md:hidden font-semibold">Semester</div>
+      <div className="">{material.semester || "N/A"}</div>
+    </div>
+    <div className="flex items-start gap-2 md:flex-col md:gap-0">
+      <div className="text-xs text-gray-500 md:hidden font-semibold">Uploaded</div>
+      <div className="">{material.uploaded_by}</div>
+    </div>
+    <div className="flex items-center justify-end md:justify-center">
       <a href={material.file_url} download={material.title + ".pdf"} target="_blank" rel="noopener noreferrer">
-        <Download className={`cursor-pointer text-gray-500 hover:text-gray-700`} size={20} />
+        <Download className={`cursor-pointer text-gray-500 hover:text-gray-700 flex-shrink-0`} size={18} />
       </a>
     </div>
   </div>
@@ -159,62 +176,63 @@ const StudyMaterialsFaculty = () => {
   }, [selectedBranch, selectedSemester, selectedSection, searchQuery]);
 
   return (
-    <div className={`w-full p-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
-        <h1 className="text-xl font-semibold">Study Materials</h1>
-        <button onClick={() => setShowUploadModal(true)} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-1 bg-[#a259ff] text-white`}>
+    <div className={`w-full p-2 sm:p-3 md:p-4 lg:p-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-3">
+        <h1 className="text-lg sm:text-xl md:text-2xl font-semibold">Study Materials</h1>
+        <button onClick={() => setShowUploadModal(true)} className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1 bg-[#a259ff] text-white hover:bg-[#8a4dde]`}>
           <UploadCloud size={16} /> Upload
         </button>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
+      <div className="flex flex-col gap-2 sm:gap-3 md:gap-4 mb-4 md:mb-6">
         <input
           type="text"
           placeholder="Search by title, course name, course code, semester, or uploaded by..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className={`flex-1 px-3 py-2 border rounded ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
+          className={`w-full px-2 sm:px-3 py-2 border rounded text-xs sm:text-sm ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
         />
 
-        <select value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)} className="border rounded px-3 py-2">
-          <option value="All Branches">All Branches</option>
-          {branches.map((b) => (
-            <option key={b.id} value={b.id.toString()}>{b.name}</option>
-          ))}
-        </select>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+          <select value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)} className={`border rounded px-2 sm:px-3 py-2 text-xs sm:text-sm ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}>
+            <option value="All Branches">All Branches</option>
+            {branches.map((b) => (
+              <option key={b.id} value={b.id.toString()}>{b.name}</option>
+            ))}
+          </select>
 
-        <select value={selectedSemester} onChange={(e) => setSelectedSemester(e.target.value)} className={`border rounded px-3 py-2 ${semesters.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={semesters.length === 0}>
-          <option value="All Semesters">All Semesters</option>
-          {semesters.map((s) => (
-            <option key={s.id} value={s.id.toString()}>Semester {s.number}</option>
-          ))}
-        </select>
+          <select value={selectedSemester} onChange={(e) => setSelectedSemester(e.target.value)} className={`border rounded px-2 sm:px-3 py-2 text-xs sm:text-sm ${semesters.length === 0 ? 'opacity-50 cursor-not-allowed' : ''} ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`} disabled={semesters.length === 0}>
+            <option value="All Semesters">All Semesters</option>
+            {semesters.map((s) => (
+              <option key={s.id} value={s.id.toString()}>Semester {s.number}</option>
+            ))}
+          </select>
 
-        <select value={selectedSection} onChange={(e) => setSelectedSection(e.target.value)} className={`border rounded px-3 py-2 ${sections.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={sections.length === 0}>
-          <option value="All Sections">All Sections</option>
-          {sections.map((sec) => (
-            <option key={sec.id} value={sec.id.toString()}>{sec.name}</option>
-          ))}
-        </select>
+          <select value={selectedSection} onChange={(e) => setSelectedSection(e.target.value)} className={`border rounded px-2 sm:px-3 py-2 text-xs sm:text-sm ${sections.length === 0 ? 'opacity-50 cursor-not-allowed' : ''} ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`} disabled={sections.length === 0}>
+            <option value="All Sections">All Sections</option>
+            {sections.map((sec) => (
+              <option key={sec.id} value={sec.id.toString()}>{sec.name}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="grid grid-cols-1 sm:grid-cols-7 font-semibold text-sm gap-2">
+        <CardHeader className="p-2 sm:p-3 md:p-4 lg:p-6">
+          <div className="hidden md:grid grid-cols-6 font-semibold text-xs sm:text-sm gap-2">
             <div>Type</div>
             <div>Title</div>
-            <div>Course Name</div>
-            <div>Course Code</div>
+            <div>Course</div>
             <div>Semester</div>
             <div>Uploaded By</div>
             <div>Action</div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-2 sm:p-3 md:p-4 lg:p-6">
           {!hasSearched ? (
-            <div className="text-center py-4 text-gray-500">Select branch, semester, and section to view study materials.</div>
+            <div className="text-center py-4 text-xs sm:text-sm text-gray-500">Select branch, semester, and section to view study materials.</div>
           ) : materials.length === 0 ? (
-            <div className="text-center py-4">No study materials found.</div>
+            <div className="text-center py-4 text-xs sm:text-sm">No study materials found.</div>
           ) : (
             materials.map((m: StudyMaterial) => <StudyMaterialRow key={m.id} material={m} theme={theme} />)
           )}
@@ -222,15 +240,15 @@ const StudyMaterialsFaculty = () => {
       </Card>
 
       {showUploadModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className={`p-6 rounded-lg shadow-lg max-w-md w-full ${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}`}>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold">Upload Study Material</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className={`p-4 sm:p-6 rounded-lg shadow-lg max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-md w-full ${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}`}>
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <h2 className="text-base sm:text-lg font-semibold">Upload Study Material</h2>
               <button onClick={() => setShowUploadModal(false)} className="text-gray-500 hover:text-gray-700">
                 <X size={20} />
               </button>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <select
                 value={uploadSubject}
                 onChange={(e) => {
@@ -244,20 +262,20 @@ const StudyMaterialsFaculty = () => {
                     setUploadSection(String(s.section_id));
                   }
                 }}
-                className={`w-full px-3 py-2 border rounded ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
+                className={`w-full px-2 sm:px-3 py-2 border rounded text-xs sm:text-sm ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
               >
                 <option value="">Select Subject</option>
                 {grouped.map(g => (
                   <option key={g.subject_id} value={g.subject_id}>{g.subject_name} ({g.subject_code})</option>
                 ))}
               </select>
-              <div className={`px-3 py-2 border rounded ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}>
+              <div className={`px-2 sm:px-3 py-2 border rounded text-xs sm:text-sm ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}>
                 Branch: {uploadBranch ? grouped.find(g => String(g.subject_id) === uploadSubject)?.sections.find(s => String(s.branch_id) === uploadBranch)?.branch : 'N/A'}
               </div>
-              <div className={`px-3 py-2 border rounded ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}>
+              <div className={`px-2 sm:px-3 py-2 border rounded text-xs sm:text-sm ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}>
                 Semester: {uploadSemester ? `Semester ${grouped.find(g => String(g.subject_id) === uploadSubject)?.sections.find(s => String(s.semester_id) === uploadSemester)?.semester}` : 'N/A'}
               </div>
-              <div className={`px-3 py-2 border rounded ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}>
+              <div className={`px-2 sm:px-3 py-2 border rounded text-xs sm:text-sm ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}>
                 Section: {uploadSection ? grouped.find(g => String(g.subject_id) === uploadSubject)?.sections.find(s => String(s.section_id) === uploadSection)?.section : 'N/A'}
               </div>
               <input
@@ -265,13 +283,13 @@ const StudyMaterialsFaculty = () => {
                 placeholder="Title"
                 value={uploadTitle}
                 onChange={(e) => setUploadTitle(e.target.value)}
-                className={`w-full px-3 py-2 border rounded ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
+                className={`w-full px-2 sm:px-3 py-2 border rounded text-xs sm:text-sm ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
               />
               <input
                 type="file"
                 accept=".pdf,.doc,.docx,.ppt,.pptx"
                 onChange={(e) => setUploadFile(e.target.files ? e.target.files[0] : null)}
-                className={`w-full px-3 py-2 border rounded ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
+                className={`w-full px-2 sm:px-3 py-2 border rounded text-xs sm:text-sm ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
               />
               <button
                 onClick={async () => {
@@ -313,7 +331,7 @@ const StudyMaterialsFaculty = () => {
                   }
                 }}
                 disabled={uploading}
-                className={`w-full px-4 py-2 rounded text-white ${uploading ? 'bg-gray-500' : 'bg-[#a259ff] hover:bg-[#8b47e0]'}`}
+                className={`w-full px-3 sm:px-4 py-2 rounded text-xs sm:text-sm font-bold text-white ${uploading ? 'bg-gray-500' : 'bg-[#a259ff] hover:bg-[#8a4dde]'}`}
               >
                 {uploading ? 'Uploading...' : 'Upload'}
               </button>

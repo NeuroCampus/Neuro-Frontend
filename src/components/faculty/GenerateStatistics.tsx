@@ -119,7 +119,7 @@ const GenerateStatistics: React.FC = () => {
       {/* Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
         {/* Attendance Overview */}
-        <Card className={theme === 'dark' ? 'shadow-sm bg-card text-foreground' : 'shadow-sm bg-white text-gray-900'}>
+        <Card className={`${theme === 'dark' ? 'shadow-sm bg-card text-foreground' : 'shadow-sm bg-white text-gray-900'} rounded-lg`}>
           <CardHeader>
             <CardTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Attendance Overview
@@ -160,7 +160,7 @@ const GenerateStatistics: React.FC = () => {
         </Card>
 
         {/* Average Marks */}
-        <Card className={theme === 'dark' ? 'shadow-sm bg-card text-foreground' : 'shadow-sm bg-white text-gray-900'}>
+        <Card className={`${theme === 'dark' ? 'shadow-sm bg-card text-foreground' : 'shadow-sm bg-white text-gray-900'} rounded-lg`}>
           <CardHeader>
             <CardTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Average Marks
@@ -199,7 +199,7 @@ const GenerateStatistics: React.FC = () => {
       </div>
 
       {/* Table */}
-      <Card className={theme === 'dark' ? 'shadow-sm bg-card text-foreground' : 'shadow-sm bg-white text-gray-900'}>
+      <Card className={`${theme === 'dark' ? 'shadow-sm bg-card text-foreground' : 'shadow-sm bg-white text-gray-900'} rounded-lg`}>
         <CardHeader className="flex flex-row justify-between items-center gap-3 p-3 sm:p-6">
           <CardTitle className={`text-base sm:text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Proctor Students Table</CardTitle>
           <Button 
