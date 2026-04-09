@@ -95,13 +95,13 @@ const VirtualizedAttendanceTable = React.memo(({
   return (
     <div 
       ref={parentRef} 
-      className="h-96 overflow-auto"
+      className="h-64 sm:h-80 md:h-96 overflow-auto"
       style={{ contain: 'strict' }}
     >
       {/* Fixed Header */}
       <div className={`sticky top-0 z-10 border-b ${theme === 'dark' ? 'border-gray-300 bg-card' : 'border-gray-200 bg-white'}`}>
-        <div className={`grid grid-cols-5 gap-4 p-3 uppercase text-xs font-medium ${theme === 'dark' ? 'text-gray-200 bg-card' : 'text-gray-900 bg-white'}`}>
-          <div>Subject</div>
+        <div className={`grid grid-cols-5 gap-8 sm:gap-4 md:gap-4 p-1 sm:p-2.5 md:p-3 uppercase text-[8px] sm:text-xs font-medium ${theme === 'dark' ? 'text-gray-200 bg-card' : 'text-gray-900 bg-white'}`}>
+          <div className="break-words">Subject</div>
           <div>Total Classes</div>
           <div>Present</div>
           <div>Percentage</div>
@@ -124,7 +124,7 @@ const VirtualizedAttendanceTable = React.memo(({
           return (
             <div
               key={virtualItem.key}
-              className={`grid grid-cols-5 gap-4 p-3 text-sm border-b ${theme === 'dark' ? 'border-gray-300 text-card-foreground hover:bg-accent' : 'border-gray-200 text-gray-900 hover:bg-gray-50'}`}
+              className={`grid grid-cols-5 gap-8 sm:gap-4 md:gap-4 p-1 sm:p-2.5 md:p-3 text-[9px] sm:text-sm border-b ${theme === 'dark' ? 'border-gray-300 text-card-foreground hover:bg-accent' : 'border-gray-200 text-gray-900 hover:bg-gray-50'}`}
               style={{
                 position: 'absolute',
                 top: 0,
@@ -134,13 +134,13 @@ const VirtualizedAttendanceTable = React.memo(({
                 transform: `translateY(${virtualItem.start}px)`,
               }}
             >
-              <div className="truncate">{subject}</div>
+              <div className="break-words">{subject}</div>
               <div>{data.total}</div>
               <div>{data.present}</div>
               <div>{percentage}%</div>
               <div>
                 <span
-                  className={`text-xs font-medium px-2 py-1 rounded-xl ${
+                  className={`text-[9px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg sm:rounded-xl ${
                     status === "Good"
                       ? (theme === 'dark' ? "bg-green-900/30 text-green-400" : "bg-green-100 text-green-700")
                       : (theme === 'dark' ? "bg-red-900/30 text-red-400" : "bg-red-100 text-red-700")

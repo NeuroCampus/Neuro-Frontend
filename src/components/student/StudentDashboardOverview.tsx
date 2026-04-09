@@ -1,28 +1,9 @@
 import {
   FaBookOpen,
   FaCheckCircle,
-  FaClipboardList,
-  FaBell,
-  FaFileAlt,
-  FaNetworkWired,
-  FaTree,
-  FaCogs,
-  FaCalendarAlt,
-  FaUsers,
   FaExclamationTriangle,
-  FaBullhorn,
-  FaLightbulb,
-  FaBook,
-  FaThumbtack,
-  FaDownload,
   FaClock,
 } from "react-icons/fa";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Bar } from "react-chartjs-2";
@@ -34,7 +15,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { getDashboardOverview } from "../../utils/student_api";
 import { useTheme } from "@/context/ThemeContext";
 
@@ -107,6 +88,7 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentSession, setCurrentSession] = useState<any>(null);
   const [nextSession, setNextSession] = useState<any>(null);
+  const [viewportTrigger, setViewportTrigger] = useState(0); // Force re-render on viewport change
   const { theme } = useTheme();
 
   // Update current time every second
@@ -118,22 +100,22 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
   }, []);
 
   // Helper function to parse time string to minutes
-  const parseTimeToMinutes = (timeStr: string) => {
+  const parseTimeToMinutes = useCallback((timeStr: string) => {
     const [hours, minutes] = timeStr.split(':').map(Number);
     return hours * 60 + minutes;
-  };
+  }, []);
 
   // Helper function to check if current time falls within a session
-  const isCurrentSession = (startTime: string, endTime: string) => {
+  const isCurrentSession = useCallback((startTime: string, endTime: string) => {
     const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
     const startMinutes = parseTimeToMinutes(startTime);
     const endMinutes = parseTimeToMinutes(endTime);
     
     return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
-  };
+  }, [currentTime, parseTimeToMinutes]);
 
   // Helper function to get session status and time remaining
-  const getSessionStatus = (session: any) => {
+  const getSessionStatus = useCallback((session: any) => {
     if (!session || !session.start_time) return null;
     
     const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
@@ -163,7 +145,7 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
       message: `Starts at ${session.start_time}`,
       color: theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
     };
-  };
+  }, [currentTime, parseTimeToMinutes, theme]);
 
   // Update current and next sessions based on real-time
   useEffect(() => {
@@ -187,7 +169,7 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
       // Set next session from backend
       setNextSession(backendNextSession);
     }
-  }, [dashboardData, currentTime, theme]);
+  }, [dashboardData, currentTime, isCurrentSession]);
 
   // Fetch dashboard data
   useEffect(() => {
@@ -228,8 +210,29 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
     return () => clearInterval(dataRefreshInterval);
   }, []);
 
-  // Generate performance chart data
-  const generateChartData = () => {
+  // Force re-render on window resize to apply Tailwind breakpoints
+  useEffect(() => {
+    let debounceTimer: NodeJS.Timeout;
+    
+    const handleResize = () => {
+      // Clear previous timer
+      clearTimeout(debounceTimer);
+      
+      // Debounce to avoid excessive re-renders (250ms delay)
+      debounceTimer = setTimeout(() => {
+        setViewportTrigger(prev => prev + 1);
+      }, 250);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(debounceTimer);
+    };
+  }, []);
+
+  // Generate performance chart data (memoized)
+  const generateChartData = useMemo(() => {
     if (!dashboardData?.performance_overview.subject_performance) {
       return {
         labels: [],
@@ -260,9 +263,9 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
         }
       ]
     };
-  };
+  }, [dashboardData, theme]);
 
-  const chartOptions = {
+  const chartOptions = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
     interaction: {
@@ -318,16 +321,7 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
         ticks: { color: theme === 'dark' ? "#9ca3af" : "#6b7280" },
       },
     },
-  };
-
-  const getNotificationIcon = (title: string) => {
-    const lowerTitle = title.toLowerCase();
-    if (lowerTitle.includes('exam')) return <FaBullhorn className={theme === 'dark' ? "text-purple-600 mt-1" : "text-purple-500 mt-1"} />;
-    if (lowerTitle.includes('tech') || lowerTitle.includes('symposium')) return <FaCalendarAlt className={theme === 'dark' ? "text-blue-500 mt-1" : "text-blue-600 mt-1"} />;
-    if (lowerTitle.includes('curriculum') || lowerTitle.includes('course')) return <FaBook className={theme === 'dark' ? "text-yellow-600 mt-1" : "text-yellow-500 mt-1"} />;
-    if (lowerTitle.includes('assignment') || lowerTitle.includes('deadline')) return <FaThumbtack className={theme === 'dark' ? "text-red-500 mt-1" : "text-red-600 mt-1"} />;
-    return <FaBell className={theme === 'dark' ? "text-gray-500 mt-1" : "text-gray-400 mt-1"} />;
-  };
+  }), [theme]);
 
   if (isLoading) {
     return (
@@ -368,31 +362,31 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
   }
 
   return (
-    <div className={`space-y-6 ${theme === 'dark' ? 'bg-background text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`w-full space-y-4 md:space-y-4 px-4 md:px-2 ${theme === 'dark' ? 'bg-background text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
       {/* Welcome Header with Profile Picture */}
-      <section className={`border rounded-md p-6 shadow-sm ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
+      <section className={`border rounded-md p-4 md:p-4 shadow-sm ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
         <div>
-          <h1 className={`text-xl font-bold ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+          <h1 className={`text-lg md:text-lg font-bold ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
             Welcome, {dashboardData.student_profile?.name || `${user?.first_name} ${user?.last_name || ''}`}!
           </h1>
-          <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+          <p className={`text-xs md:text-xs break-words ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
             {dashboardData.student_profile?.usn || user?.username} | {dashboardData.student_profile?.branch || user?.branch || 'Branch'} | Semester: {dashboardData.student_profile?.semester || user?.semester || 'N/A'} | Section: {dashboardData.student_profile?.section || user?.section || 'N/A'}
           </p>
         </div>
       </section>
 
       {/* Top Cards Row */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-3">
         {/* Today's Lectures Card */}
-        <div className={`border rounded-md p-4 flex items-center gap-4 relative shadow-sm ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
+        <div className={`border rounded-md p-3 md:p-3 flex items-center gap-3 md:gap-3 relative shadow-sm ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
           <div className="absolute top-0 left-0 h-full w-1 bg-blue-600 rounded-l-md" />
-          <div className={`p-2 rounded-md ${theme === 'dark' ? 'bg-blue-100 text-blue-600' : 'bg-blue-50 text-blue-700'}`}>
-            <FaBookOpen className="w-5 h-5" />
+          <div className={`p-2 rounded-md flex-shrink-0 ${theme === 'dark' ? 'bg-blue-100 text-blue-600' : 'bg-blue-50 text-blue-700'}`}>
+            <FaBookOpen className="w-4 h-4" />
           </div>
-          <div className="text-sm">
+          <div className="text-xs md:text-xs line-clamp-3">
             <p className={theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}>Today's Lectures</p>
-            <p className="text-lg font-semibold">{dashboardData.today_lectures.count}</p>
-            <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+            <p className="text-base md:text-lg font-semibold">{dashboardData.today_lectures.count}</p>
+            <p className={`text-[10px] md:text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               {dashboardData.today_lectures.next_lecture 
                 ? `Next: ${dashboardData.today_lectures.next_lecture.subject} at ${dashboardData.today_lectures.next_lecture.start_time}`
                 : "No more lectures today"
@@ -402,21 +396,21 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
         </div>
 
         {/* Attendance Status Card */}
-        <div className={`border rounded-md p-4 flex items-center gap-4 relative shadow-sm ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
+        <div className={`border rounded-md p-3 md:p-3 flex items-center gap-3 md:gap-3 relative shadow-sm ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
           <div className={`absolute top-0 left-0 h-full w-1 rounded-l-md ${
             dashboardData.attendance_status.percentage >= 75 ? 'bg-green-500' : 'bg-yellow-500'
           }`} />
-          <div className={`p-2 rounded-md ${
+          <div className={`p-2 rounded-md flex-shrink-0 ${
             dashboardData.attendance_status.percentage >= 75 
               ? (theme === 'dark' ? 'bg-green-100 text-green-600' : 'bg-green-50 text-green-700') 
               : (theme === 'dark' ? 'bg-yellow-100 text-yellow-500' : 'bg-yellow-50 text-yellow-700')
           }`}>
-            <FaCheckCircle className="w-5 h-5" />
+            <FaCheckCircle className="w-4 h-4" />
           </div>
-          <div className="text-sm">
+          <div className="text-xs md:text-xs line-clamp-3">
             <p className={theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}>Attendance Status</p>
-            <p className="text-lg font-semibold">{dashboardData.attendance_status.percentage}%</p>
-            <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+            <p className="text-base font-semibold">{dashboardData.attendance_status.percentage}%</p>
+            <p className={`text-[10px] md:text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               {dashboardData.attendance_status.warnings.length > 0
                 ? `Warning: Low in ${dashboardData.attendance_status.warnings[0].subject} (${dashboardData.attendance_status.warnings[0].percentage}%)`
                 : "All subjects above 75%"
@@ -427,13 +421,13 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
       </section>
 
       {/* Current & Next Session */}
-      <section className="w-full px-0 py-4">
+      <section className="w-full px-0 py-3 md:py-2">
         <Card className={theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
-          <CardHeader>
-            <div className="flex items-center justify-between w-full">
-              <CardTitle className={theme === 'dark' ? 'text-base text-card-foreground' : 'text-base text-gray-900'}>Current & Next Session</CardTitle>
-              <div className="flex items-center gap-3 text-sm">
-                <FaClock className="w-5 h-5" />
+          <CardHeader className="p-3 md:p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-2 sm:gap-0">
+              <CardTitle className={theme === 'dark' ? 'text-sm md:text-sm text-card-foreground' : 'text-sm md:text-sm text-gray-900'}>Current & Next Session</CardTitle>
+              <div className="flex items-center gap-2 text-xs md:text-xs">
+                <FaClock className="w-4 h-4" />
                 <span className={`flex items-center gap-2 px-3 py-1 rounded-full font-medium shadow-sm ${
                   theme === 'dark' ? 'bg-muted text-muted-foreground' : 'bg-gray-100 text-gray-900'
                 }`}>
@@ -444,23 +438,23 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
             </div>
           </CardHeader>
 
-          <CardContent className="w-full flex flex-col sm:flex-row gap-6">
+          <CardContent className="w-full flex flex-col gap-3 md:gap-4 p-3 md:p-4">
             {currentSession ? (
               <>
                 {/* Current Session Card */}
-                <div className={`border-2 border-blue-500 rounded-md p-6 w-full sm:w-1/2 shadow-md flex flex-col items-center sm:items-start gap-2 ${
+                <div className={`border-2 border-blue-500 rounded-md p-3 md:p-4 w-full shadow-md flex flex-col items-center sm:items-start gap-2 ${
                   theme === 'dark' ? 'bg-blue-900/20' : 'bg-blue-50'
                 }`}>
-                  <h4 className={`font-semibold text-lg mb-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                  <h4 className={`font-semibold text-sm mb-2 line-clamp-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
                     {currentSession.subject}
                   </h4>
-                  <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                  <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                     Teacher: {currentSession.teacher}
                   </p>
-                  <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                  <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                     Room: {currentSession.room}
                   </p>
-                  <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                  <p className={`text-[10px] ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                     {currentSession.start_time} - {currentSession.end_time}
                   </p>
                   <p className={`text-xs mt-1 font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>Currently Running</p>
@@ -468,23 +462,23 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
 
                 {/* Next Session Card */}
                 {nextSession && (
-                  <div className={`border rounded-md p-6 w-full sm:w-1/2 shadow-md flex flex-col items-center sm:items-start gap-2 ${
+                  <div className={`border rounded-md p-3 w-full shadow-md flex flex-col items-center gap-2 ${
                     getSessionStatus(nextSession)?.status === 'starting-soon' 
                       ? (theme === 'dark' ? 'border-orange-500 bg-orange-900/20' : 'border-orange-500 bg-orange-50')
                       : getSessionStatus(nextSession)?.status === 'upcoming'
                       ? (theme === 'dark' ? 'border-yellow-500 bg-yellow-900/20' : 'border-yellow-500 bg-yellow-50')
                       : (theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-gray-50')
                   }`}>
-                    <h4 className={`font-semibold text-lg mb-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                    <h4 className={`font-semibold text-sm mb-2 line-clamp-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
                       {nextSession.subject}
                     </h4>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                    <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                       Teacher: {nextSession.teacher}
                     </p>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                    <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                       Room: {nextSession.room}
                     </p>
-                    <p className={`text-xs mt-1 font-medium ${getSessionStatus(nextSession)?.color || (theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500')}`}>
+                    <p className={`text-[10px] mt-1 font-medium line-clamp-2 ${getSessionStatus(nextSession)?.color || (theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500')}`}>
                       {getSessionStatus(nextSession)?.message || `Starts at ${nextSession.starts_at || nextSession.start_time}`}
                     </p>
                   </div>
@@ -492,25 +486,25 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
               </>
             ) : (
               <div className="w-full text-center">
-                <p className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>No class is currently running</p>
+                <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No class is currently running</p>
                 {nextSession && (
-                  <div className={`border rounded-md p-6 mt-4 shadow-md ${
+                  <div className={`border rounded-md p-3 mt-3 shadow-md ${
                     getSessionStatus(nextSession)?.status === 'starting-soon' 
                       ? (theme === 'dark' ? 'border-orange-500 bg-orange-900/20' : 'border-orange-500 bg-orange-50')
                       : getSessionStatus(nextSession)?.status === 'upcoming'
                       ? (theme === 'dark' ? 'border-yellow-500 bg-yellow-900/20' : 'border-yellow-500 bg-yellow-50')
                       : (theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-gray-50')
                   }`}>
-                    <h4 className={`font-semibold text-lg mb-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                    <h4 className={`font-semibold text-sm mb-2 line-clamp-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
                       Next: {nextSession.subject}
                     </h4>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                    <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                       Teacher: {nextSession.teacher}
                     </p>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                    <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                       Room: {nextSession.room}
                     </p>
-                    <p className={`text-xs mt-1 font-medium ${getSessionStatus(nextSession)?.color || (theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500')}`}>
+                    <p className={`text-[10px] mt-1 font-medium line-clamp-2 ${getSessionStatus(nextSession)?.color || (theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500')}`}>
                       {getSessionStatus(nextSession)?.message || `Starts at ${nextSession.starts_at || nextSession.start_time}`}
                     </p>
                     {getSessionStatus(nextSession)?.status === 'starting-soon' && (
@@ -529,19 +523,19 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
 
       {/* Performance Overview */}
       <section>
-        <div className={`p-4 border rounded-lg shadow-lg ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
-          <h2 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>Performance Overview</h2>
-          <p className={`text-sm mb-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+        <div className={`p-3 border rounded-lg shadow-lg ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
+          <h2 className={`text-base md:text-base font-semibold mb-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>Performance Overview</h2>
+          <p className={`text-xs md:text-xs mb-2 line-clamp-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
             Subject-wise attendance percentage and average marks comparison
           </p>
-          <p className={`text-xs mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+          <p className={`text-[10px] mb-3 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
             Correlation coefficient: {dashboardData.performance_overview.correlation}
           </p>
           
           {dashboardData.performance_overview.subject_performance.length > 0 ? (
-            <div className="flex items-center justify-center h-[350px] mt-4">
-              <div className="w-full max-w-[700px] h-[300px]">
-                <Bar data={generateChartData()} options={chartOptions} />
+            <div className="w-full flex items-center justify-center h-[220px] md:h-[280px] mt-3 md:mt-3">
+              <div className="w-full h-[200px] md:h-[240px]">
+                <Bar key={`chart-${viewportTrigger}`} data={generateChartData} options={chartOptions} />
               </div>
             </div>
           ) : (
@@ -555,4 +549,4 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
   );
 };
 
-export default StudentDashboardOverview;
+export default React.memo(StudentDashboardOverview);

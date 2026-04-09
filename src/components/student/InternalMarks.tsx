@@ -1,4 +1,4 @@
-import React, { useMemo, useState, memo, useRef } from "react";
+import React, { useMemo, useState, memo, useRef , useEffect} from "react";
 import {
   Card,
   CardContent,
@@ -298,17 +298,17 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
 
   if (isLoading) {
     return (
-      <div className={`space-y-4 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-        <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Internal Marks</h2>
+      <div className={`min-h-screen w-full overflow-x-hidden space-y-4 px-4 sm:px-0 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+        <h2 className={`text-lg sm:text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Internal Marks</h2>
 
         {/* Chart Section */}
         <Card className={theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
           <CardHeader className={theme === 'dark' ? 'bg-card text-card-foreground border-b border-border' : 'bg-white text-gray-900 border-b border-gray-200'}>
-            <CardTitle className={theme === 'dark' ? 'text-base text-card-foreground' : 'text-base text-gray-900'}> Performance Overview</CardTitle>
+            <CardTitle className={theme === 'dark' ? 'text-sm sm:text-base text-card-foreground' : 'text-sm sm:text-base text-gray-900'}> Performance Overview</CardTitle>
           </CardHeader>
           <CardContent className={theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}>
-            <div className="flex items-center justify-center h-[300px]">
-              <div className="w-full max-w-[600px] h-[250px]">
+            <div className="flex items-center justify-center h-[200px] sm:h-[300px]">
+              <div className="w-full max-w-full sm:max-w-[600px] h-[160px] sm:h-[250px]">
                 <SkeletonChart />
               </div>
             </div>
@@ -316,9 +316,9 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
         </Card>
 
         {/* Filter Row */}
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-10 w-72" />
-          <Skeleton className="h-10 w-20" />
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-0 sm:justify-between">
+          <Skeleton className="h-10 w-full sm:w-72" />
+          <Skeleton className="h-10 w-full sm:w-20" />
         </div>
 
         {/* Table */}
@@ -338,8 +338,8 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
   }
 
   return (
-    <div className={`space-y-4 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Internal Marks</h2>
+    <div className={`min-h-screen w-full overflow-x-hidden space-y-4 px-4 sm:px-0 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <h2 className={`text-lg sm:text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Internal Marks</h2>
 
       {/* Chart Section */}
      <Card className={theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
@@ -347,8 +347,8 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
           <CardTitle className={theme === 'dark' ? 'text-base text-card-foreground' : 'text-base text-gray-900'}> Performance Overview</CardTitle>
         </CardHeader>
         <CardContent className={theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}>
-          <div className="flex items-center justify-center h-[300px]">
-            <div className="w-full max-w-[600px] h-[250px]">
+          <div className="flex items-center justify-center h-[200px] sm:h-[300px]">
+            <div className="w-full max-w-full sm:max-w-[600px] h-[160px] sm:h-[250px]">
               <MemoizedBarChart data={chartData} options={chartOptions} />
             </div>
           </div>
@@ -357,14 +357,14 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
 
 
       {/* Filter Row */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-0 sm:justify-between">
         {/* Search Input */}
-        <div className="relative">
+        <div className="relative w-full sm:w-auto">
           <Input
             placeholder="Search subjects..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className={theme === 'dark' ? 'w-72 bg-background text-foreground border-border focus:border-foreground focus:ring-0 rounded-md placeholder:text-muted-foreground' : 'w-72 bg-white text-gray-900 border-gray-300 focus:border-gray-500 focus:ring-0 rounded-md placeholder:text-gray-500'}
+            className={theme === 'dark' ? 'w-full sm:w-72 bg-background text-foreground border-border focus:border-foreground focus:ring-0 rounded-md placeholder:text-muted-foreground text-sm' : 'w-full sm:w-72 bg-white text-gray-900 border-gray-300 focus:border-gray-500 focus:ring-0 rounded-md placeholder:text-gray-500 text-sm'}
           />
           {isDebouncing && (
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -376,7 +376,8 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
         {/* Filter Button */}
         <Button
           variant="outline"
-          className={theme === 'dark' ? 'text-foreground bg-muted hover:bg-accent border-border' : 'text-gray-700 bg-white hover:bg-gray-100 border-gray-300'}
+          className={theme === 'dark' ? 'w-full sm:w-auto text-foreground bg-muted hover:bg-accent border-border' : 'w-full sm:w-auto text-gray-700 bg-white hover:bg-gray-100 border-gray-300'}
+          onClick={() => setShowFilter(true)}
         >
           <Filter className="w-4 h-4 mr-2" />
           Filter
@@ -384,15 +385,15 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
       </div>
 
       {/* Table */}
-      <div className={`rounded-md overflow-hidden ${theme === 'dark' ? 'border-border bg-card text-card-foreground' : 'border-gray-200 bg-white text-gray-900'}`}>
+      <div className={`rounded-md overflow-hidden w-full ${theme === 'dark' ? 'border-border bg-card text-card-foreground' : 'border-gray-200 bg-white text-gray-900'}`}>
         <div
           ref={parentRef}
-          className={`h-96 overflow-auto ${theme === 'dark' ? 'bg-card' : 'bg-white'}`}
+          className={`h-96 overflow-x-auto w-full ${theme === 'dark' ? 'bg-card' : 'bg-white'}`}
           style={{ contain: 'strict' }}
         >
           {/* Fixed Header */}
           <div className={`sticky top-0 z-10 border-b ${theme === 'dark' ? 'border-gray-300 bg-card' : 'border-gray-200 bg-white'}`}>
-            <div className={`grid grid-cols-5 p-3 font-medium text-sm ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
+            <div className={`grid grid-cols-5 p-2 sm:p-3 font-medium text-xs sm:text-sm ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
               <div>Subject</div>
               <div className="text-center">IA 1</div>
               <div className="text-center">IA 2</div>
@@ -422,7 +423,7 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
               return (
                 <div
                   key={virtualItem.key}
-                  className={`grid grid-cols-5 p-3 text-sm border-b ${theme === 'dark' ? 'border-gray-300 text-card-foreground hover:bg-accent' : 'border-gray-200 text-gray-900 hover:bg-gray-50'}`}
+                  className={`grid grid-cols-5 p-2 sm:p-3 text-xs sm:text-sm border-b ${theme === 'dark' ? 'border-gray-300 text-card-foreground hover:bg-accent' : 'border-gray-200 text-gray-900 hover:bg-gray-50'}`}
                   style={{
                     position: 'absolute',
                     top: 0,
@@ -448,9 +449,9 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
 
       {/* Filter Dialog */}
       <Dialog open={showFilter} onOpenChange={setShowFilter}>
-        <DialogContent className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}>
+        <DialogContent className={`w-[90%] sm:w-auto max-w-sm mx-auto ${theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}`}>
           <DialogHeader>
-            <DialogTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
+            <DialogTitle className={`text-base sm:text-lg font-semibold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
               Filter by Subject
             </DialogTitle>
           </DialogHeader>
@@ -466,14 +467,14 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
               }
             }}
           >
-            <SelectTrigger className={theme === 'dark' ? 'w-full bg-[#232326] text-gray-200 border-gray-600' : 'w-full bg-white text-gray-900 border-gray-300'}>
+            <SelectTrigger className={theme === 'dark' ? 'w-full bg-[#232326] text-gray-200 border-gray-600 text-sm' : 'w-full bg-white text-gray-900 border-gray-300 text-sm'}>
               <SelectValue placeholder="Choose a Subject" />
             </SelectTrigger>
-            <SelectContent className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-700' : 'bg-white text-gray-900 border-gray-200'}>
+            <SelectContent className={theme === 'dark' ? 'bg-[#1c1c1e] text-gray-200 border-gray-700 text-sm' : 'bg-white text-gray-900 border-gray-200 text-sm'}>
               {/* "All" Option */}
               <SelectItem
                 value="All"
-                className={theme === 'dark' ? 'hover:bg-[#2c2c2e] cursor-pointer font-semibold' : 'hover:bg-gray-100 cursor-pointer font-semibold'}
+                className={theme === 'dark' ? 'hover:bg-[#2c2c2e] cursor-pointer font-semibold text-xs sm:text-sm' : 'hover:bg-gray-100 cursor-pointer font-semibold text-xs sm:text-sm'}
               >
                 All Subjects
               </SelectItem>
@@ -483,7 +484,7 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
                 <SelectItem
                   key={subject}
                   value={subject}
-                  className={theme === 'dark' ? 'hover:bg-[#2c2c2e] cursor-pointer' : 'hover:bg-gray-100 cursor-pointer'}
+                  className={theme === 'dark' ? 'hover:bg-[#2c2c2e] cursor-pointer text-xs sm:text-sm' : 'hover:bg-gray-100 cursor-pointer text-xs sm:text-sm'}
                 >
                   {subject}
                 </SelectItem>
@@ -492,10 +493,10 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
           </Select>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-2 pt-4">
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-4">
             <Button
               variant="secondary"
-              className={theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-200' : 'bg-gray-200 hover:bg-gray-300 border-gray-300 text-gray-700'}
+              className={theme === 'dark' ? 'w-full sm:w-auto bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-200 text-sm' : 'w-full sm:w-auto bg-gray-200 hover:bg-gray-300 border-gray-300 text-gray-700 text-sm'}
               onClick={() => {
                 setSelectedSubjects([]);
                 setSearchQuery("");
@@ -505,7 +506,7 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
               Clear
             </Button>
             <Button 
-              className={theme === 'dark' ? 'text-gray-200 bg-gray-800 hover:bg-gray-700 border-gray-600' : 'text-gray-900 bg-gray-200 hover:bg-gray-300 border-gray-300'} 
+              className={theme === 'dark' ? 'w-full sm:w-auto text-gray-200 bg-gray-800 hover:bg-gray-700 border-gray-600 text-sm' : 'w-full sm:w-auto text-gray-900 bg-gray-200 hover:bg-gray-300 border-gray-300 text-sm'} 
               onClick={() => setShowFilter(false)}
             >
               Apply
