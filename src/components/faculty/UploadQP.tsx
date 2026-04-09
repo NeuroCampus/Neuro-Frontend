@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import jsPDF from 'jspdf';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
@@ -48,7 +49,12 @@ const UploadQP = () => {
   const [qpId, setQpId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [rejectedQPs, setRejectedQPs] = useState<any[]>([]);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const { theme } = useTheme();
+
+  const toggleExpanded = (key: string) => {
+    setExpanded((p) => ({ ...p, [key]: !p[key] }));
+  };
 
   useEffect(() => {
     const branches = Array.from(new Map(assignments.map(a => [a.branch_id, { id: a.branch_id, name: a.branch }])).values());
@@ -142,7 +148,22 @@ const UploadQP = () => {
   };
 
   const removeQuestion = (id: string) => {
-    setQuestions(prev => prev.filter(q => q.id !== id));
+    const MySwal = withReactContent(Swal);
+    MySwal.fire({
+      title: 'Delete Question?',
+      text: 'Are you sure you want to delete this question?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#a259ff',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Yes, Delete',
+      cancelButtonText: 'Cancel',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setQuestions(prev => prev.filter(q => q.id !== id));
+        MySwal.fire('Deleted!', 'Question has been deleted.', 'success');
+      }
+    });
   };
 
   const updateQuestion = (id: string, field: keyof QuestionRow, value: string) => {
@@ -153,7 +174,25 @@ const UploadQP = () => {
 
   const saveFormat = async () => {
     // minimal validation: require branch, subject and test type to be explicitly selected
-    if (!selected.branch_id || !selected.subject_id || !selected.testType) return alert('Select branch, subject and test type');
+    if (!selected.branch_id || !selected.subject_id || !selected.testType) {
+      const MySwal = withReactContent(Swal);
+      return MySwal.fire('Validation Error', 'Please select branch, subject and test type', 'error');
+    }
+
+    // Show confirmation dialog
+    const MySwal = withReactContent(Swal);
+    const confirmResult = await MySwal.fire({
+      title: 'Save Question Format?',
+      text: 'This will save the question paper format. Do you want to continue?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#a259ff',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Yes, Save',
+      cancelButtonText: 'Cancel',
+    });
+
+    if (!confirmResult.isConfirmed) return;
     // prepare payload similar to existing API expectations
     const grouped: any = {};
     questions.forEach(q => {
@@ -197,13 +236,13 @@ const UploadQP = () => {
       if (res && res.success) {
         setQuestionFormatSaved(true);
         setTabValue('questionPaper');
-        alert('Saved');
+        MySwal.fire('Success!', 'Question format saved successfully!', 'success');
       } else {
-        alert('Failed to save');
+        MySwal.fire('Error', 'Failed to save the format. Please try again.', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('Network error while saving');
+      MySwal.fire('Network Error', 'Network error while saving. Please check your connection.', 'error');
     }
   };
 
@@ -367,63 +406,130 @@ const UploadQP = () => {
                         <Button variant="ghost" onClick={() => removeQuestion(q.id)}><Trash2 size={16} /></Button>
                       </div>
                     ))}
-                    <div className="mt-2">
-                      <Button onClick={addQuestion} className="mr-2" disabled={!selected.branch_id || !selected.subject_id || !selected.testType}><Plus size={14} /> Add Question</Button>
-                      <Button onClick={saveFormat} disabled={!selected.branch_id || !selected.subject_id || !selected.testType}>Save Format</Button>
+                    <div className="flex gap-3 mt-4">
+                      <Button 
+                        onClick={addQuestion} 
+                        disabled={!selected.branch_id || !selected.subject_id || !selected.testType}
+                        className="bg-[#a259ff] text-white hover:bg-[#8a4dde] transition-all duration-200"
+                      >
+                        <Plus size={14} className="mr-2" /> Add Question
+                      </Button>
+                      <Button 
+                        onClick={saveFormat} 
+                        disabled={!selected.branch_id || !selected.subject_id || !selected.testType}
+                        className="bg-[#a259ff] text-white hover:bg-[#8a4dde] transition-all duration-200"
+                      >
+                        Save Format
+                      </Button>
                     </div>
                   </>
                 )}
               </div>
             </TabsContent>
             <TabsContent value="questionPaper">
-              <div className="mb-4">
-                  <div className="flex justify-between items-center">
-                  <h3 className="font-semibold">Question Paper Preview</h3>
-                  <div className="flex items-center gap-3">
-                    <div className="text-sm">
-                      {currentQPMeta?.status ? (
-                        <div>
-                          <div className="font-medium">Status: {(() => {
-                            const s = currentQPMeta.status;
-                            if (s === 'rejected') return 'Rejected';
-                            if (s === 'approved') return 'Approved';
-                            if (s.startsWith('pending')) return 'Pending';
-                            return s;
-                          })()}</div>
-                          <div className="text-muted-foreground">Last: {currentQPMeta.last_action?.action || 'N/A'} by {currentQPMeta.last_action?.actor || 'N/A'} ({currentQPMeta.last_action?.role || 'N/A'})</div>
-                          <div className="text-sm text-muted-foreground">Comment: {currentQPMeta.last_action?.comment || 'No comment provided'}</div>
-                        </div>
-                      ) : (
-                        <div className="text-sm text-muted-foreground">Not submitted</div>
-                      )}
-                    </div>
-                    <div>
-                      <Button onClick={downloadPDF} className="mr-2">Download PDF</Button>
-                      {qpId && (
-                        (() => {
-                          const status = currentQPMeta?.status;
-                          const isPendingOrApproved = status && (status.startsWith('pending') || status === 'approved');
-                          return (
-                            <Button onClick={handleSubmitForApproval} variant="outline" className="bg-green-600 text-white hover:bg-green-700" disabled={isPendingOrApproved || submitting}>
-                              {submitting ? 'Submitting...' : (isPendingOrApproved ? (status === 'approved' ? 'Approved' : 'Submitted') : 'Submit for Approval')}
-                            </Button>
-                          );
-                        })()
-                      )}
-                    </div>
+              <div className="mb-4 space-y-4">
+                <div className="flex justify-between items-start gap-4">
+                  <h3 className="font-semibold text-lg">Question Paper Preview</h3>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Button 
+                      onClick={downloadPDF} 
+                      className="bg-[#a259ff] text-white hover:bg-[#8a4dde] transition-all duration-200"
+                    >
+                      Download PDF
+                    </Button>
+                    {qpId && (
+                      (() => {
+                        const status = currentQPMeta?.status;
+                        const isPendingOrApproved = status && (status.startsWith('pending') || status === 'approved');
+                        return (
+                          <Button 
+                            onClick={handleSubmitForApproval} 
+                            className="bg-green-600 text-white hover:bg-green-700" 
+                            disabled={isPendingOrApproved || submitting}
+                          >
+                            {submitting ? 'Submitting...' : (isPendingOrApproved ? (status === 'approved' ? 'Approved' : 'Submitted') : 'Submit for Approval')}
+                          </Button>
+                        );
+                      })()
+                    )}
                   </div>
                 </div>
-                <div className="mt-4">
-                  {questions.map(q => (
-                    <div key={q.id} className="mb-4">
-                      <div className="font-medium">{q.number}.</div>
-                      <div className="mt-1">{q.content}</div>
-                      <div className="mt-1">({q.maxMarks} marks)</div>
-                      <div className="text-sm mt-1">CO: {q.co}</div>
-                      <div className="text-sm">Blooms: {q.bloomsLevel}</div>
+
+                {currentQPMeta && currentQPMeta.status && (
+                  <div className={`p-3 rounded-lg border ${currentQPMeta.status === 'rejected' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'}`}>
+                    <div className={`font-semibold text-sm ${currentQPMeta.status === 'rejected' ? 'text-red-700 dark:text-red-400' : 'text-blue-700 dark:text-blue-400'}`}>
+                      Status: {(() => {
+                        const s = currentQPMeta.status;
+                        if (s === 'rejected') return 'Rejected';
+                        if (s === 'approved') return 'Approved';
+                        if (s.startsWith('pending')) return 'Pending';
+                        return s;
+                      })()}
                     </div>
-                  ))}
-                  <div className="font-semibold">Total Marks: {totalMarks}</div>
+                    {currentQPMeta.last_action && (
+                      <div className={`text-xs mt-1 ${currentQPMeta.status === 'rejected' ? 'text-red-600 dark:text-red-300' : 'text-blue-600 dark:text-blue-300'}`}>
+                        <div>Last: {currentQPMeta.last_action?.action || 'N/A'} by {currentQPMeta.last_action?.actor || 'N/A'} ({currentQPMeta.last_action?.role || 'N/A'})</div>
+                        {currentQPMeta.last_action?.comment && <div>Comment: {currentQPMeta.last_action.comment}</div>}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className={`border rounded-lg p-4 ${theme === 'dark' ? 'bg-gray-800 border-border' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className="space-y-4">
+                    {(() => {
+                      const grouped: Record<string, QuestionRow[]> = {};
+                      questions.forEach(q => {
+                        const main = q.number.charAt(0);
+                        if (!grouped[main]) grouped[main] = [];
+                        grouped[main].push(q);
+                      });
+
+                      return Object.keys(grouped).map((mainQ) => (
+                        <div key={mainQ} className="space-y-3">
+                          {grouped[mainQ].map((s, sIndex) => {
+                            const key = `${mainQ}-${sIndex}`;
+                            const isExpanded = !!expanded[key];
+                            const shortContent = (s.content || '').length > 160 ? (s.content || '').slice(0, 160) + '…' : (s.content || '');
+                            return (
+                              <div key={s.id} className={`border rounded-md p-3 ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
+                                <div className="flex items-start gap-3">
+                                  <div className={`flex-shrink-0 w-10 h-10 rounded-full ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'} flex items-center justify-center font-medium text-sm`}>
+                                    {s.number}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex justify-between items-start gap-4">
+                                      <div className={`text-sm ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'} mb-1 flex-1`}>
+                                        {isExpanded ? s.content : shortContent}
+                                      </div>
+                                      <div className="ml-2 flex-shrink-0">
+                                        <Badge className={`font-semibold text-sm ${theme === 'dark' ? 'bg-gray-700 text-gray-100' : 'bg-gray-200 text-gray-900'} border-0`}>{s.maxMarks}m</Badge>
+                                      </div>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                                      <Badge className={`${theme === 'dark' ? 'bg-gray-700 text-gray-100' : 'bg-gray-200 text-gray-900'} border-0`}>CO: {s.co}</Badge>
+                                      <Badge className={`${theme === 'dark' ? 'bg-gray-700 text-gray-100' : 'bg-gray-200 text-gray-900'} border-0`}>{s.bloomsLevel}</Badge>
+                                      {((s.content || '').length > 160) && (
+                                        <button 
+                                          onClick={() => toggleExpanded(key)} 
+                                          className={`text-sm ml-2 font-medium ${theme === 'dark' ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-700'}`}
+                                        >
+                                          {isExpanded ? 'Show less' : 'Show more'}
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ));
+                    })()}
+                    <div className={`font-semibold pt-2 border-t ${theme === 'dark' ? 'border-gray-700 text-foreground' : 'border-gray-200 text-gray-900'}`}>
+                      Total Marks: {totalMarks}
+                    </div>
+                  </div>
                 </div>
               </div>
             </TabsContent>
