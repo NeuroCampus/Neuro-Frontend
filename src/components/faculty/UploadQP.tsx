@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 import jsPDF from 'jspdf';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
@@ -21,8 +23,61 @@ interface QuestionRow {
   bloomsLevel: string;
 }
 
+interface QuestionData {
+  question_number?: string;
+  number?: string;
+  co?: string;
+  blooms_level?: string;
+  bloomsLevel?: string;
+  questions?: QuestionData[];
+  questions_data?: QuestionData[];
+  subparts?: SubPart[];
+  subparts_data?: SubPart[];
+}
+
+interface SubPart {
+  subpart_label?: string;
+  content?: string;
+  max_marks?: number;
+  maxMarks?: number;
+}
+
+interface QPMetadata {
+  status: string;
+  last_action?: { actor?: string; role: string; action: string; comment: string };
+}
+
+interface QuestionPaper {
+  id: number;
+  status: string;
+  subject: number;
+  subject_name?: string;
+  test_type: string;
+  branch?: { id: number; name: string } | number;
+  semester?: number;
+  section?: number;
+  last_action?: { actor?: string; role: string; action: string; comment: string };
+  questions?: QuestionData[];
+  questions_data?: QuestionData[];
+}
+
+interface CreateQPPayload {
+  subject: number;
+  test_type: string;
+  questions_data: Array<{
+    question_number: string;
+    co: string;
+    blooms_level: string;
+    subparts_data: Array<{ subpart_label: string; content: string; max_marks: number }>;
+  }>;
+  branch: number;
+  semester: number;
+  section: number;
+}
+
 const UploadQP = () => {
   const { data: assignments = [] } = useFacultyAssignmentsQuery();
+  const { toast } = useToast();
   const [dropdownData, setDropdownData] = useState({
     branch: [] as { id: number; name: string }[],
     semester: [] as { id: number; number: number }[],
@@ -41,14 +96,44 @@ const UploadQP = () => {
 
   // start empty; populate only after Branch+Subject+TestType selection
   const [questions, setQuestions] = useState<QuestionRow[]>([]);
-  const [currentQPMeta, setCurrentQPMeta] = useState<any | null>(null);
+  const [currentQPMeta, setCurrentQPMeta] = useState<QPMetadata | null>(null);
 
   const [tabValue, setTabValue] = useState('questionFormat');
-  const [questionFormatSaved, setQuestionFormatSaved] = useState(false);
   const [qpId, setQpId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [rejectedQPs, setRejectedQPs] = useState<any[]>([]);
+  const [rejectedQPs, setRejectedQPs] = useState<QuestionPaper[]>([]);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const { theme } = useTheme();
+
+  const toggleExpanded = (key: string) => {
+    setExpanded((p) => ({ ...p, [key]: !p[key] }));
+  };
+
+  const buildQuestionRowsFromQP = (qp: QuestionPaper): QuestionRow[] => {
+    const rows: QuestionRow[] = [];
+    const questionsArray = qp.questions || qp.questions_data || [];
+    questionsArray.forEach((q: QuestionData) => {
+      const subpartsArray = q.subparts || q.subparts_data || [];
+      subpartsArray.forEach((s: SubPart) => {
+        const qnum = q.question_number || q.number;
+        rows.push({
+          id: `${qnum}${s.subpart_label}`,
+          number: `${qnum}${s.subpart_label}`,
+          content: s.content || '',
+          maxMarks: String(s.max_marks || s.maxMarks || ''),
+          co: q.co || '',
+          bloomsLevel: q.blooms_level || q.bloomsLevel || '',
+        });
+      });
+    });
+    return rows;
+  };
+
+  const getDerivedIds = (assignForSubject: { branch_id?: number; semester_id?: number; section_id?: number } | undefined) => ({
+    branch: selected.branch_id || assignForSubject?.branch_id,
+    semester: selected.semester_id || assignForSubject?.semester_id,
+    section: selected.section_id || assignForSubject?.section_id,
+  });
 
   useEffect(() => {
     const branches = Array.from(new Map(assignments.map(a => [a.branch_id, { id: a.branch_id, name: a.branch }])).values());
@@ -68,45 +153,30 @@ const UploadQP = () => {
       ];
       try {
         const res = await getQuestionPapers({ branch_id: selected.branch_id?.toString(), semester_id: selected.semester_id?.toString(), section_id: selected.section_id?.toString(), subject_id: selected.subject_id?.toString(), test_type: selected.testType, detail: true });
-          if (res && res.success && res.data && Array.isArray(res.data) && res.data.length > 0) {
+          if (res?.success && Array.isArray(res?.data) && res.data.length > 0) {
           // prefer exact match on subject+test_type; do NOT fallback to first result
-          const qp = res.data.find((q: any) => q.subject === selected.subject_id && q.test_type === selected.testType);
+          const qp = res.data.find((q: QuestionPaper) => q.subject === selected.subject_id && q.test_type === selected.testType);
           if (qp) {
             // build flat question rows from nested questions/subparts
-            const rows: QuestionRow[] = [];
-            // support both serializer shapes: 'questions' with 'subparts', and 'questions_data' with 'subparts_data'
-            const questionsArray = qp.questions || qp.questions_data || [];
-            questionsArray.forEach((q: any) => {
-              const subpartsArray = q.subparts || q.subparts_data || [];
-              subpartsArray.forEach((s: any) => {
-                const qnum = q.question_number || q.question_number || q.question_number; // fallback
-                rows.push({ id: `${qnum}${s.subpart_label}`, number: `${qnum}${s.subpart_label}`, content: s.content || '', maxMarks: String(s.max_marks || s.maxMarks || ''), co: q.co || '', bloomsLevel: q.blooms_level || q.bloomsLevel || '' });
-              });
-            });
+            const rows = buildQuestionRowsFromQP(qp);
             if (rows.length) {
               setQuestions(rows);
               setQpId(qp.id);
-              setQuestionFormatSaved(true);
-              // capture meta (status/last_action) to show rejection info if any
               setCurrentQPMeta({ status: qp.status, last_action: qp.last_action });
             } else {
-              // treat as no saved QP for this selection
               setQuestions(defaultTemplate);
               setQpId(null);
-              setQuestionFormatSaved(false);
               setCurrentQPMeta(null);
             }
           } else {
             // server returned QPs but none matched the requested test_type — treat as no saved QP
             setQuestions(defaultTemplate);
             setQpId(null);
-            setQuestionFormatSaved(false);
           }
         } else {
           // no saved QP — use default template for this selection
           setQuestions(defaultTemplate);
           setQpId(null);
-          setQuestionFormatSaved(false);
           setCurrentQPMeta(null);
         }
       } catch (err) {
@@ -114,15 +184,15 @@ const UploadQP = () => {
       }
     };
     loadIfReady();
-  }, [selected.branch_id, selected.subject_id, selected.testType]);
+  }, [selected.branch_id, selected.subject_id, selected.testType, selected.semester_id, selected.section_id]);
 
   // Load rejected QPs for this faculty to show editable items on the page
   useEffect(() => {
     const loadRejected = async () => {
       try {
         const res = await getQuestionPapers({});
-        if (res && res.success && Array.isArray(res.data)) {
-          const rejected = res.data.filter((q: any) => q.status === 'rejected');
+        if (res?.success && Array.isArray(res?.data)) {
+          const rejected = res.data.filter((q: QuestionPaper) => q.status === 'rejected');
           setRejectedQPs(rejected);
         }
       } catch (err) {
@@ -141,69 +211,139 @@ const UploadQP = () => {
     setQuestions(prev => [...prev, { id: nextId, number: `q${prev.length+1}`, content: `Question ${prev.length+1}`, maxMarks: '7', co: 'CO2', bloomsLevel: 'Apply' }]);
   };
 
-  const removeQuestion = (id: string) => {
+  const removeQuestionById = (id: string) => {
     setQuestions(prev => prev.filter(q => q.id !== id));
+  };
+
+  const removeQuestion = (id: string) => {
+    const MySwal = withReactContent(Swal);
+    const handleRemoveConfirmed = () => {
+      removeQuestionById(id);
+      MySwal.fire('Deleted!', 'Question has been deleted.', 'success');
+    };
+    MySwal.fire({
+      title: 'Delete Question?',
+      text: 'Are you sure you want to delete this question?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#a259ff',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Yes, Delete',
+      cancelButtonText: 'Cancel',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        handleRemoveConfirmed();
+      }
+    });
   };
 
   const updateQuestion = (id: string, field: keyof QuestionRow, value: string) => {
     setQuestions(prev => prev.map(q => q.id === id ? ({ ...q, [field]: value }) : q));
   };
 
-  const totalMarks = questions.reduce((s, q) => s + (parseInt(q.maxMarks || '0') || 0), 0);
+  const totalMarks = questions.reduce((s, q) => s + (Number.parseInt(q.maxMarks || '0', 10) || 0), 0);
 
-  const saveFormat = async () => {
-    // minimal validation: require branch, subject and test type to be explicitly selected
-    if (!selected.branch_id || !selected.subject_id || !selected.testType) return alert('Select branch, subject and test type');
-    // prepare payload similar to existing API expectations
-    const grouped: any = {};
+  const validateSelection = () => {
+    if (!selected.branch_id || !selected.subject_id || !selected.testType) {
+      const MySwal = withReactContent(Swal);
+      MySwal.fire('Validation Error', 'Please select branch, subject and test type', 'error');
+      return false;
+    }
+    return true;
+  };
+
+  const buildPayload = (branch: number | undefined, semester: number | undefined, section: number | undefined) => {
+    interface GroupedQuestion {
+      co: string;
+      blooms_level: string;
+      subparts: Array<{ subpart_label: string; content: string; max_marks: number }>;
+    }
+    const grouped: Record<string, GroupedQuestion> = {};
     questions.forEach(q => {
       const main = q.number.charAt(0);
       if (!grouped[main]) grouped[main] = { co: q.co, blooms_level: q.bloomsLevel, subparts: [] };
-      grouped[main].subparts.push({ subpart_label: q.number.slice(1), content: q.content, max_marks: parseInt(q.maxMarks || '0') });
+      grouped[main].subparts.push({ subpart_label: q.number.slice(1), content: q.content, max_marks: Number.parseInt(q.maxMarks || '0', 10) });
     });
-    const payload: any = { subject: selected.subject_id, test_type: selected.testType, questions_data: Object.keys(grouped).map(k => ({ question_number: k, co: grouped[k].co, blooms_level: grouped[k].blooms_level, subparts_data: grouped[k].subparts })) };
+    return {
+      subject: selected.subject_id,
+      test_type: selected.testType,
+      questions_data: Object.keys(grouped).map(k => ({ question_number: k, co: grouped[k].co, blooms_level: grouped[k].blooms_level, subparts_data: grouped[k].subparts })),
+      branch,
+      semester,
+      section
+    };
+  };
 
-    // Derive branch/semester/section when missing from assignments (like UploadMarks.tsx)
+  const validateDerivedIds = (branch: number | undefined, semester: number | undefined, section: number | undefined): branch is number => {
+    return !!(branch && semester && section);
+  };
+
+  const findExistingQP = async (): Promise<QuestionPaper | null> => {
+    const res = await getQuestionPapers({
+      branch_id: selected.branch_id?.toString(),
+      semester_id: selected.semester_id?.toString(),
+      section_id: selected.section_id?.toString(),
+      subject_id: selected.subject_id?.toString(),
+      test_type: selected.testType,
+      detail: false,
+    });
+    if (res?.success && Array.isArray(res.data)) {
+      return res.data.find((q: QuestionPaper) => q.subject === selected.subject_id && q.test_type === selected.testType) || null;
+    }
+    return null;
+  };
+
+  const saveOrUpdateQP = async (payload: CreateQPPayload, existingId?: number) => {
+    if (existingId) {
+      const res = await updateQuestionPaper(existingId, payload);
+      setQpId(existingId);
+      return res;
+    }
+    const res = await createQuestionPaper(payload);
+    if (res?.success && res?.data) setQpId(res.data.id);
+    return res;
+  };
+
+  const saveFormat = async () => {
+    if (!validateSelection()) return;
+    
+    const MySwal = withReactContent(Swal);
+    const confirmResult = await MySwal.fire({
+      title: 'Save Question Format?',
+      text: 'This will save the question paper format. Do you want to continue?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#a259ff',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Yes, Save',
+      cancelButtonText: 'Cancel',
+    });
+
+    if (!confirmResult.isConfirmed) return;
+    
     const assignForSubject = assignments.find(a => a.subject_id === selected.subject_id);
-    const derivedBranchId = selected.branch_id || (assignForSubject ? assignForSubject.branch_id : undefined);
-    const derivedSemesterId = selected.semester_id || (assignForSubject ? assignForSubject.semester_id : undefined);
-    const derivedSectionId = selected.section_id || (assignForSubject ? assignForSubject.section_id : undefined);
+    const ids = getDerivedIds(assignForSubject);
 
-    // attach branch/semester/section ensuring required fields are present
-    payload.branch = derivedBranchId;
-    payload.semester = derivedSemesterId;
-    payload.section = derivedSectionId;
-
-    if (!payload.branch || !payload.semester || !payload.section) {
+    if (!validateDerivedIds(ids.branch, ids.semester, ids.section)) {
       alert('Please select or ensure assignment provides Branch, Semester and Section before saving the QP format.');
       return;
     }
 
+    const payload = buildPayload(ids.branch, ids.semester, ids.section);
+
     try {
-      // check existing
-      const existingRes = await getQuestionPapers({ branch_id: selected.branch_id?.toString(), semester_id: selected.semester_id?.toString(), section_id: selected.section_id?.toString(), subject_id: selected.subject_id?.toString(), test_type: selected.testType, detail: false });
-      let existing = null;
-      if (existingRes && existingRes.success && existingRes.data) {
-        existing = existingRes.data.find((q: any) => q.subject === selected.subject_id && q.test_type === selected.testType);
-      }
-      let res;
-      if (existing) {
-        res = await updateQuestionPaper(existing.id, payload);
-        setQpId(existing.id);
-      } else {
-        res = await createQuestionPaper(payload);
-        if (res && res.success && res.data) setQpId(res.data.id);
-      }
-      if (res && res.success) {
-        setQuestionFormatSaved(true);
+      const existing = await findExistingQP();
+      const res = await saveOrUpdateQP(payload, existing?.id);
+      
+      if (res?.success) {
         setTabValue('questionPaper');
-        alert('Saved');
+        MySwal.fire('Success!', 'Question format saved successfully!', 'success');
       } else {
-        alert('Failed to save');
+        MySwal.fire('Error', 'Failed to save the format. Please try again.', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('Network error while saving');
+      MySwal.fire('Network Error', 'Network error while saving. Please check your connection.', 'error');
     }
   };
 
@@ -231,6 +371,29 @@ const UploadQP = () => {
     doc.save('question-paper.pdf');
   };
 
+  const getButtonClassName = (): string => `text-sm ml-2 font-medium ${theme === 'dark' ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-700'}`;
+
+  const getBadgeClassName = (): string => `${theme === 'dark' ? 'bg-gray-700 text-gray-100' : 'bg-gray-200 text-gray-900'} border-0`;
+
+  const getQuestionCardClassName = (): string => `border rounded-md p-3 ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`;
+
+  const groupQuestionsByMain = (): Record<string, QuestionRow[]> => {
+    const grouped: Record<string, QuestionRow[]> = {};
+    questions.forEach(q => {
+      const main = q.number.charAt(0);
+      if (!grouped[main]) grouped[main] = [];
+      grouped[main].push(q);
+    });
+    return grouped;
+  };
+
+  const getSubmitButtonLabel = (submitting: boolean, status: string | undefined) => {
+    if (submitting) return 'Submitting...';
+    if (status === 'approved') return 'Approved';
+    if (status?.startsWith('pending')) return 'Submitted';
+    return 'Submit for Approval';
+  };
+
   const handleSubmitForApproval = async () => {
     if (!qpId) return;
     
@@ -238,22 +401,19 @@ const UploadQP = () => {
       setSubmitting(true);
       const result = await submitQPForApproval(qpId);
       if (result.success) {
-        const MySwal = withReactContent(Swal);
-        MySwal.fire({
-          toast: true,
-          position: 'top-end',
-          icon: 'success',
-          title: 'Submitted',
-          text: result.message || 'QP submitted for approval successfully!',
-          showConfirmButton: false,
-          timer: 2500,
+        // Show toast notification
+        const toastMessage = result.message || 'QP submitted for approval successfully!';
+        toast({
+          title: 'Success',
+          description: toastMessage,
         });
+        
         // optimistically set pending status so submit button disables immediately
         setCurrentQPMeta({ status: 'pending_hod', last_action: { actor: null, role: 'faculty', action: 'submitted', comment: '' } });
         // refresh metadata from server to reflect pending status
         try {
           const detail = await getQuestionPaperDetail(qpId);
-          if (detail && detail.success && Array.isArray(detail.data) && detail.data.length > 0) {
+          if (detail?.success && Array.isArray(detail?.data) && detail.data.length > 0) {
             const qp = detail.data[0];
             setCurrentQPMeta({ status: qp.status, last_action: qp.last_action });
           }
@@ -280,7 +440,7 @@ const UploadQP = () => {
         <CardContent>
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div>
-              <label className="text-sm">Branch</label>
+              <label htmlFor="branch-select" className="text-sm">Branch</label>
               <Select value={selected.branch_id ? String(selected.branch_id) : undefined} onValueChange={(v) => setSelected(s => ({ ...s, branch_id: Number(v) }))}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select Branch" />
@@ -291,7 +451,7 @@ const UploadQP = () => {
               </Select>
             </div>
             <div>
-              <label className="text-sm">Subject</label>
+              <label htmlFor="subject-select" className="text-sm">Subject</label>
               <Select value={selected.subject_id ? String(selected.subject_id) : undefined} onValueChange={(v) => setSelected(s => ({ ...s, subject_id: Number(v) }))}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select Subject" />
@@ -302,7 +462,7 @@ const UploadQP = () => {
               </Select>
             </div>
             <div>
-              <label className="text-sm">Test Type</label>
+              <label htmlFor="test-type-select" className="text-sm">Test Type</label>
               <Select value={selected.testType} onValueChange={(v) => setSelected(s => ({ ...s, testType: String(v) }))}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select Test Type" />
@@ -321,14 +481,21 @@ const UploadQP = () => {
                   <div key={qp.id} className="p-3 border rounded flex justify-between items-start">
                     <div>
                       <div className="font-medium">{qp.subject_name || qp.subject} - {qp.test_type}</div>
-                      <div className="text-sm text-muted-foreground">Branch: {qp.branch?.name || qp.branch || 'N/A'}</div>
+                      <div className="text-sm text-muted-foreground">
+                        Branch: {typeof qp.branch === 'object' ? qp.branch?.name || 'N/A' : 'N/A'}
+                      </div>
                       <div className="text-sm text-muted-foreground">Last: {qp.last_action?.action || 'reject'} by {qp.last_action?.actor || 'N/A'} ({qp.last_action?.role || 'N/A'})</div>
                       <div className="text-sm text-muted-foreground">Comment: {qp.last_action?.comment || 'No comment provided'}</div>
                     </div>
                     <div>
                       <Button onClick={() => {
                         // preselect and open question format tab for editing
-                        setSelected(s => ({ ...s, branch_id: qp.branch?.id || qp.branch, subject_id: qp.subject, testType: qp.test_type }));
+                        setSelected(s => ({
+                          ...s,
+                          branch_id: typeof qp.branch === 'object' ? qp.branch?.id : qp.branch,
+                          subject_id: qp.subject,
+                          testType: qp.test_type
+                        }));
                         setTabValue('questionFormat');
                         // ensure QP id is set so save/update operates on this qp
                         setQpId(qp.id);
@@ -339,7 +506,7 @@ const UploadQP = () => {
               </div>
             </div>
           )}
-          {currentQPMeta && currentQPMeta.status === 'rejected' && (
+          {currentQPMeta?.status === 'rejected' && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
               <div className="font-semibold text-sm text-red-700">Rejected</div>
               <div className="text-sm text-muted-foreground">{currentQPMeta.last_action?.comment || 'No comment provided'}</div>
@@ -367,63 +534,125 @@ const UploadQP = () => {
                         <Button variant="ghost" onClick={() => removeQuestion(q.id)}><Trash2 size={16} /></Button>
                       </div>
                     ))}
-                    <div className="mt-2">
-                      <Button onClick={addQuestion} className="mr-2" disabled={!selected.branch_id || !selected.subject_id || !selected.testType}><Plus size={14} /> Add Question</Button>
-                      <Button onClick={saveFormat} disabled={!selected.branch_id || !selected.subject_id || !selected.testType}>Save Format</Button>
+                    <div className="flex gap-3 mt-4">
+                      <Button 
+                        onClick={addQuestion} 
+                        disabled={!selected.branch_id || !selected.subject_id || !selected.testType}
+                        className="bg-[#a259ff] text-white hover:bg-[#8a4dde] transition-all duration-200"
+                      >
+                        <Plus size={14} className="mr-2" /> Add Question
+                      </Button>
+                      <Button 
+                        onClick={saveFormat} 
+                        disabled={!selected.branch_id || !selected.subject_id || !selected.testType}
+                        className="bg-[#a259ff] text-white hover:bg-[#8a4dde] transition-all duration-200"
+                      >
+                        Save Format
+                      </Button>
                     </div>
                   </>
                 )}
               </div>
             </TabsContent>
             <TabsContent value="questionPaper">
-              <div className="mb-4">
-                  <div className="flex justify-between items-center">
-                  <h3 className="font-semibold">Question Paper Preview</h3>
-                  <div className="flex items-center gap-3">
-                    <div className="text-sm">
-                      {currentQPMeta?.status ? (
-                        <div>
-                          <div className="font-medium">Status: {(() => {
-                            const s = currentQPMeta.status;
-                            if (s === 'rejected') return 'Rejected';
-                            if (s === 'approved') return 'Approved';
-                            if (s.startsWith('pending')) return 'Pending';
-                            return s;
-                          })()}</div>
-                          <div className="text-muted-foreground">Last: {currentQPMeta.last_action?.action || 'N/A'} by {currentQPMeta.last_action?.actor || 'N/A'} ({currentQPMeta.last_action?.role || 'N/A'})</div>
-                          <div className="text-sm text-muted-foreground">Comment: {currentQPMeta.last_action?.comment || 'No comment provided'}</div>
-                        </div>
-                      ) : (
-                        <div className="text-sm text-muted-foreground">Not submitted</div>
-                      )}
-                    </div>
-                    <div>
-                      <Button onClick={downloadPDF} className="mr-2">Download PDF</Button>
-                      {qpId && (
-                        (() => {
-                          const status = currentQPMeta?.status;
-                          const isPendingOrApproved = status && (status.startsWith('pending') || status === 'approved');
-                          return (
-                            <Button onClick={handleSubmitForApproval} variant="outline" className="bg-green-600 text-white hover:bg-green-700" disabled={isPendingOrApproved || submitting}>
-                              {submitting ? 'Submitting...' : (isPendingOrApproved ? (status === 'approved' ? 'Approved' : 'Submitted') : 'Submit for Approval')}
-                            </Button>
-                          );
-                        })()
-                      )}
-                    </div>
+              <div className="mb-4 space-y-4">
+                <div className="flex justify-between items-start gap-4">
+                  <h3 className="font-semibold text-lg">Question Paper Preview</h3>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Button 
+                      onClick={downloadPDF} 
+                      className="bg-[#a259ff] text-white hover:bg-[#8a4dde] transition-all duration-200"
+                    >
+                      Download PDF
+                    </Button>
+                    {qpId ? (
+                      (() => {
+                        const status = currentQPMeta?.status;
+                        const isPendingOrApproved = status && (status.startsWith('pending') || status === 'approved');
+                        const buttonLabel = getSubmitButtonLabel(submitting, status);
+                        return (
+                          <Button
+                            onClick={handleSubmitForApproval}
+                            className="bg-green-600 text-white hover:bg-green-700"
+                            disabled={isPendingOrApproved || submitting}
+                          >
+                            {buttonLabel}
+                          </Button>
+                        );
+                      })()
+                    ) : null}
                   </div>
                 </div>
-                <div className="mt-4">
-                  {questions.map(q => (
-                    <div key={q.id} className="mb-4">
-                      <div className="font-medium">{q.number}.</div>
-                      <div className="mt-1">{q.content}</div>
-                      <div className="mt-1">({q.maxMarks} marks)</div>
-                      <div className="text-sm mt-1">CO: {q.co}</div>
-                      <div className="text-sm">Blooms: {q.bloomsLevel}</div>
+
+                {currentQPMeta?.status && (
+                  <div className={`p-3 rounded-lg border ${currentQPMeta.status === 'rejected' ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'}`}>
+                    <div className={`font-semibold text-sm ${currentQPMeta.status === 'rejected' ? 'text-red-700 dark:text-red-400' : 'text-blue-700 dark:text-blue-400'}`}>
+                      Status: {(() => {
+                        const s = currentQPMeta.status;
+                        if (s === 'rejected') return 'Rejected';
+                        if (s === 'approved') return 'Approved';
+                        if (s.startsWith('pending')) return 'Pending';
+                        return s;
+                      })()}
                     </div>
-                  ))}
-                  <div className="font-semibold">Total Marks: {totalMarks}</div>
+                    {currentQPMeta.last_action && (
+                      <div className={`text-xs mt-1 ${currentQPMeta.status === 'rejected' ? 'text-red-600 dark:text-red-300' : 'text-blue-600 dark:text-blue-300'}`}>
+                        <div>Last: {currentQPMeta.last_action?.action || 'N/A'} by {currentQPMeta.last_action?.actor || 'N/A'} ({currentQPMeta.last_action?.role || 'N/A'})</div>
+                        {currentQPMeta.last_action?.comment && <div>Comment: {currentQPMeta.last_action.comment}</div>}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className={`border rounded-lg p-4 ${theme === 'dark' ? 'bg-gray-800 border-border' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className="space-y-4">
+                    {Object.keys(groupQuestionsByMain()).map((mainQ) => {
+                      const grouped = groupQuestionsByMain();
+                      return (
+                        <div key={mainQ} className="space-y-3">
+                          {grouped[mainQ].map((s, sIndex) => {
+                            const key = `${mainQ}-${sIndex}`;
+                            const isExpanded = !!expanded[key];
+                            const shortContent = (s.content || '').length > 160 ? (s.content || '').slice(0, 160) + '…' : (s.content || '');
+                            return (
+                              <div key={s.id} className={getQuestionCardClassName()}>
+                                <div className="flex items-start gap-3">
+                                  <div className={`flex-shrink-0 w-10 h-10 rounded-full ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'} flex items-center justify-center font-medium text-sm`}>
+                                    {s.number}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="flex justify-between items-start gap-4">
+                                      <div className={`text-sm ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'} mb-1 flex-1`}>
+                                        {isExpanded ? s.content : shortContent}
+                                      </div>
+                                      <div className="ml-2 flex-shrink-0">
+                                        <Badge className={`font-semibold text-sm ${getBadgeClassName()}`}>{s.maxMarks}m</Badge>
+                                      </div>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                                      <Badge className={getBadgeClassName()}>CO: {s.co}</Badge>
+                                      <Badge className={getBadgeClassName()}>{s.bloomsLevel}</Badge>
+                                      {((s.content || '').length > 160) && (
+                                        <button 
+                                          onClick={() => toggleExpanded(key)} 
+                                          className={getButtonClassName()}
+                                        >
+                                          {isExpanded ? 'Show less' : 'Show more'}
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                    <div className={`font-semibold pt-2 border-t ${theme === 'dark' ? 'border-gray-700 text-foreground' : 'border-gray-200 text-gray-900'}`}>
+                      Total Marks: {totalMarks}
+                    </div>
+                  </div>
                 </div>
               </div>
             </TabsContent>

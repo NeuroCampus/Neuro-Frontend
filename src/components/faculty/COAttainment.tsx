@@ -19,12 +19,6 @@ import autoTable from "jspdf-autotable";
 // Component shows aggregated CO results only — per-question and per-student types removed
 
 const COAttainment = () => {
-  // TODO: In a full implementation, this component should integrate with actual UploadMarks data
-  // Currently using mock data for demonstration purposes
-  // Future implementation should:
-  // 1. Fetch the actual question format from UploadMarks (with CO mappings)
-  // 2. Use real student marks data from the selected test
-  // 3. Implement proper data synchronization between UploadMarks and CO Attainment
   const { data: assignments = [], isLoading: assignmentsLoading } = useFacultyAssignmentsQuery();
   const [dropdownData, setDropdownData] = useState({
     branch: [] as { id: number; name: string }[],
@@ -332,13 +326,13 @@ const COAttainment = () => {
 
   return (
     <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
-      <CardHeader>
-        <CardTitle className="text-xl font-bold">CO Attainment Calculation</CardTitle>
+      <CardHeader className="p-4 sm:p-6">
+        <CardTitle className="text-lg sm:text-xl lg:text-2xl font-bold">CO Attainment Calculation</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           <Select onValueChange={value => handleSelectChange('subject_id', Number(value))}>
-            <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
+            <SelectTrigger className={`text-sm sm:text-base ${theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}`}>
               <SelectValue placeholder="Select Subject" />
             </SelectTrigger>
             <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
@@ -352,49 +346,51 @@ const COAttainment = () => {
         </div>
         
         {errorMessage && (
-          <div className={`p-3 rounded-md text-sm ${theme === 'dark' ? 'bg-destructive/20 text-destructive' : 'bg-red-100 text-red-700'}`}>
+          <div className={`p-3 sm:p-4 rounded-md text-xs sm:text-sm ${theme === 'dark' ? 'bg-destructive/20 text-destructive' : 'bg-red-100 text-red-700'}`}>
             {errorMessage}
           </div>
         )}
         
         {areAllDropdownsSelected() && (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* PDF Export Button - Added above Configuration div */}
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
               <Button 
                 onClick={handleExportCSV} 
                 variant="outline"
-                className="border-[#a259ff] text-[#a259ff] hover:bg-[#a259ff] hover:text-white"
+                className="w-full sm:w-auto border-[#a259ff] text-[#a259ff] hover:bg-[#a259ff] hover:text-white text-xs sm:text-sm py-2 sm:py-2.5"
               >
-                Download CSV Report
+                Download CSV
               </Button>
               <Button 
                 onClick={handleExportPDF} 
-                className="bg-[#a259ff] text-white hover:bg-[#8a4dde]"
+                className="w-full sm:w-auto bg-[#a259ff] text-white hover:bg-[#8a4dde] text-xs sm:text-sm py-2 sm:py-2.5"
               >
-                Download PDF Report
+                Download PDF
               </Button>
             </div>
             
             {/* Target Threshold Configuration */}
             <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-300'}>
-              <CardHeader>
-                <CardTitle className="text-lg">Configuration</CardTitle>
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-base sm:text-lg">Configuration</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-4">
-                  <label className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                  <label className={`text-sm sm:text-base ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                     Target Threshold:
                   </label>
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={targetThreshold}
-                    onChange={(e) => handleTargetThresholdChange(e.target.value)}
-                    className="w-24"
-                  />
-                  <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>%</span>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={targetThreshold}
+                      onChange={(e) => handleTargetThresholdChange(e.target.value)}
+                      className="w-20 sm:w-24 text-sm"
+                    />
+                    <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>%</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -403,48 +399,46 @@ const COAttainment = () => {
             
             {/* CO Attainment Results */}
             <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-300'}>
-              <CardHeader>
-                <CardTitle className="text-lg">CO Attainment Results</CardTitle>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Two methods are used for CO attainment calculation:
-                  <br />
-                  <strong>Method 1 (Average Percentage):</strong> Based on average marks obtained per CO
-                  <br />
-                  <strong>Method 2 (Students Above Target):</strong> Based on percentage of students achieving target marks per CO
+              <CardHeader className="p-4 sm:p-6">
+                <CardTitle className="text-base sm:text-lg">CO Attainment Results</CardTitle>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-2 space-y-1">
+                  <div>Two methods are used for CO attainment calculation:</div>
+                  <div><strong>Method 1:</strong> Average marks per CO</div>
+                  <div><strong>Method 2:</strong> % of students at target per CO</div>
                 </p>
               </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
+              <CardContent className="p-4 sm:p-6">
+                <div className="overflow-x-auto -mx-4 sm:-mx-6">
+                  <Table className="text-xs sm:text-sm">
                     <TableHeader>
                       <TableRow>
-                        <TableHead>CO</TableHead>
-                        <TableHead>Max Marks</TableHead>
-                        <TableHead>Target ({targetThreshold}%)</TableHead>
-                        <TableHead>Avg Marks</TableHead>
-                        <TableHead>% Students ≥ Target</TableHead>
-                        <TableHead>Method 1: Average %</TableHead>
-                        <TableHead>Method 2: Students Above Target</TableHead>
-                        <TableHead>Indirect Attainment</TableHead>
-                        <TableHead>Final Attainment</TableHead>
-                        <TableHead>Attainment Level</TableHead>
+                        <TableHead className="text-xs">CO</TableHead>
+                        <TableHead className="text-xs">Max</TableHead>
+                        <TableHead className="text-xs">Target</TableHead>
+                        <TableHead className="text-xs">Avg</TableHead>
+                        <TableHead className="text-xs">% Above</TableHead>
+                        <TableHead className="text-xs">M1 %</TableHead>
+                        <TableHead className="text-xs">M2 %</TableHead>
+                        <TableHead className="text-xs">Indirect</TableHead>
+                        <TableHead className="text-xs">Final</TableHead>
+                        <TableHead className="text-xs">Level</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {Object.values(coAttainment).map((co) => (
-                        <TableRow key={co.co}>
-                          <TableCell>{co.co}</TableCell>
-                          <TableCell>{co.maxMarks}</TableCell>
-                          <TableCell>{co.targetMarks.toFixed(1)}</TableCell>
-                          <TableCell>{co.avgMarks.toFixed(2)}</TableCell>
-                          <TableCell>{co.studentsAboveTarget}/{co.totalStudents} ({co.totalStudents > 0 ? ((co.studentsAboveTarget / co.totalStudents) * 100).toFixed(1) : 0}%)</TableCell>
+                        <TableRow key={co.co} className="text-xs sm:text-sm">
+                          <TableCell className="text-xs font-medium">{co.co}</TableCell>
+                          <TableCell className="text-xs">{co.maxMarks}</TableCell>
+                          <TableCell className="text-xs">{co.targetMarks.toFixed(1)}</TableCell>
+                          <TableCell className="text-xs">{co.avgMarks.toFixed(2)}</TableCell>
+                          <TableCell className="text-xs">{co.totalStudents > 0 ? ((co.studentsAboveTarget / co.totalStudents) * 100).toFixed(0) : 0}%</TableCell>
                           <TableCell>
-                            <div>Level {co.attainmentLevel}</div>
-                            <div className="text-xs text-muted-foreground">({co.percentage.toFixed(1)}%)</div>
+                            <div className="text-xs font-medium">L{co.attainmentLevel}</div>
+                            <div className="text-xs text-muted-foreground">{co.percentage.toFixed(0)}%</div>
                           </TableCell>
                           <TableCell>
-                            <div>Level {co.method2Level}</div>
-                            <div className="text-xs text-muted-foreground">({co.method2Percentage.toFixed(1)}%)</div>
+                            <div className="text-xs font-medium">L{co.method2Level}</div>
+                            <div className="text-xs text-muted-foreground">{co.method2Percentage.toFixed(0)}%</div>
                           </TableCell>
                           <TableCell>
                             <Input
@@ -454,14 +448,14 @@ const COAttainment = () => {
                               step="0.1"
                               value={indirectAttainment[co.co] || 0}
                               onChange={(e) => handleIndirectAttainmentChange(co.co, e.target.value)}
-                              className="w-20"
+                              className="w-16 sm:w-20 text-xs"
                             />
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="text-xs">
                             {finalAttainment[co.co] ? finalAttainment[co.co].final.toFixed(2) : "N/A"}
                           </TableCell>
                           <TableCell>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
                               finalAttainment[co.co]?.level === 3 
                                 ? 'bg-green-100 text-green-800' 
                                 : finalAttainment[co.co]?.level === 2 
@@ -477,26 +471,29 @@ const COAttainment = () => {
                   </Table>
                 </div>
                 
-                <div className="mt-4 flex justify-end">
-                  <Button onClick={handleCalculateFinalAttainment} className="bg-[#a259ff] text-white hover:bg-[#8a4dde]">
+                <div className="mt-4 flex justify-center sm:justify-end">
+                  <Button 
+                    onClick={handleCalculateFinalAttainment} 
+                    className="w-full sm:w-auto bg-[#a259ff] text-white hover:bg-[#8a4dde] text-xs sm:text-sm py-2 sm:py-2.5"
+                  >
                     Recalculate Final Attainment
                   </Button>
                 </div>
-                <div className="mt-4 p-4 bg-muted rounded-lg">
-                  <h4 className="font-medium mb-2">Calculation Method Explanation</h4>
-                  <ul className="text-sm space-y-1">
-                    <li>• <strong>Method 1 (Average Percentage):</strong> Calculates attainment based on average marks obtained by all students for each CO</li>
-                    <li>• <strong>Method 2 (Students Above Target):</strong> Calculates attainment based on the percentage of students who scored above the target threshold for each CO</li>
-                    <li>• <strong>Final Attainment:</strong> Weighted combination using formula: (0.8 × Direct) + (0.2 × Indirect)</li>
+                <div className="mt-4 p-3 sm:p-4 bg-muted rounded-lg">
+                  <h4 className="font-medium text-xs sm:text-sm mb-2">Calculation Methods</h4>
+                  <ul className="text-xs sm:text-sm space-y-1">
+                    <li>• <strong>M1:</strong> Average marks per CO</li>
+                    <li>• <strong>M2:</strong> % of students ≥ target</li>
+                    <li>• <strong>Final:</strong> (0.8 × Direct) + (0.2 × Indirect)</li>
                   </ul>
                 </div>
                 
-                <div className={`mt-6 p-4 rounded-lg ${theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}`}>
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-medium">Overall Course Attainment</h3>
-                    <div className="text-2xl font-bold">
+                <div className={`mt-4 sm:mt-6 p-3 sm:p-4 rounded-lg ${theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}`}>
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-4">
+                    <h3 className="font-medium text-sm sm:text-base">Overall Course Attainment</h3>
+                    <div className="text-xl sm:text-2xl lg:text-3xl font-bold flex items-baseline gap-2">
                       {overallAttainment.toFixed(2)} 
-                      <span className="text-sm font-normal ml-2">
+                      <span className="text-xs sm:text-sm font-normal">
                         (Level {overallAttainment >= 2.7 ? 3 : overallAttainment >= 2.0 ? 2 : 1})
                       </span>
                     </div>
@@ -510,8 +507,8 @@ const COAttainment = () => {
         )}
         
         {!areAllDropdownsSelected() && (
-          <div className={`p-6 text-center rounded-lg ${theme === 'dark' ? 'bg-card border border-border' : 'bg-gray-50 border border-gray-200'}`}>
-            <p className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
+          <div className={`p-6 sm:p-8 text-center rounded-lg ${theme === 'dark' ? 'bg-card border border-border' : 'bg-gray-50 border border-gray-200'}`}>
+            <p className={`text-sm sm:text-base ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Please select a subject to calculate CO attainment.
             </p>
           </div>

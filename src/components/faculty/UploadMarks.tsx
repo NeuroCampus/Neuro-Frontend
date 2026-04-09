@@ -2179,101 +2179,145 @@ const UploadMarks = () => {
 
           {/* Bulk Upload Tab */}
           <TabsContent value="bulkUpload">
-            <div className={`border rounded-lg p-6 max-w-2xl mx-auto space-y-6 ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
-              <div>
-                <h2 className="text-lg font-semibold">Bulk Upload Marks</h2>
-                <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+            <div className={`border rounded-lg p-4 sm:p-6 lg:p-8 w-full space-y-4 sm:space-y-6 ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
+              <div className="space-y-1 sm:space-y-2">
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold">Bulk Upload Marks</h2>
+                <p className={`text-sm sm:text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                   Upload Excel file with student marks
                 </p>
               </div>
               
               {areAllDropdownsSelected() ? (
-                <>
-                  <div
-                    onDrop={handleBulkDrop}
-                    onDragOver={handleBulkDragOver}
-                    onDragLeave={handleBulkDragLeave}
-                    className={`border rounded-md p-6 text-center space-y-4 transition-all duration-300 ${
-                      bulkDragActive
-                        ? (theme === 'dark' ? "border-primary bg-primary/10" : "border-blue-400 bg-blue-50")
-                        : (theme === 'dark' ? "border-dashed border-border bg-muted" : "border-dashed border-gray-300 bg-gray-50")
-                    }`}
-                  >
-                    <UploadCloud
-                      className={`mx-auto h-8 w-8 transition-transform duration-300 ${
-                        bulkDragActive 
-                          ? (theme === 'dark' ? "scale-110 text-primary" : "scale-110 text-blue-400") 
-                          : (theme === 'dark' ? "text-muted-foreground" : "text-gray-400")
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {/* Main Upload Area - Takes 2/3 on desktop, full width on tablet/mobile */}
+                  <div className="lg:col-span-2 space-y-4 sm:space-y-6">
+                    <div
+                      onDrop={handleBulkDrop}
+                      onDragOver={handleBulkDragOver}
+                      onDragLeave={handleBulkDragLeave}
+                      className={`border rounded-md p-6 sm:p-8 lg:p-10 text-center space-y-3 sm:space-y-4 transition-all duration-300 min-h-[300px] sm:min-h-[320px] lg:min-h-[360px] flex flex-col items-center justify-center ${
+                        bulkDragActive
+                          ? (theme === 'dark' ? "border-primary bg-primary/10" : "border-blue-400 bg-blue-50")
+                          : (theme === 'dark' ? "border-dashed border-border bg-muted" : "border-dashed border-gray-300 bg-gray-50")
                       }`}
-                    />
-                    <p className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
-                      Drag & drop Excel file here
-                    </p>
-                    <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                      Supports .xlsx, .xls (max 5MB)
-                    </p>
-                    {!bulkUploadFile ? (
-                      <div className="flex justify-center">
-                        <button
-                          onClick={() => document.getElementById("bulkFileInput")?.click()}
-                          className={`px-4 py-2 rounded-md transition ${theme === 'dark' ? 'border border-border hover:bg-accent' : 'border border-gray-300 hover:bg-gray-100'}`}
-                        >
-                          Select File
-                        </button>
-                        <input
-                          id="bulkFileInput"
-                          type="file"
-                          accept=".xlsx,.xls"
-                          onChange={handleBulkFileChange}
-                          className="hidden"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center gap-2 mt-2">
-                        <p className={`text-sm ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
-                          {bulkUploadFile.name}
+                    >
+                      <UploadCloud
+                        className={`mx-auto h-10 w-10 sm:h-12 sm:w-12 lg:h-16 lg:w-16 transition-transform duration-300 ${
+                          bulkDragActive 
+                            ? (theme === 'dark' ? "scale-110 text-primary" : "scale-110 text-blue-400") 
+                            : (theme === 'dark' ? "text-muted-foreground" : "text-gray-400")
+                        }`}
+                      />
+                      <div className="space-y-1 sm:space-y-2">
+                        <p className={`text-sm sm:text-base lg:text-lg font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
+                          Drag & drop Excel file here
                         </p>
-                        <Button variant="ghost" size="sm" onClick={handleClearBulkFile}>
-                          <X className={`h-4 w-4 ${theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-500 hover:text-gray-900'}`} />
-                        </Button>
+                        <p className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                          Supports .xlsx, .xls (max 5MB)
+                        </p>
                       </div>
-                   )}
-                  </div>
-                  
-                  {errorMessage && (
-                    <div className={`text-sm font-medium text-center p-2 rounded-md ${theme === 'dark' ? 'text-destructive border border-destructive/30 bg-destructive/10' : 'text-red-600 border border-red-200 bg-red-50'}`}>
-                      {errorMessage}
+                      {!bulkUploadFile ? (
+                        <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4 flex-wrap justify-center">
+                          <button
+                            onClick={() => document.getElementById("bulkFileInput")?.click()}
+                            className={`px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base rounded-md font-medium transition-all duration-200 whitespace-nowrap ${theme === 'dark' ? 'border border-border hover:bg-accent text-foreground' : 'border border-gray-300 hover:bg-gray-100 text-gray-700'}`}
+                          >
+                            Select File
+                          </button>
+                          <input
+                            id="bulkFileInput"
+                            type="file"
+                            accept=".xlsx,.xls"
+                            onChange={handleBulkFileChange}
+                            className="hidden"
+                          />
+                        </div>
+                      ) : (
+                        <div className={`flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 mt-3 sm:mt-4 p-3 sm:p-4 rounded-md w-full ${theme === 'dark' ? 'bg-green-400/10 border border-green-400/30' : 'bg-green-50 border border-green-200'}`}>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-xs sm:text-sm font-medium truncate ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+                              ✓ {bulkUploadFile.name}
+                            </p>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={handleClearBulkFile}
+                            className="flex-shrink-0"
+                          >
+                            <X className={`h-4 w-4 ${theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-500 hover:text-gray-900'}`} />
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  
-                  <div className={`text-sm space-y-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
-                    <p className="font-semibold">Upload Instructions</p>
-                    <ul className={`list-disc list-inside ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                      <li>Use the provided Excel template for proper data formatting</li>
-                      <li>File must contain all required columns as per the template</li>
-                      <li>Maximum 500 records per file</li>
-                    </ul>
-                    <button
-                      onClick={downloadExcelTemplate}
-                      className={`text-sm ${theme === 'dark' ? 'text-primary hover:underline' : 'text-blue-600 hover:underline'}`}
-                    >
-                      Download Excel Template
-                    </button>
+                    
+                    {errorMessage && (
+                      <div className={`text-sm font-medium text-center p-3 sm:p-4 rounded-md ${theme === 'dark' ? 'text-destructive border border-destructive/30 bg-destructive/10' : 'text-red-600 border border-red-200 bg-red-50'}`}>
+                        {errorMessage}
+                      </div>
+                    )}
+                    
+                    <div className="flex gap-2 sm:gap-3 flex-col-reverse sm:flex-row justify-end">
+                      <Button
+                        onClick={handleProcessBulkUpload}
+                        disabled={!bulkUploadFile}
+                        className="w-full sm:w-auto bg-[#a259ff] text-white hover:bg-[#8a4dde] font-medium py-2 sm:py-2.5 px-4 sm:px-6 transition-all duration-200"
+                      >
+                        Process Upload
+                      </Button>
+                    </div>
                   </div>
-                  
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      onClick={handleProcessBulkUpload}
-                      disabled={!bulkUploadFile}
-                      className="bg-[#a259ff] text-white hover:bg-[#8a4dde]"
-                    >
-                      Process Upload
-                    </Button>
+
+                  {/* Instructions Panel - Right sidebar on desktop */}
+                  <div className={`lg:col-span-1 rounded-lg p-4 sm:p-6 space-y-3 sm:space-y-4 ${theme === 'dark' ? 'bg-muted border border-border' : 'bg-gray-50 border border-gray-200'}`}>
+                    <div>
+                      <p className={`font-semibold text-sm sm:text-base mb-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                        Upload Instructions
+                      </p>
+                      <ul className={`space-y-2 text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                        <li className="flex gap-2">
+                          <span className="flex-shrink-0 mt-0.5">•</span>
+                          <span>Use the provided Excel template for proper data formatting</span>
+                        </li>
+                        <li className="flex gap-2">
+                          <span className="flex-shrink-0 mt-0.5">•</span>
+                          <span>File must contain all required columns as per the template</span>
+                        </li>
+                        <li className="flex gap-2">
+                          <span className="flex-shrink-0 mt-0.5">•</span>
+                          <span>Maximum 500 records per file</span>
+                        </li>
+                      </ul>
+                    </div>
+                    
+                    <div className={`border-t pt-3 sm:pt-4 ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
+                      <button
+                        onClick={downloadExcelTemplate}
+                        className={`w-full text-center py-2 sm:py-2.5 px-3 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 ${theme === 'dark' ? 'bg-primary/10 text-primary hover:bg-primary/20' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}
+                      >
+                        📥 Download Template
+                      </button>
+                    </div>
+
+                    {/* File Info Panel */}
+                    {bulkUploadFile && (
+                      <div className={`border-t pt-3 sm:pt-4 space-y-2 ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
+                        <p className={`text-xs font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                          Selected File
+                        </p>
+                        <p className={`text-xs sm:text-sm truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                          📄 {bulkUploadFile.name}
+                        </p>
+                        <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                          Size: {(bulkUploadFile.size / 1024).toFixed(2)} KB
+                        </p>
+                      </div>
+                    )}
                   </div>
-                </>
+                </div>
               ) : (
-                <div className={`p-6 text-center rounded-lg ${theme === 'dark' ? 'bg-card border border-border' : 'bg-gray-50 border border-gray-200'}`}>
-                  <p className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
+                <div className={`p-6 sm:p-8 text-center rounded-lg ${theme === 'dark' ? 'bg-card border border-border' : 'bg-gray-50 border border-gray-200'}`}>
+                  <p className={`text-sm sm:text-base ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                     Please select all the dropdown options first to enable bulk upload.
                   </p>
                 </div>

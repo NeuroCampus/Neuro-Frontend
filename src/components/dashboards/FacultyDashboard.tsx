@@ -53,6 +53,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'dashboard': 'dashboard',
       'take-attendance': 'take-attendance',
       'upload-marks': 'upload-marks',
+      'upload-qp': 'upload-qp',
       'co-attainment': 'co-attainment',
       'apply-leave': 'apply-leave',
       'attendance-records': 'attendance-records',
@@ -65,8 +66,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'chat': 'chat',
       'faculty-profile': 'faculty-profile',
       'statistics': 'statistics',
-      'scan-student-info': 'scan-student-info'
-      ,
+      'scan-student-info': 'scan-student-info',
       'study-materials': 'study-materials'
     };
 

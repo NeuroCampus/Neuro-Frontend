@@ -421,8 +421,8 @@ const ApplyLeave = () => {
           </div>
         </CardHeader>
 
-        <CardContent className="overflow-x-auto">
-          <div className="overflow-x-auto max-w-full thin-scrollbar">
+        <CardContent className="max-h-[500px] overflow-y-auto thin-scrollbar">
+          <div className="overflow-x-auto thin-scrollbar">
             {/* Mobile: stacked cards */}
             <div className="md:hidden space-y-3">
               {loading ? (

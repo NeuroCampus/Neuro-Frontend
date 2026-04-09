@@ -12,7 +12,7 @@ const GenerateStatistics: React.FC = () => {
   const [proctorStudents, setProctorStudents] = useState<ProctorStudent[]>([]);
   const [proctorStudentsLoading, setProctorStudentsLoading] = useState<boolean>(true);
   const [page, setPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(20);
+  const [pageSize, setPageSize] = useState<number>(10);
   const [totalPages, setTotalPages] = useState<number>(1);
 
   // Initial fetch and subsequent refetches are handled by the effect below
@@ -114,19 +114,19 @@ const GenerateStatistics: React.FC = () => {
   }
 
   return (
-    <div className={`p-6 space-y-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-        <h2 className="text-2xl font-bold">Statistics</h2>
+    <div className={`p-3 sm:p-6 space-y-4 sm:space-y-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+        <h2 className="text-lg sm:text-2xl font-bold">Statistics</h2>
       {/* Charts */}
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
         {/* Attendance Overview */}
-        <Card className={theme === 'dark' ? 'shadow-sm bg-card text-foreground' : 'shadow-sm bg-white text-gray-900'}>
+        <Card className={`${theme === 'dark' ? 'shadow-sm bg-card text-foreground' : 'shadow-sm bg-white text-gray-900'} rounded-lg`}>
           <CardHeader>
             <CardTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Attendance Overview
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
+          <CardContent className="p-2 sm:p-4">
+            <ResponsiveContainer width="100%" height={200}>
               <LineChart data={attendanceData}>
                 <CartesianGrid stroke={theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#e5e7eb'} />
                 <XAxis
@@ -160,14 +160,14 @@ const GenerateStatistics: React.FC = () => {
         </Card>
 
         {/* Average Marks */}
-        <Card className={theme === 'dark' ? 'shadow-sm bg-card text-foreground' : 'shadow-sm bg-white text-gray-900'}>
+        <Card className={`${theme === 'dark' ? 'shadow-sm bg-card text-foreground' : 'shadow-sm bg-white text-gray-900'} rounded-lg`}>
           <CardHeader>
             <CardTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Average Marks
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
+          <CardContent className="p-2 sm:p-4">
+            <ResponsiveContainer width="100%" height={200}>
               <BarChart data={marksData}>
                 <CartesianGrid stroke={theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#e5e7eb'} />
                 <XAxis
@@ -199,9 +199,9 @@ const GenerateStatistics: React.FC = () => {
       </div>
 
       {/* Table */}
-      <Card className={theme === 'dark' ? 'shadow-sm bg-card text-foreground' : 'shadow-sm bg-white text-gray-900'}>
-        <CardHeader className="flex flex-row justify-between items-center">
-          <CardTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Proctor Students Table</CardTitle>
+      <Card className={`${theme === 'dark' ? 'shadow-sm bg-card text-foreground' : 'shadow-sm bg-white text-gray-900'} rounded-lg`}>
+        <CardHeader className="flex flex-row justify-between items-center gap-3 p-3 sm:p-6">
+          <CardTitle className={`text-base sm:text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Proctor Students Table</CardTitle>
           <Button 
             variant="outline" 
             size="sm" 
@@ -212,24 +212,24 @@ const GenerateStatistics: React.FC = () => {
             Export PDF
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-2 sm:p-6">
           <div className="w-full overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
+            <table className="w-full text-xs sm:text-sm border-collapse">
               <thead className={theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}>
                 <tr>
-                  <th className={`p-3 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>USN</th>
-                  <th className={`p-3 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Name</th>
-                  <th className={`p-3 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Attendance %</th>
-                  <th className={`p-3 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Avg Mark</th>
+                  <th className={`p-2 sm:p-3 text-left text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>USN</th>
+                  <th className={`p-2 sm:p-3 text-left text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Name</th>
+                  <th className={`p-2 sm:p-3 text-left text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Att %</th>
+                  <th className={`p-2 sm:p-3 text-left text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Avg</th>
                 </tr>
               </thead>
               <tbody>
                 {proctorStudents.map((student, idx) => (
                   <tr key={idx} className={theme === 'dark' ? 'border-border' : 'border-gray-200'}>
-                    <td className={`p-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.usn}</td>
-                    <td className={`p-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.name}</td>
-                    <td className={`p-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{formatAttendancePercentage(student.attendance)}</td>
-                    <td className={`p-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{((student as any).avg_mark !== undefined ? (student as any).avg_mark : (() => {
+                    <td className={`p-2 sm:p-3 text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.usn}</td>
+                    <td className={`p-2 sm:p-3 text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.name}</td>
+                    <td className={`p-2 sm:p-3 text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{formatAttendancePercentage(student.attendance)}</td>
+                    <td className={`p-2 sm:p-3 text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{((student as any).avg_mark !== undefined ? (student as any).avg_mark : (() => {
                       const internalMarks = student.marks || [];
                       const iaMarks = student.ia_marks || [];
                       const allMarks = [
@@ -247,20 +247,81 @@ const GenerateStatistics: React.FC = () => {
           </div>
 
           {/* Pagination controls */}
-          <div className="mt-4 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Button size="sm" variant="outline" onClick={() => setPage(prev => Math.max(1, prev - 1))} disabled={page <= 1}>Previous</Button>
-              <span className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Page {page} / {totalPages}</span>
-              <Button size="sm" variant="outline" onClick={() => setPage(prev => Math.min(totalPages, prev + 1))} disabled={page >= totalPages}>Next</Button>
-            </div>
-            <div className="flex items-center space-x-2">
-              <label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Page size:</label>
-              <select value={pageSize} onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }} className="rounded-md border px-2 py-1">
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
+          <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row items-center justify-end gap-2 sm:gap-4">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => setPage(prev => Math.max(1, prev - 1))} 
+                disabled={page <= 1}
+                className="text-xs px-2 sm:px-3 h-8 sm:h-9"
+              >
+                Prev
+              </Button>
+              
+              {/* Dynamic page numbers */}
+              <div className="flex items-center gap-0.5 sm:gap-1 flex-wrap">
+                {(() => {
+                  const pages: (number | string)[] = [];
+                  const maxPagesToShow = 5;
+                  const halfWindow = Math.floor(maxPagesToShow / 2);
+                  
+                  let startPage = Math.max(1, page - halfWindow);
+                  let endPage = Math.min(totalPages, page + halfWindow);
+                  
+                  // Adjust window if near boundaries
+                  if (endPage - startPage + 1 < maxPagesToShow) {
+                    if (startPage === 1) {
+                      endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+                    } else if (endPage === totalPages) {
+                      startPage = Math.max(1, endPage - maxPagesToShow + 1);
+                    }
+                  }
+                  
+                  // Add first page
+                  if (startPage > 1) {
+                    pages.push(1);
+                    if (startPage > 2) pages.push('...');
+                  }
+                  
+                  // Add page range
+                  for (let i = startPage; i <= endPage; i++) {
+                    pages.push(i);
+                  }
+                  
+                  // Add last page
+                  if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) pages.push('...');
+                    pages.push(totalPages);
+                  }
+                  
+                  return pages.map((p, idx) => (
+                    typeof p === 'number' ? (
+                      <Button
+                        key={idx}
+                        size="sm"
+                        variant={page === p ? "default" : "outline"}
+                        onClick={() => setPage(p)}
+                        className={`h-7 w-7 sm:h-8 sm:w-8 p-0 text-xs ${page === p ? 'bg-[#a259ff] text-white hover:bg-[#8a4dde]' : ''}`}
+                      >
+                        {p}
+                      </Button>
+                    ) : (
+                      <span key={idx} className="px-1 text-gray-500">...</span>
+                    )
+                  ));
+                })()}
+              </div>
+              
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => setPage(prev => Math.min(totalPages, prev + 1))} 
+                disabled={page >= totalPages}
+                className="text-xs px-2 sm:px-3 h-8 sm:h-9"
+              >
+                Next
+              </Button>
             </div>
           </div>
         </CardContent>

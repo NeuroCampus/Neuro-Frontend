@@ -435,7 +435,7 @@ const FacultyAttendance = () => {
       </Card>
 
       {/* Attendance History (paginated) */}
-      <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
+      <Card className={`hidden md:block ${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}`}>
         <CardHeader>
           <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
             Attendance History
@@ -472,24 +472,39 @@ const FacultyAttendance = () => {
           )}
 
           {/* Pagination Controls */}
-          <div className="mt-4 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Button size="sm" onClick={() => fetchHistoryPage(1)} disabled={historyLoading || historyPage === 1}>
-                First
-              </Button>
-              <Button size="sm" onClick={() => fetchHistoryPage(Math.max(1, historyPage - 1))} disabled={historyLoading || historyPage === 1}>
-                Prev
-              </Button>
-              <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-700'}`}>
-                Page {historyPage} / {historyTotalPages} ({historyTotalItems} records)
-              </span>
-              <Button size="sm" onClick={() => fetchHistoryPage(Math.min(historyTotalPages, historyPage + 1))} disabled={historyLoading || historyPage === historyTotalPages}>
-                Next
-              </Button>
-              <Button size="sm" onClick={() => fetchHistoryPage(historyTotalPages)} disabled={historyLoading || historyPage === historyTotalPages}>
-                Last
-              </Button>
+          <div className="mt-4 flex items-center justify-center space-x-2">
+            <Button size="sm" onClick={() => fetchHistoryPage(Math.max(1, historyPage - 1))} disabled={historyLoading || historyPage === 1} className="bg-[#a259ff] text-white hover:bg-[#8e40e8]">
+              Previous
+            </Button>
+            <div className="flex items-center space-x-1">
+              {(() => {
+                const total = historyTotalPages || 1;
+                const current = historyPage || 1;
+                const maxButtons = 5;
+                let start = Math.max(1, current - Math.floor(maxButtons / 2));
+                let end = Math.min(total, start + maxButtons - 1);
+                if (end - start + 1 < maxButtons) start = Math.max(1, end - maxButtons + 1);
+                const buttons = [];
+                for (let p = start; p <= end; p++) {
+                  buttons.push(
+                    <Button
+                      key={p}
+                      size="sm"
+                      variant={p === current ? undefined : 'ghost'}
+                      onClick={() => fetchHistoryPage(p)}
+                      disabled={historyLoading}
+                      className={`px-2 py-1 text-xs ${p === current ? 'bg-white text-[#a259ff] border border-[#a259ff]' : 'bg-white text-gray-900 dark:text-gray-100 dark:bg-gray-700'}`}
+                    >
+                      {p}
+                    </Button>
+                  );
+                }
+                return buttons;
+              })()}
             </div>
+            <Button size="sm" onClick={() => fetchHistoryPage(Math.min(historyTotalPages, historyPage + 1))} disabled={historyLoading || historyPage === historyTotalPages} className="bg-[#a259ff] text-white hover:bg-[#8e40e8]">
+              Next
+            </Button>
           </div>
         </CardContent>
       </Card>

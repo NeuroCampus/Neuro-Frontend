@@ -1,22 +1,32 @@
 import React, { useState } from "react";
 import { API_ENDPOINT } from "@/utils/config";
 import { fetchWithTokenRefresh } from "@/utils/authService";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useTheme } from "@/context/ThemeContext";
 
 type Filters = { usn: string; exam_period: string };
 
 const Revaluation = () => {
   const [filters, setFilters] = useState<Filters>({ usn: "", exam_period: "" });
-  const [students, setStudents] = useState<any[]>([]);
-  const role = typeof window !== 'undefined' ? localStorage.getItem('role') : null;
+  const [students, setStudents] = useState<Array<{ usn: string; name: string; student_id: number; subjects: Array<{ subject_id: number; subject_name: string; cie_marks?: number; see_marks?: number; total_marks?: number; status: string; applied: boolean; subject_mark_id: number }> }>>([]);
+  const role = typeof globalThis !== 'undefined' && globalThis.window ? globalThis.window.localStorage.getItem('role') : null;
   const [selectionMap, setSelectionMap] = useState<Record<number, { revaluation: boolean; photocopy: boolean }>>({});
   const [loading, setLoading] = useState(false);
+  const { theme } = useTheme();
 
-  const sanitizeMessage = (msg: any) => {
+  const sanitizeMessage = (msg: string | object | null | undefined): string | null => {
     if (!msg) return null;
-    if (typeof msg !== 'string') return String(msg);
-    const lowered = msg.toLowerCase();
-    if (lowered.includes('localhost') || lowered.includes('traceback') || lowered.includes('connection refused') || lowered.includes('err')) return null;
-    return msg;
+    let msgStr = '';
+    if (typeof msg === 'string') {
+      msgStr = msg;
+    } else {
+      msgStr = JSON.stringify(msg);
+    }
+    const lowered = msgStr.toLowerCase();
+    const isBadError = lowered.includes('localhost') || lowered.includes('traceback') || lowered.includes('connection refused') || lowered.includes('err');
+    return isBadError ? null : msgStr;
   };
 
   // confirmation modal state for revaluation
@@ -32,38 +42,52 @@ const Revaluation = () => {
   const [messageModal, setMessageModal] = useState<{ open: boolean; title?: string; message?: string }>({ open: false });
 
   const confirmApply = async (subject_mark_id?: number) => {
-    if (!subject_mark_id) return setConfirmModal({ open: false });
+    if (!subject_mark_id) {
+      setConfirmModal({ open: false });
+      return;
+    }
     setConfirmModal({ open: false });
     setLoading(true);
     try {
       const form = new FormData();
       form.append('subject_mark_id', String(subject_mark_id));
       const res = await fetchWithTokenRefresh(`${API_ENDPOINT}/revaluation/request/`, { method: 'POST', body: form });
-      const json = await res.json();
-      if (json.success) {
-        // mark the subject as applied in the local UI so button is disabled immediately
-        setStudents(prev => prev.map(st => ({
-          ...st,
-          subjects: st.subjects.map((sb: any) => sb.subject_mark_id === subject_mark_id ? { ...sb, applied: true } : sb)
-        })));
-        setMessageModal({ open: true, title: 'Success', message: 'Revaluation requested' });
-      } else if (json.applied) {
-        // backend indicates an existing applied request
-        setStudents(prev => prev.map(st => ({
-          ...st,
-          subjects: st.subjects.map((sb: any) => sb.subject_mark_id === subject_mark_id ? { ...sb, applied: true } : sb)
-        })));
-        const safe = sanitizeMessage(json.message) || 'Revaluation already applied';
-        setMessageModal({ open: true, title: 'Info', message: safe });
-      } else {
-        const safe = sanitizeMessage(json.message) || 'Failed to submit revaluation request';
-        setMessageModal({ open: true, title: 'Error', message: safe });
-      }
-    } catch (err: any) {
+      const json = (await res.json()) as Record<string, unknown>;
+      await handleRevaluationResponse(json, subject_mark_id);
+    } catch (err) {
       console.error('submitReval error', err);
       setMessageModal({ open: true, title: 'Error', message: 'Network error contacting server' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateSubjectInStudent = (st: typeof students[0], subjectMarkId: number) => {
+    const newSubjects = st.subjects.map((sb) => 
+      sb.subject_mark_id === subjectMarkId ? { ...sb, applied: true } : sb
+    );
+    return { ...st, subjects: newSubjects };
+  };
+
+  const markSubjectAsApplied = (subjectMarkId: number) => {
+    setStudents(prev => prev.map(st => updateSubjectInStudent(st, subjectMarkId)));
+  };
+
+  const handleRevaluationResponse = async (json: Record<string, unknown>, subjectMarkId: number) => {
+    const success = json.success as boolean | undefined;
+    const applied = json.applied as boolean | undefined;
+    const message = json.message as string | undefined;
+    
+    if (success) {
+      markSubjectAsApplied(subjectMarkId);
+      setMessageModal({ open: true, title: 'Success', message: 'Revaluation requested' });
+    } else if (applied) {
+      markSubjectAsApplied(subjectMarkId);
+      const safe = sanitizeMessage(message) || 'Revaluation already applied';
+      setMessageModal({ open: true, title: 'Info', message: safe });
+    } else {
+      const safe = sanitizeMessage(message) || 'Failed to submit revaluation request';
+      setMessageModal({ open: true, title: 'Error', message: safe });
     }
   };
 
@@ -75,20 +99,22 @@ const Revaluation = () => {
 
     try {
       const res = await fetchWithTokenRefresh(`${API_ENDPOINT}/revaluation/students/?${qs.toString()}`, { method: 'GET' });
-      const json = await res.json();
-      // DRF pagination wraps our payload under `results` when paginated.
-      const payload = json.results && typeof json.results === 'object' ? json.results : json;
-      if (payload.success) {
-        // ensure applied flag defaults to false if missing
-        const safeStudents = (payload.students || []).map((st: any) => ({
+      const json = (await res.json()) as Record<string, unknown>;
+      const payload = (json.results && typeof json.results === 'object') ? (json.results as Record<string, unknown>) : json;
+      const success = payload.success as boolean | undefined;
+      const students = payload.students as Array<{ usn: string; name: string; student_id: number; subjects: Array<{ subject_id: number; subject_name: string; cie_marks?: number; see_marks?: number; total_marks?: number; status: string; applied?: boolean; subject_mark_id: number }> }> | undefined;
+      const message = payload.message as string | undefined;
+      
+      if (success) {
+        const safeStudents = (students || []).map((st) => ({
           ...st,
-          subjects: (st.subjects || []).map((sb: any) => ({ ...sb, applied: sb.applied ? true : false }))
+          subjects: (st.subjects || []).map((sb) => ({ ...sb, applied: !!sb.applied }))
         }));
         setStudents(safeStudents);
       } else {
         setStudents([]);
         console.error('Load students error response:', payload);
-        setMessageModal({ open: true, title: 'Error', message: payload.message || 'Failed to load students' });
+        setMessageModal({ open: true, title: 'Error', message: message || 'Failed to load students' });
       }
     } catch (err) {
       console.error('Error loading students:', err);
@@ -100,150 +126,329 @@ const Revaluation = () => {
 
   
 
+  const getStatusBadge = (status: string, applied: boolean) => {
+    if (applied) {
+      return <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Applied</span>;
+    }
+    return status === 'pass' ? (
+      <span className="text-green-600">Pass</span>
+    ) : (
+      <span className="text-red-600">Fail</span>
+    );
+  };
+
+  const handleRevaluationCheckbox = (subjectMarkId: number, checked: boolean) => {
+    setSelectionMap(prev => ({
+      ...prev,
+      [subjectMarkId]: {
+        ...(prev[subjectMarkId] || { revaluation: false, photocopy: false }),
+        revaluation: checked
+      }
+    }));
+  };
+
+  const handlePhotocopCheckbox = (subjectMarkId: number, checked: boolean) => {
+    setSelectionMap(prev => ({
+      ...prev,
+      [subjectMarkId]: {
+        ...(prev[subjectMarkId] || { revaluation: false, photocopy: false }),
+        photocopy: checked
+      }
+    }));
+  };
+
+  const renderActionCell = (sub: { subject_mark_id: number; subject_name: string; applied: boolean }, isStudentRole: boolean) => {
+    if (!sub.subject_mark_id) {
+      return 'N/A';
+    }
+    if (isStudentRole) {
+      return renderStudentCheckboxes(sub.subject_mark_id);
+    }
+    return renderApproveButton(sub.subject_mark_id, sub.subject_name, sub.applied);
+  };
+
+  const renderStudentCheckboxes = (subjectMarkId: number) => (
+    <div className="flex gap-2 items-center">
+      <label className="text-xs flex items-center gap-1">
+        <input
+          type="checkbox"
+          checked={!!selectionMap[subjectMarkId]?.revaluation}
+          onChange={(e) => handleRevaluationCheckbox(subjectMarkId, e.target.checked)}
+        />
+        <span>Reval</span>
+      </label>
+      <label className="text-xs flex items-center gap-1">
+        <input
+          type="checkbox"
+          checked={!!selectionMap[subjectMarkId]?.photocopy}
+          onChange={(e) => handlePhotocopCheckbox(subjectMarkId, e.target.checked)}
+        />
+        <span>Copy</span>
+      </label>
+    </div>
+  );
+
+  const renderApproveButton = (subjectMarkId: number, subjectName: string, applied: boolean) => (
+    <Button
+      disabled={applied || loading}
+      onClick={() => handleApply(subjectMarkId, subjectName)}
+      variant={applied ? 'outline' : 'default'}
+      className={`text-xs sm:text-sm h-auto px-2 py-1 ${applied ? '' : 'bg-[#a259ff] hover:bg-[#8a4dde] text-white'}`}
+    >
+      {applied ? 'Applied' : 'Apply'}
+    </Button>
+  );
+
   return (
-    <div className="min-h-screen p-4 bg-[hsl(var(--background))] text-[hsl(var(--foreground))]">
-      <div className="max-w-4xl mx-auto">
-        <main className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-lg p-6 shadow-sm">
-          <div className="mb-4">
-            <h1 className="text-2xl font-semibold mb-1">Revaluation</h1>
-            <p className="text-sm text-[hsl(var(--muted-foreground))]">Apply for revaluation of exam papers. Search by student USN and select the exam period.</p>
-          </div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 items-end">
-        <div>
-          <label className="text-sm block mb-1">USN</label>
-          <input value={filters.usn} onChange={e => setFilters({ ...filters, usn: e.target.value })} placeholder="Enter student USN" className="w-full p-2 border border-[hsl(var(--border))] rounded bg-[hsl(var(--input))] text-[hsl(var(--foreground))]" />
-        </div>
-        <div>
-          <label className="text-sm block mb-1">Exam Period</label>
-          <select value={filters.exam_period} onChange={e => setFilters({ ...filters, exam_period: e.target.value })} className="w-full p-2 border border-[hsl(var(--border))] rounded bg-[hsl(var(--input))] text-[hsl(var(--foreground))]">
-            <option value="">Select Exam Period</option>
-            <option value="june_july">June/July</option>
-            <option value="nov_dec">Nov/Dec</option>
-            <option value="jan_feb">Jan/Feb</option>
-            <option value="apr_may">Apr/May</option>
-            <option value="supplementary">Supplementary</option>
-          </select>
-        </div>
-        <div>
-          <button onClick={loadStudents} className="w-full px-4 py-2 rounded bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]">Search</button>
-        </div>
-      </div>
+    <div className={`min-h-screen p-2 sm:p-4 lg:p-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <div className="max-w-6xl mx-auto">
+        {/* Header Card */}
+        <Card className={`mb-4 sm:mb-6 ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
+          <CardHeader className="p-3 sm:p-4 lg:p-6">
+            <CardTitle className="text-lg sm:text-xl lg:text-2xl">Exam Revaluation & Photocopy</CardTitle>
+            <p className={`text-xs sm:text-sm mt-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+              Apply for revaluation of exam papers or request photocopies. Search by student USN and select the exam period.
+            </p>
+          </CardHeader>
+        </Card>
 
-      {loading && <div className="text-sm text-[hsl(var(--muted-foreground))]">Loading...</div>}
+        {/* Filter Card */}
+        <Card className={`mb-4 sm:mb-6 ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
+          <CardContent className="p-3 sm:p-4 lg:p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 lg:gap-4 items-end">
+              <div className="sm:col-span-1">
+                <label htmlFor="usn-input" className="text-xs sm:text-sm block mb-1 font-medium">USN</label>
+                <input
+                  id="usn-input"
+                  value={filters.usn}
+                  onChange={e => setFilters({ ...filters, usn: e.target.value })}
+                  placeholder="Enter student USN"
+                  className={`w-full px-2 sm:px-3 py-2 text-xs sm:text-sm rounded border ${
+                    theme === 'dark'
+                      ? 'bg-input border-border text-foreground'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                />
+              </div>
 
-      {!loading && students.map(s => (
-        <div key={s.student_id} className="border border-[hsl(var(--border))] p-4 mb-4 rounded bg-[hsl(var(--popover))]">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <div className="text-sm text-[hsl(var(--muted-foreground))]">Student</div>
-              <div className="font-medium">{s.usn} - {s.name}</div>
+              <div className="sm:col-span-1">
+                <label htmlFor="exam-period-select" className="text-xs sm:text-sm block mb-1 font-medium">Exam Period</label>
+                <select
+                  id="exam-period-select"
+                  value={filters.exam_period}
+                  onChange={e => setFilters({ ...filters, exam_period: e.target.value })}
+                  className={`w-full px-2 sm:px-3 py-2 text-xs sm:text-sm rounded border ${
+                    theme === 'dark'
+                      ? 'bg-input border-border text-foreground'
+                      : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                >
+                  <option value="">Select Exam Period</option>
+                  <option value="june_july">June/July</option>
+                  <option value="nov_dec">Nov/Dec</option>
+                  <option value="jan_feb">Jan/Feb</option>
+                  <option value="apr_may">Apr/May</option>
+                  <option value="supplementary">Supplementary</option>
+                </select>
+              </div>
+
+              <div className="sm:col-span-2 md:col-span-1">
+                <Button
+                  onClick={loadStudents}
+                  disabled={loading}
+                  className="w-full px-3 py-2 text-xs sm:text-sm h-auto bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+                >
+                  {loading ? 'Searching...' : 'Search'}
+                </Button>
+              </div>
             </div>
-            <div className="text-sm text-[hsl(var(--muted-foreground))]">Exam: {filters.exam_period ? filters.exam_period.replace('_',' / ') : '-'}</div>
-          </div>
+          </CardContent>
+        </Card>
 
-          <div className="overflow-x-auto">
-            <table className="w-full table-auto border-collapse">
-              <thead>
-                <tr className="text-left text-sm">
-                  <th className="p-2 border-b">Subject</th>
-                  <th className="p-2 border-b text-right">CIE</th>
-                  <th className="p-2 border-b text-right">SEE</th>
-                  <th className="p-2 border-b text-right">Total</th>
-                  <th className="p-2 border-b">Status</th>
-                  <th className="p-2 border-b">Action</th>
-                  {role === 'student' && <th className="p-2 border-b">Select</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {s.subjects.map((sub: any) => (
-                  <tr key={sub.subject_id} className="odd:bg-[hsl(var(--card))]">
-                    <td className="p-2">{sub.subject_name}</td>
-                    <td className="p-2 text-right">{sub.cie_marks ?? '-'}</td>
-                    <td className="p-2 text-right">{sub.see_marks ?? '-'}</td>
-                    <td className="p-2 text-right">{sub.total_marks ?? '-'}</td>
-                    <td className="p-2">
-                      {sub.applied ? (
-                        <span className="text-[hsl(var(--muted-foreground))]">Applied</span>
-                      ) : (sub.status === 'pass' ? <span className="text-[hsl(140,50%,40%)]">Pass</span> : <span className="text-[hsl(0,70%,60%)]">Fail</span>)}
-                    </td>
-                    <td className="p-2">
-                      {sub.subject_mark_id ? (
-                        role === 'student' ? (
-                          <div className="flex gap-2 items-center">
-                            <label className="text-sm"><input type="checkbox" checked={!!selectionMap[sub.subject_mark_id]?.revaluation} onChange={(e)=>setSelectionMap(prev=>({ ...prev, [sub.subject_mark_id]: { ...(prev[sub.subject_mark_id]||{revaluation:false,photocopy:false}), revaluation: e.target.checked } }))} /> <span className="ml-1">Reval</span></label>
-                            <label className="text-sm"><input type="checkbox" checked={!!selectionMap[sub.subject_mark_id]?.photocopy} onChange={(e)=>setSelectionMap(prev=>({ ...prev, [sub.subject_mark_id]: { ...(prev[sub.subject_mark_id]||{revaluation:false,photocopy:false}), photocopy: e.target.checked } }))} /> <span className="ml-1">Photocopy</span></label>
+        {/* Students Results */}
+        {!loading && students.length > 0 ? (
+          <div className="space-y-3 sm:space-y-4 lg:space-y-6 mb-4">
+            {students.map(s => (
+              <Card key={s.student_id} className={`${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
+                <CardHeader className="p-3 sm:p-4 lg:p-6 pb-2 sm:pb-3">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                    <div>
+                      <p className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Student</p>
+                      <CardTitle className="text-sm sm:text-base lg:text-lg">{s.usn} - {s.name}</CardTitle>
+                    </div>
+                    <div className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                      Exam: {filters.exam_period ? filters.exam_period.replace('_', ' / ') : '-'}
+                    </div>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="p-3 sm:p-4 lg:p-6">
+                  {/* Desktop Table */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <table className="w-full text-xs sm:text-sm">
+                      <thead>
+                        <tr className={`border-b ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
+                          <th className="text-left p-2 sm:p-3">Subject</th>
+                          <th className="text-right p-2 sm:p-3">CIE</th>
+                          <th className="text-right p-2 sm:p-3">SEE</th>
+                          <th className="text-right p-2 sm:p-3">Total</th>
+                          <th className="text-left p-2 sm:p-3">Status</th>
+                          <th className="text-left p-2 sm:p-3">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {s.subjects.map((sub) => (
+                          <tr key={sub.subject_id} className={`border-b ${theme === 'dark' ? 'border-border' : 'border-gray-100'}`}>
+                            <td className="p-2 sm:p-3">{sub.subject_name}</td>
+                            <td className="text-right p-2 sm:p-3">{sub.cie_marks ?? '-'}</td>
+                            <td className="text-right p-2 sm:p-3">{sub.see_marks ?? '-'}</td>
+                            <td className="text-right p-2 sm:p-3">{sub.total_marks ?? '-'}</td>
+                            <td className="p-2 sm:p-3">
+                              {getStatusBadge(sub.status, sub.applied)}
+                            </td>
+                            <td className="p-2 sm:p-3">
+                              {renderActionCell(sub, role === 'student')}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile Cards */}
+                  <div className="sm:hidden space-y-2">
+                    {s.subjects.map((sub) => (
+                      <div
+                        key={sub.subject_id}
+                        className={`p-2 rounded border ${theme === 'dark' ? 'bg-background border-border' : 'bg-gray-50 border-gray-200'}`}
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1">
+                            <p className="text-xs font-medium">{sub.subject_name}</p>
+                            <div className="flex gap-2 mt-1 text-xs">
+                              <span>CIE: {sub.cie_marks ?? '-'}</span>
+                              <span>SEE: {sub.see_marks ?? '-'}</span>
+                            </div>
                           </div>
-                        ) : (
-                          <button disabled={sub.applied} onClick={() => handleApply(sub.subject_mark_id, sub.subject_name)} className={`px-3 py-1 rounded ${sub.applied ? 'bg-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]' : 'bg-[hsl(var(--secondary))] text-[hsl(var(--secondary-foreground))]'}`}>
-                            {sub.applied ? 'Applied' : 'Apply for Revaluation'}
-                          </button>
-                        )
-                      ) : 'N/A'}
-                    </td>
-                    {role === 'student' && <td className="p-2">&nbsp;</td>}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ))}
+                          <div className="text-right ml-2">
+                            {getStatusBadge(sub.status, sub.applied)}
+                          </div>
+                        </div>
 
-      {role === 'student' && (
-        <div className="max-w-4xl mx-auto p-4">
-          <div className="flex items-center justify-between">
-            <div className="text-sm">Selected: {Object.keys(selectionMap).filter(k=>selectionMap[Number(k)].revaluation || selectionMap[Number(k)].photocopy).length}</div>
-            <div className="text-sm">Total: ₹{Object.keys(selectionMap).reduce((acc,k)=>{ const s = selectionMap[Number(k)]; if(!s) return acc; return acc + (s.revaluation?600:0) + (s.photocopy?400:0); }, 0)}</div>
-            <div>
-              <button onClick={async ()=>{
-                // prepare items
-                const items = Object.entries(selectionMap).map(([k,v])=>({ subject_mark_id: Number(k), revaluation: !!v.revaluation, photocopy: !!v.photocopy })).filter(it=>it.revaluation || it.photocopy);
-                if(items.length===0) return setMessageModal({ open: true, title: 'Error', message: 'Select at least one item to pay' });
-                setLoading(true);
-                try{
-                  const res = await fetchWithTokenRefresh(`${API_ENDPOINT}/revaluation/initiate-payment/`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items }) });
-                  const json = await res.json();
-                  if(json.success && json.checkout_url){
-                    window.location.href = json.checkout_url;
-                  } else {
-                    setMessageModal({ open: true, title: 'Error', message: json.message || 'Failed to initiate payment' });
-                  }
-                }catch(err){ console.error(err); setMessageModal({ open: true, title: 'Error', message: 'Network error' }); }
-                setLoading(false);
-              }} className="px-4 py-2 rounded bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]">Pay & Apply</button>
-            </div>
+                        {sub.subject_mark_id ? (
+                          renderActionCell(sub, role === 'student')
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </div>
-      )}
+        ) : (
+          !loading && (
+            <Card className={`text-center p-6 sm:p-8 ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
+              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                No students found. Try different search criteria.
+              </p>
+            </Card>
+          )
+        )}
 
-      {confirmModal.open && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="w-11/12 max-w-md p-4 rounded shadow-lg bg-[hsl(var(--card))] border border-[hsl(var(--border))]">
-            <h3 className="font-semibold mb-2 text-[hsl(var(--foreground))]">Confirm Revaluation</h3>
-            <div className="mb-4 text-sm">Apply revaluation for <strong>{filters.usn}</strong> — <strong>{confirmModal.subject_name}</strong>?</div>
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setConfirmModal({ open: false })} className="px-3 py-1 rounded border border-[hsl(var(--border))] text-[hsl(var(--foreground))]">Cancel</button>
-              <button onClick={() => confirmApply(confirmModal.subject_mark_id)} className="px-3 py-1 rounded bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]">Confirm</button>
-            </div>
-          </div>
-        </div>
-      )}
+        {/* Student Payment Section */}
+        {role === 'student' && students.length > 0 && (
+          <Card className={`${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
+            <CardContent className="p-3 sm:p-4 lg:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="text-xs sm:text-sm">
+                  <p>Selected: {Object.keys(selectionMap).filter(k => selectionMap[Number(k)].revaluation || selectionMap[Number(k)].photocopy).length}</p>
+                  <p className="font-semibold">
+                    Total: ₹
+                    {Object.keys(selectionMap).reduce((acc, k) => {
+                      const s = selectionMap[Number(k)];
+                      if (!s) return acc;
+                      return acc + (s.revaluation ? 600 : 0) + (s.photocopy ? 400 : 0);
+                    }, 0)}
+                  </p>
+                </div>
+                <Button
+                  onClick={async () => {
+                    const items = Object.entries(selectionMap)
+                      .map(([k, v]) => ({ subject_mark_id: Number(k), revaluation: !!v.revaluation, photocopy: !!v.photocopy }))
+                      .filter(it => it.revaluation || it.photocopy);
 
-      {messageModal.open && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
-          <div className="w-11/12 max-w-sm p-4 rounded shadow-lg bg-[hsl(var(--card))] border border-[hsl(var(--border))]">
-            <h3 className="font-semibold mb-2 text-[hsl(var(--foreground))]">{messageModal.title}</h3>
-            <div className="mb-4 text-sm text-[hsl(var(--foreground))]">{messageModal.message}</div>
-            <div className="flex justify-end">
-              <button onClick={() => setMessageModal({ open: false })} className="px-3 py-1 rounded bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]">OK</button>
-            </div>
-          </div>
-        </div>
-      )}
+                    if (items.length === 0) {
+                      return setMessageModal({ open: true, title: 'Error', message: 'Select at least one item to pay' });
+                    }
 
-      {/* Modal replaced: confirmation handled via styled popup. */}
-        </main>
+                    setLoading(true);
+                    try {
+                      const res = await fetchWithTokenRefresh(`${API_ENDPOINT}/revaluation/initiate-payment/`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ items })
+                      });
+                      const json = (await res.json()) as Record<string, unknown>;
+                      const success = json.success as boolean | undefined;
+                      const checkoutUrl = json.checkout_url as string | undefined;
+                      const message = json.message as string | undefined;
+                      
+                      if (success && checkoutUrl && globalThis.window) {
+                        globalThis.window.location.href = checkoutUrl;
+                      } else {
+                        setMessageModal({ open: true, title: 'Error', message: message || 'Failed to initiate payment' });
+                      }
+                    } catch (err) {
+                      console.error(err);
+                      setMessageModal({ open: true, title: 'Error', message: 'Network error' });
+                    }
+                    setLoading(false);
+                  }}
+                  disabled={loading}
+                  className="text-xs sm:text-sm h-auto px-3 py-2 bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+                >
+                  {loading ? 'Processing...' : 'Pay & Apply'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={confirmModal.open} onOpenChange={open => !open && setConfirmModal({ open: false })}>
+        <DialogContent className={`max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-lg ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
+          <DialogHeader>
+            <DialogTitle className="text-sm sm:text-base">Confirm Revaluation</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs sm:text-sm">
+            Apply revaluation for <strong>{filters.usn}</strong> — <strong>{confirmModal.subject_name}</strong>?
+          </p>
+          <DialogFooter className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setConfirmModal({ open: false })} className="text-xs sm:text-sm h-auto px-3 py-1">
+              Cancel
+            </Button>
+            <Button onClick={() => confirmApply(confirmModal.subject_mark_id)} className="text-xs sm:text-sm h-auto px-3 py-1 bg-[#a259ff] hover:bg-[#8a4dde] text-white">
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Message Dialog */}
+      <Dialog open={messageModal.open} onOpenChange={open => !open && setMessageModal({ open: false })}>
+        <DialogContent className={`max-w-[95vw] sm:max-w-[90vw] md:max-w-md ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
+          <DialogHeader>
+            <DialogTitle className="text-sm sm:text-base">{messageModal.title}</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs sm:text-sm">{messageModal.message}</p>
+          <DialogFooter>
+            <Button onClick={() => setMessageModal({ open: false })} className="text-xs sm:text-sm h-auto px-3 py-1 bg-[#a259ff] hover:bg-[#8a4dde] text-white">
+              OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
