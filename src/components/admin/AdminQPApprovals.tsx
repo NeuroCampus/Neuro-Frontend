@@ -469,17 +469,17 @@ const AdminQPApprovals = () => {
               <Button
                 onClick={() => selectedQP && handleApprove(selectedQP.id)}
                 disabled={actionLoading}
-                className="bg-green-600 hover:bg-green-600 text-white w-full sm:w-auto justify-center transition-none"
+                className={`w-full sm:w-auto justify-center transition-none ${theme === 'dark' ? 'border-green-500 text-green-400 bg-green-500/10 hover:bg-green-500/20 border' : 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100 border'}`}
               >
-                <CheckCircle className="w-4 h-4 mr-1 hidden sm:inline-block" />
+                <CheckCircle className={`w-4 h-4 mr-1 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
                 <span className="whitespace-normal">Approve</span>
               </Button>
               <Button
                 onClick={() => selectedQP && handleReject(selectedQP.id)}
                 disabled={actionLoading}
-                className="bg-red-600 hover:bg-red-600 text-white w-full sm:w-auto justify-center transition-none"
+                className={`w-full sm:w-auto justify-center transition-none ${theme === 'dark' ? 'border-red-500 text-red-400 bg-red-500/10 hover:bg-red-500/20 border' : 'border-red-500 text-red-700 bg-red-50 hover:bg-red-100 border'}`}
               >
-                <XCircle className="w-4 h-4 mr-1 hidden sm:inline-block" />
+                <XCircle className={`w-4 h-4 mr-1 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`} />
                 <span className="whitespace-normal">Reject</span>
               </Button>
             </div>

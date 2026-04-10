@@ -516,12 +516,12 @@ const handleApprove = async (index: number) => {
           <div className="hidden md:block">
             <table className="w-full">
               <thead className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-card' : 'bg-white'}`}>
-                <tr className={`text-center border-b ${theme === 'dark' ? 'border-border text-foreground' : 'border-gray-200 text-gray-900'} text-xs`}>
-                  <th className="pb-2">Faculty</th>
-                  <th>Period</th>
-                  <th>Reason</th>
-                  <th>Status</th>
-                  <th>Action</th>
+                <tr className={`text-center border-b ${theme === 'dark' ? 'border-border text-foreground' : 'border-gray-200 text-gray-900'} text-xs md:text-sm`}>
+                  <th className="py-3 px-2 md:px-4">Faculty</th>
+                  <th className="py-3 px-2 md:px-4">Period</th>
+                  <th className="py-3 px-2 md:px-4">Reason</th>
+                  <th className="py-3 px-2 md:px-4">Status</th>
+                  <th className="py-3 px-2 md:px-4">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -535,16 +535,16 @@ const handleApprove = async (index: number) => {
                   leaveRequests.slice(0, 20).map((row, index) => (
                     <tr
                       key={row.id}
-                      className={`border-b last:border-none text-sm hover:${theme === 'dark' ? 'bg-accent' : 'bg-gray-50'} text-center`}
+                      className={`border-b last:border-none text-sm md:text-base hover:${theme === 'dark' ? 'bg-accent' : 'bg-gray-50'} text-center`}
                     >
-                      <td className="py-3">
+                      <td className="py-3 md:py-4 px-2 md:px-4">
                         <div>
                           <p className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{row.name}</p>
                           <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{row.dept}</p>
                         </div>
                       </td>
-                      <td>{row.period}</td>
-                      <td>
+                      <td className="py-3 md:py-4 px-2 md:px-4">{row.period}</td>
+                      <td className="py-3 md:py-4 px-2 md:px-4">
                         <button
                           onClick={() => openReasonModal(row.reason)}
                           className={`text-sm font-medium px-2 py-1 rounded-md ${theme === 'dark' ? 'bg-muted/10 text-foreground border border-border' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
@@ -552,7 +552,7 @@ const handleApprove = async (index: number) => {
                           View
                         </button>
                       </td>
-                      <td>
+                      <td className="py-3 md:py-4 px-2 md:px-4">
                         <span
                           className={`px-2 py-0.5 rounded-full text-xs font-medium align-middle ${
                             row.status === "Pending"
@@ -565,12 +565,12 @@ const handleApprove = async (index: number) => {
                           {row.status}
                         </span>
                       </td>
-                      <td>
+                      <td className="py-3 md:py-4 px-2 md:px-4">
                         {row.status === "Pending" ? (
-                          <div className="flex gap-2 align-middle text-center px-1 justify-center">
+                          <div className="flex flex-col md:flex-row gap-2 md:gap-2 align-middle text-center md:px-1 justify-center">
                             <button
                               onClick={() => handleApprove(index)}
-                              className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-green-500 text-green-400 bg-green-500/10 hover:bg-green-500/20' : 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100'}`}
+                              className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition border whitespace-nowrap ${theme === 'dark' ? 'border-green-500 text-green-400 bg-green-500/10 hover:bg-green-500/20' : 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100'}`}
                               disabled={isLoading}
                             >
                               <CheckCircle className={`w-4 h-4 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
@@ -578,7 +578,7 @@ const handleApprove = async (index: number) => {
                             </button>
                             <button
                               onClick={() => handleReject(index)}
-                              className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-red-500 text-red-400 bg-red-500/10 hover:bg-red-500/20' : 'border-red-500 text-red-700 bg-red-50 hover:bg-red-100'}`}
+                              className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition border whitespace-nowrap ${theme === 'dark' ? 'border-red-500 text-red-400 bg-red-500/10 hover:bg-red-500/20' : 'border-red-500 text-red-700 bg-red-50 hover:bg-red-100'}`}
                               disabled={isLoading}
                             >
                               <XCircle className={`w-4 h-4 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`} />

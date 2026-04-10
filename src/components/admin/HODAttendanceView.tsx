@@ -4,6 +4,13 @@ import { useTheme } from "../../context/ThemeContext";
 import { fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
 import Swal from "sweetalert2";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "../ui/dialog";
 
 interface TodayRow {
   branch: string;
@@ -53,6 +60,7 @@ const AdminHODAttendance: React.FC = () => {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState<'today' | 'records'>('today');
   const [isLoading, setIsLoading] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   // Today's snapshot
   const [todayRows, setTodayRows] = useState<TodayRow[]>([]);
@@ -280,22 +288,6 @@ const AdminHODAttendance: React.FC = () => {
 
       {activeTab === 'records' && !isLoading && (
         <>
-          <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
-            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>Start Date</label>
-                <input type="date" value={dateRange.start_date} onChange={(e) => setDateRange(prev => ({ ...prev, start_date: e.target.value }))} className={`w-full sm:w-auto px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-background border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`} />
-              </div>
-              <div>
-                <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>End Date</label>
-                <input type="date" value={dateRange.end_date} onChange={(e) => setDateRange(prev => ({ ...prev, end_date: e.target.value }))} className={`w-full sm:w-auto px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-background border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`} />
-              </div>
-              <div>
-                <button onClick={() => { setRecords([]); setRecordsPagination(prev => ({ ...prev, page: 1 })); fetchRecords(1, recordsPagination.page_size); }} className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md">Filter</button>
-              </div>
-            </div>
-          </div>
-
           {facultySummary.length > 0 && (
             <div className={`rounded-lg shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} overflow-hidden`}>
               <div className="px-6 py-4 border-b border-gray-200"><h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Faculty Attendance Summary</h3></div>
@@ -345,8 +337,48 @@ const AdminHODAttendance: React.FC = () => {
           )}
 
           <div className={`rounded-lg shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} overflow-hidden`}>
-            <div className="px-6 py-4 border-b border-gray-200"><h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Detailed Attendance Records</h3></div>
-            {/* Desktop / Tablet (md+) Table; show cards on sm and below */}
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Detailed Attendance Records</h3>
+              <button 
+                onClick={() => setFilterOpen(!filterOpen)}
+                className="px-4 py-2 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white rounded-md font-medium transition-colors text-sm"
+              >
+                Filter
+              </button>
+            </div>
+
+            {/* Filter Dialog */}
+            <Dialog open={filterOpen} onOpenChange={setFilterOpen}>
+              <DialogContent className={`w-full max-w-md ${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900'}`}>
+                <DialogHeader>
+                  <DialogTitle>Filter Attendance Records</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>Start Date</label>
+                    <input type="date" value={dateRange.start_date} onChange={(e) => setDateRange(prev => ({ ...prev, start_date: e.target.value }))} className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-background border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`} />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>End Date</label>
+                    <input type="date" value={dateRange.end_date} onChange={(e) => setDateRange(prev => ({ ...prev, end_date: e.target.value }))} className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${theme === 'dark' ? 'bg-background border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`} />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <button 
+                    onClick={() => setFilterOpen(false)}
+                    className={`px-4 py-2 rounded-md font-medium ${theme === 'dark' ? 'bg-card border border-border text-foreground hover:bg-accent' : 'bg-gray-100 text-gray-900 hover:bg-gray-200'}`}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={() => { setRecords([]); setRecordsPagination(prev => ({ ...prev, page: 1 })); fetchRecords(1, recordsPagination.page_size); setFilterOpen(false); }} 
+                    className="px-4 py-2 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white rounded-md font-medium transition-colors"
+                  >
+                    Apply
+                  </button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full table-fixed">
                 <thead className={`sticky top-0 ${theme === 'dark' ? 'bg-card' : 'bg-gray-50'}`}>

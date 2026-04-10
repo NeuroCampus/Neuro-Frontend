@@ -520,7 +520,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                           ))}
                         </select>
                       ) : (
-                        <div className="truncate">{branch.name}</div>
+                        <div className="break-words whitespace-normal">{branch.name}</div>
                       )}
                     </td>
 
@@ -556,13 +556,13 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                           ))}
                         </select>
                       ) : (
-                        <div className="truncate">{branch.hod || "--"}</div>
+                        <div className="break-words whitespace-normal">{branch.hod || "--"}</div>
                       )}
                     </td>
 
                     {/* HOD Contact column */}
                     <td className="py-3 hidden sm:table-cell">
-                      <div className="truncate">{branch.hod_contact || "--"}</div>
+                      <div className="break-words whitespace-normal">{branch.hod_contact || "--"}</div>
                     </td>
 
                     {/* Actions column */}

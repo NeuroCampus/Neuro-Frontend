@@ -310,28 +310,16 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
                 size="sm"
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
+                className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white border-[#a259ff]"
               >
                 Previous
               </Button>
 
-              {/* Page Numbers */}
+              {/* Current Page Number */}
               <div className="flex gap-1">
-                {Array.from({ length: Math.min(7, totalPages) }, (_, i) => {
-                  const startPage = Math.max(1, Math.min(totalPages - 6, currentPage - 3));
-                  const pageNum = startPage + i;
-                  if (pageNum > totalPages) return null;
-                  return (
-                    <Button
-                      key={pageNum}
-                      variant={currentPage === pageNum ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`w-8 h-8 p-0 ${currentPage === pageNum ? 'bg-[#a259ff] hover:bg-[#a259ff]/90 text-white' : ''}`}
-                    >
-                      {pageNum}
-                    </Button>
-                  );
-                })}
+                <span className="px-3 py-2 text-sm font-medium">
+                  {currentPage}
+                </span>
               </div>
 
               <Button
@@ -339,6 +327,7 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
                 size="sm"
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
+                className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white border-[#a259ff]"
               >
                 Next
               </Button>

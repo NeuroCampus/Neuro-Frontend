@@ -314,7 +314,7 @@ const filteredUsers = Array.isArray(users) ? users : [];
     <div className="flex flex-col">
       <label className={`text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>{label}</label>
       <Select.Root value={value} onValueChange={onChange}>
-        <Select.Trigger className={`inline-flex items-center justify-between px-3 py-2 rounded w-full sm:w-48 text-sm shadow-sm outline-none focus:ring-2 ${
+        <Select.Trigger className={`select-trigger inline-flex items-center justify-between px-3 py-2 rounded w-full sm:w-48 text-sm shadow-sm outline-none focus:ring-2 ${
           theme === 'dark' 
             ? 'bg-card border border-border text-foreground focus:ring-primary' 
             : 'bg-white border border-gray-300 text-gray-900 focus:ring-blue-500'
@@ -359,18 +359,47 @@ const filteredUsers = Array.isArray(users) ? users : [];
   }
 
   return (
-    <div className={`p-4 sm:p-6 min-h-screen text-sm sm:text-base max-w-[390px] sm:max-w-none mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
-      <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}>
-        <CardHeader>
-          <CardTitle className={`text-base sm:text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>User Management</CardTitle>
-          <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Manage all users in the system</p>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-            {/* Filters */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:flex md:gap-4 lg:flex lg:gap-4">
-              <div className="w-full md:w-auto lg:w-auto">
-                <span className={`block text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Filter by Role</span>
+    <>
+      <style>{`
+        @media (max-width: 480px) {
+          .users-container { padding: 12px; }
+          .users-card { border-radius: 8px; }
+          .users-card-header { padding: 12px; }
+          .users-card-title { font-size: 18px; line-height: 1.3; }
+          .users-card-desc { font-size: 12px; margin-top: 4px; }
+          .users-card-content { padding: 12px; }
+          .filters-search { gap: 12px; }
+          .filter-label { font-size: 12px; margin-bottom: 4px; }
+          .search-wrapper { gap: 8px; }
+          .search-input { font-size: 13px; }
+          .table-wrapper { border-radius: 6px; }
+          .users-table { font-size: 12px; }
+          .table-header th { font-size: 12px; padding: 8px 6px !important; white-space: nowrap; }
+          .table-cell { padding: 8px 6px !important; font-size: 13px; }
+          .action-buttons { gap: 4px; }
+          .pagination-container { gap: 8px; flex-direction: column; align-items: flex-start; }
+          .pagination-info { font-size: 11px; }
+          .pagination-controls { gap: 4px; }
+          .pagination-btn { padding: 6px 10px !important; font-size: 12px !important; }
+          .delete-modal { width: 90vw !important; max-width: 320px !important; padding: 16px !important; }
+          .delete-modal-title { font-size: 18px; line-height: 1.3; }
+          .delete-modal-body { font-size: 13px; line-height: 1.5; margin: 12px 0; }
+          .delete-modal-buttons { gap: 8px; flex-direction: column; }
+          .delete-modal-btn { width: 100% !important; padding: 10px 12px !important; font-size: 13px !important; }
+        }
+      `}</style>
+      <div className={`users-container p-4 sm:p-6 min-h-screen text-sm sm:text-base max-w-[390px] sm:max-w-none mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+        <Card className={`users-card ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
+          <CardHeader className="users-card-header">
+            <CardTitle className={`users-card-title ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>User Management</CardTitle>
+            <p className={`users-card-desc ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Manage all users in the system</p>
+          </CardHeader>
+          <CardContent className="users-card-content">
+            <div className="filters-search flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+              {/* Filters */}
+              <div className="grid grid-cols-1 gap-3 lg:flex lg:gap-4">
+              <div className="w-full lg:w-auto">
+                <span className={`filter-label block mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Filter by Role</span>
                 <SelectMenu
                   label=""
                   value={roleFilter}
@@ -378,8 +407,8 @@ const filteredUsers = Array.isArray(users) ? users : [];
                   options={roles}
                 />
               </div>
-              <div className="w-full md:w-auto lg:w-auto">
-                <span className={`block text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Filter by Status</span>
+              <div className="w-full lg:w-auto">
+                <span className={`filter-label block mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Filter by Status</span>
                 <SelectMenu
                   label=""
                   value={statusFilter}
@@ -390,17 +419,17 @@ const filteredUsers = Array.isArray(users) ? users : [];
             </div>
 
             {/* Search */}
-            <div className="w-full md:w-auto lg:w-auto flex flex-col">
-              <label className={`text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Search</label>
-              <div className="flex gap-2">
+            <div className="w-full lg:w-auto flex flex-col">
+              <label className={`filter-label mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Search</label>
+              <div className="search-wrapper flex gap-2">
                 <Input
                   placeholder="Search name or email..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={handleSearchKeyPress}
-                  className={theme === 'dark' 
-                    ? 'w-full md:w-52 rounded bg-card border border-border text-foreground px-2 py-1' 
-                    : 'w-full md:w-52 rounded bg-white border border-gray-300 text-gray-900 px-2 py-1'}
+                  className={`search-input w-full lg:w-52 rounded ${theme === 'dark' 
+                    ? 'bg-card border border-border text-foreground px-2 py-1' 
+                    : 'bg-white border border-gray-300 text-gray-900 px-2 py-1'}`}
                 />
                 <Button
                   onClick={performSearch}
@@ -416,15 +445,15 @@ const filteredUsers = Array.isArray(users) ? users : [];
             </div>
           </div>
 
-          <div className="block overflow-x-auto">
-            <table className="w-full text-xs sm:text-sm text-left">
-              <thead className={`border-b ${theme === 'dark' ? 'border-border text-foreground' : 'border-gray-200 text-gray-900'}`}>
+          <div className="table-wrapper block overflow-x-auto">
+            <table className="users-table w-full text-left">
+              <thead className={`table-header border-b ${theme === 'dark' ? 'border-border text-foreground' : 'border-gray-200 text-gray-900'}`}>
                 <tr>
-                  <th className="py-2">Full Name</th>
-                  <th className="py-2">Email</th>
-                  <th className="py-2">Role</th>
-                  <th className="py-2">Status</th>
-                  <th className="py-2 text-right">Actions</th>
+                  <th className="py-2 px-4 sm:w-[200px]">Full Name</th>
+                  <th className="py-2 px-1 md:w-[200px]">Email</th>
+                  <th className="py-2 px-1 md:w-[120px]">Role</th>
+                  <th className="py-2 px-1 md:w-[120px]">Status</th>
+                  <th className="py-2 px-1 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -432,13 +461,13 @@ const filteredUsers = Array.isArray(users) ? users : [];
                   filteredUsers.map((user) => (
                     <tr
                       key={user.id}
-                      className={`border-b transition-colors duration-200 ${
+                      className={`table-row border-b transition-colors duration-200 ${
                         theme === 'dark' 
                           ? 'border-border hover:bg-accent' 
                           : 'border-gray-200 hover:bg-gray-50'
                       }`}
                     >
-                      <td className="py-2 px-1 break-words whitespace-normal md:w-[150px]">
+                      <td className="table-cell py-2 px-1 break-words whitespace-normal md:w-[200px]">
                         {editingId === user.id ? (
                           <Input
                             name="name"
@@ -452,7 +481,7 @@ const filteredUsers = Array.isArray(users) ? users : [];
                           user.name
                         )}
                       </td>
-                      <td className="py-2 px-1 break-words whitespace-normal md:w-[200px]">
+                      <td className="table-cell py-2 px-1 break-words whitespace-normal md:w-[200px]">
                         {editingId === user.id ? (
                           <Input
                             name="email"
@@ -466,10 +495,10 @@ const filteredUsers = Array.isArray(users) ? users : [];
                           user.email
                         )}
                       </td>
-                      <td className="py-2 px-1 break-words whitespace-normal md:w-[120px]">{getRoleBadge(user.role, theme)}</td>
-                      <td className="py-2 px-1 break-words whitespace-normal md:w-[120px]">{getStatusBadge(user.status, theme)}</td>
-                      <td className="py-2 text-right">
-                        <div className="flex flex-wrap sm:flex-nowrap justify-end gap-2">
+                      <td className="table-cell py-2 px-1 break-words whitespace-normal md:w-[120px]">{getRoleBadge(user.role, theme)}</td>
+                      <td className="table-cell py-2 px-1 break-words whitespace-normal md:w-[120px]">{getStatusBadge(user.status, theme)}</td>
+                      <td className="table-cell py-2 px-1 text-right">
+                        <div className="action-buttons flex flex-wrap sm:flex-nowrap justify-end gap-2">
                           {editingId === user.id ? (
                             <Button
                               size="sm"
@@ -562,17 +591,17 @@ const filteredUsers = Array.isArray(users) ? users : [];
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between mt-6 gap-2">
-              <div className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+            <div className="pagination-container flex flex-col sm:flex-row items-center justify-between mt-6 gap-2">
+              <div className={`pagination-info ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                 Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, totalUsers)} of {totalUsers} users
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="pagination-controls flex items-center space-x-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1 || loading}
-                  className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white px-2 py-1 text-xs sm:px-3 sm:py-1 sm:text-sm"
+                  className="pagination-btn text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white px-2 py-1 sm:px-3 sm:py-1"
                 >
                   Previous
                 </Button>
@@ -583,7 +612,7 @@ const filteredUsers = Array.isArray(users) ? users : [];
                     variant="outline"
                     size="sm"
                     disabled
-                    className={theme === 'dark' ? 'text-muted-foreground bg-card border border-border px-2 py-1 text-xs sm:px-3 sm:py-1 sm:text-sm' : 'text-gray-700 bg-white border border-gray-300 px-2 py-1 text-xs sm:px-3 sm:py-1 sm:text-sm'}
+                    className={`pagination-btn ${theme === 'dark' ? 'text-muted-foreground bg-card border border-border' : 'text-gray-700 bg-white border border-gray-300'} px-2 py-1 sm:px-3 sm:py-1`}
                     aria-label={`Current page ${currentPage} of ${totalPages}`}
                   >
                     {currentPage}
@@ -595,7 +624,7 @@ const filteredUsers = Array.isArray(users) ? users : [];
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages || loading}
-                  className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white px-2 py-1 text-xs sm:px-3 sm:py-1 sm:text-sm"
+                  className="pagination-btn text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white px-2 py-1 sm:px-3 sm:py-1"
                 >
                   Next
                 </Button>
@@ -604,29 +633,30 @@ const filteredUsers = Array.isArray(users) ? users : [];
           )}
         </CardContent>
       </Card>
+      </div>
 
       <Dialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
         <DialogContent
           className={
             theme === 'dark'
-              ? 'bg-card border border-border text-foreground w-[92%] max-w-[420px] sm:max-w-md rounded-lg mx-auto'
-              : 'bg-white border border-gray-200 text-gray-900 w-[92%] max-w-[420px] sm:max-w-md rounded-lg mx-auto'
+              ? 'delete-modal bg-card border border-border text-foreground w-[92%] max-w-[420px] sm:max-w-md rounded-lg mx-auto'
+              : 'delete-modal bg-white border border-gray-200 text-gray-900 w-[92%] max-w-[420px] sm:max-w-md rounded-lg mx-auto'
           }
         >
           <DialogHeader>
-            <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Confirm Deletion</DialogTitle>
+            <DialogTitle className={`delete-modal-title ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Confirm Deletion</DialogTitle>
           </DialogHeader>
-          <p className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>
+          <p className={`delete-modal-body ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
             Are you sure you want to delete this user? This action cannot be undone.
           </p>
-          <DialogFooter>
+          <DialogFooter className="delete-modal-buttons">
             <Button
               variant="outline"
               onClick={() => setDeleteId(null)}
               disabled={loading}
-              className={theme === 'dark' 
+              className={`delete-modal-btn ${theme === 'dark' 
                 ? 'text-foreground bg-card border border-border hover:bg-accent' 
-                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
+                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}`}
             >
               Cancel
             </Button>
@@ -634,16 +664,16 @@ const filteredUsers = Array.isArray(users) ? users : [];
               variant="destructive"
               onClick={deleteUser}
               disabled={loading}
-              className={theme === 'dark' 
+              className={`delete-modal-btn ${theme === 'dark' 
                 ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' 
-                : 'bg-red-600 hover:bg-red-700 text-white'}
+                : 'bg-red-600 hover:bg-red-700 text-white'}`}
             >
               {loading ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 };
 
