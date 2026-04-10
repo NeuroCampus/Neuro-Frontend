@@ -48,6 +48,7 @@ const ProctorStudents = () => {
     totalCount: 0,
     totalAssigned: 0,
     totalUnassigned: 0,
+    totalPages: 1,
     editMode: false,
     selectedUSNs: [] as string[],
     selectedProctor: "",
@@ -63,7 +64,7 @@ const ProctorStudents = () => {
     cancelling: false,
   });
 
-  const studentsPerPage = 10;
+  const studentsPerPage = 20;
 
   // Helper to update state
   const updateState = (newState: Partial<typeof state>) => {
@@ -449,13 +450,13 @@ const ProctorStudents = () => {
         {/* Edit Mode Controls */}
         {state.editMode && (
           <div className={`px-4 sm:px-6 py-3 border-t ${theme === 'dark' ? 'border-border bg-card/50' : 'border-gray-200 bg-gray-50'}`}>
-            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
-              <div className="w-full sm:flex-1">
+            <div className="flex flex-col md:flex-row gap-3 items-start md:items-end w-full">
+              <div className="w-full md:flex-1">
                 <label className={`block text-xs sm:text-sm mb-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                   Choose a Proctor
                 </label>
                 <Select onValueChange={(value) => updateState({ selectedProctor: value })} disabled={state.proctors.length === 0}>
-                  <SelectTrigger className={`text-sm ${theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-300 text-gray-900'}`}>
+                  <SelectTrigger className={`text-sm w-full ${theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-300 text-gray-900'}`}>
                     <SelectValue placeholder={state.proctors.length === 0 ? "No proctors" : "Choose a proctor"} />
                   </SelectTrigger>
                   <SelectContent className={theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
@@ -466,7 +467,7 @@ const ProctorStudents = () => {
                 </Select>
               </div>
 
-              <div className="w-full sm:w-auto flex gap-2 sm:mt-6">
+              <div className="w-full md:w-auto flex gap-2 md:mt-6">
                 <Button
                   onClick={async () => {
                     updateState({ saving: true });
@@ -497,11 +498,11 @@ const ProctorStudents = () => {
 
         {!state.editMode && (
           <div className={`px-4 sm:px-6 py-3 border-t ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
-            <div className="flex flex-col md:flex-row gap-3 items-start md:items-end w-full md:flex-wrap md:justify-between">
+            <div className="flex flex-col gap-3 items-start w-full">
               {/* Filters on the left */}
-              <div className="flex flex-row gap-3 items-start md:items-end w-full md:w-auto">
+              <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end w-full">
                 {/* Semester Filter */}
-                <div className="flex flex-col flex-1 sm:flex-none sm:w-56">
+                <div className="flex flex-col w-full sm:flex-1 lg:w-56">
                   <label className={`text-xs sm:text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Semester</label>
                   <Select
                     value={state.filters.semester_id}
@@ -523,7 +524,7 @@ const ProctorStudents = () => {
                 </div>
 
                 {/* Section Filter */}
-                <div className="flex flex-col flex-1 sm:flex-none sm:w-56">
+                <div className="flex flex-col w-full sm:flex-1 lg:w-56">
                   <label className={`text-xs sm:text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Section</label>
                   <Select
                     value={state.filters.section_id}
@@ -548,10 +549,10 @@ const ProctorStudents = () => {
               </div>
 
               {/* Search on the right */}
-              <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+              <div className="flex flex-col sm:flex-row gap-2 w-full">
                 <Input
                   placeholder="Search students by name or USN..."
-                  className={`w-full sm:w-48 text-sm ${theme === 'dark' ? 'bg-card text-foreground border border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border border-gray-300 placeholder:text-gray-500'}`}
+                  className={`w-full sm:w-80 text-sm ${theme === 'dark' ? 'bg-card text-foreground border border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border border-gray-300 placeholder:text-gray-500'}`}
                   value={state.search}
                   onChange={(e) => updateState({ search: e.target.value })}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -561,7 +562,7 @@ const ProctorStudents = () => {
                   onClick={handleSearch}
                   variant="outline"
                   disabled={state.loading}
-                  className={`text-sm font-medium px-4 whitespace-nowrap ${theme === 'dark' ? 'bg-card text-foreground border border-border hover:bg-accent' : 'bg-white text-gray-900 border border-gray-300 hover:bg-gray-100'}`}
+                  className={`text-sm font-medium px-4 whitespace-nowrap w-full sm:w-auto ${theme === 'dark' ? 'bg-card text-foreground border border-border hover:bg-accent' : 'bg-white text-gray-900 border border-gray-300 hover:bg-gray-100'}`}
                 >
                   Search
                 </Button>
@@ -639,20 +640,20 @@ const ProctorStudents = () => {
             <div className="flex gap-2 items-center justify-center sm:justify-end">
               <Button
                 variant="outline"
-                disabled={state.currentPage === 1 || state.loading}
+                disabled={state.currentPage === 1 || state.loading || state.students.length === 0}
                 onClick={() => updateState({ currentPage: Math.max(state.currentPage - 1, 1) })}
-                className={`text-sm font-medium px-3 py-2 ${theme === 'dark' ? 'bg-card text-foreground border-border hover:bg-accent' : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-100'}`}
+                className="text-sm font-medium px-3 py-2 text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-sm transition-all duration-200"
               >
                 Prev
               </Button>
-              <span className={`px-3 text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+              <span className="px-3 text-sm font-medium text-[#a259ff]">
                 {state.currentPage}
               </span>
               <Button
                 variant="outline"
-                disabled={state.currentPage === state.totalPages || state.loading}
+                disabled={state.currentPage === state.totalPages || state.loading || state.students.length === 0}
                 onClick={() => updateState({ currentPage: Math.min(state.currentPage + 1, state.totalPages) })}
-                className={`text-sm font-medium px-3 py-2 ${theme === 'dark' ? 'bg-card text-foreground border-border hover:bg-accent' : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-100'}`}
+                className="text-sm font-medium px-3 py-2 text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-sm transition-all duration-200"
               >
                 Next
               </Button>

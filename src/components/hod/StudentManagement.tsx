@@ -835,8 +835,8 @@ const StudentManagement = () => {
   // Chart removed
 
   return (
-    <div className={`p-6 space-y-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <h2 className={`text-2xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Student Management</h2>
+    <div className={`p-4 sm:p-6 md:p-6 lg:p-8 space-y-6 md:space-y-5 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <h2 className={`text-2xl md:text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Student Management</h2>
       {state.isLoading && <p className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Loading data...</p>}
       {state.successMessage && (
         <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{state.successMessage}</p>
@@ -852,12 +852,12 @@ const StudentManagement = () => {
       {/* Add Student Manually Form */}
       <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
-          <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Add Student Manually</CardTitle>
+          <CardTitle className={`text-lg md:text-base ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Add Student Manually</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex space-x-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-3">
             {/* USN */}
-            <div className="flex flex-col flex-1">
+            <div className="flex flex-col">
               <Input
                 placeholder="USN"
                 value={state.manualForm.usn}
@@ -879,7 +879,7 @@ const StudentManagement = () => {
                     manualErrors: { ...state.manualErrors, usn: error },
                   });
                 }}
-                className={`flex-1 ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${
+                className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${
                   state.manualErrors?.usn
                     ? "border-red-500"
                     : theme === 'dark' ? 'border-border focus:border-primary' : 'border-gray-300 focus:border-blue-500'
@@ -891,7 +891,7 @@ const StudentManagement = () => {
             </div>
 
             {/* Name Field */}
-            <div className="flex flex-col flex-1">
+            <div className="flex flex-col">
               <Input
                 placeholder="Name"
                 value={state.manualForm.name}
@@ -920,7 +920,7 @@ const StudentManagement = () => {
                     manualErrors: { ...state.manualErrors, name: error },
                   });
                 }}
-                className={`flex-1 ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${
+                className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${
                   state.manualErrors?.name
                     ? "border-red-500"
                     : theme === 'dark' ? 'border-border focus:border-primary' : 'border-gray-300 focus:border-blue-500'
@@ -933,7 +933,7 @@ const StudentManagement = () => {
 
 
             {/* Email */}
-            <div className="flex flex-col flex-1">
+            <div className="flex flex-col">
               <Input
                 placeholder="Email"
                 type="text"
@@ -958,7 +958,7 @@ const StudentManagement = () => {
                     manualErrors: { ...state.manualErrors, email: error },
                   });
                 }}
-                className={`flex-1 ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${
+                className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${
                   state.manualErrors?.email
                     ? "border-red-500"
                     : theme === 'dark' ? 'border-border focus:border-primary' : 'border-gray-300 focus:border-blue-500'
@@ -970,7 +970,7 @@ const StudentManagement = () => {
             </div>
 
             {/* Phone */}
-            <div className="flex flex-col flex-1">
+            <div className="flex flex-col">
               <Input
                 placeholder="Phone"
                 type="tel"
@@ -987,7 +987,7 @@ const StudentManagement = () => {
                   if (value && !/^\d{10}$/.test(value)) error = "Phone must be 10 digits";
                   updateState({ manualErrors: { ...state.manualErrors, phone: error } });
                 }}
-                className={`flex-1 ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${
+                className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${
                   state.manualErrors?.phone
                     ? "border-red-500"
                     : theme === 'dark' ? 'border-border focus:border-primary' : 'border-gray-300 focus:border-blue-500'
@@ -1006,7 +1006,7 @@ const StudentManagement = () => {
               }
               disabled={state.isLoading || state.semesters.length === 0}
             >
-              <SelectTrigger className={`flex-1 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} placeholder:text-muted-foreground focus:ring-0`}>
+              <SelectTrigger className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} placeholder:text-muted-foreground focus:ring-0`}>
                 <SelectValue
                   placeholder={state.semesters.length === 0 ? "No semesters available" : "Select Semester"}
                 />
@@ -1024,7 +1024,7 @@ const StudentManagement = () => {
               onValueChange={(value) => updateState({ manualForm: { ...state.manualForm, section: value } })}
               disabled={state.isLoading || !state.manualForm.semester || state.manualSections.length === 0}
             >
-              <SelectTrigger className={`flex-1 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} placeholder:text-muted-foreground focus:ring-0`}>
+              <SelectTrigger className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} placeholder:text-muted-foreground focus:ring-0`}>
                 <SelectValue
                   placeholder={
                     state.manualSections.length === 0 || !state.manualForm.semester
@@ -1048,7 +1048,7 @@ const StudentManagement = () => {
               onValueChange={(value) => updateState({ manualForm: { ...state.manualForm, batch: value } })}
               disabled={state.isLoading || state.batches.length === 0}
             >
-              <SelectTrigger className={`flex-1 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} placeholder:text-muted-foreground focus:ring-0`}>
+              <SelectTrigger className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} placeholder:text-muted-foreground focus:ring-0`}>
                 <SelectValue
                   placeholder={state.batches.length === 0 ? "No batches available" : "Select Batch"}
                 />
@@ -1067,7 +1067,7 @@ const StudentManagement = () => {
                 onValueChange={(value) => updateState({ manualForm: { ...state.manualForm, cycle: value } })}
                 disabled={state.isLoading}
               >
-                <SelectTrigger className={`flex-1 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} placeholder:text-muted-foreground focus:ring-0`}>
+                <SelectTrigger className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} placeholder:text-muted-foreground focus:ring-0`}>
                   <SelectValue placeholder="Select Cycle" />
                 </SelectTrigger>
                 <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
@@ -1080,6 +1080,8 @@ const StudentManagement = () => {
                 </SelectContent>
               </Select>
             )}
+          </div>
+          <div className="flex justify-end mt-4">
             <Button
               onClick={handleManualEntry}
               disabled={
@@ -1090,7 +1092,7 @@ const StudentManagement = () => {
                 !state.manualForm.batch ||
                 (getSemesterNumber(state.manualForm.semester) <= 2 && !state.manualForm.cycle)
               }
-              className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition disabled:opacity-50 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+              className="flex items-center justify-center gap-1 text-sm font-medium px-4 py-1.5 rounded-md transition disabled:opacity-50 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
             >
               + Add Student
             </Button>
@@ -1112,39 +1114,40 @@ const StudentManagement = () => {
 
       <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Student List</CardTitle>
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 md:gap-4">
+            <CardTitle className={`text-lg md:text-base ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Student List</CardTitle>
             <div className="flex gap-2">
               <Button
                 onClick={() => updateState({ addStudentModal: true })}
-                className="flex items-center gap-1 text-sm font-semibold px-3 py-1.5 rounded-md transition bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                className="flex items-center gap-1 text-xs md:text-sm font-semibold px-3 py-1.5 rounded-md transition bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white whitespace-nowrap"
                 disabled={state.isLoading || !state.branchId}
               >
                 <Upload className="w-4 h-4" />
-                Bulk Upload
+                <span className="hidden sm:inline">Bulk Upload</span>
+                <span className="sm:hidden">Upload</span>
               </Button>
             </div>
           </div>
         </CardHeader>
 
         <CardContent>
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 md:gap-4 mb-4">
             {/* Left side: Search input and button */}
             <div className="flex gap-2">
               <Input
                 placeholder="Search students..."
-                className={`w-64 ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'}`}
+                className={`flex-1 md:w-48 ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'}`}
                 value={state.search}
                 onChange={(e) => updateState({ search: e.target.value })}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               />
-              <Button onClick={handleSearch} variant="outline">
+              <Button onClick={handleSearch} variant="outline" className="text-xs md:text-sm">
                 Search
               </Button>
             </div>
 
             {/* Right side: Dropdowns */}
-            <div className="flex gap-4">
+            <div className="flex gap-2 md:gap-4">
               <Select
                 value={state.semesterFilter}
                 onValueChange={(value) =>
@@ -1157,7 +1160,7 @@ const StudentManagement = () => {
                 }
                 disabled={state.isLoading || state.semesters.length === 0}
               >
-                <SelectTrigger className={`w-48 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
+                <SelectTrigger className={`flex-1 md:w-40 md:max-w-40 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
                   <SelectValue
                     placeholder={
                       state.semesters.length === 0
@@ -1187,7 +1190,7 @@ const StudentManagement = () => {
                   state.listSections.length === 0
                 }
               >
-                <SelectTrigger className={`w-48 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
+                <SelectTrigger className={`flex-1 md:w-40 md:max-w-40 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
                   <SelectValue
                     placeholder={
                       state.listSections.length === 0 ||
@@ -1212,33 +1215,33 @@ const StudentManagement = () => {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="min-w-full text-sm text-left">
+            <table className="min-w-full text-xs md:text-sm text-left">
               <thead className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-gray-100 text-gray-900 border-gray-300'}>
                 <tr className="border-b">
-                  <th className="py-2 px-4">USN</th>
-                  <th className="py-2 px-4">Name</th>
-                  <th className="py-2 px-4">Email</th>
-                  <th className="py-2 px-4">Phone</th>
-                  <th className="py-2 px-4">Section</th>
-                  <th className="py-2 px-4">Semester</th>
-                  <th className="py-2 px-4">Actions</th>
+                  <th className="py-2 px-2 md:px-3">USN</th>
+                  <th className="py-2 px-2 md:px-3">Name</th>
+                  <th className="py-2 px-2 md:px-3">Email</th>
+                  <th className="hidden sm:table-cell py-2 px-2 md:px-3">Phone</th>
+                  <th className="hidden md:table-cell py-2 px-2 md:px-3">Section</th>
+                  <th className="py-2 px-2 md:px-3">Semester</th>
+                  <th className="py-2 px-2 md:px-3">Actions</th>
                 </tr>
               </thead>
               <tbody className={theme === 'dark' ? 'divide-y divide-border' : 'divide-y divide-gray-200'}>
                 {paginatedFilteredStudents.map((student) => (
                   <tr key={student.usn} className={theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-50'}>
-                    <td className="py-2 px-4">{student.usn}</td>
-                    <td className="py-2 px-4">{student.name}</td>
-                    <td className="py-2 px-4">{student.email}</td>
-                    <td className="py-2 px-4">{student.phone && student.phone.trim() ? student.phone : '-'}</td>
-                    <td className="py-2 px-4">Section {student.section}</td>
-                    <td className="py-2 px-4">{formatSemesterDisplay(student)}</td>
-                    <td className="py-2 px-4 flex gap-2">
+                    <td className="py-2 px-2 md:px-3">{student.usn}</td>
+                    <td className="py-2 px-2 md:px-3">{student.name}</td>
+                    <td className="py-2 px-2 md:px-3">{student.email}</td>
+                    <td className="hidden sm:table-cell py-2 px-2 md:px-3">{student.phone && student.phone.trim() ? student.phone : '-'}</td>
+                    <td className="hidden md:table-cell py-2 px-2 md:px-3">Section {student.section}</td>
+                    <td className="py-2 px-2 md:px-3">{formatSemesterDisplay(student)}</td>
+                    <td className="py-2 px-2 md:px-3 flex gap-1 md:gap-2">
                       <button
                         onClick={() => openEdit(student)}
                         className={theme === 'dark' ? 'text-primary hover:text-primary/80' : 'text-blue-600 hover:text-blue-800'}
                       >
-                        <Pencil size={18} />
+                        <Pencil size={16} className="md:size-[18px]" />
                       </button>
                       <button
                         onClick={() =>
@@ -1249,7 +1252,7 @@ const StudentManagement = () => {
                         }
                         className={theme === 'dark' ? 'text-destructive hover:text-destructive/80' : 'text-red-600 hover:text-red-800'}
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={16} className="md:size-[18px]" />
                       </button>
                     </td>
                   </tr>
@@ -1267,21 +1270,21 @@ const StudentManagement = () => {
             </div>
           </div>
 
-          <div className="flex justify-end items-center mt-4">
+          <div className="flex justify-end items-center gap-2 md:gap-3 mt-4">
             <Button
               onClick={() => handlePageChange(state.currentPage - 1)}
               disabled={state.currentPage === 1}
-              className="w-24 flex items-center justify-center gap-1 text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+              className="w-20 md:w-24 flex items-center justify-center gap-1 text-xs md:text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
             >
               Previous
             </Button>
-            <div className={`w-16 text-center text-sm font-medium py-1.5 mx-2 rounded-md ${theme === 'dark' ? 'text-foreground bg-card border-border' : 'text-gray-900 bg-white border-gray-300'}`}>
+            <div className={`w-12 md:w-16 text-center text-xs md:text-sm font-medium py-1.5 rounded-md ${theme === 'dark' ? 'text-foreground bg-card border-border' : 'text-gray-900 bg-white border-gray-300'}`}>
               {state.currentPage}
             </div>
             <Button
               onClick={() => handlePageChange(state.currentPage + 1)}
               disabled={state.currentPage === totalFilteredPages}
-              className="w-24 flex items-center justify-center gap-1 text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+              className="w-20 md:w-24 flex items-center justify-center gap-1 text-xs md:text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
             >
               Next
             </Button>
@@ -1293,7 +1296,7 @@ const StudentManagement = () => {
 
 
       <Dialog open={state.addStudentModal} onOpenChange={closeModal}>
-        <DialogContent className={`max-w-4xl ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
+        <DialogContent className={`max-w-2xl md:max-w-xl ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
           <DialogHeader>
             <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Upload Student Data</DialogTitle>
           </DialogHeader>

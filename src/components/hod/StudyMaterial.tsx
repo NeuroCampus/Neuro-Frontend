@@ -150,18 +150,18 @@ const useUploadModal = () => {
 
 // Row component for each study material
 const StudyMaterialRow = ({ material, theme }: { material: StudyMaterial; theme: string }) => (
-  <div className={`grid grid-cols-1 sm:grid-cols-7 gap-2 items-center text-sm py-2 ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
-    <div className="flex items-center">
+  <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-2 items-center text-sm py-2 md:py-3 px-2 md:px-0 ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
+    <div className="flex items-center md:col-span-1">
       <FileText className="text-red-500" size={20} />
     </div>
-    <div className={`${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'} font-medium cursor-pointer hover:underline truncate`}>
+    <div className={`${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'} font-medium cursor-pointer hover:underline truncate md:col-span-1`}>
       {material.title}
     </div>
-    <div className={`truncate ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{material.subject_name}</div>
-    <div className={`truncate ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{material.subject_code}</div>
-    <div className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{material.semester || "N/A"}</div>
-    <div className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{material.uploaded_by}</div>
-    <div>
+    <div className={`truncate hidden md:block md:col-span-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{material.subject_name}</div>
+    <div className={`truncate md:col-span-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{material.subject_code}</div>
+    <div className={`hidden md:block md:col-span-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{material.semester || "N/A"}</div>
+    <div className={`hidden md:block md:col-span-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{material.uploaded_by}</div>
+    <div className="md:col-span-1">
       <a href={material.file_url} download={material.title + ".pdf"} target="_blank" rel="noopener noreferrer">
         <Download className={`cursor-pointer ${theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-500 hover:text-gray-700'}`} size={20} />
       </a>
@@ -439,72 +439,80 @@ const StudyMaterials = () => {
         </button>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
-        <input
-          type="text"
-          placeholder="Search by title, course name, course code, semester, or uploaded by..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className={`flex-1 px-3 py-2 rounded outline-none focus:ring-2 border ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
-        />
-        <select
-          value={selectedBranchFilter}
-          onChange={(e) => setSelectedBranchFilter(e.target.value)}
-          className={`border rounded px-3 py-2 ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
-        >
-          <option value="All Branches">All Branches</option>
-          {branches.map((b) => (
-            <option key={b.id} value={b.id} className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>
-              {b.name}
-            </option>
-          ))}
-        </select>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div className="sm:col-span-2 lg:col-span-1">
+          <input
+            type="text"
+            placeholder="Search by title, course name, course code, semester, or uploaded by..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className={`w-full px-3 py-2 rounded outline-none focus:ring-2 border ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
+          />
+        </div>
+        <div>
+          <select
+            value={selectedBranchFilter}
+            onChange={(e) => setSelectedBranchFilter(e.target.value)}
+            className={`w-full border rounded px-3 py-2 ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
+          >
+            <option value="All Branches">All Branches</option>
+            {branches.map((b) => (
+              <option key={b.id} value={b.id} className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <select
-          value={semesterFilter}
-          onChange={(e) => setSemesterFilter(e.target.value)}
-          className={`border rounded px-3 py-2 ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
-        >
-          <option value="All Semesters">All Semesters</option>
-          {pageSemesters && pageSemesters.length > 0 ? (
-            pageSemesters.map((s) => (
+        <div>
+          <select
+            value={semesterFilter}
+            onChange={(e) => setSemesterFilter(e.target.value)}
+            className={`w-full border rounded px-3 py-2 ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
+          >
+            <option value="All Semesters">All Semesters</option>
+            {pageSemesters && pageSemesters.length > 0 ? (
+              pageSemesters.map((s) => (
+                <option key={s.id} value={s.id} className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>
+                  {`Semester ${s.number}`}
+                </option>
+              ))
+            ) : (
+              ["1","2","3","4","5","6","7","8"].map((semester) => (
+                <option key={semester} value={semester} className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>
+                  {semester}
+                </option>
+              ))
+            )}
+          </select>
+        </div>
+
+        <div>
+          <select
+            value={selectedSectionFilter}
+            onChange={(e) => setSelectedSectionFilter(e.target.value)}
+            className={`w-full border rounded px-3 py-2 ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
+          >
+            <option value="All Sections">All Sections</option>
+            {sections.map((s) => (
               <option key={s.id} value={s.id} className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>
-                {`Semester ${s.number}`}
+                {s.name}
               </option>
-            ))
-          ) : (
-            ["1","2","3","4","5","6","7","8"].map((semester) => (
-              <option key={semester} value={semester} className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>
-                {semester}
-              </option>
-            ))
-          )}
-        </select>
-
-        <select
-          value={selectedSectionFilter}
-          onChange={(e) => setSelectedSectionFilter(e.target.value)}
-          className={`border rounded px-3 py-2 ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
-        >
-          <option value="All Sections">All Sections</option>
-          {sections.map((s) => (
-            <option key={s.id} value={s.id} className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>
-              {s.name}
-            </option>
-          ))}
-        </select>
+            ))}
+          </select>
+        </div>
       </div>
 
       <Card className={theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-200 text-gray-900'}>
         <CardHeader>
-          <div className={`grid grid-cols-1 sm:grid-cols-7 font-semibold text-sm gap-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-            <div>Type</div>
-            <div>Title</div>
-            <div>Course Name</div>
-            <div>Course Code</div>
-            <div>Semester</div>
-            <div>Uploaded By</div>
-            <div>Action</div>
+          <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 font-semibold text-sm gap-2 px-2 md:px-0 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+            <div className="md:col-span-1">Type</div>
+            <div className="md:col-span-1">Title</div>
+            <div className="hidden md:block md:col-span-1">Course Name</div>
+            <div className="md:col-span-1">Course Code</div>
+            <div className="hidden md:block md:col-span-1">Semester</div>
+            <div className="hidden md:block md:col-span-1">Uploaded By</div>
+            <div className="md:col-span-1">Action</div>
           </div>
         </CardHeader>
 
