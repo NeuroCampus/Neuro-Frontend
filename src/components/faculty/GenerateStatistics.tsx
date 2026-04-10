@@ -254,7 +254,7 @@ const GenerateStatistics: React.FC = () => {
                 variant="outline" 
                 onClick={() => setPage(prev => Math.max(1, prev - 1))} 
                 disabled={page <= 1}
-                className="text-xs px-2 sm:px-3 h-8 sm:h-9"
+                className="text-xs px-2 sm:px-3 h-8 sm:h-9 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
               >
                 Prev
               </Button>
@@ -302,7 +302,7 @@ const GenerateStatistics: React.FC = () => {
                         size="sm"
                         variant={page === p ? "default" : "outline"}
                         onClick={() => setPage(p)}
-                        className={`h-7 w-7 sm:h-8 sm:w-8 p-0 text-xs ${page === p ? 'bg-[#a259ff] text-white hover:bg-[#8a4dde]' : ''}`}
+                        className={`h-7 w-7 sm:h-8 sm:w-8 p-0 text-xs ${page === p ? 'bg-white text-gray-900 hover:bg-gray-200 border border-gray-300' : ''}`}
                       >
                         {p}
                       </Button>
@@ -318,7 +318,7 @@ const GenerateStatistics: React.FC = () => {
                 variant="outline" 
                 onClick={() => setPage(prev => Math.min(totalPages, prev + 1))} 
                 disabled={page >= totalPages}
-                className="text-xs px-2 sm:px-3 h-8 sm:h-9"
+                className="text-xs px-2 sm:px-3 h-8 sm:h-9 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
               >
                 Next
               </Button>

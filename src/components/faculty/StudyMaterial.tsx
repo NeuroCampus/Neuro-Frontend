@@ -177,22 +177,14 @@ const StudyMaterialsFaculty = () => {
 
   return (
     <div className={`w-full p-2 sm:p-3 md:p-4 lg:p-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-2 sm:gap-3">
+      <div className="flex flex-row justify-between items-center mb-4 sm:mb-6 gap-2 sm:gap-3">
         <h1 className="text-lg sm:text-xl md:text-2xl font-semibold">Study Materials</h1>
-        <button onClick={() => setShowUploadModal(true)} className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1 bg-[#a259ff] text-white hover:bg-[#8a4dde]`}>
+        <button onClick={() => setShowUploadModal(true)} className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1 bg-[#a259ff] text-white hover:bg-[#8a4dde] whitespace-nowrap`}>
           <UploadCloud size={16} /> Upload
         </button>
       </div>
 
       <div className="flex flex-col gap-2 sm:gap-3 md:gap-4 mb-4 md:mb-6">
-        <input
-          type="text"
-          placeholder="Search by title, course name, course code, semester, or uploaded by..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className={`w-full px-2 sm:px-3 py-2 border rounded text-xs sm:text-sm ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
-        />
-
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
           <select value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)} className={`border rounded px-2 sm:px-3 py-2 text-xs sm:text-sm ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}>
             <option value="All Branches">All Branches</option>
@@ -215,6 +207,14 @@ const StudyMaterialsFaculty = () => {
             ))}
           </select>
         </div>
+
+        <input
+          type="text"
+          placeholder="Search by title, course name, course code, semester, or uploaded by..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className={`w-full px-2 sm:px-3 py-2 border rounded text-xs sm:text-sm ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
+        />
       </div>
 
       <Card>

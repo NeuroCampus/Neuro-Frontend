@@ -441,7 +441,13 @@ const UploadQP = () => {
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div>
               <label htmlFor="branch-select" className="text-sm">Branch</label>
-              <Select value={selected.branch_id ? String(selected.branch_id) : undefined} onValueChange={(v) => setSelected(s => ({ ...s, branch_id: Number(v) }))}>
+              <Select value={selected.branch_id ? String(selected.branch_id) : undefined} onValueChange={(v) => {
+                const branchId = Number(v);
+                // Auto-select first subject for this branch
+                const subjectsForBranch = assignments.filter(a => a.branch_id === branchId);
+                const firstSubject = subjectsForBranch.length > 0 ? subjectsForBranch[0].subject_id : undefined;
+                setSelected(s => ({ ...s, branch_id: branchId, subject_id: firstSubject }));
+              }}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select Branch" />
                 </SelectTrigger>

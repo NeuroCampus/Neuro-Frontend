@@ -962,7 +962,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
                   Apply
                 </Button>
               )}
-              <Button onClick={() => setOpen(false)}>Close</Button>
+              <Button onClick={() => setOpen(false)} className="bg-white border border-gray-300 text-gray-900 hover:bg-gray-50">Close</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

@@ -54,8 +54,8 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
   const [performanceTrends, setPerformanceTrends] = useState<{avg_attendance_percent_30d?: number; avg_ia_mark?: number}>({});
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedClass, setSelectedClass] = useState<string>("All");
-  const [selectedSection, setSelectedSection] = useState<string>("All");
+  const [selectedClass, setSelectedClass] = useState<string>("");
+  const [selectedSection, setSelectedSection] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const { theme } = useTheme();
 
@@ -119,7 +119,7 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
   return (
     <div className={`p-4 md:p-6 space-y-6 min-h-screen w-full max-w-full overflow-x-hidden ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Top Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
         {stats.map((stat, idx) => (
           <Card key={idx} className={`${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'} overflow-hidden w-full max-w-full` }>
             <CardContent className="p-4 flex items-center space-x-4 w-full min-w-0 overflow-hidden break-words">
@@ -208,9 +208,9 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
         </CardHeader>
         <CardContent>
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-4">
+          <div className="flex flex-col sm:flex-row gap-4 mb-4 w-full">
             {/* Class */}
-            <div className="flex flex-col">
+            <div className="flex flex-col flex-1 min-w-[200px]">
               <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-700'}`}>Class</label>
               <Select value={selectedClass} onValueChange={setSelectedClass}>
                 <SelectTrigger className={`${theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'} w-full` }>
@@ -227,7 +227,7 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
             </div>
 
             {/* Section */}
-            <div className="flex flex-col">
+            <div className="flex flex-col flex-1 min-w-[200px]">
               <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-700'}`}>Section</label>
               <Select value={selectedSection} onValueChange={setSelectedSection}>
                 <SelectTrigger className={`${theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'} w-full` }>

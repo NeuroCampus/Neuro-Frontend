@@ -1648,7 +1648,7 @@ const UploadMarks = () => {
         <CardTitle className="text-xl font-bold">Upload Marks</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <Select value={selected.subject_id?.toString()} onValueChange={value => handleSelectChange('subject_id', Number(value))}>
             <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
               <SelectValue placeholder="Select Subject" />
@@ -2295,7 +2295,7 @@ const UploadMarks = () => {
                         onClick={downloadExcelTemplate}
                         className={`w-full text-center py-2 sm:py-2.5 px-3 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 ${theme === 'dark' ? 'bg-primary/10 text-primary hover:bg-primary/20' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}
                       >
-                        📥 Download Template
+                         Download Template
                       </button>
                     </div>
 
