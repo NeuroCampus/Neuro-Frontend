@@ -21,8 +21,6 @@ import {
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { getHODStats, manageLeaves, manageProfile, getHODDashboard, getHODDashboardBootstrap } from "../../utils/hod_api";
-import { API_ENDPOINT } from "../../utils/config";
-import { fetchWithTokenRefresh } from "../../utils/authService";
 import { motion } from "framer-motion";
 import { useTheme } from "../../context/ThemeContext";
 
@@ -52,12 +50,6 @@ interface StatsData {
     absent: number;
     not_marked: number;
   };
-  // HOD-specific aggregates (may be provided by backend bootstrap)
-  hod_days_present?: number; // days present in current month
-  hod_sessions_present?: number; // total sessions present in current month
-  hod_attendance_percentage?: number; // percent presence for the HOD
-  hod_branch_present?: number; // present students in HOD's branch (today)
-  hod_branch_percent?: number; // percent present in HOD's branch (today)
 }
 
 interface HODStatsProps {
@@ -122,9 +114,6 @@ export default function HODStats({ setError, setPage, onBootstrapData }: HODStat
             pending_leaves: res.data.overview.pending_leaves,
             average_attendance: 0,
             attendance_trend: res.data.attendance_trend || [],
-            hod_days_present: res.data.overview.hod_days_present, // optional
-            hod_sessions_present: res.data.overview.hod_sessions_present, // optional
-            hod_attendance_percentage: res.data.overview.hod_attendance_percentage, // optional
           });
         }
 
@@ -150,22 +139,6 @@ export default function HODStats({ setError, setPage, onBootstrapData }: HODStat
             ...prev,
             faculty_attendance_today: res.data.faculty_attendance_today.summary
           } : null);
-        }
-
-        // Try to fetch today's attendance by branch and pick the HOD's branch row
-        try {
-          const attResp = await fetchWithTokenRefresh(`${API_ENDPOINT}/dean/reports/today-attendance/`, { method: 'GET' });
-          const attJson = await attResp.json();
-          if (attJson && attJson.success && Array.isArray(attJson.data)) {
-            const branchId = res.data.profile.branch_id?.toString();
-            const found = attJson.data.find((b: any) => String(b.branch_id) === String(branchId));
-            if (found) {
-              setStats(prev => prev ? ({ ...prev, hod_branch_present: found.present_today, hod_branch_percent: found.percent_present }) : prev);
-            }
-          }
-        } catch (e) {
-          // ignore — bootstrap still shows HOD aggregates if available
-          // console.debug('Failed to fetch branch attendance for HOD', e);
         }
 
         // Pass bootstrap data to parent (only pass available data)
@@ -329,41 +302,49 @@ const handleApprove = async (index: number) => {
         </ul>
       )}
 
-      {/* Stats Cards — HOD-specific metrics (days/sessions/percentage) */}
-      <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+      {/* Stats Cards */}
+      <div className={`grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
         {[
           {
-            title: "Days Present (This Month)",
-            value: stats?.hod_days_present !== undefined && stats.hod_days_present !== null ? stats.hod_days_present.toString() : "N/A",
-            icon: <Calendar className="text-gray-600" />,
+            title: "Total Faculty",
+            className: "text-gray-600",
+            value: stats?.faculty_count.toString() || "0",
+            icon: <Users className="text-gray-600" />,
+            change: "+2.5% since last month",
             color: "text-gray-600",
           },
           {
-            title: "Sessions Present (This Month)",
-            value: stats?.hod_sessions_present !== undefined && stats.hod_sessions_present !== null ? stats.hod_sessions_present.toString() : "N/A",
-            icon: <UserPlus className="text-gray-600" />,
+            title: "Total Students",
+            value: stats?.student_count.toString() || "0",
+            icon: <Users className="text-gray-600" />,
+            change: "+5.1% since last semester",
             color: "text-gray-600",
           },
           {
-            title: "Attendance %",
-            value: typeof stats?.hod_attendance_percentage === 'number' ? `${Math.round(stats.hod_attendance_percentage)}%` : (stats?.hod_attendance_percentage ? `${stats.hod_attendance_percentage}%` : (stats?.faculty_attendance_today ? `${Math.round((stats.faculty_attendance_today.present / Math.max(1, stats.faculty_attendance_today.total_faculty)) * 100)}%` : "N/A")),
+            title: "Faculty Present Today",
+            value: stats?.faculty_attendance_today?.present.toString() || "0",
             icon: <CheckCircle className="text-green-600" />,
+            change: `${stats?.faculty_attendance_today ? Math.round((stats.faculty_attendance_today.present / stats.faculty_attendance_today.total_faculty) * 100) : 0}% attendance`,
             color: "text-green-600",
+            clickable: true,
+            onClick: () => setPage("faculty-attendance"),
           },
         ].map((item, i) => (
             <div
               key={i}
-              className={`p-4 rounded-lg shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow border ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'} text-gray-900 outline-none focus:ring-2 focus:ring-white`}
+              className={`p-4 rounded-lg shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow border ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'} text-gray-900 outline-none focus:ring-2 focus:ring-white ${item.clickable ? `cursor-pointer ${theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-50'}` : ''}`}
+              onClick={item.onClick}
             >
               <div className={`flex items-center justify-center w-12 h-12 rounded-full ${theme === 'dark' ? 'bg-accent' : 'bg-gray-200'}`}>
-                {item.icon && (
-                  <span className="text-blue-600 text-3xl">{item.icon}</span>
-                )}
+              {item.icon && (
+                // Make icon large and blue for visibility
+                <span className="text-blue-600 text-3xl">{item.icon}</span>
+              )}
               </div>
               <div>
-                <p className={`text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{item.title}</p>
-                <p className={`text-xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{item.value}</p>
-                <p className={`text-xs ${item.color}`}></p>
+              <p className={`text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{item.title}</p>
+              <p className={`text-xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{item.value}</p>
+              <p className={`text-xs ${item.color}`}>{item.change}</p>
               </div>
             </div>
         ))}

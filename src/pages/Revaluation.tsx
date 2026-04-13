@@ -1,12 +1,103 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { API_ENDPOINT } from "@/utils/config";
 import { fetchWithTokenRefresh } from "@/utils/authService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/context/ThemeContext";
+import { ChevronDown } from "lucide-react";
 
 type Filters = { usn: string; exam_period: string };
+
+// Custom Dropdown Component
+interface CustomSelectProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
+  disabled?: boolean;
+  theme: string;
+}
+
+const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, disabled = false, theme }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
+
+  useEffect(() => {
+    if (isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + 8,
+        left: rect.left,
+        width: rect.width,
+      });
+    }
+  }, [isOpen]);
+
+  const selectedLabel = options.find(opt => opt.value === value)?.label || "Select...";
+
+  return (
+    <div className="relative w-full">
+      <button
+        ref={triggerRef}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={`w-full border rounded px-2 sm:px-3 py-2 text-xs sm:text-sm flex items-center justify-between ${
+          disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+        } ${theme === 'dark' ? 'bg-input border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`}
+      >
+        <span className="truncate">{selectedLabel}</span>
+        <ChevronDown size={16} className={`transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && createPortal(
+        <div
+          className="fixed inset-0 z-[9998]"
+          onClick={() => setIsOpen(false)}
+        />,
+        document.body
+      )}
+
+      {isOpen && createPortal(
+        <div
+          className={`absolute z-[9999] border rounded shadow-lg ${
+            theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'
+          }`}
+          style={{
+            top: `${position.top}px`,
+            left: `${position.left}px`,
+            width: `${position.width}px`,
+            maxHeight: '240px',
+            overflowY: 'auto',
+          }}
+        >
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => {
+                onChange(opt.value);
+                setIsOpen(false);
+              }}
+              className={`w-full text-left px-2 sm:px-3 py-2 text-xs sm:text-sm hover:bg-accent transition ${
+                value === opt.value
+                  ? theme === 'dark'
+                    ? 'bg-accent text-foreground'
+                    : 'bg-blue-50 text-blue-600'
+                  : theme === 'dark'
+                  ? 'text-foreground'
+                  : 'text-gray-900'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+};
 
 const Revaluation = () => {
   const [filters, setFilters] = useState<Filters>({ usn: "", exam_period: "" });
@@ -232,24 +323,20 @@ const Revaluation = () => {
               </div>
 
               <div className="sm:col-span-1">
-                <label htmlFor="exam-period-select" className="text-xs sm:text-sm block mb-1 font-medium">Exam Period</label>
-                <select
-                  id="exam-period-select"
+                <label className="text-xs sm:text-sm block mb-1 font-medium">Exam Period</label>
+                <CustomSelect
                   value={filters.exam_period}
-                  onChange={e => setFilters({ ...filters, exam_period: e.target.value })}
-                  className={`w-full px-2 sm:px-3 py-2 text-xs sm:text-sm rounded border ${
-                    theme === 'dark'
-                      ? 'bg-input border-border text-foreground'
-                      : 'bg-white border-gray-300 text-gray-900'
-                  }`}
-                >
-                  <option value="">Select Exam Period</option>
-                  <option value="june_july">June/July</option>
-                  <option value="nov_dec">Nov/Dec</option>
-                  <option value="jan_feb">Jan/Feb</option>
-                  <option value="apr_may">Apr/May</option>
-                  <option value="supplementary">Supplementary</option>
-                </select>
+                  onChange={(value) => setFilters({ ...filters, exam_period: value })}
+                  options={[
+                    { value: "", label: "Select Exam Period" },
+                    { value: "june_july", label: "June/July" },
+                    { value: "nov_dec", label: "Nov/Dec" },
+                    { value: "jan_feb", label: "Jan/Feb" },
+                    { value: "apr_may", label: "Apr/May" },
+                    { value: "supplementary", label: "Supplementary" },
+                  ]}
+                  theme={theme}
+                />
               </div>
 
               <div className="sm:col-span-2 md:col-span-1">
