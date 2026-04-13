@@ -49,15 +49,15 @@ const DeanFinance = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="p-4 bg-white rounded shadow">
           <div className="text-sm text-gray-500">Total Invoices</div>
-          <div className="text-2xl font-semibold">{summary?.total_invoices ?? summary?.total_invoices ?? 0}</div>
+          <div className="text-2xl font-semibold">{summary?.total_invoices ?? 0}</div>
         </div>
         <div className="p-4 bg-white rounded shadow">
           <div className="text-sm text-gray-500">Total Collected</div>
-          <div className="text-2xl font-semibold">{summary?.total_payments ?? summary?.total_collected ?? summary?.total_revenue ?? 0}</div>
+          <div className="text-2xl font-semibold">{(summary?.total_collected ?? 0).toLocaleString()}</div>
         </div>
         <div className="p-4 bg-white rounded shadow">
           <div className="text-sm text-gray-500">Outstanding</div>
-          <div className="text-2xl font-semibold">{summary?.pending_amount ?? summary?.outstanding ?? 0}</div>
+          <div className="text-2xl font-semibold">{(summary?.outstanding ?? 0).toLocaleString()}</div>
         </div>
       </div>
 
@@ -65,32 +65,31 @@ const DeanFinance = () => {
         <div className="p-4 bg-white rounded shadow">
           <h3 className="font-medium mb-2">Department-wise</h3>
           {departmentWise.length ? (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs text-gray-500"><th>Department</th><th>Students</th><th>Revenue</th><th>Pending</th></tr>
-              </thead>
-              <tbody>
-                {departmentWise.map((d,i) => (
-                  <tr key={i} className="border-t"><td className="py-1">{d.department}</td><td className="py-1">{d.students}</td><td className="py-1">{d.revenue}</td><td className="py-1">{d.pending}</td></tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="space-y-2">
+              {departmentWise.map((d,i) => (
+                <div key={i} className="flex items-center justify-between border-t py-2">
+                  <div className="font-medium">{d.department}</div>
+                  <div className="text-sm text-gray-600">Students: {d.students}</div>
+                  <div className="text-sm font-semibold">{(d.revenue ?? 0).toLocaleString()}</div>
+                  <div className="text-sm text-red-600">{(d.pending ?? 0).toLocaleString()}</div>
+                </div>
+              ))}
+            </div>
           ) : <div>No department data</div>}
         </div>
 
         <div className="p-4 bg-white rounded shadow">
           <h3 className="font-medium mb-2">Fee Type-wise</h3>
           {feeTypeWise.length ? (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs text-gray-500"><th>Fee Type</th><th>Count</th><th>Revenue</th></tr>
-              </thead>
-              <tbody>
-                {feeTypeWise.map((f,i) => (
-                  <tr key={i} className="border-t"><td className="py-1">{f.fee_type}</td><td className="py-1">{f.count}</td><td className="py-1">{f.revenue}</td></tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="space-y-2">
+              {feeTypeWise.map((f,i) => (
+                <div key={i} className="flex items-center justify-between border-t py-2">
+                  <div className="font-medium">{f.fee_type}</div>
+                  <div className="text-sm text-gray-600">Count: {f.count}</div>
+                  <div className="text-sm font-semibold">{(f.revenue ?? 0).toLocaleString()}</div>
+                </div>
+              ))}
+            </div>
           ) : <div>No fee type data</div>}
         </div>
       </div>
@@ -99,32 +98,32 @@ const DeanFinance = () => {
         <div className="p-4 bg-white rounded shadow">
           <h3 className="font-medium mb-2">Monthly Trends</h3>
           {monthlyTrends.length ? (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs text-gray-500"><th>Month</th><th>Payments</th><th>Revenue</th></tr>
-              </thead>
-              <tbody>
-                {monthlyTrends.map((m,i) => (
-                  <tr key={i} className="border-t"><td className="py-1">{m.month}</td><td className="py-1">{m.payments}</td><td className="py-1">{m.revenue}</td></tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="space-y-2">
+              {monthlyTrends.map((m,i) => (
+                <div key={i} className="flex items-center justify-between border-t py-2">
+                  <div className="font-medium">{m.month}</div>
+                  <div className="text-sm text-gray-600">Payments: {m.payments}</div>
+                  <div className="text-sm font-semibold">{(m.revenue ?? 0).toLocaleString()}</div>
+                </div>
+              ))}
+            </div>
           ) : <div>No monthly data</div>}
         </div>
 
         <div className="p-4 bg-white rounded shadow">
           <h3 className="font-medium mb-2">Overdue Invoices</h3>
           {overdueInvoices.length ? (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs text-gray-500"><th>Invoice</th><th>Student</th><th>USN</th><th>Amount</th><th>Due</th><th>Days</th></tr>
-              </thead>
-              <tbody>
-                {overdueInvoices.map((o,i) => (
-                  <tr key={i} className="border-t"><td className="py-1">{o.invoice_number}</td><td className="py-1">{o.student_name}</td><td className="py-1">{o.usn}</td><td className="py-1">{o.amount}</td><td className="py-1">{o.due_date}</td><td className="py-1">{o.days_overdue}</td></tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="space-y-2">
+              {overdueInvoices.map((o,i) => (
+                <div key={i} className="flex items-center justify-between border-t py-2">
+                  <div className="font-medium">{o.invoice_number}</div>
+                  <div className="text-sm">{o.student_name} ({o.usn})</div>
+                  <div className="text-sm font-semibold text-red-600">{(o.amount ?? 0).toLocaleString()}</div>
+                  <div className="text-sm text-gray-600">{o.due_date}</div>
+                  <div className="text-sm text-gray-500">{o.days_overdue}d</div>
+                </div>
+              ))}
+            </div>
           ) : <div>No overdue invoices</div>}
         </div>
       </div>

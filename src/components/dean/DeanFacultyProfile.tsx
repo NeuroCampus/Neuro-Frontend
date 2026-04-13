@@ -3,7 +3,7 @@ import { API_ENDPOINT } from "@/utils/config";
 import { fetchWithTokenRefresh } from "@/utils/authService";
 
 // Dean view: load branches -> faculties -> selected faculty profile (attendance, scheduled classes, weekly hours)
-const DeanFacultyProfile = ({ facultyId: initialFacultyId }: { facultyId?: string }) => {
+const DeanFacultyProfile = ({ facultyId: initialFacultyId, initialStartDate, initialEndDate }: { facultyId?: string, initialStartDate?: string, initialEndDate?: string }) => {
   const [branches, setBranches] = useState<Array<any>>([]);
   const [branchLoading, setBranchLoading] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
@@ -16,18 +16,31 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId }: { facultyId?: strin
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
 
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
+  const [startDate, setStartDate] = useState<string>(initialStartDate || '');
+  const [endDate, setEndDate] = useState<string>(initialEndDate || '');
 
   // Set default dates to current month on mount
   useEffect(() => {
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
     const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    
-    setStartDate(firstDay.toISOString().split('T')[0]);
-    setEndDate(lastDay.toISOString().split('T')[0]);
+    // Only set defaults if not provided via props
+    if (!initialStartDate) setStartDate(firstDay.toISOString().split('T')[0]);
+    if (!initialEndDate) setEndDate(lastDay.toISOString().split('T')[0]);
   }, []);
+
+  // Update when parent passes new initial props
+  useEffect(() => {
+    if (initialFacultyId) setSelectedFaculty(initialFacultyId);
+  }, [initialFacultyId]);
+
+  useEffect(() => {
+    if (initialStartDate !== undefined) setStartDate(initialStartDate || '');
+  }, [initialStartDate]);
+
+  useEffect(() => {
+    if (initialEndDate !== undefined) setEndDate(initialEndDate || '');
+  }, [initialEndDate]);
 
   // Load branches on mount
   useEffect(() => {
@@ -216,6 +229,9 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId }: { facultyId?: strin
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               Showing attendance from {profile.attendance_summary.range.start} to {profile.attendance_summary.range.end}
+              {profile.attendance_summary?.total_days !== undefined && (
+                <span className="ml-2 text-xs text-blue-700">• {profile.attendance_summary.total_days} days</span>
+              )}
             </div>
           )}
         </div>
@@ -259,7 +275,7 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId }: { facultyId?: strin
 
           {/* Stats Cards */}
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200">
                 <div className="flex items-center justify-between">
                   <div>
@@ -278,7 +294,7 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId }: { facultyId?: strin
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-green-600">Present Days</p>
-                    <p className="text-3xl font-bold text-green-900">{profile.attendance_summary?.present ?? 0}</p>
+                    <p className="text-3xl font-bold text-green-900">{profile.attendance_summary?.present_days ?? 0}</p>
                   </div>
                   <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -292,7 +308,7 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId }: { facultyId?: strin
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-red-600">Absent Days</p>
-                    <p className="text-3xl font-bold text-red-900">{profile.attendance_summary?.absent ?? 0}</p>
+                    <p className="text-3xl font-bold text-red-900">{profile.attendance_summary?.absent_days ?? 0}</p>
                   </div>
                   <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -311,6 +327,34 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId }: { facultyId?: strin
                   <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-xl border border-yellow-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-yellow-600">Leave Days</p>
+                    <p className="text-3xl font-bold text-yellow-900">{profile.attendance_summary?.leave_days ?? 0}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-6 rounded-xl border border-amber-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-amber-600">Unmarked Days</p>
+                    <p className="text-3xl font-bold text-amber-900">{profile.attendance_summary?.unmarked_days ?? 0}</p>
+                  </div>
+                  <div className="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3" />
                     </svg>
                   </div>
                 </div>

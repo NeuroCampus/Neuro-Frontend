@@ -31,6 +31,7 @@ const getActivePageFromPath = (pathname: string): string => {
     'dashboard': 'dashboard',
     'reports': 'reports',
     'profile': 'profile',
+      'campus-locations': 'campus-locations',
     'attendance': 'attendance',
     'performance': 'performance',
     'timetable': 'timetable',
@@ -56,13 +57,8 @@ const DeanDashboard = ({ user, setPage }: { user: DeanUser; setPage: (p: string)
 
   const handlePageChange = (page: string) => {
     setActivePage(page);
-    const pathMap: { [key: string]: string } = {
-      'dashboard': '/dean/dashboard',
-      'reports': '/dean/reports',
-      'profile': '/dean/profile',
-      'campus-locations': '/dean/campus-locations',
-    };
-    const path = pathMap[page] || '/dean/dashboard';
+    // Navigate to the corresponding dean route. Default to `/dean/{page}`
+    const path = page === 'dashboard' ? '/dean/dashboard' : `/dean/${page}`;
     navigate(path);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
