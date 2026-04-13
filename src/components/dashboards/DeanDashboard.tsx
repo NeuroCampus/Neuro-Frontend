@@ -4,6 +4,7 @@ import DashboardLayout from "../common/DashboardLayout";
 import DeanReports from "../dean/DeanReports";
 import DeanStats from "../dean/DeanStats";
 import DeanAttendance from "../dean/DeanAttendance";
+import CampusLocationManager from "../dean/CampusLocationManager";
 import StudentInfoScanner from "../hod/StudentInfoScanner";
 import DeanTimetable from "../dean/DeanTimetable";
 import DeanExams from "../dean/DeanExams";
@@ -59,6 +60,7 @@ const DeanDashboard = ({ user, setPage }: { user: DeanUser; setPage: (p: string)
       'dashboard': '/dean/dashboard',
       'reports': '/dean/reports',
       'profile': '/dean/profile',
+      'campus-locations': '/dean/campus-locations',
     };
     const path = pathMap[page] || '/dean/dashboard';
     navigate(path);
@@ -71,6 +73,8 @@ const DeanDashboard = ({ user, setPage }: { user: DeanUser; setPage: (p: string)
         return <div className="p-4"><DeanStats /></div>;
       case 'attendance':
         return <div className="p-4"><DeanAttendance /></div>;
+      case 'campus-locations':
+        return <div className="p-4"><CampusLocationManager /></div>;
       case 'performance':
         return <div className="p-4"><StudentInfoScanner /></div>;
       case 'timetable':
