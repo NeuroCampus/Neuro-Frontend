@@ -16,6 +16,19 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId }: { facultyId?: strin
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<any>(null);
 
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+
+  // Set default dates to current month on mount
+  useEffect(() => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    
+    setStartDate(firstDay.toISOString().split('T')[0]);
+    setEndDate(lastDay.toISOString().split('T')[0]);
+  }, []);
+
   // Load branches on mount
   useEffect(() => {
     let mounted = true;
@@ -62,7 +75,7 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId }: { facultyId?: strin
     return () => { mounted = false; };
   }, [selectedBranch]);
 
-  // Load profile when selectedFaculty changes
+  // Load profile when selectedFaculty changes or dates change
   useEffect(() => {
     let mounted = true;
     const loadProfile = async () => {
@@ -74,8 +87,13 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId }: { facultyId?: strin
       setLoading(true);
       setError(null);
       try {
-        const idPart = `faculty/${selectedFaculty}/profile/`;
-        const res = await fetchWithTokenRefresh(`${API_ENDPOINT}/dean/${idPart}`);
+        let url = `${API_ENDPOINT}/dean/faculty/${selectedFaculty}/profile/`;
+        const params = new URLSearchParams();
+        if (startDate) params.append('start_date', startDate);
+        if (endDate) params.append('end_date', endDate);
+        if (params.toString()) url += `?${params.toString()}`;
+
+        const res = await fetchWithTokenRefresh(url);
         const json = await res.json();
         if (!mounted) return;
         if (json.success) setProfile(json.data || json.profile || null);
@@ -88,13 +106,18 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId }: { facultyId?: strin
     };
     loadProfile();
     return () => { mounted = false; };
-  }, [selectedFaculty]);
+  }, [selectedFaculty, startDate, endDate]);
 
   // If initialFacultyId provided, try to select its branch automatically after branches load
   useEffect(() => {
     if (!initialFacultyId) return;
     setSelectedFaculty(initialFacultyId);
   }, [initialFacultyId]);
+
+  const handleDateFilter = () => {
+    // Trigger reload by updating state
+    setProfile(null);
+  };
 
   return (
     <div className="space-y-4">
@@ -133,6 +156,53 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId }: { facultyId?: strin
 
       {!selectedFaculty && <div className="p-4">Select a branch and faculty to view profile.</div>}
 
+      {selectedFaculty && (
+        <div className="bg-white p-4 rounded shadow">
+          <h3 className="font-medium mb-3">Attendance Report Filters</h3>
+          <div className="flex gap-4 items-end">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Start Date</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">End Date</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            <button
+              onClick={handleDateFilter}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Apply Filter
+            </button>
+            <button
+              onClick={() => {
+                setStartDate('');
+                setEndDate('');
+                handleDateFilter();
+              }}
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            >
+              Clear
+            </button>
+          </div>
+          {profile?.attendance_summary?.range && (
+            <div className="mt-2 text-sm text-gray-600">
+              Showing attendance from {profile.attendance_summary.range.start} to {profile.attendance_summary.range.end}
+            </div>
+          )}
+        </div>
+      )}
+
       {loading && selectedFaculty && <div className="p-4">Loading faculty profile...</div>}
       {error && <div className="p-4 text-red-600">{error}</div>}
 
@@ -144,14 +214,18 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId }: { facultyId?: strin
             <div className="mt-1 text-sm">{profile.designation}</div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-4 gap-4">
             <div className="p-3 bg-slate-50 rounded">
               <div className="text-xs text-gray-500">Weekly Scheduled Hours</div>
               <div className="text-lg font-semibold">{profile.total_weekly_hours ?? 0} hrs</div>
             </div>
             <div className="p-3 bg-slate-50 rounded">
-              <div className="text-xs text-gray-500">Attendance (marked)</div>
-              <div className="text-lg font-semibold">{profile.attendance_summary?.present ?? 0} present</div>
+              <div className="text-xs text-gray-500">Attendance (present)</div>
+              <div className="text-lg font-semibold">{profile.attendance_summary?.present ?? 0}</div>
+            </div>
+            <div className="p-3 bg-slate-50 rounded">
+              <div className="text-xs text-gray-500">Attendance (absent)</div>
+              <div className="text-lg font-semibold">{profile.attendance_summary?.absent ?? 0}</div>
             </div>
             <div className="p-3 bg-slate-50 rounded">
               <div className="text-xs text-gray-500">Attendance %</div>
