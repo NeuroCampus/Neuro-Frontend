@@ -13,11 +13,15 @@ const DeanAttendance = () => {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await fetchWithTokenRefresh(`${API_ENDPOINT}/dean/reports/today-attendance/`);
-        const json = await res.json();
+        // Fetch compact HOD/Admin attendance summary (includes full hods list)
+        const resSummary = await fetchWithTokenRefresh(`${API_ENDPOINT}/dean/reports/hod-admin-attendance/`);
+        const jsonSummary = await resSummary.json();
         if (!mounted) return;
-        if (json.success) setData(json);
-        else setError(json.message || 'Failed to load');
+        if (!jsonSummary.success) {
+          setError(jsonSummary.message || 'Failed to load HOD/admin summary');
+          return;
+        }
+        setData(jsonSummary);
       } catch (e: any) {
         setError(e?.message || 'Network error');
       } finally {
@@ -31,59 +35,81 @@ const DeanAttendance = () => {
   if (loading) return <div className="p-4">Loading attendance...</div>;
   if (error) return <div className="p-4 text-red-600">{error}</div>;
 
-  const chartData = (data?.data || []).map((r: any) => ({ name: r.branch, percent: Number(r.percent_present || 0), present: Number(r.present_today || 0) }));
+  // Use hod list returned by endpoint (full list with present/absent status)
+  const hodList = data?.summary?.hods || [];
+  const totalHods = data?.summary?.total_hods ?? hodList.length;
+  const hodPresentCount = data?.summary?.hod_present_count ?? hodList.filter((h: any) => h.status === 'present').length;
+  const hodAbsentCount = totalHods - hodPresentCount;
+
+  const adminPresentCount = data?.summary?.admin_present_count ?? 0;
+  const adminList = data?.summary?.admin_present_list || [];
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold">Today's Attendance</h2>
+    <div className="space-y-6">
+      <h2 className="text-xl font-semibold">HOD & Admin Attendance</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="p-4 bg-white rounded shadow flex flex-col justify-center">
-          <div className="text-sm text-gray-500">Present</div>
-          <div className="text-3xl font-bold text-green-600">{data?.summary?.total_present_all ?? 0}</div>
-          <div className="text-sm text-gray-500 mt-1">Overall: <span className="font-semibold">{data?.summary?.overall_percent_present ?? 0}%</span></div>
-          {data?.summary?.admin_present && (
-            <div className="mt-2 text-sm text-indigo-600">Admin(s) present today</div>
-          )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-4 bg-white rounded shadow">
+          <div className="text-sm text-gray-500">HODs Present</div>
+          <div className="text-3xl font-bold text-green-600">{hodPresentCount}</div>
+          <div className="text-sm text-gray-500 mt-1">Total HODs: <span className="font-semibold">{totalHods}</span></div>
         </div>
 
         <div className="p-4 bg-white rounded shadow">
-          <div className="text-sm text-gray-500">Attendance by Branch (%)</div>
-          <div style={{ width: '100%', height: 220 }}>
-            <ResponsiveContainer>
-              <BarChart data={chartData} margin={{ top: 10, right: 8, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="percent" fill="#10b981" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <div className="text-sm text-gray-500">HODs Absent</div>
+          <div className="text-3xl font-bold text-red-600">{hodAbsentCount}</div>
+          <div className="text-sm text-gray-500 mt-1">Absent today</div>
+        </div>
+
+        <div className="p-4 bg-white rounded shadow">
+          <div className="text-sm text-gray-500">Admins Present</div>
+          <div className="text-3xl font-bold text-indigo-600">{adminPresentCount}</div>
+          <div className="text-sm text-gray-500 mt-1">Admin presence (today)</div>
+        </div>
+
+        <div className="p-4 bg-white rounded shadow">
+          <div className="text-sm text-gray-500">Admins Absent</div>
+          <div className="text-3xl font-bold text-gray-800">—</div>
+          <div className="text-sm text-gray-500 mt-1">(not tracked)</div>
         </div>
       </div>
 
-      <div className="bg-white rounded shadow overflow-auto">
-        <table className="min-w-full">
-          <thead>
-            <tr className="text-left text-sm text-gray-500">
-              <th className="px-4 py-2">Branch</th>
-              <th className="px-4 py-2">HOD</th>
-              <th className="px-4 py-2 text-right">Present</th>
-              <th className="px-4 py-2 text-right">%</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data?.data?.map((r: any) => (
-              <tr key={r.branch_id} className="border-t">
-                <td className="px-4 py-3">{r.branch}</td>
-                <td className="px-4 py-3">{r.hod ? r.hod.hod_name : '—'}</td>
-                <td className="px-4 py-3 text-right font-medium text-gray-800">{r.present_today}</td>
-                <td className="px-4 py-3 text-right font-semibold text-gray-800">{r.percent_present}%</td>
-              </tr>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-white rounded shadow p-4">
+          <div className="text-lg font-semibold mb-3">HODs — Today</div>
+          <div className="grid grid-cols-1 gap-3">
+            {hodList.map((h) => (
+              <div key={h.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                <div>
+                  <div className="font-medium">{h.name}</div>
+                  <div className="text-xs text-gray-500">{h.status === 'present' ? 'Present' : 'Absent'}{h.marked_at ? ` • ${new Date(h.marked_at).toLocaleTimeString()}` : ''}</div>
+                </div>
+                <div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${h.status === 'present' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {h.status === 'present' ? 'Present' : 'Absent'}
+                  </span>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        </div>
+
+        <div className="bg-white rounded shadow p-4">
+          <div className="text-lg font-semibold mb-3">Admins — Today</div>
+          <div className="grid grid-cols-1 gap-3">
+            {adminList.length > 0 ? adminList.map((a: any) => (
+              <div key={a.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                <div>
+                  <div className="font-medium">{a.name}</div>
+                  <div className="text-xs text-gray-500">{a.email || a.mobile || ''}</div>
+                </div>
+                <div>
+                  <span className="px-2 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">Present</span>
+                </div>
+              </div>
+            )) : <div className="text-sm text-gray-500">No admin users present today.</div>}
+          </div>
+        </div>
       </div>
     </div>
   );
