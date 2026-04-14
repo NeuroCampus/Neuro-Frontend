@@ -1,15 +1,42 @@
+import React from 'react'
 import { createRoot } from 'react-dom/client'
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
+import { ThemeProvider } from './context/ThemeContext'
 import App from './App.tsx'
 import './index.css'
 
-createRoot(document.getElementById("root")!).render(<App />);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,
+      gcTime: 1000 * 60 * 10,
+    },
+  },
+})
 
-// Register service worker
+createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    {/* ✅ NO TooltipProvider - removed */}
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
+    </QueryClientProvider>
+  </React.StrictMode>
+);
+
+// Service worker with cache busting
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    const swUrl = `/sw.js?v=${Date.now()}`
+    
+    navigator.serviceWorker.register(swUrl)
       .then((registration) => {
         console.log('Service Worker registered successfully:', registration);
+        registration.update()
+        setInterval(() => {
+          registration.update()
+        }, 5000)
       })
       .catch((error) => {
         console.log('Service Worker registration failed:', error);
