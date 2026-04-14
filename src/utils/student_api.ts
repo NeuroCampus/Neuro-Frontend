@@ -157,6 +157,7 @@ interface GetInternalMarksResponse {
 interface SubmitLeaveRequestRequest {
   start_date: string;
   end_date: string;
+  title?: string;
   reason: string;
 }
 
@@ -164,8 +165,10 @@ interface LeaveRequest {
   id: number;
   start_date: string;
   end_date: string;
+  title: string;
   reason: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
+  submitted_at?: string;
 }
 
 interface SubmitLeaveRequestResponse {

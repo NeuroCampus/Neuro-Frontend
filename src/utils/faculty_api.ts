@@ -161,6 +161,7 @@ interface UploadMarksResponse {
 }
 
 export interface ApplyLeaveRequest {
+  title: string;
   branch_ids: number[];
   start_date: string;
   end_date: string;
@@ -470,6 +471,7 @@ export interface InternalMarkStudent {
 
 export interface FacultyLeaveRequest {
   id: string;
+  title: string;
   branch: string;
   start_date: string;
   end_date: string;

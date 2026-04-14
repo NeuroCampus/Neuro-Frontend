@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Badge } from "../ui/badge";
-import { Bell, CheckCircle2, Clock3, XCircle } from "lucide-react";
+import { Bell, CheckCircle2, Clock3, XCircle, Eye } from "lucide-react";
 import { Button } from "../ui/button";
 import { getLeaveRequests } from "@/utils/student_api";
 import {
@@ -15,6 +15,7 @@ import { useStudentLeaveRequestsQuery } from '@/hooks/useApiQueries';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Input } from '@/components/ui/input';
 import { format, parseISO } from 'date-fns';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 
 type LeaveStatusType = "PENDING" | "APPROVED" | "REJECTED";
 
@@ -23,8 +24,10 @@ interface LeaveRequest {
   id: number;
   start_date: string;
   end_date: string;
+  title: string;
   reason: string;
   status: string; // API returns string values
+  submitted_at?: string;
 }
 
 interface LeaveStatusProps {
@@ -61,6 +64,7 @@ const LeaveStatus: React.FC<LeaveStatusProps> = ({ setPage }) => {
   const { data: leavesData = [], isLoading, isError, refetch } = useStudentLeaveRequestsQuery();
   const [filter, setFilter] = useState<string>('ALL');
   const [query, setQuery] = useState<string>('');
+  const [viewReason, setViewReason] = useState<string | null>(null);
 
   useEffect(() => {
     setLeaves(leavesData as LeaveRequest[]);
@@ -76,17 +80,8 @@ const LeaveStatus: React.FC<LeaveStatusProps> = ({ setPage }) => {
   }, [leaves, filter, query]);
 
   return (
-    <div className={`min-h-screen p-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Leave Requests</CardTitle>
-        <Button 
-          className={theme === 'dark' ? 'text-foreground bg-muted hover:bg-accent border-border text-sm px-4 py-1.5' : 'text-gray-900 bg-gray-200 hover:bg-gray-300 border-gray-300 text-sm px-4 py-1.5'}
-          onClick={() => setPage("leave-request")}>
-          <Bell className="w-4 h-4 mr-2" />
-          Apply for Leave
-        </Button>
-      </div>
+    <>
+      <div>
 
       {/* Controls */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
@@ -137,24 +132,30 @@ const LeaveStatus: React.FC<LeaveStatusProps> = ({ setPage }) => {
           {filteredLeaves.map((item) => (
             <div
               key={item.id}
-              className={`border rounded-md px-4 py-4 shadow-sm ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}
+              className={`p-3 border rounded-lg ${theme === 'dark' ? 'bg-background border-border hover:bg-accent/50' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'}`}
             >
-              <div className="flex justify-between items-start">
-                {/* Left Section */}
-                <div className="space-y-1 text-sm">
-                  <p className={`font-medium ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
-                    Leave Request #{item.id}
-                  </p>
-                  <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+              <div className="flex justify-between items-start gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className={`font-semibold mb-1 text-sm truncate ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                    {item.title}
+                  </div>
+                  <div className={`text-xs mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'} truncate`}>
                     {format(parseISO(item.start_date), 'PPP')} — {format(parseISO(item.end_date), 'PPP')}
-                  </p>
-                  <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-700'}`}>
-                    {item.reason}
-                  </p>
+                  </div>
+                  <div className="mb-1">
+                    <button
+                      onClick={() => setViewReason(item.reason)}
+                      className={`text-xs font-medium px-2 py-1 rounded-md ${theme === 'dark' ? 'bg-muted/10 text-foreground border border-border hover:bg-accent' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                    >
+                      <Eye className="w-3 h-3 inline mr-1" />
+                      View Reason
+                    </button>
+                  </div>
+                  <div className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                    Applied: {item.submitted_at ? format(parseISO(item.submitted_at), 'PPp') : 'N/A'}
+                  </div>
                 </div>
-
-                {/* Right Section */}
-                <div className="flex flex-col items-end gap-2">
+                <div className="ml-2 flex-shrink-0">
                   <Badge
                     className={`text-xs font-medium px-2 py-0.5 rounded-full border-none flex items-center gap-2 ${getStatusStyles(theme, item.status).bg} ${getStatusStyles(theme, item.status).color}`}
                   >
@@ -163,7 +164,6 @@ const LeaveStatus: React.FC<LeaveStatusProps> = ({ setPage }) => {
                       {item.status.charAt(0) + item.status.slice(1).toLowerCase()}
                     </div>
                   </Badge>
-                  <div className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{new Date(item.submitted_at).toLocaleString()}</div>
                 </div>
               </div>
             </div>
@@ -171,6 +171,35 @@ const LeaveStatus: React.FC<LeaveStatusProps> = ({ setPage }) => {
         </div>
       )}
     </div>
+
+    {/* View Reason Dialog */}
+    <Dialog open={!!viewReason} onOpenChange={() => setViewReason(null)}>
+      <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[80%] sm:max-w-md mx-auto rounded-2xl p-4 sm:p-6`}>
+        <DialogHeader>
+          <DialogTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Reason</DialogTitle>
+        </DialogHeader>
+
+        <div
+          className={`p-3 text-base leading-relaxed whitespace-pre-wrap break-words 
+                    max-h-64 overflow-y-auto rounded-md ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
+        >
+          {viewReason}
+        </div>
+
+        <DialogFooter>
+          <Button
+            variant="outline"
+            className={theme === 'dark' 
+              ? 'text-foreground bg-card border border-border hover:bg-accent' 
+              : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
+            onClick={() => setViewReason(null)}
+          >
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 

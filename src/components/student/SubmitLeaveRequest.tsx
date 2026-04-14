@@ -18,6 +18,7 @@ const MySwal = withReactContent(Swal);
 
 const SubmitLeaveRequest = () => {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [title, setTitle] = useState("");
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
   const { theme } = useTheme();
@@ -37,6 +38,7 @@ const SubmitLeaveRequest = () => {
     const requestData = {
       start_date: format(dateRange.from, "yyyy-MM-dd"),
       end_date: format(dateRange.to, "yyyy-MM-dd"),
+      title: title.trim() || undefined,
       reason: reason.trim(),
     };
 
@@ -60,6 +62,7 @@ const SubmitLeaveRequest = () => {
       
       // Reset form
       setDateRange(undefined);
+      setTitle("");
       setReason("");
 
       // Scroll to the leave status list to show the newly created request
@@ -134,6 +137,17 @@ const SubmitLeaveRequest = () => {
             </PopoverContent>
           </Popover>
         </div>
+          <div className="space-y-2">
+            <Label htmlFor="title" className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Title</Label>
+            <input
+              id="title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Brief title for your leave request (optional)"
+              className={theme === 'dark' ? 'w-full px-3 py-2 bg-background text-foreground border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring' : 'w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'}
+            />
+          </div>
           <div className="space-y-2">
             <Label htmlFor="reason" className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Reason</Label>
             <Textarea

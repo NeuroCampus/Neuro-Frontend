@@ -9,6 +9,7 @@ import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { applyLeave, getApplyLeaveBootstrap } from '../../utils/faculty_api';
 import { useTheme } from '@/context/ThemeContext';
 import Swal from 'sweetalert2';
@@ -47,6 +48,7 @@ const LeaveRequests = () => {
   const [filteredLeaveList, setFilteredLeaveList] = useState<LeaveRequestDisplay[]>([]);
   const [filterStatus, setFilterStatus] = useState<'All' | 'Pending' | 'Approved' | 'Rejected'>('All');
   const [filterOpen, setFilterOpen] = useState(false);
+  const [viewReason, setViewReason] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +68,7 @@ const LeaveRequests = () => {
           if (branches.length > 0) setSelectedBranch(branches[0].id.toString());
 
           // Transform backend data to match original mock structure
-          const transformedLeaves: LeaveRequestDisplay[] = leave_requests.map((leave, index) => {
+          const transformedLeaves: LeaveRequestDisplay[] = leave_requests.map((leave) => {
             console.log('Original status from backend:', leave.status);
             const mappedStatus = (leave.status === 'PENDING' ? 'Pending' :
                                 leave.status === 'APPROVED' ? 'Approved' :
@@ -75,7 +77,7 @@ const LeaveRequests = () => {
 
             return {
               id: leave.id,
-              title: `Leave Request ${index + 1}`,
+              title: leave.title || `Leave Request ${leave.id}`,
               from: leave.start_date,
               to: leave.end_date,
               reason: leave.reason,
@@ -111,6 +113,7 @@ const LeaveRequests = () => {
     setError(null);
 
     const requestData = {
+      title: title.trim(),
       branch_ids: [parseInt(selectedBranch)],
       start_date: format(dateRange.from, "yyyy-MM-dd"),
       end_date: format(dateRange.to, "yyyy-MM-dd"),
@@ -407,7 +410,14 @@ const LeaveRequests = () => {
                               <>Date: {leave.date}</>
                             )}
                           </div>
-                          <div className={`text-xs mb-0.5 sm:mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'} line-clamp-2`}>{leave.reason}</div>
+                          <div className="mb-0.5 sm:mb-1">
+                            <button
+                              onClick={() => setViewReason(leave.reason)}
+                              className={`text-xs font-medium px-2 py-1 rounded-md ${theme === 'dark' ? 'bg-muted/10 text-foreground border border-border' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                            >
+                              View Reason
+                            </button>
+                          </div>
                           <div className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Applied: {leave.appliedOn}</div>
                         </div>
                         <div className="ml-1 sm:ml-2 flex-shrink-0">
@@ -422,6 +432,34 @@ const LeaveRequests = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* View Reason Dialog */}
+      <Dialog open={!!viewReason} onOpenChange={() => setViewReason(null)}>
+        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[80%] sm:max-w-md mx-auto rounded-2xl p-4 sm:p-6`}>
+          <DialogHeader>
+            <DialogTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Reason</DialogTitle>
+          </DialogHeader>
+
+          <div
+            className={`p-3 text-base leading-relaxed whitespace-pre-wrap break-words 
+                      max-h-64 overflow-y-auto rounded-md ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
+          >
+            {viewReason}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              className={theme === 'dark' 
+                ? 'text-foreground bg-card border border-border hover:bg-accent' 
+                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
+              onClick={() => setViewReason(null)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

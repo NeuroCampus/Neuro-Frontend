@@ -14,7 +14,7 @@ const LeavePage: React.FC<LeavePageProps> = ({ setPage }) => {
   const { theme } = useTheme();
 
   return (
-    <div className={`min-h-screen p-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`p-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className={`p-2 rounded-md ${theme === 'dark' ? 'bg-card' : 'bg-white'} shadow-sm`}> 
