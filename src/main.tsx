@@ -15,14 +15,21 @@ const queryClient = new QueryClient({
 })
 
 createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    {/* ✅ NO TooltipProvider - removed */}
+  import.meta.env.PROD ? (
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
+      </QueryClientProvider>
+    </React.StrictMode>
+  ) : (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <App />
       </ThemeProvider>
     </QueryClientProvider>
-  </React.StrictMode>
+  )
 );
 
 // Service worker with cache busting
