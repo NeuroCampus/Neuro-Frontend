@@ -27,6 +27,7 @@ import InvoiceManagement from './InvoiceManagement';
 import PaymentMonitoring from './PaymentMonitoring';
 import Reports from './Reports';
 import StudentFeeReports from './StudentFeeReports';
+import FeesManagerLeave from './FeesManagerLeave';
 import Navbar from '@/components/common/Navbar';
 import { motion } from "framer-motion";
 
@@ -499,6 +500,16 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
                 transition={{ duration: 0.3 }}
               >
                 <PaymentMonitoring />
+              </motion.div>
+            )}
+
+            {activePage === 'leave' && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <FeesManagerLeave />
               </motion.div>
             )}
 
