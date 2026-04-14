@@ -3,13 +3,14 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from '@/components/ui/badge';
 import { Button } from "@/components/ui/button";
-import { Loader2, CreditCard, Receipt, AlertCircle, CheckCircle, Calendar, IndianRupee, Download } from 'lucide-react';
+import { Loader2, CreditCard, Receipt, AlertCircle, CheckCircle, Calendar, IndianRupee, Download, TrendingUp, TrendingDown } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { loadStripe } from '@stripe/stripe-js';
 import { useTheme } from "@/context/ThemeContext";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface InvoiceComponent {
   component_name: string;
@@ -195,10 +196,15 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <motion.div 
+        className="flex items-center justify-center min-h-[400px]"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
         <Loader2 className="h-8 w-8 animate-spin" />
         <span className="ml-2">Loading fee information...</span>
-      </div>
+      </motion.div>
     );
   }
 
@@ -333,321 +339,555 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
     }
   };
 
-  if (!feeData) return null;
-
   const currentInvoice = feeData?.invoices?.find(inv => inv.id === selectedInvoiceId);
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.4, ease: "easeOut" },
+    },
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  };
+
   return (
-    <div className={`container mx-auto p-6 max-w-4xl ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <div className="mb-8">
-        <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Fee Information</h1>
-        <p className={`mt-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>View your current fee status and payment details</p>
-      </div>
+    <motion.div
+      className={`space-y-6`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+    >
+      {/* Page Header */}
+      <motion.div 
+        className="mb-6"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <h1 className={`text-2xl font-bold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+          Fee Information
+        </h1>
+        <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+          View and manage your fee payments
+        </p>
+      </motion.div>
 
       {/* Student Info Card */}
-      <Card className={theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
-        <CardHeader>
-          <CardTitle className={`flex items-center gap-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
-            <CreditCard className="h-5 w-5" />
-            Student Details
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Name</label>
-              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>{feeData?.student?.name || 'N/A'}</p>
+      <motion.div variants={cardVariants} initial="hidden" animate="visible">
+        <Card className={`shadow-md border-0 ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
+          <CardHeader>
+            <CardTitle className={`flex items-center gap-2 text-lg ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+              <CreditCard className="h-5 w-5" />
+              Student Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <motion.div variants={itemVariants}>
+                <label className={`text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                  Name
+                </label>
+                <p className={`text-base font-semibold mt-1.5 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                  {feeData?.student?.name || 'N/A'}
+                </p>
+              </motion.div>
+              <motion.div variants={itemVariants}>
+                <label className={`text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                  USN
+                </label>
+                <p className={`text-base font-semibold mt-1.5 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                  {feeData?.student?.usn || 'N/A'}
+                </p>
+              </motion.div>
+              <motion.div variants={itemVariants}>
+                <label className={`text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                  Department
+                </label>
+                <p className={`text-base font-semibold mt-1.5 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                  {feeData?.student?.dept || 'N/A'}
+                </p>
+              </motion.div>
+              <motion.div variants={itemVariants}>
+                <label className={`text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                  Semester
+                </label>
+                <p className={`text-base font-semibold mt-1.5 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                  Semester {feeData?.student?.semester || 'N/A'}
+                </p>
+              </motion.div>
             </div>
-            <div>
-              <label className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>USN</label>
-              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>{feeData?.student?.usn || 'N/A'}</p>
-            </div>
-            <div>
-              <label className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Department</label>
-              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>{feeData?.student?.dept || 'N/A'}</p>
-            </div>
-            <div>
-              <label className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Semester</label>
-              <p className={`text-lg font-semibold ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>{feeData?.student?.semester || 'N/A'}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Fee Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 mt-6">
-        <Card className={theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
-          <CardContent className="p-6">
-            <p className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Total Fees</p>
-            <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
-              {formatCurrency(feeData?.fee_summary?.total_fees || 0)}
-            </p>
-          </CardContent>
-        </Card>
+      <motion.div 
+        className="grid grid-cols-1 md:grid-cols-3 gap-6"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {/* Total Fees Card */}
+        <motion.div 
+          variants={cardVariants}
+          whileHover={{ y: -4, scale: 1.02 }}
+          className="h-full"
+        >
+          <Card className={`shadow-md border-0 h-full ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                    Total Fees
+                  </p>
+                  <p className={`text-3xl font-bold ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                    {formatCurrency(feeData?.fee_summary?.total_fees || 0)}
+                  </p>
+                </div>
+                <motion.div whileHover={{ rotate: 10 }} className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-primary/10 text-primary' : 'bg-blue-100 text-blue-600'}`}>
+                  <IndianRupee className="h-6 w-6" />
+                </motion.div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card className={theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
-          <CardContent className="p-6">
-            <p className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Amount Paid</p>
-            <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
-              {formatCurrency(feeData?.fee_summary?.amount_paid || 0)}
-            </p>
-          </CardContent>
-        </Card>
+        {/* Amount Paid Card */}
+        <motion.div 
+          variants={cardVariants}
+          whileHover={{ y: -4, scale: 1.02 }}
+          className="h-full"
+        >
+          <Card className={`shadow-md border-0 h-full ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                    Amount Paid
+                  </p>
+                  <p className={`text-3xl font-bold ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+                    {formatCurrency(feeData?.fee_summary?.amount_paid || 0)}
+                  </p>
+                </div>
+                <motion.div whileHover={{ rotate: 10 }} className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-green-500/10 text-green-400' : 'bg-green-100 text-green-600'}`}>
+                  <TrendingUp className="h-6 w-6" />
+                </motion.div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card className={theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
-          <CardContent className="p-6">
-            <p className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Remaining Fees</p>
-            <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>
-              {formatCurrency(feeData?.fee_summary?.remaining_fees || 0)}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+        {/* Remaining Fees Card */}
+        <motion.div 
+          variants={cardVariants}
+          whileHover={{ y: -4, scale: 1.02 }}
+          className="h-full"
+        >
+          <Card className={`shadow-md border-0 h-full ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                    Remaining Fees
+                  </p>
+                  <p className={`text-3xl font-bold ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>
+                    {formatCurrency(feeData?.fee_summary?.remaining_fees || 0)}
+                  </p>
+                </div>
+                <motion.div whileHover={{ rotate: 10 }} className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-destructive/10 text-destructive' : 'bg-red-100 text-red-600'}`}>
+                  <TrendingDown className="h-6 w-6" />
+                </motion.div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </motion.div>
 
       {/* Status Card */}
-      <Card className={`mb-6 ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
-        <CardHeader>
-          <CardTitle className={`flex items-center gap-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
-            {getStatusIcon(feeData?.fee_summary?.remaining_fees || 0)}
-            Payment Status
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div>
-              <Badge className={getStatusColor(feeData?.fee_summary?.remaining_fees || 0)}>
-                {(feeData?.fee_summary?.remaining_fees || 0) === 0 ? 'All Paid' : 'Pending Payment'}
-              </Badge>
-              {feeData?.fee_summary?.due_date && (
-                <p className={`text-sm mt-2 flex items-center gap-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                  <Calendar className="h-4 w-4" />
-                  Due Date: {new Date(feeData.fee_summary.due_date).toLocaleDateString()}
-                </p>
-              )}
-            </div>
-            {(feeData?.fee_summary?.remaining_fees || 0) > 0 && (
-              <div className="flex gap-2">
-                <Button 
-                  className={`${theme === 'dark' ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
-                  onClick={() => {
-                    const inv = feeData?.invoices?.find(inv => inv.balance_amount > 0);
-                    if (inv) handlePaymentClick(inv.id);
-                  }}
-                >
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Pay Full Amount
-                </Button>
-                <Button 
-                  variant="outline"
-                  className={theme === 'dark' ? 'border-border text-card-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}
-                  onClick={() => {
-                    const inv = feeData?.invoices?.find(inv => inv.balance_amount > 0);
-                    if (inv) handleComponentPaymentClick(inv.id);
-                  }}
-                >
-                  Pay by Component
-                </Button>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Invoices Section */}
-      <Card className={`mb-6 ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
-        <CardHeader>
-          <CardTitle className={`flex items-center gap-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
-            <Receipt className="h-5 w-5" />
-            Fee Invoices
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {feeData?.invoices?.length ? (
-            <div className="space-y-4">
-              {feeData.invoices.map((invoice) => (
-                <div key={invoice.id} className={`border rounded-lg p-4 ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h3 className={`font-semibold ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>Semester {invoice.semester}</h3>
-                      <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Invoice #{invoice.invoice_number}</p>
-                    </div>
-                    <Badge variant={invoice.status === 'paid' ? 'default' : 'destructive'}>
-                      {invoice.status}
-                    </Badge>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4 text-sm mb-4">
-                    <div>
-                      <p className={`text-gray-600 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Total Amount</p>
-                      <p className={`font-semibold ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>{formatCurrency(invoice.total_amount)}</p>
-                    </div>
-                    <div>
-                      <p className={`text-gray-600 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Paid Amount</p>
-                      <p className={`font-semibold ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{formatCurrency(invoice.paid_amount)}</p>
-                    </div>
-                    <div>
-                      <p className={`text-gray-600 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Balance</p>
-                      <p className={`font-semibold ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>{formatCurrency(invoice.balance_amount)}</p>
-                    </div>
-                  </div>
-                  {invoice.balance_amount > 0 && (
-                    <div className="flex gap-2">
-                      <Button size="sm" className={`${theme === 'dark' ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'bg-blue-600 hover:bg-blue-700'} text-white`} onClick={() => handlePaymentClick(invoice.id)}>
-                        Pay Full
-                      </Button>
+      <motion.div variants={cardVariants} initial="hidden" animate="visible">
+        <Card className={`shadow-md border-0 ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
+          <CardHeader>
+            <CardTitle className={`flex items-center gap-2 text-lg ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+              {getStatusIcon(feeData?.fee_summary?.remaining_fees || 0)}
+              Payment Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+              <motion.div variants={itemVariants}>
+                <Badge className={`mb-3 ${getStatusColor(feeData?.fee_summary?.remaining_fees || 0)} px-4 py-2 text-base`}>
+                  {(feeData?.fee_summary?.remaining_fees || 0) === 0 ? '✓ All Paid' : '● Pending Payment'}
+                </Badge>
+                {feeData?.fee_summary?.due_date && (
+                  <p className={`text-sm flex items-center gap-2 mt-3 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                    <Calendar className="h-4 w-4" />
+                    Due Date: {new Date(feeData.fee_summary.due_date).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  </p>
+                )}
+              </motion.div>
+              <motion.div variants={itemVariants} className="flex flex-wrap gap-3">
+                {(feeData?.fee_summary?.remaining_fees || 0) > 0 && (
+                  <>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                       <Button 
-                        size="sm" 
+                        className={`bg-[#a259ff] hover:bg-[#8a4dde] text-white font-semibold`}
+                        onClick={() => {
+                          const inv = feeData?.invoices?.find(inv => inv.balance_amount > 0);
+                          if (inv) handlePaymentClick(inv.id);
+                        }}
+                      >
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Pay Full Amount
+                      </Button>
+                    </motion.div>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button 
                         variant="outline"
-                        className={theme === 'dark' ? 'border-border text-card-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}
-                        onClick={() => handleComponentPaymentClick(invoice.id)}
+                        className={theme === 'dark' ? 'border-border text-card-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100 font-semibold'}
+                        onClick={() => {
+                          const inv = feeData?.invoices?.find(inv => inv.balance_amount > 0);
+                          if (inv) handleComponentPaymentClick(inv.id);
+                        }}
                       >
                         Pay by Component
                       </Button>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    </motion.div>
+                  </>
+                )}
+              </motion.div>
             </div>
-          ) : (
-            <p className={`text-center py-8 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No invoices found</p>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Invoices Section */}
+      <motion.div variants={cardVariants} initial="hidden" animate="visible">
+        <Card className={`shadow-md border-0 ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
+          <CardHeader>
+            <CardTitle className={`flex items-center gap-2 text-lg ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+              <Receipt className="h-5 w-5" />
+              Fee Invoices ({feeData?.invoices?.length || 0})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {feeData?.invoices?.length ? (
+              <motion.div 
+                className="space-y-4"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                <AnimatePresence>
+                  {feeData.invoices.map((invoice) => (
+                    <motion.div 
+                      key={invoice.id}
+                      variants={itemVariants}
+                      layout
+                      className={`border rounded-lg p-4 transition-all ${theme === 'dark' ? 'border-border hover:border-primary/50 hover:bg-card/50' : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'}`}
+                      whileHover={{ x: 4 }}
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <motion.div variants={itemVariants}>
+                          <h3 className={`font-semibold text-base ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                            Semester {invoice.semester} • {invoice.academic_year}
+                          </h3>
+                          <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                            Invoice #{invoice.invoice_number}
+                          </p>
+                        </motion.div>
+                        <motion.div whileHover={{ scale: 1.1 }}>
+                          <Badge 
+                            variant={invoice.status === 'paid' ? 'default' : 'destructive'}
+                            className={`font-semibold ${invoice.status === 'paid' ? 'bg-green-600 text-white' : ''}`}
+                          >
+                            {invoice.status.toUpperCase()}
+                          </Badge>
+                        </motion.div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-4 mb-4 p-3 rounded-lg" style={{ backgroundColor: theme === 'dark' ? 'rgba(99, 102, 241, 0.05)' : 'rgba(59, 130, 246, 0.05)' }}>
+                        <motion.div variants={itemVariants}>
+                          <p className={`text-xs font-semibold uppercase ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                            Total
+                          </p>
+                          <p className={`font-semibold text-base ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                            {formatCurrency(invoice.total_amount)}
+                          </p>
+                        </motion.div>
+                        <motion.div variants={itemVariants}>
+                          <p className={`text-xs font-semibold uppercase ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                            Paid
+                          </p>
+                          <p className={`font-semibold text-base ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+                            {formatCurrency(invoice.paid_amount)}
+                          </p>
+                        </motion.div>
+                        <motion.div variants={itemVariants}>
+                          <p className={`text-xs font-semibold uppercase ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                            Balance
+                          </p>
+                          <p className={`font-semibold text-base ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>
+                            {formatCurrency(invoice.balance_amount)}
+                          </p>
+                        </motion.div>
+                      </div>
+                      {invoice.balance_amount > 0 && (
+                        <motion.div 
+                          variants={itemVariants}
+                          className="flex gap-2 flex-wrap"
+                        >
+                          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                            <Button 
+                              size="sm" 
+                              className={`bg-[#a259ff] hover:bg-[#8a4dde] text-white font-semibold`}
+                              onClick={() => handlePaymentClick(invoice.id)}
+                            >
+                              <CreditCard className="h-3.5 w-3.5 mr-1" />
+                              Pay Full
+                            </Button>
+                          </motion.div>
+                          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className={theme === 'dark' ? 'border-border text-card-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100 font-semibold'}
+                              onClick={() => handleComponentPaymentClick(invoice.id)}
+                            >
+                              Pay Component
+                            </Button>
+                          </motion.div>
+                        </motion.div>
+                      )}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+            ) : (
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className={`text-center py-12 text-lg ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}
+              >
+                No invoices found
+              </motion.p>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Payment History Section */}
-      <Card className={`mb-6 ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
-        <CardHeader>
-          <CardTitle className={`flex items-center gap-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
-            <CreditCard className="h-5 w-5" />
-            Payment History
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {feeData?.payments?.length ? (
-            <div className="space-y-4">
-              {feeData.payments.map((payment) => (
-                <div key={payment.id} className={`border rounded-lg p-4 ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className={`font-semibold ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>{formatCurrency(payment.amount)}</h3>
-                      <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                        {new Date(payment.timestamp).toLocaleDateString()} • {payment.mode}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Badge variant={payment.status === 'success' ? 'default' : 'secondary'}>
-                        {payment.status}
-                      </Badge>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className={theme === 'dark' ? 'border-border text-card-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}
-                        onClick={() => handleDownloadReceipt(payment.id)}
-                      >
-                        <Download className="h-4 w-4 mr-1" />
-                        Receipt
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className={`text-center py-8 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No payment history</p>
-          )}
-        </CardContent>
-      </Card>
+      <motion.div variants={cardVariants} initial="hidden" animate="visible">
+        <Card className={`shadow-md border-0 ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
+          <CardHeader>
+            <CardTitle className={`flex items-center gap-2 text-lg ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+              <CreditCard className="h-5 w-5" />
+              Payment History ({feeData?.payments?.length || 0})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {feeData?.payments?.length ? (
+              <motion.div 
+                className="space-y-3"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                <AnimatePresence>
+                  {feeData.payments.map((payment) => (
+                    <motion.div 
+                      key={payment.id}
+                      variants={itemVariants}
+                      layout
+                      className={`border rounded-lg p-4 transition-all ${theme === 'dark' ? 'border-border hover:border-primary/50 hover:bg-card/50' : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'}`}
+                      whileHover={{ x: 4 }}
+                    >
+                      <div className="flex justify-between items-start gap-4">
+                        <motion.div variants={itemVariants} className="flex-1">
+                          <h3 className={`font-semibold text-base ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                            {formatCurrency(payment.amount)}
+                          </h3>
+                          <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                            {new Date(payment.timestamp).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })} • {payment.mode}
+                          </p>
+                        </motion.div>
+                        <motion.div variants={itemVariants} className="flex gap-2 flex-shrink-0">
+                          <Badge 
+                            variant={payment.status === 'success' ? 'default' : 'secondary'}
+                            className={payment.status === 'success' ? 'bg-green-600 text-white' : 'bg-yellow-100 text-yellow-800 border-yellow-300'}
+                          >
+                            {payment.status === 'success' ? '✓ Success' : 'Pending'}
+                          </Badge>
+                          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                            <Button 
+                              variant="ghost"
+                              size="sm" 
+                              className={theme === 'dark' ? 'text-primary hover:bg-primary/10' : 'text-blue-600 hover:bg-blue-50'}
+                              onClick={() => handleDownloadReceipt(payment.id)}
+                              title="Download Receipt"
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          </motion.div>
+                        </motion.div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+            ) : (
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className={`text-center py-12 text-lg ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}
+              >
+                No payment history
+              </motion.p>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Payment Modal */}
-      <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
-        <DialogContent className={`max-w-md ${theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
-          <DialogHeader>
-            <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
-              {paymentType === 'full' ? 'Pay Full Amount' : 'Pay by Component'}
-            </DialogTitle>
-          </DialogHeader>
+      <AnimatePresence>
+        {paymentModalOpen && (
+          <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
+            <DialogContent className={`max-w-md ${theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
+              <DialogHeader>
+                <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
+                  {paymentType === 'full' ? '💳 Pay Full Amount' : '🧩 Pay by Component'}
+                </DialogTitle>
+              </DialogHeader>
 
-          {paymentType === 'full' ? (
-            <div className="space-y-4">
-              <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}`}>
-                <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Total Amount to Pay</p>
-                <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                  {formatCurrency(currentInvoice?.balance_amount || 0)}
-                </p>
-              </div>
-              <Button 
-                onClick={initiateStripePayment} 
-                disabled={isProcessingPayment} 
-                className={`${theme === 'dark' ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'bg-blue-600 hover:bg-blue-700'} text-white w-full`}
-              >
-                {isProcessingPayment ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Proceed to Payment
-                  </>
-                )}
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Select components to pay:</p>
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {currentInvoice?.components?.map((component, idx) => (
-                  <div key={idx} className={`flex items-center space-x-3 p-2 border rounded ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
-                    <Checkbox 
-                      checked={selectedComponents.has(idx)}
-                      onCheckedChange={() => handleComponentToggle(idx)}
-                      className={theme === 'dark' ? 'border-border' : 'border-gray-300'}
-                    />
-                    <Label className={`flex-1 cursor-pointer ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                      <div>
-                        <p className="font-medium">{component.component_name}</p>
-                        <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>{formatCurrency(component.balance_amount)}</p>
-                      </div>
-                    </Label>
+              {paymentType === 'full' ? (
+                <motion.div 
+                  className="space-y-4"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className={`p-4 rounded-lg border-2 ${theme === 'dark' ? 'bg-purple-500/10 border-purple-500/30' : 'bg-purple-50 border-purple-300'}`}>
+                    <p className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                      Total Amount to Pay
+                    </p>
+                    <p className={`text-3xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                      {formatCurrency(currentInvoice?.balance_amount || 0)}
+                    </p>
                   </div>
-                ))}
-              </div>
-
-              {selectedComponents.size > 0 && (
-                <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}`}>
-                  <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Total Selected</p>
-                  <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                    {formatCurrency(
-                      (currentInvoice?.components || [])
-                        .filter((_, idx) => selectedComponents.has(idx))
-                        .reduce((sum, comp) => sum + comp.balance_amount, 0)
-                    )}
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Button 
+                      onClick={initiateStripePayment} 
+                      disabled={isProcessingPayment} 
+                      className={`bg-[#a259ff] hover:bg-[#8a4dde] text-white w-full font-semibold py-6 text-base disabled:opacity-50`}
+                    >
+                      {isProcessingPayment ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="h-4 w-4 mr-2" />
+                          Proceed to Stripe Payment
+                        </>
+                      )}
+                    </Button>
+                  </motion.div>
+                </motion.div>
+              ) : (
+                <motion.div 
+                  className="space-y-4"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <p className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                    Select components to pay:
                   </p>
-                </div>
-              )}
+                  <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+                    {currentInvoice?.components?.map((component, idx) => (
+                      <motion.div
+                        key={idx}
+                        variants={itemVariants}
+                        className={`flex items-center space-x-3 p-3 border rounded-lg ${theme === 'dark' ? 'border-border hover:bg-accent/50' : 'border-gray-200 hover:bg-gray-50'}`}
+                      >
+                        <Checkbox 
+                          checked={selectedComponents.has(idx)}
+                          onCheckedChange={() => handleComponentToggle(idx)}
+                          className={`w-5 h-5 ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}
+                        />
+                        <Label className={`flex-1 cursor-pointer ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                          <div>
+                            <p className="font-medium text-sm">{component.component_name}</p>
+                            <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                              Balance: {formatCurrency(component.balance_amount)}
+                            </p>
+                          </div>
+                        </Label>
+                      </motion.div>
+                    ))}
+                  </div>
 
-              <Button 
-                onClick={initiateStripePayment} 
-                disabled={isProcessingPayment || selectedComponents.size === 0} 
-                className={`${theme === 'dark' ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'bg-blue-600 hover:bg-blue-700'} text-white w-full`}
-              >
-                {isProcessingPayment ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Proceed to Payment
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+                  {selectedComponents.size > 0 && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`p-4 rounded-lg border-2 ${theme === 'dark' ? 'bg-purple-500/10 border-purple-500/30' : 'bg-purple-50 border-purple-300'}`}
+                    >
+                      <p className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                        Total Selected
+                      </p>
+                      <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                        {formatCurrency(
+                          (currentInvoice?.components || [])
+                            .filter((_, idx) => selectedComponents.has(idx))
+                            .reduce((sum, comp) => sum + comp.balance_amount, 0)
+                        )}
+                      </p>
+                    </motion.div>
+                  )}
+
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Button 
+                      onClick={initiateStripePayment} 
+                      disabled={isProcessingPayment || selectedComponents.size === 0} 
+                      className={`bg-[#a259ff] hover:bg-[#8a4dde] text-white w-full font-semibold py-6 text-base disabled:opacity-50`}
+                    >
+                      {isProcessingPayment ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="h-4 w-4 mr-2" />
+                          Proceed to Payment
+                        </>
+                      )}
+                    </Button>
+                  </motion.div>
+                </motion.div>
+              )}
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 
