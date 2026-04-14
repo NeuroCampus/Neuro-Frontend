@@ -266,6 +266,9 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // Main
     { name: "Dashboard", page: "dashboard" },
 
+    // Leave Management
+    { name: "Apply Leave", page: "apply-leave" },
+
     // Exam Management
     { name: "Student Status", page: "student-status" },
     { name: "Course Statistics", page: "course-statistics" },

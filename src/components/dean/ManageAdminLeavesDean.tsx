@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { useTheme } from "../../context/ThemeContext";
-import { manageAdminLeaves } from "../../utils/dean_api";
+import { manageAdminLeaves, manageCOELeaves } from "../../utils/dean_api";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import {
@@ -25,29 +25,49 @@ interface AdminLeave {
   status: string;
 }
 
+interface COELeave {
+  id: number;
+  faculty_name: string;
+  department: string;
+  start_date: string;
+  end_date: string;
+  reason: string;
+  status: string;
+}
+
 const ManageAdminLeavesDean = () => {
   const { theme } = useTheme();
-  const [leaves, setLeaves] = useState<AdminLeave[]>([]);
+  const [adminLeaves, setAdminLeaves] = useState<AdminLeave[]>([]);
+  const [coeLeaves, setCoeLeaves] = useState<COELeave[]>([]);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
-  const [selectedLeave, setSelectedLeave] = useState<AdminLeave | null>(null);
+  const [selectedLeave, setSelectedLeave] = useState<AdminLeave | COELeave | null>(null);
   const [showReasonDialog, setShowReasonDialog] = useState(false);
 
-  // Fetch admin leaves data
+  // Fetch admin and COE leaves data
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await manageAdminLeaves();
-        if (response.success && response.data) {
-          setLeaves(response.data);
+        // Fetch admin leaves
+        const adminResponse = await manageAdminLeaves();
+        if (adminResponse.success && adminResponse.data) {
+          setAdminLeaves(adminResponse.data);
         } else {
-          setError(response.message || "Failed to fetch admin leaves");
+          setError(adminResponse.message || "Failed to fetch admin leaves");
+        }
+
+        // Fetch COE leaves
+        const coeResponse = await manageCOELeaves();
+        if (coeResponse.success && coeResponse.data) {
+          setCoeLeaves(coeResponse.data);
+        } else {
+          setError(coeResponse.message || "Failed to fetch COE leaves");
         }
       } catch (err) {
-        setError("Failed to fetch admin leaves");
+        setError("Failed to fetch leave data");
       } finally {
         setLoading(false);
       }
@@ -55,23 +75,34 @@ const ManageAdminLeavesDean = () => {
     fetchData();
   }, []);
 
-  const handleAction = async (leaveId: number, action: 'APPROVED' | 'REJECTED') => {
+  const handleAction = async (leaveId: number, action: 'APPROVED' | 'REJECTED', leaveType: 'admin' | 'coe') => {
     setActionLoading(leaveId);
     try {
-      const response = await manageAdminLeaves(
+      const apiFunction = leaveType === 'admin' ? manageAdminLeaves : manageCOELeaves;
+      const response = await apiFunction(
         { leave_id: leaveId, status: action },
         'PATCH'
       );
 
       if (response.success && response.updated_leave) {
         // Update the leave status in the local state
-        setLeaves(prevLeaves =>
-          prevLeaves.map(leave =>
-            leave.id === leaveId
-              ? { ...leave, status: action }
-              : leave
-          )
-        );
+        if (leaveType === 'admin') {
+          setAdminLeaves(prevLeaves =>
+            prevLeaves.map(leave =>
+              leave.id === leaveId
+                ? { ...leave, status: action }
+                : leave
+            )
+          );
+        } else {
+          setCoeLeaves(prevLeaves =>
+            prevLeaves.map(leave =>
+              leave.id === leaveId
+                ? { ...leave, status: action }
+                : leave
+            )
+          );
+        }
 
         // Show success alert
         const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
@@ -125,12 +156,14 @@ const ManageAdminLeavesDean = () => {
     }
   };
 
-  const pendingLeaves = leaves.filter(leave => leave.status === 'PENDING');
-  const processedLeaves = leaves.filter(leave => leave.status !== 'PENDING');
+  const pendingAdminLeaves = adminLeaves.filter(leave => leave.status === 'PENDING');
+  const processedAdminLeaves = adminLeaves.filter(leave => leave.status !== 'PENDING');
+  const pendingCoeLeaves = coeLeaves.filter(leave => leave.status === 'PENDING');
+  const processedCoeLeaves = coeLeaves.filter(leave => leave.status !== 'PENDING');
 
   return (
     <div className={`p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <h2 className={`text-3xl font-bold mb-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Manage Admin Leaves</h2>
+      <h2 className={`text-3xl font-bold mb-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Manage Faculty Leaves</h2>
 
       {/* Error Message */}
       {error && (
@@ -146,21 +179,21 @@ const ManageAdminLeavesDean = () => {
         </div>
       )}
 
-      {/* Pending Leave Requests */}
+      {/* Pending Admin Leave Requests */}
       <Card className={`mb-6 ${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
         <CardHeader>
           <CardTitle className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-            Pending Admin Leave Requests ({pendingLeaves.length})
+            Pending Admin Leave Requests ({pendingAdminLeaves.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading leave requests...</div>
-          ) : pendingLeaves.length === 0 ? (
+          ) : pendingAdminLeaves.length === 0 ? (
             <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No pending admin leave requests.</div>
           ) : (
             <div className="space-y-4">
-              {pendingLeaves.map((leave) => (
+              {pendingAdminLeaves.map((leave) => (
                 <div
                   key={leave.id}
                   className={`border rounded-md px-4 py-4 shadow-sm ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}
@@ -198,7 +231,7 @@ const ManageAdminLeavesDean = () => {
                       </span>
                       <div className="flex gap-2">
                         <Button
-                          onClick={() => handleAction(leave.id, 'APPROVED')}
+                          onClick={() => handleAction(leave.id, 'APPROVED', 'admin')}
                           disabled={actionLoading === leave.id}
                           className="text-xs px-3 py-1 bg-green-600 hover:bg-green-700 text-white"
                           size="sm"
@@ -206,7 +239,7 @@ const ManageAdminLeavesDean = () => {
                           {actionLoading === leave.id ? '...' : 'Approve'}
                         </Button>
                         <Button
-                          onClick={() => handleAction(leave.id, 'REJECTED')}
+                          onClick={() => handleAction(leave.id, 'REJECTED', 'admin')}
                           disabled={actionLoading === leave.id}
                           className="text-xs px-3 py-1 bg-red-600 hover:bg-red-700 text-white"
                           size="sm"
@@ -223,19 +256,159 @@ const ManageAdminLeavesDean = () => {
         </CardContent>
       </Card>
 
-      {/* Processed Leave Requests */}
-      <Card className={theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}>
+      {/* Processed Admin Leave Requests */}
+      <Card className={`mb-6 ${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
         <CardHeader>
           <CardTitle className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-            Processed Admin Leave Requests ({processedLeaves.length})
+            Processed Admin Leave Requests ({processedAdminLeaves.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {processedLeaves.length === 0 ? (
+          {processedAdminLeaves.length === 0 ? (
             <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No processed admin leave requests.</div>
           ) : (
             <div className="space-y-4">
-              {processedLeaves.map((leave) => (
+              {processedAdminLeaves.map((leave) => (
+                <div
+                  key={leave.id}
+                  className={`border rounded-md px-4 py-4 shadow-sm ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1 text-sm flex-1">
+                      <p className={`font-medium ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                        {leave.title}
+                      </p>
+                      <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                        {leave.faculty_name} - {leave.department}
+                      </p>
+                      <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                        {leave.start_date} to {leave.end_date}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          onClick={() => {
+                            setSelectedLeave(leave);
+                            setShowReasonDialog(true);
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className={`text-xs ${theme === 'dark' ? 'border-border hover:bg-accent' : 'border-gray-300 hover:bg-gray-50'}`}
+                        >
+                          View Reason
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <span
+                        className={`text-xs font-medium px-2 py-0.5 rounded-full border-none ${
+                          leave.status === 'APPROVED'
+                            ? 'text-green-700 bg-green-100'
+                            : leave.status === 'REJECTED'
+                            ? 'text-red-700 bg-red-100'
+                            : 'text-yellow-700 bg-yellow-100'
+                        }`}
+                      >
+                        {leave.status.charAt(0) + leave.status.slice(1).toLowerCase()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Pending COE Leave Requests */}
+      <Card className={`mb-6 ${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
+        <CardHeader>
+          <CardTitle className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+            Pending COE Leave Requests ({pendingCoeLeaves.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading leave requests...</div>
+          ) : pendingCoeLeaves.length === 0 ? (
+            <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No pending COE leave requests.</div>
+          ) : (
+            <div className="space-y-4">
+              {pendingCoeLeaves.map((leave) => (
+                <div
+                  key={leave.id}
+                  className={`border rounded-md px-4 py-4 shadow-sm ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1 text-sm flex-1">
+                      <p className={`font-medium ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                        {leave.title}
+                      </p>
+                      <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                        {leave.faculty_name} - {leave.department}
+                      </p>
+                      <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                        {leave.start_date} to {leave.end_date}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          onClick={() => {
+                            setSelectedLeave(leave);
+                            setShowReasonDialog(true);
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className={`text-xs ${theme === 'dark' ? 'border-border hover:bg-accent' : 'border-gray-300 hover:bg-gray-50'}`}
+                        >
+                          View Reason
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2 ml-4">
+                      <span
+                        className={`text-xs font-medium px-2 py-0.5 rounded-full border-none text-yellow-700 bg-yellow-100`}
+                      >
+                        Pending
+                      </span>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => handleAction(leave.id, 'APPROVED', 'coe')}
+                          disabled={actionLoading === leave.id}
+                          className="text-xs px-3 py-1 bg-green-600 hover:bg-green-700 text-white"
+                          size="sm"
+                        >
+                          {actionLoading === leave.id ? '...' : 'Approve'}
+                        </Button>
+                        <Button
+                          onClick={() => handleAction(leave.id, 'REJECTED', 'coe')}
+                          disabled={actionLoading === leave.id}
+                          className="text-xs px-3 py-1 bg-red-600 hover:bg-red-700 text-white"
+                          size="sm"
+                        >
+                          {actionLoading === leave.id ? '...' : 'Reject'}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Processed COE Leave Requests */}
+      <Card className={theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}>
+        <CardHeader>
+          <CardTitle className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+            Processed COE Leave Requests ({processedCoeLeaves.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {processedCoeLeaves.length === 0 ? (
+            <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No processed COE leave requests.</div>
+          ) : (
+            <div className="space-y-4">
+              {processedCoeLeaves.map((leave) => (
                 <div
                   key={leave.id}
                   className={`border rounded-md px-4 py-4 shadow-sm ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}

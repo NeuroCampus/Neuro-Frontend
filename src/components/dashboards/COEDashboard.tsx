@@ -7,6 +7,7 @@ import COEDashboardStats from "../coe/COEDashboardStats";
 import COEProfile from "../coe/COEProfile";
 import COEQPApprovals from "../coe/COEQPApprovals";
 import PublishResults from "../coe/PublishResults";
+import ApplyLeave from "../coe/ApplyLeave";
 import { API_ENDPOINT } from "../../utils/config";
 import { logoutUser } from "../../utils/authService";
 
@@ -38,6 +39,7 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
       'course-statistics': 'course-statistics',
       'publish-results': 'publish-results',
       'qp-approvals': 'qp-approvals',
+      'apply-leave': 'apply-leave',
       'profile': 'profile',
     };
 
@@ -68,6 +70,7 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
       'course-statistics': '/coe/course-statistics',
       'publish-results': '/coe/publish-results',
       'qp-approvals': '/coe/qp-approvals',
+      'apply-leave': '/coe/apply-leave',
       'profile': '/coe/profile',
     };
 
@@ -97,6 +100,8 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
         return <PublishResults />;
       case 'qp-approvals':
         return <COEQPApprovals />;
+      case 'apply-leave':
+        return <ApplyLeave />;
       case 'profile':
         return <COEProfile />;
       default:

@@ -156,3 +156,63 @@ export const manageAdminLeaves = async (
     return { success: false, message: 'Network error' };
   }
 };
+
+// COE Leaves Management for Dean
+interface COELeave {
+  id: number;
+  faculty_name: string;
+  department: string;
+  start_date: string;
+  end_date: string;
+  title: string;
+  reason: string;
+  status: string;
+}
+
+interface ManageCOELeavesResponse {
+  success: boolean;
+  message?: string;
+  data?: COELeave[];
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
+  results?: COELeave[];
+  updated_leave?: {
+    id: number;
+    status: string;
+    reviewed_at: string;
+    reviewed_by: string;
+  };
+  pending_leaves_count?: number;
+}
+
+interface ManageCOELeavesRequest {
+  action?: string;
+  leave_id?: number;
+  status?: string;
+}
+
+export const manageCOELeaves = async (
+  data?: ManageCOELeavesRequest,
+  method: 'GET' | 'PATCH' = 'GET'
+): Promise<ManageCOELeavesResponse> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/dean/coe-leaves/`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        'Content-Type': 'application/json',
+      },
+      body: method === 'PATCH' && data ? JSON.stringify(data) : undefined,
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      console.error('Manage COE Leaves Failed:', { status: response.status, result });
+      return { success: false, message: result.message || `HTTP ${response.status}` };
+    }
+    return result;
+  } catch (error) {
+    console.error('Manage COE Leaves Error:', error);
+    return { success: false, message: 'Network error' };
+  }
+};
