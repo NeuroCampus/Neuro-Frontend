@@ -7,16 +7,16 @@ import {
 } from "../ui/card";
 import { Button } from "../ui/button";
 import { CalendarDays, FileDown } from "lucide-react";
-import { ScrollArea } from "../ui/scroll-area";
 import { getTimetable, type TimetableEntry } from "@/utils/student_api";
 import { useTheme } from "@/context/ThemeContext";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import styles from './StudentTimetable.module.css';
 
 const StudentTimetable = () => {
   const [timetableData, setTimetableData] = useState<TimetableEntry[]>([]);
   const { theme } = useTheme();
-  const tableRef = useRef<HTMLTableElement>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
 
   // Predefined time slots for the grid (9:00 AM to 5:00 PM)
   const timeSlots = [
@@ -45,14 +45,17 @@ const StudentTimetable = () => {
   const getTableData = () => {
     const timetable = Array.isArray(timetableData) ? timetableData : [];
     const tableData = timeSlots.map(({ start, end }) => {
-      const row: Record<string, string> = { time: `${start}-${end}` };
+      const row: Record<string, any> = { time: `${start} - ${end}` };
       days.forEach((day) => {
         const entry = timetable.find(
           (e) => e.start_time === start && e.end_time === end && e.day === day
         );
         row[day.toLowerCase()] = entry
-          ? `${entry.subject?.name || entry.subject}\n${entry.room}`
-          : "";
+          ? {
+              subject: entry.subject?.name || entry.subject,
+              room: entry.room,
+            }
+          : null;
       });
       return row;
     });
@@ -86,67 +89,88 @@ const StudentTimetable = () => {
   };
 
   return (
-    <Card className={theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className={theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}>Timetable</CardTitle>
-        <div className="flex gap-2 ">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className={theme === 'dark' ? 'text-card-foreground bg-muted hover:bg-accent border-border' : 'text-gray-700 bg-white hover:bg-gray-100 border-gray-300'}
-            onClick={exportToPDF}
-          >
-            <FileDown className="w-4 h-4 mr-2" /> Export
-          </Button>
-        </div>
+    <Card className={`mobile-card w-full max-w-full overflow-hidden ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
+      <CardHeader className="flex flex-row items-center justify-between mobile-card-header px-2 sm:px-4">
+        <CardTitle className={`mobile-card-title ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+          <div className="flex items-center gap-2">
+            <CalendarDays className="w-5 h-5" />
+            Timetable
+          </div>
+        </CardTitle>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className={`mobile-touch-target ${theme === 'dark' ? 'text-card-foreground bg-muted hover:bg-accent border-border' : 'text-gray-700 bg-white hover:bg-gray-100 border-gray-300'}`}
+          onClick={exportToPDF}
+        >
+          <FileDown className="w-4 h-4 mr-2" /> Export
+        </Button>
       </CardHeader>
 
-      <CardContent>
-        <div className={`border rounded-lg p-4 ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className={`text-lg font-semibold flex items-center gap-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
-              <CalendarDays className="w-5 h-5" /> Timetable
-            </h2>
-          </div>
-
-          <ScrollArea className="w-full overflow-auto">
-            <table ref={tableRef} className="min-w-full text-sm text-left">
-              <thead className={theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}>
-                <tr>
-                  <th className={`py-2 px-4 font-semibold ${theme === 'dark' ? 'border-b border-border' : 'border-b border-gray-200'}`}>Time/Day</th>
-                  <th className={`py-2 px-4 font-semibold ${theme === 'dark' ? 'border-b border-border' : 'border-b border-gray-200'}`}>Monday</th>
-                  <th className={`py-2 px-4 font-semibold ${theme === 'dark' ? 'border-b border-border' : 'border-b border-gray-200'}`}>Tuesday</th>
-                  <th className={`py-2 px-4 font-semibold ${theme === 'dark' ? 'border-b border-border' : 'border-b border-gray-200'}`}>Wednesday</th>
-                  <th className={`py-2 px-4 font-semibold ${theme === 'dark' ? 'border-b border-border' : 'border-b border-gray-200'}`}>Thursday</th>
-                  <th className={`py-2 px-4 font-semibold ${theme === 'dark' ? 'border-b border-border' : 'border-b border-gray-200'}`}>Friday</th>
-                  <th className={`py-2 px-4 font-semibold ${theme === 'dark' ? 'border-b border-border' : 'border-b border-gray-200'}`}>Saturday</th>
-                </tr>
-              </thead>
-              <tbody>
-                {getTableData().map((row, idx) => (
-                  <tr key={idx} className={theme === 'dark' ? 'border-t border-border hover:bg-accent' : 'border-t border-gray-200 hover:bg-gray-50'}>
-                    <td className={`py-3 px-4 font-medium ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>{row.time}</td>
-                    {["mon", "tue", "wed", "thu", "fri", "sat"].map((day, i) => (
+      <CardContent className="p-0 w-full max-w-full overflow-hidden">
+        <div 
+          ref={tableRef}
+          className={`w-full max-w-full overflow-x-auto overflow-y-auto max-h-[70vh] sm:max-h-none sm:overflow-y-visible ${styles.timetableContainer} ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}
+        >
+          <table className={`min-w-[900px] sm:min-w-0 w-full text-sm text-left ${styles.timetableTable}`}>
+            <thead className={`${theme === 'dark' ? 'bg-muted sticky top-0 z-10' : 'bg-gray-50 sticky top-0 z-10'}`}>
+              <tr>
+                <th className={`py-3 px-2 sm:px-4 font-semibold whitespace-nowrap ${styles.timeColumn} ${theme === 'dark' ? 'border-b border-border text-card-foreground' : 'border-b border-gray-200 text-gray-900'}`}>
+                  Time
+                </th>
+                {days.map((day) => (
+                  <th 
+                    key={day}
+                    className={`py-3 px-2 sm:px-4 font-semibold whitespace-nowrap ${styles.dayColumn} ${theme === 'dark' ? 'border-b border-border text-card-foreground' : 'border-b border-gray-200 text-gray-900'}`}
+                  >
+                    {day}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {getTableData().map((row, idx) => (
+                <tr 
+                  key={idx} 
+                  className={`${
+                    idx % 2 === 0 
+                      ? theme === 'dark' ? 'bg-card' : 'bg-white'
+                      : theme === 'dark' ? 'bg-muted/40' : 'bg-gray-50'
+                  } hover:${theme === 'dark' ? 'bg-accent/50' : 'bg-blue-50'}`}
+                >
+                  <td className={`py-3 px-2 sm:px-4 font-medium whitespace-nowrap ${styles.timeColumn} ${
+                    theme === 'dark' 
+                      ? 'text-card-foreground border-r border-border' 
+                      : 'text-gray-900 border-r border-gray-200'
+                  }`}>
+                    {row.time}
+                  </td>
+                  {["mon", "tue", "wed", "thu", "fri", "sat"].map((day, i) => {
+                    const entry = row[day];
+                    return (
                       <td
                         key={i}
-                        className={`py-3 px-4 whitespace-pre-line ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}
+                        className={`py-3 px-2 sm:px-4 whitespace-nowrap ${styles.dayColumn} ${theme === 'dark' ? 'text-card-foreground border-b border-border/50' : 'text-gray-900 border-b border-gray-200'}`}
                       >
-                        {row[day] ? (
-                          <>
-                            <span className="font-semibold">{row[day].split("\n")[0]}</span>
-                            <br />
-                            {row[day].split("\n")[1]}
-                          </>
+                        {entry ? (
+                          <div className={`space-y-1 ${styles.cellContent}`}>
+                            <div className={`font-semibold text-sm leading-tight ${styles.subject} ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                              {entry.subject}
+                            </div>
+                            <div className={`text-xs ${styles.room} ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                              {entry.room}
+                            </div>
+                          </div>
                         ) : (
-                          ""
+                          <span className={`${styles.emptyCell} ${theme === 'dark' ? 'text-muted-foreground/50' : 'text-gray-300'}`}>—</span>
                         )}
                       </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </ScrollArea>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </CardContent>
     </Card>

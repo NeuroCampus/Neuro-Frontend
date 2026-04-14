@@ -476,3 +476,89 @@ html {
     min-width: 180px !important;
   }
 }
+
+/* Mobile responsive styles for StudentTimetable component */
+@media (max-width: 480px) {
+  .mobile-card {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .mobile-card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    padding: 12px !important;
+  }
+  
+  .mobile-card-title {
+    font-size: 16px !important;
+  }
+  
+  .mobile-card-content {
+    padding: 0 !important;
+  }
+  
+  .mobile-timetable-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+    width: 100vw !important;
+    max-width: 100% !important;
+    position: relative !important;
+    left: 50% !important;
+    right: 50% !important;
+    margin-left: -50vw !important;
+    margin-right: -50vw !important;
+  }
+  
+  .mobile-h2 {
+    font-size: 14px !important;
+    gap: 4px !important;
+  }
+  
+  .mobile-h2 svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+  
+  .mobile-table-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border: none !important;
+    padding: 0 8px !important;
+  }
+  
+  .mobile-timetable {
+    min-width: 360px !important;
+    font-size: 10px !important;
+    width: auto !important;
+  }
+  
+  .mobile-table-header {
+    padding: 4px 3px !important;
+    font-size: 9px !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+  }
+  
+  .mobile-table-cell {
+    padding: 3px 2px !important;
+    font-size: 8px !important;
+    min-width: 60px !important;
+    line-height: 1.1 !important;
+  }
+  
+  .mobile-touch-target {
+    min-height: 44px !important;
+    min-width: 44px !important;
+    width: 100% !important;
+    padding: 10px 12px !important;
+    font-size: 12px !important;
+  }
+}

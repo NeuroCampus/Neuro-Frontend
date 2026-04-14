@@ -1,0 +1,80 @@
+/* Tablet-Specific Styles (768px to 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .timetableContainer {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden !important;
+  }
+
+  .timetableTable {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+  }
+
+  .timetableTable thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .timetableTable th,
+  .timetableTable td {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    padding: 12px 8px;
+    font-size: 13px;
+  }
+
+  .timetableTable th {
+    padding: 12px 8px;
+    font-weight: 600;
+  }
+
+  .timeColumn {
+    width: 90px !important;
+    padding: 12px 6px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
+  }
+
+  .dayColumn {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cellContent {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .cellContent .subject {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.3;
+    word-break: break-word;
+  }
+
+  .cellContent .room {
+    font-size: 11px;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  .emptyCell {
+    font-size: 13px;
+  }
+}
+
+/* Mobile (below 768px) - No changes */
+@media (max-width: 767px) {
+  /* Original mobile styles - no modifications */
+}
+
+/* Desktop (above 1024px) - No changes */
+@media (min-width: 1025px) {
+  /* Original desktop styles - no modifications */
+}
