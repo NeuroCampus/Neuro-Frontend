@@ -23,10 +23,10 @@ const StudyMaterialsStudent = lazy(() => import("../student/StudyMaterial"));
 const StudentAssignments = lazy(() => import("../student/StudentAssignments"));
 const AIInterview = lazy(() => import("../student/AIInterview"));
 const StudentFees = lazy(() => import("../../pages/StudentFees"));
-const PaymentSuccess = lazy(() => import("../../pages/PaymentSuccess"));
-const PaymentCancel = lazy(() => import("../../pages/PaymentCancel"));
-const Revaluation = lazy(() => import("../../pages/Revaluation"));
-const MakeupExam = lazy(() => import("../../pages/MakeupExam"));
+import PaymentSuccess from "../../pages/PaymentSuccess";
+import PaymentCancel from "../../pages/PaymentCancel";
+import Revaluation from "../../pages/Revaluation";
+import MakeupExam from "../../pages/MakeupExam";
 
 // Loading fallback component
 const LoadingFallback = () => (

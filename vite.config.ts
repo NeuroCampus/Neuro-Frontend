@@ -34,13 +34,15 @@ export default defineConfig(({ mode }) => ({
   // - `chunkSizeWarningLimit` raised to avoid noisy warnings for larger legitimate chunks
   // - `manualChunks` separates heavy third-party libs into their own bundles
   build: {
-    chunkSizeWarningLimit: 800, // KB
+    chunkSizeWarningLimit: 2000, // KB - increased to reduce warnings for large legitimate chunks
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
           pdf: ['jspdf', 'html2canvas'],
           images: ['browser-image-compression'],
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select', '@radix-ui/react-toast', '@radix-ui/react-tabs', 'lucide-react'],
+          charts: ['recharts'],
         },
       },
     },
