@@ -163,7 +163,8 @@ export const useInfiniteScroll = (queryKey: string[], fetchMore: () => void) => 
 export const useOptimisticUpdate = <T,>(
   mutationFn: (data: T) => Promise<any>,
   queryKey: string[],
-  optimisticUpdate: (oldData: any, newData: T) => any
+  optimisticUpdate: (oldData: any, newData: T) => any,
+  options?: { refetchOnSettled?: boolean }
 ) => {
   const queryClient = useQueryClient();
 
@@ -191,8 +192,11 @@ export const useOptimisticUpdate = <T,>(
       }
     },
     onSettled: () => {
-      // Always refetch after error or success
-      queryClient.invalidateQueries({ queryKey });
+      // Refetch only when requested via options (default true)
+      const shouldRefetch = options?.refetchOnSettled !== false;
+      if (shouldRefetch) {
+        queryClient.invalidateQueries({ queryKey });
+      }
     },
   });
 };

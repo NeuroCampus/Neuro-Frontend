@@ -130,6 +130,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       "ai-interview": <Mic size={20} />,
       "student-study-material": <FileText size={20} />,
       "student-assignment": <ClipboardList size={20} />,
+      "admin-leaves": <FileText size={20} />,
     };
     return iconMap[page] || <LayoutDashboard size={20} />;
   };
@@ -166,7 +167,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "HOD Attendance", page: "hod-attendance" },
     
     { name: "My Attendance", page: "my-attendance" },
-    ,
+    { name: "Apply Leave", page: "apply-leave" },
+    
     // User & Profile
     { name: "Users", page: "users" },
     { name: "Profile", page: "profile" },
@@ -282,6 +284,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Faculty", page: "faculty" },
     { name: "Finance", page: "finance" },
     { name: "Campus Locations", page: "campus-locations" },
+    { name: "Admin Leaves", page: "admin-leaves" },
     { name: "Profile", page: "profile" },
   ],
 };

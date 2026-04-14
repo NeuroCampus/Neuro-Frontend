@@ -95,7 +95,8 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
   const includeForProctor = activePage === 'student-leave'
     ? 'leave_requests'
     : (needsProctorData ? (activePage === 'proctor-students' ? 'id,name,usn,semester,section,contact,minimal' : 'students') : undefined);
-  const { data: proctorStudentsData, isLoading: proctorStudentsLoading, pagination: proctorPagination } = useProctorStudentsQuery(needsProctorData, includeForProctor);
+  const onlyWithLeaves = activePage === 'student-leave';
+  const { data: proctorStudentsData, isLoading: proctorStudentsLoading, pagination: proctorPagination } = useProctorStudentsQuery(needsProctorData, includeForProctor, undefined, onlyWithLeaves);
   const proctorStudents = proctorStudentsData?.data || [];
 
   // Update active page when location changes

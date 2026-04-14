@@ -676,6 +676,7 @@ export const getProctorStudents = async (params?: {
   page_size?: number;
   include?: string | string[]; // e.g. 'students' or ['students']
   exam_period?: string;
+  only_with_leaves?: boolean;
 }): Promise<GetProctorStudentsResponse> => {
   try {
     const queryParams = new URLSearchParams();
@@ -698,6 +699,9 @@ export const getProctorStudents = async (params?: {
 
     if (params?.exam_period) {
       queryParams.append('exam_period', params.exam_period);
+    }
+    if (params?.only_with_leaves) {
+      queryParams.append('only_with_leaves', 'true');
     }
 
     const basePath = params && params.exam_period
