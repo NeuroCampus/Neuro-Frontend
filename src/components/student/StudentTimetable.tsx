@@ -42,20 +42,39 @@ const StudentTimetable = () => {
   }, []);
 
   // Generate table data for the grid
+  interface DayEntry {
+    subject: string;
+    room: string;
+  }
+  
+  interface TableRow {
+    time: string;
+    [key: string]: string | DayEntry | null | undefined;
+  }
+  
+  const findTimetableEntry = (timetable: TimetableEntry[], start: string, end: string, day: string): TimetableEntry | undefined => {
+    return timetable.find(
+      (e) => e.start_time === start && e.end_time === end && e.day === day
+    );
+  };
+  
+  const createDayEntry = (entry: TimetableEntry | undefined): DayEntry | null => {
+    if (!entry) return null;
+    const subjectStr = typeof entry.subject === 'string' ? entry.subject : (entry.subject?.name || 'Unknown');
+    return {
+      subject: subjectStr,
+      room: entry.room,
+    };
+  };
+  
   const getTableData = () => {
     const timetable = Array.isArray(timetableData) ? timetableData : [];
     const tableData = timeSlots.map(({ start, end }) => {
-      const row: Record<string, any> = { time: `${start} - ${end}` };
+      const row: TableRow = { time: `${start} - ${end}` };
       days.forEach((day) => {
-        const entry = timetable.find(
-          (e) => e.start_time === start && e.end_time === end && e.day === day
-        );
-        row[day.toLowerCase()] = entry
-          ? {
-              subject: entry.subject?.name || entry.subject,
-              room: entry.room,
-            }
-          : null;
+        const entry = findTimetableEntry(timetable, start, end, day);
+        const dayKey = day.toLowerCase() as keyof TableRow;
+        row[dayKey] = createDayEntry(entry);
       });
       return row;
     });
@@ -89,39 +108,37 @@ const StudentTimetable = () => {
   };
 
   return (
-    <Card className={`mobile-card w-full max-w-full overflow-hidden ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
-      <CardHeader className="flex flex-row items-center justify-between mobile-card-header px-2 sm:px-4">
-        <CardTitle className={`mobile-card-title ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
-          <div className="flex items-center gap-2">
-            <CalendarDays className="w-5 h-5" />
-            Timetable
-          </div>
+    <Card className={`${styles.card} ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
+      <CardHeader className={`${styles.cardHeader} ${theme === 'dark' ? 'bg-card' : 'bg-white'}`}>
+        <CardTitle className={`${styles.cardTitle} ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+          <CalendarDays className="w-5 h-5" />
+          <span>Timetable</span>
         </CardTitle>
         <Button 
           variant="outline" 
           size="sm" 
-          className={`mobile-touch-target ${theme === 'dark' ? 'text-card-foreground bg-muted hover:bg-accent border-border' : 'text-gray-700 bg-white hover:bg-gray-100 border-gray-300'}`}
+          className={`${styles.exportButton} bg-[#a259ff] hover:bg-[#8a4dde] text-white border-[#a259ff]`}
           onClick={exportToPDF}
         >
           <FileDown className="w-4 h-4 mr-2" /> Export
         </Button>
       </CardHeader>
 
-      <CardContent className="p-0 w-full max-w-full overflow-hidden">
+      <CardContent className={`p-0 ${styles.card}`}>
         <div 
           ref={tableRef}
-          className={`w-full max-w-full overflow-x-auto overflow-y-auto max-h-[70vh] sm:max-h-none sm:overflow-y-visible ${styles.timetableContainer} ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}
+          className={`${styles.timetableContainer} ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}
         >
-          <table className={`min-w-[900px] sm:min-w-0 w-full text-sm text-left ${styles.timetableTable}`}>
-            <thead className={`${theme === 'dark' ? 'bg-muted sticky top-0 z-10' : 'bg-gray-50 sticky top-0 z-10'}`}>
+          <table className={styles.timetableTable}>
+            <thead className={theme === 'dark' ? 'bg-muted' : 'bg-gray-50'}>
               <tr>
-                <th className={`py-3 px-2 sm:px-4 font-semibold whitespace-nowrap ${styles.timeColumn} ${theme === 'dark' ? 'border-b border-border text-card-foreground' : 'border-b border-gray-200 text-gray-900'}`}>
+                <th className={`${styles.timeColumn} ${theme === 'dark' ? 'border-b border-border text-card-foreground' : 'border-b border-gray-200 text-gray-900'}`}>
                   Time
                 </th>
                 {days.map((day) => (
                   <th 
                     key={day}
-                    className={`py-3 px-2 sm:px-4 font-semibold whitespace-nowrap ${styles.dayColumn} ${theme === 'dark' ? 'border-b border-border text-card-foreground' : 'border-b border-gray-200 text-gray-900'}`}
+                    className={`${styles.dayColumn} ${theme === 'dark' ? 'border-b border-border text-card-foreground' : 'border-b border-gray-200 text-gray-900'}`}
                   >
                     {day}
                   </th>
@@ -129,46 +146,66 @@ const StudentTimetable = () => {
               </tr>
             </thead>
             <tbody>
-              {getTableData().map((row, idx) => (
+              {getTableData().map((row, idx) => {
+                const isEvenRow = idx % 2 === 0;
+                const rowBgLight = isEvenRow ? 'bg-white' : 'bg-gray-50';
+                const rowBgDark = isEvenRow ? 'bg-card' : 'bg-muted/40';
+                const rowBgClass = theme === 'dark' ? rowBgDark : rowBgLight;
+                const hoverClass = theme === 'dark' ? 'hover:bg-accent/50' : 'hover:bg-blue-50';
+                const slotKey = `time-${idx}`;
+                
+                return (
                 <tr 
-                  key={idx} 
-                  className={`${
-                    idx % 2 === 0 
-                      ? theme === 'dark' ? 'bg-card' : 'bg-white'
-                      : theme === 'dark' ? 'bg-muted/40' : 'bg-gray-50'
-                  } hover:${theme === 'dark' ? 'bg-accent/50' : 'bg-blue-50'}`}
+                  key={slotKey} 
+                  className={`${rowBgClass} ${hoverClass}`}
                 >
-                  <td className={`py-3 px-2 sm:px-4 font-medium whitespace-nowrap ${styles.timeColumn} ${
+                  <td className={`${styles.timeColumn} ${
                     theme === 'dark' 
                       ? 'text-card-foreground border-r border-border' 
                       : 'text-gray-900 border-r border-gray-200'
                   }`}>
                     {row.time}
                   </td>
-                  {["mon", "tue", "wed", "thu", "fri", "sat"].map((day, i) => {
-                    const entry = row[day];
+                  {["mon", "tue", "wed", "thu", "fri", "sat"].map((day) => {
+                    type DayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat';
+                    const entryValue = row[day as DayKey];
+                    const entry = (entryValue && typeof entryValue === 'object') ? entryValue : null;
+                    const tdTextLight = 'text-gray-900 border-b border-gray-200';
+                    const tdTextDark = 'text-card-foreground border-b border-border/50';
+                    const tdTextClass = theme === 'dark' ? tdTextDark : tdTextLight;
+                    const subjectColorLight = 'text-gray-900';
+                    const subjectColorDark = 'text-card-foreground';
+                    const subjectColor = theme === 'dark' ? subjectColorDark : subjectColorLight;
+                    const roomColorLight = 'text-gray-600';
+                    const roomColorDark = 'text-muted-foreground';
+                    const roomColor = theme === 'dark' ? roomColorDark : roomColorLight;
+                    const emptyColorLight = 'text-gray-300';
+                    const emptyColorDark = 'text-muted-foreground/50';
+                    const emptyColor = theme === 'dark' ? emptyColorDark : emptyColorLight;
+                    
                     return (
                       <td
-                        key={i}
-                        className={`py-3 px-2 sm:px-4 whitespace-nowrap ${styles.dayColumn} ${theme === 'dark' ? 'text-card-foreground border-b border-border/50' : 'text-gray-900 border-b border-gray-200'}`}
+                        key={day}
+                        className={`${styles.dayColumn} ${tdTextClass}`}
                       >
                         {entry ? (
-                          <div className={`space-y-1 ${styles.cellContent}`}>
-                            <div className={`font-semibold text-sm leading-tight ${styles.subject} ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                          <div className={styles.cellContent}>
+                            <div className={`${styles.subject} ${subjectColor}`}>
                               {entry.subject}
                             </div>
-                            <div className={`text-xs ${styles.room} ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                            <div className={`${styles.room} ${roomColor}`}>
                               {entry.room}
                             </div>
                           </div>
                         ) : (
-                          <span className={`${styles.emptyCell} ${theme === 'dark' ? 'text-muted-foreground/50' : 'text-gray-300'}`}>—</span>
+                          <span className={`${styles.emptyCell} ${emptyColor}`}>—</span>
                         )}
                       </td>
                     );
                   })}
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
