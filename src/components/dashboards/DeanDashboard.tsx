@@ -13,6 +13,7 @@ import DeanFinance from "../dean/DeanFinance";
 import DeanAlerts from "../dean/DeanAlerts";
 import DeanAttendanceRecords from "../dean/DeanAttendanceRecords";
 import DeanProfile from "../dean/DeanProfile";
+import ManageAdminLeavesDean from "../dean/ManageAdminLeavesDean";
 import { useTheme } from "../../context/ThemeContext";
 
 interface DeanUser {
@@ -40,6 +41,7 @@ const getActivePageFromPath = (pathname: string): string => {
     'finance': 'finance',
     'alerts': 'alerts',
     'attendance-records': 'attendance-records',
+    'admin-leaves': 'admin-leaves',
   };
   return pathMap[lastPart] || 'dashboard';
 };
@@ -89,6 +91,8 @@ const DeanDashboard = ({ user, setPage }: { user: DeanUser; setPage: (p: string)
         return <DeanReports />;
       case 'profile':
         return <div className="p-4"><DeanProfile /></div>;
+      case 'admin-leaves':
+        return <ManageAdminLeavesDean />;
       default:
         return <div className="p-4">Welcome, Dean.</div>;
     }

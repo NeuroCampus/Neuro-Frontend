@@ -690,6 +690,65 @@ export const bulkProcessHODLeaves = async (data: BulkHODLeaveActionsRequest): Pr
   }
 };
 
+// Admin Leave Interfaces
+interface AdminLeaveRequest {
+  title: string;
+  start_date: string;
+  end_date: string;
+  reason: string;
+}
+
+interface AdminLeave {
+  id: number;
+  title: string;
+  date: string;
+  reason: string;
+  status: string;
+}
+
+interface AdminLeaveApplicationsResponse {
+  success: boolean;
+  message?: string;
+  data?: AdminLeave[];
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
+  results?: AdminLeave[];
+}
+
+interface AdminLeaveApplicationsRequest {
+  title: string;
+  start_date: string;
+  end_date: string;
+  reason: string;
+}
+
+// Admin Leave Functions
+export const adminLeaveApplications = async (
+  data?: AdminLeaveApplicationsRequest,
+  method: "GET" | "POST" = "GET"
+): Promise<AdminLeaveApplicationsResponse> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/leave-applications/`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+      body: method === "POST" && data ? JSON.stringify(data) : undefined,
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      console.error("Admin Leave Applications Failed:", { status: response.status, result });
+      return { success: false, message: result.message || `HTTP ${response.status}` };
+    }
+    return result;
+  } catch (error) {
+    console.error("Admin Leave Applications Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
 interface ManageAdminProfilePatchRequest {
   user_id: string;
   updates: {
