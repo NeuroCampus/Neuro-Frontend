@@ -12,8 +12,6 @@ const StudentTimetable = lazy(() => import("../student/StudentTimetable"));
 const StudentAttendance = lazy(() => import("../student/StudentAttendance"));
 const InternalMarks = lazy(() => import("../student/InternalMarks"));
 const SubmitLeaveRequest = lazy(() => import("../student/SubmitLeaveRequest"));
-const LeaveStatus = lazy(() => import("../student/LeaveStatus"));
-const LeavePage = lazy(() => import("../student/LeavePage"));
 const StudentProfile = lazy(() => import("../student/StudentProfile"));
 const StudentAnnouncements = lazy(() => import("../student/StudentAnnouncements"));
 const StudentNotifications = lazy(() => import("../student/StudentNotifications"));
@@ -94,11 +92,11 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
       case "marks":
         return <InternalMarks />;
       case "leave-request":
-        return <LeavePage setPage={handlePageChange} />;
+        return <SubmitLeaveRequest />;
       case "leave-status":
-        return <LeavePage setPage={handlePageChange} />;
+        return <SubmitLeaveRequest />;
       case "leave":
-        return <LeavePage setPage={handlePageChange} />;
+        return <SubmitLeaveRequest />;
       case "fees":
         return <StudentFees user={user} />;
       case "payment-success":
