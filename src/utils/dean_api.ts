@@ -217,26 +217,29 @@ export const manageCOELeaves = async (
   }
 };
 
-// Fees Manager Leaves Management for Dean
-interface FeesManagerLeave {
+// All Leaves Management for Dean (Combined)
+interface AllLeave {
   id: number;
   faculty_name: string;
   department: string;
+  faculty_type: 'admin' | 'coe' | 'fees_manager';
   start_date: string;
   end_date: string;
   title: string;
   reason: string;
   status: string;
+  submitted_at: string;
+  reviewed_at: string | null;
 }
 
-interface ManageFeesManagerLeavesResponse {
+interface ManageAllLeavesResponse {
   success: boolean;
   message?: string;
-  data?: FeesManagerLeave[];
+  data?: AllLeave[];
   count?: number;
   next?: string | null;
   previous?: string | null;
-  results?: FeesManagerLeave[];
+  results?: AllLeave[];
   updated_leave?: {
     id: number;
     status: string;
@@ -246,18 +249,18 @@ interface ManageFeesManagerLeavesResponse {
   pending_leaves_count?: number;
 }
 
-interface ManageFeesManagerLeavesRequest {
+interface ManageAllLeavesRequest {
   action?: string;
   leave_id?: number;
   status?: string;
 }
 
-export const manageFeesManagerLeaves = async (
-  data?: ManageFeesManagerLeavesRequest,
+export const manageAllLeaves = async (
+  data?: ManageAllLeavesRequest,
   method: 'GET' | 'PATCH' = 'GET'
-): Promise<ManageFeesManagerLeavesResponse> => {
+): Promise<ManageAllLeavesResponse> => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/dean/fees-manager-leaves/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/dean/all-leaves/`, {
       method,
       headers: {
         Authorization: `Bearer ${localStorage.getItem('access_token')}`,
@@ -267,12 +270,12 @@ export const manageFeesManagerLeaves = async (
     });
     const result = await response.json();
     if (!response.ok) {
-      console.error('Manage Fees Manager Leaves Failed:', { status: response.status, result });
+      console.error('Manage All Leaves Failed:', { status: response.status, result });
       return { success: false, message: result.message || `HTTP ${response.status}` };
     }
     return result;
   } catch (error) {
-    console.error('Manage Fees Manager Leaves Error:', error);
+    console.error('Manage All Leaves Error:', error);
     return { success: false, message: 'Network error' };
   }
 };

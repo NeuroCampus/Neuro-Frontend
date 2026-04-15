@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { useTheme } from "../../context/ThemeContext";
-import { manageAdminLeaves, manageCOELeaves, manageFeesManagerLeaves } from "../../utils/dean_api";
+import { manageAllLeaves } from "../../utils/dean_api";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import {
@@ -20,20 +20,18 @@ interface UnifiedLeave {
   title?: string;
   faculty_name: string;
   department: string;
+  faculty_type: 'admin' | 'coe' | 'fees_manager';
   start_date: string;
   end_date: string;
   reason: string;
   status: string;
-  faculty_type: 'admin' | 'coe' | 'fees_manager';
-  applied_on?: string;
-  updated_at?: string;
+  submitted_at: string;
+  reviewed_at: string | null;
 }
 
 const ManageAdminLeavesDean = () => {
   const { theme } = useTheme();
-  const [adminLeaves, setAdminLeaves] = useState<AdminLeave[]>([]);
-  const [coeLeaves, setCoeLeaves] = useState<COELeave[]>([]);
-  const [feesManagerLeaves, setFeesManagerLeaves] = useState<FeesManagerLeave[]>([]);
+  const [allLeaves, setAllLeaves] = useState<UnifiedLeave[]>([]);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -41,33 +39,16 @@ const ManageAdminLeavesDean = () => {
   const [selectedLeave, setSelectedLeave] = useState<UnifiedLeave | null>(null);
   const [showReasonDialog, setShowReasonDialog] = useState(false);
 
-  // Fetch admin, COE, and fees manager leaves data
+  // Fetch all leaves data in one call
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch admin leaves
-        const adminResponse = await manageAdminLeaves();
-        if (adminResponse.success && adminResponse.data) {
-          setAdminLeaves(adminResponse.data);
+        const response = await manageAllLeaves();
+        if (response.success && response.data) {
+          setAllLeaves(response.data);
         } else {
-          setError(adminResponse.message || "Failed to fetch admin leaves");
-        }
-
-        // Fetch COE leaves
-        const coeResponse = await manageCOELeaves();
-        if (coeResponse.success && coeResponse.data) {
-          setCoeLeaves(coeResponse.data);
-        } else {
-          setError(coeResponse.message || "Failed to fetch COE leaves");
-        }
-
-        // Fetch fees manager leaves
-        const feesManagerResponse = await manageFeesManagerLeaves();
-        if (feesManagerResponse.success && feesManagerResponse.data) {
-          setFeesManagerLeaves(feesManagerResponse.data);
-        } else {
-          setError(feesManagerResponse.message || "Failed to fetch fees manager leaves");
+          setError(response.message || "Failed to fetch leaves");
         }
       } catch (err) {
         setError("Failed to fetch leave data");
@@ -78,110 +59,45 @@ const ManageAdminLeavesDean = () => {
     fetchData();
   }, []);
 
-  const handleAction = async (leaveId: number, action: 'APPROVED' | 'REJECTED', leaveType: 'admin' | 'coe' | 'fees_manager') => {
+  const handleAction = async (leaveId: number, action: 'APPROVED' | 'REJECTED') => {
     setActionLoading(leaveId);
     try {
-      const apiFunction = leaveType === 'admin' ? manageAdminLeaves : leaveType === 'coe' ? manageCOELeaves : manageFeesManagerLeaves;
-      const response = await apiFunction(
+      const response = await manageAllLeaves(
         { leave_id: leaveId, status: action },
         'PATCH'
       );
 
       if (response.success && response.updated_leave) {
         // Update the leave status in the local state
-        if (leaveType === 'admin') {
-          setAdminLeaves(prevLeaves =>
-            prevLeaves.map(leave =>
-              leave.id === leaveId
-                ? { ...leave, status: action }
-                : leave
-            )
-          );
-        } else if (leaveType === 'coe') {
-          setCoeLeaves(prevLeaves =>
-            prevLeaves.map(leave =>
-              leave.id === leaveId
-                ? { ...leave, status: action }
-                : leave
-            )
-          );
-        } else {
-          setFeesManagerLeaves(prevLeaves =>
-            prevLeaves.map(leave =>
-              leave.id === leaveId
-                ? { ...leave, status: action }
-                : leave
-            )
-          );
-        }
-
-        // Show success alert
-        const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-
-        await MySwal.fire({
-          title: 'Success!',
-          text: `Leave request has been ${action.toLowerCase()}.`,
-          icon: 'success',
-          confirmButtonText: 'OK',
-          confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
-          background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
-          color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-        });
-
-        setError("");
-        setSuccessMessage(`Leave request ${action.toLowerCase()} successfully`);
+        setAllLeaves(prevLeaves =>
+          prevLeaves.map(leave =>
+            leave.id === leaveId
+              ? { ...leave, status: action, reviewed_at: response.updated_leave?.reviewed_at || null }
+              : leave
+          )
+        );
+        setSuccessMessage(`Leave ${action.toLowerCase()} successfully`);
+        setTimeout(() => setSuccessMessage(""), 3000);
       } else {
-        setError(response.message || `Failed to ${action.toLowerCase()} leave`);
-
-        // Show error alert
-        const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-
-        await MySwal.fire({
-          title: 'Error!',
-          text: response.message || `Failed to ${action.toLowerCase()} leave`,
-          icon: 'error',
-          confirmButtonText: 'OK',
-          confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
-          background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
-          color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-        });
+        setError(response.message || "Failed to update leave");
       }
     } catch (err) {
-      const errorMessage = "Network error occurred";
-      setError(errorMessage);
-
-      // Show error alert
-      const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-
-      await MySwal.fire({
-        title: 'Error!',
-        text: 'Network error occurred',
-        icon: 'error',
-        confirmButtonText: 'OK',
-        confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
-        background: currentTheme === 'dark' ? '#ffffff' : '#000000',
-      });
+      setError("Failed to update leave");
     } finally {
       setActionLoading(null);
     }
   };
 
   // Create unified arrays for pending and recent leaves
-  const allPendingLeaves: UnifiedLeave[] = [
-    ...adminLeaves.filter(leave => leave.status === 'PENDING').map(leave => ({ ...leave, faculty_type: 'admin' as const })),
-    ...coeLeaves.filter(leave => leave.status === 'PENDING').map(leave => ({ ...leave, faculty_type: 'coe' as const })),
-    ...feesManagerLeaves.filter(leave => leave.status === 'PENDING').map(leave => ({ ...leave, faculty_type: 'fees_manager' as const }))
-  ];
+  const allPendingLeaves: UnifiedLeave[] = allLeaves.filter(leave => leave.status === 'PENDING');
 
   // Get leaves from past 7 days (only processed leaves, not pending)
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-  const recentLeaves: UnifiedLeave[] = [
-    ...adminLeaves.filter(leave => new Date(leave.start_date) >= sevenDaysAgo && leave.status !== 'PENDING').map(leave => ({ ...leave, faculty_type: 'admin' as const })),
-    ...coeLeaves.filter(leave => new Date(leave.start_date) >= sevenDaysAgo && leave.status !== 'PENDING').map(leave => ({ ...leave, faculty_type: 'coe' as const })),
-    ...feesManagerLeaves.filter(leave => new Date(leave.start_date) >= sevenDaysAgo && leave.status !== 'PENDING').map(leave => ({ ...leave, faculty_type: 'fees_manager' as const }))
-  ].sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime()); // Sort by date descending
+  const recentLeaves: UnifiedLeave[] = allLeaves
+    .filter(leave => leave.status !== 'PENDING' && new Date(leave.start_date) >= sevenDaysAgo)
+    .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime()); // Sort by date descending
 
   return (
     <div className={`p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
@@ -262,7 +178,7 @@ const ManageAdminLeavesDean = () => {
                       </span>
                       <div className="flex gap-2">
                         <Button
-                          onClick={() => handleAction(leave.id, 'APPROVED', leave.faculty_type)}
+                          onClick={() => handleAction(leave.id, 'APPROVED')}
                           disabled={actionLoading === leave.id}
                           className="text-xs px-3 py-1 bg-green-600 hover:bg-green-700 text-white"
                           size="sm"
@@ -270,7 +186,7 @@ const ManageAdminLeavesDean = () => {
                           {actionLoading === leave.id ? '...' : 'Approve'}
                         </Button>
                         <Button
-                          onClick={() => handleAction(leave.id, 'REJECTED', leave.faculty_type)}
+                          onClick={() => handleAction(leave.id, 'REJECTED')}
                           disabled={actionLoading === leave.id}
                           className="text-xs px-3 py-1 bg-red-600 hover:bg-red-700 text-white"
                           size="sm"
