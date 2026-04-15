@@ -536,8 +536,7 @@ const StudentManagement = () => {
               setTimeout(() => updateState({ successMessage: "" }), 4000);
             }
           if (fileInputRef.current) fileInputRef.current.value = "";
-          // Fetch fresh students from server (force refresh to bypass suppression cache)
-          await fetchStudents(state.branchId, 1, state.pageSize, '', '', true);
+          // Note: Removed automatic refresh after bulk upload to avoid GET after POST
         } else {
           updateState({ uploadErrors: [res.message || "Bulk upload failed"], uploadedCount: 0, updatedCount: 0, isLoading: false });
         }
@@ -649,8 +648,6 @@ const StudentManagement = () => {
         });
         updateState({ successMessage: "Student added successfully." });
         setTimeout(() => updateState({ successMessage: "" }), 3000);
-        // Refresh full list in background to reconcile with server (force refresh to bypass cache)
-        fetchStudents(state.branchId, 1, state.pageSize, '', '', true);
         // Clear success message after 3 seconds
         setTimeout(() => {
           updateState({ uploadedCount: 0, updatedCount: 0 });
@@ -697,8 +694,6 @@ const StudentManagement = () => {
         updateState({ students: updated, editDialog: false, uploadErrors: [], editSections: [], currentPage: 1 });
         updateState({ successMessage: "Student updated successfully." });
         setTimeout(() => updateState({ successMessage: "" }), 3000);
-        // Refresh in background (force refresh to bypass cache)
-        fetchStudents(state.branchId, 1, state.pageSize, '', '', true);
       } else {
         updateState({ uploadErrors: [res.message || "Error updating student"] });
       }
@@ -718,9 +713,9 @@ const StudentManagement = () => {
       }, "POST");
 
       if (res.success) {
-      // Force refresh after delete to ensure latest list
-      await fetchStudents(state.branchId, 1, state.pageSize, '', '', true);
-      updateState({ confirmDelete: false, uploadErrors: [], currentPage: 1 });
+      // Optimistically remove student from local state
+      const filtered = state.students.filter((s) => s.usn !== state.selectedStudent!.usn);
+      updateState({ students: filtered, confirmDelete: false, uploadErrors: [], currentPage: 1 });
       updateState({ successMessage: "Student deleted successfully." });
       setTimeout(() => updateState({ successMessage: "" }), 3000);
       } else {
