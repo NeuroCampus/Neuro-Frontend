@@ -112,6 +112,7 @@ const MakeupExam = () => {
   const [confirmMakeup, setConfirmMakeup] = useState<{ open: boolean; student_id?: number; subject_id?: number; subject_name?: string }>({ open: false });
 
   const loadStudents = async () => {
+    if (loading) return; // Prevent duplicate calls
     setLoading(true);
     const qs = new URLSearchParams();
     if (usn.trim()) {
