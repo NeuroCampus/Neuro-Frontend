@@ -562,3 +562,18 @@ html {
     font-size: 12px !important;
   }
 }
+
+@media (max-width: 760px) {
+  html, body, #root {
+    min-height: 100dvh;
+    height: 100dvh;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background: linear-gradient(to bottom, #7c3aed, #5b21b6, #1e1b4b);
+    overflow-x: hidden;
+  }
+  body {
+    overscroll-behavior-y: none;
+  }
+}

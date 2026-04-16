@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import useIsMobile from "../hooks/useIsMobile";
 import { useNavigate } from "react-router-dom";
 import LoginWrapper from "../components/auth/LoginWrapper";
 import OTPPage from "../components/auth/OTPPage";
 import ForgotPasswordFlow from "../components/auth/ForgotPasswordFlow";
+import ForgotPasswordMobile from "../components/auth/ForgotPasswordMobile";
 import ResetPassword from "../components/auth/ResetPassword";
 import { startTokenRefresh, stopTokenRefresh } from "../utils/authService";
 import { ThemeProvider } from "../context/ThemeContext";
@@ -13,6 +15,7 @@ const Index = () => {
   const [page, setPage] = useState<string>("login");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [user, setUser] = useState<any>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const checkAuthAndRedirect = () => {
@@ -102,7 +105,13 @@ const Index = () => {
   // Authentication pages
   if (page === "login") return <LoginWrapper setRole={setRole} setPage={setPage} setUser={setUser} />;
   if (page === "otp") return <OTPPage setRole={setRole} setPage={setPage} setUser={setUser} />;
-  if (page === "forgot-password") return <ForgotPasswordFlow setPage={setPage} />;
+  if (page === "forgot-password") {
+    return isMobile ? (
+      <ForgotPasswordMobile setPage={setPage} />
+    ) : (
+      <ForgotPasswordFlow setPage={setPage} />
+    );
+  }
   if (page === "reset-password") return <ResetPassword setPage={setPage} />;
 
   // If still loading or redirecting, show loading

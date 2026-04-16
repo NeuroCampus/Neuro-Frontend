@@ -85,12 +85,10 @@ const StudentProfile = () => {
     // consolidated effect further down (which also checks face status).
   }, []);
 
-  const handleProfilePictureUpload = async () => {
-    if (!profilePictureFile) return;
-
+  const uploadProfilePictureDirectly = async (file: File) => {
     try {
       const result = await uploadProfilePicture(
-        profilePictureFile,
+        file,
         `${API_ENDPOINT}/profile/upload-picture`,
         {}
       );
@@ -131,6 +129,8 @@ const StudentProfile = () => {
     } catch (error) {
       console.error('Profile picture upload failed:', error);
       showErrorAlert("Error", "Failed to upload profile picture");
+      setProfilePictureFile(null);
+      resetUpload();
     }
   };
 
@@ -138,6 +138,8 @@ const StudentProfile = () => {
     const file = event.target.files?.[0];
     if (file) {
       setProfilePictureFile(file);
+      // Auto-upload immediately after file selection
+      uploadProfilePictureDirectly(file);
     }
   };
 
@@ -314,39 +316,11 @@ const StudentProfile = () => {
                   />
                 </div>
 
-                {profilePictureFile && (
+                {isUploadingPicture && (
                   <div className="mb-2 text-center">
-                    <p className="text-sm text-gray-600 mb-2">Selected: {profilePictureFile.name}</p>
-                    {isUploadingPicture && (
-                      <div className="space-y-1">
-                        <Progress value={uploadProgress} className="w-full h-2" />
-                        <p className="text-xs text-gray-500">Uploading... {uploadProgress}%</p>
-                      </div>
-                    )}
-                    {uploadError && (
-                      <p className="text-xs text-red-500">{uploadError}</p>
-                    )}
-                    <div className="flex gap-2 mt-2">
-                      <Button
-                        size="sm"
-                        onClick={handleProfilePictureUpload}
-                        disabled={isUploadingPicture}
-                        className="text-xs"
-                      >
-                        <Upload className="h-3 w-3 mr-1" />
-                        Upload
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setProfilePictureFile(null);
-                          resetUpload();
-                        }}
-                        className="text-xs"
-                      >
-                        Cancel
-                      </Button>
+                    <div className="space-y-1">
+                      <Progress value={uploadProgress} className="w-full h-2" />
+                      <p className="text-xs text-gray-500">Uploading... {uploadProgress}%</p>
                     </div>
                   </div>
                 )}
@@ -703,7 +677,7 @@ const StudentProfile = () => {
 
         <div className="flex justify-end">
           <Button 
-            className={`mt-4 ${theme === 'dark' ? 'text-foreground bg-muted hover:bg-accent border-border' : 'text-gray-900 bg-gray-200 hover:bg-gray-300 border-gray-300'}`}
+            className="mt-4 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white"
             onClick={handleSave}
             disabled={updateProfileMutation.isPending}
           >
