@@ -506,3 +506,210 @@ export const toggleWithholdResult = async (resultId: number) => {
     return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
   }
 };
+
+// Types for exam requests
+export interface MakeupRequest {
+  id: number;
+  student_name: string;
+  student_usn: string;
+  subject_name: string;
+  subject_code: string;
+  batch: string;
+  branch: string;
+  semester: number;
+  section: string | null;
+  exam_period: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reason: string;
+  attachment: string | null;
+  requested_at: string;
+  processed_by: string | null;
+  processed_at: string | null;
+  response_note: string | null;
+}
+
+export interface RevaluationRequest {
+  id: number;
+  student_name: string;
+  student_usn: string;
+  subject_name: string;
+  subject_code: string;
+  batch: string;
+  branch: string;
+  semester: number;
+  exam_period: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reason: string;
+  attachment: string | null;
+  previous_cie: number | null;
+  previous_see: number | null;
+  previous_total: number | null;
+  requested_at: string;
+  processed_by: string | null;
+  processed_at: string | null;
+  response_note: string | null;
+}
+
+export interface ExamRequestFilters {
+  batches: Batch[];
+  branches: Branch[];
+  semesters_by_branch: { [key: number]: Semester[] };
+  exam_periods: Array<{ value: string; label: string }>;
+}
+
+/**
+ * Fetch makeup exam requests with filtering
+ */
+export const getMakeupRequests = async (params: {
+  batch_id?: number;
+  branch_id?: number;
+  semester_id?: number;
+  exam_period?: string;
+  status?: string;
+  search?: string;
+  page?: number;
+  page_size?: number;
+}): Promise<{ success: boolean; message?: string; data?: { requests: MakeupRequest[]; pagination?: any } }> => {
+  try {
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) queryParams.append(k, String(v));
+    });
+
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/makeup-requests/?${queryParams}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+    const result = await response.json();
+
+    // Handle the actual API response structure
+    if (result.success && result.results) {
+      return {
+        success: true,
+        data: {
+          requests: result.results,
+          pagination: {
+            count: result.count,
+            total_pages: result.total_pages,
+            current_page: result.current_page,
+            next: result.next,
+            previous: result.previous
+          }
+        }
+      };
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Error fetching makeup requests:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+/**
+ * Fetch revaluation requests with filtering
+ */
+export const getRevaluationRequests = async (params: {
+  batch_id?: number;
+  branch_id?: number;
+  semester_id?: number;
+  status?: string;
+  search?: string;
+  page?: number;
+  page_size?: number;
+}): Promise<{ success: boolean; message?: string; data?: { requests: RevaluationRequest[]; pagination?: any } }> => {
+  try {
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) queryParams.append(k, String(v));
+    });
+
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/revaluation-requests/?${queryParams}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+    const result = await response.json();
+
+    // Handle the actual API response structure
+    if (result.success && result.results) {
+      return {
+        success: true,
+        data: {
+          requests: result.results,
+          pagination: {
+            count: result.count,
+            total_pages: result.total_pages,
+            current_page: result.current_page,
+            next: result.next,
+            previous: result.previous
+          }
+        }
+      };
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Error fetching revaluation requests:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+/**
+ * Fetch exam request filter options
+ */
+export const getExamRequestFilters = async (): Promise<{ success: boolean; message?: string; data?: ExamRequestFilters }> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/exam-request-filters/`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Error fetching exam request filters:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+/**
+ * Update makeup request status
+ */
+export const updateMakeupRequestStatus = async (requestId: number, status: 'pending' | 'approved' | 'rejected', responseNote?: string) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/makeup-requests/${requestId}/status/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, response_note: responseNote })
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating makeup request status:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+/**
+ * Update revaluation request status
+ */
+export const updateRevaluationRequestStatus = async (requestId: number, status: 'pending' | 'approved' | 'rejected', responseNote?: string) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/revaluation-requests/${requestId}/status/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status, response_note: responseNote })
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating revaluation request status:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};

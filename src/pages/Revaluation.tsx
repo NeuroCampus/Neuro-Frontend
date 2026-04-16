@@ -104,6 +104,7 @@ const Revaluation = () => {
   const [students, setStudents] = useState<Array<{ usn: string; name: string; student_id: number; subjects: Array<{ subject_id: number; subject_name: string; cie_marks?: number; see_marks?: number; total_marks?: number; status: string; applied: boolean; subject_mark_id: number }> }>>([]);
   const role = typeof globalThis !== 'undefined' && globalThis.window ? globalThis.window.localStorage.getItem('role') : null;
   const [selectionMap, setSelectionMap] = useState<Record<number, { revaluation: boolean; photocopy: boolean }>>({});
+  const [viewModal, setViewModal] = useState<{ open: boolean; request?: any }>({ open: false });
   const [loading, setLoading] = useState(false);
   const { theme } = useTheme();
 
@@ -253,9 +254,44 @@ const Revaluation = () => {
       return 'N/A';
     }
     if (isStudentRole) {
+      // for students, if already applied show View button, else show checkboxes
+      if (sub.applied) {
+        return (
+          <Button
+            onClick={() => handleViewRequest(sub.subject_mark_id)}
+            variant="outline"
+            className="text-xs sm:text-sm h-auto px-2 py-1 border-blue-500 text-blue-600 hover:bg-blue-50"
+          >
+            View
+          </Button>
+        );
+      }
       return renderStudentCheckboxes(sub.subject_mark_id);
     }
     return renderApproveButton(sub.subject_mark_id, sub.subject_name, sub.applied);
+  };
+
+  const handleViewRequest = (subjectMarkId: number) => {
+    for (const st of students) {
+      const subject = st.subjects.find((s) => s.subject_mark_id === subjectMarkId && s.request_details);
+      if (subject) {
+        const rd = subject.request_details;
+        const request = {
+          subject_mark_id: subjectMarkId,
+          subject_name: subject.subject_name,
+          status: rd.status,
+          requested_at: rd.requested_at,
+          processed_by_name: rd.processed_by,
+          processed_at: rd.processed_at,
+          response_note: rd.response_note,
+          types: rd.types || [],
+        };
+        setViewModal({ open: true, request });
+        return;
+      }
+    }
+    // fallback: no request details available
+    setMessageModal({ open: true, title: 'Info', message: 'No request details available' });
   };
 
   const renderStudentCheckboxes = (subjectMarkId: number) => (
@@ -532,6 +568,33 @@ const Revaluation = () => {
           <DialogFooter>
             <Button onClick={() => setMessageModal({ open: false })} className="text-xs sm:text-sm h-auto px-3 py-1 bg-[#a259ff] hover:bg-[#8a4dde] text-white">
               OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Request Dialog */}
+      <Dialog open={viewModal.open} onOpenChange={open => !open && setViewModal({ open: false })}>
+        <DialogContent className={`max-w-[95vw] sm:max-w-[90vw] md:max-w-md ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
+          <DialogHeader>
+            <DialogTitle className="text-sm sm:text-base">Request Details</DialogTitle>
+          </DialogHeader>
+          {viewModal.request ? (
+            <div className="text-xs sm:text-sm space-y-2">
+              <div><strong>Subject:</strong> {viewModal.request.subject_name}</div>
+              <div><strong>Status:</strong> {viewModal.request.status}</div>
+              <div><strong>Types:</strong> {(viewModal.request.types || []).map((t: string) => t === 'photocopy' ? 'Photocopy' : 'Revaluation').join(', ') || '-'}</div>
+              <div><strong>Requested At:</strong> {viewModal.request.requested_at || '-'}</div>
+              <div><strong>Processed By:</strong> {viewModal.request.processed_by_name || '-'}</div>
+              <div><strong>Processed At:</strong> {viewModal.request.processed_at || '-'}</div>
+              <div><strong>Response:</strong> {viewModal.request.response_note || '-'}</div>
+            </div>
+          ) : (
+            <p className="text-xs sm:text-sm">No details available</p>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setViewModal({ open: false })} className="text-xs sm:text-sm h-auto px-3 py-1 bg-[#a259ff] hover:bg-[#8a4dde] text-white">
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

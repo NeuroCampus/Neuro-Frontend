@@ -103,13 +103,14 @@ const MakeupExam = () => {
   const [filters, setFilters] = useState({ batch_id: "", branch_id: "", semester_id: "", section_id: "", exam_period: "" });
   const [usn, setUsn] = useState("");
   const [messageModal, setMessageModal] = useState<{ open: boolean; title?: string; message?: string }>({ open: false });
-  const [students, setStudents] = useState<Array<{ usn: string; name: string; student_id: number; subjects: Array<{ subject_id: number; subject_name: string; cie_marks?: number; see_marks?: number; total_marks?: number; status: string; applied: boolean }> }>>([]);
+  const [students, setStudents] = useState<Array<{ usn: string; name: string; student_id: number; subjects: Array<{ subject_id: number; subject_name: string; cie_marks?: number; see_marks?: number; total_marks?: number; status: string; applied: boolean; request_details?: any }> }>>([]);
   const [loading, setLoading] = useState(false);
   const [selectionMap, setSelectionMap] = useState<Record<number, boolean>>({});
   const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<number | null>(null);
   const [reason, setReason] = useState("");
   const [confirmMakeup, setConfirmMakeup] = useState<{ open: boolean; student_id?: number; subject_id?: number; subject_name?: string }>({ open: false });
+  const [viewModal, setViewModal] = useState<{ open: boolean; request?: any }>({ open: false });
 
   const loadStudents = async () => {
     if (loading) return; // Prevent duplicate calls
@@ -216,6 +217,29 @@ const MakeupExam = () => {
     setStudents(prev => prev.map(updateSubjectInStudent));
   };
 
+  const handleViewRequest = (subjectId: number) => {
+    // Find the request details from the current search results
+    for (const student of students) {
+      const subject = student.subjects.find((s: any) => s.subject_id === subjectId && s.applied && s.request_details);
+      if (subject) {
+        // Transform the request_details to match the expected format for the modal
+        const request = {
+          subject: subjectId,
+          subject_name: subject.subject_name,
+          status: subject.request_details.status,
+          exam_period: filters.exam_period, // Use the current exam period from filters
+          requested_at: subject.request_details.requested_at,
+          processed_by_name: subject.request_details.processed_by,
+          processed_at: subject.request_details.processed_at,
+          reason: '', // Not available in the search results
+          response_note: subject.request_details.response_note,
+        };
+        setViewModal({ open: true, request });
+        return;
+      }
+    }
+  };
+
   const handleApplyMakeup = async () => {
     await applyMakeup();
     if (selectedSubject) {
@@ -228,21 +252,45 @@ const MakeupExam = () => {
   };
 
   const renderApplyButton = (applied: boolean, studentId: number, subjectId: number, subjectName: string) => (
-    <Button
-      disabled={applied || loading}
-      onClick={() => handleApplyClick(studentId, subjectId, subjectName)}
-      variant={applied ? 'outline' : 'default'}
-      className={`text-xs sm:text-sm h-auto px-2 py-1 ${applied ? '' : 'bg-[#a259ff] hover:bg-[#8a4dde] text-white'}`}
-    >
-      {applied ? 'Applied' : 'Apply'}
-    </Button>
+    applied ? (
+      <Button
+        onClick={() => handleViewRequest(subjectId)}
+        variant="outline"
+        className="text-xs sm:text-sm h-auto px-2 py-1 border-blue-500 text-blue-600 hover:bg-blue-50"
+      >
+        View
+      </Button>
+    ) : (
+      <Button
+        disabled={loading}
+        onClick={() => handleApplyClick(studentId, subjectId, subjectName)}
+        variant="default"
+        className="text-xs sm:text-sm h-auto px-2 py-1 bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+      >
+        Apply
+      </Button>
+    )
   );
 
-  const renderActionCell = (sub: { subject_id: number; subject_name: string; applied: boolean }, studentId: number, isStudentRole: boolean) => {
+  const renderActionCell = (sub: { subject_id: number; subject_name: string; applied: boolean; request_details?: any }, studentId: number, isStudentRole: boolean) => {
     if (!sub.subject_id) {
       return 'N/A';
     }
     if (isStudentRole) {
+      // If the student has already applied for this subject, show a View button
+      if (sub.applied) {
+        return (
+          <Button
+            onClick={() => handleViewRequest(sub.subject_id)}
+            variant="outline"
+            className="text-xs sm:text-sm h-auto px-2 py-1 border-blue-500 text-blue-600 hover:bg-blue-50"
+          >
+            View
+          </Button>
+        );
+      }
+
+      // Otherwise allow selecting the subject for applying
       return (
         <label className="text-xs flex items-center gap-1">
           <input
@@ -254,6 +302,7 @@ const MakeupExam = () => {
         </label>
       );
     }
+
     return renderApplyButton(sub.applied, studentId, sub.subject_id, sub.subject_name);
   };
 
@@ -492,6 +541,67 @@ const MakeupExam = () => {
           <DialogFooter>
             <Button onClick={() => setMessageModal({ open: false })} className="text-xs sm:text-sm h-auto px-3 py-1 bg-[#a259ff] hover:bg-[#8a4dde] text-white">
               OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Request Details Dialog */}
+      <Dialog open={viewModal.open} onOpenChange={open => !open && setViewModal({ open: false })}>
+        <DialogContent className={`max-w-[95vw] sm:max-w-[90vw] md:max-w-lg ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
+          <DialogHeader>
+            <DialogTitle className="text-sm sm:text-base">Makeup Request Details</DialogTitle>
+          </DialogHeader>
+          {viewModal.request && (
+            <div className="space-y-3 text-xs sm:text-sm">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <strong>Subject:</strong> {viewModal.request.subject_name}
+                </div>
+                <div>
+                  <strong>Status:</strong>
+                  <span className={`ml-1 px-2 py-1 rounded text-xs ${
+                    viewModal.request.status === 'approved' ? 'bg-green-100 text-green-800' :
+                    viewModal.request.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                    'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {viewModal.request.status}
+                  </span>
+                </div>
+                <div>
+                  <strong>Exam Period:</strong> {viewModal.request.exam_period}
+                </div>
+                <div>
+                  <strong>Requested At:</strong> {new Date(viewModal.request.requested_at).toLocaleDateString()}
+                </div>
+                {viewModal.request.processed_by_name && (
+                  <div>
+                    <strong>Processed By:</strong> {viewModal.request.processed_by_name}
+                  </div>
+                )}
+                {viewModal.request.processed_at && (
+                  <div>
+                    <strong>Processed At:</strong> {new Date(viewModal.request.processed_at).toLocaleDateString()}
+                  </div>
+                )}
+              </div>
+              {viewModal.request.reason && (
+                <div>
+                  <strong>Reason:</strong>
+                  <p className="mt-1 text-xs">{viewModal.request.reason}</p>
+                </div>
+              )}
+              {viewModal.request.response_note && (
+                <div>
+                  <strong>Response Note:</strong>
+                  <p className="mt-1 text-xs">{viewModal.request.response_note}</p>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setViewModal({ open: false })} className="text-xs sm:text-sm h-auto px-3 py-1 bg-[#a259ff] hover:bg-[#8a4dde] text-white">
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

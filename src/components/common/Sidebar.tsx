@@ -273,6 +273,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // Exam Management
     { name: "Student Status", page: "student-status" },
     { name: "Course Statistics", page: "course-statistics" },
+    { name: "Makeup Requests", page: "makeup-requests" },
+    { name: "Revaluation Requests", page: "revaluation-requests" },
     { name: "Question Paper Approvals", page: "qp-approvals" },
     { name: "Publish Results", page: "publish-results" },
 
