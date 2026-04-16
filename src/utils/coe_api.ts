@@ -356,11 +356,12 @@ export const createResultUploadBatch = async (payload: { batch: string; branch: 
   }
 };
 
-export const getStudentsForUpload = async (uploadId: number, page?: number, page_size?: number) => {
+export const getStudentsForUpload = async (uploadId: number, page?: number, page_size?: number, request_type?: string) => {
   try {
     const params = new URLSearchParams();
     if (page !== undefined) params.append('page', String(page));
     if (page_size !== undefined) params.append('page_size', String(page_size));
+    if (request_type !== undefined && request_type !== '') params.append('request_type', request_type);
 
     const url = `${API_ENDPOINT}/coe/result-upload/${uploadId}/students/` + (params.toString() ? `?${params}` : '');
     const response = await fetchWithTokenRefresh(url, {
@@ -388,6 +389,43 @@ export const getStudentsForUpload = async (uploadId: number, page?: number, page
     return result;
   } catch (error) {
     console.error('Error fetching students for upload:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+export const getStudentsForRevalMakeupUpload = async (uploadId: number, page?: number, page_size?: number, request_type?: string) => {
+  try {
+    const params = new URLSearchParams();
+    if (page !== undefined) params.append('page', String(page));
+    if (page_size !== undefined) params.append('page_size', String(page_size));
+    if (request_type !== undefined && request_type !== '') params.append('request_type', request_type);
+
+    const url = `${API_ENDPOINT}/coe/result-upload/${uploadId}/reval-makeup-students/` + (params.toString() ? `?${params}` : '');
+    const response = await fetchWithTokenRefresh(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    if ((result as any).results) {
+      const pag = result as any;
+      const payload = pag.results as any;
+      return {
+        success: payload.success,
+        data: {
+          students: payload.students,
+          pagination: { count: pag.count, next: pag.next, previous: pag.previous }
+        }
+      };
+    }
+
+    return result;
+  } catch (error) {
+    console.error('Error fetching students for reval/makeup upload:', error);
     return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
   }
 };

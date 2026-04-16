@@ -277,6 +277,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Revaluation Requests", page: "revaluation-requests" },
     { name: "Question Paper Approvals", page: "qp-approvals" },
     { name: "Publish Results", page: "publish-results" },
+    { name: "Publish Results (Reval/Makeup)", page: "publish-results-reval-makeup" },
 
     // Profile
     { name: "Profile", page: "profile" },

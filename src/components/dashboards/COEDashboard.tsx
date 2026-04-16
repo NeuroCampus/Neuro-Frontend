@@ -7,6 +7,7 @@ import COEDashboardStats from "../coe/COEDashboardStats";
 import COEProfile from "../coe/COEProfile";
 import COEQPApprovals from "../coe/COEQPApprovals";
 import PublishResults from "../coe/PublishResults";
+import PublishResultsRevalMakeup from "../coe/PublishResultsRevalMakeup";
 import ApplyLeave from "../coe/ApplyLeave";
 import MakeupRequests from "../coe/MakeupRequests";
 import RevaluationRequests from "../coe/RevaluationRequests";
@@ -42,6 +43,7 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
       'makeup-requests': 'makeup-requests',
       'revaluation-requests': 'revaluation-requests',
       'publish-results': 'publish-results',
+      'publish-results-reval-makeup': 'publish-results-reval-makeup',
       'qp-approvals': 'qp-approvals',
       'apply-leave': 'apply-leave',
       'profile': 'profile',
@@ -75,6 +77,7 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
       'makeup-requests': '/coe/makeup-requests',
       'revaluation-requests': '/coe/revaluation-requests',
       'publish-results': '/coe/publish-results',
+      'publish-results-reval-makeup': '/coe/publish-results-reval-makeup',
       'qp-approvals': '/coe/qp-approvals',
       'apply-leave': '/coe/apply-leave',
       'profile': '/coe/profile',
@@ -108,6 +111,8 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
         return <RevaluationRequests />;
       case 'publish-results':
         return <PublishResults />;
+      case 'publish-results-reval-makeup':
+        return <PublishResultsRevalMakeup />;
       case 'qp-approvals':
         return <COEQPApprovals />;
       case 'apply-leave':
