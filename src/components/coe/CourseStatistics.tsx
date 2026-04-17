@@ -8,6 +8,7 @@ import { BookOpen, Users, Download } from "lucide-react";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { getCourseApplicationStats, getFilterOptions, getSemesters, FilterOptions } from "../../utils/coe_api";
+import "./CourseStatistics.css";
 
 const CourseStatistics = () => {
   const [data, setData] = useState<any>(null);
@@ -136,15 +137,15 @@ const CourseStatistics = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="course-statistics-main space-y-6">
+      <div className="course-statistics-header flex justify-between items-center">
         <h1 className="text-3xl font-bold">Course Statistics</h1>
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <Card className="course-statistics-filters">
+        <CardContent className="p-6 course-statistics-filters-content">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 course-statistics-filter-grid">
             <div>
               <label className="text-sm font-medium mb-2 block">Batch</label>
               <Select value={filters.batch} onValueChange={(value) => setFilters({...filters, batch: value})}>
@@ -215,8 +216,8 @@ const CourseStatistics = () => {
 
       {/* Summary Cards */}
       {data && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 course-statistics-summary">
+          <Card className="course-statistics-summary-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Subjects</CardTitle>
               <BookOpen className="h-4 w-4 text-muted-foreground" />
@@ -226,7 +227,7 @@ const CourseStatistics = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="course-statistics-summary-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
               <Users className="h-4 w-4 text-blue-500" />
@@ -240,19 +241,19 @@ const CourseStatistics = () => {
 
       {/* Course Statistics Table */}
       {data && (
-        <Card>
+        <Card className="course-statistics-table-card">
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle>Subject-wise Application Statistics ({pagination ? pagination.count : data.courses.length})</CardTitle>
+              <CardTitle>Subject-wise Application Statistics ({totalCount !== null ? totalCount : data.courses.length})</CardTitle>
               <Button variant="outline" size="sm" onClick={handleExport}>
                 <Download className="mr-2 h-4 w-4" />
                 {exporting ? 'Exporting...' : 'Export PDF'}
               </Button>
-              
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
+            <div className="course-statistics-table-wrapper w-full overflow-x-auto">
+              <Table className="min-w-full">
               <TableHeader>
                 <TableRow>
                   <TableHead>Subject Code</TableHead>
@@ -266,20 +267,21 @@ const CourseStatistics = () => {
               <TableBody>
                 {data.courses.map((course: any) => (
                   <TableRow key={course.subject_id}>
-                    <TableCell className="font-medium">{course.subject_code}</TableCell>
-                    <TableCell>{course.subject_name}</TableCell>
-                    <TableCell>{course.total_students}</TableCell>
-                    <TableCell>{course.applied_students}</TableCell>
-                    <TableCell>
+                    <TableCell className="font-medium" data-label="Subject Code">{course.subject_code}</TableCell>
+                    <TableCell data-label="Subject Name">{course.subject_name}</TableCell>
+                    <TableCell data-label="Total Students">{course.total_students}</TableCell>
+                    <TableCell data-label="Applications">{course.applied_students}</TableCell>
+                    <TableCell data-label="Application Rate">
                       <span className={`font-medium ${getApplicationRateColor(course.application_rate)}`}>
                         {course.application_rate}%
                       </span>
                     </TableCell>
-                    <TableCell>{getApplicationRateBadge(course.application_rate)}</TableCell>
+                    <TableCell data-label="Status">{getApplicationRateBadge(course.application_rate)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+              </Table>
+            </div>
             {data.courses.length === 0 && (
               <div className="text-center py-8 text-muted-foreground">
                 No course statistics found for the selected filters.
@@ -287,16 +289,10 @@ const CourseStatistics = () => {
             )}
           {/* Pagination controls */}
           <div className="flex items-center justify-between mt-4">
-            <div className="text-sm text-muted-foreground">
-              {pagination ? `Showing page ${page} of ${Math.ceil(pagination.count / pageSize)} — ${pagination.count} subjects` : `Page ${page}`}
-            </div>
+            <div className="text-sm text-muted-foreground">{totalCount !== null ? `Showing page ${page} — ${totalCount} subjects` : `Page ${page}`}</div>
             <div className="space-x-2">
-              <Button size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1 || !pagination?.previous}>
-                Previous
-              </Button>
-              <Button size="sm" onClick={() => setPage(p => p + 1)} disabled={!pagination?.next}>
-                Next
-              </Button>
+              <Button size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
+              <Button size="sm" onClick={() => setPage(p => p + 1)} disabled={data.courses.length < pageSize}>Next</Button>
             </div>
           </div>
           </CardContent>

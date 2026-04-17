@@ -5,13 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, CheckCircle, Clock, Download, Eye, XCircle } from 'lucide-react';
+import { CheckCircle, Clock, Download, Eye, XCircle } from 'lucide-react';
 import { getRevaluationRequests, getExamRequestFilters, updateRevaluationRequestStatus, getSemesters, RevaluationRequest, ExamRequestFilters } from '@/utils/coe_api';
 import { fetchWithTokenRefresh } from '@/utils/authService';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { useTheme } from '@/context/ThemeContext';
 import { toast } from 'sonner';
 
 const EXAM_PERIODS = [
@@ -23,6 +24,7 @@ const EXAM_PERIODS = [
 ];
 
 const RevaluationRequests: React.FC = () => {
+  const { theme } = useTheme();
   const [requests, setRequests] = useState<RevaluationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<ExamRequestFilters | null>(null);
@@ -129,6 +131,15 @@ const RevaluationRequests: React.FC = () => {
     setActionDialogOpen(true);
   };
 
+  const handleActionDialogOpenChange = (open: boolean) => {
+    setActionDialogOpen(open);
+    if (!open) {
+      setSelectedRequest(null);
+      setActionType(null);
+      setResponseNote('');
+    }
+  };
+
   const submitAction = async () => {
     if (!selectedRequest || !actionType) return;
 
@@ -151,7 +162,7 @@ const RevaluationRequests: React.FC = () => {
           )
         );
         setActionDialogOpen(false);
-        // loadRequests(); // Remove this line to avoid unnecessary GET request
+        loadRequests(); // Refresh the list
       } else {
         toast.error(result.message || 'Failed to update request');
       }
@@ -164,15 +175,17 @@ const RevaluationRequests: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
+    const baseClass = 'inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold shadow-sm';
+
     switch (status) {
       case 'pending':
-        return <Badge variant="secondary" className="flex items-center gap-1"><Clock className="w-3 h-3" /> Pending</Badge>;
+        return <Badge variant="secondary" className={`${baseClass} border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200`}><Clock className="w-3 h-3" /> Pending</Badge>;
       case 'approved':
-        return <Badge variant="default" className="bg-green-500 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Approved</Badge>;
+        return <Badge variant="default" className={`${baseClass} border-emerald-200 bg-emerald-100 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200`}><CheckCircle className="w-3 h-3" /> Approved</Badge>;
       case 'rejected':
-        return <Badge variant="destructive" className="flex items-center gap-1"><XCircle className="w-3 h-3" /> Rejected</Badge>;
+        return <Badge variant="destructive" className={`${baseClass} border-red-200 bg-red-100 text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200`}><XCircle className="w-3 h-3" /> Rejected</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline" className={baseClass}>{status}</Badge>;
     }
   };
 
@@ -199,7 +212,6 @@ const RevaluationRequests: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertCircle className="w-5 h-5" />
             Revaluation Requests
           </CardTitle>
         </CardHeader>
@@ -374,17 +386,18 @@ const RevaluationRequests: React.FC = () => {
                           {request.status === 'pending' && (
                             <>
                               <Button
-                                variant="default"
+                                variant="outline"
                                 size="sm"
                                 onClick={() => handleAction(request, 'approve')}
-                                className="bg-green-600 hover:bg-green-700"
+                                className="text-green-700 border-green-600 hover:bg-green-100"
                               >
                                 Approve
                               </Button>
                               <Button
-                                variant="destructive"
+                                variant="outline"
                                 size="sm"
                                 onClick={() => handleAction(request, 'reject')}
+                                className="text-red-700 border-red-600 hover:bg-red-100"
                               >
                                 Reject
                               </Button>
@@ -479,71 +492,73 @@ const RevaluationRequests: React.FC = () => {
 
       {/* Request Details Dialog */}
       <Dialog open={!!selectedRequest && !actionDialogOpen} onOpenChange={() => setSelectedRequest(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[720px] w-[calc(100vw-2rem)] sm:w-[90vw] rounded-lg flex flex-col max-h-[92vh]`}>
           <DialogHeader>
-            <DialogTitle>Revaluation Request Details</DialogTitle>
+            <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Revaluation Request Details</DialogTitle>
           </DialogHeader>
           {selectedRequest && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4 overflow-auto px-1 sm:px-2 py-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label>Student</Label>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Student</Label>
                   <p className="font-medium">{selectedRequest.student_name}</p>
                   <p className="text-sm text-muted-foreground">{selectedRequest.student_usn}</p>
                 </div>
                 <div>
-                  <Label>Subject</Label>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Subject</Label>
                   <p className="font-medium">{selectedRequest.subject_name}</p>
                   <p className="text-sm text-muted-foreground">{selectedRequest.subject_code}</p>
                 </div>
                 <div>
-                  <Label>Batch/Branch/Semester</Label>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Batch/Branch/Semester</Label>
                   <p>{selectedRequest.batch} / {selectedRequest.branch} / Sem {selectedRequest.semester}</p>
                 </div>
                 <div>
-                  <Label>Exam Period</Label>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Exam Period</Label>
                   <p>{selectedRequest.exam_period}</p>
                 </div>
                 <div>
-                  <Label>Status</Label>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Status : </Label>
                   {getStatusBadge(selectedRequest.status)}
                 </div>
                 <div>
-                  <Label>Requested Date</Label>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Requested Date</Label>
                   <p>{new Date(selectedRequest.requested_at).toLocaleString()}</p>
                 </div>
               </div>
               <div>
-                <Label>Request Types</Label>
-                <p className="font-medium">{(selectedRequest.types || []).map((t: string) => t === 'photocopy' ? 'Photocopy' : 'Revaluation').join(', ') || '-'}</p>
+                <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Request Types</Label>
+                <p className={`mt-1 rounded-md p-3 whitespace-pre-wrap ${theme === 'dark' ? 'bg-muted/20' : 'bg-gray-50 border border-gray-200'}`}>
+                  {(selectedRequest.types || []).map((type: string) => type === 'photocopy' ? 'Photocopy' : 'Revaluation').join(', ') || '-'}
+                </p>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <Label>Previous CIE</Label>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Previous CIE</Label>
                   <p className="font-medium">{selectedRequest.previous_cie || 'N/A'}</p>
                 </div>
                 <div>
-                  <Label>Previous SEE</Label>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Previous SEE</Label>
                   <p className="font-medium">{selectedRequest.previous_see || 'N/A'}</p>
                 </div>
                 <div>
-                  <Label>Previous Total</Label>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Previous Total</Label>
                   <p className="font-medium">{selectedRequest.previous_total || 'N/A'}</p>
                 </div>
               </div>
               <div>
-                <Label>Reason</Label>
-                <p className="mt-1">{selectedRequest.reason}</p>
+                <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Reason</Label>
+                <p className={`mt-1 rounded-md p-3 whitespace-pre-wrap ${theme === 'dark' ? 'bg-muted/20' : 'bg-gray-50 border border-gray-200'}`}>{selectedRequest.reason}</p>
               </div>
               {selectedRequest.response_note && (
                 <div>
-                  <Label>Response Note</Label>
-                  <p className="mt-1">{selectedRequest.response_note}</p>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Response Note</Label>
+                  <p className={`mt-1 rounded-md p-3 whitespace-pre-wrap ${theme === 'dark' ? 'bg-muted/20' : 'bg-gray-50 border border-gray-200'}`}>{selectedRequest.response_note}</p>
                 </div>
               )}
               {selectedRequest.processed_by && (
                 <div>
-                  <Label>Processed By</Label>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Processed By</Label>
                   <p>{selectedRequest.processed_by}</p>
                   {selectedRequest.processed_at && (
                     <p className="text-sm text-muted-foreground">
@@ -555,7 +570,7 @@ const RevaluationRequests: React.FC = () => {
               {/* Photocopy upload UI for approved requests that include photocopy type and lack attachment */}
               {selectedRequest && selectedRequest.types?.includes('photocopy') && selectedRequest.status === 'approved' && !selectedRequest.attachment && (
                 <div>
-                  <Label>Upload Photocopy</Label>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Upload Photocopy</Label>
                   <div className="flex items-center gap-2 mt-2">
                     <input type="file" onChange={(e) => setUploadFile(e.target.files?.[0] || null)} />
                     <Button
@@ -598,16 +613,16 @@ const RevaluationRequests: React.FC = () => {
       </Dialog>
 
       {/* Action Dialog */}
-      <Dialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>
-        <DialogContent>
+      <Dialog open={actionDialogOpen} onOpenChange={handleActionDialogOpenChange}>
+        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[80%] sm:max-w-md mx-auto rounded-2xl p-4 sm:p-6`}>
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className={`${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} text-lg font-semibold`}>
               {actionType === 'approve' ? 'Approve' : 'Reject'} Revaluation Request
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="response-note">Response Note (Optional)</Label>
+            <div className={`p-4 rounded-md ${actionType === 'approve' ? 'bg-green-50 border border-green-200 text-green-700 space-y-2': 'bg-red-50 border border-red-200 text-red-700 space-y-2'}`}>
+              <Label htmlFor="response-note" className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Response Note (Optional)</Label>
               <Textarea
                 id="response-note"
                 placeholder="Add a note for the student..."
@@ -616,15 +631,14 @@ const RevaluationRequests: React.FC = () => {
               />
             </div>
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setActionDialogOpen(false)}>
+              <Button variant="outline" className={theme === 'dark' ? 'text-foreground bg-card border border-border hover:bg-accent' : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'} onClick={() => handleActionDialogOpenChange(false)}>
                 Cancel
               </Button>
               <Button
                 onClick={submitAction}
                 disabled={processing}
-                variant={actionType === 'approve' ? 'default' : 'destructive'}
-                className={actionType === 'approve' ? 'bg-green-600 hover:bg-green-700' : ''}
-              >
+                variant="outline"
+                className={actionType === 'approve' ? 'text-green-700 border-green-600 hover:bg-green-100' : 'text-red-700 border-red-600 hover:bg-red-100'}              >
                 {processing ? 'Processing...' : actionType === 'approve' ? 'Approve' : 'Reject'}
               </Button>
             </div>

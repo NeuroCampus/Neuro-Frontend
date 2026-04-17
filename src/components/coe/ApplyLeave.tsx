@@ -403,7 +403,10 @@ const COEApplyLeave = () => {
                 {filterStatus === 'All' ? 'No leave requests found.' : `No ${filterStatus.toLowerCase()} leave requests found.`}
               </div>
             ) : (
-              <div className="max-h-[350px] sm:max-h-[450px] lg:max-h-[520px] overflow-y-auto custom-scrollbar space-y-1 sm:space-y-2 lg:space-y-3">
+              <div
+                className="max-h-[350px] sm:max-h-[450px] lg:max-h-[520px] overflow-y-auto thin-scrollbar space-y-1 sm:space-y-2 lg:space-y-3 border-r border-gray-200 dark:border-border pr-2"
+                style={{ scrollbarWidth: 'thin' }}
+              >
                 {filteredLeaveList.map((leave) => {
                   console.log('Rendering leave card with status:', leave.status);
                   return (

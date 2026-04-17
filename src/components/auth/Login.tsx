@@ -141,7 +141,7 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
 
             {/* Username */}
             <div className="space-y-2">
-              <label htmlFor="username" className="text-sm font-medium text-gray-300">Username</label>
+              <label htmlFor="username" className="text-sm font-medium text-gray-900">Username</label>
               <div className="relative">
                 <User className="absolute left-3 top-4 h-4 w-4 text-gray-500" />
                 <Input
@@ -159,7 +159,7 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
 
             {/* Password */}
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-gray-300">Password</label>
+              <label htmlFor="password" className="text-sm font-medium text-gray-900">Password</label>
               <div className="relative">
                 <LockKeyhole className="absolute left-3 top-4 h-4 w-4 text-gray-500" />
 
