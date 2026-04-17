@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "../ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, Eye, Download } from "lucide-react";
@@ -32,11 +39,36 @@ const COEQPApprovals = () => {
   const [detailLoading, setDetailLoading] = useState(false);
   const [comment, setComment] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const { theme } = useTheme();
+
+  const toggleExpanded = (key: string) => {
+    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   useEffect(() => {
     fetchPendingQPs();
     fetchFinalizedQPs();
+  }, []);
+
+  // Ensure SweetAlert appears above Dialog and remains clickable.
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+    const styleId = 'swal2-global-fix';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.innerHTML = `
+        .swal2-container, .swal2-popup {
+          z-index: 99999 !important;
+          pointer-events: auto !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
   }, []);
 
   const fetchPendingQPs = async () => {
@@ -74,6 +106,25 @@ const COEQPApprovals = () => {
   };
 
   const handleFinalize = async (qpId: number) => {
+    const result = await MySwal.fire({
+      title: 'Confirm approval',
+      text: 'Are you sure you want to finalize and approve this question paper?',
+      icon: 'question',
+      showCancelButton: true,
+      showCloseButton: true,
+      allowOutsideClick: true,
+      allowEscapeKey: true,
+      reverseButtons: true,
+      confirmButtonText: 'Yes, approve',
+      cancelButtonText: 'Cancel',
+      target: document.body,
+    });
+
+    if (!result || result.isDismissed || !result.isConfirmed) {
+      MySwal.close();
+      return;
+    }
+
     setActionLoading(true);
     try {
       const response = await fetch(`${API_ENDPOINT}/admin/qps/${qpId}/coe-finalize/`, {
@@ -86,7 +137,15 @@ const COEQPApprovals = () => {
       });
       const data = await response.json();
       if (data.success) {
-        alert("QP finalized and approved for use.");
+        MySwal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Approved',
+          text: data.message || 'QP finalized and approved for use.',
+          showConfirmButton: false,
+          timer: 3000,
+        });
         // remove from pending list
         setPendingQPs(pendingQPs.filter(qp => qp.id !== qpId));
         // add to finalized list so UI updates immediately without refetch
@@ -95,14 +154,16 @@ const COEQPApprovals = () => {
           // avoid duplicates
           setFinalizedQPs(prev => [finalizedItem, ...prev.filter(q => q.id !== finalizedItem.id)]);
         }
+        setDialogOpen(false);
         setSelectedQP(null);
+        setQpDetail(null);
         setComment("");
       } else {
-        alert(data.message || "Failed to finalize QP.");
+        MySwal.fire('Error', data.message || 'Failed to finalize QP.', 'error');
       }
     } catch (error) {
       console.error("Error finalizing QP:", error);
-      alert("Network error while finalizing QP.");
+      MySwal.fire('Network error', 'Network error while finalizing QP.', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -208,10 +269,20 @@ const COEQPApprovals = () => {
       text: 'Are you sure you want to reject this question paper and send it back to Admin?',
       icon: 'warning',
       showCancelButton: true,
+      showCloseButton: true,
+      allowOutsideClick: true,
+      allowEscapeKey: true,
+      reverseButtons: true,
       confirmButtonText: 'Yes, reject',
-      cancelButtonText: 'Cancel'
+      cancelButtonText: 'Cancel',
+      // Render at document.body so it's not trapped under portal layers.
+      target: document.body,
     });
-    if (!result.isConfirmed) return;
+
+    if (!result || result.isDismissed || !result.isConfirmed) {
+      MySwal.close();
+      return;
+    }
 
     setActionLoading(true);
     try {
@@ -235,7 +306,9 @@ const COEQPApprovals = () => {
           timer: 3000,
         });
         setPendingQPs(pendingQPs.filter(qp => qp.id !== qpId));
+        setDialogOpen(false);
         setSelectedQP(null);
+        setQpDetail(null);
         setComment("");
       } else {
         MySwal.fire('Error', data.message || 'Failed to reject QP.', 'error');
@@ -297,7 +370,7 @@ const COEQPApprovals = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => { setSelectedQP(qp); fetchQPDetail(qp.id); }}
+                        onClick={() => { setSelectedQP(qp); setQpDetail(null); fetchQPDetail(qp.id); setDialogOpen(true); }}
                       >
                         <Eye className="w-4 h-4 mr-1" />
                         Review
@@ -348,9 +421,10 @@ const COEQPApprovals = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          // open the same preview as pending review but read-only and provide download
                           setSelectedQP(qp);
+                          setQpDetail(null);
                           fetchQPDetail(qp.id);
+                          setDialogOpen(true);
                         }}
                       >
                         <Eye className="w-4 h-4 mr-1" />
@@ -364,47 +438,110 @@ const COEQPApprovals = () => {
           )}
         </CardContent>
       </Card>
-      {selectedQP && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Final Review QP: {selectedQP.subject} - {selectedQP.test_type}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              {detailLoading ? (
-                <div className="text-center py-4">Loading QP...</div>
-              ) : qpDetail ? (
-                <div>
-                  <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
-                    <h4 className="font-semibold mb-4">Question Paper Preview</h4>
-                    <div className="space-y-4">
-                      {qpDetail.questions.map((q: any, qIndex: number) => (
-                        <div key={qIndex}>
-                          {q.subparts.map((s: any, sIndex: number) => (
-                            <div key={sIndex} className="mb-3">
-                              <div className="font-medium">{q.question_number}{s.subpart_label}.</div>
-                              <div className="mt-1">{s.content}</div>
-                              <div className="mt-1 text-sm">({s.max_marks} marks)</div>
-                              <div className="text-sm mt-1">CO: {q.co}</div>
-                              <div className="text-sm">Blooms: {q.blooms_level}</div>
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedQP(null);
+            setQpDetail(null);
+            setComment("");
+          }
+          setDialogOpen(open);
+        }}
+      >
+        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[720px] w-[calc(100vw-1.5rem)] sm:w-[calc(100vw-2rem)] md:w-[90vw] rounded-lg flex flex-col max-h-[92vh]`}>
+          <DialogHeader>
+            <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
+              Review QP: {selectedQP?.subject} - {selectedQP?.test_type}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="overflow-auto px-4 py-2 space-y-4 flex-1">
+            {detailLoading ? (
+              <div className="text-center py-4">Loading QP details...</div>
+            ) : qpDetail ? (
+              <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                <h4 className="font-semibold mb-4">Question Paper Preview</h4>
+                <div className="space-y-4">
+                  {qpDetail.questions.map((q: any, qIndex: number) => (
+                    <div key={qIndex} className="space-y-3">
+                      {q.subparts.map((s: any, sIndex: number) => {
+                        const key = `${qIndex}-${sIndex}`;
+                        const isExpanded = !!expanded[key];
+                        const content = s.content || '';
+                        const shortContent = content.length > 160 ? content.slice(0, 160) + '...' : content;
+
+                        return (
+                          <div key={sIndex} className="border rounded-md p-3 bg-white dark:bg-gray-900">
+                            <div className="flex items-start gap-3">
+                              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center font-medium text-sm">
+                                {q.question_number}{s.subpart_label}
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex justify-between items-start gap-4">
+                                  <div className="text-sm text-gray-900 dark:text-gray-100 mb-1 flex-1">
+                                    {isExpanded ? content : shortContent}
+                                  </div>
+                                  <div className="ml-2 flex-shrink-0">
+                                    <Badge className="text-black font-semibold text-sm bg-transparent">{s.max_marks}m</Badge>
+                                  </div>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-2 mt-2">
+                                  <Badge className="text-black bg-transparent">CO: {q.co}</Badge>
+                                  <Badge className="text-black bg-transparent">{q.blooms_level}</Badge>
+                                  {content.length > 160 && (
+                                    <button
+                                      onClick={() => toggleExpanded(key)}
+                                      className="text-sm text-primary-600 dark:text-primary-400 ml-2"
+                                    >
+                                      {isExpanded ? 'Show less' : 'Show more'}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
                             </div>
-                          ))}
-                        </div>
-                      ))}
-                      <div className="font-semibold pt-2 border-t">Total Marks: {qpDetail.questions.reduce((total: number, q: any) => total + q.subparts.reduce((st: number, s: any) => st + s.max_marks, 0), 0)}</div>
+                          </div>
+                        );
+                      })}
                     </div>
+                  ))}
+
+                  <div className="font-semibold pt-2 border-t">
+                    Total Marks: {qpDetail.questions.reduce((total: number, q: any) =>
+                      total + q.subparts.reduce((subTotal: number, s: any) => subTotal + s.max_marks, 0), 0
+                    )}
                   </div>
                 </div>
-              ) : (
-                <div className="text-center text-muted-foreground">QP details not loaded.</div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="text-center py-4 text-muted-foreground">Failed to load QP details</div>
+            )}
 
-            <div>
-              {selectedQP.status === 'approved' ? (
-                <div className="flex gap-2 mt-4">
-                  <Button onClick={() => { window.print(); }}>Print</Button>
-                  <Button onClick={() => {
+            {selectedQP?.status !== 'approved' && (
+              <div>
+                <label className="block text-sm font-medium mb-2">Comment (optional)</label>
+                <Textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Add a final comment..."
+                  rows={3}
+                />
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            {selectedQP?.status === 'approved' ? (
+              <>
+                <Button
+                  onClick={() => qpDetail && printQP(qpDetail)}
+                  className="w-full sm:w-auto justify-center whitespace-normal text-center bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]"
+                >
+                  Print
+                </Button>
+                <Button
+                  onClick={() => {
                     if (!qpDetail) return;
                     const doc = new jsPDF();
                     let y = 10;
@@ -431,54 +568,64 @@ const COEQPApprovals = () => {
                       });
                     });
                     doc.save(`qp-${qpDetail.subject}-${qpDetail.test_type}.pdf`);
-                  }}> <Download className="w-4 h-4 mr-1"/> Download PDF</Button>
-                  <Button variant="outline" onClick={() => { setSelectedQP(null); setQpDetail(null); }}>Close</Button>
+                  }}
+                  className="w-full sm:w-auto justify-center whitespace-normal text-center bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]"
+                >
+                  <Download className="w-4 h-4 mr-1" />
+                  Download PDF
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setDialogOpen(false);
+                    setSelectedQP(null);
+                    setQpDetail(null);
+                    setComment("");
+                  }}
+                  className="w-full sm:w-auto justify-center whitespace-normal text-center"
+                >
+                  Close
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full sm:w-auto">
+                  <Button
+                    onClick={() => selectedQP && handleFinalize(selectedQP.id)}
+                    disabled={actionLoading}
+                    className={`w-full sm:w-auto justify-center transition-none whitespace-normal text-center ${theme === 'dark' ? 'border-green-500 text-green-400 bg-green-500/10 hover:bg-green-500/20 border' : 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100 border'}`}
+                  >
+                    <CheckCircle className={`w-4 h-4 mr-1 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
+                    Finalize & Approve
+                  </Button>
+                  <Button
+                    onClick={() => selectedQP && handleReject(selectedQP.id)}
+                    disabled={actionLoading}
+                    className={`w-full sm:w-auto justify-center transition-none whitespace-normal text-center ${theme === 'dark' ? 'border-red-500 text-red-400 bg-red-500/10 hover:bg-red-500/20 border' : 'border-red-500 text-red-700 bg-red-50 hover:bg-red-100 border'}`}
+                  >
+                    <XCircle className={`w-4 h-4 mr-1 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`} />
+                    Reject & Send Back
+                  </Button>
                 </div>
-              ) : (
-                <div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Comment (optional)</label>
-                    <Textarea
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                      placeholder="Add a final comment..."
-                      rows={3}
-                    />
-                  </div>
-                  <div className="flex gap-2 mt-4">
-                    <Button
-                      onClick={() => handleFinalize(selectedQP.id)}
-                      disabled={actionLoading}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      Finalize & Approve
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => handleReject(selectedQP.id)}
-                      disabled={actionLoading}
-                    >
-                      <XCircle className="w-4 h-4 mr-1" />
-                      Reject & Send Back
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setSelectedQP(null);
-                        setComment("");
-                        setQpDetail(null);
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
+                <div className="w-full sm:w-auto sm:ml-auto">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setDialogOpen(false);
+                      setSelectedQP(null);
+                      setComment("");
+                      setQpDetail(null);
+                    }}
+                    className="w-full sm:w-auto justify-center whitespace-normal text-center"
+                  >
+                    Cancel
+                  </Button>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
