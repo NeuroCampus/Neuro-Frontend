@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { getFilterOptions } from '../../utils/coe_api';
+import { getFilterOptions, getSemesters } from '../../utils/coe_api';
 import { Input } from '@/components/ui/input';
 import { useTheme } from '@/context/ThemeContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
@@ -11,7 +11,8 @@ import { createResultUploadBatch, getStudentsForRevalMakeupUpload, saveMarksForU
 
 export default function PublishResultsRevalMakeup() {
   const { theme } = useTheme();
-  const [filters, setFilters] = useState<any>({ batches: [], branches: [], semesters: [] });
+  const [filters, setFilters] = useState<any>({ batches: [], branches: [] });
+  const [semesters, setSemesters] = useState<any[]>([]);
   const [selected, setSelected] = useState<any>({ batch: '', branch: '', semester: '', exam_period: '', request_type: 'all' });
   const [upload, setUpload] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
@@ -31,15 +32,23 @@ export default function PublishResultsRevalMakeup() {
   useEffect(() => {
     (async () => {
       const opts = await getFilterOptions();
-      const semestersRaw = (opts && opts.semesters) || [];
-      const semMap = new Map<number, any>();
-      semestersRaw.forEach((s: any) => {
-        if (!semMap.has(s.number)) semMap.set(s.number, s);
-      });
-      const semesters = Array.from(semMap.values()).sort((a: any, b: any) => a.number - b.number);
-      setFilters({ ...opts, semesters });
+      setFilters(opts);
     })();
   }, []);
+
+  const fetchSemesters = async (branchId: string) => {
+    if (!branchId) {
+      setSemesters([]);
+      return;
+    }
+    try {
+      const sems = await getSemesters(parseInt(branchId));
+      setSemesters(sems);
+    } catch (error) {
+      console.error('Error fetching semesters:', error);
+      setSemesters([]);
+    }
+  };
 
   const handleCreate = async () => {
     if (!selected.batch || !selected.branch || !selected.semester || !selected.exam_period || !selected.request_type || selected.request_type === 'all') {
@@ -287,7 +296,10 @@ export default function PublishResultsRevalMakeup() {
         </div>
         <div>
           <label className="block text-sm">Branch</label>
-          <Select value={selected.branch} onValueChange={(v) => setSelected(s => ({ ...s, branch: v }))}>
+          <Select value={selected.branch} onValueChange={(v) => {
+            setSelected(s => ({ ...s, branch: v, semester: '' }));
+            fetchSemesters(v);
+          }}>
             <SelectTrigger>
               <SelectValue placeholder="Select branch" />
             </SelectTrigger>
@@ -303,8 +315,8 @@ export default function PublishResultsRevalMakeup() {
               <SelectValue placeholder="Select semester" />
             </SelectTrigger>
             <SelectContent>
-              {filters.semesters.map((s: any) => (
-                <SelectItem key={`${s.id}_${s.number}`} value={String(s.number)}>{s.number}</SelectItem>
+              {semesters.map((s: any) => (
+                <SelectItem key={s.id} value={String(s.id)}>{s.number}</SelectItem>
               ))}
             </SelectContent>
           </Select>

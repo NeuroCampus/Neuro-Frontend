@@ -9,14 +9,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, CheckCircle, Clock, Download, Eye, XCircle } from 'lucide-react';
-import { getMakeupRequests, getExamRequestFilters, updateMakeupRequestStatus, MakeupRequest, ExamRequestFilters } from '@/utils/coe_api';
+import { getMakeupRequests, getExamRequestFilters, updateMakeupRequestStatus, getSemesters, MakeupRequest, ExamRequestFilters } from '@/utils/coe_api';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { toast } from 'sonner';
+
+const EXAM_PERIODS = [
+  { value: 'june_july', label: 'June/July' },
+  { value: 'nov_dec', label: 'November/December' },
+  { value: 'jan_feb', label: 'January/February' },
+  { value: 'apr_may', label: 'April/May' },
+  { value: 'supplementary', label: 'Supplementary' },
+];
 
 const MakeupRequests: React.FC = () => {
   const [requests, setRequests] = useState<MakeupRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<ExamRequestFilters | null>(null);
+  const [semesters, setSemesters] = useState<any[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<MakeupRequest | null>(null);
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
@@ -130,8 +139,16 @@ const MakeupRequests: React.FC = () => {
 
       if (result.success) {
         toast.success(`Makeup request ${actionType}d successfully`);
+        // Update the request status in local state instead of refetching
+        setRequests(prevRequests =>
+          prevRequests.map(req =>
+            req.id === selectedRequest.id
+              ? { ...req, status: actionType === 'approve' ? 'approved' : 'rejected' }
+              : req
+          )
+        );
         setActionDialogOpen(false);
-        loadRequests(); // Refresh the list
+        // loadRequests(); // Remove this line to avoid unnecessary GET request
       } else {
         toast.error(result.message || 'Failed to update request');
       }
@@ -156,9 +173,22 @@ const MakeupRequests: React.FC = () => {
     }
   };
 
+  const fetchSemesters = async (branchId: string) => {
+    if (!branchId) {
+      setSemesters([]);
+      return;
+    }
+    try {
+      const sems = await getSemesters(parseInt(branchId));
+      setSemesters(sems);
+    } catch (error) {
+      console.error('Error fetching semesters:', error);
+      setSemesters([]);
+    }
+  };
+
   const getAvailableSemesters = () => {
-    if (!filters || !branchId) return [];
-    return filters.semesters_by_branch[parseInt(branchId)] || [];
+    return semesters;
   };
 
   return (
@@ -190,7 +220,7 @@ const MakeupRequests: React.FC = () => {
 
             <div>
               <Label htmlFor="branch">Branch</Label>
-              <Select value={branchId} onValueChange={(value) => { setBranchId(value); setSemesterId(''); }}>
+              <Select value={branchId} onValueChange={(value) => { setBranchId(value); setSemesterId(''); fetchSemesters(value); }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select branch" />
                 </SelectTrigger>
@@ -226,7 +256,7 @@ const MakeupRequests: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Periods</SelectItem>
-                  {filters?.exam_periods.map(period => (
+                  {EXAM_PERIODS.map(period => (
                     <SelectItem key={period.value} value={period.value}>{period.label}</SelectItem>
                   ))}
                 </SelectContent>

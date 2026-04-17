@@ -12,20 +12,21 @@ import { fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
 
 interface COEProfile {
-  id: number;
+  user_id: number;
   username: string;
   email: string;
   first_name: string;
   last_name: string;
   phone_number?: string;
+  mobile_number?: string;
   address?: string;
   date_joined: string;
   last_login?: string;
   is_active: boolean;
   role: string;
-  profile_image?: string;
+  profile_picture?: string;
   department?: string;
-  designation: string;
+  designation?: string;
 }
 
 const COEProfile = () => {
@@ -63,7 +64,7 @@ const COEProfile = () => {
           first_name: profileData.first_name || "",
           last_name: profileData.last_name || "",
           email: profileData.email || "",
-          phone_number: profileData.phone_number || "",
+          phone_number: profileData.phone_number || profileData.mobile_number || "",
           address: profileData.address || "",
         });
       }
@@ -159,7 +160,7 @@ const COEProfile = () => {
         <CardContent className="p-6">
           <div className="flex items-center space-x-6">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={profile.profile_image} alt={profile.first_name} />
+              <AvatarImage src={profile.profile_picture} alt={profile.first_name} />
               <AvatarFallback className="text-2xl">
                 {profile.first_name?.[0]}{profile.last_name?.[0]}
               </AvatarFallback>
@@ -304,7 +305,7 @@ const COEProfile = () => {
                 <div className="flex items-center mt-1">
                   <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
                   <p className="text-sm text-muted-foreground">
-                    {profile.phone_number || 'Not provided'}
+                    {profile.phone_number || profile.mobile_number || 'Not provided'}
                   </p>
                 </div>
               )}

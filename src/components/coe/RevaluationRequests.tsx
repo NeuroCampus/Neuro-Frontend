@@ -9,15 +9,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, CheckCircle, Clock, Download, Eye, XCircle } from 'lucide-react';
-import { getRevaluationRequests, getExamRequestFilters, updateRevaluationRequestStatus, RevaluationRequest, ExamRequestFilters } from '@/utils/coe_api';
+import { getRevaluationRequests, getExamRequestFilters, updateRevaluationRequestStatus, getSemesters, RevaluationRequest, ExamRequestFilters } from '@/utils/coe_api';
 import { fetchWithTokenRefresh } from '@/utils/authService';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { toast } from 'sonner';
+
+const EXAM_PERIODS = [
+  { value: 'june_july', label: 'June/July' },
+  { value: 'nov_dec', label: 'November/December' },
+  { value: 'jan_feb', label: 'January/February' },
+  { value: 'apr_may', label: 'April/May' },
+  { value: 'supplementary', label: 'Supplementary' },
+];
 
 const RevaluationRequests: React.FC = () => {
   const [requests, setRequests] = useState<RevaluationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<ExamRequestFilters | null>(null);
+  const [semesters, setSemesters] = useState<any[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<RevaluationRequest | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -133,8 +142,16 @@ const RevaluationRequests: React.FC = () => {
 
       if (result.success) {
         toast.success(`Revaluation request ${actionType}d successfully`);
+        // Update the request status in local state instead of refetching
+        setRequests(prevRequests =>
+          prevRequests.map(req =>
+            req.id === selectedRequest.id
+              ? { ...req, status: actionType === 'approve' ? 'approved' : 'rejected' }
+              : req
+          )
+        );
         setActionDialogOpen(false);
-        loadRequests(); // Refresh the list
+        // loadRequests(); // Remove this line to avoid unnecessary GET request
       } else {
         toast.error(result.message || 'Failed to update request');
       }
@@ -159,9 +176,22 @@ const RevaluationRequests: React.FC = () => {
     }
   };
 
+  const fetchSemesters = async (branchId: string) => {
+    if (!branchId) {
+      setSemesters([]);
+      return;
+    }
+    try {
+      const sems = await getSemesters(parseInt(branchId));
+      setSemesters(sems);
+    } catch (error) {
+      console.error('Error fetching semesters:', error);
+      setSemesters([]);
+    }
+  };
+
   const getAvailableSemesters = () => {
-    if (!filters || !branchId) return [];
-    return filters.semesters_by_branch[parseInt(branchId)] || [];
+    return semesters;
   };
 
   return (
@@ -193,7 +223,7 @@ const RevaluationRequests: React.FC = () => {
 
             <div>
               <Label htmlFor="branch">Branch</Label>
-              <Select value={branchId} onValueChange={(value) => { setBranchId(value); setSemesterId(''); }}>
+              <Select value={branchId} onValueChange={(value) => { setBranchId(value); setSemesterId(''); fetchSemesters(value); }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select branch" />
                 </SelectTrigger>
@@ -229,7 +259,7 @@ const RevaluationRequests: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Periods</SelectItem>
-                  {filters?.exam_periods?.map(period => (
+                  {EXAM_PERIODS.map(period => (
                     <SelectItem key={period.value} value={period.value}>{period.label}</SelectItem>
                   ))}
                 </SelectContent>

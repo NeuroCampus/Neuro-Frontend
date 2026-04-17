@@ -7,14 +7,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { BookOpen, Users, Download } from "lucide-react";
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { getCourseApplicationStats, getFilterOptions, FilterOptions } from "../../utils/coe_api";
+import { getCourseApplicationStats, getFilterOptions, getSemesters, FilterOptions } from "../../utils/coe_api";
 
 const CourseStatistics = () => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
-  const [totalCount, setTotalCount] = useState<number | null>(null);
+  const [pagination, setPagination] = useState<{
+    count: number;
+    next: string | null;
+    previous: string | null;
+  } | null>(null);
   const [exporting, setExporting] = useState<boolean>(false);
   const [filters, setFilters] = useState({
     batch: "",
@@ -24,9 +28,9 @@ const CourseStatistics = () => {
   });
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     batches: [],
-    branches: [],
-    semesters: []
+    branches: []
   });
+  const [semesters, setSemesters] = useState<any[]>([]);
 
   useEffect(() => {
     fetchFilterOptions();
@@ -46,16 +50,23 @@ const CourseStatistics = () => {
   const fetchFilterOptions = async () => {
     try {
       const options = await getFilterOptions();
-      // Deduplicate semesters by number to avoid duplicate 1..8 entries
-      const semestersRaw = (options && options.semesters) || [];
-      const semMap = new Map<number, any>();
-      semestersRaw.forEach((s: any) => {
-        if (!semMap.has(s.number)) semMap.set(s.number, s);
-      });
-      const semesters = Array.from(semMap.values()).sort((a: any, b: any) => a.number - b.number);
-      setFilterOptions({ ...options, semesters });
+      setFilterOptions(options);
     } catch (error) {
       console.error('Error fetching filter options:', error);
+    }
+  };
+
+  const fetchSemesters = async (branchId: string) => {
+    if (!branchId) {
+      setSemesters([]);
+      return;
+    }
+    try {
+      const sems = await getSemesters(parseInt(branchId));
+      setSemesters(sems);
+    } catch (error) {
+      console.error('Error fetching semesters:', error);
+      setSemesters([]);
     }
   };
 
@@ -65,11 +76,12 @@ const CourseStatistics = () => {
       const result = await getCourseApplicationStats({ ...filters, page: String(page), page_size: String(pageSize) } as any);
       if (result.success) {
         setData(result.data);
-        if (result.data && (result.data as any).pagination) {
-          setTotalCount((result.data as any).pagination.count || 0);
-        } else {
-          setTotalCount(null);
-        }
+        // Pagination info is now at the response root level
+        setPagination({
+          count: result.count || 0,
+          next: result.next || null,
+          previous: result.previous || null
+        });
       }
     } catch (error) {
       console.error('Error fetching course statistics:', error);
@@ -90,8 +102,8 @@ const CourseStatistics = () => {
         const res = await getCourseApplicationStats({ ...filters, page: String(p), page_size: String(perPage) } as any);
         if (!res.success || !res.data) break;
         allCourses.push(...(res.data.courses || []));
-        const pagination = (res.data as any).pagination;
-        if (!pagination || !pagination.next) break;
+        // Pagination info is now at the response root level
+        if (!res.next) break;
         p += 1;
       }
 
@@ -166,7 +178,10 @@ const CourseStatistics = () => {
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">Branch</label>
-              <Select value={filters.branch} onValueChange={(value) => setFilters({...filters, branch: value})}>
+              <Select value={filters.branch} onValueChange={(value) => {
+                setFilters({...filters, branch: value, semester: ""});
+                fetchSemesters(value);
+              }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select branch" />
                 </SelectTrigger>
@@ -186,9 +201,8 @@ const CourseStatistics = () => {
                   <SelectValue placeholder="Select semester" />
                 </SelectTrigger>
                 <SelectContent>
-                  {filterOptions.semesters.map((semester: any) => (
-                    // send semester number (string) so backend can match number+branch
-                    <SelectItem key={`${semester.id}_${semester.number}`} value={semester.number.toString()}>
+                  {semesters.map((semester: any) => (
+                    <SelectItem key={semester.id} value={semester.id.toString()}>
                       Semester {semester.number}
                     </SelectItem>
                   ))}
@@ -229,7 +243,7 @@ const CourseStatistics = () => {
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
-              <CardTitle>Subject-wise Application Statistics ({totalCount !== null ? totalCount : data.courses.length})</CardTitle>
+              <CardTitle>Subject-wise Application Statistics ({pagination ? pagination.count : data.courses.length})</CardTitle>
               <Button variant="outline" size="sm" onClick={handleExport}>
                 <Download className="mr-2 h-4 w-4" />
                 {exporting ? 'Exporting...' : 'Export PDF'}
@@ -273,10 +287,16 @@ const CourseStatistics = () => {
             )}
           {/* Pagination controls */}
           <div className="flex items-center justify-between mt-4">
-            <div className="text-sm text-muted-foreground">{totalCount !== null ? `Showing page ${page} — ${totalCount} subjects` : `Page ${page}`}</div>
+            <div className="text-sm text-muted-foreground">
+              {pagination ? `Showing page ${page} of ${Math.ceil(pagination.count / pageSize)} — ${pagination.count} subjects` : `Page ${page}`}
+            </div>
             <div className="space-x-2">
-              <Button size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
-              <Button size="sm" onClick={() => setPage(p => p + 1)} disabled={data.courses.length < pageSize}>Next</Button>
+              <Button size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1 || !pagination?.previous}>
+                Previous
+              </Button>
+              <Button size="sm" onClick={() => setPage(p => p + 1)} disabled={!pagination?.next}>
+                Next
+              </Button>
             </div>
           </div>
           </CardContent>

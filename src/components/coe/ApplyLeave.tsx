@@ -13,6 +13,8 @@ import { useTheme } from '@/context/ThemeContext';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { Circle, CalendarCheck2, CalendarX2, Filter } from 'lucide-react';
+import { API_ENDPOINT } from '@/utils/config';
+import { fetchWithTokenRefresh } from '@/utils/authService';
 
 const MySwal = withReactContent(Swal);
 
@@ -58,18 +60,16 @@ const COEApplyLeave = () => {
 
   const fetchLeaveRequests = async () => {
     try {
-      const response = await fetch('/api/coe/leaves/', {
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/leaves/`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-        },
       });
 
       const data = await response.json();
-      if (data.success && data.data) {
+      if (data.results && data.results.success && data.results.data) {
+        // Handle paginated response - data.results.data contains the leave requests
+        const leaveData = data.results.data;
         // Transform backend data to match component structure
-        const transformedLeaves: LeaveRequestDisplay[] = data.data.map((leave: any) => {
+        const transformedLeaves: LeaveRequestDisplay[] = leaveData.map((leave: any) => {
           const mappedStatus = (leave.status === 'PENDING' ? 'Pending' :
                               leave.status === 'APPROVED' ? 'Approved' :
                               leave.status === 'REJECTED' ? 'Rejected' : 'Pending') as 'Pending' | 'Approved' | 'Rejected';
@@ -85,8 +85,9 @@ const COEApplyLeave = () => {
           };
         });
         setLeaveList(transformedLeaves);
+        setError(null); // Clear any previous errors
       } else {
-        setError(data.message || 'Failed to load leave requests');
+        setError('Failed to load leave requests');
       }
     } catch (error) {
       console.error('Failed to fetch leave requests:', error);
@@ -125,11 +126,10 @@ const COEApplyLeave = () => {
 
     try {
       setSubmitting(true);
-      const response = await fetch('/api/coe/leaves/apply/', {
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/leaves/apply/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
         },
         body: JSON.stringify(requestData),
       });
