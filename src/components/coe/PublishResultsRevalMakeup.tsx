@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { getFilterOptions, getSemesters } from '../../utils/coe_api';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTheme } from '@/context/ThemeContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { AlertTriangle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { createResultUploadBatch, getStudentsForRevalMakeupUpload, saveMarksForUpload, publishUploadBatch, unpublishUploadBatch, toggleWithholdResult } from '../../utils/coe_api';
+import { getFilterOptions, getSemesters, createResultUploadBatch, getStudentsForRevalMakeupUpload, saveMarksForUpload, publishUploadBatch, toggleWithholdResult } from '../../utils/coe_api';
 
 export default function PublishResultsRevalMakeup() {
   const { theme } = useTheme();
@@ -280,13 +280,21 @@ export default function PublishResultsRevalMakeup() {
   };
 
   return (
-    <div>
-      <h2 className="text-2xl font-semibold mb-4">Publish Results (Reval/Makeup)</h2>
-      <div className="flex gap-4 mb-4 flex-wrap">
+    <div className={`p-2 sm:p-3 lg:p-4 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <h2 className={`text-xl sm:text-2xl lg:text-3xl font-bold mb-4 sm:mb-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+        Publish Results (Reval/Makeup)
+      </h2>
+
+      <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'} mb-4`}>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg sm:text-xl">Filter And Create Upload Batch</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-3 sm:gap-4">
         <div>
-          <label className="block text-sm">Batch</label>
+          <label htmlFor="reval-batch" className="block text-sm mb-1">Batch</label>
           <Select value={selected.batch} onValueChange={(v) => setSelected(s => ({ ...s, batch: v }))}>
-            <SelectTrigger>
+            <SelectTrigger id="reval-batch" className={theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}>
               <SelectValue placeholder="Select batch" />
             </SelectTrigger>
             <SelectContent>
@@ -295,12 +303,12 @@ export default function PublishResultsRevalMakeup() {
           </Select>
         </div>
         <div>
-          <label className="block text-sm">Branch</label>
+          <label htmlFor="reval-branch" className="block text-sm mb-1">Branch</label>
           <Select value={selected.branch} onValueChange={(v) => {
             setSelected(s => ({ ...s, branch: v, semester: '' }));
             fetchSemesters(v);
           }}>
-            <SelectTrigger>
+            <SelectTrigger id="reval-branch" className={theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}>
               <SelectValue placeholder="Select branch" />
             </SelectTrigger>
             <SelectContent>
@@ -309,9 +317,9 @@ export default function PublishResultsRevalMakeup() {
           </Select>
         </div>
         <div>
-          <label className="block text-sm">Semester</label>
+          <label htmlFor="reval-semester" className="block text-sm mb-1">Semester</label>
           <Select value={selected.semester} onValueChange={(v) => setSelected(s => ({ ...s, semester: v }))}>
-            <SelectTrigger>
+            <SelectTrigger id="reval-semester" className={theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}>
               <SelectValue placeholder="Select semester" />
             </SelectTrigger>
             <SelectContent>
@@ -322,9 +330,9 @@ export default function PublishResultsRevalMakeup() {
           </Select>
         </div>
         <div>
-          <label className="block text-sm">Exam Period</label>
+          <label htmlFor="reval-exam-period" className="block text-sm mb-1">Exam Period</label>
           <Select value={selected.exam_period} onValueChange={(v) => setSelected(s => ({ ...s, exam_period: v }))}>
-            <SelectTrigger>
+            <SelectTrigger id="reval-exam-period" className={theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}>
               <SelectValue placeholder="Exam period" />
             </SelectTrigger>
             <SelectContent>
@@ -337,9 +345,9 @@ export default function PublishResultsRevalMakeup() {
           </Select>
         </div>
         <div>
-          <label className="block text-sm">Request Type</label>
+          <label htmlFor="reval-request-type" className="block text-sm mb-1">Request Type</label>
           <Select value={selected.request_type} onValueChange={(v) => setSelected(s => ({ ...s, request_type: v }))}>
-            <SelectTrigger>
+            <SelectTrigger id="reval-request-type" className={theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}>
               <SelectValue placeholder="Request type" />
             </SelectTrigger>
             <SelectContent>
@@ -351,41 +359,62 @@ export default function PublishResultsRevalMakeup() {
           </Select>
         </div>
         <div className="flex items-end">
-          <Button onClick={handleCreate}>Create Upload Batch</Button>
+          <Button
+            onClick={handleCreate}
+            className="w-full bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]"
+          >
+            Create Upload Batch
+          </Button>
         </div>
       </div>
+        </CardContent>
+      </Card>
 
       {upload && (
-        <div className="mb-4">
-          <div>Upload ID: {upload.id} | Token: {upload.token}</div>
-          <div className="mt-2 flex items-center gap-4">
-            <div>Published: <span className={`font-medium ${upload.is_published ? 'text-green-600' : 'text-red-600'}`}>{upload.is_published ? 'Yes' : 'No'}</span></div>
+        <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'} mb-4`}>
+          <CardContent className="pt-6">
+          <div className="text-sm text-muted-foreground">Upload ID: {upload.id} | Token: {upload.token}</div>
+          <div className="mt-2 flex flex-wrap items-center gap-4">
+            <div className="text-sm">Published: <span className={`font-medium ${upload.is_published ? 'text-green-600' : 'text-red-600'}`}>{upload.is_published ? 'Yes' : 'No'}</span></div>
             {upload.is_published ? (
               <Button onClick={() => setUnpublishModalOpen(true)} variant="secondary">Unpublish</Button>
             ) : (
-              <Button className="btn-primary" onClick={() => setPublishModalOpen(true)}>Publish Results</Button>
+              <Button className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={() => setPublishModalOpen(true)}>Publish Results</Button>
             )}
           </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {students.length > 0 && (
-        <div className="overflow-auto">
-          <div className="flex items-center justify-between mb-3">
+        <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg sm:text-xl">Student Marks Entry</CardTitle>
+          </CardHeader>
+          <CardContent>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
             <div className="text-sm text-muted-foreground">Showing {students.length} students</div>
             <div className="flex gap-3 items-center">
               <div className="flex items-center gap-2">
                 <label className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}>Page size</label>
-                <select value={studentsPageSize} onChange={(e) => {
-                  const v = Number(e.target.value);
-                  setStudentsPageSize(v);
-                  if (upload) navigateToPage(1, v);
-                }} className={`border rounded px-2 py-1 ${theme === 'dark' ? 'bg-slate-800 text-white border-slate-700' : 'bg-white text-foreground'}`}>
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
+                <Select
+                  value={String(studentsPageSize)}
+                  onValueChange={(value) => {
+                    const v = Number(value);
+                    setStudentsPageSize(v);
+                    if (upload) navigateToPage(1, v);
+                  }}
+                >
+                  <SelectTrigger className="w-[110px]">
+                    <SelectValue placeholder="Page size" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -404,7 +433,7 @@ export default function PublishResultsRevalMakeup() {
               }, 0);
 
               return (
-                <div key={s.student_id} className="border rounded-md p-3">
+                <div key={s.student_id} className={`border rounded-md p-3 ${theme === 'dark' ? 'border-border bg-background/40' : 'border-gray-200 bg-white'}`}>
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <div className="font-medium">{s.name} <span className="text-sm text-muted-foreground">({s.usn})</span></div>
@@ -421,11 +450,33 @@ export default function PublishResultsRevalMakeup() {
                           size="sm"
                           variant={s.is_withheld ? "outline" : "destructive"}
                           onClick={async () => {
-                            if (!s.published_result_id) {
+                            let publishedResultId = s.published_result_id;
+                            let currentWithheld = s.is_withheld;
+
+                            // Retry once after refreshing current page if the id is not yet present.
+                            if (!publishedResultId && upload) {
+                              const refreshed = await getStudentsForRevalMakeupUpload(
+                                upload.id,
+                                studentsPage,
+                                studentsPageSize,
+                                selected.request_type === 'all' ? undefined : selected.request_type
+                              );
+                              const refreshedStudent = refreshed?.success
+                                ? (refreshed.data?.students || []).find((st: any) => st.student_id === s.student_id)
+                                : null;
+                              if (refreshedStudent?.published_result_id) {
+                                publishedResultId = refreshedStudent.published_result_id;
+                                currentWithheld = !!refreshedStudent.is_withheld;
+                                await fetchStudentsPage(upload.id, studentsPage, studentsPageSize, true);
+                              }
+                            }
+
+                            if (!publishedResultId) {
                               toast({ variant: 'destructive', title: 'Not Ready', description: 'Published result ID not found yet. Please refresh student list.' });
                               return;
                             }
-                            await handleToggleWithhold(s.student_id, s.name, s.published_result_id, s.is_withheld);
+
+                            await handleToggleWithhold(s.student_id, s.name, publishedResultId, currentWithheld);
                           }}
                           className="text-xs"
                         >
@@ -435,20 +486,34 @@ export default function PublishResultsRevalMakeup() {
                     </div>
                   </div>
 
-                  <table className="table-auto w-full border-collapse">
+                  <div className="w-full overflow-x-auto xl:overflow-x-visible">
+                  <table className="min-w-[980px] md:min-w-[1100px] xl:min-w-0 xl:w-full border-collapse table-fixed text-xs sm:text-sm">
+                    <colgroup>
+                      <col className="w-[8%]" />
+                      <col className="w-[13%]" />
+                      <col className="w-[11%]" />
+                      <col className="w-[10%]" />
+                      <col className="w-[9%]" />
+                      <col className="w-[9%]" />
+                      <col className="w-[9%]" />
+                      <col className="w-[6%]" />
+                      <col className="w-[5%]" />
+                      <col className="w-[9%]" />
+                      <col className="w-[11%]" />
+                    </colgroup>
                     <thead>
                       <tr>
-                        <th className="border px-2 py-1">Subject Code</th>
-                        <th className="border px-2 py-1">Subject Title</th>
-                        <th className="border px-2 py-1">Request Types</th>
-                        <th className="border px-2 py-1">Request Status</th>
-                        <th className="border px-2 py-1">CIE</th>
-                        <th className="border px-2 py-1">SEE</th>
-                        <th className="border px-2 py-1">Total Marks</th>
-                        <th className="border px-2 py-1">Result</th>
-                        <th className="border px-2 py-1">Grade</th>
-                        <th className="border px-2 py-1">Grade Point</th>
-                        <th className="border px-2 py-1">Credits Assigned</th>
+                        <th className="border px-1.5 py-1">Subject Code</th>
+                        <th className="border px-1.5 py-1">Subject Title</th>
+                        <th className="border px-1.5 py-1">Request Types</th>
+                        <th className="border px-1.5 py-1">Request Status</th>
+                        <th className="border px-1.5 py-1">CIE</th>
+                        <th className="border px-1.5 py-1">SEE</th>
+                        <th className="border px-1.5 py-1">Total Marks</th>
+                        <th className="border px-1.5 py-1">Result</th>
+                        <th className="border px-1.5 py-1">Grade</th>
+                        <th className="border px-1.5 py-1">Grade Point</th>
+                        <th className="border px-1.5 py-1">Credits Assigned</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -474,17 +539,17 @@ export default function PublishResultsRevalMakeup() {
                         
                         return (
                           <tr key={sub.id}>
-                            <td className="border px-2 py-1">{sub.code}</td>
-                            <td className="border px-2 py-1">{sub.name}</td>
-                            <td className="border px-2 py-1">{sub.request_details?.types?.join(', ') || 'N/A'}</td>
-                            <td className="border px-2 py-1">{sub.request_details?.status || 'N/A'}</td>
-                            <td className={`border px-2 py-1`}><Input disabled={upload?.is_published} className="w-20" type="number" min={0} max={50} value={cie} onChange={(e: any) => handleInput(s.student_id, s.usn, sub.id, 'cie', e.target.value)} onWheel={(e:any) => e.currentTarget.blur()} /></td>
-                            <td className={`border px-2 py-1`}><Input disabled={upload?.is_published} className="w-20" type="number" min={0} max={50} value={see} onChange={(e: any) => handleInput(s.student_id, s.usn, sub.id, 'see', e.target.value)} onWheel={(e:any) => e.currentTarget.blur()} /></td>
-                            <td className="border px-2 py-1">{displayTotal}</td>
-                            <td className={`border px-2 py-1 ${result === 'Pass' ? 'text-green-600' : result === 'Fail' ? 'text-red-600' : 'text-yellow-600'}`}>{result}</td>
-                            <td className="border px-2 py-1">{grade}</td>
-                            <td className="border px-2 py-1">{gradePoints}</td>
-                            <td className="border px-2 py-1">{result === 'Pass' ? (sub.credits ?? 0) : (result === 'Fail' ? 0 : 'N/A')}</td>
+                            <td className="border px-1.5 py-1 align-top">{sub.code}</td>
+                            <td className="border px-1.5 py-1 align-top truncate" title={sub.name}>{sub.name}</td>
+                            <td className="border px-1.5 py-1 align-top">{sub.request_details?.types?.join(', ') || 'N/A'}</td>
+                            <td className="border px-1.5 py-1 align-top">{sub.request_details?.status || 'N/A'}</td>
+                            <td className={`border px-1.5 py-1 align-top`}><Input disabled={upload?.is_published} className="w-14 h-8 text-xs" type="number" min={0} max={50} value={cie} onChange={(e: any) => handleInput(s.student_id, s.usn, sub.id, 'cie', e.target.value)} onWheel={(e:any) => e.currentTarget.blur()} /></td>
+                            <td className={`border px-1.5 py-1 align-top`}><Input disabled={upload?.is_published} className="w-14 h-8 text-xs" type="number" min={0} max={50} value={see} onChange={(e: any) => handleInput(s.student_id, s.usn, sub.id, 'see', e.target.value)} onWheel={(e:any) => e.currentTarget.blur()} /></td>
+                            <td className="border px-1.5 py-1 align-top">{displayTotal}</td>
+                            <td className={`border px-1.5 py-1 align-top ${result === 'Pass' ? 'text-green-600' : result === 'Fail' ? 'text-red-600' : 'text-yellow-600'}`}>{result}</td>
+                            <td className="border px-1.5 py-1 align-top">{grade}</td>
+                            <td className="border px-1.5 py-1 align-top">{gradePoints}</td>
+                            <td className="border px-1.5 py-1 align-top">{result === 'Pass' ? (sub.credits ?? 0) : (result === 'Fail' ? 0 : 'N/A')}</td>
                           </tr>
                         );
                       })}
@@ -553,17 +618,25 @@ export default function PublishResultsRevalMakeup() {
                       </tr>
                     </tfoot>
                   </table>
+                  </div>
                 </div>
               );
             })}
           </div>
 
-          <div className="mt-4 flex gap-2">
+          <div className="mt-4 flex flex-wrap gap-2 items-center">
             <div className="flex items-center gap-3 mr-auto">
-              <button className="btn btn-sm" disabled={studentsPage <= 1} onClick={() => {
+              <Button
+                size="sm"
+                className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] disabled:opacity-50"
+                disabled={studentsPage <= 1}
+                onClick={() => {
                 if (!upload) return;
                 navigateToPage(Math.max(1, studentsPage - 1));
-              }}>Previous</button>
+              }}
+              >
+                Previous
+              </Button>
 
               {(() => {
                 const totalPages = studentsPagination?.count ? Math.max(1, Math.ceil(studentsPagination.count / studentsPageSize)) : 1;
@@ -580,25 +653,35 @@ export default function PublishResultsRevalMakeup() {
                 return (
                   <div className="flex gap-1">
                       {pages.map(p => (
-                        <button
+                        <Button
                           key={p}
-                          className={`btn btn-xs ${p === studentsPage ? (theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-primary text-white') : (theme === 'dark' ? 'bg-slate-800 text-muted-foreground' : '')}`}
+                          size="sm"
+                          variant="outline"
+                          className={p === studentsPage ? 'bg-white text-black border-gray-300 hover:bg-gray-100' : 'bg-white text-black border-gray-300 hover:bg-gray-100'}
                           onClick={() => upload && navigateToPage(p)}
-                        >{p}</button>
+                        >{p}</Button>
                     ))}
                   </div>
                 );
               })()}
 
-              <button className="btn btn-sm" disabled={!studentsPagination?.next} onClick={() => {
+              <Button
+                size="sm"
+                className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] disabled:opacity-50"
+                disabled={!studentsPagination?.next}
+                onClick={() => {
                 if (!upload) return;
                 navigateToPage(studentsPage + 1);
-              }}>Next</button>
+              }}
+              >
+                Next
+              </Button>
             </div>
 
-            <Button onClick={handleSave} disabled={saving || upload?.is_published}>{saving ? 'Saving...' : 'Save Marks'}</Button>
+            <Button className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={handleSave} disabled={saving || upload?.is_published}>{saving ? 'Saving...' : 'Save Marks'}</Button>
           </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       <Dialog open={navModalOpen} onOpenChange={setNavModalOpen}>
