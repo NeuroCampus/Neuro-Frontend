@@ -10,7 +10,7 @@ import {
 } from "../ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, Eye, Download } from "lucide-react";
+import { CheckCircle, XCircle, Eye, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import jsPDF from 'jspdf';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
@@ -30,6 +30,15 @@ interface QPPending {
   last_action?: { actor?: string; role?: string; action?: string; comment?: string } | null;
 }
 
+interface PaginationInfo {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  current_page: number;
+  total_pages: number;
+  page_size: number;
+}
+
 const COEQPApprovals = () => {
   const [pendingQPs, setPendingQPs] = useState<QPPending[]>([]);
   const [finalizedQPs, setFinalizedQPs] = useState<QPPending[]>([]);
@@ -41,6 +50,10 @@ const COEQPApprovals = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [pendingPagination, setPendingPagination] = useState<PaginationInfo | null>(null);
+  const [finalizedPagination, setFinalizedPagination] = useState<PaginationInfo | null>(null);
+  const [pendingPage, setPendingPage] = useState(1);
+  const [finalizedPage, setFinalizedPage] = useState(1);
   const { theme } = useTheme();
 
   const toggleExpanded = (key: string) => {
@@ -52,35 +65,37 @@ const COEQPApprovals = () => {
     fetchFinalizedQPs();
   }, []);
 
-  // Ensure SweetAlert appears above Dialog and remains clickable.
-  useEffect(() => {
-    if (typeof document === 'undefined') {
-      return;
-    }
-    const styleId = 'swal2-global-fix';
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement('style');
-      style.id = styleId;
-      style.innerHTML = `
-        .swal2-container, .swal2-popup {
-          z-index: 99999 !important;
-          pointer-events: auto !important;
-        }
-      `;
-      document.head.appendChild(style);
-    }
-  }, []);
-
   const fetchPendingQPs = async () => {
     try {
-      const response = await fetch(`${API_ENDPOINT}/admin/qps/coe-pending/`, {
+      const response = await fetch(`${API_ENDPOINT}/admin/qps/coe-pending/?page=${pendingPage}&page_size=10`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
       });
       const data = await response.json();
-      if (data.success) {
-        setPendingQPs(data.data);
+      
+      // Handle standard DRF pagination format
+      if (data.results) {
+        setPendingQPs(data.results);
+        setPendingPagination({
+          count: data.count,
+          next: data.next,
+          previous: data.previous,
+          current_page: pendingPage,
+          total_pages: Math.ceil(data.count / 10),
+          page_size: 10
+        });
+      } else {
+        // Fallback for old format
+        setPendingQPs(data.data || []);
+        setPendingPagination({
+          count: (data.data || []).length,
+          next: null,
+          previous: null,
+          current_page: pendingPage,
+          total_pages: 1,
+          page_size: 10
+        });
       }
     } catch (error) {
       console.error("Error fetching pending QPs:", error);
@@ -91,17 +106,43 @@ const COEQPApprovals = () => {
 
   const fetchFinalizedQPs = async () => {
     try {
-      const response = await fetch(`${API_ENDPOINT}/admin/qps/coe-finalized/`, {
+      const response = await fetch(`${API_ENDPOINT}/admin/qps/coe-finalized/?page=${finalizedPage}&page_size=10`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
       });
       const data = await response.json();
-      if (data.success) {
-        setFinalizedQPs(data.data);
+      console.log('Finalized QPs response:', data);  // Debug log
+      
+      // Handle standard DRF pagination format
+      if (data.results) {
+        console.log('Setting finalized QPs:', data.results.length, 'items');  // Debug log
+        setFinalizedQPs(data.results);
+        setFinalizedPagination({
+          count: data.count,
+          next: data.next,
+          previous: data.previous,
+          current_page: finalizedPage,
+          total_pages: Math.ceil(data.count / 10),
+          page_size: 10
+        });
+      } else {
+        // Fallback for old format
+        const qpsData = data.data || [];
+        console.log('Setting finalized QPs (fallback):', qpsData.length, 'items');  // Debug log
+        setFinalizedQPs(qpsData);
+        setFinalizedPagination({
+          count: qpsData.length,
+          next: null,
+          previous: null,
+          current_page: finalizedPage,
+          total_pages: 1,
+          page_size: 10
+        });
       }
     } catch (error) {
       console.error("Error fetching finalized QPs:", error);
+      setFinalizedQPs([]);
     }
   };
 
@@ -137,27 +178,20 @@ const COEQPApprovals = () => {
       });
       const data = await response.json();
       if (data.success) {
-        MySwal.fire({
-          toast: true,
-          position: 'top-end',
-          icon: 'success',
-          title: 'Approved',
-          text: data.message || 'QP finalized and approved for use.',
-          showConfirmButton: false,
-          timer: 3000,
-        });
+        alert("QP finalized and approved for use.");
         // remove from pending list
         setPendingQPs(pendingQPs.filter(qp => qp.id !== qpId));
         // add to finalized list so UI updates immediately without refetch
         if (selectedQP) {
           const finalizedItem = { ...selectedQP, status: 'approved' };
-          // avoid duplicates
           setFinalizedQPs(prev => [finalizedItem, ...prev.filter(q => q.id !== finalizedItem.id)]);
         }
         setDialogOpen(false);
         setSelectedQP(null);
         setQpDetail(null);
         setComment("");
+        // Refresh pending QPs to get updated pagination
+        fetchPendingQPs();
       } else {
         MySwal.fire('Error', data.message || 'Failed to finalize QP.', 'error');
       }
@@ -310,6 +344,8 @@ const COEQPApprovals = () => {
         setSelectedQP(null);
         setQpDetail(null);
         setComment("");
+        // Refresh pending QPs to get updated pagination
+        fetchPendingQPs();
       } else {
         MySwal.fire('Error', data.message || 'Failed to reject QP.', 'error');
       }
@@ -381,6 +417,36 @@ const COEQPApprovals = () => {
               ))}
             </div>
           )}
+          {pendingPagination && (pendingPagination.next || pendingPagination.previous) && (
+            <div className="flex items-center justify-between mt-4">
+              <div className="text-sm text-muted-foreground">
+                Showing page {pendingPage} of {pendingPagination.total_pages} — {pendingPagination.count} entries
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPendingPage(prev => Math.max(1, prev - 1))}
+                  disabled={pendingPage === 1 || !pendingPagination.previous}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Previous
+                </Button>
+                <span className="text-sm">
+                  Page {pendingPage} of {pendingPagination.total_pages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPendingPage(prev => prev + 1)}
+                  disabled={!pendingPagination.next}
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -434,6 +500,36 @@ const COEQPApprovals = () => {
                   </div>
                 </Card>
               ))}
+            </div>
+          )}
+          {finalizedPagination && (finalizedPagination.next || finalizedPagination.previous) && (
+            <div className="flex items-center justify-between mt-4">
+              <div className="text-sm text-muted-foreground">
+                Showing page {finalizedPage} of {finalizedPagination.total_pages} — {finalizedPagination.count} entries
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFinalizedPage(prev => Math.max(1, prev - 1))}
+                  disabled={finalizedPage === 1 || !finalizedPagination.previous}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Previous
+                </Button>
+                <span className="text-sm">
+                  Page {finalizedPage} of {finalizedPagination.total_pages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFinalizedPage(prev => prev + 1)}
+                  disabled={!finalizedPagination.next}
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>

@@ -66,6 +66,9 @@ export interface StudentStatusSummary {
 export interface StudentApplicationStatusResponse {
   success: boolean;
   message?: string;
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
   data?: {
     students: StudentApplicationStatus[];
     summary: StudentStatusSummary;
@@ -74,11 +77,6 @@ export interface StudentApplicationStatusResponse {
       exam_period: string;
       branch: string;
       semester: string;
-    };
-    pagination?: {
-      count: number;
-      next: string | null;
-      previous: string | null;
     };
   };
 }
@@ -102,6 +100,9 @@ export interface CourseStatsSummary {
 export interface CourseApplicationStatsResponse {
   success: boolean;
   message?: string;
+  count?: number;
+  next?: string | null;
+  previous?: string | null;
   data?: {
     courses: CourseApplicationStats[];
     summary: CourseStatsSummary;
@@ -131,7 +132,6 @@ export interface Semester {
 export interface FilterOptions {
   batches: Batch[];
   branches: Branch[];
-  semesters: Semester[];
 }
 
 export interface FilterOptionsResponse {
@@ -178,7 +178,11 @@ export const getStudentApplicationStatus = async (filters: {
   page_size?: string | number;
 }): Promise<StudentApplicationStatusResponse> => {
   try {
-    const params = new URLSearchParams(filters);
+    const params = new URLSearchParams({
+      ...filters,
+      page: String(filters.page || 1),
+      page_size: String(filters.page_size || 10)
+    });
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/exam-applications/students/?${params}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
@@ -190,18 +194,14 @@ export const getStudentApplicationStatus = async (filters: {
 
     const result = await response.json();
 
-    // Normalize paginated responses from backend paginator
-    if ((result as any).results) {
-      const pag = (result as any);
-      const payload = pag.results as any;
+    // Handle standard DRF pagination format
+    if (result.results) {
       return {
-        success: payload.success,
-        data: {
-          students: payload.students,
-          summary: payload.summary,
-          filters: payload.filters,
-          pagination: { count: pag.count, next: pag.next, previous: pag.previous }
-        }
+        success: true,
+        count: result.count,
+        next: result.next,
+        previous: result.previous,
+        data: result.results
       };
     }
 
@@ -226,7 +226,11 @@ export const getCourseApplicationStats = async (filters: {
   page_size?: string | number;
 }): Promise<CourseApplicationStatsResponse> => {
   try {
-    const params = new URLSearchParams(filters);
+    const params = new URLSearchParams({
+      ...filters,
+      page: String(filters.page || 1),
+      page_size: String(filters.page_size || 10)
+    });
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/exam-applications/courses/?${params}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
@@ -237,17 +241,15 @@ export const getCourseApplicationStats = async (filters: {
     }
 
     const result = await response.json();
-    if ((result as any).results) {
-      const pag = (result as any);
-      const payload = pag.results as any;
+
+    // Handle standard DRF pagination format
+    if (result.results) {
       return {
-        success: payload.success,
-        data: {
-          courses: payload.courses,
-          summary: payload.summary,
-          filters: payload.filters,
-          pagination: { count: pag.count, next: pag.next, previous: pag.previous }
-        }
+        success: true,
+        count: result.count,
+        next: result.next,
+        previous: result.previous,
+        data: result.results
       };
     }
 
@@ -262,12 +264,11 @@ export const getCourseApplicationStats = async (filters: {
 };
 
 /**
- * Fetch filter options (batches, branches, semesters)
+ * Fetch filter options (batches, branches)
  */
 export const getFilterOptions = async (): Promise<{
   batches: Batch[];
   branches: Branch[];
-  semesters: Semester[];
 }> => {
   try {
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/filter-options/`, {
@@ -290,9 +291,35 @@ export const getFilterOptions = async (): Promise<{
     console.error('Error fetching filter options:', error);
     return {
       batches: [],
-      branches: [],
-      semesters: []
+      branches: []
     };
+  }
+};
+
+/**
+ * Fetch semesters for a specific branch
+ */
+export const getSemesters = async (branchId: number): Promise<Semester[]> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/semesters/?branch_id=${branchId}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
+      return result.data.semesters;
+    } else {
+      throw new Error(result.message || 'Failed to fetch semesters');
+    }
+  } catch (error) {
+    console.error('Error fetching semesters:', error);
+    return [];
   }
 };
 
@@ -591,8 +618,6 @@ export interface RevaluationRequest {
 export interface ExamRequestFilters {
   batches: Batch[];
   branches: Branch[];
-  semesters_by_branch: { [key: number]: Semester[] };
-  exam_periods: Array<{ value: string; label: string }>;
 }
 
 /**
@@ -623,16 +648,14 @@ export const getMakeupRequests = async (params: {
 
     const result = await response.json();
 
-    // Handle the actual API response structure
-    if (result.success && result.results) {
+    // Handle standard DRF pagination format
+    if (result.results) {
       return {
         success: true,
         data: {
           requests: result.results,
           pagination: {
             count: result.count,
-            total_pages: result.total_pages,
-            current_page: result.current_page,
             next: result.next,
             previous: result.previous
           }
@@ -674,16 +697,14 @@ export const getRevaluationRequests = async (params: {
 
     const result = await response.json();
 
-    // Handle the actual API response structure
-    if (result.success && result.results) {
+    // Handle standard DRF pagination format
+    if (result.results) {
       return {
         success: true,
         data: {
           requests: result.results,
           pagination: {
             count: result.count,
-            total_pages: result.total_pages,
-            current_page: result.current_page,
             next: result.next,
             previous: result.previous
           }
@@ -711,7 +732,10 @@ export const getExamRequestFilters = async (): Promise<{ success: boolean; messa
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
     const result = await response.json();
-    return result;
+    return {
+      success: true,
+      data: result
+    };
   } catch (error) {
     console.error('Error fetching exam request filters:', error);
     return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };

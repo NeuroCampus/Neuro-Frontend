@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { getFilterOptions, getSemesters } from '../../utils/coe_api';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTheme } from '@/context/ThemeContext';
@@ -11,7 +12,8 @@ import { getFilterOptions, createResultUploadBatch, getStudentsForUpload, saveMa
 
 export default function PublishResults() {
   const { theme } = useTheme();
-  const [filters, setFilters] = useState<any>({ batches: [], branches: [], semesters: [] });
+  const [filters, setFilters] = useState<any>({ batches: [], branches: [] });
+  const [semesters, setSemesters] = useState<any[]>([]);
   // Do not pre-select exam_period so students aren't auto-loaded before user choice
   const [selected, setSelected] = useState<any>({ batch: '', branch: '', semester: '', exam_period: '' });
   const [upload, setUpload] = useState<any>(null);
@@ -34,16 +36,23 @@ export default function PublishResults() {
   useEffect(() => {
     (async () => {
       const opts = await getFilterOptions();
-      // Deduplicate semesters by number to avoid duplicate 1..8 entries across branches
-      const semestersRaw = (opts && opts.semesters) || [];
-      const semMap = new Map<number, any>();
-      semestersRaw.forEach((s: any) => {
-        if (!semMap.has(s.number)) semMap.set(s.number, s);
-      });
-      const semesters = Array.from(semMap.values()).sort((a: any, b: any) => a.number - b.number);
-      setFilters({ ...opts, semesters });
+      setFilters(opts);
     })();
   }, []);
+
+  const fetchSemesters = async (branchId: string) => {
+    if (!branchId) {
+      setSemesters([]);
+      return;
+    }
+    try {
+      const sems = await getSemesters(parseInt(branchId));
+      setSemesters(sems);
+    } catch (error) {
+      console.error('Error fetching semesters:', error);
+      setSemesters([]);
+    }
+  };
 
   const handleCreate = async () => {
     if (!selected.batch || !selected.branch || !selected.semester || !selected.exam_period) {
@@ -319,7 +328,10 @@ export default function PublishResults() {
         </div>
         <div>
           <label htmlFor="publish-results-branch" className="block text-sm mb-1">Branch</label>
-          <Select value={selected.branch} onValueChange={(v) => setSelected(s => ({ ...s, branch: v }))}>
+          <Select value={selected.branch} onValueChange={(v) => {
+            setSelected(s => ({ ...s, branch: v, semester: '' }));
+            fetchSemesters(v);
+          }}>
             <SelectTrigger id="publish-results-branch" className={theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}>
               <SelectValue placeholder="Select branch" />
             </SelectTrigger>
@@ -335,9 +347,8 @@ export default function PublishResults() {
               <SelectValue placeholder="Select semester" />
             </SelectTrigger>
             <SelectContent>
-              {filters.semesters.map((s: any) => (
-                // Use semester number as the value so backend can resolve by number+branch
-                <SelectItem key={`${s.id}_${s.number}`} value={String(s.number)}>{s.number}</SelectItem>
+              {semesters.map((s: any) => (
+                <SelectItem key={s.id} value={String(s.id)}>{s.number}</SelectItem>
               ))}
             </SelectContent>
           </Select>
