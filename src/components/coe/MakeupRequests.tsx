@@ -119,6 +119,15 @@ const MakeupRequests: React.FC = () => {
     setActionDialogOpen(true);
   };
 
+  const handleActionDialogOpenChange = (open: boolean) => {
+    setActionDialogOpen(open);
+    if (!open) {
+      setSelectedRequest(null);
+      setActionType(null);
+      setResponseNote('');
+    }
+  };
+
   const submitAction = async () => {
     if (!selectedRequest || !actionType) return;
 
@@ -133,6 +142,9 @@ const MakeupRequests: React.FC = () => {
       if (result.success) {
         toast.success(`Makeup request ${actionType}d successfully`);
         setActionDialogOpen(false);
+        setSelectedRequest(null);
+        setActionType(null);
+        setResponseNote('');
         loadRequests(); // Refresh the list
       } else {
         toast.error(result.message || 'Failed to update request');
@@ -146,15 +158,17 @@ const MakeupRequests: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
+    const baseClass = 'inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold shadow-sm';
+
     switch (status) {
       case 'pending':
-        return <Badge variant="secondary" className="flex items-center gap-1"><Clock className="w-3 h-3" /> Pending</Badge>;
+        return <Badge variant="secondary" className={`${baseClass} border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200`}><Clock className="w-3 h-3" /> Pending</Badge>;
       case 'approved':
-        return <Badge variant="default" className="bg-green-500 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Approved</Badge>;
+        return <Badge variant="default" className={`${baseClass} border-emerald-200 bg-emerald-100 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200`}><CheckCircle className="w-3 h-3" /> Approved</Badge>;
       case 'rejected':
-        return <Badge variant="destructive" className="flex items-center gap-1"><XCircle className="w-3 h-3" /> Rejected</Badge>;
+        return <Badge variant="destructive" className={`${baseClass} border-red-200 bg-red-100 text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200`}><XCircle className="w-3 h-3" /> Rejected</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline" className={baseClass}>{status}</Badge>;
     }
   };
 
@@ -443,7 +457,7 @@ const MakeupRequests: React.FC = () => {
 
       {/* Request Details Dialog */}
       <Dialog open={!!selectedRequest && !actionDialogOpen} onOpenChange={() => setSelectedRequest(null)}>
-        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[720px] w-[90vw] mx-4 rounded-lg flex flex-col max-h-[92vh]`}>
+        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[720px] w-[calc(100vw-2rem)] sm:w-[90vw] rounded-lg flex flex-col max-h-[92vh]`}>
           <DialogHeader>
             <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Makeup Request Details</DialogTitle>
           </DialogHeader>
@@ -469,7 +483,7 @@ const MakeupRequests: React.FC = () => {
                   <p>{selectedRequest.exam_period}</p>
                 </div>
                 <div>
-                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Status</Label>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Status : </Label>
                   {getStatusBadge(selectedRequest.status)}
                 </div>
                 <div>
@@ -504,7 +518,7 @@ const MakeupRequests: React.FC = () => {
       </Dialog>
 
       {/* Action Dialog */}
-      <Dialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>
+      <Dialog open={actionDialogOpen} onOpenChange={handleActionDialogOpenChange}>
         <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[80%] sm:max-w-md mx-auto rounded-2xl p-4 sm:p-6`}>
           <DialogHeader>
             <DialogTitle className={`${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} text-lg font-semibold`}>
@@ -512,7 +526,7 @@ const MakeupRequests: React.FC = () => {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className={`p-4 rounded-md ${actionType === 'approve' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+            <div className={`p-4 rounded-md ${actionType === 'approve' ? 'bg-green-50 border border-green-200 text-green-700 space-y-2' : 'bg-red-50 border border-red-200 text-red-700 space-y-2'}`}>
               <Label htmlFor="response-note">Response Note (Optional)</Label>
               <Textarea
                 id="response-note"
@@ -522,7 +536,7 @@ const MakeupRequests: React.FC = () => {
               />
             </div>
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" className={theme === 'dark' ? 'text-foreground bg-card border border-border hover:bg-accent' : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'} onClick={() => setActionDialogOpen(false)}>
+              <Button variant="outline" className={theme === 'dark' ? 'text-foreground bg-card border border-border hover:bg-accent' : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'} onClick={() => handleActionDialogOpenChange(false)}>
                 Cancel
               </Button>
               <Button
