@@ -5,15 +5,17 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, CheckCircle, Clock, Download, Eye, XCircle } from 'lucide-react';
+import { CheckCircle, Clock, Download, Eye, XCircle } from 'lucide-react';
 import { getMakeupRequests, getExamRequestFilters, updateMakeupRequestStatus, MakeupRequest, ExamRequestFilters } from '@/utils/coe_api';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { useTheme } from '@/context/ThemeContext';
 import { toast } from 'sonner';
 
 const MakeupRequests: React.FC = () => {
+  const { theme } = useTheme();
   const [requests, setRequests] = useState<MakeupRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<ExamRequestFilters | null>(null);
@@ -166,7 +168,6 @@ const MakeupRequests: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertCircle className="w-5 h-5" />
             Makeup Exam Requests
           </CardTitle>
         </CardHeader>
@@ -266,14 +267,14 @@ const MakeupRequests: React.FC = () => {
           <div className="border rounded-lg">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Student</TableHead>
-                  <TableHead>Subject</TableHead>
-                  <TableHead>Batch/Branch/Sem</TableHead>
-                  <TableHead>Exam Period</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Requested</TableHead>
-                  <TableHead>Actions</TableHead>
+                <TableRow className={theme === 'dark' ? 'bg-muted/40 border-b border-border' : 'bg-slate-100 border-b border-slate-200'}>
+                  <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-slate-900'}>Student</TableHead>
+                  <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-slate-900'}>Subject</TableHead>
+                  <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-slate-900'}>Batch/Branch/Sem</TableHead>
+                  <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-slate-900'}>Exam Period</TableHead>
+                  <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-slate-900'}>Status</TableHead>
+                  <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-slate-900'}>Requested</TableHead>
+                  <TableHead className={theme === 'dark' ? 'font-bold text-foreground' : 'font-bold text-slate-900'}>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -336,17 +337,18 @@ const MakeupRequests: React.FC = () => {
                           {request.status === 'pending' && (
                             <>
                               <Button
-                                variant="default"
+                                variant="outline"
                                 size="sm"
                                 onClick={() => handleAction(request, 'approve')}
-                                className="bg-green-600 hover:bg-green-700"
+                                className="text-green-700 border-green-600 hover:bg-green-100"
                               >
                                 Approve
                               </Button>
                               <Button
-                                variant="destructive"
+                                variant="outline"
                                 size="sm"
                                 onClick={() => handleAction(request, 'reject')}
+                                className="text-red-700 border-red-600 hover:bg-red-100"
                               >
                                 Reject
                               </Button>
@@ -441,53 +443,53 @@ const MakeupRequests: React.FC = () => {
 
       {/* Request Details Dialog */}
       <Dialog open={!!selectedRequest && !actionDialogOpen} onOpenChange={() => setSelectedRequest(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[720px] w-[90vw] mx-4 rounded-lg flex flex-col max-h-[92vh]`}>
           <DialogHeader>
-            <DialogTitle>Makeup Request Details</DialogTitle>
+            <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Makeup Request Details</DialogTitle>
           </DialogHeader>
           {selectedRequest && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4 overflow-auto px-1 sm:px-2 py-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label>Student</Label>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Student</Label>
                   <p className="font-medium">{selectedRequest.student_name}</p>
                   <p className="text-sm text-muted-foreground">{selectedRequest.student_usn}</p>
                 </div>
                 <div>
-                  <Label>Subject</Label>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Subject</Label>
                   <p className="font-medium">{selectedRequest.subject_name}</p>
                   <p className="text-sm text-muted-foreground">{selectedRequest.subject_code}</p>
                 </div>
                 <div>
-                  <Label>Batch/Branch/Semester</Label>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Batch/Branch/Semester</Label>
                   <p>{selectedRequest.batch} / {selectedRequest.branch} / Sem {selectedRequest.semester}</p>
                 </div>
                 <div>
-                  <Label>Exam Period</Label>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Exam Period</Label>
                   <p>{selectedRequest.exam_period}</p>
                 </div>
                 <div>
-                  <Label>Status</Label>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Status</Label>
                   {getStatusBadge(selectedRequest.status)}
                 </div>
                 <div>
-                  <Label>Requested Date</Label>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Requested Date</Label>
                   <p>{new Date(selectedRequest.requested_at).toLocaleString()}</p>
                 </div>
               </div>
               <div>
-                <Label>Reason</Label>
-                <p className="mt-1">{selectedRequest.reason}</p>
+                <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Reason</Label>
+                <p className={`mt-1 rounded-md p-3 whitespace-pre-wrap ${theme === 'dark' ? 'bg-muted/20' : 'bg-gray-50 border border-gray-200'}`}>{selectedRequest.reason}</p>
               </div>
               {selectedRequest.response_note && (
                 <div>
-                  <Label>Response Note</Label>
-                  <p className="mt-1">{selectedRequest.response_note}</p>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Response Note</Label>
+                  <p className={`mt-1 rounded-md p-3 whitespace-pre-wrap ${theme === 'dark' ? 'bg-muted/20' : 'bg-gray-50 border border-gray-200'}`}>{selectedRequest.response_note}</p>
                 </div>
               )}
               {selectedRequest.processed_by && (
                 <div>
-                  <Label>Processed By</Label>
+                  <Label className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>Processed By</Label>
                   <p>{selectedRequest.processed_by}</p>
                   {selectedRequest.processed_at && (
                     <p className="text-sm text-muted-foreground">
@@ -503,14 +505,14 @@ const MakeupRequests: React.FC = () => {
 
       {/* Action Dialog */}
       <Dialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>
-        <DialogContent>
+        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[80%] sm:max-w-md mx-auto rounded-2xl p-4 sm:p-6`}>
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className={`${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} text-lg font-semibold`}>
               {actionType === 'approve' ? 'Approve' : 'Reject'} Makeup Request
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
+            <div className={`p-4 rounded-md ${actionType === 'approve' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
               <Label htmlFor="response-note">Response Note (Optional)</Label>
               <Textarea
                 id="response-note"
@@ -520,14 +522,14 @@ const MakeupRequests: React.FC = () => {
               />
             </div>
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setActionDialogOpen(false)}>
+              <Button variant="outline" className={theme === 'dark' ? 'text-foreground bg-card border border-border hover:bg-accent' : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'} onClick={() => setActionDialogOpen(false)}>
                 Cancel
               </Button>
               <Button
                 onClick={submitAction}
                 disabled={processing}
-                variant={actionType === 'approve' ? 'default' : 'destructive'}
-                className={actionType === 'approve' ? 'bg-green-600 hover:bg-green-700' : ''}
+                variant="outline"
+                className={actionType === 'approve' ? 'text-green-700 border-green-600 hover:bg-green-100' : 'text-red-700 border-red-600 hover:bg-red-100'}
               >
                 {processing ? 'Processing...' : actionType === 'approve' ? 'Approve' : 'Reject'}
               </Button>

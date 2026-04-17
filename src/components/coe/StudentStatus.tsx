@@ -8,6 +8,7 @@ import { Users, CheckCircle, XCircle, Search, Download } from "lucide-react";
 import { getStudentApplicationStatus, getFilterOptions, FilterOptions } from "../../utils/coe_api";
 import { fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
+import "./StudentStatus.css";
 
 
 const StudentStatus = () => {
@@ -134,121 +135,121 @@ const StudentStatus = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Student Status</h1>
-      </div>
+    <div className="student-status-main-container w-full max-w-full">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex justify-between items-center header-section px-0">
+          <h1 className="text-2xl sm:text-3xl font-bold header-title">Student Status</h1>
+        </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Batch</label>
-              <Select value={filters.batch} onValueChange={(value) => setFilters({...filters, batch: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select batch" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filterOptions.batches.map((batch: any) => (
-                    <SelectItem key={batch.id} value={batch.id.toString()}>
-                      {batch.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        {/* Filters */}
+        <Card className="w-full max-w-full">
+          <CardContent className="p-3 sm:p-6 filter-section">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-2 sm:gap-4">
+              <div>
+                <label className="text-xs sm:text-sm font-medium mb-1 sm:mb-2 block filter-label">Batch</label>
+                <Select value={filters.batch} onValueChange={(value) => setFilters({...filters, batch: value})}>
+                  <SelectTrigger className="filter-select text-sm">
+                    <SelectValue placeholder="Select batch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filterOptions.batches.map((batch: any) => (
+                      <SelectItem key={batch.id} value={batch.id.toString()}>
+                        {batch.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-xs sm:text-sm font-medium mb-1 sm:mb-2 block filter-label">Exam Period</label>
+                <Select value={filters.exam_period} onValueChange={(value) => setFilters({...filters, exam_period: value})}>
+                  <SelectTrigger className="filter-select text-sm">
+                    <SelectValue placeholder="Select exam period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="june_july">June/July</SelectItem>
+                    <SelectItem value="nov_dec">November/December</SelectItem>
+                    <SelectItem value="jan_feb">January/February</SelectItem>
+                    <SelectItem value="apr_may">April/May</SelectItem>
+                    <SelectItem value="supplementary">Supplementary</SelectItem>
+                    <SelectItem value="revaluation">Revaluation</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-xs sm:text-sm font-medium mb-1 sm:mb-2 block filter-label">Branch</label>
+                <Select value={filters.branch} onValueChange={(value) => setFilters({...filters, branch: value})}>
+                  <SelectTrigger className="filter-select text-sm">
+                    <SelectValue placeholder="Select branch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filterOptions.branches.map((branch: any) => (
+                      <SelectItem key={branch.id} value={branch.id.toString()}>
+                        {branch.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-xs sm:text-sm font-medium mb-1 sm:mb-2 block filter-label">Semester</label>
+                <Select value={filters.semester} onValueChange={(value) => setFilters({...filters, semester: value})}>
+                  <SelectTrigger className="filter-select text-sm">
+                    <SelectValue placeholder="Select semester" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filterOptions.semesters.map((semester: any) => (
+                      <SelectItem key={`${semester.id}_${semester.number}`} value={semester.number.toString()}>
+                        Semester {semester.number}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Exam Period</label>
-              <Select value={filters.exam_period} onValueChange={(value) => setFilters({...filters, exam_period: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select exam period" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="june_july">June/July</SelectItem>
-                  <SelectItem value="nov_dec">November/December</SelectItem>
-                  <SelectItem value="jan_feb">January/February</SelectItem>
-                  <SelectItem value="apr_may">April/May</SelectItem>
-                  <SelectItem value="supplementary">Supplementary</SelectItem>
-                  <SelectItem value="revaluation">Revaluation</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Branch</label>
-              <Select value={filters.branch} onValueChange={(value) => setFilters({...filters, branch: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select branch" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filterOptions.branches.map((branch: any) => (
-                    <SelectItem key={branch.id} value={branch.id.toString()}>
-                      {branch.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Semester</label>
-              <Select value={filters.semester} onValueChange={(value) => setFilters({...filters, semester: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select semester" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filterOptions.semesters.map((semester: any) => (
-                    // send semester number (string) so backend can match number+branch
-                    <SelectItem key={`${semester.id}_${semester.number}`} value={semester.number.toString()}>
-                      Semester {semester.number}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
       {/* Summary Cards */}
       {data && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-6 summary-cards">
+          <Card className="summary-card w-full max-w-full">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-1 sm:space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium summary-card-title">Total Students</CardTitle>
+              <Users className="h-3 sm:h-4 w-3 sm:w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{data.summary.total_students}</div>
+              <div className="text-lg sm:text-2xl font-bold summary-card-value">{data.summary.total_students}</div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Applied</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-500" />
+          <Card className="summary-card w-full max-w-full">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-1 sm:space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium summary-card-title">Applied</CardTitle>
+              <CheckCircle className="h-3 sm:h-4 w-3 sm:w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{data.summary.applied_students}</div>
+              <div className="text-lg sm:text-2xl font-bold text-green-600 summary-card-value">{data.summary.applied_students}</div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Not Applied</CardTitle>
-              <XCircle className="h-4 w-4 text-red-500" />
+          <Card className="summary-card w-full max-w-full">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-1 sm:space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium summary-card-title">Not Applied</CardTitle>
+              <XCircle className="h-3 sm:h-4 w-3 sm:w-4 text-red-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{data.summary.not_applied_students}</div>
+              <div className="text-lg sm:text-2xl font-bold text-red-600 summary-card-value">{data.summary.not_applied_students}</div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Application Rate</CardTitle>
-              <Search className="h-4 w-4 text-blue-500" />
+          <Card className="summary-card w-full max-w-full">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-1 sm:space-y-0 pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium summary-card-title">App Rate</CardTitle>
+              <Search className="h-3 sm:h-4 w-3 sm:w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{data.summary.application_rate}%</div>
+              <div className="text-lg sm:text-2xl font-bold text-blue-600 summary-card-value">{data.summary.application_rate}%</div>
             </CardContent>
           </Card>
         </div>
@@ -256,64 +257,70 @@ const StudentStatus = () => {
 
       {/* Students Table */}
       {data && (
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>Student Application Status ({totalCount !== null ? totalCount : data.students.length})</CardTitle>
-              <div className="flex items-center space-x-2">
+        <Card className="w-full max-w-full">
+          <CardHeader className="p-3 sm:p-6">
+            <div className="flex flex-row justify-between items-center gap-2 sm:gap-4">
+              <CardTitle className="text-sm sm:text-base flex-1">Student Application Status ({totalCount !== null ? totalCount : data.students.length})</CardTitle>
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <Button
-                  variant="outline"
+                  variant="default"
                   size="sm"
                   onClick={handleExport}
                   disabled={exporting || !(filters.batch && filters.exam_period && filters.branch && filters.semester)}
+                  className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] export-button text-xs sm:text-sm"
                 >
-                  <Download className="mr-2 h-4 w-4" />
+                  <Download className="mr-1 sm:mr-2 h-3 sm:h-4 w-3 sm:w-4" />
                   {exporting ? 'Exporting...' : 'Export'}
                 </Button>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Roll Number</TableHead>
-                  <TableHead>Student Name</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Applied Subjects</TableHead>
-                  <TableHead>Count</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.students.map((student: any) => (
-                  <TableRow key={student.student_id}>
-                    <TableCell className="font-medium">{student.roll_number}</TableCell>
-                    <TableCell>{student.student_name}</TableCell>
-                    <TableCell>{getStatusBadge(student.status)}</TableCell>
-                    <TableCell>
-                      <div className="max-w-xs truncate" title={student.applied_subjects.join(', ')}>
-                        {student.applied_subjects.length > 0
-                          ? student.applied_subjects.join(', ')
-                          : 'None'
-                        }
-                      </div>
-                    </TableCell>
-                    <TableCell>{student.applied_count}</TableCell>
+          <CardContent className="p-3 sm:p-6">
+            <div className="w-full overflow-x-auto table-wrapper">
+              <Table className="min-w-full">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-xs sm:text-sm whitespace-nowrap">Roll Number</TableHead>
+                    <TableHead className="text-xs sm:text-sm whitespace-nowrap">Student Name</TableHead>
+                    <TableHead className="text-xs sm:text-sm whitespace-nowrap">Status</TableHead>
+                    <TableHead className="text-xs sm:text-sm whitespace-nowrap">Applied Subjects</TableHead>
+                    <TableHead className="text-xs sm:text-sm whitespace-nowrap text-center sm:text-left">Count</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {data.students.map((student: any) => (
+                    <TableRow key={student.student_id}>
+                      <TableCell className="font-medium text-xs sm:text-sm" data-label="Roll Number">{student.roll_number}</TableCell>
+                      <TableCell className="text-xs sm:text-sm" data-label="Student Name">{student.student_name}</TableCell>
+                      <TableCell className="text-xs sm:text-sm" data-label="Status">{getStatusBadge(student.status)}</TableCell>
+                      <TableCell className="text-xs sm:text-sm" data-label="Applied Subjects">
+                        <div className="max-w-xs truncate" title={student.applied_subjects.join(', ')}>
+                          {student.applied_subjects.length > 0
+                            ? student.applied_subjects.join(', ')
+                            : 'None'
+                          }
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs sm:text-sm text-center" data-label="Count">{student.applied_count}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
             {data.students.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-6 sm:py-8 text-xs sm:text-sm text-muted-foreground empty-state">
                 No students found for the selected filters.
               </div>
             )}
             {/* Pagination controls */}
-            <div className="flex items-center justify-between mt-4">
-              <div className="text-sm text-muted-foreground">{totalCount !== null ? `Showing page ${page} — ${totalCount} students` : `Page ${page}`}</div>
-              <div className="space-x-2">
-                <Button size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
-                <Button size="sm" onClick={() => setPage(p => p + 1)} disabled={data.students.length < pageSize}>Next</Button>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mt-3 sm:mt-4 pagination-container">
+              <div className="text-xs sm:text-sm text-muted-foreground pagination-info">{totalCount !== null ? `Showing page ${page} — ${totalCount} students` : `Page ${page}`}</div>
+              <div className="flex gap-2 pagination-controls w-full sm:w-auto">
+                <Button size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="flex-1 sm:flex-none bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] text-xs">Previous</Button>
+                <span className="inline-flex items-center justify-center min-w-8 h-8 px-2 rounded-md border border-[#a259ff] text-[#a259ff] text-xs sm:text-sm font-semibold">
+                  {page}
+                </span>
+                <Button size="sm" onClick={() => setPage(p => p + 1)} disabled={data.students.length < pageSize} className="flex-1 sm:flex-none bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] text-xs">Next</Button>
               </div>
             </div>
           </CardContent>
@@ -321,11 +328,12 @@ const StudentStatus = () => {
       )}
 
       {loading && (
-        <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-2 text-muted-foreground">Loading student status...</p>
+        <div className="text-center py-6 sm:py-8 px-4">
+          <div className="animate-spin rounded-full h-6 sm:h-8 w-6 sm:w-8 border-b-2 border-gray-900 mx-auto loading-spinner"></div>
+          <p className="mt-2 text-xs sm:text-sm text-muted-foreground loading-text">Loading student status...</p>
         </div>
       )}
+      </div>
     </div>
   );
 };

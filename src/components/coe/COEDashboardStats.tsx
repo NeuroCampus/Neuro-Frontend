@@ -65,8 +65,6 @@ const COEDashboardStats: React.FC = () => {
 
   return (
     <div className="space-y-6">
-     
-
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader>
@@ -77,7 +75,6 @@ const COEDashboardStats: React.FC = () => {
             <div className="text-sm text-muted-foreground mt-1">Applications submitted</div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-medium">Question Papers</CardTitle>
@@ -87,7 +84,6 @@ const COEDashboardStats: React.FC = () => {
             <div className="text-sm text-muted-foreground mt-1">Total QPs</div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-medium">Pending COE</CardTitle>
@@ -97,7 +93,6 @@ const COEDashboardStats: React.FC = () => {
             <div className="text-sm text-muted-foreground mt-1">Awaiting your review</div>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-medium">Published Results</CardTitle>
@@ -108,14 +103,16 @@ const COEDashboardStats: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-3">
+            <ul
+              className="space-y-3 overflow-y-auto"
+              style={{ maxHeight: '220px' }}
+            >
               {(stats.recent_activity || []).slice(0, 5).map((activity, idx) => (
                 <li key={idx} className="flex items-start justify-between">
                   <div className="flex-1">
@@ -136,13 +133,15 @@ const COEDashboardStats: React.FC = () => {
             )}
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader>
             <CardTitle>Recent Published Results</CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-3">
+            <ul
+              className="space-y-3 overflow-y-auto"
+              style={{ maxHeight: '220px' }}
+            >
               {(stats.published_results_summary?.recent_published_results || []).slice(0, 5).map((pr, idx) => (
                 <li key={idx} className="flex items-center justify-between">
                   <div className="flex-1">
