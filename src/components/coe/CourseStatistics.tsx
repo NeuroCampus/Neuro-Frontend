@@ -136,6 +136,13 @@ const CourseStatistics = () => {
     return <Badge variant="secondary" className="bg-red-100 text-red-800">Low</Badge>;
   };
 
+  const totalCount = pagination?.count ?? null;
+  const totalPages = totalCount ? Math.max(1, Math.ceil(totalCount / pageSize)) : 1;
+  const visiblePages = Array.from({ length: totalPages }, (_, index) => index + 1).slice(
+    Math.max(0, page - 3),
+    Math.max(5, page + 2)
+  );
+
   return (
     <div className="course-statistics-main space-y-6">
       <div className="course-statistics-header flex justify-between items-center">
@@ -245,7 +252,11 @@ const CourseStatistics = () => {
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>Subject-wise Application Statistics ({totalCount !== null ? totalCount : data.courses.length})</CardTitle>
-              <Button variant="outline" size="sm" onClick={handleExport}>
+              <Button
+                size="sm"
+                onClick={handleExport}
+                className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]"
+              >
                 <Download className="mr-2 h-4 w-4" />
                 {exporting ? 'Exporting...' : 'Export PDF'}
               </Button>
@@ -290,9 +301,38 @@ const CourseStatistics = () => {
           {/* Pagination controls */}
           <div className="flex items-center justify-between mt-4">
             <div className="text-sm text-muted-foreground">{totalCount !== null ? `Showing page ${page} — ${totalCount} subjects` : `Page ${page}`}</div>
-            <div className="space-x-2">
-              <Button size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
-              <Button size="sm" onClick={() => setPage(p => p + 1)} disabled={data.courses.length < pageSize}>Next</Button>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] disabled:opacity-50"
+              >
+                Previous
+              </Button>
+
+              <div className="flex items-center gap-2">
+                {visiblePages.map((pageNumber) => (
+                  <Button
+                    key={pageNumber}
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setPage(pageNumber)}
+                    className="bg-white text-black border-gray-300 hover:bg-gray-100"
+                  >
+                    {pageNumber}
+                  </Button>
+                ))}
+              </div>
+
+              <Button
+                size="sm"
+                onClick={() => setPage(p => p + 1)}
+                disabled={!pagination?.next}
+                className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] disabled:opacity-50"
+              >
+                Next
+              </Button>
             </div>
           </div>
           </CardContent>

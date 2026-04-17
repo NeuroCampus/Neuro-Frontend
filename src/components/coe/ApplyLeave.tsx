@@ -369,6 +369,7 @@ const COEApplyLeave = () => {
                     : 'bg-white text-gray-900 border-gray-200'
                 }`}>
                   <div className="space-y-2">
+                    
                     {(['All', 'Pending', 'Approved', 'Rejected'] as const).map((status) => (
                       <button
                         key={status}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,6 +54,7 @@ const COEQPApprovals = () => {
   const [finalizedPagination, setFinalizedPagination] = useState<PaginationInfo | null>(null);
   const [pendingPage, setPendingPage] = useState(1);
   const [finalizedPage, setFinalizedPage] = useState(1);
+  const dialogContentRef = useRef<HTMLDivElement | null>(null);
   const { theme } = useTheme();
 
   const toggleExpanded = (key: string) => {
@@ -158,7 +159,7 @@ const COEQPApprovals = () => {
       reverseButtons: true,
       confirmButtonText: 'Yes, approve',
       cancelButtonText: 'Cancel',
-      target: document.body,
+      target: dialogContentRef.current ?? document.body,
     });
 
     if (!result || result.isDismissed || !result.isConfirmed) {
@@ -310,7 +311,7 @@ const COEQPApprovals = () => {
       confirmButtonText: 'Yes, reject',
       cancelButtonText: 'Cancel',
       // Render at document.body so it's not trapped under portal layers.
-      target: document.body,
+      target: dialogContentRef.current ?? document.body,
     });
 
     if (!result || result.isDismissed || !result.isConfirmed) {
@@ -545,7 +546,10 @@ const COEQPApprovals = () => {
           setDialogOpen(open);
         }}
       >
-        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[720px] w-[calc(100vw-1.5rem)] sm:w-[calc(100vw-2rem)] md:w-[90vw] rounded-lg flex flex-col max-h-[92vh]`}>
+        <DialogContent
+          ref={dialogContentRef}
+          className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[720px] w-[calc(100vw-1.5rem)] sm:w-[calc(100vw-2rem)] md:w-[90vw] rounded-lg flex flex-col max-h-[92vh]`}
+        >
           <DialogHeader>
             <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
               Review QP: {selectedQP?.subject} - {selectedQP?.test_type}

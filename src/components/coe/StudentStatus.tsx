@@ -103,6 +103,13 @@ const StudentStatus = () => {
     }
   };
 
+  const totalCount = pagination?.count ?? null;
+  const totalPages = totalCount ? Math.max(1, Math.ceil(totalCount / pageSize)) : 1;
+  const visiblePages = Array.from(
+    { length: totalPages },
+    (_, index) => index + 1
+  ).slice(Math.max(0, page - 3), Math.max(5, page + 2));
+
   const handleExport = async () => {
     if (!filters.batch || !filters.exam_period || !filters.branch || !filters.semester) return;
     const accessToken = localStorage.getItem('access_token');
@@ -330,9 +337,38 @@ const StudentStatus = () => {
             {/* Pagination controls */}
             <div className="flex items-center justify-between mt-4">
               <div className="text-sm text-muted-foreground">{totalCount !== null ? `Showing page ${page} — ${totalCount} students` : `Page ${page}`}</div>
-              <div className="space-x-2">
-                <Button size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
-                <Button size="sm" onClick={() => setPage(p => p + 1)} disabled={data.students.length < pageSize}>Next</Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] disabled:opacity-50"
+                >
+                  Previous
+                </Button>
+
+                <div className="flex items-center gap-2">
+                  {visiblePages.map((pageNumber) => (
+                    <Button
+                      key={pageNumber}
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setPage(pageNumber)}
+                      className="bg-white text-black border-gray-300 hover:bg-gray-100"
+                    >
+                      {pageNumber}
+                    </Button>
+                  ))}
+                </div>
+
+                <Button
+                  size="sm"
+                  onClick={() => setPage(p => p + 1)}
+                  disabled={!pagination?.next}
+                  className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] disabled:opacity-50"
+                >
+                  Next
+                </Button>
               </div>
             </div>
           </CardContent>
