@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { getFilterOptions } from '../../utils/coe_api';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTheme } from '@/context/ThemeContext';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { AlertTriangle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { createResultUploadBatch, getStudentsForUpload, saveMarksForUpload, publishUploadBatch, unpublishUploadBatch, toggleWithholdResult } from '../../utils/coe_api';
+import { getFilterOptions, createResultUploadBatch, getStudentsForUpload, saveMarksForUpload, publishUploadBatch, unpublishUploadBatch, toggleWithholdResult } from '../../utils/coe_api';
 
 export default function PublishResults() {
   const { theme } = useTheme();
@@ -295,13 +295,21 @@ export default function PublishResults() {
   };
 
   return (
-    <div>
-      <h2 className="text-2xl font-semibold mb-4">Publish Exam Results (COE)</h2>
-      <div className="flex gap-4 mb-4">
+    <div className={`p-3 sm:p-4 lg:p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <h2 className={`text-xl sm:text-2xl lg:text-3xl font-bold mb-4 sm:mb-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+        Publish Exam Results
+      </h2>
+
+      <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'} mb-4`}>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg sm:text-xl">Filter And Create Upload Batch</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3 sm:gap-4">
         <div>
-          <label className="block text-sm">Batch</label>
+          <label htmlFor="publish-results-batch" className="block text-sm mb-1">Batch</label>
           <Select value={selected.batch} onValueChange={(v) => setSelected(s => ({ ...s, batch: v }))}>
-            <SelectTrigger>
+            <SelectTrigger id="publish-results-batch" className={theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}>
               <SelectValue placeholder="Select batch" />
             </SelectTrigger>
             <SelectContent>
@@ -310,9 +318,9 @@ export default function PublishResults() {
           </Select>
         </div>
         <div>
-          <label className="block text-sm">Branch</label>
+          <label htmlFor="publish-results-branch" className="block text-sm mb-1">Branch</label>
           <Select value={selected.branch} onValueChange={(v) => setSelected(s => ({ ...s, branch: v }))}>
-            <SelectTrigger>
+            <SelectTrigger id="publish-results-branch" className={theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}>
               <SelectValue placeholder="Select branch" />
             </SelectTrigger>
             <SelectContent>
@@ -321,9 +329,9 @@ export default function PublishResults() {
           </Select>
         </div>
         <div>
-          <label className="block text-sm">Semester</label>
+          <label htmlFor="publish-results-semester" className="block text-sm mb-1">Semester</label>
           <Select value={selected.semester} onValueChange={(v) => setSelected(s => ({ ...s, semester: v }))}>
-            <SelectTrigger>
+            <SelectTrigger id="publish-results-semester" className={theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}>
               <SelectValue placeholder="Select semester" />
             </SelectTrigger>
             <SelectContent>
@@ -335,9 +343,9 @@ export default function PublishResults() {
           </Select>
         </div>
         <div>
-          <label className="block text-sm">Exam Period</label>
+          <label htmlFor="publish-results-exam-period" className="block text-sm mb-1">Exam Period</label>
           <Select value={selected.exam_period} onValueChange={(v) => setSelected(s => ({ ...s, exam_period: v }))}>
-            <SelectTrigger>
+            <SelectTrigger id="publish-results-exam-period" className={theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}>
               <SelectValue placeholder="Exam period" />
             </SelectTrigger>
             <SelectContent>
@@ -350,42 +358,61 @@ export default function PublishResults() {
           </Select>
         </div>
         <div className="flex items-end">
-          <Button onClick={handleCreate}>Create Upload Batch</Button>
+          <Button className="w-full sm:w-auto bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={handleCreate}>
+            Create Upload Batch
+          </Button>
         </div>
       </div>
+        </CardContent>
+      </Card>
 
       {upload && (
-        <div className="mb-4">
-          <div>Upload ID: {upload.id} | Token: {upload.token}</div>
-          <div className="mt-2 flex items-center gap-4">
+        <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'} mb-4`}>
+          <CardContent className="pt-5">
+          <div className="text-sm sm:text-base">Upload ID: <span className="font-semibold">{upload.id}</span> | Token: <span className="font-mono">{upload.token}</span></div>
+          <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
             <div>Published: <span className={`font-medium ${upload.is_published ? 'text-green-600' : 'text-red-600'}`}>{upload.is_published ? 'Yes' : 'No'}</span></div>
             {upload.is_published ? (
               <Button onClick={() => setUnpublishModalOpen(true)} variant="secondary">Unpublish</Button>
             ) : (
-              <Button className="btn-primary" onClick={() => setPublishModalOpen(true)}>Publish Results</Button>
+              <Button className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={() => setPublishModalOpen(true)}>Publish Results</Button>
             )}
           </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {students.length > 0 && (
+        <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg sm:text-xl">Student Marks Entry</CardTitle>
+          </CardHeader>
+          <CardContent>
         <div className="overflow-auto">
           <div className="flex items-center justify-between mb-3">
             <div className="text-sm text-muted-foreground">Showing {students.length} students</div>
-            <div className="flex gap-3 items-center">
+            <div className="flex gap-3 items-center pr-1">
               {/* page size selector */}
-              <div className="flex items-center gap-2">
-                <label className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : ''}`}>Page size</label>
-                <select value={studentsPageSize} onChange={(e) => {
-                  const v = Number(e.target.value);
-                  setStudentsPageSize(v);
-                  if (upload) navigateToPage(1, v);
-                }} className={`border rounded px-2 py-1 ${theme === 'dark' ? 'bg-slate-800 text-white border-slate-700' : 'bg-white text-foreground'}`}>
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
+              <div className="flex items-center gap-2 px-2 py-1 rounded-md">
+                <label htmlFor="publish-results-page-size" className={`text-sm leading-none ${theme === 'dark' ? 'text-muted-foreground' : ''}`}>Page size</label>
+                <Select
+                  value={String(studentsPageSize)}
+                  onValueChange={(v) => {
+                    const size = Number(v);
+                    setStudentsPageSize(size);
+                    if (upload) navigateToPage(1, size);
+                  }}
+                >
+                  <SelectTrigger id="publish-results-page-size" className={`w-20 h-9 px-3 ${theme === 'dark' ? 'bg-slate-800 text-white border-slate-700' : 'bg-white text-foreground border-gray-300'}`}>
+                    <SelectValue placeholder="Size" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
             
@@ -438,18 +465,19 @@ export default function PublishResults() {
                     </div>
                   </div>
 
-                  <table className="table-auto w-full border-collapse">
+                  <div className="w-full overflow-x-auto">
+                  <table className="table-auto w-full min-w-[980px] border-collapse">
                     <thead>
                       <tr>
-                        <th className="border px-2 py-1">Subject Code</th>
-                        <th className="border px-2 py-1">Subject Title</th>
-                        <th className="border px-2 py-1">CIE</th>
-                        <th className="border px-2 py-1">SEE</th>
-                        <th className="border px-2 py-1">Total Marks</th>
-                        <th className="border px-2 py-1">Result</th>
-                        <th className="border px-2 py-1">Grade</th>
-                        <th className="border px-2 py-1">Grade Point</th>
-                        <th className="border px-2 py-1">Credits Assigned</th>
+                        <th className="border px-2 py-1 whitespace-nowrap">Subject Code</th>
+                        <th className="border px-2 py-1 whitespace-nowrap">Subject Title</th>
+                        <th className="border px-2 py-1 whitespace-nowrap">CIE</th>
+                        <th className="border px-2 py-1 whitespace-nowrap">SEE</th>
+                        <th className="border px-2 py-1 whitespace-nowrap">Total Marks</th>
+                        <th className="border px-2 py-1 whitespace-nowrap">Result</th>
+                        <th className="border px-2 py-1 whitespace-nowrap">Grade</th>
+                        <th className="border px-2 py-1 whitespace-nowrap">Grade Point</th>
+                        <th className="border px-2 py-1 whitespace-nowrap">Credits Assigned</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -553,14 +581,15 @@ export default function PublishResults() {
                       </tr>
                     </tfoot>
                   </table>
+                  </div>
                 </div>
               );
             })}
           </div>
 
-          <div className="mt-4 flex gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             <div className="flex items-center gap-3 mr-auto">
-              <button className="btn btn-sm" disabled={studentsPage <= 1} onClick={() => {
+              <button className="px-3 py-1 rounded border text-sm bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] disabled:opacity-50" disabled={studentsPage <= 1} onClick={() => {
                 if (!upload) return;
                 navigateToPage(Math.max(1, studentsPage - 1));
               }}>Previous</button>
@@ -583,7 +612,7 @@ export default function PublishResults() {
                       {pages.map(p => (
                         <button
                           key={p}
-                          className={`btn btn-xs ${p === studentsPage ? (theme === 'dark' ? 'bg-slate-700 text-white' : 'bg-primary text-white') : (theme === 'dark' ? 'bg-slate-800 text-muted-foreground' : '')}`}
+                          className={`px-2 py-1 rounded border text-xs ${p === studentsPage ? (theme === 'dark' ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-[#a259ff] text-[#a259ff]') : (theme === 'dark' ? 'bg-slate-800 border-slate-700 text-muted-foreground' : 'bg-white border-gray-300 text-gray-700')}`}
                           onClick={() => upload && navigateToPage(p)}
                         >{p}</button>
                     ))}
@@ -591,13 +620,13 @@ export default function PublishResults() {
                 );
               })()}
 
-              <button className="btn btn-sm" disabled={!studentsPagination?.next} onClick={() => {
+              <button className="px-3 py-1 rounded border text-sm bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] disabled:opacity-50" disabled={!studentsPagination?.next} onClick={() => {
                 if (!upload) return;
                 navigateToPage(studentsPage + 1);
               }}>Next</button>
             </div>
 
-            <Button onClick={handleSave} disabled={saving || upload?.is_published}>{saving ? 'Saving...' : 'Save Marks'}</Button>
+            <Button className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={handleSave} disabled={saving || upload?.is_published}>{saving ? 'Saving...' : 'Save Marks'}</Button>
             {upload?.is_published && (
               <Button onClick={() => setUnpublishModalOpen(true)} variant="destructive">Unpublish</Button>
             )}
@@ -669,6 +698,8 @@ export default function PublishResults() {
         </DialogContent>
       </Dialog>
         </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
