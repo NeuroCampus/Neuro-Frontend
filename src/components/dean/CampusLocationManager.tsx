@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, MapPin, Save, Plus, Edit, Trash2 } from 'lucide-react';
 import { manageCampusLocation } from '@/utils/dean_api';
 import { toast } from 'sonner';
+import Swal from 'sweetalert2';
 import { useTheme } from '../../context/ThemeContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
@@ -372,9 +373,20 @@ const CampusLocationManager: React.FC = () => {
   };
 
   const handleDelete = async (location: CampusLocation) => {
-    if (!confirm(`Are you sure you want to delete "${location.name}"?`)) return;
-
     try {
+      const result = await Swal.fire({
+        title: `Delete \"${location.name}\"?`,
+        text: 'This action cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Delete',
+        cancelButtonText: 'Cancel',
+        confirmButtonColor: '#dc2626',
+        customClass: { popup: 'sweetalert-popup' }
+      });
+
+      if (!result.isConfirmed) return;
+
       const response = await manageCampusLocation(undefined, location.id, 'DELETE');
       if (response.success) {
         toast.success('Campus location deleted successfully');
@@ -484,14 +496,56 @@ const CampusLocationManager: React.FC = () => {
     document.head.appendChild(style);
   }, []);
 
+  // Inject responsive modal/dialog styles scoped to this component
+  useEffect(() => {
+    if (document.getElementById('campus-modal-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'campus-modal-styles';
+    style.innerHTML = `
+      /* Reduce modal/dialog widths for tablet and mobile while preserving desktop */
+      @media (max-width: 768px) {
+        .DialogContent,
+        .dialog-content,
+        .modal,
+        .dialog,
+        [role="dialog"] {
+          max-width: 600px !important;
+          width: calc(100% - 24px) !important;
+          margin-left: auto !important;
+          margin-right: auto !important;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .DialogContent,
+        .dialog-content,
+        .modal,
+        .dialog,
+        [role="dialog"] {
+          max-width: 340px !important;
+          width: calc(100% - 20px) !important;
+          margin-left: auto !important;
+          margin-right: auto !important;
+          padding-left: 12px !important;
+          padding-right: 12px !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      const el = document.getElementById('campus-modal-styles');
+      if (el) el.remove();
+    };
+  }, []);
+
   return (
-    <div className={`flex flex-col h-[100dvh] overflow-hidden p-4 sm:p-6 text-sm sm:text-base w-full max-w-[412px] sm:max-w-none sm:min-h-screen mx-auto ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200 rounded-lg'}`}>
+    <div className={`flex flex-col h-[100dvh] overflow-hidden p-4 sm:p-4 text-sm sm:text-base w-full max-w-[412px] sm:max-w-none sm:min-h-screen mx-auto ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200 rounded-lg'}`}>
       {/* Header area (fixed) */}
       <div className="shrink-0 space-y-6">
         <div className="flex items-start justify-between w-full">
           <div>
             <h2 className={`text-lg sm:text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Campus Location Management</h2>
-            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Set and manage campus boundaries for geolocation-based attendance</p>
+            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500 p-2'}`}>Set and manage campus boundaries for geolocation-based attendance</p>
           </div>
           <div>
             <Button onClick={() => setShowForm(true)} className="flex items-center gap-2 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white">
@@ -509,7 +563,7 @@ const CampusLocationManager: React.FC = () => {
               <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{editingLocation ? 'Edit' : 'Add'} Campus Location</DialogTitle>
             </DialogHeader>
 
-            <div className="flex-1 overflow-y-auto min-h-0 w-full min-w-0 p-4 sm:p-6 overscroll-contain thin-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <div className="flex-1 overflow-y-auto min-h-0 w-full min-w-0 p-4 sm:p-4 overscroll-contain thin-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
               <form onSubmit={handleSubmit} className="space-y-4 w-full min-w-0">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full min-w-0">
                   <div>
@@ -518,7 +572,14 @@ const CampusLocationManager: React.FC = () => {
                   </div>
                   <div>
                     <Label htmlFor="description">Description</Label>
-                    <Textarea id="description" value={formData.description} onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))} rows={2} />
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                      rows={2}
+                      className="resize-none overflow-auto max-h-[140px]"
+                      aria-label="Campus location description"
+                    />
                   </div>
                 </div>
 
