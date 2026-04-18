@@ -20,9 +20,7 @@ const DashboardCard = ({ title, description, value, icon, trend, onClick, classN
   
   return (
     <motion.div
-      className={theme === 'dark' 
-        ? "bg-card border border-border text-foreground outline-none focus:ring-2 focus:ring-primary rounded-lg" 
-        : "bg-white border border-gray-200 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"}
+      className={`rounded-lg outline-none focus:ring-2 ${theme === 'dark' ? 'focus:ring-primary' : 'focus:ring-blue-500'}`} 
       whileHover={{ scale: 1.02, y: -2 }}
       whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.2, ease: "easeInOut" }}

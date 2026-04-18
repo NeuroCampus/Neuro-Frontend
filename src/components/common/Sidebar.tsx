@@ -291,6 +291,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
   dean: [
     { name: "Dashboard", page: "dashboard" },
     { name: "Today's Attendance", page: "attendance" },
+    { name: "Attendance Filters", page: "attendance-filters" },
     { name: "Scan for Student Info", page: "performance" },
     { name: "Timetable", page: "timetable" },
     { name: "Exams", page: "exams" },

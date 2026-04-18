@@ -4,6 +4,7 @@ import DashboardLayout from "../common/DashboardLayout";
 import DeanReports from "../dean/DeanReports";
 import DeanStats from "../dean/DeanStats";
 import DeanAttendance from "../dean/DeanAttendance";
+import DeanAttendanceFilters from "../dean/DeanAttendanceFilters";
 import CampusLocationManager from "../dean/CampusLocationManager";
 import StudentInfoScanner from "../hod/StudentInfoScanner";
 import DeanTimetable from "../dean/DeanTimetable";
@@ -34,6 +35,7 @@ const getActivePageFromPath = (pathname: string): string => {
     'profile': 'profile',
       'campus-locations': 'campus-locations',
     'attendance': 'attendance',
+    'attendance-filters': 'attendance-filters',
     'performance': 'performance',
     'timetable': 'timetable',
     'exams': 'exams',
@@ -71,6 +73,8 @@ const DeanDashboard = ({ user, setPage }: { user: DeanUser; setPage: (p: string)
         return <div className="p-4"><DeanStats /></div>;
       case 'attendance':
         return <div className="p-4"><DeanAttendance /></div>;
+      case 'attendance-filters':
+        return <div className="p-4"><DeanAttendanceFilters /></div>;
       case 'campus-locations':
         return <div className="p-4"><CampusLocationManager /></div>;
       case 'performance':

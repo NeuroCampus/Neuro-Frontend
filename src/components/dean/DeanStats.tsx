@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { API_ENDPOINT } from "@/utils/config";
 import { fetchWithTokenRefresh } from "@/utils/authService";
 import { Pie, Bar } from "react-chartjs-2";
+import DashboardCard from "../common/DashboardCard";
+import { useTheme } from "../../context/ThemeContext";
+import { FaUserGraduate, FaChalkboardTeacher, FaUserTie, FaUserCheck, FaBuilding } from "react-icons/fa";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -37,6 +40,7 @@ type BranchRow = {
 };
 
 const DeanStats = () => {
+  const { theme } = useTheme();
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [rows, setRows] = useState<BranchRow[]>([]);
@@ -165,97 +169,105 @@ const DeanStats = () => {
 
   const barOptions = {
     responsive: true,
-    plugins: { legend: { display: false } },
-    scales: { y: { beginAtZero: true, max: 100 } },
+    plugins: {
+      legend: {
+        display: true,
+        labels: { color: theme === 'dark' ? '#ffffff' : '#111827' },
+      },
+    },
+    scales: {
+      x: { ticks: { color: theme === 'dark' ? '#ffffff' : '#111827' } },
+      y: { beginAtZero: true, ticks: { color: theme === 'dark' ? '#ffffff' : '#111827' } },
+    },
+  };
+
+  const pieOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'bottom' as const,
+        labels: { color: theme === 'dark' ? '#ffffff' : '#111827' },
+      },
+    },
   };
 
   return (
-    <div className="p-4 space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="p-4 bg-gradient-to-r from-indigo-500 via-violet-500 to-purple-600 text-white rounded-lg shadow-lg">
-          <div className="text-sm opacity-80">Branches</div>
-          <div className="text-3xl font-bold">{totalBranches}</div>
-          <div className="text-xs mt-2 opacity-90">Active branches in college</div>
+    <div className={`space-y-8 min-h-screen p-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+        <DashboardCard
+          title="Branches"
+          value={totalBranches}
+          description="Active branches in college"
+          icon={<FaBuilding className={theme === 'dark' ? 'text-indigo-400 text-3xl' : 'text-indigo-500 text-3xl'} />}
+        />
+        <DashboardCard
+          title="Total Students"
+          value={totalStudents}
+          description="Enrolled across branches"
+          icon={<FaUserGraduate className={theme === 'dark' ? 'text-blue-400 text-3xl' : 'text-blue-500 text-3xl'} />}
+        />
+        <DashboardCard
+          title="Total Faculty"
+          value={totalFaculty}
+          description="Teaching staff"
+          icon={<FaChalkboardTeacher className={theme === 'dark' ? 'text-purple-400 text-3xl' : 'text-purple-500 text-3xl'} />}
+        />
+        <DashboardCard
+          title="HODs"
+          value={totalHods}
+          description="Department heads"
+          icon={<FaUserTie className={theme === 'dark' ? 'text-yellow-400 text-3xl' : 'text-yellow-500 text-3xl'} />}
+        />
+        <DashboardCard
+          title="COE"
+          value={totalCoe}
+          description="Controller of exams"
+          icon={<FaUserCheck className={theme === 'dark' ? 'text-green-400 text-3xl' : 'text-green-500 text-3xl'} />}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className={`rounded-lg shadow p-6 ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
+          <h3 className={`text-lg font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Branch Distribution</h3>
+          <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Students and faculty across branches</p>
+          <div className="h-80">
+            <Bar data={barData} options={{ ...barOptions, maintainAspectRatio: false }} />
+          </div>
         </div>
 
-        <div className="p-4 bg-white rounded-lg shadow-lg">
-          <div className="text-sm text-gray-500">Total Students</div>
-          <div className="text-3xl font-bold text-gray-900">{totalStudents}</div>
-          <div className="text-xs text-gray-500 mt-2">Enrolled across branches</div>
-        </div>
-
-        <div className="p-4 bg-white rounded-lg shadow-lg">
-          <div className="text-sm text-gray-500">Total Faculty</div>
-          <div className="text-2xl font-bold text-gray-900">{totalFaculty}</div>
-          <div className="text-xs text-gray-500 mt-2">Teaching staff</div>
-        </div>
-
-        <div className="p-4 bg-white rounded-lg shadow-lg">
-          <div className="text-sm text-gray-500">HODs</div>
-          <div className="text-2xl font-bold text-gray-900">{totalHods}</div>
-          <div className="text-xs text-gray-500 mt-2">Department heads</div>
-        </div>
-
-        <div className="p-4 bg-white rounded-lg shadow-lg flex items-center justify-between">
-          <div>
-            <div className="text-sm text-gray-500">COE</div>
-            <div className="text-2xl font-bold text-gray-900">{totalCoe}</div>
-            <div className="text-xs text-gray-500 mt-2">Controller of exams</div>
+        <div className={`rounded-lg shadow p-6 ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
+          <h3 className={`text-lg font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Role Distribution</h3>
+          <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Current user role composition</p>
+          <div className="h-80">
+            <Pie data={pieData} options={{ ...pieOptions, maintainAspectRatio: false }} />
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="col-span-2 bg-white rounded shadow p-4 flex flex-col">
-          <div className="flex items-center justify-between mb-4">
-            <div className="text-lg font-semibold">Students by Branch</div>
-            <div className="text-sm text-gray-500">Current snapshot</div>
-          </div>
-          <div className="flex-1">
-            <div className="h-72 lg:h-96">
-              <Bar data={barData} options={{ ...barOptions, maintainAspectRatio: false }} />
-            </div>
-          </div>
+      <div className={`rounded-lg shadow overflow-hidden ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
+        <div className="px-4 py-3 border-b">
+          <h3 className={`text-base font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Branch Summary</h3>
         </div>
-
-        <div className="col-span-1 bg-white rounded shadow p-4 overflow-auto" style={{ maxHeight: '26rem' }}>
-          <div className="text-lg font-semibold mb-3">Top Branches</div>
-          <ul className="space-y-3">
-            {topBranches.map((b) => (
-              <li key={b.branch_id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                <div>
-                  <div className="text-sm font-medium">{b.branch}</div>
-                  <div className="text-xs text-gray-500">{b.total_students} students • {b.faculty || 0} faculty</div>
-                </div>
-                <div className="w-24">
-                  <div className="w-full bg-gray-200 h-2 rounded overflow-hidden">
-                    <div style={{ width: `${Math.min(100, Math.round((b.total_students / (totalStudents || 1)) * 100))}%` }} className="h-2 bg-indigo-500" />
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-      <div className="bg-white rounded shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Branch</th>
-              <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Students</th>
-              <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Faculty</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {rows.map((r) => (
-              <tr key={r.branch_id}>
-                <td className="px-4 py-3 text-sm text-gray-700">{r.branch}</td>
-                <td className="px-4 py-3 text-sm text-gray-700">{r.total_students}</td>
-                <td className="px-4 py-3 text-sm text-gray-700">{r.faculty ?? '-'}</td>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-border">
+            <thead className={theme === 'dark' ? 'bg-muted' : 'bg-gray-50'}>
+              <tr>
+                <th className={theme === 'dark' ? 'px-4 py-2 text-left text-sm font-semibold text-foreground' : 'px-4 py-2 text-left text-sm font-semibold text-gray-700'}>Branch</th>
+                <th className={theme === 'dark' ? 'px-4 py-2 text-left text-sm font-semibold text-foreground' : 'px-4 py-2 text-left text-sm font-semibold text-gray-700'}>Students</th>
+                <th className={theme === 'dark' ? 'px-4 py-2 text-left text-sm font-semibold text-foreground' : 'px-4 py-2 text-left text-sm font-semibold text-gray-700'}>Faculty</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className={theme === 'dark' ? 'bg-card divide-y divide-border' : 'bg-white divide-y divide-gray-200'}>
+              {rows.map((r) => (
+                <tr key={r.branch_id}>
+                  <td className={theme === 'dark' ? 'px-4 py-3 text-sm text-foreground' : 'px-4 py-3 text-sm text-gray-700'}>{r.branch}</td>
+                  <td className={theme === 'dark' ? 'px-4 py-3 text-sm text-foreground' : 'px-4 py-3 text-sm text-gray-700'}>{r.total_students}</td>
+                  <td className={theme === 'dark' ? 'px-4 py-3 text-sm text-foreground' : 'px-4 py-3 text-sm text-gray-700'}>{r.faculty ?? '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
