@@ -71,6 +71,9 @@ const OTPPage = ({ setRole, setPage, setUser }: OTPPageProps) => {
             case "fees_manager":
               navigate("/fees-manager", { replace: true });
               break;
+            case "hms_admin":
+              navigate("/hms", { replace: true });
+              break;
             case "teacher":
               navigate("/faculty", { replace: true });
               break;

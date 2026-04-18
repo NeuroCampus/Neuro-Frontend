@@ -198,7 +198,7 @@ const filteredUsers = Array.isArray(users) ? users : [];
         const [firstName, ...lastNameParts] = editData.name.split(" ");
         const lastName = lastNameParts.join(" ");
         const originalUser = users.find((u) => u.id === editData.id);
-        const username = originalUser?.username || editData.email.split("@")[0]; // Preserve original username
+        const username = editData.email; // Use the new email as username for login compatibility
         const updates = {
           username,
           email: editData.email,

@@ -166,6 +166,7 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
                     <SelectItem value="teacher">Faculty/Teacher</SelectItem>
                     <SelectItem value="dean">Dean</SelectItem>
                     <SelectItem value="coe">COE</SelectItem>
+                    <SelectItem value="hms_admin">HMS Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

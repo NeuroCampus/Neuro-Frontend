@@ -14,6 +14,7 @@ import FacultyDashboard from "./components/dashboards/FacultyDashboard";
 import COEDashboard from "./components/dashboards/COEDashboard";
 import FeesManagerDashboard from "./components/FeesManager/FeesManagerDashboard";
 import DeanDashboard from "./components/dashboards/DeanDashboard";
+import HMSDashboard from "./components/dashboards/HMSDashboard";
 import FloatingAssistant from "./components/common/FloatingAssistant";
 import AIInterview from "./components/common/AIInterview";
 import { shouldShowFloatingAssistant } from "./utils/config";
@@ -340,6 +341,16 @@ const App = () => {
           <ProtectedRoute allowedRoles={["fees_manager"]}>
             <>
               <FeesManagerDashboard user={userData} setPage={() => {}} />
+              {shouldShowFloatingAssistant() && <FloatingAssistant />}
+            </>
+          </ProtectedRoute>
+        } />
+
+        {/* HMS routes */}
+        <Route path="/hms/*" element={
+          <ProtectedRoute allowedRoles={["hms_admin"]}>
+            <>
+              <HMSDashboard user={userData} setPage={() => {}} />
               {shouldShowFloatingAssistant() && <FloatingAssistant />}
             </>
           </ProtectedRoute>
