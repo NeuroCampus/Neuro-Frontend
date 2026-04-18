@@ -83,8 +83,17 @@ const hmsApiCall = async <T>(
     if (method === "DELETE") {
       return { success: true };
     } else if (method === "GET" && Array.isArray(result)) {
-      // List response
+      // List response (array)
       return { success: true, results: result, count: result.length };
+    } else if (method === "GET" && result.results !== undefined) {
+      // Paginated response with results field
+      return {
+        success: true,
+        results: result.results,
+        count: result.count,
+        next: result.next,
+        previous: result.previous,
+      };
     } else {
       // Single object response
       return { success: true, data: result };
@@ -109,9 +118,25 @@ export const manageHostels = async (
 export const manageRooms = async (
   data?: Partial<HostelRoom>,
   roomId?: number,
-  method: "GET" | "POST" | "PUT" | "DELETE" = "GET"
+  method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
+  params?: Record<string, any>
 ): Promise<HMSResponse<HostelRoom>> => {
-  const endpoint = roomId ? `rooms/${roomId}/` : "rooms/";
+  let endpoint = roomId ? `rooms/${roomId}/` : "rooms/";
+
+  // Add query parameters for GET requests
+  if (method === "GET" && params) {
+    const queryParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        queryParams.append(key, value.toString());
+      }
+    });
+    const queryString = queryParams.toString();
+    if (queryString) {
+      endpoint += `?${queryString}`;
+    }
+  }
+
   return hmsApiCall<HostelRoom>(endpoint, method, data);
 };
 

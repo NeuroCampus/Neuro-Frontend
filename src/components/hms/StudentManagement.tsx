@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { manageHostelStudents, manageCourses, manageRooms } from '../../utils/hms_api';
+import { manageHostelStudents, manageRooms } from '../../utils/hms_api';
 import { useToast } from '../../hooks/use-toast';
 
 interface HostelStudent {
@@ -43,10 +43,10 @@ const StudentManagement: React.FC = () => {
   const [batches, setBatches] = useState<Batch[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [semesters, setSemesters] = useState<Semester[]>([]);
-  const [courses, setCourses] = useState<any[]>([]);
   const [rooms, setRooms] = useState<any[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<HostelStudent | null>(null);
+  const [isLoadingRooms, setIsLoadingRooms] = useState(false);
   const [formData, setFormData] = useState({
     room: null as number | null,
     room_allotted: false,
@@ -73,8 +73,6 @@ const StudentManagement: React.FC = () => {
   useEffect(() => {
     fetchBatches();
     fetchBranches();
-    fetchCourses();
-    fetchRooms();
   }, []);
 
   useEffect(() => {
@@ -185,29 +183,21 @@ const StudentManagement: React.FC = () => {
     }
   };
 
-  const fetchCourses = async () => {
-    const response = await manageCourses();
-    if (response.success && response.results) {
-      setCourses(response.results);
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: response.message || "Failed to fetch courses",
-      });
-    }
-  };
-
   const fetchRooms = async () => {
-    const response = await manageRooms();
-    if (response.success && response.results) {
-      setRooms(response.results);
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: response.message || "Failed to fetch rooms",
-      });
+    setIsLoadingRooms(true);
+    try {
+      const response = await manageRooms();
+      if (response.success && response.results) {
+        setRooms(response.results);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: response.message || "Failed to fetch rooms",
+        });
+      }
+    } finally {
+      setIsLoadingRooms(false);
     }
   };
 
@@ -262,6 +252,8 @@ const StudentManagement: React.FC = () => {
       no_dues: student.no_dues
     });
     setIsDialogOpen(true);
+    // Fetch rooms only when Edit dialog is opened
+    fetchRooms();
   };
 
   return (
@@ -370,19 +362,23 @@ const StudentManagement: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="room">Room</Label>
-                    <Select value={formData.room ? formData.room.toString() : 'none'} onValueChange={(value) => setFormData({ ...formData, room: value === 'none' ? null : value ? parseInt(value) : null })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select room" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No Room</SelectItem>
-                        {rooms.filter(room => room.vacant).map((room) => (
-                          <SelectItem key={room.id} value={room.id.toString()}>
-                            {room.name} ({room.hostel_name})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {isLoadingRooms ? (
+                      <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                    ) : (
+                      <Select value={formData.room ? formData.room.toString() : 'none'} onValueChange={(value) => setFormData({ ...formData, room: value === 'none' ? null : value ? parseInt(value) : null })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select room" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No Room</SelectItem>
+                          {rooms.filter(room => room.vacant).map((room) => (
+                            <SelectItem key={room.id} value={room.id.toString()}>
+                              {room.name} ({room.hostel_name})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2">

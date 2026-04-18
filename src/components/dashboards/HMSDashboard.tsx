@@ -2,10 +2,10 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import DashboardLayout from "../common/DashboardLayout";
-import { HMSAdminDashboard, HostelManagement, RoomManagement, StudentManagement, WardenManagement, CourseManagement } from "../hms";
+import { HostelManagement, RoomManagement, StudentManagement, WardenManagement } from "../hms";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { useToast } from "../../hooks/use-toast";
 import { logoutUser } from "../../utils/authService";
-import { useRef, useEffect } from "react";
 import { useTheme } from "../../context/ThemeContext";
 
 interface HMSDashboardProps {
@@ -23,7 +23,7 @@ const HMSDashboard = ({ user, setPage }: HMSDashboardProps) => {
   // Get active page from URL path
   const getActivePageFromPath = (pathname: string) => {
     const path = pathname.replace('/hms', '').replace('/', '');
-    return path || 'dashboard';
+    return path || 'hostels';
   };
 
   const activePage = getActivePageFromPath(location.pathname);
@@ -39,86 +39,8 @@ const HMSDashboard = ({ user, setPage }: HMSDashboardProps) => {
     navigate('/hms/notifications');
   };
 
-  const renderContent = () => {
-    switch (activePage) {
-      case "dashboard":
-        return (
-          <motion.div
-            className="space-y-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            <HMSAdminDashboard />
-          </motion.div>
-        );
-      case "hostels":
-        return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <HostelManagement />
-          </motion.div>
-        );
-      case "rooms":
-        return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <RoomManagement />
-          </motion.div>
-        );
-      case "students":
-        return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <StudentManagement />
-          </motion.div>
-        );
-      case "wardens":
-        return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <WardenManagement />
-          </motion.div>
-        );
-      case "courses":
-        return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <CourseManagement />
-          </motion.div>
-        );
-      default:
-        return (
-          <motion.div
-            className="space-y-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            <HMSAdminDashboard />
-          </motion.div>
-        );
-    }
+  const handleTabChange = (value: string) => {
+    handlePageChange(value);
   };
 
   return (
@@ -131,13 +53,62 @@ const HMSDashboard = ({ user, setPage }: HMSDashboardProps) => {
       pageTitle="HMS Dashboard"
     >
       <motion.div
-        key={activePage}
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -20 }}
-        transition={{ duration: 0.3 }}
+        className="space-y-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
       >
-        {renderContent()}
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">Hostel Management System</h1>
+          <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+            Admin Dashboard
+          </p>
+        </div>
+
+        {/* Tabs Navigation */}
+        <Tabs value={activePage} onValueChange={handleTabChange} className="w-full">
+          <TabsList className={`grid w-full grid-cols-4 ${
+            theme === 'dark' 
+              ? 'bg-background border border-border' 
+              : 'bg-gray-50 border border-gray-200'
+          }`}>
+            <TabsTrigger value="hostels" className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white">
+              Hostels
+            </TabsTrigger>
+            <TabsTrigger value="rooms" className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white">
+              Rooms
+            </TabsTrigger>
+            <TabsTrigger value="students" className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white">
+              Students
+            </TabsTrigger>
+            <TabsTrigger value="wardens" className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white">
+              Wardens
+            </TabsTrigger>
+          </TabsList>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <TabsContent value="hostels">
+              <HostelManagement />
+            </TabsContent>
+
+            <TabsContent value="rooms">
+              <RoomManagement />
+            </TabsContent>
+
+            <TabsContent value="students">
+              <StudentManagement />
+            </TabsContent>
+
+            <TabsContent value="wardens">
+              <WardenManagement />
+            </TabsContent>
+          </motion.div>
+        </Tabs>
       </motion.div>
     </DashboardLayout>
   );

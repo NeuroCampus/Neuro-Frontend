@@ -1,4 +1,3 @@
-export { default as HMSAdminDashboard } from './HMSAdminDashboard';
 export { default as HostelManagement } from './HostelManagement';
 export { default as RoomManagement } from './RoomManagement';
 export { default as StudentManagement } from './StudentManagement';

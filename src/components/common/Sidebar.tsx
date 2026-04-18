@@ -136,7 +136,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       "rooms": <UserCheck size={20} />,
       "hostel-students": <GraduationCap size={20} />,
       "wardens": <UserCheck size={20} />,
-      "courses": <BookOpen size={20} />,
+
     };
     return iconMap[page] || <LayoutDashboard size={20} />;
   };
@@ -306,7 +306,6 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Rooms", page: "rooms" },
     { name: "Students", page: "students" },
     { name: "Wardens", page: "wardens" },
-    { name: "Courses", page: "courses" },
   ],
 };
 
