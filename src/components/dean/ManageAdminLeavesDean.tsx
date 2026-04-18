@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { useTheme } from "../../context/ThemeContext";
+import { CheckCircle, XCircle, Filter as FilterIcon } from 'lucide-react';
 import { manageAllLeaves } from "../../utils/dean_api";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
@@ -38,6 +39,9 @@ const ManageAdminLeavesDean = () => {
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [selectedLeave, setSelectedLeave] = useState<UnifiedLeave | null>(null);
   const [showReasonDialog, setShowReasonDialog] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'All' | 'Approved' | 'Pending' | 'Rejected'>('All');
+  const [showFilter, setShowFilter] = useState(false);
+  const filterRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch all leaves data in one call
   useEffect(() => {
@@ -99,6 +103,22 @@ const ManageAdminLeavesDean = () => {
     .filter(leave => leave.status !== 'PENDING' && new Date(leave.start_date) >= sevenDaysAgo)
     .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime()); // Sort by date descending
 
+  // Filtered recent leaves according to statusFilter
+  const filteredRecentLeaves: UnifiedLeave[] = recentLeaves.filter(l => {
+    if (statusFilter === 'All') return true;
+    return l.status === statusFilter.toUpperCase();
+  });
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setShowFilter(false);
+      }
+    };
+    if (showFilter) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showFilter]);
+
   return (
     <div className={`p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <h2 className={`text-3xl font-bold mb-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Manage Faculty Leaves</h2>
@@ -117,8 +137,10 @@ const ManageAdminLeavesDean = () => {
         </div>
       )}
 
-      {/* Pending Leave Requests */}
-      <Card className={`mb-6 ${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="flex flex-col">
+          {/* Pending Leave Requests */}
+      <Card className={` flex-1 ${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
         <CardHeader>
           <CardTitle className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
             Pending Leave Requests ({allPendingLeaves.length})
@@ -130,7 +152,7 @@ const ManageAdminLeavesDean = () => {
           ) : allPendingLeaves.length === 0 ? (
             <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No pending leave requests.</div>
           ) : (
-            <div className="space-y-4">
+            <div className="h-[420px] overflow-auto space-y-4 custom-scrollbar">
               {allPendingLeaves.map((leave) => (
                 <div
                   key={`${leave.faculty_type}-${leave.id}`}
@@ -178,20 +200,30 @@ const ManageAdminLeavesDean = () => {
                       </span>
                       <div className="flex gap-2">
                         <Button
+                          variant="outline"
                           onClick={() => handleAction(leave.id, 'APPROVED')}
                           disabled={actionLoading === leave.id}
-                          className="text-xs px-3 py-1 bg-green-600 hover:bg-green-700 text-white"
                           size="sm"
+                          className={`px-3 py-1 text-xs flex items-center gap-1 w-full sm:w-auto ${
+                            theme === 'dark'
+                              ? 'text-green-400 border-green-400 hover:bg-green-900/20'
+                              : 'text-green-700 border-green-600 hover:bg-green-100'
+                          }`}
                         >
-                          {actionLoading === leave.id ? '...' : 'Approve'}
+                          {actionLoading === leave.id ? '...' : <><CheckCircle className="w-4 h-4" /> Approve</>}
                         </Button>
                         <Button
+                          variant="outline"
                           onClick={() => handleAction(leave.id, 'REJECTED')}
                           disabled={actionLoading === leave.id}
-                          className="text-xs px-3 py-1 bg-red-600 hover:bg-red-700 text-white"
                           size="sm"
+                          className={`px-3 py-1 text-xs flex items-center gap-1 w-full sm:w-auto ${
+                            theme === 'dark'
+                              ? 'text-red-400 border-red-400 hover:bg-red-900/20'
+                              : 'text-red-700 border-red-600 hover:bg-red-100'
+                          }`}
                         >
-                          {actionLoading === leave.id ? '...' : 'Reject'}
+                          {actionLoading === leave.id ? '...' : <><XCircle className="w-4 h-4" /> Reject</>}
                         </Button>
                       </div>
                     </div>
@@ -202,20 +234,45 @@ const ManageAdminLeavesDean = () => {
           )}
         </CardContent>
       </Card>
-
+        </div>
+        <div className="flex flex-col">
       {/* Recent Leave History (Past 7 Days) */}
-      <Card className={theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}>
+      <Card className={`flex-1 ${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
         <CardHeader>
-          <CardTitle className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-            Recent Leave History (Past 7 Days) ({recentLeaves.length})
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+              Recent Leave History (Past 7 Days) ({filteredRecentLeaves.length})
+            </CardTitle>
+            <div className="relative" ref={filterRef}>
+              <button
+                className={theme === 'dark' ? 'text-foreground hover:text-muted-foreground p-2 rounded-md' : 'text-gray-900 hover:text-gray-500 p-2 rounded-md'}
+                onClick={() => setShowFilter(v => !v)}
+                aria-label="Filter recent leaves"
+              >
+                <FilterIcon className="w-5 h-5" />
+              </button>
+              {showFilter && (
+                <div className={`absolute right-0 mt-2 w-36 rounded shadow-lg z-10 border ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
+                  {['All', 'Approved', 'Pending', 'Rejected'].map((status) => (
+                    <div
+                      key={status}
+                      onClick={() => { setStatusFilter(status as any); setShowFilter(false); }}
+                      className={`${theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-100'} px-4 py-2 cursor-pointer ${statusFilter === status ? 'font-semibold' : ''}`}
+                    >
+                      {status}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          {recentLeaves.length === 0 ? (
+          {filteredRecentLeaves.length === 0 ? (
             <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No leave requests in the past 7 days.</div>
           ) : (
-            <div className="space-y-4">
-              {recentLeaves.map((leave) => (
+            <div className="h-[420px] overflow-auto space-y-4 custom-scrollbar">
+              {filteredRecentLeaves.map((leave) => (
                 <div
                   key={`${leave.faculty_type}-${leave.id}`}
                   className={`border rounded-md px-4 py-4 shadow-sm ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}
@@ -277,6 +334,8 @@ const ManageAdminLeavesDean = () => {
           )}
         </CardContent>
       </Card>
+        </div>
+      </div>
       <Dialog open={showReasonDialog} onOpenChange={setShowReasonDialog}>
         <DialogContent className={theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
           <DialogHeader>
