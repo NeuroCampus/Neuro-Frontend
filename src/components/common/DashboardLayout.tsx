@@ -162,7 +162,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         >
           {/* Page Header */}
           <motion.div
-            className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4"
+            className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.3 }}
