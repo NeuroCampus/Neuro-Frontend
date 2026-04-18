@@ -233,6 +233,12 @@ const App = () => {
             </>
           </ProtectedRoute>
         } />
+                <Route path="/student-hostel-details" element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <StudentDashboard user={userData} setPage={() => {}} />
+            {shouldShowFloatingAssistant() && <FloatingAssistant />}
+          </ProtectedRoute>
+        } />
 
         <Route path="/announcements" element={
           <ProtectedRoute allowedRoles={["student"]}>

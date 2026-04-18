@@ -123,6 +123,9 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
         return <Revaluation />;
       case "makeupexam":
         return <MakeupExam />;
+      case "student-hostel-details":
+        const StudentHostelDetails = lazy(() => import("../student/StudentHostelDetails"));
+        return <StudentHostelDetails />;
       default:
         return <StudentDashboardOverview setPage={handlePageChange} user={user} />;
     }
