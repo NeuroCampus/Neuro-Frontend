@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import DashboardLayout from "../common/DashboardLayout";
 import { HostelManagement, RoomManagement, StudentManagement, WardenManagement } from "../hms";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { useToast } from "../../hooks/use-toast";
 import { logoutUser } from "../../utils/authService";
 import { useTheme } from "../../context/ThemeContext";
@@ -39,10 +38,6 @@ const HMSDashboard = ({ user, setPage }: HMSDashboardProps) => {
     navigate('/hms/notifications');
   };
 
-  const handleTabChange = (value: string) => {
-    handlePageChange(value);
-  };
-
   return (
     <DashboardLayout
       role="hms"
@@ -67,48 +62,16 @@ const HMSDashboard = ({ user, setPage }: HMSDashboardProps) => {
         </div>
 
         {/* Tabs Navigation */}
-        <Tabs value={activePage} onValueChange={handleTabChange} className="w-full">
-          <TabsList className={`grid w-full grid-cols-4 ${
-            theme === 'dark' 
-              ? 'bg-background border border-border' 
-              : 'bg-gray-50 border border-gray-200'
-          }`}>
-            <TabsTrigger value="hostels" className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white">
-              Hostels
-            </TabsTrigger>
-            <TabsTrigger value="rooms" className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white">
-              Rooms
-            </TabsTrigger>
-            <TabsTrigger value="students" className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white">
-              Students
-            </TabsTrigger>
-            <TabsTrigger value="wardens" className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white">
-              Wardens
-            </TabsTrigger>
-          </TabsList>
-
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <TabsContent value="hostels">
-              <HostelManagement />
-            </TabsContent>
-
-            <TabsContent value="rooms">
-              <RoomManagement />
-            </TabsContent>
-
-            <TabsContent value="students">
-              <StudentManagement />
-            </TabsContent>
-
-            <TabsContent value="wardens">
-              <WardenManagement />
-            </TabsContent>
-          </motion.div>
-        </Tabs>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {activePage === 'hostels' && <HostelManagement />}
+          {activePage === 'rooms' && <RoomManagement />}
+          {activePage === 'students' && <StudentManagement />}
+          {activePage === 'wardens' && <WardenManagement />}
+        </motion.div>
       </motion.div>
     </DashboardLayout>
   );

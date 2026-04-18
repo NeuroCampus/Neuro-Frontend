@@ -140,6 +140,12 @@ export const manageRooms = async (
   return hmsApiCall<HostelRoom>(endpoint, method, data);
 };
 
+// Fetch rooms by hostel (new dedicated endpoint)
+export const getRoomsByHostel = async (hostelId: number): Promise<HMSResponse<HostelRoom>> => {
+  const endpoint = `rooms/by_hostel/?hostel_id=${hostelId}`;
+  return hmsApiCall<HostelRoom>(endpoint, 'GET');
+};
+
 // Student Management
 export const manageHostelStudents = async (
   data?: Partial<HostelStudent>,

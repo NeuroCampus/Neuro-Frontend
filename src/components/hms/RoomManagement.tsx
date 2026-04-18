@@ -51,6 +51,8 @@ const RoomManagement: React.FC = () => {
     vacant: true,
     hostel: 0
   });
+  const [selectedFloor, setSelectedFloor] = useState<number | null>(null);
+  const [nextRoomNumberForFloor, setNextRoomNumberForFloor] = useState<number>(1);
   const { toast } = useToast();
   const { theme } = useTheme();
 
@@ -155,12 +157,26 @@ const RoomManagement: React.FC = () => {
     const response = await manageRooms(formData, editingRoom?.id, method);
 
     if (response.success) {
-      if (selectedHostel) {
-        fetchRoomsByHostel(selectedHostel);
+      // Update local state instead of refetching
+      const updatedRoom = response.data as Room | undefined;
+      if (updatedRoom) {
+        if (editingRoom) {
+          // Update existing room
+          setRooms(prevRooms =>
+            prevRooms.map(room =>
+              room.id === editingRoom.id ? updatedRoom : room
+            )
+          );
+        } else {
+          // Add new room to the list
+          setRooms(prevRooms => [...prevRooms, updatedRoom]);
+        }
       }
+
       setIsDialogOpen(false);
       setEditingRoom(null);
       setRoomStudents([]);
+      setSelectedFloor(null);
       setFormData({ no: '', name: '', room_type: 'S', vacant: true, hostel: 0 });
       toast({
         title: "Success",
@@ -202,7 +218,8 @@ const RoomManagement: React.FC = () => {
     if (confirm('Are you sure you want to delete this room?')) {
       const response = await manageRooms(undefined, id, 'DELETE');
       if (response.success) {
-        fetchRooms();
+        // Update local state instead of refetching
+        setRooms(prevRooms => prevRooms.filter(room => room.id !== id));
         toast({
           title: "Success",
           description: "Room deleted successfully",
@@ -307,12 +324,14 @@ const RoomManagement: React.FC = () => {
               if (!open) {
                 setRoomStudents([]);
                 setEditingRoom(null);
+                setSelectedFloor(null);
               }
             }}>
               <DialogTrigger asChild>
                 <Button onClick={() => {
                   setEditingRoom(null);
                   setRoomStudents([]);
+                  setSelectedFloor(null);
                   setFormData({ 
                     no: '', 
                     name: '', 
@@ -330,12 +349,61 @@ const RoomManagement: React.FC = () => {
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
+                    <Label htmlFor="floor">Floor *</Label>
+                    <Select 
+                      value={selectedFloor !== null ? selectedFloor.toString() : ''} 
+                      onValueChange={(value) => {
+                        const floor = parseInt(value);
+                        setSelectedFloor(floor);
+                        
+                        // Get existing rooms for this floor
+                        const hostelId = formData.hostel || selectedHostel;
+                        const hostelRooms = rooms.filter(r => r.hostel === hostelId);
+                        const floorRooms = hostelRooms.filter(r => {
+                          const roomFloor = Math.floor(parseInt(r.no) / 100) || 0;
+                          return roomFloor === floor;
+                        });
+                        
+                        // Calculate next room number for this floor
+                        let nextNum = 1;
+                        if (floorRooms.length > 0) {
+                          const lastRoomNo = Math.max(...floorRooms.map(r => parseInt(r.no) % 100));
+                          nextNum = lastRoomNo + 1;
+                        }
+                        setNextRoomNumberForFloor(nextNum);
+                        
+                        // Auto-generate room number and name
+                        const roomNo = floor * 100 + nextNum;
+                        const hostelName = hostels.find(h => h.id === hostelId)?.name || 'H1';
+                        const roomName = `${hostelName}-${String(roomNo).padStart(3, '0')}`;
+                        setFormData(prev => ({
+                          ...prev,
+                          no: String(roomNo),
+                          name: roomName
+                        }));
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select floor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">Ground Floor</SelectItem>
+                        <SelectItem value="1">1st Floor</SelectItem>
+                        <SelectItem value="2">2nd Floor</SelectItem>
+                        <SelectItem value="3">3rd Floor</SelectItem>
+                        <SelectItem value="4">4th Floor</SelectItem>
+                        <SelectItem value="5">5th Floor</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
                     <Label htmlFor="no">Room Number</Label>
                     <Input
                       id="no"
                       value={formData.no}
                       onChange={(e) => setFormData({ ...formData, no: e.target.value })}
-                      placeholder="e.g., 101, 202"
+                      placeholder="Auto-generated"
+                      disabled={selectedFloor !== null}
                       required
                     />
                   </div>
@@ -345,7 +413,8 @@ const RoomManagement: React.FC = () => {
                       id="name"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="e.g., H1-101"
+                      placeholder="Auto-generated"
+                      disabled={selectedFloor !== null}
                       required
                     />
                   </div>
