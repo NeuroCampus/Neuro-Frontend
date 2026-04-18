@@ -76,7 +76,29 @@ const hmsApiCall = async <T>(
     const result = await response.json();
     if (!response.ok) {
       console.error(`HMS API ${method} ${endpoint} Failed:`, { status: response.status, result });
-      return { success: false, message: result.detail || result.message || `HTTP ${response.status}` };
+      
+      // Extract error message from different formats
+      let errorMessage = `HTTP ${response.status}`;
+      
+      if (result.detail) {
+        errorMessage = result.detail;
+      } else if (result.message) {
+        errorMessage = result.message;
+      } else if (typeof result === 'object') {
+        // Handle Django REST Framework validation errors
+        // Format: { "field_name": ["error message"], "non_field_errors": ["error message"] }
+        const errorEntries = Object.entries(result);
+        if (errorEntries.length > 0) {
+          const firstError = errorEntries[0];
+          if (Array.isArray(firstError[1])) {
+            errorMessage = (firstError[1] as string[])[0];
+          } else if (typeof firstError[1] === 'string') {
+            errorMessage = firstError[1];
+          }
+        }
+      }
+      
+      return { success: false, message: errorMessage };
     }
 
     // Handle different response formats
@@ -180,6 +202,31 @@ export const manageWardens = async (
 ): Promise<HMSResponse<HostelWarden>> => {
   const endpoint = wardenId ? `wardens/${wardenId}/` : "wardens/";
   return hmsApiCall<HostelWarden>(endpoint, method, data);
+};
+
+// Caretaker Management
+export const manageCaretakers = async (
+  data?: any,
+  caretakerId?: number,
+  method: "GET" | "POST" | "PUT" | "DELETE" = "GET"
+): Promise<HMSResponse<any>> => {
+  const endpoint = caretakerId ? `caretakers/${caretakerId}/` : "caretakers/";
+  return hmsApiCall<any>(endpoint, method, data);
+};
+
+// Dashboard Stats - Single endpoint for all dashboard data
+export const getDashboardStats = async (): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>("dashboard/stats/", "GET");
+};
+
+// Get rooms for a specific hostel
+export const getRoomsByHostelId = async (hostelId: number): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>(`hostels/${hostelId}/rooms/`, "GET");
+};
+
+// Get staff enrollment data (wardens and caretakers)
+export const getStaffEnrollment = async (): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>("staff/enrollment/", "GET");
 };
 
 // Course Management

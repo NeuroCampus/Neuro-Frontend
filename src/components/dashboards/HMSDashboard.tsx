@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import DashboardLayout from "../common/DashboardLayout";
-import { HostelManagement, RoomManagement, StudentManagement, WardenManagement } from "../hms";
+import { HMSOverview, HostelManagement, RoomManagement, StudentManagement, WardenManagement, Enrollment, StaffManagementOverview } from "../hms";
 import { useToast } from "../../hooks/use-toast";
 import { logoutUser } from "../../utils/authService";
 import { useTheme } from "../../context/ThemeContext";
@@ -22,7 +22,7 @@ const HMSDashboard = ({ user, setPage }: HMSDashboardProps) => {
   // Get active page from URL path
   const getActivePageFromPath = (pathname: string) => {
     const path = pathname.replace('/hms', '').replace('/', '');
-    return path || 'hostels';
+    return path || 'dashboard';
   };
 
   const activePage = getActivePageFromPath(location.pathname);
@@ -53,13 +53,15 @@ const HMSDashboard = ({ user, setPage }: HMSDashboardProps) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Hostel Management System</h1>
-          <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-            Admin Dashboard
-          </p>
-        </div>
+        {/* Header - Only show for non-dashboard pages */}
+        {(activePage !== '' && activePage !== 'dashboard') && (
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold">Hostel Management System</h1>
+            <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+              Admin Dashboard
+            </p>
+          </div>
+        )}
 
         {/* Tabs Navigation */}
         <motion.div
@@ -67,10 +69,13 @@ const HMSDashboard = ({ user, setPage }: HMSDashboardProps) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
+          {(activePage === '' || activePage === 'dashboard') && <HMSOverview />}
           {activePage === 'hostels' && <HostelManagement />}
           {activePage === 'rooms' && <RoomManagement />}
           {activePage === 'students' && <StudentManagement />}
           {activePage === 'wardens' && <WardenManagement />}
+          {activePage === 'enrollment' && <Enrollment />}
+          {activePage === 'staff' && <StaffManagementOverview />}
         </motion.div>
       </motion.div>
     </DashboardLayout>
