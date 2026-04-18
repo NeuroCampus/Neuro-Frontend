@@ -20,6 +20,8 @@ import {
   DollarSign
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext'; // Added theme context import
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 
 interface FeeComponent {
   id: number;
@@ -30,6 +32,8 @@ interface FeeComponent {
   created_at: string;
   updated_at: string;
 }
+
+const MySwal = withReactContent(Swal);
 
 const FeeComponents: React.FC = () => {
   const { theme } = useTheme(); // Using theme context
@@ -183,7 +187,21 @@ const FeeComponents: React.FC = () => {
   };
 
   const handleDeleteComponent = async (componentId: number) => {
-    if (!confirm('Are you sure you want to delete this fee component? This may affect existing fee templates.')) return;
+    const currentTheme = theme === 'dark' ? 'dark' : 'light';
+    const result = await MySwal.fire({
+      title: 'Delete Fee Component?',
+      text: 'This may affect existing fee templates.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+      background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+      color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       const token = localStorage.getItem('access_token');
@@ -201,8 +219,26 @@ const FeeComponents: React.FC = () => {
       // Remove locally without refetch
       setComponents(prev => prev.filter(c => c.id !== componentId));
       setComponentsTotalCount(c => Math.max(0, c - 1));
+      await MySwal.fire({
+        title: 'Deleted!',
+        text: 'Fee component deleted successfully.',
+        icon: 'success',
+        confirmButtonText: 'OK',
+        confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+        background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+      });
       try { window.dispatchEvent(new CustomEvent('feeComponents:changed', { detail: { action: 'delete', id: componentId } })); } catch (e) {}
     } catch (err) {
+      await MySwal.fire({
+        title: 'Error!',
+        text: err instanceof Error ? err.message : 'Failed to delete component',
+        icon: 'error',
+        confirmButtonText: 'OK',
+        confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+        background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+      });
       setError(err instanceof Error ? err.message : 'Failed to delete component');
     }
   };
@@ -224,11 +260,11 @@ const FeeComponents: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto p-0">
-      <div className="flex justify-between items-center mb-8">
+    <div className="container mx-auto p-0 max-[480px]:w-full max-[480px]:max-w-[360px] max-[480px]:px-3">
+      <div className="mb-8 flex items-center justify-between max-[480px]:mb-5 max-[480px]:flex-col max-[480px]:items-start max-[480px]:gap-4">
         <div>
-          <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Fee Components</h1>
-          <p className={`mt-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Manage basic fee building blocks used in templates</p>
+          <h1 className={`text-3xl font-bold max-[480px]:text-[30px] max-[480px]:leading-[1.2] ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Fee Components</h1>
+          <p className={`mt-2 max-[480px]:mt-1 max-[480px]:text-[14px] max-[480px]:leading-[1.5] ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Manage basic fee building blocks used in templates</p>
         </div>
 
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -238,15 +274,15 @@ const FeeComponents: React.FC = () => {
                 resetForm();
                 setIsCreateDialogOpen(true);
               }}
-              className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+              className="bg-[#a259ff] hover:bg-[#8a4dde] text-white max-[480px]:w-full max-[480px]:min-h-11"
             >
               <Plus className="h-4 w-4 mr-2" />
               Create Component
             </Button>
           </DialogTrigger>
-          <DialogContent className={`${theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'} p-6 max-w-md`}>
+          <DialogContent className={`${theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'} p-6 max-w-md max-[480px]:w-[90vw] max-[480px]:max-w-[340px] max-[480px]:rounded-xl max-[480px]:p-4`}>
             <DialogHeader className="mb-4">
-              <DialogTitle>
+              <DialogTitle className="max-[480px]:text-[20px]">
                 {editingComponent ? 'Edit Fee Component' : 'Create New Fee Component'}
               </DialogTitle>
             </DialogHeader>
@@ -282,18 +318,18 @@ const FeeComponents: React.FC = () => {
                   className={`${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'} mt-1`}
                 />
               </div>
-              <div className="flex justify-end gap-3 pt-4">
+              <div className="flex justify-end gap-3 pt-4 max-[480px]:flex-col">
                 <Button 
                   variant="outline" 
                   onClick={() => setIsCreateDialogOpen(false)}
-                  className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                  className="border-gray-300 text-gray-700 hover:bg-gray-100 max-[480px]:min-h-10 max-[480px]:w-full"
                 >
                   <X className="h-4 w-4 mr-2" />
                   Cancel
                 </Button>
                 <Button 
                   onClick={editingComponent ? handleUpdateComponent : handleCreateComponent}
-                  className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+                  className="bg-[#a259ff] hover:bg-[#8a4dde] text-white max-[480px]:min-h-10 max-[480px]:w-full"
                 >
                   <Save className="h-4 w-4 mr-2" />
                   {editingComponent ? 'Update' : 'Create'}
@@ -318,78 +354,136 @@ const FeeComponents: React.FC = () => {
             Fee Components List ({componentsTotalCount})
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow className={theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}>
-                <TableHead>Name</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {components.map((component) => (
-                <TableRow 
-                  key={component.id} 
-                  className={theme === 'dark' ? 'border-border' : 'border-gray-200'}
-                >
-                  <TableCell className="font-medium">{component.name}</TableCell>
-                  <TableCell>{formatCurrency(component.amount)}</TableCell>
-                  <TableCell>{component.description || '-'}</TableCell>
-                  <TableCell>
-                    <Badge variant={component.is_active ? "default" : "secondary"}>
-                      {component.is_active ? 'Active' : 'Inactive'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEditComponent(component)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDeleteComponent(component.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+        <CardContent className="max-[480px]:px-3 max-[480px]:py-4">
+          <div className="hidden max-[480px]:block space-y-3">
+            {components.map((component) => (
+              <div
+                key={component.id}
+                className={`rounded-lg border p-3 ${theme === 'dark' ? 'border-border bg-background' : 'border-gray-200 bg-white'}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="text-[16px] font-semibold break-words">{component.name}</h3>
+                    <p className="mt-1 text-[15px] font-medium">{formatCurrency(component.amount)}</p>
+                  </div>
+                  <Badge variant={component.is_active ? "default" : "secondary"}>
+                    {component.is_active ? 'Active' : 'Inactive'}
+                  </Badge>
+                </div>
+                <p className={`mt-2 text-[14px] leading-[1.5] break-words ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                  {component.description || 'No description'}
+                </p>
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-11 flex-1"
+                    onClick={() => handleEditComponent(component)}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-11 flex-1"
+                    onClick={() => handleDeleteComponent(component.id)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {components.length === 0 && (
+              <div className="py-8 text-center">
+                <div className="flex flex-col items-center justify-center">
+                  <DollarSign className="mb-2 h-12 w-12 text-muted-foreground" />
+                  <h3 className="mb-1 text-lg font-medium">No fee components found</h3>
+                  <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                    Create your first fee component to get started
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="max-[480px]:hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className={theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-              {components.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8">
-                    <div className="flex flex-col items-center justify-center">
-                      <DollarSign className="h-12 w-12 text-muted-foreground mb-2" />
-                      <h3 className="font-medium text-lg mb-1">No fee components found</h3>
-                      <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                        Create your first fee component to get started
-                      </p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {components.map((component) => (
+                  <TableRow 
+                    key={component.id} 
+                    className={theme === 'dark' ? 'border-border' : 'border-gray-200'}
+                  >
+                    <TableCell className="font-medium">{component.name}</TableCell>
+                    <TableCell>{formatCurrency(component.amount)}</TableCell>
+                    <TableCell>{component.description || '-'}</TableCell>
+                    <TableCell>
+                      <Badge variant={component.is_active ? "default" : "secondary"}>
+                        {component.is_active ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEditComponent(component)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDeleteComponent(component.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {components.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8">
+                      <div className="flex flex-col items-center justify-center">
+                        <DollarSign className="h-12 w-12 text-muted-foreground mb-2" />
+                        <h3 className="font-medium text-lg mb-1">No fee components found</h3>
+                        <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                          Create your first fee component to get started
+                        </p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
           {/* Pagination controls */}
-          <div className="flex items-center justify-between mt-4">
-            <div className="text-sm text-gray-600">Page {componentsPage} of {componentsTotalPages}</div>
-            <div className="flex space-x-2">
-              <Button size="sm" variant="outline" onClick={() => {
+          <div className="mt-4 flex items-center justify-between max-[480px]:flex-col max-[480px]:items-stretch max-[480px]:gap-3">
+            <div className="text-sm text-gray-600 max-[480px]:text-center">Page {componentsPage} of {componentsTotalPages}</div>
+            <div className="flex items-center space-x-2 max-[480px]:justify-center">
+              <Button size="sm" className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] max-[480px]:h-11 max-[480px]:flex-1" onClick={() => {
                 if (componentsPage > 1) {
                   const next = componentsPage - 1;
                   setComponentsPage(next);
                   fetchComponents(next);
                 }
               }} disabled={componentsPage === 1}>Prev</Button>
-              <Button size="sm" variant="outline" onClick={() => {
+              <span className={`min-w-8 text-center text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
+                {componentsPage}
+              </span>
+              <Button size="sm" className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] max-[480px]:h-11 max-[480px]:flex-1" onClick={() => {
                 if (componentsPage < componentsTotalPages) {
                   const next = componentsPage + 1;
                   setComponentsPage(next);

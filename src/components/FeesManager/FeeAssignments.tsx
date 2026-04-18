@@ -373,7 +373,7 @@ const FeeAssignments: React.FC = () => {
               Assign Fees
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="w-[94vw] sm:max-w-lg md:max-w-xl lg:max-w-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Assign Fee Template</DialogTitle>
             </DialogHeader>

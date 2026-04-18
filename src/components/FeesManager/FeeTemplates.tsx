@@ -8,6 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import {
   FileText,
   Plus,
@@ -43,6 +46,8 @@ interface FeeTemplate {
   }>;
   created_at: string;
 }
+
+const MySwal = withReactContent(Swal);
 
 const FeeTemplates: React.FC = () => {
   const { theme } = useTheme(); // Using theme context
@@ -237,8 +242,105 @@ const FeeTemplates: React.FC = () => {
     }
   };
 
+  const handleEditTemplate = async (template: FeeTemplate) => {
+    resetForm();
+
+    try {
+      await fetchAvailableComponents();
+    } catch (err) {
+      // fetchAvailableComponents already handles logging
+    }
+
+    const templateComponents = ((template.components as unknown) as any[]) || [];
+    const selectedIds: number[] = templateComponents
+      .map((c) => Number(c.id ?? c.component?.id ?? c.component))
+      .filter((id) => Number.isFinite(id));
+
+    const overrides: Record<number, number> = {};
+    templateComponents.forEach((c) => {
+      const componentId = Number(c.id ?? c.component?.id ?? c.component);
+      if (!Number.isFinite(componentId)) return;
+      if (c.amount_override != null) {
+        overrides[componentId] = Number(c.amount_override);
+      }
+    });
+
+    setEditingTemplate(template);
+    setTemplateName(template.name || '');
+    setTemplateDescription(template.description || '');
+    setFeeType(template.fee_type || 'semester');
+    setSemester(template.semester);
+    setSelectedComponents(selectedIds);
+    setComponentOverrides(overrides);
+    setIsCreateDialogOpen(true);
+  };
+
+  const handleUpdateTemplate = async () => {
+    if (!editingTemplate || !templateName.trim() || selectedComponents.length === 0) return;
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const templateData = {
+        name: templateName.trim(),
+        description: templateDescription.trim() || null,
+        fee_type: feeType,
+        semester: semester,
+        component_ids: selectedComponents,
+        component_overrides: componentOverrides,
+      };
+
+      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/templates/${editingTemplate.id}/`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(templateData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update fee template');
+      }
+
+      const resp = await response.json();
+      const updated = resp.data;
+      const item = {
+        ...updated,
+        total_amount: (updated.total_amount_cents != null ? Number(updated.total_amount_cents) / 100 : (updated.total_amount || 0)),
+        components: (updated.components || []).map((c: any) => ({
+          id: c.component,
+          component_name: c.component_name,
+          amount: (c.component_amount_cents != null ? Number(c.component_amount_cents) / 100 : (c.component?.amount ? Math.round(c.component.amount * 100)/100 : 0)),
+          amount_override: (c.amount_override_cents != null ? Number(c.amount_override_cents) / 100 : (c.amount_override != null ? Number(c.amount_override) : null)),
+        })),
+      };
+
+      setTemplates(prev => prev.map(t => (t.id === item.id ? item : t)));
+      try { window.dispatchEvent(new CustomEvent('feeTemplates:changed', { detail: { action: 'update', item } })); } catch (e) {}
+      setIsCreateDialogOpen(false);
+      resetForm();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update template');
+    }
+  };
+
   const handleDeleteTemplate = async (templateId: number) => {
-    if (!confirm('Are you sure you want to delete this template?')) return;
+    const currentTheme = theme === 'dark' ? 'dark' : 'light';
+    const result = await MySwal.fire({
+      title: 'Delete Fee Template?',
+      text: 'Are you sure you want to delete this template?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+      background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+      color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       const token = localStorage.getItem('access_token');
@@ -255,8 +357,26 @@ const FeeTemplates: React.FC = () => {
       // Remove locally to avoid an extra GET
       setTemplates(prev => prev.filter(t => t.id !== templateId));
       setTemplatesTotalCount(c => Math.max(0, c - 1));
+      await MySwal.fire({
+        title: 'Deleted!',
+        text: 'Fee template deleted successfully.',
+        icon: 'success',
+        confirmButtonText: 'OK',
+        confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+        background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+      });
       try { window.dispatchEvent(new CustomEvent('feeTemplates:changed', { detail: { action: 'delete', id: templateId } })); } catch (e) {}
     } catch (err) {
+      await MySwal.fire({
+        title: 'Error!',
+        text: err instanceof Error ? err.message : 'Failed to delete template',
+        icon: 'error',
+        confirmButtonText: 'OK',
+        confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+        background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+      });
       setError(err instanceof Error ? err.message : 'Failed to delete template');
     }
   };
@@ -323,14 +443,14 @@ const FeeTemplates: React.FC = () => {
               Create Template
             </Button>
           </DialogTrigger>
-          <DialogContent className={`max-w-2xl max-h-[80vh] ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'} p-6`}>
-            <DialogHeader className="mb-4">
+          <DialogContent className={`w-[90vw] max-w-[340px] sm:w-[92vw] sm:max-w-xl lg:max-w-2xl max-h-[85vh] overflow-hidden rounded-xl sm:rounded-2xl ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'} p-0`}>
+            <DialogHeader className="px-6 pt-6 pb-3 border-b">
               <DialogTitle>
                 {editingTemplate ? 'Edit Fee Template' : 'Create New Fee Template'}
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-6 overflow-y-auto custom-scrollbar pr-2" style={{ maxHeight: 'calc(80vh - 120px)' }}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-6 overflow-y-auto custom-scrollbar px-6 pb-6 pt-4" style={{ maxHeight: 'calc(85vh - 88px)' }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                 <div>
                   <Label htmlFor="templateName">Template Name</Label>
                   <Input
@@ -343,21 +463,20 @@ const FeeTemplates: React.FC = () => {
                 </div>
                 <div>
                   <Label htmlFor="feeType">Fee Type</Label>
-                  <select
-                    id="feeType"
-                    value={feeType}
-                    onChange={(e) => setFeeType(e.target.value)}
-                    className={`w-full p-2 rounded-md border ${
-                      theme === 'dark' 
-                        ? 'bg-background border-border text-foreground' 
-                        : 'bg-white border-gray-300 text-gray-900'
-                    } mt-1`}
-                  >
-                    <option value="semester">Semester Fee</option>
-                    <option value="annual">Annual Fee</option>
-                    <option value="exam">Exam Fee</option>
-                    <option value="other">Other</option>
-                  </select>
+                  <Select value={feeType} onValueChange={setFeeType}>
+                    <SelectTrigger
+                      id="feeType"
+                      className={`${theme === 'dark' ? 'bg-background border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'} mt-1 w-full`}
+                    >
+                      <SelectValue placeholder="Select fee type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="semester">Semester Fee</SelectItem>
+                      <SelectItem value="annual">Annual Fee</SelectItem>
+                      <SelectItem value="exam">Exam Fee</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -391,13 +510,14 @@ const FeeTemplates: React.FC = () => {
               <div>
                 <Label className="mb-2 block">Fee Components</Label>
                 <div className="border rounded-lg overflow-hidden">
-                  <Table>
+                  <div className="overflow-x-auto">
+                  <Table className="min-w-[640px]">
                     <TableHeader>
                       <TableRow className={theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}>
-                        <TableHead>Select</TableHead>
-                        <TableHead>Component</TableHead>
-                        <TableHead>Default Amount</TableHead>
-                        <TableHead>Override Amount</TableHead>
+                        <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Select</TableHead>
+                        <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Component</TableHead>
+                        <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Default Amount</TableHead>
+                        <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Override Amount</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -445,10 +565,11 @@ const FeeTemplates: React.FC = () => {
                       )}
                     </TableBody>
                   </Table>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4">
+              <div className="flex justify-end gap-3 pt-2">
                 <Button 
                   variant="outline" 
                   onClick={() => setIsCreateDialogOpen(false)}
@@ -458,7 +579,7 @@ const FeeTemplates: React.FC = () => {
                   Cancel
                 </Button>
                 <Button 
-                  onClick={handleCreateTemplate}
+                  onClick={editingTemplate ? handleUpdateTemplate : handleCreateTemplate}
                   className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
                 >
                   <Save className="h-4 w-4 mr-2" />
@@ -488,12 +609,12 @@ const FeeTemplates: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow className={theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Semester</TableHead>
-                <TableHead>Total Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Name</TableHead>
+                <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Type</TableHead>
+                <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Semester</TableHead>
+                <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Total Amount</TableHead>
+                <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Status</TableHead>
+                <TableHead className={`text-right ${theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}`}>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -520,9 +641,7 @@ const FeeTemplates: React.FC = () => {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => {
-                          // Implement edit functionality
-                        }}
+                        onClick={() => handleEditTemplate(template)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -556,15 +675,18 @@ const FeeTemplates: React.FC = () => {
         {/* Pagination Controls */}
         <div className="p-4 border-t flex items-center justify-between">
           <div className="text-sm text-gray-600">Page {templatesPage} of {templatesTotalPages}</div>
-          <div className="flex space-x-2">
-            <Button size="sm" variant="outline" onClick={() => {
+          <div className="flex items-center space-x-2">
+            <Button size="sm" className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={() => {
               if (templatesPage > 1) {
                 const next = templatesPage - 1;
                 setTemplatesPage(next);
                 fetchTemplates(next);
               }
             }} disabled={templatesPage === 1}>Prev</Button>
-            <Button size="sm" variant="outline" onClick={() => {
+            <span className={`min-w-8 text-center text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
+              {templatesPage}
+            </span>
+            <Button size="sm" className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={() => {
               if (templatesPage < templatesTotalPages) {
                 const next = templatesPage + 1;
                 setTemplatesPage(next);
