@@ -1,6 +1,19 @@
 import { useEffect, useState } from "react";
 import { API_ENDPOINT } from "@/utils/config";
 import { fetchWithTokenRefresh } from "@/utils/authService";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Button } from "../ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Input } from "../ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Calendar as CalendarComponent } from "../ui/calendar";
+import { Calendar } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { Label } from "../ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "../ui/dialog";
+import { Sliders } from "lucide-react";
+import { useTheme } from "../../context/ThemeContext";
 
 // Dean view: load branches -> faculties -> selected faculty profile (attendance, scheduled classes, weekly hours)
 const DeanFacultyProfile = ({ facultyId: initialFacultyId, initialStartDate, initialEndDate }: { facultyId?: string, initialStartDate?: string, initialEndDate?: string }) => {
@@ -18,6 +31,10 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId, initialStartDate, ini
 
   const [startDate, setStartDate] = useState<string>(initialStartDate || '');
   const [endDate, setEndDate] = useState<string>(initialEndDate || '');
+  const [reloadKey, setReloadKey] = useState<number>(0);
+  const [startDatePopoverOpen, setStartDatePopoverOpen] = useState(false);
+  const [endDatePopoverOpen, setEndDatePopoverOpen] = useState(false);
+  const { theme } = useTheme();
 
   // Set default dates to current month on mount
   useEffect(() => {
@@ -119,7 +136,7 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId, initialStartDate, ini
     };
     loadProfile();
     return () => { mounted = false; };
-  }, [selectedFaculty, startDate, endDate]);
+  }, [selectedFaculty, startDate, endDate, reloadKey]);
 
   // If initialFacultyId provided, try to select its branch automatically after branches load
   useEffect(() => {
@@ -128,151 +145,162 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId, initialStartDate, ini
   }, [initialFacultyId]);
 
   const handleDateFilter = () => {
-    // Trigger reload by updating state
+    // Trigger reload by bumping reloadKey; keep profile cleared while fetching
     setProfile(null);
+    setReloadKey((k) => k + 1);
   };
 
+  const isTeacher01 = profile?.email === 'teacher01@college.edu';
+
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold">Faculty Profile</h2>
-
-      <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-end mb-6">
-        <div className="flex-1">
-          <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-            <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-            Branch
-          </label>
-          <select
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
-            value={selectedBranch || ''}
-            onChange={(e) => setSelectedBranch(e.target.value || null)}
-          >
-            <option value="">Select a branch</option>
-            {branches.map((b: any) => (
-              <option key={b.branch_id || b.id} value={b.branch_id || b.id}>{b.branch || b.name}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex-1">
-          <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
-            <svg className="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            Faculty
-          </label>
-          <select
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors bg-white disabled:bg-gray-50 disabled:cursor-not-allowed"
-            value={selectedFaculty || ''}
-            onChange={(e) => setSelectedFaculty(e.target.value || null)}
-            disabled={!selectedBranch || facultiesLoading}
-          >
-            <option value="">Select a faculty member</option>
-            {faculties.map((f: any) => (
-              <option key={f.id} value={f.id}>{f.name}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {!selectedFaculty && <div className="p-4">Select a branch and faculty to view profile.</div>}
-
-      {selectedFaculty && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg shadow-sm border border-blue-100">
-          <h3 className="font-semibold mb-4 text-gray-800 flex items-center">
-            <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            Attendance Report Filters
-          </h3>
-          <div className="flex flex-wrap gap-4 items-end">
-            <div className="flex-1 min-w-0">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              />
+    <div className={`dean-profile min-h-screen ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'} p-6` }>
+      <style>{`
+        @media (min-width: 481px) and (max-width: 768px) {
+          .dean-profile .filters-row { display: flex !important; flex-direction: row !important; align-items: flex-end !important; gap: 1rem !important; }
+          .dean-profile .filters-row .flex-1 { flex: 1 1 0% !important; min-width: 0 !important; }
+          .dean-profile .filters-row .flex-shrink-0 { align-self: flex-end !important; margin-top: 0 !important; }
+        }
+      `}</style>
+      <Card className={theme === 'dark' ? 'w-full bg-card border border-border shadow-md' : 'w-full bg-white border border-gray-200 shadow-md'}>
+        <CardHeader className="flex flex-col items-start gap-2 px-6 pt-6 pb-4">
+          <div className="flex w-full justify-between items-center">
+            <div>
+              <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Faculty Profile</CardTitle>
+              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>View faculty attendance, schedule and assignments</p>
             </div>
-            <div className="flex-1 min-w-0">
-              <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              />
-            </div>
-            <button
-              onClick={handleDateFilter}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors font-medium"
-            >
-              Apply Filter
-            </button>
-            <button
-              onClick={() => {
-                setStartDate('');
-                setEndDate('');
-                handleDateFilter();
-              }}
-              className="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors font-medium"
-            >
-              Clear
-            </button>
           </div>
-          {profile?.attendance_summary?.range && (
-            <div className="mt-3 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-md inline-block">
-              <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Showing attendance from {profile.attendance_summary.range.start} to {profile.attendance_summary.range.end}
-              {profile.attendance_summary?.total_days !== undefined && (
-                <span className="ml-2 text-xs text-blue-700">• {profile.attendance_summary.total_days} days</span>
-              )}
-            </div>
-          )}
+        </CardHeader>
+
+        <CardContent className="px-6 pb-6 pt-2 space-y-6">
+          <div className="filters-row flex flex-col lg:flex-row gap-6 items-start lg:items-end mb-6">
+        <div className="flex-1">
+          <Label className={`text-sm mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>Branch</Label>
+          <Select value={selectedBranch || ''} onValueChange={(val) => setSelectedBranch(val || null)}>
+            <SelectTrigger className={`w-full ${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}`}>
+              <SelectValue placeholder="Select a branch" />
+            </SelectTrigger>
+            <SelectContent>
+              {branches.map((b: any) => (
+                <SelectItem key={b.branch_id || b.id} value={(b.branch_id || b.id).toString()}>
+                  {b.branch || b.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      )}
 
-      {loading && selectedFaculty && <div className="p-4">Loading faculty profile...</div>}
-      {error && <div className="p-4 text-red-600">{error}</div>}
-
-      {profile && (
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-              <div className="text-white">
-                <h2 className="text-2xl font-bold">{profile.name}</h2>
-                <p className="text-blue-100">{profile.designation}</p>
-                <div className="flex items-center space-x-4 mt-1 text-sm text-blue-100">
-                  <span className="flex items-center">
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    {profile.email}
-                  </span>
-                  {profile.mobile && (
-                    <span className="flex items-center">
-                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                      {profile.mobile}
-                    </span>
-                  )}
+        <div className="flex-1">
+          <Label className={`text-sm mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>Faculty</Label>
+          <Select value={selectedFaculty || ''} onValueChange={(val) => setSelectedFaculty(val || null)}>
+            <SelectTrigger className={`w-full ${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}`} disabled={!selectedBranch || facultiesLoading}>
+              <SelectValue placeholder="Select a faculty member" />
+            </SelectTrigger>
+            <SelectContent>
+              {faculties.map((f: any) => (
+                <SelectItem key={f.id} value={f.id.toString()}>
+                  {f.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex-shrink-0 flex items-end mt-2 lg:mt-0">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 px-4 h-10"
+                disabled={!selectedBranch || !selectedFaculty || facultiesLoading}
+                title={!selectedBranch || !selectedFaculty ? 'Select branch and faculty to enable filters' : undefined}
+              >
+                Filters
+                <Sliders className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Attendance Report Filters</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <div>
+                  <Label className={`text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>Start Date</Label>
+                  <Popover open={startDatePopoverOpen} onOpenChange={setStartDatePopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !startDate && "text-muted-foreground",
+                          theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'
+                        )}
+                      >
+                        <Calendar className="mr-2 h-4 w-4" />
+                        {startDate ? format(new Date(startDate), "MMM dd, yyyy") : "Pick a date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className={`w-auto p-0 ${theme === 'dark' ? 'bg-card border-border' : 'bg-white'}`}>
+                      <CalendarComponent
+                        mode="single"
+                        selected={startDate ? new Date(startDate) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            const dateStr = format(date, "yyyy-MM-dd");
+                            setStartDate(dateStr);
+                            setStartDatePopoverOpen(false);
+                          }
+                        }}
+                        disabled={(date) => date > new Date()}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div>
+                  <Label className={`text-sm mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>End Date</Label>
+                  <Popover open={endDatePopoverOpen} onOpenChange={setEndDatePopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !endDate && "text-muted-foreground",
+                          theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'
+                        )}
+                      >
+                        <Calendar className="mr-2 h-4 w-4" />
+                        {endDate ? format(new Date(endDate), "MMM dd, yyyy") : "Pick a date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className={`w-auto p-0 ${theme === 'dark' ? 'bg-card border-border' : 'bg-white'}`}>
+                      <CalendarComponent
+                        mode="single"
+                        selected={endDate ? new Date(endDate) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            const dateStr = format(date, "yyyy-MM-dd");
+                            setEndDate(dateStr);
+                            setEndDatePopoverOpen(false);
+                          }
+                        }}
+                        disabled={(date) => date > new Date()}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <DialogClose asChild>
+                    <Button onClick={() => { setStartDate(''); setEndDate(''); handleDateFilter(); }} className={`px-4 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200 transition-colors`}>Clear</Button>
+                  </DialogClose>
+                  <DialogClose asChild>
+                    <Button onClick={() => { handleDateFilter(); }} className={`px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors`}>Apply</Button>
+                  </DialogClose>
                 </div>
               </div>
-            </div>
-          </div>
-
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+      {profile && (
+        <div>
           {/* Stats Cards */}
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
@@ -282,11 +310,7 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId, initialStartDate, ini
                     <p className="text-sm font-medium text-blue-600">Weekly Hours</p>
                     <p className="text-3xl font-bold text-blue-900">{profile.total_weekly_hours ?? 0}</p>
                   </div>
-                  <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
+                      
                 </div>
               </div>
 
@@ -296,11 +320,7 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId, initialStartDate, ini
                     <p className="text-sm font-medium text-green-600">Present Days</p>
                     <p className="text-3xl font-bold text-green-900">{profile.attendance_summary?.present_days ?? 0}</p>
                   </div>
-                  <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
+                      
                 </div>
               </div>
 
@@ -310,11 +330,7 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId, initialStartDate, ini
                     <p className="text-sm font-medium text-red-600">Absent Days</p>
                     <p className="text-3xl font-bold text-red-900">{profile.attendance_summary?.absent_days ?? 0}</p>
                   </div>
-                  <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </div>
+                  
                 </div>
               </div>
 
@@ -324,11 +340,7 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId, initialStartDate, ini
                     <p className="text-sm font-medium text-purple-600">Attendance %</p>
                     <p className="text-3xl font-bold text-purple-900">{profile.attendance_summary?.percent_present ?? 'N/A'}</p>
                   </div>
-                  <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                  </div>
+                  
                 </div>
               </div>
 
@@ -338,11 +350,7 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId, initialStartDate, ini
                     <p className="text-sm font-medium text-yellow-600">Leave Days</p>
                     <p className="text-3xl font-bold text-yellow-900">{profile.attendance_summary?.leave_days ?? 0}</p>
                   </div>
-                  <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
+                  
                 </div>
               </div>
 
@@ -352,11 +360,7 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId, initialStartDate, ini
                     <p className="text-sm font-medium text-amber-600">Unmarked Days</p>
                     <p className="text-3xl font-bold text-amber-900">{profile.attendance_summary?.unmarked_days ?? 0}</p>
                   </div>
-                  <div className="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3" />
-                    </svg>
-                  </div>
+                  
                 </div>
               </div>
             </div>
@@ -455,6 +459,9 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId, initialStartDate, ini
           </div>
         </div>
       )}
+
+        </CardContent>
+      </Card>
     </div>
   );
 };
