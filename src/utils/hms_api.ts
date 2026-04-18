@@ -244,6 +244,11 @@ export const getRoomsByHostelId = async (hostelId: number): Promise<HMSResponse<
   return hmsApiCall<any>(`hostels/${hostelId}/rooms/`, "GET");
 };
 
+// Get current student's hostel details
+export const getStudentHostelDetails = async (): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>(`student/hostel-details/`, "GET");
+};
+
 // Get staff enrollment data (wardens and caretakers)
 export const getStaffEnrollment = async (page: number = 1, pageSize: number = 50): Promise<HMSResponse<any>> => {
   return hmsApiCall<any>(`staff/enrollment/?page=${page}&page_size=${pageSize}`, "GET");

@@ -15,7 +15,6 @@ import {
   BarChart2,
   Settings,
   LogOut,
-
   GitBranch,
   UserCheck,
   ClipboardList,
@@ -26,6 +25,7 @@ import {
   Receipt,
   Search,
   Mic,
+  Home,
 } from "lucide-react";
 import { useIsMobile } from "../../hooks/use-mobile";
 import {
@@ -248,7 +248,6 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
   student: [
     // Main
     { name: "Dashboard", page: "dashboard" },
-    
     // Academic
     { name: "Timetable", page: "timetable" },
     { name: "Attendance", page: "attendance" },
@@ -258,6 +257,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Revaluation", page: "revaluation" },
     { name: "Makeup Exam", page: "makeupexam" },
     { name: "Fees", page: "fees" },
+    // Hostel Details
+    { name: "Hostel Details", page: "student-hostel-details" },
 
     // Interview
     { name: "AI Interview", page: "ai-interview" },
@@ -268,6 +269,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // Profile
     { name: "Profile", page: "profile" },
   ],
+  "student-hostel-details": <Home size={20} />,
 
   coe: [
     // Main
