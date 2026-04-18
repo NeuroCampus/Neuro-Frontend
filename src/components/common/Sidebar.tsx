@@ -131,6 +131,12 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       "student-study-material": <FileText size={20} />,
       "student-assignment": <ClipboardList size={20} />,
       "admin-leaves": <FileText size={20} />,
+      "hms-dashboard": <LayoutDashboard size={20} />,
+      "hostels": <GitBranch size={20} />,
+      "rooms": <UserCheck size={20} />,
+      "hostel-students": <GraduationCap size={20} />,
+      "wardens": <UserCheck size={20} />,
+      "courses": <BookOpen size={20} />,
     };
     return iconMap[page] || <LayoutDashboard size={20} />;
   };
@@ -294,6 +300,14 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Campus Locations", page: "campus-locations" },
     { name: "Admin Leaves", page: "admin-leaves" },
     { name: "Profile", page: "profile" },
+  ],
+  hms: [
+    { name: "Dashboard", page: "dashboard" },
+    { name: "Hostels", page: "hostels" },
+    { name: "Rooms", page: "rooms" },
+    { name: "Students", page: "students" },
+    { name: "Wardens", page: "wardens" },
+    { name: "Courses", page: "courses" },
   ],
 };
 
