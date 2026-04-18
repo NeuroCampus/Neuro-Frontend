@@ -73,6 +73,26 @@ const hmsApiCall = async <T>(
       body: data ? JSON.stringify(data) : undefined,
     });
 
+    // Log cache information for debugging (only in development)
+    if (process.env.NODE_ENV === 'development') {
+      const etag = response.headers.get('ETag');
+      const cacheControl = response.headers.get('Cache-Control');
+      const dbQueryCount = response.headers.get('X-DB-Query-Count');
+      const dbQueryTime = response.headers.get('X-DB-Query-Time');
+      
+      if (response.status === 304) {
+        console.log(`[CACHE HIT] ${method} ${endpoint} - 304 Not Modified`);
+      } else if (etag || cacheControl) {
+        console.log(`[CACHE] ${method} ${endpoint}`, {
+          status: response.status,
+          etag: etag ? '✓' : '✗',
+          cacheControl: cacheControl || 'none',
+          dbQueries: dbQueryCount ? parseInt(dbQueryCount) : 'unknown',
+          dbTime: dbQueryTime || 'unknown',
+        });
+      }
+    }
+
     const result = await response.json();
     if (!response.ok) {
       console.error(`HMS API ${method} ${endpoint} Failed:`, { status: response.status, result });
@@ -225,8 +245,8 @@ export const getRoomsByHostelId = async (hostelId: number): Promise<HMSResponse<
 };
 
 // Get staff enrollment data (wardens and caretakers)
-export const getStaffEnrollment = async (): Promise<HMSResponse<any>> => {
-  return hmsApiCall<any>("staff/enrollment/", "GET");
+export const getStaffEnrollment = async (page: number = 1, pageSize: number = 50): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>(`staff/enrollment/?page=${page}&page_size=${pageSize}`, "GET");
 };
 
 // Course Management

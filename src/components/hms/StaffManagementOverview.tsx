@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Users, UserCheck, Loader } from "lucide-react";
+import { Users, UserCheck, Loader, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
 import { getStaffEnrollment } from "../../utils/hms_api";
 import { useTheme } from "../../context/ThemeContext";
@@ -32,14 +32,19 @@ const StaffManagementOverview = () => {
   const [wardensTotal, setWardensTotal] = useState(0);
   const [caretakersTotal, setCaretakersTotal] = useState(0);
 
+  // Pagination state
+  const [wardensPage, setWardensPage] = useState(1);
+  const [caretakersPage, setCaretakersPage] = useState(1);
+  const pageSize = 50;
+
   useEffect(() => {
     fetchStaffData();
-  }, []);
+  }, [wardensPage, caretakersPage]);
 
   const fetchStaffData = async () => {
     setLoading(true);
     try {
-      const response = await getStaffEnrollment();
+      const response = await getStaffEnrollment(wardensPage, pageSize);
 
       if (response.success) {
         // Handle the response data structure - check if it's double-wrapped
@@ -66,6 +71,7 @@ const StaffManagementOverview = () => {
     }
   };
 
+  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -83,6 +89,36 @@ const StaffManagementOverview = () => {
     visible: { opacity: 1, y: 0 },
   };
 
+  // Pagination calculations
+  const totalWardensPages = Math.ceil(wardensTotal / pageSize);
+  const totalCaretakersPages = Math.ceil(caretakersTotal / pageSize);
+
+  // Pagination handlers
+  const handleWardensPreviousPage = () => {
+    if (wardensPage > 1) {
+      setWardensPage(wardensPage - 1);
+    }
+  };
+
+  const handleWardensNextPage = () => {
+    if (wardensPage < totalWardensPages) {
+      setWardensPage(wardensPage + 1);
+    }
+  };
+
+  const handleCaretakersPreviousPage = () => {
+    if (caretakersPage > 1) {
+      setCaretakersPage(caretakersPage - 1);
+    }
+  };
+
+  const handleCaretakersNextPage = () => {
+    if (caretakersPage < totalCaretakersPages) {
+      setCaretakersPage(caretakersPage + 1);
+    }
+  };
+
+  // Loading state
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -94,6 +130,7 @@ const StaffManagementOverview = () => {
     );
   }
 
+  // Main render
   return (
     <motion.div
       className="space-y-6"
@@ -175,7 +212,7 @@ const StaffManagementOverview = () => {
             Wardens ({wardensTotal})
           </h2>
 
-          <div className="space-y-3 max-h-96 overflow-y-auto">
+          <div className="space-y-3 max-h-96 overflow-y-auto mb-4">
             {wardens.length > 0 ? (
               wardens.map((warden, index) => (
                 <motion.div
@@ -189,7 +226,7 @@ const StaffManagementOverview = () => {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      {index + 1}. {warden.name}
+                      {(wardensPage - 1) * pageSize + index + 1}. {warden.name}
                     </p>
                     <span className="px-3 py-1 bg-orange-500 text-white rounded-full text-xs font-semibold">
                       Warden
@@ -223,6 +260,49 @@ const StaffManagementOverview = () => {
               </p>
             )}
           </div>
+
+          {/* Wardens Pagination Controls */}
+          {totalWardensPages > 1 && (
+            <div className="flex items-center justify-between pt-4 border-t border-gray-600">
+              <button
+                onClick={handleWardensPreviousPage}
+                disabled={wardensPage === 1}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                  wardensPage === 1
+                    ? theme === 'dark'
+                      ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : theme === 'dark'
+                    ? 'bg-orange-600 hover:bg-orange-500 text-white'
+                    : 'bg-orange-500 hover:bg-orange-600 text-white'
+                }`}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </button>
+
+              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                Page {wardensPage} of {totalWardensPages}
+              </span>
+
+              <button
+                onClick={handleWardensNextPage}
+                disabled={wardensPage === totalWardensPages}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                  wardensPage === totalWardensPages
+                    ? theme === 'dark'
+                      ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : theme === 'dark'
+                    ? 'bg-orange-600 hover:bg-orange-500 text-white'
+                    : 'bg-orange-500 hover:bg-orange-600 text-white'
+                }`}
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </motion.div>
 
         {/* Caretakers */}
@@ -239,7 +319,7 @@ const StaffManagementOverview = () => {
             Caretakers ({caretakersTotal})
           </h2>
 
-          <div className="space-y-3 max-h-96 overflow-y-auto">
+          <div className="space-y-3 max-h-96 overflow-y-auto mb-4">
             {caretakers.length > 0 ? (
               caretakers.map((caretaker, index) => (
                 <motion.div
@@ -253,7 +333,7 @@ const StaffManagementOverview = () => {
                 >
                   <div className="flex items-start justify-between mb-2">
                     <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      {index + 1}. {caretaker.name}
+                      {(caretakersPage - 1) * pageSize + index + 1}. {caretaker.name}
                     </p>
                     <span className="px-3 py-1 bg-blue-500 text-white rounded-full text-xs font-semibold">
                       Caretaker
@@ -287,6 +367,49 @@ const StaffManagementOverview = () => {
               </p>
             )}
           </div>
+
+          {/* Caretakers Pagination Controls */}
+          {totalCaretakersPages > 1 && (
+            <div className="flex items-center justify-between pt-4 border-t border-gray-600">
+              <button
+                onClick={handleCaretakersPreviousPage}
+                disabled={caretakersPage === 1}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                  caretakersPage === 1
+                    ? theme === 'dark'
+                      ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : theme === 'dark'
+                    ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                    : 'bg-blue-500 hover:bg-blue-600 text-white'
+                }`}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </button>
+
+              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                Page {caretakersPage} of {totalCaretakersPages}
+              </span>
+
+              <button
+                onClick={handleCaretakersNextPage}
+                disabled={caretakersPage === totalCaretakersPages}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                  caretakersPage === totalCaretakersPages
+                    ? theme === 'dark'
+                      ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : theme === 'dark'
+                    ? 'bg-blue-600 hover:bg-blue-500 text-white'
+                    : 'bg-blue-500 hover:bg-blue-600 text-white'
+                }`}
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </motion.div>
       </div>
     </motion.div>
