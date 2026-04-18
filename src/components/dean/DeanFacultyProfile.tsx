@@ -153,12 +153,52 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId, initialStartDate, ini
   const isTeacher01 = profile?.email === 'teacher01@college.edu';
 
   return (
-    <div className={`dean-profile min-h-screen ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'} p-6` }>
+    <div className={`dean-profile min-h-screen ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'} p-0` }>
       <style>{`
         @media (min-width: 481px) and (max-width: 768px) {
           .dean-profile .filters-row { display: flex !important; flex-direction: row !important; align-items: flex-end !important; gap: 1rem !important; }
           .dean-profile .filters-row .flex-1 { flex: 1 1 0% !important; min-width: 0 !important; }
           .dean-profile .filters-row .flex-shrink-0 { align-self: flex-end !important; margin-top: 0 !important; }
+        }
+        @media (max-width: 480px) {
+          .dean-profile .filters-row { gap: 12px !important; display: flex !important; flex-direction: column !important; align-items: stretch !important; }
+          .dean-profile .filters-row .flex-1 { width: 100% !important; min-width: 0 !important; }
+          .dean-profile .filters-row .flex-shrink-0 { width: 100% !important; margin-top: 0.25rem !important; display: flex !important; justify-content: flex-end !important; }
+
+          .dean-profile h1 { font-size: 28px !important; line-height: 1.4 !important; }
+          .dean-profile h2 { font-size: 22px !important; line-height: 1.45 !important; }
+          .dean-profile h3 { font-size: 18px !important; line-height: 1.5 !important; }
+          .dean-profile, .dean-profile p, .dean-profile label, .dean-profile input, .dean-profile button { font-size: 14px !important; }
+
+          .dean-profile .card, .dean-profile .card-content { padding-left: 12px !important; padding-right: 12px !important; }
+
+          .dean-profile .button-group, .dean-profile .flex-row { flex-direction: column !important; gap: 8px !important; }
+          .dean-profile button, .dean-profile .btn { width: 100% !important; max-width: 320px !important; padding: 10px 16px !important; min-height: 40px !important; }
+
+          .dean-profile img, .dean-profile .responsive-img { max-width: 100% !important; height: auto !important; }
+
+          .dean-profile table, .dean-profile .table-responsive { width: 100% !important; display: block !important; overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
+
+          .dean-profile .modal, .dean-profile .popup, .dean-profile .dialog, .dean-profile .swal2-popup, .dean-profile [role="dialog"] {
+            width: 90vw !important; max-width: 340px !important; padding: 20px !important; border-radius: 12px !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; box-sizing: border-box !important; max-height: 90vh !important; overflow: auto !important;
+          }
+
+          /* Target the dialog rendered in the portal from this component */
+          .dean-filters-dialog {
+            width: 90vw !important;
+            max-width: 320px !important;
+            padding: 16px !important;
+            border-radius: 12px !important;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12) !important;
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%) !important;
+          }
+
+          .dean-profile .modal-header, .dean-profile .dialog-header, .dean-profile .swal2-title { font-size: 20px !important; margin-bottom: 12px !important; }
+          .dean-profile .modal-body, .dean-profile .dialog-body, .dean-profile .swal2-html-container { font-size: 14px !important; line-height: 1.5 !important; }
+          .dean-profile .modal-footer, .dean-profile .dialog-footer, .dean-profile .swal2-actions { margin-top: 16px !important; display: flex !important; gap: 8px !important; flex-direction: column !important; }
+          .dean-profile .modal-button, .dean-profile .swal2-confirm, .dean-profile .swal2-cancel { width: 100% !important; padding: 10px 16px !important; min-height: 40px !important; }
         }
       `}</style>
       <Card className={theme === 'dark' ? 'w-full bg-card border border-border shadow-md' : 'w-full bg-white border border-gray-200 shadow-md'}>
@@ -217,7 +257,7 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId, initialStartDate, ini
                 <Sliders className="h-4 w-4" />
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className={`${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'} dean-filters-dialog`}>
               <DialogHeader>
                 <DialogTitle>Attendance Report Filters</DialogTitle>
               </DialogHeader>
