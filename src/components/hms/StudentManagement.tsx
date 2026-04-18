@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { manageHostelStudents, manageRooms } from '../../utils/hms_api';
+import { manageHostelStudents, manageRooms, getRoomsByHostel } from '../../utils/hms_api';
 import { useToast } from '../../hooks/use-toast';
 
 interface HostelStudent {
@@ -43,10 +43,13 @@ const StudentManagement: React.FC = () => {
   const [batches, setBatches] = useState<Batch[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [semesters, setSemesters] = useState<Semester[]>([]);
+  const [hostels, setHostels] = useState<any[]>([]);
   const [rooms, setRooms] = useState<any[]>([]);
+  const [roomsForHostel, setRoomsForHostel] = useState<any[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<HostelStudent | null>(null);
   const [isLoadingRooms, setIsLoadingRooms] = useState(false);
+  const [selectedHostelInDialog, setSelectedHostelInDialog] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     room: null as number | null,
     room_allotted: false,
@@ -73,6 +76,7 @@ const StudentManagement: React.FC = () => {
   useEffect(() => {
     fetchBatches();
     fetchBranches();
+    fetchHostels();
   }, []);
 
   useEffect(() => {
@@ -115,6 +119,41 @@ const StudentManagement: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to fetch branches:', error);
+    }
+  };
+
+  const fetchHostels = async () => {
+    try {
+      const response = await fetch('/api/hms/hostels/', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Handle paginated response
+        const hostelsData = data.results || data;
+        setHostels(Array.isArray(hostelsData) ? hostelsData : []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch hostels:', error);
+    }
+  };
+
+  const getRoomsForHostel = async (hostelId: number) => {
+    setIsLoadingRooms(true);
+    try {
+      const response = await getRoomsByHostel(hostelId);
+      if (response.success && response.results) {
+        setRoomsForHostel(response.results);
+      } else {
+        setRoomsForHostel([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch rooms for hostel:', error);
+      setRoomsForHostel([]);
+    } finally {
+      setIsLoadingRooms(false);
     }
   };
 
@@ -223,7 +262,18 @@ const StudentManagement: React.FC = () => {
     const response = await manageHostelStudents(formData, editingStudent.id, 'PUT');
 
     if (response.success) {
-      fetchStudents();
+      // Update local state with the response data (single object for PUT)
+      const updatedStudent = response.data as HostelStudent | undefined;
+      if (updatedStudent) {
+        setStudents(prevStudents =>
+          prevStudents.map(student =>
+            student.id === editingStudent.id
+              ? { ...student, ...updatedStudent }
+              : student
+          )
+        );
+      }
+
       setIsDialogOpen(false);
       setEditingStudent(null);
       setFormData({
@@ -231,6 +281,8 @@ const StudentManagement: React.FC = () => {
         room_allotted: false,
         no_dues: true
       });
+      setSelectedHostelInDialog(null);
+      setRoomsForHostel([]);
       toast({
         title: "Success",
         description: "Student HMS details updated successfully",
@@ -251,9 +303,29 @@ const StudentManagement: React.FC = () => {
       room_allotted: student.room_allotted,
       no_dues: student.no_dues
     });
+
+    // If student has a room assigned, extract hostel from room_hostel_name and pre-select it
+    if (student.room && student.room_hostel_name) {
+      // Find hostel ID by matching name
+      const hostel = hostels.find(h => h.name === student.room_hostel_name);
+      if (hostel) {
+        setSelectedHostelInDialog(hostel.id);
+        getRoomsForHostel(hostel.id);
+      }
+    } else {
+      setSelectedHostelInDialog(null);
+      setRoomsForHostel([]);
+    }
+
     setIsDialogOpen(true);
-    // Fetch rooms only when Edit dialog is opened
-    fetchRooms();
+  };
+
+  const handleHostelSelect = (hostelId: string) => {
+    const id = parseInt(hostelId);
+    setSelectedHostelInDialog(id);
+    getRoomsForHostel(id);
+    // Reset room selection when hostel changes
+    setFormData(prev => ({ ...prev, room: null }));
   };
 
   return (
@@ -341,7 +413,23 @@ const StudentManagement: React.FC = () => {
           </div>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog 
+          open={isDialogOpen} 
+          onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) {
+              // Clear state when dialog closes
+              setEditingStudent(null);
+              setFormData({
+                room: null,
+                room_allotted: false,
+                no_dues: true
+              });
+              setSelectedHostelInDialog(null);
+              setRoomsForHostel([]);
+            }
+          }}
+        >
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Student HMS Details</DialogTitle>
@@ -361,9 +449,28 @@ const StudentManagement: React.FC = () => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
+                    <Label htmlFor="hostel">Hostel *</Label>
+                    <Select value={selectedHostelInDialog ? selectedHostelInDialog.toString() : ''} onValueChange={handleHostelSelect}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select hostel" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {hostels.map((hostel) => (
+                          <SelectItem key={hostel.id} value={hostel.id.toString()}>
+                            {hostel.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
                     <Label htmlFor="room">Room</Label>
                     {isLoadingRooms ? (
                       <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                    ) : !selectedHostelInDialog ? (
+                      <div className="h-10 bg-gray-100 dark:bg-gray-700 rounded flex items-center px-3 text-sm text-gray-500">
+                        Select a hostel first
+                      </div>
                     ) : (
                       <Select value={formData.room ? formData.room.toString() : 'none'} onValueChange={(value) => setFormData({ ...formData, room: value === 'none' ? null : value ? parseInt(value) : null })}>
                         <SelectTrigger>
@@ -371,34 +478,37 @@ const StudentManagement: React.FC = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">No Room</SelectItem>
-                          {rooms.filter(room => room.vacant).map((room) => (
-                            <SelectItem key={room.id} value={room.id.toString()}>
-                              {room.name} ({room.hostel_name})
-                            </SelectItem>
-                          ))}
+                          {roomsForHostel.map((room) => {
+                            const isCurrent = editingStudent?.room === room.id;
+                            return (
+                              <SelectItem key={room.id} value={room.id.toString()}>
+                                {room.name} ({room.student_count}/{room.capacity}) {isCurrent ? '✓ Currently Assigned' : ''}
+                              </SelectItem>
+                            );
+                          })}
                         </SelectContent>
                       </Select>
                     )}
                   </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id="room_allotted"
-                        checked={formData.room_allotted}
-                        onChange={(e) => setFormData({ ...formData, room_allotted: e.target.checked })}
-                      />
-                      <Label htmlFor="room_allotted">Room Allotted</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id="no_dues"
-                        checked={formData.no_dues}
-                        onChange={(e) => setFormData({ ...formData, no_dues: e.target.checked })}
-                      />
-                      <Label htmlFor="no_dues">No Dues</Label>
-                    </div>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="room_allotted"
+                      checked={formData.room_allotted}
+                      onChange={(e) => setFormData({ ...formData, room_allotted: e.target.checked })}
+                    />
+                    <Label htmlFor="room_allotted">Room Allotted</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="no_dues"
+                      checked={formData.no_dues}
+                      onChange={(e) => setFormData({ ...formData, no_dues: e.target.checked })}
+                    />
+                    <Label htmlFor="no_dues">No Dues</Label>
                   </div>
                 </div>
                 <Button type="submit">{editingStudent ? 'Update' : 'Create'}</Button>
