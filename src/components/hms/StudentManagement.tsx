@@ -288,9 +288,12 @@ const StudentManagement: React.FC = () => {
         description: "Student HMS details updated successfully",
       });
     } else {
+      // Check if it's a "room full" error
+      const isRoomFullError = response.message?.includes('full capacity') || response.message?.includes('room is full') || response.message?.includes('Room');
+      
       toast({
         variant: "destructive",
-        title: "Error",
+        title: isRoomFullError ? "Room Capacity Exceeded" : "Error",
         description: response.message || "Failed to update student",
       });
     }
@@ -480,9 +483,16 @@ const StudentManagement: React.FC = () => {
                           <SelectItem value="none">No Room</SelectItem>
                           {roomsForHostel.map((room) => {
                             const isCurrent = editingStudent?.room === room.id;
+                            const isFull = room.student_count >= room.capacity;
                             return (
-                              <SelectItem key={room.id} value={room.id.toString()}>
-                                {room.name} ({room.student_count}/{room.capacity}) {isCurrent ? '✓ Currently Assigned' : ''}
+                              <SelectItem 
+                                key={room.id} 
+                                value={room.id.toString()}
+                                disabled={isFull && !isCurrent}
+                              >
+                                {room.name} ({room.student_count}/{room.capacity}) 
+                                {isCurrent && ' ✓ Currently Assigned'} 
+                                {isFull && !isCurrent && ' (FULL)'}
                               </SelectItem>
                             );
                           })}

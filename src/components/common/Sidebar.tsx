@@ -135,7 +135,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       "hostels": <GitBranch size={20} />,
       "rooms": <UserCheck size={20} />,
       "hostel-students": <GraduationCap size={20} />,
-      "wardens": <UserCheck size={20} />,
+      "enrollment": <UserCheck size={20} />,
 
     };
     return iconMap[page] || <LayoutDashboard size={20} />;
@@ -306,7 +306,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Hostels", page: "hostels" },
     { name: "Rooms", page: "rooms" },
     { name: "Students", page: "students" },
-    { name: "Wardens", page: "wardens" },
+    { name: "Enrollment", page: "enrollment" },
+    { name: "Staff", page: "staff" },
   ],
 };
 
