@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getStudentHostelDetails } from '../../utils/hms_api';
 import { useTheme } from '../../context/ThemeContext';
+import StudentMealManagement from '../hms/StudentMealManagement';
 import {
   FaBuilding,
   FaBed,
@@ -388,6 +389,11 @@ const StudentHostelDetails: React.FC = () => {
           color={theme === 'dark' ? 'bg-orange-900/40 text-orange-400' : 'bg-orange-50 text-orange-600'}
           theme={theme}
         />
+      </div>
+
+      {/* ── Meal Management Section ──────────────────────────────────────── */}
+      <div className="mt-6">
+        <StudentMealManagement />
       </div>
     </div>
   );

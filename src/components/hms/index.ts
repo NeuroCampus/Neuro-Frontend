@@ -6,3 +6,6 @@ export { default as WardenManagement } from './WardenManagement';
 export { default as CourseManagement } from './CourseManagement';
 export { default as Enrollment } from './Enrollment';
 export { default as StaffManagementOverview } from './StaffManagementOverview';
+export { default as MenuManagement } from './MenuManagement';
+export { default as MessBillingView } from './MessBillingView';
+export { default as StudentMealManagement } from './StudentMealManagement';
