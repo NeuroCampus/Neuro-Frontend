@@ -93,18 +93,24 @@ const hmsApiCall = async <T>(
       }
     }
 
-    const result = await response.json();
+    const result = response.status === 204 ? null : await response.json();
+    
+    // Handle successful DELETE (204 No Content)
+    if (method === "DELETE" && response.status === 204) {
+      return { success: true };
+    }
+    
     if (!response.ok) {
       console.error(`HMS API ${method} ${endpoint} Failed:`, { status: response.status, result });
       
       // Extract error message from different formats
       let errorMessage = `HTTP ${response.status}`;
       
-      if (result.detail) {
+      if (result && result.detail) {
         errorMessage = result.detail;
-      } else if (result.message) {
+      } else if (result && result.message) {
         errorMessage = result.message;
-      } else if (typeof result === 'object') {
+      } else if (result && typeof result === 'object') {
         // Handle Django REST Framework validation errors
         // Format: { "field_name": ["error message"], "non_field_errors": ["error message"] }
         const errorEntries = Object.entries(result);
@@ -122,12 +128,10 @@ const hmsApiCall = async <T>(
     }
 
     // Handle different response formats
-    if (method === "DELETE") {
-      return { success: true };
-    } else if (method === "GET" && Array.isArray(result)) {
+    if (method === "GET" && Array.isArray(result)) {
       // List response (array)
       return { success: true, results: result, count: result.length };
-    } else if (method === "GET" && result.results !== undefined) {
+    } else if (method === "GET" && result && result.results !== undefined) {
       // Paginated response with results field
       return {
         success: true,
@@ -154,6 +158,10 @@ export const manageHostels = async (
 ): Promise<HMSResponse<Hostel>> => {
   const endpoint = hostelId ? `hostels/${hostelId}/` : "hostels/";
   return hmsApiCall<Hostel>(endpoint, method, data);
+};
+
+export const getHostels = async (): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>("hostels/", "GET");
 };
 
 // Room Management
@@ -262,4 +270,140 @@ export const manageCourses = async (
 ): Promise<HMSResponse<HostelCourse>> => {
   const endpoint = courseId ? `courses/${courseId}/` : "courses/";
   return hmsApiCall<HostelCourse>(endpoint, method, data);
+};
+
+// =============================================
+// MESS MANAGEMENT API FUNCTIONS
+// =============================================
+
+// Meal Types
+export const getMealTypes = async (): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>(`meal-types/`, "GET");
+};
+
+export const manageMealType = async (
+  data?: any,
+  mealTypeId?: number,
+  method: "GET" | "POST" | "PUT" | "DELETE" = "GET"
+): Promise<HMSResponse<any>> => {
+  const endpoint = mealTypeId ? `meal-types/${mealTypeId}/` : "meal-types/";
+  return hmsApiCall<any>(endpoint, method, data);
+};
+
+// Menu Items
+export const getMenuItems = async (filters?: Record<string, any>): Promise<HMSResponse<any>> => {
+  let endpoint = `menu-items/`;
+  if (filters) {
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        queryParams.append(key, value.toString());
+      }
+    });
+    const queryString = queryParams.toString();
+    if (queryString) endpoint += `?${queryString}`;
+  }
+  return hmsApiCall<any>(endpoint, "GET");
+};
+
+export const manageMenuItem = async (
+  data?: any,
+  itemId?: number,
+  method: "GET" | "POST" | "PUT" | "DELETE" = "GET"
+): Promise<HMSResponse<any>> => {
+  const endpoint = itemId ? `menu-items/${itemId}/` : "menu-items/";
+  return hmsApiCall<any>(endpoint, method, data);
+};
+
+// Menus (Weekly/Daily menus)
+export const getMenus = async (filters?: Record<string, any>): Promise<HMSResponse<any>> => {
+  let endpoint = `menus/`;
+  if (filters) {
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        queryParams.append(key, value.toString());
+      }
+    });
+    const queryString = queryParams.toString();
+    if (queryString) endpoint += `?${queryString}`;
+  }
+  return hmsApiCall<any>(endpoint, "GET");
+};
+
+export const manageMenu = async (
+  data?: any,
+  menuId?: number,
+  method: "GET" | "POST" | "PUT" | "DELETE" = "GET"
+): Promise<HMSResponse<any>> => {
+  const endpoint = menuId ? `menus/${menuId}/` : "menus/";
+  return hmsApiCall<any>(endpoint, method, data);
+};
+
+export const getWeeklyMenu = async (): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>(`menus/weekly_menu/`, "GET");
+};
+
+export const getTodayMenu = async (): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>(`menus/today_menu/`, "GET");
+};
+
+// Student Meal Skips
+export const getMealSkips = async (filters?: Record<string, any>): Promise<HMSResponse<any>> => {
+  let endpoint = `meal-skips/`;
+  if (filters) {
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        queryParams.append(key, value.toString());
+      }
+    });
+    const queryString = queryParams.toString();
+    if (queryString) endpoint += `?${queryString}`;
+  }
+  return hmsApiCall<any>(endpoint, "GET");
+};
+
+export const skipMeal = async (data: {
+  date: string;
+  meal_type: number;
+  reason?: string;
+}): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>(`meal-skips/skip_meal/`, "POST", data);
+};
+
+export const markMealLeave = async (data: {
+  from_date: string;
+  to_date: string;
+  reason?: string;
+}): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>(`meal-skips/mark_leave/`, "POST", data);
+};
+
+export const getMyMealSkips = async (): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>(`meal-skips/my_skips/`, "GET");
+};
+
+// Mess Billing
+export const getMessBilling = async (filters?: Record<string, any>): Promise<HMSResponse<any>> => {
+  let endpoint = `mess-billing/`;
+  if (filters) {
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        queryParams.append(key, value.toString());
+      }
+    });
+    const queryString = queryParams.toString();
+    if (queryString) endpoint += `?${queryString}`;
+  }
+  return hmsApiCall<any>(endpoint, "GET");
+};
+
+export const getMyMessBilling = async (): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>(`mess-billing/my_billing/`, "GET");
+};
+
+export const getHostelMessStats = async (hostelId: number): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>(`mess-billing/hostel_stats/?hostel_id=${hostelId}`, "GET");
 };
