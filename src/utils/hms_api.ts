@@ -336,8 +336,8 @@ export const manageMenuItem = async (
 };
 
 // Menus (Weekly/Daily menus)
-export const getMenus = async (filters?: Record<string, any>): Promise<HMSResponse<any>> => {
-  let endpoint = `menus/`;
+export const getMenus = async (filters?: Record<string, any>, page: number = 1): Promise<HMSResponse<any>> => {
+  let endpoint = `menus/?page=${page}`;
   if (filters) {
     const queryParams = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
@@ -346,7 +346,7 @@ export const getMenus = async (filters?: Record<string, any>): Promise<HMSRespon
       }
     });
     const queryString = queryParams.toString();
-    if (queryString) endpoint += `?${queryString}`;
+    if (queryString) endpoint += `&${queryString}`;
   }
   return hmsApiCall<any>(endpoint, "GET");
 };
@@ -374,8 +374,8 @@ export const getTodayMenuSummary = async (): Promise<HMSResponse<any>> => {
 };
 
 // Student Meal Skips
-export const getMealSkips = async (filters?: Record<string, any>): Promise<HMSResponse<any>> => {
-  let endpoint = `meal-skips/`;
+export const getMealSkips = async (filters?: Record<string, any>, page: number = 1): Promise<HMSResponse<any>> => {
+  let endpoint = `meal-skips/?page=${page}`;
   if (filters) {
     const queryParams = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
@@ -384,14 +384,14 @@ export const getMealSkips = async (filters?: Record<string, any>): Promise<HMSRe
       }
     });
     const queryString = queryParams.toString();
-    if (queryString) endpoint += `?${queryString}`;
+    if (queryString) endpoint += `&${queryString}`;
   }
   return hmsApiCall<any>(endpoint, "GET");
 };
 
 // Mess Billing
-export const getMessBilling = async (filters?: Record<string, any>): Promise<HMSResponse<any>> => {
-  let endpoint = `mess-billing/`;
+export const getMessBilling = async (filters?: Record<string, any>, page: number = 1): Promise<HMSResponse<any>> => {
+  let endpoint = `mess-billing/?page=${page}`;
   if (filters) {
     const queryParams = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
@@ -400,13 +400,13 @@ export const getMessBilling = async (filters?: Record<string, any>): Promise<HMS
       }
     });
     const queryString = queryParams.toString();
-    if (queryString) endpoint += `?${queryString}`;
+    if (queryString) endpoint += `&${queryString}`;
   }
   return hmsApiCall<any>(endpoint, "GET");
 };
 
-export const getMyMessBilling = async (): Promise<HMSResponse<any>> => {
-  return hmsApiCall<any>(`mess-billing/my_billing/`, "GET");
+export const getMyMessBilling = async (page: number = 1): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>(`mess-billing/my_billing/?page=${page}`, "GET");
 };
 
 export const getHostelMessStats = async (hostelId: number): Promise<HMSResponse<any>> => {
@@ -423,13 +423,14 @@ export const raiseIssue = async (data: {
   return hmsApiCall<any>(`issues/`, "POST", data);
 };
 
-export const getMyIssues = async (): Promise<HMSResponse<any>> => {
-  return hmsApiCall<any>(`issues/my_issues/`, "GET");
+export const getMyIssues = async (page: number = 1): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>(`issues/my_issues/?page=${page}`, "GET");
 };
 
 export const getIssues = async (filters?: {
   hostel_id?: number;
   status?: string;
+  page?: number;
 }): Promise<HMSResponse<any>> => {
   let endpoint = `issues/`;
   if (filters) {
@@ -461,9 +462,10 @@ export const updateIssueStatus = async (
 
 export const getHostelIssues = async (
   hostelId: number,
-  status?: string
+  status?: string,
+  page: number = 1
 ): Promise<HMSResponse<any>> => {
-  let endpoint = `issues/hostel_issues/?hostel_id=${hostelId}`;
+  let endpoint = `issues/hostel_issues/?hostel_id=${hostelId}&page=${page}`;
   if (status) {
     endpoint += `&status=${status}`;
   }

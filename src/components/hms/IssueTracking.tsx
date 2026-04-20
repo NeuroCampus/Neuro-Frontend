@@ -53,30 +53,33 @@ const IssueTracking = ({ hostelId }: { hostelId: number }) => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [updatingIssueId, setUpdatingIssueId] = useState<number | null>(null);
   const [permissionError, setPermissionError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
 
   useEffect(() => {
     fetchIssues();
-  }, [hostelId, statusFilter]);
+  }, [hostelId, statusFilter, currentPage]);
 
   const fetchIssues = async () => {
     setLoading(true);
     setPermissionError(null);
     try {
-      const filters: any = { hostel_id: hostelId };
-      if (statusFilter !== 'all') {
-        filters.status = statusFilter;
-      }
-      
-      const response = await getHostelIssues(hostelId, statusFilter !== 'all' ? statusFilter : undefined);
+      const response = await getHostelIssues(hostelId, statusFilter !== 'all' ? statusFilter : undefined, currentPage);
       
       // Check for permission error (403)
       if (!response.success && response.message?.includes('You do not have permission') || response.message?.includes('Only wardens')) {
         setPermissionError(response.message || 'You do not have permission to view hostel issues. Only wardens and admins can access this page.');
         setIssues([]);
-      } else if (response.success && response.results) {
-        setIssues(response.results);
-      } else if (response.success && Array.isArray(response.data)) {
-        setIssues(response.data);
+      } else if (response.success) {
+        // Handle paginated response
+        if (response.results) {
+          setIssues(response.results);
+          setTotalCount(response.count || response.results.length);
+        } else if (Array.isArray(response.data)) {
+          setIssues(response.data);
+          setTotalCount(response.data.length);
+        }
       } else if (!response.success) {
         // Generic error
         toast({
@@ -96,6 +99,8 @@ const IssueTracking = ({ hostelId }: { hostelId: number }) => {
       setLoading(false);
     }
   };
+
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   const handleIssueClick = async (issue: Issue) => {
     try {
