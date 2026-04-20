@@ -3,10 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { cn } from "@/lib/utils";
+import { Textarea } from "../ui/textarea";
 import { manageProfile } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
 import { showSuccessAlert, showErrorAlert, showInfoAlert } from "../../utils/sweetalert";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { Eye, EyeOff } from "lucide-react";
+import { fetchWithTokenRefresh } from "../../utils/authService";
+import { API_ENDPOINT } from "../../utils/config";
 
 interface User {
   user_id?: string;
@@ -45,6 +49,12 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
   const [fetchedUser, setFetchedUser] = useState<User | null>(null);
   // ref used to skip one fetch immediately after a successful PATCH
   const skipFetch = useRef(false);
+  // Change password states
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [passwordData, setPasswordData] = useState({ current_password: "", new_password: "", confirm_password: "" });
+  const [showPasswords, setShowPasswords] = useState({ current: false, next: false, confirm: false });
+  const passwordDialogContentRef = useRef<HTMLDivElement | null>(null);
+  const [activeTab, setActiveTab] = useState<'personal' | 'contact' | 'about'>('personal');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -96,20 +106,31 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
       if (setError) setError(null);
       try {
         const response = await manageProfile({}, "GET");
-        if (response.success && response.data) {
+        let payload: any = null;
+        if (response) {
+          if ((response as any).data) {
+            // data may itself be the profile or contain profile
+            payload = (response as any).data.profile || (response as any).data;
+          }
+          if (!payload && (response as any).profile) payload = (response as any).profile;
+          if (!payload && (response as any).first_name) payload = response;
+        }
+
+        if (payload) {
           const fetchedProfile: Profile = {
-            first_name: response.data.first_name || "",
-            last_name: response.data.last_name || "",
-            email: response.data.email || "",
-            mobile_number: response.data.mobile_number || "",
-            address: response.data.address || "",
-            bio: response.data.bio || "",
+            first_name: payload.first_name || "",
+            last_name: payload.last_name || "",
+            email: payload.email || payload.username || "",
+            mobile_number: payload.mobile_number || payload.mobile || "",
+            address: payload.address || "",
+            bio: payload.bio || "",
           };
           setProfile(fetchedProfile);
         } else {
-          setLocalError(response.message || "Failed to fetch profile");
-          showErrorAlert("Error", response.message || "Failed to fetch profile");
-          if (response.message === "Profile not found") {
+          const message = (response && (response as any).message) || "Failed to fetch profile";
+          setLocalError(message);
+          showErrorAlert("Error", message);
+          if (message === "Profile not found") {
             setEditing(true);
             setProfile({
               first_name: currentUser?.username?.split(" ")[0] || "",
@@ -233,211 +254,237 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
     }
   };
 
+  const handleChangePassword = async () => {
+    if (!passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password) {
+      showErrorAlert("Missing fields", "Please fill in current, new and confirm password fields.");
+      return;
+    }
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      showErrorAlert("Password mismatch", "New passwords don't match");
+      return;
+    }
+    if (passwordData.current_password === passwordData.new_password) {
+      showErrorAlert("Invalid new password", "Current password and new password cannot be the same.");
+      return;
+    }
+
+    try {
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/profile/change-password/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          current_password: passwordData.current_password,
+          new_password: passwordData.new_password,
+          confirm_password: passwordData.confirm_password,
+        }),
+      });
+      const result = await response.json();
+      if (result.success) {
+        setShowPasswordDialog(false);
+        setPasswordData({ current_password: '', new_password: '', confirm_password: '' });
+        showSuccessAlert('Password changed', 'Your password has been updated successfully.');
+      } else {
+        showErrorAlert('Unable to change password', result.message || 'Failed to change password');
+      }
+    } catch (err) {
+      console.error('Error changing password:', err);
+      showErrorAlert('Unable to change password', 'Failed to change password');
+    }
+  };
+
   if (loading) {
     return <div className={`text-center py-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading...</div>;
   }
 
-  return (
-    <div className="min-h-screen flex justify-center items-start py-12 px-4">
-      <Card className={`w-full max-w-2xl shadow-md ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
-        <CardHeader className="flex flex-col items-start gap-2 px-6 pt-6 pb-4">
-          <div className="flex w-full justify-between items-center">
-            <div>
-              <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Profile Information</CardTitle>
-              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>View and update your personal information</p>
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'personal':
+        return (
+          <div className="space-y-4 sm:space-y-5 md:space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
+              <div className="w-full">
+                <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>First Name</label>
+                <Input id="first_name" name="first_name" value={profile.first_name} onChange={handleChange} disabled={!editing || loading} placeholder="First name" className="text-xs sm:text-sm h-8 sm:h-9 md:h-10 w-full" />
+              </div>
+              <div className="w-full">
+                <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Last Name</label>
+                <Input id="last_name" name="last_name" value={profile.last_name} onChange={handleChange} disabled={!editing || loading} placeholder="Last name" className="text-xs sm:text-sm h-8 sm:h-9 md:h-10 w-full" />
+              </div>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Email</label>
+                <Input id="email" name="email" value={profile.email} onChange={handleChange} disabled={!editing || loading} placeholder="Email address" className="text-xs sm:text-sm h-8 sm:h-10 w-full" />
+              </div>
+              <div>
+                <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Mobile</label>
+                <Input id="mobile_number" name="mobile_number" value={profile.mobile_number} onChange={handleChange} disabled={!editing || loading} maxLength={10} placeholder="10-digit mobile" className="text-xs sm:text-sm h-8 sm:h-10 w-full" />
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'contact':
+        return (
+          <div className="space-y-4 sm:space-y-5">
+            <div>
+              <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Address</label>
+              <Textarea id="address" name="address" value={profile.address} onChange={handleChange} disabled={!editing || loading} rows={3} className="text-xs sm:text-sm w-full" />
+            </div>
+            <div>
+              <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Bio</label>
+              <Textarea id="bio" name="bio" value={profile.bio} onChange={handleChange} disabled={!editing || loading} rows={4} className="text-xs sm:text-sm w-full" />
+              <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{profile.bio.trim().split(/\s+/).filter(Boolean).length}/50 words</p>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex justify-center items-start px-4">
+      <Card className={`w-full max-w-none mx-auto my-2 sm:my-4 md:my-6 lg:my-8 px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6 ${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}`}>
+        <CardHeader className="px-2 sm:px-3 md:px-4 lg:px-6 py-3 sm:py-4 md:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 border-b">
+          <div className="flex-1 min-w-0">
+            <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Profile Information</CardTitle>
+            <p className={`text-xs sm:text-sm mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>View and update your personal information</p>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap ml-auto">
+            {editing && (
+              <Button size="sm" variant="ghost" onClick={() => { setEditing(false); /* revert could be implemented if desired */ }}>
+                Cancel
+              </Button>
+            )}
+
             <Button
               size="sm"
-              onClick={() => {
-                if (editing) handleSaveProfile();
-                else setEditing(true);
-              }}
-              variant="default"
-              className={`bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}
+              onClick={() => { if (editing) handleSaveProfile(); else setEditing(true); }}
+              variant="outline"
+              className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
               disabled={loading}
             >
-              {editing ? (loading ? "Saving..." : "Save") : "Edit Profile"}
+              {editing ? (loading ? 'Saving...' : 'Save') : 'Edit Profile'}
             </Button>
+            <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+              <DialogTrigger asChild>
+                <Button className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde]">Change Password</Button>
+              </DialogTrigger>
+              <DialogContent ref={passwordDialogContentRef} className="w-[calc(100vw-1.5rem)] sm:w-full max-w-[420px] rounded-xl sm:rounded-2xl">
+                <DialogHeader>
+                  <DialogTitle>Change Password</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="current_password">Current Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="current_password"
+                        type={showPasswords.current ? 'text' : 'password'}
+                        value={passwordData.current_password}
+                        onChange={(e) => setPasswordData({ ...passwordData, current_password: e.target.value })}
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswords((prev) => ({ ...prev, current: !prev.current }))}
+                        className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                        aria-label={showPasswords.current ? 'Hide current password' : 'Show current password'}
+                      >
+                        {showPasswords.current ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="new_password">New Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="new_password"
+                        type={showPasswords.next ? 'text' : 'password'}
+                        value={passwordData.new_password}
+                        onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswords((prev) => ({ ...prev, next: !prev.next }))}
+                        className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                        aria-label={showPasswords.next ? 'Hide new password' : 'Show new password'}
+                      >
+                        {showPasswords.next ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="confirm_password">Confirm New Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="confirm_password"
+                        type={showPasswords.confirm ? 'text' : 'password'}
+                        value={passwordData.confirm_password}
+                        onChange={(e) => setPasswordData({ ...passwordData, confirm_password: e.target.value })}
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPasswords((prev) => ({ ...prev, confirm: !prev.confirm }))}
+                        className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                        aria-label={showPasswords.confirm ? 'Hide confirm password' : 'Show confirm password'}
+                      >
+                        {showPasswords.confirm ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button variant="outline" onClick={() => setShowPasswordDialog(false)}>Cancel</Button>
+                    <Button className="font-medium bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={handleChangePassword}>Change Password</Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardHeader>
 
         <CardContent className="px-6 pb-6 pt-2 space-y-8">
-          {error && <div className={`text-center ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{error}</div>}
-          <div className="flex flex-col items-center">
-            <div className={`w-20 h-20 rounded-full bg-[#a259ff] text-white flex items-center justify-center text-2xl font-semibold`}>
-              {profile.first_name[0] || ""}
-              {profile.last_name[0] || ""}
-            </div>
-            <div className="text-center mt-2">
-              <div className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                {profile.first_name} {profile.last_name}
+          {error && <div className={`text-red-500 text-center`}>{error}</div>}
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-8 items-start">
+            <div className="col-span-1 flex flex-col items-center sm:items-start">
+              <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#a259ff] text-white flex items-center justify-center text-lg sm:text-2xl font-semibold mb-3 sm:mb-4 flex-shrink-0`}>
+                {(profile.first_name && profile.first_name[0]) || ''}{(profile.last_name && profile.last_name[0]) || ''}
               </div>
-              <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Head of Department</div>
+
+              <div className="text-base sm:text-lg font-semibold text-center sm:text-left mb-1">{profile.first_name} {profile.last_name}</div>
+              <div className={`text-xs sm:text-sm mb-4 sm:mb-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Head of Department</div>
+
+              <div className="w-full mt-4 sm:mt-6 flex flex-col">
+                <h4 className={`text-xs sm:text-sm font-bold mb-2.5 sm:mb-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Quick Info</h4>
+                <div className={`border rounded-lg p-2.5 sm:p-4 ${theme === 'dark' ? 'bg-card border-input' : 'bg-gray-50 border-gray-200'}`}>
+                  <div className="grid grid-cols-1 gap-2.5 sm:gap-3.5">
+                    <div className="flex flex-col justify-start">
+                      <span className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Email</span>
+                      <span className={`text-xs sm:text-sm break-words px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-2xl line-clamp-2 ${theme === 'dark' ? 'bg-accent text-foreground' : 'bg-purple-100 text-purple-700'}`}>{profile.email || '—'}</span>
+                    </div>
+                    <div className="flex flex-col justify-start">
+                      <span className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Mobile</span>
+                      <span className={`text-xs sm:text-sm break-words px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-2xl line-clamp-2 ${theme === 'dark' ? 'bg-accent text-foreground' : 'bg-purple-100 text-purple-700'}`}>{profile.mobile_number || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <hr className={theme === 'dark' ? 'border-border' : 'border-gray-200'} />
-
-          <div className="space-y-6">
-            <div>
-              <Label htmlFor="first_name" className={`text-xs mb-1 block ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                First Name
-              </Label>
-              <Input
-                id="first_name"
-                name="first_name"
-                value={profile.first_name}
-                onChange={handleChange}
-                disabled={!editing || loading}
-                className={cn(
-                  "w-full",
-                  theme === 'dark' 
-                    ? 'bg-background text-foreground border-border' 
-                    : 'bg-white text-gray-900 border-gray-300'
-                )}
-              />
-            </div>
-            <div>
-              <Label htmlFor="last_name" className={`text-xs mb-1 block ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                Last Name
-              </Label>
-              <Input
-                id="last_name"
-                name="last_name"
-                value={profile.last_name}
-                onChange={handleChange}
-                disabled={!editing || loading}
-                className={cn(
-                  "w-full",
-                  theme === 'dark' 
-                    ? 'bg-background text-foreground border-border' 
-                    : 'bg-white text-gray-900 border-gray-300'
-                )}
-              />
-            </div>
-            <div>
-              <Label htmlFor="email" className={`text-xs mb-1 block ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                Email Address
-              </Label>
-              <Input
-                id="email"
-                name="email"
-                value={profile.email}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  // Strict email regex (disallows bad domains/TLDs)
-                  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,10}$/;
-
-                  if (value === "" || emailRegex.test(value)) {
-                    handleChange(e); // Only update if valid or cleared
-                  }
-                }}
-                disabled={!editing || loading}
-                className={cn(
-                  "w-full",
-                  theme === 'dark' 
-                    ? 'bg-background text-foreground border-border' 
-                    : 'bg-white text-gray-900 border-gray-300'
-                )}
-              />
-            </div>
-            <div>
-              <Label htmlFor="mobile_number" className={`text-xs mb-1 block ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                Mobile Number
-              </Label>
-              <Input
-                id="mobile_number"
-                name="mobile_number"
-                value={profile.mobile_number}
-                onChange={(e) => {
-                  const value = e.target.value.trim();
-
-                  // Allow +91 optional
-                  let processedValue = value;
-                  if (processedValue.startsWith("+91")) {
-                    processedValue = processedValue.replace("+91", "").trim();
-                  }
-
-                  // Remove spaces/dashes
-                  processedValue = processedValue.replace(/\s|-/g, "");
-
-                  // Allow only digits
-                  if (!/^\d*$/.test(processedValue)) return;
-
-                  // Restrict to 10 digits
-                  if (processedValue.length > 10) return;
-
-                  handleChange({ target: { name: "mobile_number", value: processedValue } } as React.ChangeEvent<HTMLInputElement>);
-                }}
-                disabled={!editing || loading}
-                className={cn(
-                  "w-full",
-                  theme === 'dark' 
-                    ? 'bg-background text-foreground border-border' 
-                    : 'bg-white text-gray-900 border-gray-300'
-                )}
-              />
-
-            </div>
-            <div>
-              <Label htmlFor="address" className={`text-xs mb-1 block ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                Address
-              </Label>
-              <Input
-                id="address"
-                name="address"
-                value={profile.address}
-                onChange={(e) => {
-                  const value = e.target.value;
-
-                  // Restrict length
-                  if (value.length > 200) return;
-
-                  // Require at least one alphanumeric (when not empty)
-                  if (value && !/[a-zA-Z0-9]/.test(value)) return;
-
-                  handleChange(e);
-                }}
-                disabled={!editing || loading}
-                className={cn(
-                  "w-full",
-                  theme === 'dark' 
-                    ? 'bg-background text-foreground border-border' 
-                    : 'bg-white text-gray-900 border-gray-300'
-                )}
-              />
-            </div>
-            <div>
-              <Label htmlFor="bio" className={`text-xs mb-1 block ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                Bio
-              </Label>
-              <textarea
-                id="bio"
-                name="bio"
-                value={profile.bio}
-                onChange={(e) => {
-                  const value = e.target.value;
-
-                  // Limit to 50 words (example)
-                  const words = value.trim().split(/\s+/);
-                  if (words.length > 50) return;
-
-                  // Trim and validate non-empty (when not blank)
-                  if (value.trim() === "" && value !== "") return;
-
-                  handleChange(e);
-                }}
-                disabled={!editing || loading}
-                className={cn(
-                  "w-full p-2 border rounded-md resize-none thin-scrollbar",
-                  theme === 'dark' 
-                    ? 'bg-background text-foreground border-border' 
-                    : 'bg-white text-gray-900 border-gray-300'
-                )}
-              />
-              <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                {profile.bio.trim().split(/\s+/).filter(Boolean).length}/50 words
-              </p>
+            <div className="col-span-1 sm:col-span-2 lg:col-span-3 w-full flex flex-col h-full">
+              <div className="flex items-center gap-1 sm:gap-2 mb-3 sm:mb-4 md:mb-5 lg:mb-6 border-b pb-2 sm:pb-3 overflow-x-auto flex-shrink-0">
+                <button onClick={() => setActiveTab('personal')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'personal' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Personal</button>
+                <button onClick={() => setActiveTab('contact')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'contact' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Contact</button>
+              </div>
+              <div className={`p-3 sm:p-4 md:p-5 lg:p-6 rounded-lg border flex-1 ${theme === 'dark' ? 'bg-card border-input' : 'bg-gray-50 border-gray-200'}`}>
+                {renderTabContent()}
+              </div>
             </div>
           </div>
         </CardContent>

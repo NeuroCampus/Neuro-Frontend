@@ -576,13 +576,38 @@ export const manageAdminProfile = async (
         Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         "Content-Type": "application/json",
       },
+      // avoid conditional requests for profile GETs in production
+      cache: method === 'GET' ? 'no-store' : undefined,
       body: method === "POST" ? JSON.stringify(data) : undefined,
     });
-    const result = await response.json();
+
+    // Handle 304 Not Modified: return cached profile if available
+    if (response.status === 304) {
+      try {
+        const cached = localStorage.getItem('user');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          return { success: true, profile: parsed } as ManageAdminProfileResponse;
+        }
+        return { success: false, message: 'Profile not modified and no cached profile available' } as ManageAdminProfileResponse;
+      } catch (e) {
+        console.error('Error reading cached admin profile', e);
+        return { success: false, message: 'Profile not modified and failed to read cache' } as ManageAdminProfileResponse;
+      }
+    }
+
+    let result: any = null;
+    try {
+      result = await response.json();
+    } catch (e) {
+      console.warn('manageAdminProfile: response had no JSON body', e);
+    }
+
     if (!response.ok) {
       console.error("Manage Admin Profile Failed:", { status: response.status, result });
-      return { success: false, message: result.message || `HTTP ${response.status}` };
+      return { success: false, message: (result && result.message) || `HTTP ${response.status}` };
     }
+
     return result;
   } catch (error) {
     console.error("Manage Admin Profile Error:", error);

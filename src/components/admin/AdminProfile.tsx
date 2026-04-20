@@ -304,8 +304,8 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
   }
 
   return (
-    <div className={`min-h-screen flex justify-center items-start py-12 px-4 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
-      <Card className={`w-full max-w-full sm:max-w-2xl md:max-w-4xl lg:max-w-5xl mx-auto my-2 sm:my-4 md:my-6 lg:my-8 px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6 ${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}`}>
+    <div className={`min-h-screen flex justify-center items-start px-4 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+      <Card className={`w-full max-w-none mx-auto my-2 sm:my-4 md:my-6 lg:my-8 px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6 ${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}`}>
         <CardHeader className="px-2 sm:px-3 md:px-4 lg:px-6 py-3 sm:py-4 md:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 border-b">
           <div className="flex-1 min-w-0">
             <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Profile Information</CardTitle>

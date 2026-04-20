@@ -2128,9 +2128,33 @@ export const manageProfile = async (
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/profile/`, {
       method,
       headers: { "Content-Type": "application/json" },
+      // prevent conditional requests that result in 304 when we want fresh profile
+      cache: method === 'GET' ? 'no-store' : undefined,
       body: method === "PATCH" ? JSON.stringify(data) : undefined,
-
     });
+
+    // If server returned 304 Not Modified, try to use cached profile from localStorage
+    if (response.status === 304) {
+      try {
+        const cached = localStorage.getItem('user');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          return { success: true, data: parsed } as ManageProfileResponse;
+        }
+        return { success: false, message: 'Profile not modified and no cached profile available' } as ManageProfileResponse;
+      } catch (e) {
+        return { success: false, message: 'Profile not modified and failed to read cache' } as ManageProfileResponse;
+      }
+    }
+
+    // For other responses, attempt to parse JSON and return
+    if (!response.ok) {
+      let parsed: any = null;
+      try { parsed = await response.json(); } catch (e) { /* ignore */ }
+      const message = parsed?.message || `Request failed (status: ${response.status})`;
+      return { success: false, message, data: parsed?.data } as ManageProfileResponse;
+    }
+
     return await response.json();
   } catch (error: unknown) {
     return handleApiError(error, (error as any).response);
