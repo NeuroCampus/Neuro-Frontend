@@ -156,6 +156,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Leave", page: "leave" },
     { name: "Reports", page: "reports" },
     { name: "Student Fee Reports", page: "student-reports" },
+    { name: "Profile", page: "profile" },
   ],
   admin: [
     // Main
