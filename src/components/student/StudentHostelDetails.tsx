@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getStudentHostelDetails, getTodayMenuSummary } from '../../utils/hms_api';
+import { getStudentHostelDetails, getTodayMenuSummary, getMyIssues } from '../../utils/hms_api';
 import { useTheme } from '../../context/ThemeContext';
 import { useToast } from '../../hooks/use-toast';
 import RaiseIssueModal from '../hms/RaiseIssueModal';
@@ -191,6 +191,8 @@ const StudentHostelDetails: React.FC = () => {
   const [caretaker, setCaretaker] = useState<Caretaker | null>(null);
   const [todayMenus, setTodayMenus] = useState<any[]>([]);
   const [isRaiseIssueModalOpen, setIsRaiseIssueModalOpen] = useState(false);
+  const [myIssues, setMyIssues] = useState<any[]>([]);
+  const [loadingIssues, setLoadingIssues] = useState(false);
   const { toast } = useToast();
 
   const load = async () => {
@@ -238,6 +240,29 @@ const StudentHostelDetails: React.FC = () => {
       }
     };
     loadToday();
+  }, []);
+
+  useEffect(() => {
+    // Load student's raised issues
+    const loadIssues = async () => {
+      setLoadingIssues(true);
+      try {
+        const res = await getMyIssues();
+        if (res.success && res.results) {
+          setMyIssues(res.results);
+        } else if (res.success && Array.isArray(res.data)) {
+          setMyIssues(res.data);
+        } else {
+          setMyIssues([]);
+        }
+      } catch (e) {
+        console.error('Failed to load my issues', e);
+        setMyIssues([]);
+      } finally {
+        setLoadingIssues(false);
+      }
+    };
+    loadIssues();
   }, []);
 
 
@@ -433,20 +458,135 @@ const StudentHostelDetails: React.FC = () => {
         />
       </div>
 
-      {/* ── Raise Issue Button ───────────────────────────────────────────── */}
+      {/* ── Issue Management Card (Combined) ──────────────────────────── */}
       {room && (
-        <div className="mt-4">
-          <button
-            onClick={() => setIsRaiseIssueModalOpen(true)}
-            className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors ${
-              theme === 'dark'
-                ? 'bg-amber-900/40 hover:bg-amber-900/60 text-amber-300 border border-amber-700'
-                : 'bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200'
-            }`}
-          >
-            <FaExclamationTriangle className="w-4 h-4" />
-            Raise an Issue
-          </button>
+        <div className={`rounded-xl border shadow-sm ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
+          
+          {/* Section 1: Report an Issue */}
+          <div className={`p-6 bg-gradient-to-r ${theme === 'dark' ? 'from-amber-900/20 to-amber-900/10' : 'from-amber-50 to-amber-25'}`}>
+            <div className="flex items-start gap-4">
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${theme === 'dark' ? 'bg-amber-900/60 text-amber-300' : 'bg-amber-100 text-amber-600'}`}>
+                <FaExclamationTriangle className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <h3 className={`text-lg font-bold mb-1 ${theme === 'dark' ? 'text-amber-300' : 'text-amber-900'}`}>
+                  Report an Issue
+                </h3>
+                <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-amber-200/70' : 'text-amber-800/70'}`}>
+                  Have a maintenance problem, leak, or facility issue? Let us know and our team will resolve it within 2 days.
+                </p>
+                <button
+                  onClick={() => setIsRaiseIssueModalOpen(true)}
+                  className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                    theme === 'dark'
+                      ? 'bg-amber-600 hover:bg-amber-500 text-white'
+                      : 'bg-amber-600 hover:bg-amber-700 text-white'
+                  }`}
+                >
+                  Raise an Issue
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className={`h-px ${theme === 'dark' ? 'bg-border' : 'bg-gray-200'}`} />
+
+          {/* Section 2: Your Raised Issues */}
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${theme === 'dark' ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-50 text-blue-600'}`}>
+                <FaExclamationCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>Your Raised Issues</h3>
+                <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                  Track all issues you've reported and their current status
+                </p>
+              </div>
+            </div>
+
+            {loadingIssues ? (
+              <div className="flex items-center justify-center py-8">
+                <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Loading issues...</p>
+              </div>
+            ) : myIssues.length === 0 ? (
+              <div className={`py-8 text-center rounded-lg border-2 border-dashed ${theme === 'dark' ? 'border-border bg-slate-900/30' : 'border-gray-200 bg-gray-50'}`}>
+                <FaExclamationCircle className={`w-10 h-10 mx-auto mb-2 opacity-50 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} />
+                <p className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                  No issues raised yet
+                </p>
+                <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-500'}`}>
+                  Use the "Raise an Issue" button above to report your first issue
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {myIssues.map((issue) => {
+                  const statusColors: Record<string, string> = {
+                    pending: theme === 'dark' ? 'bg-yellow-900/30 text-yellow-300 border-yellow-700' : 'bg-yellow-50 text-yellow-800 border-yellow-200',
+                    in_progress: theme === 'dark' ? 'bg-blue-900/30 text-blue-300 border-blue-700' : 'bg-blue-50 text-blue-800 border-blue-200',
+                    waiting_for_workers: theme === 'dark' ? 'bg-orange-900/30 text-orange-300 border-orange-700' : 'bg-orange-50 text-orange-800 border-orange-200',
+                    completed: theme === 'dark' ? 'bg-green-900/30 text-green-300 border-green-700' : 'bg-green-50 text-green-800 border-green-200',
+                  };
+
+                  const statusIcons: Record<string, React.ReactNode> = {
+                    pending: '⏳',
+                    in_progress: '⚙️',
+                    waiting_for_workers: '👷',
+                    completed: '✅',
+                  };
+
+                  const statusLabels: Record<string, string> = {
+                    pending: 'Pending',
+                    in_progress: 'In Progress',
+                    waiting_for_workers: 'Waiting for Workers',
+                    completed: 'Completed',
+                  };
+
+                  const colorClass = statusColors[issue.status] || statusColors.pending;
+                  const statusLabel = statusLabels[issue.status] || issue.status;
+                  const statusIcon = statusIcons[issue.status];
+
+                  return (
+                    <div
+                      key={issue.id}
+                      className={`rounded-lg border p-4 transition-all hover:shadow-md ${theme === 'dark' ? 'bg-slate-900/50 border-slate-700 hover:border-slate-600' : 'bg-gray-50/50 border-gray-200 hover:border-gray-300'}`}
+                    >
+                      <div className="flex items-start justify-between gap-4 mb-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-lg">{statusIcon}</span>
+                            <h4 className={`text-base font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                              {issue.title}
+                            </h4>
+                          </div>
+                          <p className={`text-sm mb-3 leading-relaxed ${theme === 'dark' ? 'text-gray-400' : 'text-gray-700'}`}>
+                            {issue.description}
+                          </p>
+                        </div>
+                        <div className={`px-4 py-2 rounded-full text-xs font-bold border whitespace-nowrap ${colorClass}`}>
+                          {statusLabel}
+                        </div>
+                      </div>
+                      
+                      {/* Footer with timestamps and updates */}
+                      <div className="flex items-center justify-between gap-2 pt-3 border-t border-gray-300/30">
+                        <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'}`}>
+                          📅 {new Date(issue.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at {new Date(issue.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        {issue.update_count && issue.update_count > 0 && (
+                          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${theme === 'dark' ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-50 text-blue-700'}`}>
+                            {issue.update_count} update{issue.update_count !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -534,7 +674,21 @@ const StudentHostelDetails: React.FC = () => {
         roomId={room?.id || 0}
         roomName={room?.room_number}
         onSuccess={() => {
-          // Optionally refresh data or show success message
+          // Refresh issues list and show success message
+          const loadIssues = async () => {
+            try {
+              const res = await getMyIssues();
+              if (res.success && res.results) {
+                setMyIssues(res.results);
+              } else if (res.success && Array.isArray(res.data)) {
+                setMyIssues(res.data);
+              }
+            } catch (e) {
+              console.error('Failed to reload issues', e);
+            }
+          };
+          loadIssues();
+          
           toast({
             title: 'Issue Raised',
             description: 'Your issue has been successfully reported to the hostel management.',
