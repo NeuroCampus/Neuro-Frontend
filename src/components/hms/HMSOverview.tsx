@@ -134,16 +134,28 @@ const HMSOverview = () => {
     return "AVAIL";
   };
 
-  const filteredRooms = rooms;
+  // Helper: derive floor number from room_number like H1-101 -> 1, H1-001 -> 0
+  const getFloorFromRoomNumber = (roomNumber: string) => {
+    if (!roomNumber) return 0;
+    const m = roomNumber.match(/(\d+)$/);
+    if (!m) return 0;
+    const num = parseInt(m[1], 10);
+    if (isNaN(num)) return 0;
+    return Math.floor(num / 100);
+  };
 
-  // Group rooms by hostel for matrix visualization
-  const roomsByHostel = rooms.reduce((acc, room) => {
-    if (!acc[room.hostel]) {
-      acc[room.hostel] = [];
-    }
-    acc[room.hostel].push(room);
+  // Group rooms by floor for display and sort within floors
+  const roomsByFloor = rooms.reduce((acc, room) => {
+    const floor = getFloorFromRoomNumber(room.room_number || room.name || '');
+    if (!acc[floor]) acc[floor] = [];
+    acc[floor].push(room);
     return acc;
   }, {} as Record<number, Room[]>);
+
+  // Ensure rooms in each floor are sorted by room_number
+  Object.keys(roomsByFloor).forEach((f) => {
+    roomsByFloor[Number(f)].sort((a, b) => (a.room_number || a.name).localeCompare(b.room_number || b.name, undefined, {numeric: true}));
+  });
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -369,34 +381,46 @@ const HMSOverview = () => {
               </div>
             ) : selectedHostel ? (
               // Show selected hostel's rooms only
-              filteredRooms.length > 0 ? (
+              Object.keys(roomsByFloor).length > 0 ? (
                 <div>
                   <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
                     {hostels.find((h) => h.id === selectedHostel)?.name}
                   </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
-                    {filteredRooms.map((room) => (
-                      <motion.div
-                        key={room.id}
-                        variants={itemVariants}
-                        className={`p-3 rounded-lg border-2 text-center cursor-pointer hover:scale-105 transition-transform ${getRoomColor(
-                          room.student_count,
-                          room.capacity
-                        )} ${
-                          room.student_count === room.capacity ? 'border-red-700' : 'border-opacity-50'
-                        } text-white font-semibold`}
-                        title={`${room.room_number}: ${room.student_count}/${room.capacity}`}
-                      >
-                        <div className="text-xs mb-1">{room.room_number}</div>
-                        <div className="text-sm">
-                          {room.student_count}/{room.capacity}
-                        </div>
-                        <div className="text-xs mt-1 font-bold opacity-80">
-                          {getRoomStatusLabel(room.student_count, room.capacity)}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
+                      <div className="space-y-6">
+                        {Object.keys(roomsByFloor)
+                          .map((k) => Number(k))
+                          .sort((a, b) => a - b)
+                          .map((floorNum) => (
+                            <div key={floorNum}>
+                              <h4 className={`text-md font-semibold mb-3 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                                Floor {floorNum === 0 ? 'Ground' : floorNum}
+                              </h4>
+                              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+                                {roomsByFloor[floorNum].map((room) => (
+                                  <motion.div
+                                    key={room.id}
+                                    variants={itemVariants}
+                                    className={`p-3 rounded-lg border-2 text-center cursor-pointer hover:scale-105 transition-transform ${getRoomColor(
+                                      room.student_count,
+                                      room.capacity
+                                    )} ${
+                                      room.student_count === room.capacity ? 'border-red-700' : 'border-opacity-50'
+                                    } text-white font-semibold`}
+                                    title={`${room.room_number}: ${room.student_count}/${room.capacity}`}
+                                  >
+                                    <div className="text-xs mb-1">{room.room_number}</div>
+                                    <div className="text-sm">
+                                      {room.student_count}/{room.capacity}
+                                    </div>
+                                    <div className="text-xs mt-1 font-bold opacity-80">
+                                      {getRoomStatusLabel(room.student_count, room.capacity)}
+                                    </div>
+                                  </motion.div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                      </div>
                 </div>
               ) : (
                 <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>

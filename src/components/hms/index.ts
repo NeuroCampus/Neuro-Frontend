@@ -9,3 +9,5 @@ export { default as StaffManagementOverview } from './StaffManagementOverview';
 export { default as MenuManagement } from './MenuManagement';
 export { default as MessBillingView } from './MessBillingView';
 export { default as StudentMealManagement } from './StudentMealManagement';
+export { default as IssueTracking } from './IssueTracking';
+export { default as RaiseIssueModal } from './RaiseIssueModal';
