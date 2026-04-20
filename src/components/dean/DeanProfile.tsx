@@ -311,16 +311,16 @@ const DeanProfile = () => {
 
       <CardContent className="px-2 sm:px-3 md:px-4 lg:px-6 py-3 sm:py-4 md:py-6">
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-8 items-stretch">
-          <div className="col-span-1 flex flex-col items-center sm:items-start h-full">
+          <div className="col-span-1 flex flex-col items-center h-full">
             <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#a259ff] text-white flex items-center justify-center text-lg sm:text-2xl font-semibold mb-3 sm:mb-4 flex-shrink-0`}>
               {(profile.first_name && profile.first_name[0]) || ""}{(profile.last_name && profile.last_name[0]) || ""}
             </div>
-            <div className="text-base sm:text-lg font-semibold text-center sm:text-left mb-1">{profile.first_name} {profile.last_name}</div>
+            <div className="text-base sm:text-lg font-semibold text-center mb-1">{profile.first_name} {profile.last_name}</div>
             <div className={`text-xs sm:text-sm mb-4 sm:mb-6 text-gray-500`}>{profile.designation}</div>
 
-            <div className="w-full mt-4 sm:mt-6 flex-1 flex flex-col">
-              <h4 className={`text-xs sm:text-sm font-bold mb-2.5 sm:mb-4 text-gray-900`}>Quick Info</h4>
-              <div className={`border rounded-lg p-2.5 sm:p-4 flex-1 bg-gray-50 border-gray-200`}>
+            <div className="w-full mt-4 sm:mt-6 flex-1 flex flex-col items-center">
+              <h4 className={`text-xs sm:text-sm font-bold mb-2.5 sm:mb-4 text-gray-900 text-center`}>Quick Info</h4>
+              <div className={`border rounded-lg p-2.5 sm:p-4 bg-gray-50 border-gray-200 w-full max-w-xs`}>
                 <div className="grid grid-cols-1 gap-2.5 sm:gap-3.5 h-full">
                   <div className="flex flex-col justify-start">
                     <span className={`text-xs font-semibold mb-1 text-gray-900`}>Department</span>
