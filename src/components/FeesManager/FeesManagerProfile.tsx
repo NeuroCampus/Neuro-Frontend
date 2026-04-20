@@ -183,9 +183,9 @@ const FeesManagerProfile: React.FC = () => {
 
         <CardContent className="px-6 pb-6 pt-2 space-y-8">
           <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-8 items-start">
-            <div className="col-span-1 flex flex-col items-center sm:items-start">
-              <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#a259ff] text-white flex items-center justify-center text-lg sm:text-2xl font-semibold mb-3 sm:mb-4 flex-shrink-0`}>{(formData.first_name?.[0] || '') + (formData.last_name?.[0] || '')}</div>
-              <div className="text-base sm:text-lg font-semibold text-center sm:text-left mb-1">{formData.first_name} {formData.last_name}</div>
+            <div className="col-span-1 flex flex-col items-center">
+              <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#a259ff] text-white flex items-center justify-center text-lg sm:text-2xl font-semibold mb-3 sm:mb-4 mt-4 flex-shrink-0`}>{(formData.first_name?.[0] || '') + (formData.last_name?.[0] || '')}</div>
+              <div className="text-base sm:text-lg font-semibold text-center mb-1">{formData.first_name} {formData.last_name}</div>
               <div className={`text-xs sm:text-sm mb-4 sm:mb-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Fees Manager</div>
 
               <div className="w-full mt-4 sm:mt-6 flex flex-col">
