@@ -27,6 +27,7 @@ import {
   Mic,
   Home,
   Utensils,
+  AlertCircle,
 } from "lucide-react";
 import { useIsMobile } from "../../hooks/use-mobile";
 import {
@@ -138,6 +139,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       "hostel-students": <GraduationCap size={20} />,
       "enrollment": <UserCheck size={20} />,
       "menu-management": <Utensils size={20} />,
+      "issues": <AlertCircle size={20} />,
 
     };
     return iconMap[page] || <LayoutDashboard size={20} />;
@@ -314,6 +316,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Enrollment", page: "enrollment" },
     { name: "Staff", page: "staff" },
     { name: "Menu Management", page: "menu-management" },
+    { name: "Issue Tracking", page: "issues" },
   ],
 };
 

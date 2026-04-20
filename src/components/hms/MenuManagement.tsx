@@ -5,7 +5,6 @@ import {
   getMenuItems,
   manageMenuItem,
   getHostels,
-  getMealSkips,
 } from '../../utils/hms_api';
 import { useTheme } from '../../context/ThemeContext';
 import { useToast } from '../../hooks/use-toast';
@@ -29,11 +28,11 @@ interface MealType {
 }
 
 interface MenuItem {
-  id: number;
+  id?: number;
   name: string;
   description?: string;
   vegetarian: boolean;
-  cost: number;
+  cost?: number;
   calories?: number;
   is_active?: boolean;
 }
@@ -44,7 +43,6 @@ interface Menu {
   hostel_name: string;
   day_of_week: string;
   day_name: string;
-  meal_type: number;
   meal_type_detail?: MealType;
   items: MenuItem[];
   is_recurring: boolean;
@@ -54,14 +52,6 @@ interface Menu {
 interface Hostel {
   id: number;
   name: string;
-}
-
-interface MealSkip {
-  id: number;
-  date: string;
-  student_name: string;
-  enrollment_no: string;
-  skip_type_display: string;
 }
 
 const DAY_OPTIONS = [
@@ -100,13 +90,13 @@ const MenuManagement: React.FC = () => {
 
   const [menus, setMenus] = useState<Menu[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  
   const [hostels, setHostels] = useState<Hostel[]>([]);
-  const [mealSkips, setMealSkips] = useState<MealSkip[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingMenu, setEditingMenu] = useState<Menu | null>(null);
   const [selectedHostel, setSelectedHostel] = useState<string>('');
-  const [showSkips, setShowSkips] = useState(false);
+  const [dayFilter, setDayFilter] = useState<string>('all');
   
   // Food Item Management
   const [showFoodForm, setShowFoodForm] = useState(false);
@@ -124,26 +114,24 @@ const MenuManagement: React.FC = () => {
     day_of_week: '0',
     meal_type: '',
     date: '',
-    items: [] as number[],
+    items: [],
     is_recurring: true,
   });
 
-  useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  const loadInitialData = async () => {
+  // Load menus for a specific hostel only
+  const loadMenusForHostel = async (hostelId: string) => {
+    if (!hostelId) {
+      setMenus([]);
+      return;
+    }
     setLoading(true);
     try {
-      // Initial load: only fetch menus to keep initial load minimal
-      const menusRes = await getMenus();
-      if (menusRes.success && menusRes.results) setMenus(menusRes.results);
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to load menu data',
-        variant: 'destructive',
-      });
+      const res = await getMenus({ hostel: hostelId });
+      if (res.success && res.results) setMenus(res.results);
+      else setMenus([]);
+    } catch (e) {
+      console.error('Failed to load menus for hostel', e);
+      setMenus([]);
     } finally {
       setLoading(false);
     }
@@ -156,19 +144,9 @@ const MenuManagement: React.FC = () => {
       const res = await getHostels();
       if (res.success && res.results) {
         setHostels(res.results);
-        if (res.results.length > 0 && !selectedHostel) setSelectedHostel(res.results[0].id.toString());
       }
     } catch (e) {
       console.error('Failed to load hostels', e);
-    }
-  };
-
-  const loadMealSkips = async () => {
-    try {
-      const res = await getMealSkips();
-      if (res.success && res.results) setMealSkips(res.results);
-    } catch (e) {
-      console.error('Failed to load meal skips', e);
     }
   };
 
@@ -189,14 +167,15 @@ const MenuManagement: React.FC = () => {
     }
   };
 
-  // Reload menus and menu items after food item changes
+  // meal types are mocked on frontend; no API call required
+
+  // Reload menu items after food item changes (no menus fetch)
   const reloadMenuData = async () => {
     try {
-      const [menusRes, itemsRes] = await Promise.all([getMenus(), getMenuItems()]);
-      if (menusRes.success && menusRes.results) setMenus(menusRes.results);
+      const itemsRes = await getMenuItems();
       if (itemsRes.success && itemsRes.results) setMenuItems(itemsRes.results);
     } catch (error) {
-      console.error('Failed to reload menu data:', error);
+      console.error('Failed to reload menu items:', error);
     }
   };
 
@@ -211,14 +190,34 @@ const MenuManagement: React.FC = () => {
       return;
     }
 
+    // Check for duplicate menu (client-side validation)
+    if (!editingMenu) {
+      const duplicate = menus.find(
+        (m) =>
+          m.hostel === parseInt(formData.hostel) &&
+          m.day_of_week === formData.day_of_week &&
+          m.meal_type_detail?.name === formData.meal_type
+      );
+
+      if (duplicate) {
+        toast({
+          title: 'Menu Already Exists',
+          description: `A menu already exists for this hostel on ${DAY_OPTIONS.find((d) => d.value === formData.day_of_week)?.label} for ${formData.meal_type}. Click "Edit" to modify it.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
     try {
       const data: any = {
-        hostel: parseInt(formData.hostel),
-        day_of_week: formData.day_of_week,
-        meal_type: isNaN(Number(formData.meal_type)) ? formData.meal_type : parseInt(formData.meal_type),
-        items: formData.items,
-        is_recurring: formData.is_recurring,
-      };
+          hostel: parseInt(formData.hostel),
+          day_of_week: formData.day_of_week,
+          // frontend uses mocked meal type codes (e.g., 'BR','LN')
+          meal_type: formData.meal_type || null,
+          items: formData.items,
+          is_recurring: formData.is_recurring,
+        };
 
       // include date when provided (for one-time menus)
       if (formData.date && !formData.is_recurring) {
@@ -226,6 +225,8 @@ const MenuManagement: React.FC = () => {
       } else {
         data.date = null;
       }
+
+      console.log('Submitting menu data:', data);
 
       let response;
       if (editingMenu) {
@@ -249,11 +250,48 @@ const MenuManagement: React.FC = () => {
           items: [],
           is_recurring: true,
         });
-        loadInitialData();
+        // Update local menus state so no extra GET is required
+        const updatedMenu = response.data;
+        if (updatedMenu) {
+          // Find existing menu to preserve derived fields like `meal_type_detail` and `hostel_name`
+          const existing = menus.find((m) => m.id === updatedMenu.id);
+
+          // Convert items into full MenuItem objects when possible.
+          // The backend may return either an array of IDs or an array of full item objects.
+          const fullItems = Array.isArray(updatedMenu.items)
+            ? updatedMenu.items.map((it: any) => {
+                if (typeof it === 'number') {
+                  return menuItems.find((m) => m.id === it) || { id: it, name: 'Unknown', vegetarian: false };
+                }
+                if (it && typeof it === 'object' && it.id) {
+                  // already a full item object returned by backend
+                  return it;
+                }
+                return { id: it, name: 'Unknown', vegetarian: false };
+              })
+            : [];
+
+          const merged = {
+            ...existing,
+            ...updatedMenu,
+            items: fullItems,
+            // Preserve meal_type_detail if available locally
+            // Prefer server-provided nested meal_type_detail when available
+            meal_type_detail: (updatedMenu.meal_type_detail) || (existing && existing.meal_type_detail) || null,
+            hostel_name: (updatedMenu.hostel_name) || (existing && existing.hostel_name) || '',
+          };
+
+          if (editingMenu) {
+            setMenus((prev) => prev.map((m) => (m.id === merged.id ? merged : m)));
+          } else {
+            setMenus((prev) => [merged, ...prev]);
+          }
+        }
       } else {
         throw new Error(response.message || 'Failed to save menu');
       }
     } catch (error) {
+      console.error('Menu submit error:', error);
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to save menu',
@@ -265,9 +303,10 @@ const MenuManagement: React.FC = () => {
   const handleEdit = (menu: Menu) => {
     setEditingMenu(menu);
     setFormData({
-      hostel: menu.hostel.toString(),
+      hostel: selectedHostel, // Use selectedHostel instead of menu.hostel
       day_of_week: menu.day_of_week,
-      meal_type: menu.meal_type.toString(),
+      // Get meal_type code from meal_type_detail.name
+      meal_type: menu.meal_type_detail?.name || '',
       date: menu.date || '',
       items: menu.items.map((item) => item.id),
       is_recurring: menu.is_recurring,
@@ -277,13 +316,6 @@ const MenuManagement: React.FC = () => {
     loadHostels();
     loadMenuItems();
   };
-
-  // When skip tracking is requested, load meal skips lazily
-  useEffect(() => {
-    if (showSkips && mealSkips.length === 0) {
-      loadMealSkips();
-    }
-  }, [showSkips]);
 
   const handleDelete = async (menuId: number) => {
     if (!confirm('Are you sure you want to delete this menu?')) return;
@@ -295,7 +327,8 @@ const MenuManagement: React.FC = () => {
           title: 'Success',
           description: 'Menu deleted successfully',
         });
-        loadInitialData();
+        // Remove deleted menu locally to avoid extra GET
+        setMenus((prev) => prev.filter((m) => m.id !== menuId));
       } else {
         throw new Error(response.message || 'Failed to delete menu');
       }
@@ -359,10 +392,8 @@ const MenuManagement: React.FC = () => {
           cost: '',
           calories: '',
         });
-        // Reload only menu items and menus
-        await Promise.all([loadMenuItems(), getMenus().then(res => {
-          if (res.success && res.results) setMenus(res.results);
-        })]);
+        // Reload only menu items (no need to fetch all menus)
+        await loadMenuItems();
       } else {
         throw new Error(response.message || 'Failed to save food item');
       }
@@ -397,10 +428,8 @@ const MenuManagement: React.FC = () => {
           title: 'Success',
           description: 'Food item deleted successfully',
         });
-        // Reload only menu items and menus
-        await Promise.all([loadMenuItems(), getMenus().then(res => {
-          if (res.success && res.results) setMenus(res.results);
-        })]);
+        // Reload only menu items (no need to fetch all menus)
+        await loadMenuItems();
       } else {
         throw new Error(response.message || 'Failed to delete food item');
       }
@@ -413,27 +442,28 @@ const MenuManagement: React.FC = () => {
     }
   };
 
-  const getSkipCountForMenu = (menu: Menu) => {
-    return mealSkips.filter((skip) => {
-      if (menu.date) {
-        return skip.date === menu.date;
-      }
-      const skipDate = new Date(skip.date);
-      const skipDay = skipDate.getDay().toString();
-      return menu.hostel_name && skipDay === menu.day_of_week;
-    }).length;
-  };
-
   const filteredMenus = selectedHostel
     ? menus.filter((m) => m.hostel === parseInt(selectedHostel))
     : menus;
 
-  const hostelSkipStats = selectedHostel
-    ? mealSkips.filter((skip) => {
-        const hostel = hostels.find((h) => h.id === parseInt(selectedHostel));
-        return hostel;
-      })
-    : [];
+  // Apply day filter (supports recurring weekly menus and one-time date menus)
+  const applyDayFilter = (menuList: Menu[]) => {
+    if (dayFilter === 'all') return menuList;
+    return menuList.filter((m) => {
+      // If menu has explicit date (one-time), compute its weekday
+      if (m.date) {
+        const d = new Date(m.date);
+        if (isNaN(d.getTime())) return false;
+        // JS getDay(): 0=Sun..6=Sat ; map to our 0=Mon..6=Sun
+        const mapped = ((d.getDay() + 6) % 7).toString();
+        return mapped === dayFilter;
+      }
+      // Otherwise use menu.day_of_week (assumed to be '0'..'6' as string)
+      return m.day_of_week === dayFilter;
+    });
+  };
+
+  const displayedMenus = applyDayFilter(filteredMenus);
 
   return (
     <div className={`rounded-xl border ${isDark ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-white'} p-6 shadow-sm`}>
@@ -458,8 +488,8 @@ const MenuManagement: React.FC = () => {
                 is_recurring: true,
               });
               // Load required data for form lazily
-              loadHostels();
-              loadMenuItems();
+                    loadHostels();
+                    loadMenuItems();
             }}
             className={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
               isDark
@@ -470,17 +500,7 @@ const MenuManagement: React.FC = () => {
             <Plus className="h-4 w-4" />
             Add Menu
           </button>
-          <button
-            onClick={() => setShowSkips(!showSkips)}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
-              isDark
-                ? 'bg-orange-600 text-white hover:bg-orange-700'
-                : 'bg-orange-600 text-white hover:bg-orange-700'
-            }`}
-          >
-            <Users className="h-4 w-4" />
-            Skip Tracking
-          </button>
+          
         </div>
       </div>
 
@@ -491,7 +511,13 @@ const MenuManagement: React.FC = () => {
         </label>
         <select
           value={selectedHostel}
-          onChange={(e) => setSelectedHostel(e.target.value)}
+          onChange={(e) => {
+            const val = e.target.value;
+            setSelectedHostel(val);
+            // Only load menus when a hostel is selected
+            if (val) loadMenusForHostel(val);
+            else setMenus([]);
+          }}
           onFocus={() => loadHostels()}
           className={`w-full rounded-lg border ${
             isDark
@@ -508,47 +534,29 @@ const MenuManagement: React.FC = () => {
         </select>
       </div>
 
-      {/* Skip Tracking View */}
-      {showSkips && (
-        <div className={`mb-6 rounded-lg border ${isDark ? 'border-slate-700 bg-slate-900' : 'border-gray-200 bg-gray-50'} p-4`}>
-          <h3 className={`mb-4 flex items-center gap-2 font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            <TrendingUp className="h-5 w-5" />
-            Meal Skip Tracking
-          </h3>
-
-          {hostelSkipStats.length > 0 ? (
-            <div className="space-y-3">
-              {hostelSkipStats.map((skip) => (
-                <div
-                  key={skip.id}
-                  className={`rounded-lg border ${isDark ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-white'} p-3 flex items-center justify-between`}
-                >
-                  <div>
-                    <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {skip.student_name}
-                    </p>
-                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {skip.enrollment_no}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                      {skip.skip_type_display}
-                    </p>
-                    <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                      {skip.date}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className={`text-center py-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              No meal skips recorded for this hostel
-            </p>
-          )}
+      {/* Day Filter */}
+      <div className="mb-6">
+        <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+          Filter by Day
+        </label>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setDayFilter('all')}
+            className={`px-3 py-1 rounded-md text-sm ${dayFilter === 'all' ? (isDark ? 'bg-blue-600 text-white' : 'bg-blue-600 text-white') : (isDark ? 'bg-slate-700 text-gray-200' : 'bg-gray-100 text-gray-700')}`}
+          >
+            All
+          </button>
+          {DAY_OPTIONS.map((d) => (
+            <button
+              key={d.value}
+              onClick={() => setDayFilter(d.value)}
+              className={`px-3 py-1 rounded-md text-sm ${dayFilter === d.value ? (isDark ? 'bg-blue-600 text-white' : 'bg-blue-600 text-white') : (isDark ? 'bg-slate-700 text-gray-200' : 'bg-gray-100 text-gray-700')}`}
+            >
+              {d.label.substring(0,3)}
+            </button>
+          ))}
         </div>
-      )}
+      </div>
 
       {/* Form */}
       {showForm && (
@@ -940,7 +948,7 @@ const MenuManagement: React.FC = () => {
         <div className="flex justify-center py-8">
           <div className={`h-8 w-8 animate-spin rounded-full border-4 ${isDark ? 'border-slate-700 border-t-blue-400' : 'border-gray-300 border-t-blue-600'}`} />
         </div>
-      ) : filteredMenus.length === 0 ? (
+      ) : displayedMenus.length === 0 ? (
         <div className={`rounded-lg border-2 border-dashed ${isDark ? 'border-slate-700 bg-slate-900' : 'border-gray-300 bg-gray-50'} py-8 text-center`}>
           <ChefHat className={`mx-auto h-12 w-12 ${isDark ? 'text-slate-600' : 'text-gray-400'}`} />
           <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
@@ -949,7 +957,7 @@ const MenuManagement: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredMenus.map((menu) => {
+          {displayedMenus.map((menu) => {
             const today = new Date();
             const todayStr = today.toISOString().slice(0, 10);
             const todayWeekday = ((today.getDay() + 6) % 7).toString();
@@ -980,12 +988,6 @@ const MenuManagement: React.FC = () => {
                       <Calendar className={`h-4 w-4 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
                       <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                         {menu.is_recurring ? 'Weekly' : 'One-time'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users className={`h-4 w-4 ${isDark ? 'text-orange-400' : 'text-orange-600'}`} />
-                      <span className={`text-sm font-medium ${isDark ? 'text-orange-300' : 'text-orange-600'}`}>
-                        {getSkipCountForMenu(menu)} skip(s)
                       </span>
                     </div>
                   </div>
