@@ -116,22 +116,36 @@ const IssueTracking = ({ hostelId }: { hostelId: number }) => {
         note: note || undefined
       });
 
-      if (response.success) {
+      if (response.success && response.data) {
         toast({
           title: 'Success',
           description: 'Issue status updated successfully',
           variant: 'default'
         });
         
-        // Refresh the issues list
-        await fetchIssues();
+        // Update the issues list optimistically from the response
+        setIssues(prevIssues =>
+          prevIssues.map(issue =>
+            issue.id === issueId
+              ? {
+                  ...issue,
+                  status: newStatus,
+                  updated_at: new Date().toISOString(),
+                  update_count: (issue.update_count || 0) + 1
+                }
+              : issue
+          )
+        );
         
-        // Refresh the selected issue if it was the one we updated
+        // Update the selected issue optimistically from the response
         if (selectedIssue?.id === issueId) {
-          const detailedResponse = await getIssueDetail(issueId);
-          if (detailedResponse.success && detailedResponse.data) {
-            setSelectedIssue(detailedResponse.data);
-          }
+          setSelectedIssue({
+            ...selectedIssue,
+            status: newStatus,
+            updated_at: new Date().toISOString(),
+            update_count: (selectedIssue.update_count || 0) + 1,
+            updates: response.data.updates || selectedIssue.updates || []
+          });
         }
       } else {
         toast({
