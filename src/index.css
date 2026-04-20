@@ -398,6 +398,15 @@ html {
   100% { opacity: 1; }
 }
 
+/* Ensure SweetAlert overlays above other UI modals (e.g., Radix Dialog z-50) */
+.swal2-container,
+.swal2-backdrop,
+.swal2-popup,
+.sweetalert-popup {
+  z-index: 2147483647 !important;
+  pointer-events: auto !important;
+}
+
 /* Ensure modal is centered */
 .swal2-container {
   display: flex !important;
