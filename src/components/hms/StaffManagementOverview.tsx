@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Users, UserCheck, Loader, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
-import { getStaffEnrollment } from "../../utils/hms_api";
+import { getStaffEnrollment, manageWardens, manageCaretakers } from "../../utils/hms_api";
 import { useTheme } from "../../context/ThemeContext";
 
 interface Warden {
@@ -31,6 +31,13 @@ const StaffManagementOverview = () => {
   const [caretakers, setCaretakers] = useState<Caretaker[]>([]);
   const [wardensTotal, setWardensTotal] = useState(0);
   const [caretakersTotal, setCaretakersTotal] = useState(0);
+
+  // Inline edit state
+  const [editingWardenId, setEditingWardenId] = useState<number | null>(null);
+  const [editingCaretakerId, setEditingCaretakerId] = useState<number | null>(null);
+  const [editingWardenForm, setEditingWardenForm] = useState<Partial<Warden>>({});
+  const [editingCaretakerForm, setEditingCaretakerForm] = useState<Partial<Caretaker>>({});
+  const [actionLoading, setActionLoading] = useState(false);
 
   // Pagination state
   const [wardensPage, setWardensPage] = useState(1);
@@ -68,6 +75,136 @@ const StaffManagementOverview = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Warden handlers
+  const startEditWarden = (warden: Warden) => {
+    setEditingWardenId(warden.id);
+    setEditingWardenForm({ ...warden });
+  };
+
+  const cancelEditWarden = () => {
+    setEditingWardenId(null);
+    setEditingWardenForm({});
+  };
+
+  const saveWarden = async (id?: number) => {
+    try {
+      setActionLoading(true);
+      const payload = {
+        name: editingWardenForm.name,
+        email: editingWardenForm.email,
+        phone: editingWardenForm.phone,
+        designation: editingWardenForm.designation,
+        experience: editingWardenForm.experience,
+      };
+      const method = id ? "PUT" : "POST";
+      const response = await manageWardens(payload, id, method as any);
+      if (response.success) {
+        toast({ title: "Saved", description: "Warden saved successfully." });
+        const saved = response.data?.data || response.data || null;
+        setEditingWardenId(null);
+        setEditingWardenForm({});
+        if (saved) {
+          if (id) {
+            setWardens((prev) => prev.map((w) => (w.id === id ? (saved as Warden) : w)));
+          } else {
+            setWardens((prev) => [saved as Warden, ...prev]);
+            setWardensTotal((t) => t + 1);
+          }
+        }
+      } else {
+        throw new Error(response.message || "Failed to save warden");
+      }
+    } catch (err) {
+      toast({ title: "Error", description: "Failed to save warden.", variant: "destructive" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const deleteWarden = async (id: number) => {
+    if (!confirm("Delete this warden?")) return;
+    try {
+      setActionLoading(true);
+      const response = await manageWardens(undefined, id, "DELETE");
+      if (response.success) {
+        toast({ title: "Deleted", description: "Warden deleted." });
+        setWardens((prev) => prev.filter((w) => w.id !== id));
+        setWardensTotal((t) => Math.max(0, t - 1));
+      } else {
+        throw new Error(response.message || "Failed to delete warden");
+      }
+    } catch (err) {
+      toast({ title: "Error", description: "Failed to delete warden.", variant: "destructive" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Caretaker handlers
+  const startEditCaretaker = (c: Caretaker) => {
+    setEditingCaretakerId(c.id);
+    setEditingCaretakerForm({ ...c });
+  };
+
+  const cancelEditCaretaker = () => {
+    setEditingCaretakerId(null);
+    setEditingCaretakerForm({});
+  };
+
+  const saveCaretaker = async (id?: number) => {
+    try {
+      setActionLoading(true);
+      const payload = {
+        name: editingCaretakerForm.name,
+        email: editingCaretakerForm.email,
+        phone: editingCaretakerForm.phone,
+        address: editingCaretakerForm.address,
+        experience: editingCaretakerForm.experience,
+      };
+      const method = id ? "PUT" : "POST";
+      const response = await manageCaretakers(payload, id, method as any);
+      if (response.success) {
+        toast({ title: "Saved", description: "Caretaker saved successfully." });
+        const saved = response.data?.data || response.data || null;
+        setEditingCaretakerId(null);
+        setEditingCaretakerForm({});
+        if (saved) {
+          if (id) {
+            setCaretakers((prev) => prev.map((c) => (c.id === id ? (saved as Caretaker) : c)));
+          } else {
+            setCaretakers((prev) => [saved as Caretaker, ...prev]);
+            setCaretakersTotal((t) => t + 1);
+          }
+        }
+      } else {
+        throw new Error(response.message || "Failed to save caretaker");
+      }
+    } catch (err) {
+      toast({ title: "Error", description: "Failed to save caretaker.", variant: "destructive" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const deleteCaretaker = async (id: number) => {
+    if (!confirm("Delete this caretaker?")) return;
+    try {
+      setActionLoading(true);
+      const response = await manageCaretakers(undefined, id, "DELETE");
+      if (response.success) {
+        toast({ title: "Deleted", description: "Caretaker deleted." });
+        setCaretakers((prev) => prev.filter((c) => c.id !== id));
+        setCaretakersTotal((t) => Math.max(0, t - 1));
+      } else {
+        throw new Error(response.message || "Failed to delete caretaker");
+      }
+    } catch (err) {
+      toast({ title: "Error", description: "Failed to delete caretaker.", variant: "destructive" });
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -224,33 +361,108 @@ const StaffManagementOverview = () => {
                       : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                   } transition-colors`}
                 >
-                  <div className="flex items-start justify-between mb-2">
-                    <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      {(wardensPage - 1) * pageSize + index + 1}. {warden.name}
-                    </p>
-                    <span className="px-3 py-1 bg-orange-500 text-white rounded-full text-xs font-semibold">
-                      Warden
-                    </span>
-                  </div>
-                  {warden.designation && (
-                    <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      🏢 {warden.designation}
-                    </p>
-                  )}
-                  {warden.email && (
-                    <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      📧 {warden.email}
-                    </p>
-                  )}
-                  {warden.phone && (
-                    <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      📱 {warden.phone}
-                    </p>
-                  )}
-                  {warden.experience && (
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      ⭐ {warden.experience} years experience
-                    </p>
+                  {editingWardenId === warden.id ? (
+                    <div>
+                      <div className="flex items-start justify-between mb-2">
+                        <input
+                          className="w-full px-2 py-1 rounded-md mr-2"
+                          value={editingWardenForm.name || ''}
+                          onChange={(e) => setEditingWardenForm({ ...editingWardenForm, name: e.target.value })}
+                          placeholder="Name"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                        <input
+                          className="px-2 py-1 rounded-md"
+                          value={editingWardenForm.designation || ''}
+                          onChange={(e) => setEditingWardenForm({ ...editingWardenForm, designation: e.target.value })}
+                          placeholder="Designation"
+                        />
+                        <input
+                          className="px-2 py-1 rounded-md"
+                          value={editingWardenForm.phone || ''}
+                          onChange={(e) => setEditingWardenForm({ ...editingWardenForm, phone: e.target.value })}
+                          placeholder="Phone"
+                        />
+                        <input
+                          className="px-2 py-1 rounded-md"
+                          value={editingWardenForm.email || ''}
+                          onChange={(e) => setEditingWardenForm({ ...editingWardenForm, email: e.target.value })}
+                          placeholder="Email"
+                        />
+                        <input
+                          className="px-2 py-1 rounded-md"
+                          value={editingWardenForm.experience || ''}
+                          onChange={(e) => setEditingWardenForm({ ...editingWardenForm, experience: e.target.value })}
+                          placeholder="Experience (years)"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => saveWarden(warden.id)}
+                          disabled={actionLoading}
+                          className="bg-green-500 text-white px-3 py-1 rounded-md"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={cancelEditWarden}
+                          disabled={actionLoading}
+                          className="bg-gray-300 text-gray-800 px-3 py-1 rounded-md"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => deleteWarden(warden.id)}
+                          disabled={actionLoading}
+                          className="bg-red-500 text-white px-3 py-1 rounded-md ml-auto"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex items-start justify-between mb-2">
+                        <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                          {(wardensPage - 1) * pageSize + index + 1}. {warden.name}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => startEditWarden(warden)}
+                            className="text-sm px-3 py-1 bg-yellow-400 rounded-md"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => deleteWarden(warden.id)}
+                            className="text-sm px-3 py-1 bg-red-500 text-white rounded-md"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                      {warden.designation && (
+                        <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                          🏢 {warden.designation}
+                        </p>
+                      )}
+                      {warden.email && (
+                        <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                          📧 {warden.email}
+                        </p>
+                      )}
+                      {warden.phone && (
+                        <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                          📱 {warden.phone}
+                        </p>
+                      )}
+                      {warden.experience && (
+                        <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                          ⭐ {warden.experience} years experience
+                        </p>
+                      )}
+                    </div>
                   )}
                 </motion.div>
               ))
@@ -331,33 +543,108 @@ const StaffManagementOverview = () => {
                       : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                   } transition-colors`}
                 >
-                  <div className="flex items-start justify-between mb-2">
-                    <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      {(caretakersPage - 1) * pageSize + index + 1}. {caretaker.name}
-                    </p>
-                    <span className="px-3 py-1 bg-blue-500 text-white rounded-full text-xs font-semibold">
-                      Caretaker
-                    </span>
-                  </div>
-                  {caretaker.phone && (
-                    <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      📱 {caretaker.phone}
-                    </p>
-                  )}
-                  {caretaker.email && (
-                    <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      📧 {caretaker.email}
-                    </p>
-                  )}
-                  {caretaker.address && (
-                    <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      🏠 {caretaker.address}
-                    </p>
-                  )}
-                  {caretaker.experience && (
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                      ⭐ {caretaker.experience} years experience
-                    </p>
+                  {editingCaretakerId === caretaker.id ? (
+                    <div>
+                      <div className="flex items-start justify-between mb-2">
+                        <input
+                          className="w-full px-2 py-1 rounded-md mr-2"
+                          value={editingCaretakerForm.name || ''}
+                          onChange={(e) => setEditingCaretakerForm({ ...editingCaretakerForm, name: e.target.value })}
+                          placeholder="Name"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+                        <input
+                          className="px-2 py-1 rounded-md"
+                          value={editingCaretakerForm.phone || ''}
+                          onChange={(e) => setEditingCaretakerForm({ ...editingCaretakerForm, phone: e.target.value })}
+                          placeholder="Phone"
+                        />
+                        <input
+                          className="px-2 py-1 rounded-md"
+                          value={editingCaretakerForm.email || ''}
+                          onChange={(e) => setEditingCaretakerForm({ ...editingCaretakerForm, email: e.target.value })}
+                          placeholder="Email"
+                        />
+                        <input
+                          className="px-2 py-1 rounded-md"
+                          value={editingCaretakerForm.address || ''}
+                          onChange={(e) => setEditingCaretakerForm({ ...editingCaretakerForm, address: e.target.value })}
+                          placeholder="Address"
+                        />
+                        <input
+                          className="px-2 py-1 rounded-md"
+                          value={editingCaretakerForm.experience || ''}
+                          onChange={(e) => setEditingCaretakerForm({ ...editingCaretakerForm, experience: e.target.value })}
+                          placeholder="Experience (years)"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => saveCaretaker(caretaker.id)}
+                          disabled={actionLoading}
+                          className="bg-green-500 text-white px-3 py-1 rounded-md"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={cancelEditCaretaker}
+                          disabled={actionLoading}
+                          className="bg-gray-300 text-gray-800 px-3 py-1 rounded-md"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => deleteCaretaker(caretaker.id)}
+                          disabled={actionLoading}
+                          className="bg-red-500 text-white px-3 py-1 rounded-md ml-auto"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex items-start justify-between mb-2">
+                        <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                          {(caretakersPage - 1) * pageSize + index + 1}. {caretaker.name}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => startEditCaretaker(caretaker)}
+                            className="text-sm px-3 py-1 bg-yellow-400 rounded-md"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => deleteCaretaker(caretaker.id)}
+                            className="text-sm px-3 py-1 bg-red-500 text-white rounded-md"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                      {caretaker.phone && (
+                        <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                          📱 {caretaker.phone}
+                        </p>
+                      )}
+                      {caretaker.email && (
+                        <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                          📧 {caretaker.email}
+                        </p>
+                      )}
+                      {caretaker.address && (
+                        <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                          🏠 {caretaker.address}
+                        </p>
+                      )}
+                      {caretaker.experience && (
+                        <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                          ⭐ {caretaker.experience} years experience
+                        </p>
+                      )}
+                    </div>
                   )}
                 </motion.div>
               ))

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import DashboardLayout from "../common/DashboardLayout";
-import { HMSOverview, HostelManagement, RoomManagement, StudentManagement, WardenManagement, Enrollment, StaffManagementOverview, MenuManagement } from "../hms";
+import { HMSOverview, HostelManagement, RoomManagement, StudentManagement, WardenManagement, Enrollment, StaffManagementOverview, MenuManagement, IssueTracking } from "../hms";
 import { useToast } from "../../hooks/use-toast";
 import { logoutUser } from "../../utils/authService";
 import { useTheme } from "../../context/ThemeContext";
@@ -77,6 +77,7 @@ const HMSDashboard = ({ user, setPage }: HMSDashboardProps) => {
           {activePage === 'enrollment' && <Enrollment />}
           {activePage === 'staff' && <StaffManagementOverview />}
           {activePage === 'menu-management' && <MenuManagement />}
+          {activePage === 'issues' && <IssueTracking hostelId={1} />}
         </motion.div>
       </motion.div>
     </DashboardLayout>

@@ -113,13 +113,33 @@ const hmsApiCall = async <T>(
       } else if (result && typeof result === 'object') {
         // Handle Django REST Framework validation errors
         // Format: { "field_name": ["error message"], "non_field_errors": ["error message"] }
-        const errorEntries = Object.entries(result);
-        if (errorEntries.length > 0) {
-          const firstError = errorEntries[0];
-          if (Array.isArray(firstError[1])) {
-            errorMessage = (firstError[1] as string[])[0];
-          } else if (typeof firstError[1] === 'string') {
-            errorMessage = firstError[1];
+        
+        // Check for non_field_errors first (these are validation errors like unique constraint violations)
+        if (result.non_field_errors && Array.isArray(result.non_field_errors)) {
+          errorMessage = result.non_field_errors[0];
+        } else {
+          // Otherwise, use the first field error
+          const errorEntries = Object.entries(result);
+          if (errorEntries.length > 0) {
+            // Collect all error messages for better debugging
+            const errorMessages = errorEntries
+              .map(([field, errors]) => {
+                if (Array.isArray(errors)) {
+                  return `${field}: ${(errors as string[]).join(', ')}`;
+                } else if (typeof errors === 'string') {
+                  return `${field}: ${errors}`;
+                }
+                return `${field}: ${JSON.stringify(errors)}`;
+              });
+            console.error('All validation errors:', errorMessages.join('; '));
+            
+            // For user display, show just the first error
+            const firstError = errorEntries[0];
+            if (Array.isArray(firstError[1])) {
+              errorMessage = (firstError[1] as string[])[0];
+            } else if (typeof firstError[1] === 'string') {
+              errorMessage = firstError[1];
+            }
           }
         }
       }
@@ -348,6 +368,11 @@ export const getTodayMenu = async (): Promise<HMSResponse<any>> => {
   return hmsApiCall<any>(`menus/today_menu/`, "GET");
 };
 
+// Compact student-facing today's menu summary
+export const getTodayMenuSummary = async (): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>(`menus/today_summary/`, "GET");
+};
+
 // Student Meal Skips
 export const getMealSkips = async (filters?: Record<string, any>): Promise<HMSResponse<any>> => {
   let endpoint = `meal-skips/`;
@@ -362,26 +387,6 @@ export const getMealSkips = async (filters?: Record<string, any>): Promise<HMSRe
     if (queryString) endpoint += `?${queryString}`;
   }
   return hmsApiCall<any>(endpoint, "GET");
-};
-
-export const skipMeal = async (data: {
-  date: string;
-  meal_type: number;
-  reason?: string;
-}): Promise<HMSResponse<any>> => {
-  return hmsApiCall<any>(`meal-skips/skip_meal/`, "POST", data);
-};
-
-export const markMealLeave = async (data: {
-  from_date: string;
-  to_date: string;
-  reason?: string;
-}): Promise<HMSResponse<any>> => {
-  return hmsApiCall<any>(`meal-skips/mark_leave/`, "POST", data);
-};
-
-export const getMyMealSkips = async (): Promise<HMSResponse<any>> => {
-  return hmsApiCall<any>(`meal-skips/my_skips/`, "GET");
 };
 
 // Mess Billing
@@ -406,4 +411,65 @@ export const getMyMessBilling = async (): Promise<HMSResponse<any>> => {
 
 export const getHostelMessStats = async (hostelId: number): Promise<HMSResponse<any>> => {
   return hmsApiCall<any>(`mess-billing/hostel_stats/?hostel_id=${hostelId}`, "GET");
+};
+
+// Hostel Issue Tracking API
+
+export const raiseIssue = async (data: {
+  title: string;
+  description: string;
+  room: number;
+}): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>(`issues/`, "POST", data);
+};
+
+export const getMyIssues = async (): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>(`issues/my_issues/`, "GET");
+};
+
+export const getIssues = async (filters?: {
+  hostel_id?: number;
+  status?: string;
+}): Promise<HMSResponse<any>> => {
+  let endpoint = `issues/`;
+  if (filters) {
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        queryParams.append(key, value.toString());
+      }
+    });
+    const queryString = queryParams.toString();
+    if (queryString) endpoint += `?${queryString}`;
+  }
+  return hmsApiCall<any>(endpoint, "GET");
+};
+
+export const getIssueDetail = async (issueId: number): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>(`issues/${issueId}/`, "GET");
+};
+
+export const updateIssueStatus = async (
+  issueId: number,
+  data: {
+    status: string;
+    note?: string;
+  }
+): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>(`issues/${issueId}/`, "PATCH", data);
+};
+
+export const getHostelIssues = async (
+  hostelId: number,
+  status?: string
+): Promise<HMSResponse<any>> => {
+  let endpoint = `issues/hostel_issues/?hostel_id=${hostelId}`;
+  if (status) {
+    endpoint += `&status=${status}`;
+  }
+  return hmsApiCall<any>(endpoint, "GET");
+};
+
+export const getIssueTimeline = async (issueId: number): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>(`issues/${issueId}/timeline/`, "GET");
 };
