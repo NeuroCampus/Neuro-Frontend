@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { User, Mail, Phone, MapPin, Calendar, Edit, Save, X, Eye, EyeOff } from "lucide-react";
 import Swal from "sweetalert2";
 import { showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
+import { useTheme } from "../../context/ThemeContext";
 import { fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
 
@@ -33,6 +34,7 @@ interface DeanProfileShape {
 const DeanProfile = () => {
   const [profile, setProfile] = useState<DeanProfileShape | null>(null);
   const [loading, setLoading] = useState(true);
+  const { theme } = useTheme();
   const [editing, setEditing] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [formData, setFormData] = useState({
@@ -53,6 +55,12 @@ const DeanProfile = () => {
     confirm: false,
   });
   const passwordDialogContentRef = useRef<HTMLDivElement | null>(null);
+
+  const getInitials = (p: DeanProfileShape) => {
+    const fn = p.first_name || "";
+    const ln = p.last_name || "";
+    return `${(fn[0] || "").toUpperCase()}${(ln[0] || "").toUpperCase()}`;
+  };
 
   useEffect(() => {
     fetchProfile();
@@ -199,7 +207,7 @@ const DeanProfile = () => {
   }
 
   return (
-    <Card className={`w-full max-w-full sm:max-w-2xl md:max-w-4xl lg:max-w-5xl mx-auto my-2 sm:my-4 md:my-6 lg:my-8 px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6`}>
+    <Card className={`w-full max-w-none mx-auto my-2 sm:my-4 md:my-6 lg:my-8 px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6 ${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}`}>
       <CardHeader className="px-2 sm:px-3 md:px-4 lg:px-6 py-3 sm:py-4 md:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 border-b">
         <div className="flex-1 min-w-0">
           <CardTitle className="text-lg sm:text-xl md:text-2xl font-bold line-clamp-2">Profile</CardTitle>
@@ -315,12 +323,12 @@ const DeanProfile = () => {
             <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#a259ff] text-white flex items-center justify-center text-lg sm:text-2xl font-semibold mb-3 sm:mb-4 flex-shrink-0`}>
               {(profile.first_name && profile.first_name[0]) || ""}{(profile.last_name && profile.last_name[0]) || ""}
             </div>
-            <div className="text-base sm:text-lg font-semibold text-center mb-1">{profile.first_name} {profile.last_name}</div>
-            <div className={`text-xs sm:text-sm mb-4 sm:mb-6 text-gray-500`}>{profile.designation}</div>
+            <div className="text-base sm:text-lg font-semibold text-center sm:text-left mb-1">{profile.first_name} {profile.last_name}</div>
+            <div className={`text-xs sm:text-sm mb-4 sm:mb-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{profile.designation}</div>
 
-            <div className="w-full mt-4 sm:mt-6 flex-1 flex flex-col items-center">
-              <h4 className={`text-xs sm:text-sm font-bold mb-2.5 sm:mb-4 text-gray-900 text-center`}>Quick Info</h4>
-              <div className={`border rounded-lg p-2.5 sm:p-4 bg-gray-50 border-gray-200 w-full max-w-xs`}>
+            <div className="w-full mt-4 sm:mt-6 flex-1 flex flex-col">
+              <h4 className={`text-xs sm:text-sm font-bold mb-2.5 sm:mb-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Quick Info</h4>
+              <div className={`border rounded-lg p-2.5 sm:p-4 flex-1 ${theme === 'dark' ? 'bg-card border-input' : 'bg-gray-50 border-gray-200'}`}>
                 <div className="grid grid-cols-1 gap-2.5 sm:gap-3.5 h-full">
                   <div className="flex flex-col justify-start">
                     <span className={`text-xs font-semibold mb-1 text-gray-900`}>Department</span>
