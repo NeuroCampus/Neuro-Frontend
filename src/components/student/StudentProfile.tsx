@@ -285,8 +285,8 @@ const StudentProfile: React.FC = () => {
 
         <CardContent className="px-6 pb-6 pt-2 space-y-8">
           <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-8 items-start">
-            <div className="col-span-1 flex flex-col items-center sm:items-start">
-              <div className="relative mb-3 sm:mb-4 flex-shrink-0">
+            <div className="col-span-1 flex flex-col items-center">
+              <div className="relative mb-3 mt-3 sm:mb-4 flex-shrink-0">
                 <Avatar className="w-20 h-20 sm:w-24 sm:h-24">
                   {form.profile_picture ? <AvatarImage src={form.profile_picture} alt={`${form.first_name} ${form.last_name}`} /> : <AvatarFallback>{(form.first_name?.[0] || '') + (form.last_name?.[0] || '')}</AvatarFallback>}
                 </Avatar>
@@ -303,8 +303,8 @@ const StudentProfile: React.FC = () => {
                 </div>
               )}
 
-              <div className="text-base sm:text-lg font-semibold text-center sm:text-left mb-1">{form.first_name} {form.last_name}</div>
-              <div className={`text-xs sm:text-sm mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{form.username || form.email}</div>
+              <div className="text-base sm:text-lg font-semibold text-center mb-1">{form.first_name} {form.last_name}</div>
+              <div className={`text-xs sm:text-sm mb-4 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{form.username || form.email}</div>
 
               <div className="w-full mt-4 sm:mt-6 flex flex-col">
                 <h4 className={`text-xs sm:text-sm font-bold mb-2.5 sm:mb-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Quick Info</h4>
