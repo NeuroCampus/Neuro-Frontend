@@ -8,6 +8,12 @@ import {
   FileBarChart,
   Clock,
   MapPin,
+  User,
+  ClipboardList,
+  GitBranch,
+  UserCheck,
+  Bell,
+  Settings,
   
   TrendingUp,
   Activity,
@@ -38,6 +44,8 @@ import {
   Bar,
   LabelList,
 } from "recharts";
+import { motion } from "framer-motion";
+import DashboardCard from "../common/DashboardCard";
 import { getFacultyDashboardBootstrap } from "@/utils/faculty_api";
 import { useTheme } from "@/context/ThemeContext";
 
@@ -137,6 +145,30 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
     setNextClass(earliestFuture);
   };
 
+  // Live time for header (for display like student dashboard)
+  const [nowDate, setNowDate] = useState<Date>(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNowDate(new Date()), 30_000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Helper to get status/color/message for a class (used for Next class display)
+  const getClassStatus = (cls?: TodayClass | null) => {
+    if (!cls) return { status: null as null | string, color: theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500', message: '' };
+    const now = new Date();
+    const [sh, sm] = cls.start_time.split(':').map(Number);
+    const startMinutes = sh * 60 + sm;
+    const minutesNow = now.getHours() * 60 + now.getMinutes();
+    const minutesUntil = startMinutes - minutesNow;
+    if (minutesUntil >= 0 && minutesUntil <= 15) {
+      return { status: 'starting-soon', color: theme === 'dark' ? 'text-orange-400' : 'text-orange-600', message: `Starts in ${minutesUntil} min${minutesUntil === 1 ? '' : 's'}` };
+    }
+    if (minutesUntil > 15) {
+      return { status: 'upcoming', color: theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600', message: `Starts at ${cls.start_time}` };
+    }
+    return { status: null as null | string, color: theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500', message: `Starts at ${cls.start_time}` };
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -151,6 +183,28 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
           setProctorStudentsCount(proctor_students_count || 0);
           setPerformanceTrends(performance_trends || {});
           setSubjectPerformanceTrends(subject_performance_trends || []);
+
+          // Set stats after data is loaded (use local response values safely)
+          setStats([
+            {
+              label: "Total Proctor Students",
+              value: proctor_students_count || 0,
+              icon: <Users className="text-green-600 w-5 h-5" />,
+              color: "green",
+            },
+            {
+              label: "Attendance (30d)",
+              value: bootstrapRes.data?.attendance_snapshot ?? (performance_trends?.avg_attendance_percent_30d ?? 0),
+              icon: <CheckSquare className="text-indigo-600 w-5 h-5" />,
+              color: "indigo",
+            },
+            {
+              label: "Avg IA Marks",
+              value: performance_trends?.avg_ia_mark ?? bootstrapRes.data?.avg_ia_mark ?? 0.0,
+              icon: <GraduationCap className="text-purple-600 w-5 h-5" />,
+              color: "purple",
+            },
+          ]);
         } else {
           setError(bootstrapRes.message || "Failed to load dashboard data");
         }
@@ -161,21 +215,7 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
         setTodayClasses(todayClassesFromBootstrap);
         determineClassStatus(todayClassesFromBootstrap);
 
-        // Set stats after data is loaded
-        setStats([
-          {
-            label: "Total Proctor Students",
-            value: bootstrapRes.data?.proctor_students_count || 0,
-            icon: <Users className="text-green-600 w-5 h-5" />,
-            color: "green",
-          },
-          {
-            label: "Attendance (30d)",
-            value: bootstrapRes.data?.attendance_snapshot ?? performance_trends?.avg_attendance_percent_30d ?? 0,
-            icon: <CheckSquare className="text-indigo-600 w-5 h-5" />,
-            color: "indigo",
-          },
-        ]);
+        
       } catch (err) {
         setError("Network error occurred while fetching data");
         console.error("Fetch error:", err);
@@ -200,7 +240,7 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
   return (
     <div className={` md: space-y-6 min-h-screen w-full max-w-full overflow-x-hidden ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Top Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {stats.map((stat, idx) => (
           <Card key={idx} className={`${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'} overflow-hidden w-full max-w-full shadow-sm hover:shadow-md transition-shadow`}>
             <CardContent className="p-4 flex items-center space-x-4 w-full min-w-0 overflow-hidden break-words">
@@ -219,59 +259,13 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
           </Card>
         ))}
 
-        {/* Ongoing Class Card */}
-        <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'} overflow-hidden w-full max-w-full shadow-sm hover:shadow-md transition-shadow`}>
-          <CardContent className="p-4 w-full min-w-0 overflow-hidden break-words">
-            <div className="flex items-center space-x-3 mb-2">
-              <Activity className="text-orange-600 w-5 h-5 flex-shrink-0" />
-              <p className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Ongoing Class</p>
-            </div>
-            {ongoingClass ? (
-              <div className="space-y-1">
-                <h3 className="font-semibold text-sm truncate">{ongoingClass.subject}</h3>
-                <p className="text-xs text-orange-600">{ongoingClass.branch ?? ''} • Sem {ongoingClass.semester ?? ''} • {ongoingClass.section} • {ongoingClass.start_time} - {ongoingClass.end_time}</p>
-                <p className="text-xs flex items-center">
-                  <MapPin className="w-3 h-3 mr-1" />
-                  {ongoingClass.room}
-                </p>
-              </div>
-            ) : todayClasses.length === 0 ? (
-              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No classes scheduled for today</p>
-            ) : (
-              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No ongoing class</p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Next Class Card */}
-        <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'} overflow-hidden w-full max-w-full shadow-sm hover:shadow-md transition-shadow`}>
-          <CardContent className="p-4 w-full min-w-0 overflow-hidden break-words">
-            <div className="flex items-center space-x-3 mb-2">
-              <Clock className="text-purple-600 w-5 h-5 flex-shrink-0" />
-              <p className={`text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Next Class</p>
-            </div>
-            {nextClass ? (
-              <div className="space-y-1">
-                <h3 className="font-semibold text-sm truncate">{nextClass.subject}</h3>
-                <p className="text-xs text-purple-600">{nextClass.branch ?? ''} • Sem {nextClass.semester ?? ''} • {nextClass.section} • {nextClass.start_time} - {nextClass.end_time}</p>
-                <p className="text-xs flex items-center">
-                  <MapPin className="w-3 h-3 mr-1" />
-                  {nextClass.room}
-                </p>
-              </div>
-            ) : todayClasses.length === 0 ? (
-              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No classes scheduled for today</p>
-            ) : (
-              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No upcoming classes</p>
-            )}
-          </CardContent>
-        </Card>
+      {/* Ongoing/Next cards moved into the right column of the main content below */}
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         {/* Performance Trends (span 2 columns) */}
-        <Card className={`lg:col-span-2 ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'} shadow-sm`}>
+        <Card className={`lg:col-span-2 h-full flex flex-col ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'} shadow-sm`}>
           <CardHeader className="flex items-center justify-between pb-3">
             <div>
               <CardTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Performance Trends</CardTitle>
@@ -290,8 +284,8 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
               </Select>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="flex flex-col md:flex-row gap-4 items-stretch">
+          <CardContent className="flex-1 h-full">
+            <div className="h-full flex flex-col md:flex-row gap-4 items-stretch">
               {/* Bar chart - Average Attendance */}
               <div className="flex-1 min-h-[240px]">
                 <h4 className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-700'}`}>Average Attendance (30 days)</h4>
@@ -325,35 +319,143 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
           </CardContent>
         </Card>
 
-      </div>
+          {/* Right column: Current & Next Session (student-style card) */}
+          <div className="lg:col-span-1 flex flex-col gap-4 h-full">
+            <section className="w-full h-full">
+              <Card className={`h-full flex flex-col justify-between ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
+                <CardHeader className="p-3 md:p-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-2 sm:gap-0">
+                    <CardTitle className={theme === 'dark' ? 'text-sm md:text-sm text-card-foreground' : 'text-sm md:text-sm text-gray-900'}>Current & Next Session</CardTitle>
+                    <div className="flex items-center gap-2 text-xs md:text-xs">
+                      <Clock className="w-4 h-4" />
+                      <span className={`flex items-center gap-2 px-3 py-1 rounded-full font-medium shadow-sm ${
+                        theme === 'dark' ? 'bg-muted text-muted-foreground' : 'bg-gray-100 text-gray-900'
+                      }`}>
+                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                        Live: {nowDate.toLocaleTimeString('en-US', { hour12: false })}
+                      </span>
+                    </div>
+                  </div>
+                </CardHeader>
 
-      {/* Quick Actions - bottom horizontal bar */}
-      <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'} shadow-sm`}>
-        <CardHeader className="pb-2">
-          <CardTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-            {[
-              { label: "Take Attendance", icon: CheckSquare, page: "take-attendance", color: "indigo" },
-              { label: "Schedule Class", icon: PlusCircle, page: "timetable", color: "green" },
-              { label: "Mentoring", icon: GraduationCap, page: "proctor-students", color: "blue" },
-              { label: "View Reports", icon: FileBarChart, page: "statistics", color: "purple" },
-            ].map((action) => (
-              <button
-                key={action.label}
-                onClick={() => setActivePage(action.page)}
-                className={`flex items-center gap-3 px-4 py-2 rounded-md font-semibold shadow-sm transition-colors hover:opacity-95 ${
-                  theme === 'dark' ? 'bg-accent text-white' : 'bg-white border border-gray-200 text-gray-800'
-                }`}
-              >
-                <action.icon className={`w-5 h-5 ${action.color === 'indigo' ? 'text-indigo-600' : action.color === 'green' ? 'text-green-600' : action.color === 'blue' ? 'text-blue-600' : 'text-purple-600'}`} />
-                <span>{action.label}</span>
-              </button>
-            ))}
+                <CardContent className="w-full flex-1 flex flex-col gap-3 md:gap-4 p-3 md:p-4">
+                  {ongoingClass ? (
+                    <>
+                      <div className={`border-2 border-blue-500 rounded-md p-3 md:p-4 w-full shadow-md flex flex-col items-center sm:items-start gap-2 ${
+                        theme === 'dark' ? 'bg-blue-900/20' : 'bg-blue-50'
+                      }`}>
+                        <h4 className={`font-semibold text-sm mb-2 line-clamp-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                          {ongoingClass.subject}
+                        </h4>
+                        <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                          Teacher: {ongoingClass.section ?? ''}
+                        </p>
+                        <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                          Room: {ongoingClass.room}
+                        </p>
+                        <p className={`text-[10px] ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                          {ongoingClass.start_time} - {ongoingClass.end_time}
+                        </p>
+                        <p className={`text-xs mt-1 font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>Currently Running</p>
+                      </div>
+                      {nextClass && (
+                        <div className={`border rounded-md p-3 w-full shadow-md ${
+                          getClassStatus(nextClass).status === 'starting-soon'
+                            ? (theme === 'dark' ? 'border-orange-500 bg-orange-900/20' : 'border-orange-500 bg-orange-50')
+                            : getClassStatus(nextClass).status === 'upcoming'
+                            ? (theme === 'dark' ? 'border-yellow-500 bg-yellow-900/20' : 'border-yellow-500 bg-yellow-50')
+                            : (theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-gray-50')
+                        }`}>
+                          <h4 className={`font-semibold text-sm mb-2 line-clamp-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                            {nextClass.subject}
+                          </h4>
+                          <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                            Teacher: {nextClass.section ?? ''}
+                          </p>
+                          <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                            Room: {nextClass.room}
+                          </p>
+                          <p className={`text-[10px] mt-1 font-medium line-clamp-2 ${getClassStatus(nextClass).color || (theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500')}`}>
+                            {getClassStatus(nextClass).message || `Starts at ${nextClass.start_time}`}
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="w-full text-center">
+                      <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No class is currently running</p>
+                      {nextClass && (
+                        <div className={`border rounded-md p-3 mt-3 shadow-md ${
+                          getClassStatus(nextClass).status === 'starting-soon'
+                            ? (theme === 'dark' ? 'border-orange-500 bg-orange-900/20' : 'border-orange-500 bg-orange-50')
+                            : getClassStatus(nextClass).status === 'upcoming'
+                            ? (theme === 'dark' ? 'border-yellow-500 bg-yellow-900/20' : 'border-yellow-500 bg-yellow-50')
+                            : (theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-gray-50')
+                        }`}>
+                          <h4 className={`font-semibold text-sm mb-2 line-clamp-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                            Next: {nextClass.subject}
+                          </h4>
+                          <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                            Teacher: {nextClass.section ?? ''}
+                          </p>
+                          <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                            Room: {nextClass.room}
+                          </p>
+                          <p className={`text-[10px] mt-1 font-medium line-clamp-2 ${getClassStatus(nextClass).color || (theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500')}`}>
+                            {getClassStatus(nextClass).message || `Starts at ${nextClass.start_time}`}
+                          </p>
+                          {getClassStatus(nextClass).status === 'starting-soon' && (
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+                              <span className={`text-xs font-medium ${theme === 'dark' ? 'text-orange-400' : 'text-orange-600'}`}>Get ready!</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </section>
           </div>
-        </CardContent>
-      </Card>
+
+        </div>
+
+      {/* Action Cards */}
+      <motion.div
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <DashboardCard
+          title="Take Attendance"
+          description="Quickly mark attendance"
+          icon={<CheckSquare size={20} />}
+          onClick={() => setActivePage("take-attendance")}
+        />
+
+        <DashboardCard
+          title="Schedule Class"
+          description="Create or edit class schedule"
+          icon={<PlusCircle size={20} />}
+          onClick={() => setActivePage("timetable")}
+        />
+
+        <DashboardCard
+          title="Mentoring"
+          description="Open mentoring / proctor students"
+          icon={<GraduationCap size={20} />}
+          onClick={() => setActivePage("proctor-students")}
+        />
+
+        <DashboardCard
+          title="View Reports"
+          description="Open performance and attendance reports"
+          icon={<FileBarChart size={20} />}
+          onClick={() => setActivePage("statistics")}
+        />
+      </motion.div>
     </div>
   );
 };
