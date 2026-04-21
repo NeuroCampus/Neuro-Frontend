@@ -134,22 +134,21 @@ const Timetable = ({ role }: TimetableProps) => {
   }, [filteredData, role]);
 
   return (
-    <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
-      <CardHeader>
-        <CardTitle>Timetable - {role}</CardTitle>
+    <Card className={`shadow-xl ${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}`}>
+      <CardHeader className="flex flex-row items-center justify-between bg-card px-4 py-3 rounded-t-md">
+        <CardTitle className="text-lg font-semibold">Timetable - {role}</CardTitle>
+        <div className="flex space-x-2">
+          <Button 
+            onClick={exportPDF} 
+            className="hidden md:flex items-center mr-3 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out shadow-md"
+          >
+            <FaDownload />
+            <span className="ml-2">Export PDF</span>
+          </Button>
+        </div>
       </CardHeader>
 
-      <div className="flex justify-between items-center p-4">
-        <h2 className="text-lg font-semibold ml-3">Timetable</h2>
-        <Button 
-          onClick={exportPDF} 
-          className="hidden md:flex items-center mr-3 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out shadow-md"
-        >
-          <FaDownload  />
-          Export PDF
-        </Button>
-      </div>
-      <CardContent>
+      <CardContent className="bg-card">
         {loading ? (
           <div className={`text-center ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading timetable...</div>
         ) : error ? (

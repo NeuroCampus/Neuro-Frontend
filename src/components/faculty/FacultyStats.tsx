@@ -117,7 +117,7 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
   }
 
   return (
-    <div className={`p-4 md:p-6 space-y-6 min-h-screen w-full max-w-full overflow-x-hidden ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={` md: space-y-6 min-h-screen w-full max-w-full overflow-x-hidden ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Top Stats */}
       <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
         {stats.map((stat, idx) => (
