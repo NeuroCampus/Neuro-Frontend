@@ -315,6 +315,23 @@ interface GetFacultyDashboardBootstrapResponse {
       avg_attendance_percent_30d?: number;
       avg_ia_mark?: number;
     };
+    subject_performance_trends?: Array<{
+      subject_id: number;
+      subject_name: string;
+      subject_code: string;
+      avg_attendance_percent_30d: number;
+      avg_ia_mark: number;
+    }>;
+    // Added: today's classes and quick actions bundled in bootstrap
+    today_classes?: Array<{
+      subject: string;
+      section: string;
+      start_time: string;
+      end_time: string;
+      room: string;
+    }>;
+    attendance_snapshot?: number;
+    quick_actions?: string[];
   };
 }
 
