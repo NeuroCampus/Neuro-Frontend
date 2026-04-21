@@ -361,19 +361,31 @@ const IssueTracking = ({ hostelId }: { hostelId: number }) => {
                 <button
                   key={status}
                   onClick={() => handleStatusChange(selectedIssue.id, status, '')}
-                  disabled={updatingIssueId === selectedIssue.id || selectedIssue.status === status}
+                  disabled={
+                    updatingIssueId === selectedIssue.id ||
+                    selectedIssue.status === status ||
+                    selectedIssue.status === 'completed'
+                  }
                   className={`px-3 py-1 text-sm rounded-lg font-medium transition-colors ${
                     selectedIssue.status === status
                       ? STATUS_COLORS[status as keyof typeof STATUS_COLORS]
                       : theme === 'dark'
                       ? 'bg-slate-600 text-gray-200 hover:bg-slate-500'
                       : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
-                  } disabled:opacity-50`}
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  title={selectedIssue.status === 'completed' ? 'Completed issues cannot be changed' : undefined}
                 >
                   {updatingIssueId === selectedIssue.id ? '...' : status.replace(/_/g, ' ')}
                 </button>
               ))}
             </div>
+            {selectedIssue.status === 'completed' && (
+              <p className={`text-xs mt-2 ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+              }`}>
+                ✅ This issue is completed and cannot be reopened.
+              </p>
+            )}
           </div>
 
           {/* Updates Timeline */}
