@@ -8,7 +8,6 @@ import UploadQP from "../faculty/UploadQP";
 import COAttainment from "../faculty/COAttainment";
 import ApplyLeave from "../faculty/ApplyLeave";
 import AttendanceRecords from "../faculty/AttendanceRecords";
-import Announcements from "../faculty/Announcements";
 import ProctorStudents from "../faculty/ProctorStudents";
 import ExamApplication from "../faculty/ExamApplication";
 import Revaluation from "../../pages/Revaluation";
@@ -75,6 +74,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
     pathMap['revaluation'] = 'revaluation';
     pathMap['makeupexam'] = 'makeupexam';
     pathMap['study-materials'] = 'study-materials';
+    pathMap['faculty-announcement-management'] = 'announcements';
 
     return pathMap[lastPart] || 'dashboard';
   };
@@ -132,7 +132,8 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'faculty-profile': '/faculty/faculty-profile',
       'statistics': '/faculty/statistics',
       'scan-student-info': '/faculty/scan-student-info',
-      'study-materials': '/faculty/study-materials'
+      'study-materials': '/faculty/study-materials',
+      'faculty-announcement-management': '/faculty/announcements'
     };
 
     const path = pathMap[page] || '/faculty/dashboard';
@@ -180,7 +181,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       case "faculty-attendance":
         return <FacultyAttendance />;
       case "announcements":
-        return <Announcements role="faculty" proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} />;
+        return <FacultyAnnouncementManagement />;
       case "faculty-announcement-management":
         return <FacultyAnnouncementManagement />;
       case "proctor-students":

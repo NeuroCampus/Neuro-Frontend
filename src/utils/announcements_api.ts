@@ -30,6 +30,11 @@ export interface AnnouncementListResponse {
   results: Announcement[];
 }
 
+export interface SplitAnnouncementResponse {
+  my_announcements: AnnouncementListResponse;
+  received_announcements: AnnouncementListResponse;
+}
+
 export interface CreateAnnouncementRequest {
   title: string;
   message: string;
@@ -51,7 +56,7 @@ export interface AnnouncementStats {
   expiring_soon: number;
 }
 
-// Fetch announcements visible to user
+// Fetch announcements visible to user (split into my/received)
 export const fetchAnnouncements = async (page = 1, pageSize = 20) => {
   try {
     const response = await fetchWithTokenRefresh(
@@ -65,7 +70,7 @@ export const fetchAnnouncements = async (page = 1, pageSize = 20) => {
       throw new Error(`Failed to fetch announcements: ${response.statusText}`);
     }
 
-    const data: AnnouncementListResponse = await response.json();
+    const data: SplitAnnouncementResponse = await response.json();
     return { success: true, data, message: "Announcements fetched" };
   } catch (error: any) {
     console.error("Error fetching announcements:", error);

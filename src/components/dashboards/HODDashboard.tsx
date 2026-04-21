@@ -128,7 +128,8 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
       'study-materials': 'study-materials',
       'scan-student-info': 'scan-student-info',
       'hod-profile': 'hod-profile',
-      'qp-approvals': 'qp-approvals'
+      'qp-approvals': 'qp-approvals',
+      'hod-announcement-management': 'hod-announcement-management'
     };
     
     return pathMap[lastPart] || 'dashboard';
@@ -189,7 +190,8 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
       'study-materials': '/hod/study-materials',
       'scan-student-info': '/hod/scan-student-info',
       'hod-profile': '/hod/hod-profile',
-      'qp-approvals': '/hod/qp-approvals'
+      'qp-approvals': '/hod/qp-approvals',
+      'hod-announcement-management': '/hod/hod-announcement-management'
     };
     
     const path = pathMap[page] || '/hod/dashboard';

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Plus, Edit, Trash2, Users, Calendar } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import {
   fetchAnnouncements,
@@ -37,29 +36,21 @@ import {
   updateAnnouncement,
   deleteAnnouncement,
   toggleAnnouncementActive,
+  markAnnouncementRead,
   Announcement,
   CreateAnnouncementRequest,
 } from "@/utils/announcements_api";
+import AnnouncementSections from "@/components/announcements/AnnouncementSections";
 
 const FacultyAnnouncementManagement = () => {
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [myAnnouncements, setMyAnnouncements] = useState<Announcement[]>([]);
+  const [receivedAnnouncements, setReceivedAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [selectedAnnouncementId, setSelectedAnnouncementId] = useState<number | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterActive, setFilterActive] = useState<"all" | "active" | "inactive">("all");
   const { theme } = useTheme();
-
-  // Get current user
-  const getCurrentUser = () => {
-    const userData = localStorage.getItem("user");
-    return userData ? JSON.parse(userData) : null;
-  };
-
-  const currentUser = getCurrentUser();
 
   // Form state
   const [formData, setFormData] = useState<CreateAnnouncementRequest>({
@@ -77,37 +68,20 @@ const FacultyAnnouncementManagement = () => {
     const response = await fetchAnnouncements(1, 50);
 
     if (response.success && response.data) {
-      // Filter to show only announcements created by this faculty member
-      // In production, the backend would filter these based on user permissions
-      let filtered = response.data.results || [];
-
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        filtered = filtered.filter(
-          (a) =>
-            a.title.toLowerCase().includes(query) ||
-            a.message.toLowerCase().includes(query)
-        );
-      }
-
-      if (filterActive !== "all") {
-        filtered = filtered.filter(
-          (a) => a.is_active === (filterActive === "active")
-        );
-      }
-
-      setAnnouncements(filtered);
+      setMyAnnouncements(response.data.my_announcements.results || []);
+      setReceivedAnnouncements(response.data.received_announcements.results || []);
       setError(null);
     } else {
       setError(response.message || "Failed to load announcements");
-      setAnnouncements([]);
+      setMyAnnouncements([]);
+      setReceivedAnnouncements([]);
     }
     setLoading(false);
   };
 
   useEffect(() => {
     loadAnnouncements();
-  }, [filterActive]);
+  }, []);
 
   const handleCreateOrUpdate = async () => {
     if (!formData.title.trim() || !formData.message.trim()) {
@@ -126,7 +100,7 @@ const FacultyAnnouncementManagement = () => {
       if (editingId) {
         const response = await updateAnnouncement(editingId, payload);
         if (response.success) {
-          setAnnouncements((prev) =>
+          setMyAnnouncements((prev) =>
             prev.map((a) => (a.id === editingId ? response.data : a))
           );
           alert("Announcement updated successfully");
@@ -136,7 +110,7 @@ const FacultyAnnouncementManagement = () => {
       } else {
         const response = await createAnnouncement(payload);
         if (response.success) {
-          setAnnouncements((prev) => [response.data, ...prev]);
+          setMyAnnouncements((prev) => [response.data, ...prev]);
           alert("Announcement created successfully");
         } else {
           alert(response.message || "Failed to create announcement");
@@ -170,7 +144,7 @@ const FacultyAnnouncementManagement = () => {
     try {
       const response = await deleteAnnouncement(deletingId);
       if (response.success) {
-        setAnnouncements((prev) => prev.filter((a) => a.id !== deletingId));
+        setMyAnnouncements((prev) => prev.filter((a) => a.id !== deletingId));
         alert("Announcement deleted successfully");
       } else {
         alert(response.message || "Failed to delete announcement");
@@ -185,7 +159,10 @@ const FacultyAnnouncementManagement = () => {
     try {
       const response = await toggleAnnouncementActive(announcementId);
       if (response.success) {
-        setAnnouncements((prev) =>
+        setMyAnnouncements((prev) =>
+          prev.map((a) => (a.id === announcementId ? response.data : a))
+        );
+        setReceivedAnnouncements((prev) =>
           prev.map((a) => (a.id === announcementId ? response.data : a))
         );
       } else {
@@ -193,6 +170,19 @@ const FacultyAnnouncementManagement = () => {
       }
     } catch (error: any) {
       alert(error.message || "An error occurred");
+    }
+  };
+
+  const handleMarkRead = async (announcementId: number) => {
+    try {
+      const response = await markAnnouncementRead(announcementId);
+      if (response.success) {
+        setReceivedAnnouncements((prev) =>
+          prev.map((a) => (a.id === announcementId ? { ...a, is_read: true } : a))
+        );
+      }
+    } catch (error: any) {
+      console.error("Failed to mark as read:", error);
     }
   };
 
@@ -205,30 +195,6 @@ const FacultyAnnouncementManagement = () => {
       is_global: false,
       expires_at: "",
       priority: "normal",
-    });
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case "urgent":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100";
-      case "high":
-        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-100";
-      case "normal":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100";
-      case "low":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100";
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100";
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-IN", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
     });
   };
 
@@ -281,7 +247,7 @@ const FacultyAnnouncementManagement = () => {
                 <Label htmlFor="message">Message *</Label>
                 <Textarea
                   id="message"
-                  placeholder="Announcement message (supports HTML)"
+                  placeholder="Announcement message"
                   value={formData.message}
                   onChange={(e) =>
                     setFormData({ ...formData, message: e.target.value })
@@ -346,25 +312,6 @@ const FacultyAnnouncementManagement = () => {
         </Dialog>
       </div>
 
-      {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          placeholder="Search announcements..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <Select value={filterActive} onValueChange={(value: any) => setFilterActive(value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Filter by status..." />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
       {/* Loading State */}
       {loading && (
         <div className="flex items-center justify-center py-12">
@@ -379,99 +326,18 @@ const FacultyAnnouncementManagement = () => {
         </div>
       )}
 
-      {/* Announcements Grid */}
+      {/* Announcement Sections */}
       {!loading && !error && (
-        <div className="grid gap-4">
-          {announcements.length > 0 ? (
-            announcements.map((announcement) => (
-              <Card key={announcement.id} className="overflow-hidden">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CardTitle className="text-lg">
-                          {announcement.title}
-                        </CardTitle>
-                        <Badge className={getPriorityColor(announcement.priority)}>
-                          {announcement.priority}
-                        </Badge>
-                        <Badge
-                          variant={announcement.is_active ? "default" : "secondary"}
-                        >
-                          {announcement.is_active ? "Active" : "Inactive"}
-                        </Badge>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <span>Created by: {announcement.created_by_name}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          <span>
-                            Created:{" "}
-                            {formatDate(announcement.created_at)}
-                          </span>
-                        </div>
-                        {announcement.expires_at && (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            <span>
-                              Expires:{" "}
-                              {formatDate(announcement.expires_at)}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div
-                    className="text-sm leading-relaxed text-foreground/80 line-clamp-2"
-                    dangerouslySetInnerHTML={{
-                      __html: announcement.message,
-                    }}
-                  />
-                  <div className="flex gap-2 pt-2 flex-wrap">
-                    {currentUser && Number(announcement.created_by) === Number(currentUser.id) && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit(announcement)}
-                          className="gap-2"
-                        >
-                          <Edit className="w-4 h-4" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant={announcement.is_active ? "outline" : "default"}
-                          size="sm"
-                          onClick={() => handleToggleActive(announcement.id)}
-                        >
-                          {announcement.is_active ? "Deactivate" : "Activate"}
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => setDeletingId(announcement.id)}
-                          className="gap-2"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Delete
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : (
-            <Card className="p-8 text-center">
-              <p className="text-muted-foreground">No announcements found</p>
-            </Card>
-          )}
-        </div>
+        <AnnouncementSections
+          myAnnouncements={myAnnouncements}
+          receivedAnnouncements={receivedAnnouncements}
+          onEdit={handleEdit}
+          onDelete={(id) => setDeletingId(id)}
+          onToggleActive={handleToggleActive}
+          onMarkRead={handleMarkRead}
+          loading={loading}
+          showActions={true}
+        />
       )}
 
       {/* Delete Confirmation Dialog */}
