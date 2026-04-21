@@ -848,7 +848,7 @@ const Timetable = () => {
   }
 
   return (
-    <div className="p-6 bg-background text-foreground">
+    <div className="bg-background text-foreground">
       <Card className="shadow-xl">
         <CardHeader className="flex flex-row items-center justify-between bg-card px-4 py-3 rounded-t-md">
           <CardTitle className="text-2xl font-semibold text-foreground">Timetable</CardTitle>
@@ -873,16 +873,16 @@ const Timetable = () => {
 
         <CardContent className="bg-card">
           <div className="border border-border rounded-lg p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex gap-4">
-                <div>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-2">
+              <div className="flex flex-col sm:flex-row md:flex-row gap-2 sm:gap-4 w-full md:flex-1 md:items-center md:flex-nowrap">
+                <div className="w-full sm:w-auto md:flex-none">
                   <Select
                     value={state.semesterId}
                     onValueChange={(value) =>
                       updateState({ semesterId: value, sectionId: "", timetable: [] })
                     }
                   >
-                    <SelectTrigger className="w-40 bg-card text-foreground border-border">
+                    <SelectTrigger className="w-full sm:w-40 md:w-48 bg-card text-foreground border-border">
                       <SelectValue placeholder="Select Semester" />
                     </SelectTrigger>
                     <SelectContent className="bg-card text-foreground border-border">
@@ -894,13 +894,13 @@ const Timetable = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
+                <div className="w-full sm:w-auto md:flex-none">
                   <Select
                     value={state.sectionId}
                     onValueChange={(value) => updateState({ sectionId: value, timetable: [] })}
                     disabled={!state.semesterId}
                   >
-                    <SelectTrigger className="w-40 bg-card text-foreground border-border">
+                    <SelectTrigger className="w-full sm:w-40 md:w-48 bg-card text-foreground border-border">
                       <SelectValue placeholder="Select Section" />
                     </SelectTrigger>
                     <SelectContent className="bg-card text-foreground border-border">
@@ -913,7 +913,7 @@ const Timetable = () => {
                   </Select>
                 </div>
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground mt-2 md:mt-0 md:ml-4 md:whitespace-nowrap md:flex-none">
                 {state.semesterId && state.sectionId
                   ? `${state.semesters.find((s) => s.id === state.semesterId)?.number} Semester - Section ${state.sections.find((s) => s.id === state.sectionId)?.name
                   }`
