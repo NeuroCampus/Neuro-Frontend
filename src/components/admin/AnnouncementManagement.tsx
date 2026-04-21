@@ -30,7 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Plus, Edit, Trash2, Eye, Users, Calendar } from "lucide-react";
+import { Loader2, Plus, Edit, Trash2, Users, Calendar } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 import {
   getAllAnnouncements,
@@ -38,7 +38,6 @@ import {
   updateAnnouncement,
   deleteAnnouncement,
   toggleAnnouncementActive,
-  getAnnouncementReaders,
   Announcement,
   CreateAnnouncementRequest,
 } from "@/utils/announcements_api";
@@ -48,12 +47,9 @@ const AdminAnnouncementManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showReadersDialog, setShowReadersDialog] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [selectedAnnouncementId, setSelectedAnnouncementId] = useState<number | null>(null);
-  const [readers, setReaders] = useState<any[]>([]);
-  const [readersLoading, setReadersLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterActive, setFilterActive] = useState<"all" | "active" | "inactive">("all");
   const [filterGlobal, setFilterGlobal] = useState<"all" | "global" | "branch">("all");
@@ -107,17 +103,6 @@ const AdminAnnouncementManagement = () => {
   useEffect(() => {
     loadAnnouncements();
   }, [filterActive, filterGlobal]);
-
-  const handleViewReaders = async (announcementId: number) => {
-    setSelectedAnnouncementId(announcementId);
-    setReadersLoading(true);
-    const response = await getAnnouncementReaders(announcementId);
-    if (response.success && response.data) {
-      setReaders(response.data);
-    }
-    setReadersLoading(false);
-    setShowReadersDialog(true);
-  };
 
   const handleCreateOrUpdate = async () => {
     if (!formData.title.trim() || !formData.message.trim()) {
@@ -470,10 +455,6 @@ const AdminAnnouncementManagement = () => {
                       </div>
                       <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
-                          <span>{announcement.read_count} read</span>
-                        </div>
-                        <div className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
                           <span>
                             Created:{" "}
@@ -511,15 +492,6 @@ const AdminAnnouncementManagement = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleViewReaders(announcement.id)}
-                      className="gap-2"
-                    >
-                      <Eye className="w-4 h-4" />
-                      Readers ({announcement.read_count})
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
                       onClick={() => handleEdit(announcement)}
                       className="gap-2"
                     >
@@ -553,45 +525,6 @@ const AdminAnnouncementManagement = () => {
           )}
         </div>
       )}
-
-      {/* Readers Dialog */}
-      <Dialog open={showReadersDialog} onOpenChange={setShowReadersDialog}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Announcement Readers</DialogTitle>
-            <DialogDescription>
-              Users who have viewed this announcement
-            </DialogDescription>
-          </DialogHeader>
-          {readersLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin" />
-            </div>
-          ) : readers.length > 0 ? (
-            <div className="space-y-2 max-h-80 overflow-y-auto">
-              {readers.map((reader) => (
-                <Card key={reader.id} className="p-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">{reader.user_name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {reader.user_email}
-                      </p>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(reader.read_at).toLocaleString("en-IN")}
-                    </p>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <p className="text-center text-muted-foreground py-8">
-              No readers yet
-            </p>
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
