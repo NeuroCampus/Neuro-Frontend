@@ -309,7 +309,6 @@ interface GetFacultyDashboardBootstrapResponse {
   success: boolean;
   message?: string;
   data?: {
-    assignments: FacultyAssignment[];
     proctor_students_count?: number;
     performance_trends?: {
       avg_attendance_percent_30d?: number;
@@ -326,6 +325,8 @@ interface GetFacultyDashboardBootstrapResponse {
     today_classes?: Array<{
       subject: string;
       section: string;
+      semester?: number | null;
+      branch?: string | null;
       start_time: string;
       end_time: string;
       room: string;
