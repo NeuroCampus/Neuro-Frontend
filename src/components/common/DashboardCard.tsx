@@ -20,17 +20,17 @@ const DashboardCard = ({ title, description, value, icon, trend, onClick, classN
   
   return (
     <motion.div
-      className={`rounded-lg outline-none focus:ring-2 ${theme === 'dark' ? 'focus:ring-primary' : 'focus:ring-blue-500'}`} 
+      className={`rounded-lg outline-none focus:ring-2 ${theme === 'dark' ? 'focus:ring-primary' : 'focus:ring-blue-500'} ${className || ''}`} 
       whileHover={{ scale: 1.02, y: -2 }}
       whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.2, ease: "easeInOut" }}
     >
       <Card
-        className={`transition-all duration-300 cursor-pointer backdrop-blur-sm ${
+        className={`h-full flex flex-col transition-all duration-300 cursor-pointer backdrop-blur-sm ${
           theme === 'dark' 
             ? "bg-card/50 border-border hover:bg-card/70 hover:border-primary/30" 
             : "bg-white border-gray-200 hover:bg-gray-50 hover:border-blue-300"
-        } ${className || ''}`}
+        }`}
         onClick={onClick}
       >
         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
@@ -45,8 +45,8 @@ const DashboardCard = ({ title, description, value, icon, trend, onClick, classN
             </motion.div>
           )}
         </CardHeader>
-        <CardContent>
-          {value && (
+        <CardContent className="flex-1">
+          {(value !== undefined && value !== null) && (
             <motion.div 
               className={`text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
               initial={{ opacity: 0, y: 10 }}

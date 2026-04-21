@@ -46,6 +46,7 @@ import {
 } from "recharts";
 import { motion } from "framer-motion";
 import DashboardCard from "../common/DashboardCard";
+import { FaUserGraduate, FaChalkboardTeacher, FaUserCheck } from "react-icons/fa";
 import { getFacultyDashboardBootstrap } from "@/utils/faculty_api";
 import { useTheme } from "@/context/ThemeContext";
 
@@ -238,40 +239,50 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
   }
 
   return (
-    <div className={` md: space-y-6 min-h-screen w-full max-w-full overflow-x-hidden ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      {/* Top Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {stats.map((stat, idx) => (
-          <Card key={idx} className={`${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'} overflow-hidden w-full max-w-full shadow-sm hover:shadow-md transition-shadow`}>
-            <CardContent className="p-4 flex items-center space-x-4 w-full min-w-0 overflow-hidden break-words">
-              <div className={`p-3 rounded-full flex-shrink-0 ${
-                stat.color === 'blue' ? (theme === 'dark' ? 'bg-blue-900/30' : 'bg-blue-100') :
-                stat.color === 'green' ? (theme === 'dark' ? 'bg-green-900/30' : 'bg-green-100') :
-                (theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200')
-              }`}>
-                {stat.icon}
-              </div>
-              <div className="w-full min-w-0">
-                <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{stat.label}</p>
-                <h2 className="text-2xl sm:text-3xl font-bold truncate">{stat.value}</h2>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+    <div className={`space-y-6 w-full max-w-full min-h-0 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      {/* Top Stats Cards (admin style) */}
+      <motion.div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
+        <motion.div className="h-full" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+          <DashboardCard
+            title="Total Proctor Students"
+            value={proctorStudentsCount || 0}
+            description="Students under your proctoring"
+            icon={<FaUserGraduate className={theme === 'dark' ? "text-blue-400 text-3xl" : "text-blue-500 text-3xl"} />}
+            className="h-full"
+          />
+        </motion.div>
 
-      {/* Ongoing/Next cards moved into the right column of the main content below */}
-      </div>
+        <motion.div className="h-full" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
+          <DashboardCard
+            title="Attendance (30d)"
+            value={`${Math.round((performanceTrends?.avg_attendance_percent_30d ?? 0) * 10) / 10}%`}
+            description="Average attendance (last 30 days)"
+            icon={<FaChalkboardTeacher className={theme === 'dark' ? "text-purple-400 text-3xl" : "text-purple-500 text-3xl"} />}
+            className="h-full"
+          />
+        </motion.div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-        {/* Performance Trends (span 2 columns) */}
-        <Card className={`lg:col-span-2 h-full flex flex-col ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'} shadow-sm`}>
-          <CardHeader className="flex items-center justify-between pb-3">
-            <div>
+        <motion.div className="h-full" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <DashboardCard
+            title="Avg IA Marks"
+            value={performanceTrends?.avg_ia_mark ?? 0}
+            description="Average internal assessment"
+            icon={<FaUserCheck className={theme === 'dark' ? "text-green-400 text-3xl" : "text-green-500 text-3xl"} />}
+            className="h-full"
+          />
+        </motion.div>
+      </motion.div>
+
+      {/* Main Content - stacked full-width rows */}
+      <div className="flex flex-col gap-6 w-full">
+        {/* Performance Trends (full width) */}
+        <Card className={`h-full flex flex-col w-full ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'} shadow-sm`}>
+          <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between pb-3">
+            <div className="flex-1 text-left">
               <CardTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Performance Trends</CardTitle>
               <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Average Attendance and IA marks per subject</p>
             </div>
-            <div className="w-48">
+            <div className="mt-3 md:mt-0 md:ml-4 flex-none w-full md:w-48">
               <Select onValueChange={(v) => setSelectedSubject(v)}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="All Subjects" />
@@ -319,107 +330,105 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
           </CardContent>
         </Card>
 
-          {/* Right column: Current & Next Session (student-style card) */}
-          <div className="lg:col-span-1 flex flex-col gap-4 h-full">
-            <section className="w-full h-full">
-              <Card className={`h-full flex flex-col justify-between ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
-                <CardHeader className="p-3 md:p-4">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-2 sm:gap-0">
-                    <CardTitle className={theme === 'dark' ? 'text-sm md:text-sm text-card-foreground' : 'text-sm md:text-sm text-gray-900'}>Current & Next Session</CardTitle>
-                    <div className="flex items-center gap-2 text-xs md:text-xs">
-                      <Clock className="w-4 h-4" />
-                      <span className={`flex items-center gap-2 px-3 py-1 rounded-full font-medium shadow-sm ${
-                        theme === 'dark' ? 'bg-muted text-muted-foreground' : 'bg-gray-100 text-gray-900'
-                      }`}>
-                        <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                        Live: {nowDate.toLocaleTimeString('en-US', { hour12: false })}
-                      </span>
-                    </div>
-                  </div>
-                </CardHeader>
+        {/* Current & Next Session (full width row) */}
+        <section className="w-full">
+          <Card className={`h-full flex flex-col justify-between w-full ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
+            <CardHeader className="p-3 md:p-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-2 sm:gap-0">
+                <CardTitle className={theme === 'dark' ? 'text-sm md:text-sm text-card-foreground' : 'text-sm md:text-sm text-gray-900'}>Current & Next Session</CardTitle>
+                <div className="flex items-center gap-2 text-xs md:text-xs">
+                  <Clock className="w-4 h-4" />
+                  <span className={`flex items-center gap-2 px-3 py-1 rounded-full font-medium shadow-sm ${
+                    theme === 'dark' ? 'bg-muted text-muted-foreground' : 'bg-gray-100 text-gray-900'
+                  }`}>
+                    <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                    Live: {nowDate.toLocaleTimeString('en-US', { hour12: false })}
+                  </span>
+                </div>
+              </div>
+            </CardHeader>
 
-                <CardContent className="w-full flex-1 flex flex-col gap-3 md:gap-4 p-3 md:p-4">
-                  {ongoingClass ? (
-                    <>
-                      <div className={`border-2 border-blue-500 rounded-md p-3 md:p-4 w-full shadow-md flex flex-col items-center sm:items-start gap-2 ${
-                        theme === 'dark' ? 'bg-blue-900/20' : 'bg-blue-50'
-                      }`}>
-                        <h4 className={`font-semibold text-sm mb-2 line-clamp-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
-                          {ongoingClass.subject}
-                        </h4>
-                        <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                          Teacher: {ongoingClass.section ?? ''}
-                        </p>
-                        <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                          Room: {ongoingClass.room}
-                        </p>
-                        <p className={`text-[10px] ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                          {ongoingClass.start_time} - {ongoingClass.end_time}
-                        </p>
-                        <p className={`text-xs mt-1 font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>Currently Running</p>
-                      </div>
-                      {nextClass && (
-                        <div className={`border rounded-md p-3 w-full shadow-md ${
-                          getClassStatus(nextClass).status === 'starting-soon'
-                            ? (theme === 'dark' ? 'border-orange-500 bg-orange-900/20' : 'border-orange-500 bg-orange-50')
-                            : getClassStatus(nextClass).status === 'upcoming'
-                            ? (theme === 'dark' ? 'border-yellow-500 bg-yellow-900/20' : 'border-yellow-500 bg-yellow-50')
-                            : (theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-gray-50')
-                        }`}>
-                          <h4 className={`font-semibold text-sm mb-2 line-clamp-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
-                            {nextClass.subject}
-                          </h4>
-                          <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                            Teacher: {nextClass.section ?? ''}
-                          </p>
-                          <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                            Room: {nextClass.room}
-                          </p>
-                          <p className={`text-[10px] mt-1 font-medium line-clamp-2 ${getClassStatus(nextClass).color || (theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500')}`}>
-                            {getClassStatus(nextClass).message || `Starts at ${nextClass.start_time}`}
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="w-full text-center">
-                      <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No class is currently running</p>
-                      {nextClass && (
-                        <div className={`border rounded-md p-3 mt-3 shadow-md ${
-                          getClassStatus(nextClass).status === 'starting-soon'
-                            ? (theme === 'dark' ? 'border-orange-500 bg-orange-900/20' : 'border-orange-500 bg-orange-50')
-                            : getClassStatus(nextClass).status === 'upcoming'
-                            ? (theme === 'dark' ? 'border-yellow-500 bg-yellow-900/20' : 'border-yellow-500 bg-yellow-50')
-                            : (theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-gray-50')
-                        }`}>
-                          <h4 className={`font-semibold text-sm mb-2 line-clamp-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
-                            Next: {nextClass.subject}
-                          </h4>
-                          <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                            Teacher: {nextClass.section ?? ''}
-                          </p>
-                          <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                            Room: {nextClass.room}
-                          </p>
-                          <p className={`text-[10px] mt-1 font-medium line-clamp-2 ${getClassStatus(nextClass).color || (theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500')}`}>
-                            {getClassStatus(nextClass).message || `Starts at ${nextClass.start_time}`}
-                          </p>
-                          {getClassStatus(nextClass).status === 'starting-soon' && (
-                            <div className="flex items-center gap-2 mt-2">
-                              <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
-                              <span className={`text-xs font-medium ${theme === 'dark' ? 'text-orange-400' : 'text-orange-600'}`}>Get ready!</span>
-                            </div>
-                          )}
+            <CardContent className="w-full flex-1 flex flex-col gap-3 md:gap-4 p-3 md:p-4">
+              {ongoingClass ? (
+                <>
+                  <div className={`border-2 border-blue-500 rounded-md p-3 md:p-4 w-full shadow-md flex flex-col items-center sm:items-start gap-2 ${
+                    theme === 'dark' ? 'bg-blue-900/20' : 'bg-blue-50'
+                  }`}>
+                    <h4 className={`font-semibold text-sm mb-2 line-clamp-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                      {ongoingClass.subject}
+                    </h4>
+                    <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                      Teacher: {ongoingClass.section ?? ''}
+                    </p>
+                    <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                      Room: {ongoingClass.room}
+                    </p>
+                    <p className={`text-[10px] ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                      {ongoingClass.start_time} - {ongoingClass.end_time}
+                    </p>
+                    <p className={`text-xs mt-1 font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>Currently Running</p>
+                  </div>
+                  {nextClass && (
+                    <div className={`border rounded-md p-3 w-full shadow-md ${
+                      getClassStatus(nextClass).status === 'starting-soon'
+                        ? (theme === 'dark' ? 'border-orange-500 bg-orange-900/20' : 'border-orange-500 bg-orange-50')
+                        : getClassStatus(nextClass).status === 'upcoming'
+                        ? (theme === 'dark' ? 'border-yellow-500 bg-yellow-900/20' : 'border-yellow-500 bg-yellow-50')
+                        : (theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-gray-50')
+                    }`}>
+                      <h4 className={`font-semibold text-sm mb-2 line-clamp-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                        {nextClass.subject}
+                      </h4>
+                      <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                        Teacher: {nextClass.section ?? ''}
+                      </p>
+                      <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                        Room: {nextClass.room}
+                      </p>
+                      <p className={`text-[10px] mt-1 font-medium line-clamp-2 ${getClassStatus(nextClass).color || (theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500')}`}>
+                        {getClassStatus(nextClass).message || `Starts at ${nextClass.start_time}`}
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="w-full text-center">
+                  <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No class is currently running</p>
+                  {nextClass && (
+                    <div className={`border rounded-md p-3 mt-3 shadow-md ${
+                      getClassStatus(nextClass).status === 'starting-soon'
+                        ? (theme === 'dark' ? 'border-orange-500 bg-orange-900/20' : 'border-orange-500 bg-orange-50')
+                        : getClassStatus(nextClass).status === 'upcoming'
+                        ? (theme === 'dark' ? 'border-yellow-500 bg-yellow-900/20' : 'border-yellow-500 bg-yellow-50')
+                        : (theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-gray-50')
+                    }`}>
+                      <h4 className={`font-semibold text-sm mb-2 line-clamp-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
+                        Next: {nextClass.subject}
+                      </h4>
+                      <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                        Teacher: {nextClass.section ?? ''}
+                      </p>
+                      <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                        Room: {nextClass.room}
+                      </p>
+                      <p className={`text-[10px] mt-1 font-medium line-clamp-2 ${getClassStatus(nextClass).color || (theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500')}`}>
+                        {getClassStatus(nextClass).message || `Starts at ${nextClass.start_time}`}
+                      </p>
+                      {getClassStatus(nextClass).status === 'starting-soon' && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+                          <span className={`text-xs font-medium ${theme === 'dark' ? 'text-orange-400' : 'text-orange-600'}`}>Get ready!</span>
                         </div>
                       )}
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            </section>
-          </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
 
-        </div>
+      </div>
 
       {/* Action Cards */}
       <motion.div
