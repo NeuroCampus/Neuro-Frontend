@@ -22,6 +22,7 @@ import FacultyAttendance from "../faculty/FacultyAttendance";
 import StudentInfoScanner from "../hod/StudentInfoScanner";
 import StudyMaterial from "../faculty/StudyMaterial";
 import { logoutUser, fetchWithTokenRefresh } from "../../utils/authService";
+import FacultyAnnouncementManagement from "../faculty/FacultyAnnouncementManagement";
 import { API_ENDPOINT } from "../../utils/config";
 import { useTheme } from "../../context/ThemeContext";
 import { useProctorStudentsQuery } from "../../hooks/useApiQueries";
@@ -180,6 +181,8 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
         return <FacultyAttendance />;
       case "announcements":
         return <Announcements role="faculty" proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} />;
+      case "faculty-announcement-management":
+        return <FacultyAnnouncementManagement />;
       case "proctor-students":
         return <ProctorStudents proctorStudents={proctorStudents} proctorStudentsLoading={proctorStudentsLoading} pagination={proctorPagination} />;
       case "exam-applications":

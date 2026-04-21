@@ -140,6 +140,9 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       "enrollment": <UserCheck size={20} />,
       "menu-management": <Utensils size={20} />,
       "issues": <AlertCircle size={20} />,
+      "announcement-management": <Bell size={20} />,
+      "hod-announcement-management": <Bell size={20} />,
+      "faculty-announcement-management": <Bell size={20} />,
 
     };
     return iconMap[page] || <LayoutDashboard size={20} />;
@@ -173,6 +176,9 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Faculty Assignments", page: "teacher-assignments" },
     { name: "Question Paper Approvals", page: "qp-approvals" },
     { name: "Batches", page: "batches" },
+    
+    // Communication
+    { name: "Announcement Management", page: "announcement-management" },
     
     // Leaves
     { name: "HOD Leaves", page: "hod-leaves" },
@@ -215,6 +221,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     // Resources & Communication
     { name: "Study Material", page: "study-materials" },
     { name: "Scan for Student Info", page: "scan-student-info" },
+    { name: "Branch Announcements", page: "hod-announcement-management" },
     
     // Profile
     { name: "Profile", page: "hod-profile" },
@@ -245,6 +252,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Proctor Students", page: "proctor-students" },
     { name: "Scan for Student Info", page: "scan-student-info" },
     { name: "Study Material", page: "study-materials" },
+    { name: "Announcements for Students", page: "faculty-announcement-management" },
     
     // Profile
     { name: "Profile", page: "faculty-profile" },
@@ -267,6 +275,9 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
 
     // Interview
     { name: "AI Interview", page: "ai-interview" },
+    
+    // Communication
+    { name: "Announcements", page: "announcements" },
     
     // Leave Management
     { name: "Leaves", page: "leave" },

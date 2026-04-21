@@ -14,6 +14,7 @@ import UsersManagement from "../admin/UsersManagement";
 import AdminProfile from "../admin/AdminProfile";
 import AdminQPApprovals from "../admin/AdminQPApprovals";
 import TeacherBranchAssignment from "../admin/TeacherBranchAssignment";
+import AnnouncementManagement from "../admin/AnnouncementManagement";
 import { useToast } from "../../hooks/use-toast";
 import AdminAttendance from "../admin/AdminAttendance";
 import ApplyLeaveAdmin from "../admin/ApplyLeaveAdmin";
@@ -224,6 +225,18 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
             transition={{ duration: 0.3 }}
           >
             <AdminQPApprovals />
+          </motion.div>
+        );
+      
+      case "announcement-management":
+        return (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <AnnouncementManagement />
           </motion.div>
         );
       
