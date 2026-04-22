@@ -430,7 +430,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
   if (loading && branches.length === 0) return <div className={`text-center py-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading...</div>;
 
   return (
-    <div className={`mx-auto w-full max-w-[400px] sm:max-w-full p-2 sm:p-6 min-h-screen text-sm sm:text-base ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`mx-auto w-full max-w-[400px] sm:max-w-full sm: min-h-screen text-sm sm:text-base ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <Card className={theme === 'dark' ? 'w-full bg-card border border-border' : 'w-full bg-white border border-gray-200'}>
         <CardHeader className="pb-2 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           {/* Title + paragraph always full width */}

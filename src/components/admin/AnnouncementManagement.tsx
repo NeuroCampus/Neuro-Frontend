@@ -201,190 +201,215 @@ const AdminAnnouncementManagement = () => {
   const roles = ["student", "teacher", "hod", "faculty"];
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">Announcement Management</h1>
-          <p className="text-muted-foreground">Create and manage system announcements</p>
-        </div>
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button onClick={() => resetForm()} className="gap-2">
-              <Plus className="w-4 h-4" />
-              New Announcement
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingId ? "Edit Announcement" : "Create Announcement"}
-              </DialogTitle>
-              <DialogDescription>
-                {editingId
-                  ? "Update the announcement details below"
-                  : "Create a new announcement visible to selected roles"}
-              </DialogDescription>
-            </DialogHeader>
+    <>
+      <style>{`
+        @media (max-width: 480px) {
+          .announcements-container { padding: 12px; }
+          .announcements-card { border-radius: 8px; }
+          .announcements-card-header { padding: 12px; }
+          .announcements-card-title { font-size: 18px; line-height: 1.3; }
+          .announcements-card-desc { font-size: 12px; margin-top: 4px; }
+          .announcements-card-content { padding: 12px; }
+          .announce-actions { gap: 8px; }
+          .announce-list { gap: 10px; }
+          .delete-modal { width: 90vw !important; max-width: 320px !important; padding: 16px !important; }
+        }
+      `}</style>
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  placeholder="Announcement title"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="message">Message *</Label>
-                <Textarea
-                  id="message"
-                  placeholder="Announcement message"
-                  value={formData.message}
-                  onChange={(e) =>
-                    setFormData({ ...formData, message: e.target.value })
-                  }
-                  rows={6}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="priority">Priority</Label>
-                  <Select
-                    value={formData.priority}
-                    onValueChange={(value: any) =>
-                      setFormData({ ...formData, priority: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="normal">Normal</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="urgent">Urgent</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="expires_at">Expires At</Label>
-                  <Input
-                    id="expires_at"
-                    type="date"
-                    value={formData.expires_at}
-                    onChange={(e) =>
-                      setFormData({ ...formData, expires_at: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Scope</Label>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="is_global"
-                      checked={formData.is_global}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          is_global: checked as boolean,
-                        })
-                      }
-                    />
-                    <Label htmlFor="is_global" className="font-normal">
-                      Global (All branches)
-                    </Label>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Target Roles *</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  {roles.map((role) => (
-                    <div key={role} className="flex items-center gap-2">
-                      <Checkbox
-                        id={role}
-                        checked={formData.target_roles.includes(role)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setFormData({
-                              ...formData,
-                              target_roles: [
-                                ...formData.target_roles,
-                                role,
-                              ],
-                            });
-                          } else {
-                            setFormData({
-                              ...formData,
-                              target_roles: formData.target_roles.filter(
-                                (r) => r !== role
-                              ),
-                            });
-                          }
-                        }}
-                      />
-                      <Label htmlFor={role} className="font-normal capitalize">
-                        {role}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex gap-3 justify-end pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowCreateDialog(false)}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleCreateOrUpdate}>
-                  {editingId ? "Update" : "Create"} Announcement
-                </Button>
-              </div>
+      <div className={`announcements-container sm: min-h-screen text-sm sm:text-base max-w-[390px] sm:max-w-none mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+        <Card className={`announcements-card ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
+          <CardHeader className="announcements-card-header grid grid-cols-[1fr_auto] items-center gap-4">
+            <div className="min-w-0">
+              <CardTitle className={`announcements-card-title ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Announcement Management</CardTitle>
+              <p className={`announcements-card-desc ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Create and manage system announcements</p>
             </div>
-          </DialogContent>
-        </Dialog>
+            <div className="announce-actions">
+              <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+                <DialogTrigger asChild>
+                  <Button
+                    onClick={() => resetForm()}
+                    className={`gap-2 ${theme === 'dark' ? 'text-white bg-[#a259ff] hover:bg-[#9147e0] border-border' : 'text-white bg-[#a259ff] hover:bg-[#9147e0] border-[#a259ff]'}`}
+                  >
+                    <Plus className="w-4 h-4" />
+                    New Announcement
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingId ? "Edit Announcement" : "Create Announcement"}
+                    </DialogTitle>
+                    <DialogDescription>
+                      {editingId
+                        ? "Update the announcement details below"
+                        : "Create a new announcement visible to selected roles"}
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Title *</Label>
+                      <Input
+                        id="title"
+                        placeholder="Announcement title"
+                        value={formData.title}
+                        onChange={(e) =>
+                          setFormData({ ...formData, title: e.target.value })
+                        }
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="message">Message *</Label>
+                      <Textarea
+                        id="message"
+                        placeholder="Announcement message"
+                        value={formData.message}
+                        onChange={(e) =>
+                          setFormData({ ...formData, message: e.target.value })
+                        }
+                        rows={6}
+                        className="resize-none max-h-24 overflow-auto custom-scrollbar"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="priority">Priority</Label>
+                        <Select
+                          value={formData.priority}
+                          onValueChange={(value: any) =>
+                            setFormData({ ...formData, priority: value })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="low">Low</SelectItem>
+                            <SelectItem value="normal">Normal</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                            <SelectItem value="urgent">Urgent</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="expires_at">Expires At</Label>
+                        <Input
+                          id="expires_at"
+                          type="date"
+                          value={formData.expires_at}
+                          onChange={(e) =>
+                            setFormData({ ...formData, expires_at: e.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Scope</Label>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id="is_global"
+                            checked={formData.is_global}
+                            onCheckedChange={(checked) =>
+                              setFormData({
+                                ...formData,
+                                is_global: checked as boolean,
+                              })
+                            }
+                          />
+                          <Label htmlFor="is_global" className="font-normal">
+                            Global (All branches)
+                          </Label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Target Roles *</Label>
+                      <div className="grid grid-cols-2 gap-3">
+                        {roles.map((role) => (
+                          <div key={role} className="flex items-center gap-2">
+                            <Checkbox
+                              id={role}
+                              checked={formData.target_roles.includes(role)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setFormData({
+                                    ...formData,
+                                    target_roles: [
+                                      ...formData.target_roles,
+                                      role,
+                                    ],
+                                  });
+                                } else {
+                                  setFormData({
+                                    ...formData,
+                                    target_roles: formData.target_roles.filter(
+                                      (r) => r !== role
+                                    ),
+                                  });
+                                }
+                              }}
+                            />
+                            <Label htmlFor={role} className="font-normal capitalize">
+                              {role}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 justify-end pt-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowCreateDialog(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleCreateOrUpdate}
+                        className={`${theme === 'dark' ? 'text-white bg-[#a259ff] hover:bg-[#9147e0] border-border' : 'text-white bg-[#a259ff] hover:bg-[#9147e0] border-[#a259ff]'}`}
+                      >
+                        {editingId ? "Update" : "Create"} Announcement
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+          </CardHeader>
+          <CardContent className="announcements-card-content">
+            <div className="space-y-6">
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              ) : error ? (
+                <div className="p-4 rounded-lg bg-destructive/10 text-destructive">
+                  <p className="font-medium">{error}</p>
+                </div>
+              ) : (
+                <AnnouncementSections
+                  myAnnouncements={myAnnouncements}
+                  receivedAnnouncements={receivedAnnouncements}
+                  onEdit={handleEdit}
+                  onDelete={(id) => setDeletingId(id)}
+                  onToggleActive={handleToggleActive}
+                  onMarkRead={handleMarkRead}
+                  loading={loading}
+                  showActions={true}
+                />
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Loading State */}
-      {loading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      )}
-
-      {/* Error State */}
-      {error && (
-        <div className="p-4 rounded-lg bg-destructive/10 text-destructive">
-          <p className="font-medium">{error}</p>
-        </div>
-      )}
-
-      {/* Announcement Sections */}
-      {!loading && !error && (
-        <AnnouncementSections
-          myAnnouncements={myAnnouncements}
-          receivedAnnouncements={receivedAnnouncements}
-          onEdit={handleEdit}
-          onDelete={(id) => setDeletingId(id)}
-          onToggleActive={handleToggleActive}
-          onMarkRead={handleMarkRead}
-          loading={loading}
-          showActions={true}
-        />
-      )}
+      
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
@@ -407,7 +432,7 @@ const AdminAnnouncementManagement = () => {
           </div>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 };
 

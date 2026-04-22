@@ -196,14 +196,14 @@ const FacultyAttendance = () => {
 
   if (loading) {
     return (
-      <div className={`p-6 text-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+      <div className={` text-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
         Loading attendance data...
       </div>
     );
   }
 
   return (
-    <div className={`p-4 md:p-6 space-y-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={` md: space-y-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Today's Attendance */}
       <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
         <CardHeader>

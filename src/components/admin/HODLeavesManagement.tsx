@@ -247,7 +247,7 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
   }
 
   return (
-    <div className={`p-4 sm:p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={` sm:min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

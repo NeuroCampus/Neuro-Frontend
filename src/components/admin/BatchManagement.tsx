@@ -222,7 +222,7 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
   };
 
   return (
-    <div className={`p-4 max-w-full min-h-screen mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+    <div className={` max-w-full min-h-screen mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
 
       {/* Add New Batch Card */}
       <Card className={theme === 'dark' ? 'bg-card border border-border shadow-sm mb-6' : 'bg-white border border-gray-200 shadow-sm mb-6'}>

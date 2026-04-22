@@ -165,11 +165,7 @@ const AdminHODAttendance: React.FC = () => {
   const handleRecordsPageSizeChange = (newSize: number) => setRecordsPagination(prev => ({ ...prev, page_size: newSize, page: 1 }));
 
   return (
-    <div className={`p-4 sm:p-6 space-y-4 sm:space-y-6 text-sm sm:text-base ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <div className="flex justify-between items-center">
-        <h1 className={`text-xl sm:text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>HOD Attendance</h1>
-      </div>
-
+    <div className={`sm: space-y-4 sm:space-y-6 text-sm sm:text-base ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Tabs */}
       <div className={`flex space-x-1 p-1 rounded-lg ${theme === 'dark' ? 'bg-card' : 'bg-white'} border ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
         <button onClick={() => setActiveTab('today')} className={`flex-1 py-2 px-4 rounded-md text-sm font-medium ${activeTab === 'today' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Today's Attendance</button>
