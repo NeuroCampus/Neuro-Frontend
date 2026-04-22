@@ -161,32 +161,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           transition={{ duration: 0.4, delay: 0.2 }}
         >
           {/* Page Header */}
-          <motion.div
-            className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.3 }}
-          >
-            <motion.h1
-              className={`text-xl md:text-2xl font-bold ${
-                theme === "dark" ? "text-foreground" : "text-gray-900"
-              }`}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4, delay: 0.4 }}
-            >
-              {pageTitle || formatTitle(activePage)}
-            </motion.h1>
-            {headerActions && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.5 }}
-              >
-                {headerActions}
-              </motion.div>
-            )}
-          </motion.div>
+          
 
           {/* Error Message */}
           {error && (

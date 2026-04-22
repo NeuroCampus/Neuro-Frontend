@@ -217,7 +217,7 @@ const AdminStats = ({ setError, onNavigate }: AdminStatsProps) => {
   }
 
   return (
-    <div className={`space-y-8 min-h-screen p-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`space-y-8 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

@@ -142,8 +142,8 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
   };
 
   return (
-    <div className={`min-h-screen px-4 py-10 overflow-y-hidden ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
-      <div className="max-w-2xl mx-auto">
+    <div className={`min-h-screen px-4 overflow-y-hidden ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+      <div className="w-full mx-auto">
         <Card className={theme === 'dark' ? 'w-full bg-card border border-border shadow-lg rounded-lg p-6' : 'w-full bg-white border border-gray-200 shadow-lg rounded-lg p-6'}>
           <CardHeader className="pb-4">
             <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Staff Enrollment Form</CardTitle>
