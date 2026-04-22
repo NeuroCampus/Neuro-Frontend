@@ -311,7 +311,6 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     { name: "Today's Attendance", page: "attendance" },
     { name: "Attendance Filters", page: "attendance-filters" },
     { name: "Scan for Student Info", page: "performance" },
-    { name: "Timetable", page: "timetable" },
     { name: "Exams", page: "exams" },
     { name: "Faculty", page: "faculty" },
     { name: "Finance", page: "finance" },
