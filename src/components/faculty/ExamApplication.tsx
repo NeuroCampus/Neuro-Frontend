@@ -576,11 +576,17 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
                 <div id="exam-application-printable" className="p-3 md:p-4 lg:p-6 bg-white text-black" style={{ minWidth: '100%', maxWidth: '800px', width: 'auto', margin: '0 auto' }}>
                   <div className="flex items-center justify-between mb-2">
                     <div>
-                      <img src="/logo.jpeg" alt="Logo" style={{ height: 96, width: 96, objectFit: 'contain', borderRadius: 6 }} />
+                      <img 
+                        src={JSON.parse(localStorage.getItem('user') || '{}').org_logo || "/logo.jpeg"} 
+                        alt="Logo" 
+                        style={{ height: 96, width: 96, objectFit: 'contain', borderRadius: 6 }} 
+                      />
                     </div>
                     <div style={{ flex: 1, textAlign: 'center' }}>
-                      <div className="font-bold text-lg" style={{ letterSpacing: '0.6px' }}>AMC ENGINEERING COLLEGE</div>
-                      <div className="text-xs text-muted-foreground">Bannerghatta Road, Bangalore - 560083</div>
+                      <div className="font-bold text-lg uppercase" style={{ letterSpacing: '0.6px' }}>
+                        {JSON.parse(localStorage.getItem('user') || '{}').org_name || "NEURO CAMPUS"}
+                      </div>
+                      <div className="text-xs text-muted-foreground">Official Campus Portal</div>
                     </div>
                     <div style={{ width: 120, textAlign: 'right' }}>
                       <div className="text-sm font-medium">Exam Application</div>

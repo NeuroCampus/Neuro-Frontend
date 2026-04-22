@@ -135,9 +135,13 @@ const ResultsView: React.FC = () => {
       <div className="w-full max-w-3xl bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-4">
-            <img src="/logo.jpeg" alt="AMC Logo" className="w-16 h-16 object-contain" />
+            <img 
+              src={result?.organization?.logo || "/logo.jpeg"} 
+              alt={`${result?.organization?.name || 'College'} Logo`} 
+              className="w-16 h-16 object-contain" 
+            />
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">AMC - Neuro Campus</h1>
+              <h1 className="text-2xl font-semibold text-gray-900">{result?.organization?.name || 'Neuro Campus'}</h1>
               <p className="text-xs text-gray-500">Official marks portal</p>
             </div>
           </div>
@@ -149,7 +153,7 @@ const ResultsView: React.FC = () => {
           <ul className="text-xs text-gray-600 mt-2 list-disc list-inside space-y-1">
             <li>Enter your USN exactly as on your ID (input will convert to UPPERCASE).</li>
             <li>Results shown are official. Use the export to download a marks card.</li>
-            <li>Passing requires meeting the minimum criteria set by the examination board.</li>
+            <li>Passing requires meeting the minimum criteria set by the {result?.organization?.name || 'examination board'}.</li>
           </ul>
         </div>
 
@@ -268,9 +272,13 @@ const ResultsView: React.FC = () => {
             <div style={{ position: 'absolute', left: -9999, top: 0 }}>
               <div ref={cardRef as any} style={{ width: 800, padding: 20, background: '#fff', color: '#000' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <img src="/logo.jpeg" alt="AMC" style={{ width: 80, height: 80, objectFit: 'contain' }} />
+                  <img 
+                    src={result?.organization?.logo || "/logo.jpeg"} 
+                    alt="Logo" 
+                    style={{ width: 80, height: 80, objectFit: 'contain' }} 
+                  />
                   <div>
-                    <div style={{ fontSize: 20, fontWeight: 700 }}>AMC - Neuro Campus</div>
+                    <div style={{ fontSize: 20, fontWeight: 700 }}>{result?.organization?.name || 'Neuro Campus'}</div>
                     <div style={{ fontSize: 12 }}>Official Marks Card</div>
                   </div>
                 </div>
@@ -390,7 +398,7 @@ const ResultsView: React.FC = () => {
                     </tr>
                   </tbody>
                 </table>
-                <div style={{ marginTop: 18, fontSize: 11 }}>This is an official marks card generated from AMC - Neuro Campus.</div>
+                <div style={{ marginTop: 18, fontSize: 11 }}>This is an official marks card generated from {result?.organization?.name || 'Neuro Campus'}.</div>
               </div>
             </div>
           </div>
