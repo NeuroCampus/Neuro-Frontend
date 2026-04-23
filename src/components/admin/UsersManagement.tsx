@@ -362,42 +362,47 @@ const filteredUsers = Array.isArray(users) ? users : [];
     <>
       <style>{`
         @media (max-width: 480px) {
-          .users-container { padding: 12px; }
-          .users-card { border-radius: 8px; }
+=          .users-card { border-radius: 8px; }
           .users-card-header { padding: 12px; }
-          .users-card-title { font-size: 18px; line-height: 1.3; }
-          .users-card-desc { font-size: 12px; margin-top: 4px; }
+          .users-card-title { font-size: 20px; line-height: 1.3; }
+          .users-card-desc { font-size: 13px; margin-top: 4px; }
           .users-card-content { padding: 12px; }
           .filters-search { gap: 12px; }
-          .filter-label { font-size: 12px; margin-bottom: 4px; }
+          .filter-label { font-size: 13px; margin-bottom: 4px; }
           .search-wrapper { gap: 8px; }
-          .search-input { font-size: 13px; }
+          .search-input { font-size: 14px; }
           .table-wrapper { border-radius: 6px; }
-          .users-table { font-size: 12px; }
-          .table-header th { font-size: 12px; padding: 8px 6px !important; white-space: nowrap; }
-          .table-cell { padding: 8px 6px !important; font-size: 13px; }
+          .users-table { font-size: 13px; }
+          /* Keep table layout on small screens to avoid card-like rendering */
+          .users-table { display: table !important; table-layout: auto !important; width: 100% !important; }
+          .users-table thead, .users-table tbody { display: table-row-group !important; }
+          .users-table tr { display: table-row !important; }
+          .users-table th, .users-table td { display: table-cell !important; }
+          .table-wrapper { overflow-x: auto; }
+          .table-header th { font-size: 13px; padding: 8px 6px !important; white-space: nowrap; }
+          .table-cell { padding: 8px 6px !important; font-size: 14px; }
           .action-buttons { gap: 4px; }
-          .pagination-container { gap: 8px; flex-direction: column; align-items: flex-start; }
-          .pagination-info { font-size: 11px; }
+          .pagination-container { gap: 8px; flex-direction: column; align-items: center; }
+          .pagination-info { font-size: 12px; }
           .pagination-controls { gap: 4px; }
           .pagination-btn { padding: 6px 10px !important; font-size: 12px !important; }
           .delete-modal { width: 90vw !important; max-width: 320px !important; padding: 16px !important; }
-          .delete-modal-title { font-size: 18px; line-height: 1.3; }
-          .delete-modal-body { font-size: 13px; line-height: 1.5; margin: 12px 0; }
+          .delete-modal-title { font-size: 20px; line-height: 1.3; }
+          .delete-modal-body { font-size: 14px; line-height: 1.5; margin: 12px 0; }
           .delete-modal-buttons { gap: 8px; flex-direction: column; }
           .delete-modal-btn { width: 100% !important; padding: 10px 12px !important; font-size: 13px !important; }
         }
       `}</style>
-      <div className={`users-container p-4 sm:p-6 min-h-screen text-sm sm:text-base max-w-[390px] sm:max-w-none mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+      <div className={`users-container min-h-screen text-sm sm:text-base max-w-none mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
         <Card className={`users-card ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
           <CardHeader className="users-card-header">
             <CardTitle className={`users-card-title ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>User Management</CardTitle>
             <p className={`users-card-desc ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Manage all users in the system</p>
           </CardHeader>
           <CardContent className="users-card-content">
-            <div className="filters-search flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+            <div className="filters-search flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
               {/* Filters */}
-              <div className="grid grid-cols-1 gap-3 lg:flex lg:gap-4">
+              <div className="grid grid-cols-1 gap-3 md:flex md:gap-4">
               <div className="w-full lg:w-auto">
                 <span className={`filter-label block mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Filter by Role</span>
                 <SelectMenu
@@ -419,7 +424,7 @@ const filteredUsers = Array.isArray(users) ? users : [];
             </div>
 
             {/* Search */}
-            <div className="w-full lg:w-auto flex flex-col">
+            <div className="w-full md:w-auto flex flex-col">
               <label className={`filter-label mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Search</label>
               <div className="search-wrapper flex gap-2">
                 <Input
@@ -427,7 +432,7 @@ const filteredUsers = Array.isArray(users) ? users : [];
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={handleSearchKeyPress}
-                  className={`search-input w-full lg:w-52 rounded ${theme === 'dark' 
+                  className={`search-input w-full md:w-52 rounded ${theme === 'dark' 
                     ? 'bg-card border border-border text-foreground px-2 py-1' 
                     : 'bg-white border border-gray-300 text-gray-900 px-2 py-1'}`}
                 />
@@ -551,43 +556,7 @@ const filteredUsers = Array.isArray(users) ? users : [];
             </table>
           </div>
 
-          {/* Compact mobile list (hidden - showing table instead) */}
-          <div className="hidden">
-            {filteredUsers.length > 0 ? (
-              filteredUsers.map((user) => (
-                <div key={user.id} className={`p-2 rounded border ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-200 bg-white'}`}>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
-                      <div className="font-medium text-sm truncate">{user.name}</div>
-                      <div className="text-xs text-gray-500 truncate">{user.email}</div>
-                      <div className="mt-1 flex items-center gap-2">
-                        <div className="text-xs">{getRoleBadge(user.role, theme)}</div>
-                        <div className="text-xs">{getStatusBadge(user.status, theme)}</div>
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0 ml-2 flex items-center gap-1">
-                      {editingId === user.id ? (
-                        <Button size="sm" onClick={saveEdit} disabled={loading} className="px-2 py-1 text-xs">
-                          {loading ? 'Saving' : 'Save'}
-                        </Button>
-                      ) : (
-                        <>
-                          <Button variant="ghost" size="icon" onClick={() => handleEdit(user)} className="p-1">
-                            <Pencil1Icon className={theme === 'dark' ? 'w-4 h-4 text-primary' : 'w-4 h-4 text-blue-500'} />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => confirmDelete(user.id)} className="p-1">
-                            <TrashIcon className={theme === 'dark' ? 'w-4 h-4 text-destructive' : 'w-4 h-4 text-red-500'} />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className={`py-4 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No users found.</div>
-            )}
-          </div>
+          {/* Mobile: show table only; compact card list removed */}
 
           {/* Pagination Controls */}
           {totalPages > 1 && (

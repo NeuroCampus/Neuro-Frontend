@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,9 @@ import { manageHODLeaves } from "../../utils/admin_api";
 import { useToast } from "../../hooks/use-toast";
 import Swal from 'sweetalert2';
 import { useTheme } from "../../context/ThemeContext";
-import { Input } from "../ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Calendar } from "../ui/calendar";
+import { format } from "date-fns";
 
 interface LeaveRequest {
   id: number;
@@ -59,6 +61,14 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const { theme } = useTheme();
+  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
+  const [visibleMonth, setVisibleMonth] = useState<Date>(() => {
+    try {
+      return new Date(`${selectedMonth}-01`);
+    } catch (e) {
+      return new Date();
+    }
+  });
 
   const fetchLeaves = async (month?: string, page: number = 1) => {
     setLoading(true);
@@ -257,14 +267,85 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
             </div>
             <div className="flex items-center gap-2">
               <label className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Month:</label>
-              <Input
-                type="month"
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className={theme === 'dark'
-                  ? 'w-full sm:w-40 bg-card border border-border text-foreground'
-                  : 'w-full sm:w-40 bg-white border border-gray-300 text-gray-900'}
-              />
+              <Popover open={monthPickerOpen} onOpenChange={setMonthPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={theme === 'dark' ? 'w-full sm:w-40 justify-start text-left font-normal bg-card text-foreground border-border' : 'w-full sm:w-40 justify-start text-left font-normal bg-white text-gray-900 border-gray-300'}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedMonth ? (
+                      (() => {
+                        try {
+                          const d = new Date(`${selectedMonth}-01`);
+                          return format(d, 'MMMM yyyy');
+                        } catch (e) {
+                          return selectedMonth;
+                        }
+                      })()
+                    ) : (
+                      <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Select month</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+
+                <PopoverContent className={theme === 'dark' ? 'w-64 p-3 bg-background text-foreground border-border shadow-lg' : 'w-64 p-3 bg-white text-gray-900 border-gray-200 shadow-lg'}>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <button
+                        className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                        onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear() - 1, visibleMonth.getMonth(), 1))}
+                        aria-label="Previous year"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+
+                      <div className="text-center font-medium">{format(visibleMonth, 'yyyy')}</div>
+
+                      <button
+                        className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+                        onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear() + 1, visibleMonth.getMonth(), 1))}
+                        aria-label="Next year"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2">
+                      {Array.from({ length: 12 }).map((_, i) => {
+                        const monthDate = new Date(visibleMonth.getFullYear(), i, 1);
+                        const monthLabel = format(monthDate, 'MMM');
+                        const monthValue = `${visibleMonth.getFullYear()}-${String(i + 1).padStart(2, '0')}`;
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => {
+                              setSelectedMonth(monthValue);
+                              setMonthPickerOpen(false);
+                            }}
+                            className={`px-3 py-2 rounded-md text-sm text-left w-full ${selectedMonth === monthValue ? 'bg-primary text-primary-foreground' : theme === 'dark' ? 'bg-card hover:bg-accent text-foreground' : 'bg-white hover:bg-gray-100 text-gray-900'} `}
+                          >
+                            {monthLabel}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="mt-3 flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedMonth('');
+                          setMonthPickerOpen(false);
+                        }}
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </CardHeader>

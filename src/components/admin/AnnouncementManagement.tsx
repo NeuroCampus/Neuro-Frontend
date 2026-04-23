@@ -29,7 +29,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Calendar as CalendarIcon } from "lucide-react";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 import { useTheme } from "@/context/ThemeContext";
 import {
   fetchAnnouncements,
@@ -62,6 +65,7 @@ const AdminAnnouncementManagement = () => {
     expires_at: "",
     priority: "normal",
   });
+  const [expiresOpen, setExpiresOpen] = useState(false);
 
   const loadAnnouncements = async () => {
     setLoading(true);
@@ -212,7 +216,8 @@ const AdminAnnouncementManagement = () => {
           .announcements-card-content { padding: 12px; }
           .announce-actions { gap: 8px; }
           .announce-list { gap: 10px; }
-          .delete-modal { width: 90vw !important; max-width: 320px !important; padding: 16px !important; }
+          .mobile-modal { width: 90vw !important; max-width: 360px !important; padding: 12px !important; border-radius: 12px !important; }
+          .delete-modal { width: 90vw !important; max-width: 320px !important; padding: 16px !important; border-radius: 12px !important; }
         }
       `}</style>
 
@@ -234,7 +239,7 @@ const AdminAnnouncementManagement = () => {
                     New Announcement
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="mobile-modal max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>
                       {editingId ? "Edit Announcement" : "Create Announcement"}
@@ -296,14 +301,45 @@ const AdminAnnouncementManagement = () => {
 
                       <div className="space-y-2">
                         <Label htmlFor="expires_at">Expires At</Label>
-                        <Input
-                          id="expires_at"
-                          type="date"
-                          value={formData.expires_at}
-                          onChange={(e) =>
-                            setFormData({ ...formData, expires_at: e.target.value })
-                          }
-                        />
+                          <Popover open={expiresOpen} onOpenChange={setExpiresOpen}>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className={theme === 'dark' ? 'w-full justify-start text-left font-normal bg-card text-foreground border-border' : 'w-full justify-start text-left font-normal bg-white text-gray-900 border-gray-300'}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {formData.expires_at ? (
+                                  (() => {
+                                    try {
+                                      return format(new Date(formData.expires_at), 'PPP');
+                                    } catch (e) {
+                                      return formData.expires_at;
+                                    }
+                                  })()
+                                ) : (
+                                  <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Select date</span>
+                                )}
+                              </Button>
+                            </PopoverTrigger>
+
+                            <PopoverContent className={theme === 'dark' ? 'w-auto p-0 bg-background text-foreground border-border shadow-lg' : 'w-auto p-0 bg-white text-gray-900 border-gray-200 shadow-lg'}>
+                              <div className="p-2">
+                                <Calendar
+                                  mode="single"
+                                  selected={formData.expires_at ? new Date(formData.expires_at) : undefined}
+                                  onSelect={(date: Date | undefined) => {
+                                    if (date) {
+                                      setFormData({ ...formData, expires_at: format(date, 'yyyy-MM-dd') });
+                                    } else {
+                                      setFormData({ ...formData, expires_at: '' });
+                                    }
+                                    setExpiresOpen(false);
+                                  }}
+                                  className={theme === 'dark' ? 'rounded-md bg-background text-foreground' : 'rounded-md bg-white text-gray-900'}
+                                />
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                       </div>
                     </div>
 
@@ -413,7 +449,7 @@ const AdminAnnouncementManagement = () => {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="delete-modal">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Announcement</AlertDialogTitle>
             <AlertDialogDescription>

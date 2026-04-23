@@ -252,12 +252,12 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
               <div className="w-full">
                 <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>First Name</label>
-                <Input value={profile.first_name} name="first_name" onChange={handleChange} disabled={!editing} placeholder="First name" className="text-xs sm:text-sm h-8 sm:h-9 md:h-10 w-full" />
+                <Input value={profile.first_name} name="first_name" onChange={handleChange} disabled={!editing} placeholder="First name" className="text-xs sm:text-sm h-8 sm:h-9 md:h-10 w-full disabled:opacity-80 disabled:placeholder-opacity-80" />
                 {localErrors.first_name && <p className={`text-xs mt-1 sm:mt-1.5 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.first_name}</p>}
               </div>
               <div className="w-full">
                 <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Last Name</label>
-                <Input value={profile.last_name} name="last_name" onChange={handleChange} disabled={!editing} placeholder="Last name" className="text-xs sm:text-sm h-8 sm:h-9 md:h-10 w-full" />
+                <Input value={profile.last_name} name="last_name" onChange={handleChange} disabled={!editing} placeholder="Last name" className="text-xs sm:text-sm h-8 sm:h-9 md:h-10 w-full disabled:opacity-80 disabled:placeholder-opacity-80" />
                 {localErrors.last_name && <p className={`text-xs mt-1 sm:mt-1.5 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.last_name}</p>}
               </div>
             </div>
@@ -267,13 +267,13 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
           <div className="space-y-4 sm:space-y-5">
             <div>
               <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Email</label>
-              <Input value={profile.email} name="email" onChange={handleChange} disabled={!editing} placeholder="Email address" className="text-xs sm:text-sm h-8 sm:h-10 w-full" />
+              <Input value={profile.email} name="email" onChange={handleChange} disabled={!editing} placeholder="Email address" className="text-xs sm:text-sm h-8 sm:h-10 w-full disabled:opacity-80 disabled:placeholder-opacity-80" />
               {localErrors.email && <p className={`text-xs mt-1 sm:mt-1.5 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.email}</p>}
             </div>
 
             <div>
               <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Mobile</label>
-              <Input value={profile.mobile_number} name="mobile_number" onChange={handleChange} disabled={!editing} maxLength={10} placeholder="10-digit mobile" className="text-xs sm:text-sm h-8 sm:h-10 w-full" />
+              <Input value={profile.mobile_number} name="mobile_number" onChange={handleChange} disabled={!editing} maxLength={10} placeholder="10-digit mobile" className="text-xs sm:text-sm h-8 sm:h-10 w-full disabled:opacity-80 disabled:placeholder-opacity-80" />
               {localErrors.mobile_number && <p className={`text-xs mt-1 sm:mt-1.5 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.mobile_number}</p>}
             </div>
           </div>
@@ -286,13 +286,13 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
       <div className="space-y-6">
         <div>
           <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Address</label>
-          <Textarea value={profile.address} name="address" onChange={handleChange} disabled={!editing} placeholder="Address" rows={3} className="text-xs sm:text-sm w-full" />
+          <Textarea value={profile.address} name="address" onChange={handleChange} disabled={!editing} placeholder="Address" rows={3} className="text-xs sm:text-sm w-full disabled:opacity-80 disabled:placeholder-opacity-80" />
           {localErrors.address && <p className={`text-xs mt-1 sm:mt-1.5 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.address}</p>}
         </div>
 
         <div>
           <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Bio</label>
-          <Textarea value={profile.bio} name="bio" onChange={handleChange} disabled={!editing} placeholder="Tell us about yourself" rows={4} className="text-xs sm:text-sm w-full" />
+          <Textarea value={profile.bio} name="bio" onChange={handleChange} disabled={!editing} placeholder="Tell us about yourself" rows={4} className="text-xs sm:text-sm w-full disabled:opacity-80 disabled:placeholder-opacity-80" />
           {localErrors.bio && <p className={`text-xs mt-1 sm:mt-1.5 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.bio}</p>}
         </div>
       </div>
@@ -304,7 +304,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
   }
 
   return (
-    <div className={`min-h-screen flex justify-center items-start px-4 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen flex justify-center items-start ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
       <Card className={`w-full max-w-none mx-auto my-2 sm:my-4 md:my-6  px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6 ${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}`}>
         <CardHeader className="px-2 sm:px-3 md:px-4 lg:px-6 py-3 sm:py-4 md:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 border-b">
           <div className="flex-1 min-w-0">
@@ -331,7 +331,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
 
             <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
               <DialogTrigger asChild>
-                <Button className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde]">Change Password</Button>
+                <Button className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-9 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde]">Change Password</Button>
               </DialogTrigger>
               <DialogContent ref={passwordDialogContentRef} className="w-[calc(100vw-1.5rem)] sm:w-full max-w-[420px] rounded-xl sm:rounded-2xl">
                 <DialogHeader>

@@ -58,9 +58,19 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
         }
       } else {
         if (setError) setError(dataSource?.message || "Failed to fetch batches");
+        if (toast) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: dataSource?.message || "Failed to fetch batches",
+          });
+        }
       }
     } catch (err) {
       if (setError) setError("Network error");
+      if (toast) {
+        toast({ variant: "destructive", title: "Error", description: "Network error" });
+      }
     }
     setLoading(false);
   };
@@ -118,9 +128,19 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
         }
       } else {
         if (setError) setError(dataSource?.message || "Failed to add batch");
+        if (toast) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: dataSource?.message || "Failed to add batch",
+          });
+        }
       }
     } catch (err) {
       if (setError) setError("Network error");
+      if (toast) {
+        toast({ variant: "destructive", title: "Error", description: "Network error" });
+      }
     }
     setLoading(false);
   };
@@ -179,9 +199,19 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
         }
       } else {
         if (setError) setError(dataSource?.message || "Failed to update batch");
+        if (toast) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: dataSource?.message || "Failed to update batch",
+          });
+        }
       }
     } catch (err) {
       if (setError) setError("Network error");
+      if (toast) {
+        toast({ variant: "destructive", title: "Error", description: "Network error" });
+      }
     }
     setLoading(false);
   };
@@ -214,16 +244,25 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
         }
       } else {
         if (setError) setError(dataSource?.message || "Failed to delete batch");
+        if (toast) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: dataSource?.message || "Failed to delete batch",
+          });
+        }
       }
     } catch (err) {
       if (setError) setError("Network error");
+      if (toast) {
+        toast({ variant: "destructive", title: "Error", description: "Network error" });
+      }
     }
     setLoading(false);
   };
 
   return (
     <div className={` max-w-full min-h-screen mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
-
       {/* Add New Batch Card */}
       <Card className={theme === 'dark' ? 'bg-card border border-border shadow-sm mb-6' : 'bg-white border border-gray-200 shadow-sm mb-6'}>
         <CardHeader className="pb-2 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -281,7 +320,7 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
           {loading ? (
             <Skeleton className="h-8 w-full" />
           ) : (
-            <div className="max-h-[22rem] overflow-y-auto thin-scrollbar">
+            <div className="max-h-[22rem] overflow-y-auto custom-scrollbar">
               <div className="w-full max-w-[320px] mx-auto md:max-w-none md:mx-0">
                 <table className="w-full text-[11px] md:text-sm text-left border-collapse table-auto align-middle">
                   <thead className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-card border-b border-border' : 'bg-gray-50 border-b border-gray-200'}`}>
