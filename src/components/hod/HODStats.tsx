@@ -23,6 +23,7 @@ import { useNavigate } from "react-router-dom";
 import { getHODStats, manageLeaves, manageProfile, getHODDashboard, getHODDashboardBootstrap } from "../../utils/hod_api";
 import { motion } from "framer-motion";
 import { useTheme } from "../../context/ThemeContext";
+import { SkeletonCard, SkeletonChart, SkeletonList } from "../ui/skeleton";
 
 interface LeaveRequest {
   id: string;
@@ -283,17 +284,45 @@ const handleApprove = async (index: number) => {
   // Calculate pending leaves count from actual leave requests
   const pendingLeavesCount = leaveRequests.filter(request => request.status === "Pending").length;
 
-  // Data for pie chart
+  // Data for pie chart - show only components (Faculty, Students). "Members" was a duplicate (sum) and caused overlapping labels.
   const memberData = [
     { name: "Faculty", value: stats?.faculty_count || 0, fill: "#2563eb" },
     { name: "Students", value: stats?.student_count || 0, fill: "#6b7280" },
-    { name: "Members", value: stats ? stats.faculty_count + stats.student_count : 0, fill: "#9ca3af" },
   ];
 
+  const totalMembers = (stats?.faculty_count || 0) + (stats?.student_count || 0);
+
+  const RADIAN = Math.PI / 180;
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, index }: any) => {
+    // push labels further out to avoid overlap with large slices
+    const radius = innerRadius + (outerRadius - innerRadius) * 1.4;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    const entry = memberData[index] || { name: '', value: '' };
+    return (
+      <text x={x} y={y} fill={theme === 'dark' ? '#e5e7eb' : '#111827'} textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={12}>
+        {entry.name}: {entry.value}
+      </text>
+    );
+  };
+
   return (
-    <div className={`p-8 space-y-6 font-sans min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={` space-y-6 font-sans min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Loading and Errors */}
-      {isLoading && <p className={`${theme === 'dark' ? 'bg-background text-muted-foreground' : 'bg-gray-50 text-gray-600'} mb-4 animate-pulse`}>Loading data...</p>}
+      {isLoading && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <SkeletonChart />
+            <SkeletonChart />
+          </div>
+          <SkeletonList items={4} />
+        </div>
+      )}
       {errors.length > 0 && (
         <ul className={`text-sm ${theme === 'dark' ? 'text-destructive' : 'text-red-500'} mb-4 list-disc list-inside ${theme === 'dark' ? 'bg-destructive/10 border border-destructive/20' : 'bg-red-50'} p-4 rounded-lg`}>
           {errors.map((err, idx) => (
@@ -369,6 +398,8 @@ const handleApprove = async (index: number) => {
                   <YAxis domain={[0, 100]} stroke={theme === 'dark' ? '#9ca3af' : '#6b7280'} fontSize={12} />
                   <Tooltip
                     contentStyle={{ backgroundColor: theme === 'dark' ? '#1c1c1e' : '#fff', borderRadius: "8px", border: theme === 'dark' ? '1px solid #3f3f46' : '1px solid #e5e7eb' }}
+                    labelStyle={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                    itemStyle={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
                   />
                   <Line
                     type="monotone"
@@ -393,21 +424,37 @@ const handleApprove = async (index: number) => {
           <div className="min-h-[250px] focus:outline-none">
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
-                <Pie
-                  data={memberData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  label
-                />
+                  <Pie
+                    data={memberData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={80}
+                    paddingAngle={2}
+                    label={renderCustomizedLabel}
+                    labelLine={false}
+                  />
+                  {/* Subtle center background for better contrast (only render in dark theme) */}
+                  {theme === 'dark' && (
+                    <circle cx="50%" cy="50%" r={42} fill="#0b1220" opacity={0.06} />
+                  )}
+                  {/* Center label showing total members */}
+                  <text x="50%" y="46%" textAnchor="middle" fill={theme === 'dark' ? '#cbd5e1' : '#6b7280'} fontSize={12}>
+                    Total Members
+                  </text>
+                  <text x="50%" y="58%" textAnchor="middle" fill={theme === 'dark' ? '#e5e7eb' : '#0f172a'} fontSize={20} fontWeight={700}>
+                    {totalMembers}
+                  </text>
                 <Tooltip
                   contentStyle={{
                     backgroundColor: theme === 'dark' ? '#1c1c1e' : '#fff',
                     borderRadius: "8px",
                     border: theme === 'dark' ? '1px solid #3f3f46' : '1px solid #e5e7eb',
                   }}
+                  labelStyle={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
+                  itemStyle={{ color: theme === 'dark' ? '#e5e7eb' : '#111827' }}
                 />
                 <Legend 
                   verticalAlign="bottom" 

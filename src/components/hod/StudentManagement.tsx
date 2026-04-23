@@ -830,8 +830,7 @@ const StudentManagement = () => {
   // Chart removed
 
   return (
-    <div className={`p-4 sm:p-6 md:p-6 lg:p-8 space-y-6 md:space-y-5 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <h2 className={`text-2xl md:text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Student Management</h2>
+    <div className={` sm: md: lg: space-y-6 md:space-y-5 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {state.isLoading && <p className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Loading data...</p>}
       {state.successMessage && (
         <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{state.successMessage}</p>
@@ -880,7 +879,7 @@ const StudentManagement = () => {
                     : theme === 'dark' ? 'border-border focus:border-primary' : 'border-gray-300 focus:border-blue-500'
                 }`}
               />
-              <span className="text-red-500 text-xs mt-1 h-4">
+              <span className="text-red-500 text-xs mt-1">
                 {state.manualErrors?.usn}
               </span>
             </div>
@@ -921,7 +920,7 @@ const StudentManagement = () => {
                     : theme === 'dark' ? 'border-border focus:border-primary' : 'border-gray-300 focus:border-blue-500'
                 }`}
               />
-              <span className="text-red-500 text-xs mt-1 h-4">
+              <span className="text-red-500 text-xs mt-1">
                 {state.manualErrors?.name}
               </span>
             </div>
@@ -959,7 +958,7 @@ const StudentManagement = () => {
                     : theme === 'dark' ? 'border-border focus:border-primary' : 'border-gray-300 focus:border-blue-500'
                 }`}
               />
-              <span className="text-red-500 text-xs mt-1 h-4">
+              <span className="text-red-500 text-xs mt-1">
                 {state.manualErrors?.email}
               </span>
             </div>
@@ -988,7 +987,7 @@ const StudentManagement = () => {
                     : theme === 'dark' ? 'border-border focus:border-primary' : 'border-gray-300 focus:border-blue-500'
                 }`}
               />
-              <span className="text-red-500 text-xs mt-1 h-4">{state.manualErrors?.phone}</span>
+              <span className="text-red-500 text-xs mt-1">{state.manualErrors?.phone}</span>
             </div>
 
             <Select
@@ -1109,12 +1108,12 @@ const StudentManagement = () => {
 
       <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 md:gap-4">
-            <CardTitle className={`text-lg md:text-base ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Student List</CardTitle>
+          <div className="flex flex-row justify-between items-center gap-2 md:gap-4">
+            <CardTitle className={`text-lg md:text-base flex-1 truncate ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Student List</CardTitle>
             <div className="flex gap-2">
               <Button
                 onClick={() => updateState({ addStudentModal: true })}
-                className="flex items-center gap-1 text-xs md:text-sm font-semibold px-3 py-1.5 rounded-md transition bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white whitespace-nowrap"
+                className="flex-shrink-0 flex items-center gap-1 text-xs md:text-sm font-semibold px-3 py-1.5 rounded-md transition bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white whitespace-nowrap"
                 disabled={state.isLoading || !state.branchId}
               >
                 <Upload className="w-4 h-4" />
@@ -1209,34 +1208,35 @@ const StudentManagement = () => {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-xs md:text-sm text-left">
+            <div className="overflow-x-auto">
+            <table className="min-w-full text-sm md:text-base text-left">
               <thead className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-gray-100 text-gray-900 border-gray-300'}>
                 <tr className="border-b">
-                  <th className="py-2 px-2 md:px-3">USN</th>
-                  <th className="py-2 px-2 md:px-3">Name</th>
-                  <th className="py-2 px-2 md:px-3">Email</th>
-                  <th className="hidden sm:table-cell py-2 px-2 md:px-3">Phone</th>
-                  <th className="hidden md:table-cell py-2 px-2 md:px-3">Section</th>
-                  <th className="py-2 px-2 md:px-3">Semester</th>
-                  <th className="py-2 px-2 md:px-3">Actions</th>
+                  <th className="py-3 px-3 md:px-4 text-sm md:text-base font-medium">USN</th>
+                  <th className="py-3 px-3 md:px-4 text-sm md:text-base font-medium">Name</th>
+                  <th className="py-3 px-3 md:px-4 text-sm md:text-base font-medium">Email</th>
+                  <th className="hidden sm:table-cell py-3 px-3 md:px-4 text-sm md:text-base font-medium">Phone</th>
+                  <th className="hidden md:table-cell py-3 px-3 md:px-4 text-sm md:text-base font-medium">Section</th>
+                  <th className="py-3 px-3 md:px-4 text-sm md:text-base font-medium">Semester</th>
+                  <th className="py-3 px-3 md:px-4 text-sm md:text-base font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody className={theme === 'dark' ? 'divide-y divide-border' : 'divide-y divide-gray-200'}>
                 {paginatedFilteredStudents.map((student) => (
-                  <tr key={student.usn} className={theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-50'}>
-                    <td className="py-2 px-2 md:px-3">{student.usn}</td>
-                    <td className="py-2 px-2 md:px-3">{student.name}</td>
-                    <td className="py-2 px-2 md:px-3">{student.email}</td>
-                    <td className="hidden sm:table-cell py-2 px-2 md:px-3">{student.phone && student.phone.trim() ? student.phone : '-'}</td>
-                    <td className="hidden md:table-cell py-2 px-2 md:px-3">Section {student.section}</td>
-                    <td className="py-2 px-2 md:px-3">{formatSemesterDisplay(student)}</td>
-                    <td className="py-2 px-2 md:px-3 flex gap-1 md:gap-2">
+                  <tr key={student.usn} className={`${theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-50'} align-middle`}>
+                    <td className="py-3 px-3 md:px-4 text-sm md:text-base">{student.usn}</td>
+                    <td className="py-3 px-3 md:px-4 text-sm md:text-base">{student.name}</td>
+                    <td className="py-3 px-3 md:px-4 text-sm md:text-base">{student.email}</td>
+                    <td className="hidden sm:table-cell py-3 px-3 md:px-4 text-sm md:text-base">{student.phone && student.phone.trim() ? student.phone : '-'}</td>
+                    <td className="hidden md:table-cell py-3 px-3 md:px-4 text-sm md:text-base">Section {student.section}</td>
+                    <td className="py-3 px-3 md:px-4 text-sm md:text-base">{formatSemesterDisplay(student)}</td>
+                    <td className="py-3 px-3 md:px-4 text-sm md:text-base flex gap-2 md:gap-3 items-center">
                       <button
                         onClick={() => openEdit(student)}
                         className={theme === 'dark' ? 'text-primary hover:text-primary/80' : 'text-blue-600 hover:text-blue-800'}
+                        aria-label="Edit student"
                       >
-                        <Pencil size={16} className="md:size-[18px]" />
+                        <Pencil className="w-4 h-4 md:w-5 md:h-5" />
                       </button>
                       <button
                         onClick={() =>
@@ -1246,8 +1246,9 @@ const StudentManagement = () => {
                           })
                         }
                         className={theme === 'dark' ? 'text-destructive hover:text-destructive/80' : 'text-red-600 hover:text-red-800'}
+                        aria-label="Delete student"
                       >
-                        <Trash2 size={16} className="md:size-[18px]" />
+                        <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
                       </button>
                     </td>
                   </tr>
@@ -1291,7 +1292,7 @@ const StudentManagement = () => {
 
 
       <Dialog open={state.addStudentModal} onOpenChange={closeModal}>
-        <DialogContent className={`max-w-2xl md:max-w-xl ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
+        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} w-[92%] sm:w-auto md:w-[80%] lg:w-auto max-w-md sm:max-w-2xl md:max-w-3xl lg:max-w-2xl rounded-2xl sm:rounded-md p-4 max-h-[80vh] sm:max-h-none overflow-y-auto`}>
           <DialogHeader>
             <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Upload Student Data</DialogTitle>
           </DialogHeader>
@@ -1301,7 +1302,7 @@ const StudentManagement = () => {
             <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Select Batch, Semester, and Section
             </label>
-            <div className="flex gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4">
               {/* Batch Dropdown */}
               <Select
                 value={state.manualForm.batch}
@@ -1447,7 +1448,7 @@ const StudentManagement = () => {
             onDrop={handleDrop}
             onDragOver={(e) => e.preventDefault()}
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${theme === 'dark' ? 'border-border hover:bg-accent' : 'border-gray-300 hover:bg-gray-100'}`}
+            className={`border-2 border-dashed rounded-lg p-6 sm:p-8 text-center cursor-pointer transition-colors ${theme === 'dark' ? 'border-border hover:bg-accent' : 'border-gray-300 hover:bg-gray-100'}`}
           >
             <UploadCloud size={36} className={`mx-auto mb-3 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`} />
             <p className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
@@ -1527,7 +1528,7 @@ const StudentManagement = () => {
             <Button 
               onClick={handleEnrollStudents}
               disabled={!state.selectedFile || state.isLoading}
-              className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition disabled:opacity-50 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+              className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition disabled:opacity-50 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#9147e0] hover:border-[#9147e0] hover:text-white"
             >
               {state.isLoading ? "Enrolling..." : "Enroll Students"}
             </Button>
@@ -1537,7 +1538,7 @@ const StudentManagement = () => {
 
 
       <Dialog open={state.confirmDelete} onOpenChange={() => updateState({ confirmDelete: false })}>
-        <DialogContent className={`bg-[#1c1c1e] ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
+        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} w-[92%] sm:w-auto max-w-sm mx-auto rounded-2xl sm:rounded-md p-4` }>
           <DialogHeader>
             <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Delete Student</DialogTitle>
           </DialogHeader>
@@ -1552,7 +1553,7 @@ const StudentManagement = () => {
             >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
+            <Button variant="destructive" onClick={handleDelete} className="flex-shrink-0 bg-[#ef4444] hover:bg-[#dc2626] text-white border-transparent">
               Delete
             </Button>
           </DialogFooter>
@@ -1560,7 +1561,7 @@ const StudentManagement = () => {
       </Dialog>
 
       <Dialog open={state.editDialog} onOpenChange={() => updateState({ editDialog: false, editSections: [] })}>
-        <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} w-[92%] sm:w-auto max-w-md sm:max-w-2xl rounded-2xl sm:rounded-md` }>
           <DialogHeader>
             <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Edit Student</DialogTitle>
           </DialogHeader>
@@ -1661,7 +1662,7 @@ const StudentManagement = () => {
             >
               Cancel
             </Button>
-            <Button className={`text-foreground ${theme === 'dark' ? 'bg-card border-border hover:bg-accent' : 'bg-white border-gray-300 hover:bg-gray-100'}`} onClick={handleEditSave}>
+            <Button onClick={handleEditSave} className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition disabled:opacity-50 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#9147e0] hover:border-[#9147e0]">
               Save
             </Button>
           </DialogFooter>

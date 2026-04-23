@@ -347,16 +347,14 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       >
         <div className="flex items-center gap-3">
           <div
-            className="w-12 h-12 rounded-lg flex items-center justify-center shadow-lg overflow-hidden border-2 border-[#a259ff]"
+            className={`w-12 h-12 rounded-lg flex items-center justify-center shadow-lg overflow-hidden border-2 border-[#a259ff] ${theme === 'dark' ? 'bg-white' : ''}`}
+            style={{ borderRadius: 8 }}
           >
             <img
               src="/logo.jpeg"
               alt="Logo"
               className="w-full h-full object-contain"
-              style={{ 
-                borderRadius: '0.5rem',
-                filter: theme === 'dark' ? 'brightness(0) invert(1)' : 'none'
-              }}
+              style={{ borderRadius: '0.5rem' }}
             />
           </div>
           <AnimatePresence>
