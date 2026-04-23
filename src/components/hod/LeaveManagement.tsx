@@ -7,6 +7,13 @@ import { CheckCircle, XCircle } from "lucide-react";
 import Swal from 'sweetalert2';
 import { manageLeaves, manageProfile, getFacultyLeavesBootstrap } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface LeaveRequest {
   id: string;
@@ -293,7 +300,7 @@ const LeaveManagement = () => {
   };
 
   return (
-    <div className={`p-4 sm:p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <Card className={`${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
         <CardHeader className="border-b">
           <CardTitle>Leave Approvals</CardTitle>
@@ -307,18 +314,22 @@ const LeaveManagement = () => {
               onChange={(e) => setSearch(e.target.value)}
               className={`flex-1 w-full text-sm ${theme === 'dark' ? 'bg-card border-border text-foreground placeholder:text-muted-foreground' : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-500'}`}
             />
-            <select
+            <Select
               value={filterStatus}
-              onChange={(e) => {
-                setFilterStatus(e.target.value as "All" | "Pending" | "Approved" | "Rejected");
+              onValueChange={(value) => {
+                setFilterStatus(value as "All" | "Pending" | "Approved" | "Rejected");
               }}
-              className={`w-full sm:w-auto px-4 py-2 rounded-md text-sm font-medium border ${theme === 'dark' ? 'bg-card text-foreground border-border hover:bg-accent' : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50'}`}
             >
-              <option value="All">All Status</option>
-              <option value="Pending">Pending</option>
-              <option value="Approved">Approved</option>
-              <option value="Rejected">Rejected</option>
-            </select>
+              <SelectTrigger className={`w-full sm:w-auto min-w-[140px] text-sm font-medium ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
+                <SelectValue placeholder="All Status" />
+              </SelectTrigger>
+              <SelectContent className={theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white text-gray-900'}>
+                <SelectItem value="All">All Status</SelectItem>
+                <SelectItem value="Pending">Pending</SelectItem>
+                <SelectItem value="Approved">Approved</SelectItem>
+                <SelectItem value="Rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Errors */}

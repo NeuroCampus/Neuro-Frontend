@@ -1,5 +1,24 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader } from "../ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../ui/card";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
 import { Download, FileText, UploadCloud, X } from "lucide-react";
 import { uploadStudyMaterial, getStudyMaterials, getBranches, manageSections, getSemesters, manageSubjects } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
@@ -107,9 +126,30 @@ const useUploadModal = () => {
   const [sectionId, setSectionId] = useState("");
   const [uploading, setUploading] = useState(false);
 
+  const [dragActive, setDragActive] = useState(false);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setFile(e.target.files[0]);
+    }
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setFile(e.dataTransfer.files[0]);
     }
   };
 
@@ -122,6 +162,7 @@ const useUploadModal = () => {
     setSemesterId("");
     setBranchId("");
     setSectionId("");
+    setDragActive(false);
   };
 
   return {
@@ -137,6 +178,10 @@ const useUploadModal = () => {
     uploading,
     setUploading,
     handleFileChange,
+    handleDrag,
+    handleDrop,
+    dragActive,
+    setFile,
     setTitle,
     setSubjectName,
     setSubjectCode,
@@ -150,23 +195,33 @@ const useUploadModal = () => {
 
 // Row component for each study material
 const StudyMaterialRow = ({ material, theme }: { material: StudyMaterial; theme: string }) => (
-  <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-2 items-center text-sm py-2 md:py-3 px-2 md:px-0 ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
-    <div className="flex items-center md:col-span-1">
+  <TableRow className={theme === 'dark' ? 'border-border' : 'border-gray-200'}>
+    <TableCell className="w-[50px]">
       <FileText className="text-red-500" size={20} />
-    </div>
-    <div className={`${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'} font-medium cursor-pointer hover:underline truncate md:col-span-1`}>
-      {material.title}
-    </div>
-    <div className={`truncate hidden md:block md:col-span-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{material.subject_name}</div>
-    <div className={`truncate md:col-span-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{material.subject_code}</div>
-    <div className={`hidden md:block md:col-span-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{material.semester || "N/A"}</div>
-    <div className={`hidden md:block md:col-span-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{material.uploaded_by}</div>
-    <div className="md:col-span-1">
+    </TableCell>
+    <TableCell className="font-medium">
+      <div className={`${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'} cursor-pointer hover:underline truncate max-w-[150px] sm:max-w-[200px]`}>
+        {material.title}
+      </div>
+    </TableCell>
+    <TableCell className="max-w-[150px] truncate">
+      {material.subject_name}
+    </TableCell>
+    <TableCell className="max-w-[100px] truncate">
+      {material.subject_code}
+    </TableCell>
+    <TableCell>
+      {material.semester || "N/A"}
+    </TableCell>
+    <TableCell className="max-w-[120px] truncate">
+      {material.uploaded_by}
+    </TableCell>
+    <TableCell className="text-right">
       <a href={material.file_url} download={material.title + ".pdf"} target="_blank" rel="noopener noreferrer">
-        <Download className={`cursor-pointer ${theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-500 hover:text-gray-700'}`} size={20} />
+        <Download className={`inline-block cursor-pointer ${theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-500 hover:text-gray-700'}`} size={20} />
       </a>
-    </div>
-  </div>
+    </TableCell>
+  </TableRow>
 );
 
 // Main component
@@ -204,6 +259,10 @@ const StudyMaterials = () => {
     uploading,
     setUploading,
     handleFileChange,
+    handleDrag,
+    handleDrop,
+    dragActive,
+    setFile,
     setTitle,
     setSubjectName,
     setSubjectCode,
@@ -426,17 +485,17 @@ const StudyMaterials = () => {
   );
 
   return (
-    <div className={`w-full p-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+    <div className={`w-full ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+      <div className="flex justify-between items-center mb-4 mt-4 gap-2">
         <h1 className="text-xl font-semibold">Study Materials</h1>
-        <button
+        <Button
           onClick={() => setShowUploadModal(true)}
           className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-1 transition-all duration-200 ease-in-out transform hover:scale-105 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}
           disabled={uploading}
         >
           <UploadCloud size={16} />
           Upload
-        </button>
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
@@ -450,215 +509,331 @@ const StudyMaterials = () => {
           />
         </div>
         <div>
-          <select
+          <Select
             value={selectedBranchFilter}
-            onChange={(e) => setSelectedBranchFilter(e.target.value)}
-            className={`w-full border rounded px-3 py-2 ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
+            onValueChange={(value) => setSelectedBranchFilter(value)}
           >
-            <option value="All Branches">All Branches</option>
-            {branches.map((b) => (
-              <option key={b.id} value={b.id} className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>
-                {b.name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className={`w-full ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}>
+              <SelectValue placeholder="All Branches" />
+            </SelectTrigger>
+            <SelectContent className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+              <SelectItem value="All Branches">All Branches</SelectItem>
+              {branches.map((b) => (
+                <SelectItem key={b.id} value={b.id}>
+                  {b.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>
-          <select
+          <Select
             value={semesterFilter}
-            onChange={(e) => setSemesterFilter(e.target.value)}
-            className={`w-full border rounded px-3 py-2 ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
+            onValueChange={(value) => setSemesterFilter(value)}
           >
-            <option value="All Semesters">All Semesters</option>
-            {pageSemesters && pageSemesters.length > 0 ? (
-              pageSemesters.map((s) => (
-                <option key={s.id} value={s.id} className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>
-                  {`Semester ${s.number}`}
-                </option>
-              ))
-            ) : (
-              ["1","2","3","4","5","6","7","8"].map((semester) => (
-                <option key={semester} value={semester} className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>
-                  {semester}
-                </option>
-              ))
-            )}
-          </select>
+            <SelectTrigger className={`w-full ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}>
+              <SelectValue placeholder="All Semesters" />
+            </SelectTrigger>
+            <SelectContent className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+              <SelectItem value="All Semesters">All Semesters</SelectItem>
+              {pageSemesters && pageSemesters.length > 0 ? (
+                pageSemesters.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {`Semester ${s.number}`}
+                  </SelectItem>
+                ))
+              ) : (
+                ["1","2","3","4","5","6","7","8"].map((semester) => (
+                  <SelectItem key={semester} value={semester}>
+                    {semester}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>
-          <select
+          <Select
             value={selectedSectionFilter}
-            onChange={(e) => setSelectedSectionFilter(e.target.value)}
-            className={`w-full border rounded px-3 py-2 ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
+            onValueChange={(value) => setSelectedSectionFilter(value)}
           >
-            <option value="All Sections">All Sections</option>
-            {sections.map((s) => (
-              <option key={s.id} value={s.id} className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>
-                {s.name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className={`w-full ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}>
+              <SelectValue placeholder="All Sections" />
+            </SelectTrigger>
+            <SelectContent className={theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+              <SelectItem value="All Sections">All Sections</SelectItem>
+              {sections.map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       <Card className={theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-200 text-gray-900'}>
-        <CardHeader>
-          <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 font-semibold text-sm gap-2 px-2 md:px-0 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-            <div className="md:col-span-1">Type</div>
-            <div className="md:col-span-1">Title</div>
-            <div className="hidden md:block md:col-span-1">Course Name</div>
-            <div className="md:col-span-1">Course Code</div>
-            <div className="hidden md:block md:col-span-1">Semester</div>
-            <div className="hidden md:block md:col-span-1">Uploaded By</div>
-            <div className="md:col-span-1">Action</div>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table className="min-w-[700px]">
+              <TableHeader>
+                <TableRow className={theme === 'dark' ? 'border-border hover:bg-transparent' : 'border-gray-200 hover:bg-transparent'}>
+                  <TableHead className="w-[50px]">Type</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Course Name</TableHead>
+                  <TableHead>Course Code</TableHead>
+                  <TableHead>Sem</TableHead>
+                  <TableHead>Uploaded By</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-10">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="animate-spin text-[#a259ff]">◌</span>
+                        Loading materials...
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredMaterials.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
+                      No study materials found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredMaterials.map((material) => (
+                    <StudyMaterialRow key={material.id} material={material} theme={theme} />
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
-        </CardHeader>
-
-        <CardContent className="space-y-2">
-          {loading ? (
-            <div className={`text-center py-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading...</div>
-          ) : filteredMaterials.length === 0 ? (
-            <div className={`text-center py-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No study materials found.</div>
-          ) : (
-            filteredMaterials.map((material) => (
-              <StudyMaterialRow key={material.id} material={material} theme={theme} />
-            ))
-          )}
         </CardContent>
       </Card>
 
-      {/* Upload Modal */}
-      {showUploadModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 ">
-          <div className={`rounded-lg p-6 w-full max-w-md border ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Upload Study Material</h2>
-              <button onClick={() => setShowUploadModal(false)} disabled={uploading}>
-                <X className={theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-400 hover:text-gray-700'} />
-              </button>
+      <Dialog open={showUploadModal} onOpenChange={(open) => {
+        if (!uploading) {
+          setShowUploadModal(open);
+          if (!open) resetForm();
+        }
+      }}>
+        <DialogContent className={`w-[92%] sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Upload Study Material</DialogTitle>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+            {/* Left Side: Form Fields */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="material-title">Material Title *</Label>
+                <Input
+                  id="material-title"
+                  placeholder="Enter title (e.g. Unit 1 Notes)"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className={theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}
+                  disabled={uploading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Branch *</Label>
+                <Select
+                  value={branchId}
+                  onValueChange={(value) => setBranchId(value)}
+                  disabled={uploading}
+                >
+                  <SelectTrigger className={theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}>
+                    <SelectValue placeholder="Select Branch" />
+                  </SelectTrigger>
+                  <SelectContent className={theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white text-gray-900'}>
+                    {branches.map((b) => (
+                      <SelectItem key={b.id} value={b.id}>
+                        {b.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Semester *</Label>
+                  <Select
+                    value={semesterId}
+                    onValueChange={(value) => setSemesterId(value)}
+                    disabled={uploading || !branchId}
+                  >
+                    <SelectTrigger className={theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}>
+                      <SelectValue placeholder="Select Sem" />
+                    </SelectTrigger>
+                    <SelectContent className={theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white text-gray-900'}>
+                      {modalSemesters.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          Sem {s.number}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Section</Label>
+                  <Select
+                    value={sectionId}
+                    onValueChange={(value) => setSectionId(value)}
+                    disabled={uploading || !semesterId}
+                  >
+                    <SelectTrigger className={theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}>
+                      <SelectValue placeholder="Optional" />
+                    </SelectTrigger>
+                    <SelectContent className={theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white text-gray-900'}>
+                      {modalSections.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          Sec {s.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Course / Subject *</Label>
+                <Select
+                  value={subjectId}
+                  onValueChange={(sid) => {
+                    setSubjectId(sid);
+                    const subj = modalSubjects.find((m) => m.id === sid);
+                    if (subj) {
+                      setSubjectName(subj.name);
+                      setSubjectCode(subj.subject_code || "");
+                    } else {
+                      setSubjectName("");
+                      setSubjectCode("");
+                    }
+                  }}
+                  disabled={uploading || !semesterId}
+                >
+                  <SelectTrigger className={theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}>
+                    <SelectValue placeholder="Select Course" />
+                  </SelectTrigger>
+                  <SelectContent className={theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white text-gray-900'}>
+                    {modalSubjects.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name} ({s.subject_code})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {/* Input fields */}
-            <div className="grid gap-3 mb-4">
-              <input
-                type="text"
-                placeholder="Title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className={`px-3 py-2 rounded outline-none focus:ring-2 ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
-                disabled={uploading}
-              />
-
-              <select
-                value={branchId}
-                onChange={(e) => setBranchId(e.target.value)}
-                className={`px-3 py-2 rounded outline-none focus:ring-2 ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
-                disabled={uploading}
-              >
-                <option value="">Select Branch</option>
-                {branches.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={semesterId}
-                onChange={(e) => setSemesterId(e.target.value)}
-                className={`px-3 py-2 rounded outline-none focus:ring-2 ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
-                disabled={uploading || !branchId}
-              >
-                <option value="">Select Semester</option>
-                {modalSemesters.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.number}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={sectionId}
-                onChange={(e) => setSectionId(e.target.value)}
-                className={`px-3 py-2 rounded outline-none focus:ring-2 ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
-                disabled={uploading || !semesterId}
-              >
-                <option value="">Section (optional)</option>
-                {modalSections.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={subjectId}
-                onChange={(e) => {
-                  const sid = e.target.value;
-                  setSubjectId(sid);
-                  const subj = modalSubjects.find((m) => m.id === sid);
-                  if (subj) {
-                    setSubjectName(subj.name);
-                    setSubjectCode(subj.subject_code || "");
-                  } else {
-                    setSubjectName("");
-                    setSubjectCode("");
+            {/* Right Side: Upload Area */}
+            <div className="space-y-4">
+              <Label>File Upload *</Label>
+              <div
+                onDragEnter={handleDrag}
+                onDragOver={handleDrag}
+                onDragLeave={handleDrag}
+                onDrop={handleDrop}
+                className={`
+                  relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200
+                  ${dragActive 
+                    ? 'border-[#a259ff] bg-[#a259ff]/10 scale-[1.02]' 
+                    : theme === 'dark' ? 'border-border bg-background/50' : 'border-gray-300 bg-gray-50'
                   }
-                }}
-                className={`px-3 py-2 rounded outline-none focus:ring-2 ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
-                disabled={uploading || !semesterId}
+                  ${file ? 'border-green-500 bg-green-500/5' : ''}
+                `}
               >
-                <option value="">Select Course</option>
-                {modalSubjects.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
+                <UploadCloud 
+                  className={`mx-auto mb-4 ${file ? 'text-green-500' : theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`} 
+                  size={48} 
+                />
+                
+                {file ? (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium truncate px-4">{file.name}</p>
+                    <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                      {(file.size / (1024 * 1024)).toFixed(2)} MB
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setFile(null)}
+                      className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      <X size={16} className="mr-1" /> Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm font-medium mb-1">Drag & drop your file here</p>
+                    <p className={`text-xs mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                      PDF, JPG, PNG or JPEG (Max 50MB)
+                    </p>
+                    <input
+                      type="file"
+                      id="study-material-file"
+                      className="hidden"
+                      onChange={handleFileChange}
+                      accept=".pdf,.png,.jpg,.jpeg"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.getElementById('study-material-file')?.click()}
+                      className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:text-white"
+                    >
+                      Select File
+                    </Button>
+                  </>
+                )}
+              </div>
 
-              <input
-                type="text"
-                placeholder="Course Code"
-                value={subjectCode}
-                readOnly
-                className={`px-3 py-2 rounded outline-none focus:ring-2 ${theme === 'dark' ? 'bg-background text-foreground border-border focus:ring-primary' : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-500'}`}
-                disabled={uploading}
-              />
+              <div className="pt-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">Instructions</p>
+                <ul className={`text-[11px] list-disc pl-4 space-y-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                  <li>Select the correct Branch and Semester to see available courses.</li>
+                  <li>Title should be descriptive (e.g., "Unit 1 - Calculus Notes").</li>
+                  <li>Ensure the file is clear and readable.</li>
+                  <li>Maximum file size allowed is 50MB.</li>
+                </ul>
+              </div>
             </div>
-
-            {/* File upload box */}
-            <div className={`border-2 border-dashed rounded-lg p-6 text-center mb-4 ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
-              <UploadCloud className={`mx-auto mb-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`} size={40} />
-              <p className={`mb-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Drag & drop file here</p>
-              <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`}>Supports PDF, PNG, JPG, JPEG (max 50MB)</p>
-              <input
-                type="file"
-                accept=".pdf,.png,.jpg,.jpeg"
-                onChange={handleFileChange}
-                className="hidden"
-                id="fileInput"
-                disabled={uploading}
-              />
-              <label
-                htmlFor="fileInput"
-                className={`inline-block px-4 py-2 rounded cursor-pointer ${theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-900 bg-white border-gray-300 hover:bg-gray-100'}`}
-              >
-                {file ? file.name : "Select File"}
-              </label>
-            </div>
-
-            <button
-              onClick={handleUpload}
-              className={`w-full py-2 rounded transition-colors disabled:opacity-50 ${theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-900 bg-white border-gray-300 hover:bg-gray-100'}`}
-              disabled={uploading}
-            >
-              {uploading ? "Uploading..." : "Upload File"}
-            </button>
           </div>
-        </div>
-      )}
+
+          <DialogFooter className="mt-4 flex flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowUploadModal(false)}
+              disabled={uploading}
+              className={theme === 'dark' ? 'border-border' : 'border-gray-300'}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpload}
+              disabled={uploading || !file || !title || !branchId || !semesterId || !subjectId}
+              className="bg-[#a259ff] text-white hover:bg-[#8a4dde] min-w-[120px]"
+            >
+              {uploading ? (
+                <>
+                  <span className="animate-spin mr-2">◌</span>
+                  Uploading...
+                </>
+              ) : (
+                "Upload Material"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

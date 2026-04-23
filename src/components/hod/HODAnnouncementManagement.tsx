@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -203,22 +203,26 @@ const HODAnnouncementManagement = () => {
   const roles = ["student", "teacher", "faculty"];
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">Branch Announcements</h1>
-          <p className="text-muted-foreground">
-            Create and manage announcements for your branch
-          </p>
-        </div>
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button onClick={() => resetForm()} className="gap-2">
-              <Plus className="w-4 h-4" />
-              New Announcement
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="w-full max-w-7xl mx-auto space-y-6">
+      <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 gap-4">
+          <div className="space-y-1">
+            <CardTitle className="text-xl font-semibold">Branch Announcements</CardTitle>
+            <CardDescription className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>
+              Create and manage announcements for your branch
+            </CardDescription>
+          </div>
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogTrigger asChild>
+              <Button 
+                onClick={() => resetForm()} 
+                className="w-full sm:w-auto gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] transition-all duration-200 shadow-md"
+              >
+                <Plus className="w-4 h-4" />
+                New Announcement
+              </Button>
+            </DialogTrigger>
+          <DialogContent className="w-[92%] sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl">
             <DialogHeader>
               <DialogTitle>
                 {editingId ? "Edit Announcement" : "Create Announcement"}
@@ -252,7 +256,7 @@ const HODAnnouncementManagement = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, message: e.target.value })
                   }
-                  rows={6}
+                  className={`h-40 resize-none overflow-y-auto ${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}`}
                 />
               </div>
 
@@ -338,14 +342,18 @@ const HODAnnouncementManagement = () => {
                 >
                   Cancel
                 </Button>
-                <Button onClick={handleCreateOrUpdate}>
+                <Button 
+                  onClick={handleCreateOrUpdate}
+                  className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] transition-all duration-200"
+                >
                   {editingId ? "Update" : "Create"} Announcement
                 </Button>
               </div>
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+        </CardHeader>
+      </Card>
 
       {/* Loading State */}
       {loading && (

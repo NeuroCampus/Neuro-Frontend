@@ -290,9 +290,7 @@ const ApplyLeave = () => {
   });
 
   return (
-    <div className={`p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <h2 className={`text-3xl font-bold mb-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Apply Leave</h2>
-
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Main Container with Flex Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Leave Application Form - Left Side */}

@@ -72,29 +72,16 @@ const PromotionManagement = () => {
       case "overview":
         return <PromotionOverview onTabChange={setActiveTab} theme={theme} />;
       case "promote":
-        return <PromotionPage theme={theme} />;
+        return <PromotionPage theme={theme} onTabChange={setActiveTab} />;
       case "demote":
-        return <DemotionPage theme={theme} />;
+        return <DemotionPage theme={theme} onTabChange={setActiveTab} />;
       default:
         return <PromotionOverview onTabChange={setActiveTab} theme={theme} />;
     }
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Student Promotion & Demotion Management</h1>
-        {activeTab !== "overview" && (
-          <Button
-            onClick={() => setActiveTab("overview")}
-            variant="outline"
-            className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
-          >
-            Back to Overview
-          </Button>
-        )}
-      </div>
-
+    <div className="space-y-4">
       {renderContent()}
     </div>
   );
@@ -104,7 +91,7 @@ const PromotionOverview = ({ onTabChange, theme }: { onTabChange: (tab: "overvie
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Promotion Card */}
-      <Card className={theme === 'dark' ? 'bg-card text-foreground border-border hover:border-green-500' : 'bg-white text-gray-900 border-gray-200 hover:border-green-500'}>
+      <Card className={`h-full flex flex-col ${theme === 'dark' ? 'bg-card text-foreground border-border hover:border-green-500' : 'bg-white text-gray-900 border-gray-200 hover:border-green-500'}`}>
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-green-600 rounded-lg">
@@ -116,7 +103,7 @@ const PromotionOverview = ({ onTabChange, theme }: { onTabChange: (tab: "overvie
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1 flex flex-col justify-between">
           <div className="space-y-3">
             <div className="flex items-center justify-between text-sm">
               <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Bulk promote students</span>
@@ -131,14 +118,14 @@ const PromotionOverview = ({ onTabChange, theme }: { onTabChange: (tab: "overvie
               <ArrowRight className={`h-4 w-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`} />
             </div>
           </div>
-          <Button onClick={() => onTabChange("promote")} className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white">
+          <Button onClick={() => onTabChange("promote")} className="w-full mt-6 bg-green-600 hover:bg-green-700 text-white">
             Manage Promotions
           </Button>
         </CardContent>
       </Card>
 
       {/* Demotion Card */}
-      <Card className={theme === 'dark' ? 'bg-card text-foreground border-border hover:border-red-500' : 'bg-white text-gray-900 border-gray-200 hover:border-red-500'}>
+      <Card className={`h-full flex flex-col ${theme === 'dark' ? 'bg-card text-foreground border-border hover:border-red-500' : 'bg-white text-gray-900 border-gray-200 hover:border-red-500'}`}>
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="p-3 bg-red-600 rounded-lg">
@@ -150,7 +137,7 @@ const PromotionOverview = ({ onTabChange, theme }: { onTabChange: (tab: "overvie
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-1 flex flex-col justify-between">
           <div className="space-y-3">
             <div className="flex items-center justify-between text-sm">
               <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Individual demotion</span>
@@ -165,7 +152,7 @@ const PromotionOverview = ({ onTabChange, theme }: { onTabChange: (tab: "overvie
               <ArrowRight className={`h-4 w-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`} />
             </div>
           </div>
-          <Button onClick={() => onTabChange("demote")} className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white">
+          <Button onClick={() => onTabChange("demote")} className="w-full mt-6 bg-red-600 hover:bg-red-700 text-white">
             Manage Demotions
           </Button>
         </CardContent>
@@ -200,7 +187,7 @@ const PromotionOverview = ({ onTabChange, theme }: { onTabChange: (tab: "overvie
   );
 };
 
-const PromotionPage = ({ theme }: { theme: string }) => {
+const PromotionPage = ({ theme, onTabChange }: { theme: string; onTabChange: (tab: "overview" | "promote" | "demote") => void }) => {
   const [state, setState] = useState({
     semesters: [] as Semester[],
     sections: [] as Section[],
@@ -630,9 +617,19 @@ const PromotionPage = ({ theme }: { theme: string }) => {
       {/* Header */}
       <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
-          <CardTitle className={`flex items-center gap-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-            <UserCheck className="h-5 w-5 text-green-400" />
-            Student Promotion
+          <CardTitle className={`flex items-center justify-between gap-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+            <span className="flex items-center gap-2">
+              <UserCheck className="h-5 w-5 text-green-400" />
+              Student Promotion
+            </span>
+            <Button
+              onClick={() => onTabChange("overview")}
+              variant="outline"
+              size="sm"
+              className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 shadow-md"
+            >
+              Back to Overview
+            </Button>
           </CardTitle>
         </CardHeader>
       </Card>
@@ -753,7 +750,7 @@ const PromotionPage = ({ theme }: { theme: string }) => {
                 <Button
                   onClick={handlePromoteSelectedStudents}
                   disabled={state.isPromoting || state.selectedStudents.length === 0}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-green-600 hover:bg-green-700 text-white"
                   size="sm"
                 >
                   <UserCheck className="h-4 w-4 mr-2" />
@@ -832,7 +829,7 @@ const PromotionPage = ({ theme }: { theme: string }) => {
   );
 };
 
-const DemotionPage = ({ theme }: { theme: string }) => {
+const DemotionPage = ({ theme, onTabChange }: { theme: string; onTabChange: (tab: "overview" | "promote" | "demote") => void }) => {
   const [state, setState] = useState({
     semesters: [] as Semester[],
     sections: [] as Section[],
@@ -1176,9 +1173,19 @@ const DemotionPage = ({ theme }: { theme: string }) => {
       {/* Header */}
       <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
-          <CardTitle className={`flex items-center gap-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-            <UserX className="h-5 w-5 text-red-400" />
-            Student Demotion
+          <CardTitle className={`flex items-center justify-between gap-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+            <span className="flex items-center gap-2">
+              <UserX className="h-5 w-5 text-red-400" />
+              Student Demotion
+            </span>
+            <Button
+              onClick={() => onTabChange("overview")}
+              variant="outline"
+              size="sm"
+              className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 shadow-md"
+            >
+              Back to Overview
+            </Button>
           </CardTitle>
         </CardHeader>
       </Card>

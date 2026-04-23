@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CheckCircle, XCircle, Clock, FileText, RotateCcw } from "lucide-react";
+import { CheckCircle, XCircle, Clock, FileText, RotateCcw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,8 @@ const FacultyAttendance = () => {
   const [attendanceStatus, setAttendanceStatus] = useState<"present" | "absent" | null>(null);
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [markingStatus, setMarkingStatus] = useState<"present" | "absent" | null>(null);
+  const [loadingMessage, setLoadingMessage] = useState("");
   const [todayRecord, setTodayRecord] = useState<FacultyAttendanceRecord | null>(null);
   const [recentRecords, setRecentRecords] = useState<FacultyAttendanceRecord[]>([]);
   const [historyRecords, setHistoryRecords] = useState<FacultyAttendanceRecord[]>([]);
@@ -80,7 +82,9 @@ const FacultyAttendance = () => {
 
   const handleToggleAttendance = async (status: "present" | "absent") => {
     setIsSubmitting(true);
+    setMarkingStatus(status);
     setIsAnimating(true);
+    setLoadingMessage(status === 'present' ? "Initializing location..." : "Preparing request...");
 
     try {
       let latitude: number | undefined = undefined;
@@ -88,10 +92,12 @@ const FacultyAttendance = () => {
       let device_info: any = undefined;
 
       if (status === 'present') {
+        setLoadingMessage("Detecting your location...");
         // Require geolocation for marking present
         if (!navigator.geolocation) {
           toast.error('Geolocation not supported by this browser. Cannot mark present.');
           setIsSubmitting(false);
+          setMarkingStatus(null);
           return;
         }
 
@@ -107,6 +113,7 @@ const FacultyAttendance = () => {
 
         if (!pos) {
           setIsSubmitting(false);
+          setMarkingStatus(null);
           return;
         }
 
@@ -121,6 +128,7 @@ const FacultyAttendance = () => {
           userAgent: navigator.userAgent
         };
       } else {
+        setLoadingMessage("Capturing context...");
         // For absent, try to capture location if available but do not block
         try {
           const pos = await new Promise<GeolocationPosition | null>((resolve) => {
@@ -137,6 +145,7 @@ const FacultyAttendance = () => {
         }
       }
 
+      setLoadingMessage("Syncing with server...");
       const requestData: MarkFacultyAttendanceRequest & any = {
         status,
         notes: notes.trim() || undefined,
@@ -150,6 +159,7 @@ const FacultyAttendance = () => {
       const response = await markFacultyAttendance(requestData);
 
       if (response.success) {
+        setLoadingMessage("Almost done...");
         const isUpdate = response.data?.updated || false;
         toast.success(isUpdate ? `Attendance updated to ${status}` : `Attendance marked as ${status}`);
         setAttendanceStatus(status);
@@ -162,6 +172,8 @@ const FacultyAttendance = () => {
       toast.error("Network error occurred");
     } finally {
       setIsSubmitting(false);
+      setMarkingStatus(null);
+      setLoadingMessage("");
       setTimeout(() => setIsAnimating(false), 500);
     }
   };
@@ -220,20 +232,26 @@ const FacultyAttendance = () => {
                 onClick={() => handleToggleAttendance("present")}
                 disabled={isSubmitting}
                 className={`flex items-center justify-center w-20 h-20 rounded-full transition-all duration-300 shadow-lg ${
-                  attendanceStatus === 'present'
-                    ? 'bg-green-500 text-white scale-110'
-                    : theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-white text-gray-600 hover:bg-gray-50 border-2 border-gray-200'
+                  markingStatus === 'present'
+                    ? 'bg-blue-500 text-white animate-pulse'
+                    : attendanceStatus === 'present'
+                      ? 'bg-green-500 text-white scale-110'
+                      : theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-white text-gray-600 hover:bg-gray-50 border-2 border-gray-200'
                 }`}
-                whileHover={{ scale: attendanceStatus === 'present' ? 1.1 : 1.05 }}
+                whileHover={{ scale: (attendanceStatus === 'present' || markingStatus === 'present') ? 1.1 : 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 animate={{
-                  rotate: attendanceStatus === 'present' ? [0, -10, 10, 0] : 0,
+                  rotate: (attendanceStatus === 'present' && !markingStatus) ? [0, -10, 10, 0] : 0,
                 }}
                 transition={{
                   rotate: { duration: 0.5, ease: "easeInOut" }
                 }}
               >
-                <CheckCircle className="w-8 h-8" />
+                {markingStatus === 'present' ? (
+                  <Loader2 className="w-8 h-8 animate-spin" />
+                ) : (
+                  <CheckCircle className="w-8 h-8" />
+                )}
               </motion.button>
 
               {/* Absent Button */}
@@ -241,44 +259,65 @@ const FacultyAttendance = () => {
                 onClick={() => handleToggleAttendance("absent")}
                 disabled={isSubmitting}
                 className={`flex items-center justify-center w-20 h-20 rounded-full transition-all duration-300 shadow-lg ${
-                  attendanceStatus === 'absent'
-                    ? 'bg-red-500 text-white scale-110'
-                    : theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-white text-gray-600 hover:bg-gray-50 border-2 border-gray-200'
+                  markingStatus === 'absent'
+                    ? 'bg-blue-500 text-white animate-pulse'
+                    : attendanceStatus === 'absent'
+                      ? 'bg-red-500 text-white scale-110'
+                      : theme === 'dark' ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-white text-gray-600 hover:bg-gray-50 border-2 border-gray-200'
                 }`}
-                whileHover={{ scale: attendanceStatus === 'absent' ? 1.1 : 1.05 }}
+                whileHover={{ scale: (attendanceStatus === 'absent' || markingStatus === 'absent') ? 1.1 : 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 animate={{
-                  rotate: attendanceStatus === 'absent' ? [0, -10, 10, 0] : 0,
+                  rotate: (attendanceStatus === 'absent' && !markingStatus) ? [0, -10, 10, 0] : 0,
                 }}
                 transition={{
                   rotate: { duration: 0.5, ease: "easeInOut" }
                 }}
               >
-                <XCircle className="w-8 h-8" />
+                {markingStatus === 'absent' ? (
+                  <Loader2 className="w-8 h-8 animate-spin" />
+                ) : (
+                  <XCircle className="w-8 h-8" />
+                )}
               </motion.button>
             </div>
 
             {/* Button Labels */}
             <div className="flex items-center space-x-8 text-sm font-medium">
               <motion.span
-                className={attendanceStatus === 'present' ? 'text-green-600' : 'text-gray-500'}
+                className={markingStatus === 'present' ? 'text-blue-500' : attendanceStatus === 'present' ? 'text-green-600' : 'text-gray-500'}
                 animate={{
-                  scale: attendanceStatus === 'present' ? 1.1 : 1,
+                  scale: (attendanceStatus === 'present' || markingStatus === 'present') ? 1.1 : 1,
                 }}
                 transition={{ duration: 0.3 }}
               >
-                Present
+                {markingStatus === 'present' ? 'Marking...' : 'Present'}
               </motion.span>
               <motion.span
-                className={attendanceStatus === 'absent' ? 'text-red-600' : 'text-gray-500'}
+                className={markingStatus === 'absent' ? 'text-blue-500' : attendanceStatus === 'absent' ? 'text-red-600' : 'text-gray-500'}
                 animate={{
-                  scale: attendanceStatus === 'absent' ? 1.1 : 1,
+                  scale: (attendanceStatus === 'absent' || markingStatus === 'absent') ? 1.1 : 1,
                 }}
                 transition={{ duration: 0.3 }}
               >
-                Absent
+                {markingStatus === 'absent' ? 'Marking...' : 'Absent'}
               </motion.span>
             </div>
+
+            {/* Progress Message */}
+            <AnimatePresence>
+              {isSubmitting && loadingMessage && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="flex items-center gap-2 text-xs font-medium text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-3 py-1 rounded-full border border-blue-100 dark:border-blue-800"
+                >
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  {loadingMessage}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Status Indicator */}
             <AnimatePresence mode="wait">
@@ -336,8 +375,7 @@ const FacultyAttendance = () => {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Add any notes about your attendance..."
-              className={theme === 'dark' ? 'bg-background border-input text-foreground' : 'bg-white border-gray-300 text-gray-900'}
-              rows={3}
+              className={`resize-none h-24 ${theme === 'dark' ? 'bg-background border-input text-foreground' : 'bg-white border-gray-300 text-gray-900'}`}
             />
           </motion.div>
 
@@ -445,67 +483,89 @@ const FacultyAttendance = () => {
           {historyLoading ? (
             <p className={`text-center py-8 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Loading history...</p>
           ) : historyRecords.length > 0 ? (
-            <div className="space-y-3">
-              {historyRecords.map((record) => (
-                <div key={record.id} className={`p-3 rounded-lg border ${getStatusColor(record.status)}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      {getStatusIcon(record.status)}
-                      <div>
-                        <p className="font-medium capitalize">{record.status}</p>
-                        <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                          {new Date(record.date).toLocaleDateString()}
-                        </p>
+            <>
+              <div className="space-y-3">
+                {historyRecords.map((record) => (
+                  <div key={record.id} className={`p-3 rounded-lg border ${getStatusColor(record.status)}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        {getStatusIcon(record.status)}
+                        <div>
+                          <p className="font-medium capitalize">{record.status}</p>
+                          <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                            {new Date(record.date).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                        {new Date(record.marked_at).toLocaleTimeString()}
                       </div>
                     </div>
-                    <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                      {new Date(record.marked_at).toLocaleTimeString()}
-                    </div>
                   </div>
+                ))}
+              </div>
+
+              {/* Pagination Controls */}
+              {historyTotalPages > 1 && (
+                <div className="mt-4 flex items-center justify-center space-x-2">
+                  <Button 
+                    size="sm" 
+                    onClick={() => fetchHistoryPage(Math.max(1, historyPage - 1))} 
+                    disabled={historyLoading || historyPage === 1} 
+                    className={`font-medium transition-all duration-200 ${
+                      (historyLoading || historyPage === 1) 
+                        ? 'bg-[#a259ff] opacity-50 text-white cursor-not-allowed' 
+                        : 'bg-[#a259ff] text-white hover:bg-[#8a4dde] shadow-sm'
+                    }`}
+                  >
+                    Previous
+                  </Button>
+                  <div className="flex items-center space-x-1">
+                    {(() => {
+                      const total = historyTotalPages || 1;
+                      const current = historyPage || 1;
+                      const maxButtons = 5;
+                      let start = Math.max(1, current - Math.floor(maxButtons / 2));
+                      let end = Math.min(total, start + maxButtons - 1);
+                      if (end - start + 1 < maxButtons) start = Math.max(1, end - maxButtons + 1);
+                      const buttons = [];
+                      for (let p = start; p <= end; p++) {
+                        buttons.push(
+                          <Button
+                            key={p}
+                            size="sm"
+                            variant={p === current ? undefined : 'ghost'}
+                            onClick={() => fetchHistoryPage(p)}
+                            disabled={historyLoading}
+                            className={`px-2 py-1 text-xs font-semibold ${p === current ? 'bg-white text-[#a259ff]' : 'bg-white text-gray-600 hover:text-[#a259ff] dark:bg-gray-700'}`}
+                          >
+                            {p}
+                          </Button>
+                        );
+                      }
+                      return buttons;
+                    })()}
+                  </div>
+                  <Button 
+                    size="sm" 
+                    onClick={() => fetchHistoryPage(Math.min(historyTotalPages, historyPage + 1))} 
+                    disabled={historyLoading || historyPage === historyTotalPages} 
+                    className={`font-medium transition-all duration-200 ${
+                      (historyLoading || historyPage === historyTotalPages) 
+                        ? 'bg-[#a259ff] opacity-50 text-white cursor-not-allowed' 
+                        : 'bg-[#a259ff] text-white hover:bg-[#8a4dde] shadow-sm'
+                    }`}
+                  >
+                    Next
+                  </Button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           ) : (
             <p className={`text-center py-8 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               No history available
             </p>
           )}
-
-          {/* Pagination Controls */}
-          <div className="mt-4 flex items-center justify-center space-x-2">
-            <Button size="sm" onClick={() => fetchHistoryPage(Math.max(1, historyPage - 1))} disabled={historyLoading || historyPage === 1} className="bg-[#a259ff] text-white hover:bg-[#8e40e8]">
-              Previous
-            </Button>
-            <div className="flex items-center space-x-1">
-              {(() => {
-                const total = historyTotalPages || 1;
-                const current = historyPage || 1;
-                const maxButtons = 5;
-                let start = Math.max(1, current - Math.floor(maxButtons / 2));
-                let end = Math.min(total, start + maxButtons - 1);
-                if (end - start + 1 < maxButtons) start = Math.max(1, end - maxButtons + 1);
-                const buttons = [];
-                for (let p = start; p <= end; p++) {
-                  buttons.push(
-                    <Button
-                      key={p}
-                      size="sm"
-                      variant={p === current ? undefined : 'ghost'}
-                      onClick={() => fetchHistoryPage(p)}
-                      disabled={historyLoading}
-                      className={`px-2 py-1 text-xs ${p === current ? 'bg-white text-[#a259ff] border border-[#a259ff]' : 'bg-white text-gray-900 dark:text-gray-100 dark:bg-gray-700'}`}
-                    >
-                      {p}
-                    </Button>
-                  );
-                }
-                return buttons;
-              })()}
-            </div>
-            <Button size="sm" onClick={() => fetchHistoryPage(Math.min(historyTotalPages, historyPage + 1))} disabled={historyLoading || historyPage === historyTotalPages} className="bg-[#a259ff] text-white hover:bg-[#8e40e8]">
-              Next
-            </Button>
-          </div>
         </CardContent>
       </Card>
     </div>
