@@ -1,17 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "../ui/select";
 import { Checkbox } from "../ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
-import { manageStudents, manageSubjects, getElectiveEnrollmentBootstrap } from "../../utils/hod_api";
+import { manageStudents, getElectiveEnrollmentBootstrap } from "../../utils/hod_api";
 import { useHODBootstrap } from "../../context/HODBootstrapContext";
 import { useTheme } from "../../context/ThemeContext";
 import { API_ENDPOINT } from "../../utils/config";
 import { fetchWithTokenRefresh } from "../../utils/authService";
 
 const StudentEnrollment = () => {
-  const bootstrap = useHODBootstrap();
+  useHODBootstrap();
   const [branchId, setBranchId] = useState<string>("");
   const [semesters, setSemesters] = useState<any[]>([]);
   const [sectionsBySemester, setSectionsBySemester] = useState<Record<string, any[]>>({});
@@ -23,7 +24,7 @@ const StudentEnrollment = () => {
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>("");
   const [students, setStudents] = useState<any[]>([]);
   const [showEnrolledOnly, setShowEnrolledOnly] = useState<boolean>(false);
-  const [enrolledCount, setEnrolledCount] = useState<number>(0);
+  // enrolledCount state removed (unused)
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const { theme } = useTheme();
@@ -35,7 +36,7 @@ const StudentEnrollment = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalStudents, setTotalStudents] = useState(0);
-  const studentsPerPage = 20; // Frontend pagination
+  // studentsPerPage removed (unused)
 
   // Elective subjects pagination state
   const [electivePage, setElectivePage] = useState(1);
@@ -177,8 +178,7 @@ const StudentEnrollment = () => {
       setTotalPages(Math.ceil(data.count / 50));  // Fixed page size of 50
       setTotalStudents(data.count);
 
-      // Reset enrolled count - will be calculated from checked states
-      setEnrolledCount(mapped.filter(s => s.checked).length);
+      // Reset enrolled count - derived when needed (removed state)
     } catch (e) {
       console.error(e);
     }
@@ -189,17 +189,10 @@ const StudentEnrollment = () => {
     setStudents((prev) => prev.map((p) => (p.id === id ? { ...p, checked: !p.checked } : p)));
   };
 
-  const enrolledList = students.filter((s) => s.checked);
-  const notEnrolledList = students.filter((s) => !s.checked);
-
   const save = async () => {
     if (students.length === 0) return;
     setSaving(true);
     try {
-      // Get current checked state (what user wants)
-      const currentChecked = students.filter(s => s.checked).map(s => s.usn);
-      const currentUnchecked = students.filter(s => !s.checked).map(s => s.usn);
-
       // Determine changes based on original loaded state vs current checked state
       const toRegister = students.filter(s => s.checked && !s.originallyEnrolled).map(s => s.usn);
       const toUnregister = students.filter(s => !s.checked && s.originallyEnrolled).map(s => s.usn);
@@ -210,9 +203,10 @@ const StudentEnrollment = () => {
 
       if (toRegister.length > 0) {
         const res = await manageStudents({ action: "bulk_register_subjects", branch_id: branchId, subject_id: selectedSubjectId, student_ids: toRegister }, "POST");
-        if (res && res.success) {
-          registeredCount = res.data?.registered_count ?? res.data?.registered?.length ?? toRegister.length;
-          failed = failed.concat(res.data?.failed || []);
+        if (res?.success) {
+          const resData: any = res.data;
+          registeredCount = resData?.registered_count ?? resData?.registered?.length ?? toRegister.length;
+          failed = failed.concat(resData?.failed || []);
         } else {
           const msg = res?.message || 'Failed to register students';
           setResultData({ added: 0, removed: 0, failed: [msg] });
@@ -224,9 +218,10 @@ const StudentEnrollment = () => {
 
       if (toUnregister.length > 0) {
         const res2 = await manageStudents({ action: "bulk_unregister_subjects", branch_id: branchId, subject_id: selectedSubjectId, student_ids: toUnregister }, "POST");
-        if (res2 && res2.success) {
-          removedCount = res2.data?.removed_count ?? res2.data?.removed?.length ?? toUnregister.length;
-          failed = failed.concat(res2.data?.failed || []);
+        if (res2?.success) {
+          const res2Data: any = res2.data;
+          removedCount = res2Data?.removed_count ?? res2Data?.removed?.length ?? toUnregister.length;
+          failed = failed.concat(res2Data?.failed || []);
         } else {
           const msg = res2?.message || 'Failed to unregister students';
           setResultData({ added: 0, removed: 0, failed: [msg] });
@@ -249,8 +244,6 @@ const StudentEnrollment = () => {
         return student;
       }));
       
-      // Update enrolled count
-      setEnrolledCount((prev) => prev + registeredCount - removedCount);
     } catch (e) {
       console.error(e);
       setResultData({ added: 0, removed: 0, failed: [] });
@@ -268,8 +261,8 @@ const StudentEnrollment = () => {
         <CardContent className="space-y-4 sm:space-y-5 md:space-y-4 lg:space-y-6 p-4 sm:p-5 md:p-4 lg:p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-3 md:gap-2 lg:gap-4 mb-6">
             <div>
-              <label className="block text-sm font-medium mb-2">Semester</label>
-              <Select value={semesterId} onValueChange={(v: string) => { setSemesterId(v); setSectionId(""); }}>
+              <label className="block text-sm font-medium mb-2">Semester
+                <Select value={semesterId} onValueChange={(v: string) => { setSemesterId(v); setSectionId(""); }}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select semester" />
                 </SelectTrigger>
@@ -278,11 +271,12 @@ const StudentEnrollment = () => {
                     <SelectItem key={sem.id} value={sem.id}>{`${sem.number}th Semester`}</SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+                </Select>
+              </label>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Section</label>
-              <Select value={sectionId} onValueChange={setSectionId}>
+              <label className="block text-sm font-medium mb-2">Section
+                <Select value={sectionId} onValueChange={setSectionId}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select section" />
                 </SelectTrigger>
@@ -296,11 +290,12 @@ const StudentEnrollment = () => {
                     ));
                   })()}
                 </SelectContent>
-              </Select>
+                </Select>
+              </label>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Subject Type</label>
-              <Select value={subjectType} onValueChange={setSubjectType}>
+              <label className="block text-sm font-medium mb-2">Subject Type
+                <Select value={subjectType} onValueChange={setSubjectType}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Subject type" />
                 </SelectTrigger>
@@ -308,11 +303,12 @@ const StudentEnrollment = () => {
                   <SelectItem value="elective">Elective</SelectItem>
                   <SelectItem value="open_elective">Open Elective</SelectItem>
                 </SelectContent>
-              </Select>
+                </Select>
+              </label>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Subject</label>
-              <Select value={selectedSubjectId} onValueChange={setSelectedSubjectId}>
+              <label className="block text-sm font-medium mb-2">Subject
+                <Select value={selectedSubjectId} onValueChange={setSelectedSubjectId}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select subject" />
                 </SelectTrigger>
@@ -321,7 +317,8 @@ const StudentEnrollment = () => {
                     <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+                </Select>
+              </label>
               {electiveLoading && <div className="text-sm text-muted-foreground mt-1">Loading subjects...</div>}
               {electivePage < electiveTotalPages && (
                 <Button
@@ -523,7 +520,7 @@ const StudentEnrollment = () => {
                 {resultData.failed && resultData.failed.length > 0 && (
                   <div className="mt-2 max-h-40 overflow-y-auto border rounded p-2">
                     {resultData.failed.map((f: any, idx: number) => (
-                      <div key={idx} className="text-sm">{f.usn || f.student_id || f}</div>
+                      <div key={f?.usn || f?.student_id || String(f) || idx} className="text-sm">{f.usn || f.student_id || f}</div>
                     ))}
                   </div>
                 )}
