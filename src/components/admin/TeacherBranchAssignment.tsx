@@ -195,7 +195,7 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
         }
         setShowBranchDialog(false);
         setSelectedBranch("");
-        fetchTeacherAssignments();
+        setSelectedTeacher(null);
       } else {
         setError(result.message || "Failed to assign branch");
       }
