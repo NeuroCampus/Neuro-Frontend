@@ -136,7 +136,7 @@ const VirtualizedSectionTable = React.memo(({
     >
       {/* Fixed Header */}
       <div className={`sticky top-0 z-10 border-b ${theme === 'dark' ? 'border-gray-600 bg-card' : 'border-gray-300 bg-white'}`}>
-        <div className={`grid grid-cols-5 gap-2 sm:gap-4 p-2 sm:p-3 text-xs font-medium min-w-max ${theme === 'dark' ? 'text-gray-200 bg-card' : 'text-gray-900 bg-white'}`}>
+        <div className={`grid grid-cols-5 gap-2 sm:gap-4 p-2 sm:p-3 text-sm font-medium min-w-max ${theme === 'dark' ? 'text-gray-200 bg-card' : 'text-gray-900 bg-white'}`}>
           <div className={`w-20 sm:w-auto border-r text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}>USN</div>
           <div className={`w-24 sm:w-auto border-r text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}>Name</div>
           <div className={`w-24 sm:w-auto border-r text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}>Course</div>
@@ -158,7 +158,7 @@ const VirtualizedSectionTable = React.memo(({
           return (
             <div
               key={virtualItem.key}
-              className={`grid grid-cols-5 gap-2 sm:gap-4 p-2 sm:p-3 text-xs sm:text-sm border-b min-w-max ${theme === 'dark' ? 'border-gray-600 text-card-foreground hover:bg-accent' : 'border-gray-200 text-gray-900 hover:bg-gray-50'} items-center content-center`}
+              className={`grid grid-cols-5 gap-2 sm:gap-4 p-2 sm:p-3 text-sm border-b min-w-max ${theme === 'dark' ? 'border-gray-600 text-card-foreground hover:bg-accent' : 'border-gray-200 text-gray-900 hover:bg-gray-50'} items-center content-center`}
               style={{
                 position: 'absolute',
                 top: 0,
@@ -168,11 +168,11 @@ const VirtualizedSectionTable = React.memo(({
                 transform: `translateY(${virtualItem.start}px)`,
               }}
             >
-              <div className={`truncate text-xs sm:text-sm w-20 sm:w-auto border-r text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}>{student.usn}</div>
-              <div className={`truncate text-xs sm:text-sm w-24 sm:w-auto border-r text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}>{student.name}</div>
-              <div className={`truncate text-xs sm:text-sm w-24 sm:w-auto border-r text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}>{student.subject}</div>
+              <div className={`truncate text-sm w-20 sm:w-auto border-r text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}>{student.usn}</div>
+              <div className={`truncate text-sm w-24 sm:w-auto border-r text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}>{student.name}</div>
+              <div className={`truncate text-sm w-24 sm:w-auto border-r text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}>{student.subject}</div>
               <div
-                className={`font-medium text-xs sm:text-sm w-28 sm:w-auto border-r text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} ${getAttendanceColorClass(student.attendance_percentage)}`}
+                className={`font-medium text-sm w-28 sm:w-auto border-r text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} ${getAttendanceColorClass(student.attendance_percentage)}`}
               >
                 {formatAttendancePercentage(student.attendance_percentage)}
               </div>
@@ -180,11 +180,10 @@ const VirtualizedSectionTable = React.memo(({
                 <Button
                   size="sm"
                   onClick={() => onNotifyStudent(student)}
-                  className={`px-4 py-1 text-xs flex items-center gap-1 rounded-md shadow-sm border transition-all duration-200 ease-in-out transform hover:scale-105
-                    ${
-                      notifiedStudents?.[student.student_id]
-                        ? "bg-green-700 border-green-600 text-white cursor-default"
-                        : "bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                  className={`px-4 py-1 text-sm flex items-center gap-1 rounded-md shadow-sm border transition-all duration-200 ease-in-out transform hover:scale-105
+                    ${notifiedStudents?.[student.student_id]
+                      ? "bg-green-700 border-green-600 text-white cursor-default"
+                      : "bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
                     }`}
                   disabled={
                     notifyingStudents?.[student.student_id] ||
@@ -535,20 +534,20 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
   // Calculate stats
   const totalStudents = state.totalCount;
   const lowAttendanceCount = state.students.length;
-  const avgAttendance = state.students.length > 0 
+  const avgAttendance = state.students.length > 0
     ? Math.round(state.students.reduce((sum, s) => sum + (typeof s.attendance_percentage === 'number' ? s.attendance_percentage : 0), 0) / state.students.filter(s => typeof s.attendance_percentage === 'number').length)
     : 0;
 
   return (
     <ErrorBoundary>
-      <div className={`min-h-screen text-sm sm:text-base w-full max-w-none mx-auto px-4 sm:px-0 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+      <div className={`min-h-screen text-base w-full max-w-none mx-auto sm:px-0 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
-          <Card className={`${theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'} w-full relative` }>
+          <Card className={`${theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'} w-full relative`}>
             <CardHeader className="pb-2 px-3 sm:px-4">
-              <CardTitle className={`text-sm sm:text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Total Students</CardTitle>
+              <CardTitle className={`text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Total Students</CardTitle>
             </CardHeader>
-            <CardContent className={`flex items-center justify-between text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+            <CardContent className={`flex items-center justify-between text-3xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               <span className="flex-1">{totalStudents}</span>
             </CardContent>
             <div className={`absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-14 h-14 rounded-full ${theme === 'dark' ? 'bg-blue-900/10' : 'bg-blue-50'}`}>
@@ -558,9 +557,9 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
 
           <Card className={`${theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'} w-full relative`}>
             <CardHeader className="pb-2 px-3 sm:px-4">
-              <CardTitle className={`text-sm sm:text-base ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>Low Attendance</CardTitle>
+              <CardTitle className={`text-base ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>Low Attendance</CardTitle>
             </CardHeader>
-            <CardContent className={`flex items-center justify-between text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
+            <CardContent className={`flex items-center justify-between text-3xl font-bold ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
               <span className="flex-1">{lowAttendanceCount}</span>
             </CardContent>
             <div className={`absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-14 h-14 rounded-full ${theme === 'dark' ? 'bg-red-900/10' : 'bg-red-50'}`}>
@@ -570,9 +569,9 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
 
           <Card className={`${theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'} w-full relative`}>
             <CardHeader className="pb-2 px-3 sm:px-4">
-              <CardTitle className={`text-sm sm:text-base ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>Avg Attendance</CardTitle>
+              <CardTitle className={`text-base ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>Avg Attendance</CardTitle>
             </CardHeader>
-            <CardContent className={`flex items-center justify-between text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+            <CardContent className={`flex items-center justify-between text-3xl font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
               <span className="flex-1">{avgAttendance}%</span>
             </CardContent>
             <div className={`absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-14 h-14 rounded-full ${theme === 'dark' ? 'bg-blue-900/10' : 'bg-blue-50'}`}>
@@ -585,10 +584,10 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
         <Card className={theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'}>
           <CardHeader className="pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex-1">
-              <CardTitle className={`text-lg sm:text-xl ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+              <CardTitle className={`text-xl ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                 Low Attendance Management
               </CardTitle>
-              <p className={`text-xs sm:text-sm mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+              <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                 Monitor and notify students with low attendance
               </p>
             </div>
@@ -608,7 +607,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
               <div className="flex flex-row gap-3 items-start md:items-end w-full sm:w-auto">
                 {/* Semester Filter */}
                 <div className="flex flex-col flex-1 sm:flex-none sm:w-56">
-                  <label className={`text-xs sm:text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Semester</label>
+                  <label className={`text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Semester</label>
                   <Select
                     value={state.selectedSemester}
                     onValueChange={handleSemesterChange}
@@ -628,7 +627,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
 
                 {/* Section Filter */}
                 <div className="flex flex-col flex-1 sm:flex-none sm:w-56">
-                  <label className={`text-xs sm:text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Section</label>
+                  <label className={`text-sm mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Section</label>
                   <Select
                     value={state.selectedSection}
                     onValueChange={handleSectionChange}
@@ -655,12 +654,12 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
             {state.loading ? (
               <div className="flex justify-center items-center py-12">
                 <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin" />
-                <span className={`ml-2 text-sm sm:text-base ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading students...</span>
+                <span className={`ml-2 text-base ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading students...</span>
               </div>
             ) : state.students.length > 0 ? (
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                  <h2 className={`text-base sm:text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                  <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                     Students ({state.totalCount > 0 ? `${(state.currentPage - 1) * state.pageSize + 1}-${Math.min(state.currentPage * state.pageSize, state.totalCount)} of ${state.totalCount}` : state.students.length})
                   </h2>
                 </div>
@@ -673,11 +672,11 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
                     onNotifyStudent={notifyStudent}
                   />
                 </div>
-                
+
                 {/* Pagination Controls */}
                 {state.totalCount > state.pageSize && (
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mt-6">
-                    <div className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                    <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                       Showing {state.students.length} of {state.totalCount} students
                     </div>
                     <div className="flex gap-2 items-center justify-center sm:justify-end flex-wrap">
@@ -686,12 +685,12 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
                         size="sm"
                         onClick={goToPreviousPage}
                         disabled={!state.previous || state.loading}
-                        className={`text-xs sm:text-sm ${theme === 'dark' ? 'bg-card text-foreground border-border hover:bg-accent' : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-100'}`}
+                        className={`text-sm ${theme === 'dark' ? 'bg-card text-foreground border-border hover:bg-accent' : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-100'}`}
                       >
                         <ChevronLeft className="w-3 h-3 mr-1" />
                         Prev
                       </Button>
-                      
+
                       <div className="flex items-center space-x-1">
                         {Array.from(
                           { length: Math.min(5, Math.ceil(state.totalCount / state.pageSize)) },
@@ -705,7 +704,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
                                 size="sm"
                                 onClick={() => goToPage(pageNum)}
                                 disabled={state.loading}
-                                className="text-xs"
+                                className="text-sm"
                               >
                                 {pageNum}
                               </Button>
@@ -713,13 +712,13 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
                           }
                         )}
                       </div>
-                      
+
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={goToNextPage}
                         disabled={!state.next || state.loading}
-                        className={`text-xs sm:text-sm ${theme === 'dark' ? 'bg-card text-foreground border-border hover:bg-accent' : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-100'}`}
+                        className={`text-sm ${theme === 'dark' ? 'bg-card text-foreground border-border hover:bg-accent' : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-100'}`}
                       >
                         Next
                         <ChevronRight className="w-3 h-3 ml-1" />

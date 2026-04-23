@@ -277,17 +277,9 @@ const FacultyAttendanceView: React.FC = () => {
   };
 
   return (
-    <div className={`p-3 sm:p-6 space-y-4 sm:space-y-6 min-h-screen max-w-[390px] sm:max-w-none mx-auto ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <div className="flex justify-between items-center">
-        <h1 className={`text-xl sm:text-2xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-          Faculty Attendance Management
-        </h1>
-      </div>
-
-      
-
+    <div className={` sm: space-y-4 sm:space-y-6 min-h-screen max-w-[390px] sm:max-w-none mx-auto ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Tab Navigation */}
-      <div className={`flex space-x-1 p-1 rounded-lg ${theme === 'dark' ? 'bg-card' : 'bg-white'} border ${theme === 'dark' ? 'border-border' : 'border-gray-200'} overflow-x-auto`}>
+      <div className={`flex space-x-1 p-1 rounded-lg mt-3 ${theme === 'dark' ? 'bg-card' : 'bg-white'} border ${theme === 'dark' ? 'border-border' : 'border-gray-200'} overflow-x-auto`}>
         <button
           onClick={() => setActiveTab('today')}
           className={`flex-1 py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
@@ -378,7 +370,7 @@ const FacultyAttendanceView: React.FC = () => {
                     <th className={`px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Faculty</th>
                     <th className={`px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Status</th>
                     <th className={`px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Marked At</th>
-                    <th className={`px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium uppercase tracking-wider hidden sm:table-cell ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Notes</th>
+                    <th className={`px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Notes</th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${theme === 'dark' ? 'divide-border' : 'divide-gray-200'}`}>
@@ -415,7 +407,7 @@ const FacultyAttendanceView: React.FC = () => {
                             <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Location not recorded</div>
                           )}
                         </td>
-                        <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                        <td className={`px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                           {record.notes || '-'}
                         </td>
                       </tr>
@@ -455,11 +447,11 @@ const FacultyAttendanceView: React.FC = () => {
             <button
               onClick={() => handlePageChange(todayPagination.page - 1)}
               disabled={!todayPagination.has_prev || isLoading}
-              className={`px-2 sm:px-3 py-1 text-xs sm:text-sm border rounded-md transition-colors whitespace-nowrap ${
+              className={`px-3 py-2 text-sm font-medium border rounded-md transition-all duration-200 whitespace-nowrap ${
                 todayPagination.has_prev && !isLoading
-                  ? 'border-[#a259ff] text-[#a259ff] hover:bg-purple-50 disabled:opacity-50'
-                  : 'border-gray-300 text-gray-400 cursor-not-allowed'
-              } ${theme === 'dark' ? 'hover:bg-accent' : ''}`}
+                  ? 'bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] shadow-sm'
+                  : 'bg-[#a259ff] opacity-50 text-white border-[#a259ff] cursor-not-allowed'
+              }`}
             >
               Previous
             </button>
@@ -474,10 +466,10 @@ const FacultyAttendanceView: React.FC = () => {
                     key={pageNum}
                     onClick={() => handlePageChange(pageNum)}
                     disabled={isLoading}
-                    className={`px-2 sm:px-3 py-1 text-xs sm:text-sm border rounded-md transition-colors disabled:opacity-50 ${
+                    className={`px-3 py-1 text-sm font-medium transition-colors disabled:opacity-50 ${
                       pageNum === todayPagination.page
-                        ? 'bg-[#a259ff] text-white border-[#a259ff]'
-                        : `border-gray-300 text-gray-700 hover:bg-gray-50 ${theme === 'dark' ? 'hover:bg-accent' : ''}`
+                        ? 'bg-white text-[#a259ff] font-semibold'
+                        : `bg-white text-gray-600 hover:text-[#a259ff] ${theme === 'dark' ? 'hover:bg-accent' : ''}`
                     }`}
                   >
                     {pageNum}
@@ -489,11 +481,11 @@ const FacultyAttendanceView: React.FC = () => {
             <button
               onClick={() => handlePageChange(todayPagination.page + 1)}
               disabled={!todayPagination.has_next || isLoading}
-              className={`px-2 sm:px-3 py-1 text-xs sm:text-sm border rounded-md transition-colors whitespace-nowrap ${
+              className={`px-3 py-2 text-sm font-medium border rounded-md transition-all duration-200 whitespace-nowrap ${
                 todayPagination.has_next && !isLoading
-                  ? 'border-[#a259ff] text-[#a259ff] hover:bg-purple-50'
-                  : 'border-gray-300 text-gray-400 cursor-not-allowed'
-              } ${theme === 'dark' ? 'hover:bg-accent' : ''}`}
+                  ? 'bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] shadow-sm'
+                  : 'bg-[#a259ff] opacity-50 text-white border-[#a259ff] cursor-not-allowed'
+              }`}
             >
               Next
             </button>
@@ -668,11 +660,11 @@ const FacultyAttendanceView: React.FC = () => {
                 <button
                   onClick={() => handleRecordsPageChange(recordsPagination.page - 1)}
                   disabled={!recordsPagination.has_prev || isLoading}
-                  className={`px-3 py-1 text-sm border rounded-md transition-colors ${
+                  className={`px-3 py-2 text-sm font-medium border rounded-md transition-all duration-200 whitespace-nowrap ${
                     recordsPagination.has_prev && !isLoading
-                      ? 'border-[#a259ff] text-[#a259ff] hover:bg-purple-50 disabled:opacity-50'
-                      : 'border-gray-300 text-gray-400 cursor-not-allowed'
-                  } ${theme === 'dark' ? 'hover:bg-accent' : ''}`}
+                      ? 'bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] shadow-sm'
+                      : 'bg-[#a259ff] opacity-50 text-white border-[#a259ff] cursor-not-allowed'
+                  }`}
                 >
                   Previous
                 </button>
@@ -687,10 +679,10 @@ const FacultyAttendanceView: React.FC = () => {
                         key={pageNum}
                         onClick={() => handleRecordsPageChange(pageNum)}
                         disabled={isLoading}
-                        className={`px-3 py-1 text-sm border rounded-md transition-colors disabled:opacity-50 ${
+                        className={`px-3 py-1 text-sm font-medium transition-colors disabled:opacity-50 ${
                           pageNum === recordsPagination.page
-                            ? 'bg-[#a259ff] text-white border-[#a259ff]'
-                            : `border-gray-300 text-gray-700 hover:bg-gray-50 ${theme === 'dark' ? 'hover:bg-accent' : ''}`
+                            ? 'bg-white text-[#a259ff] font-semibold'
+                            : `bg-white text-gray-600 hover:text-[#a259ff] ${theme === 'dark' ? 'hover:bg-accent' : ''}`
                         }`}
                       >
                         {pageNum}
@@ -702,11 +694,11 @@ const FacultyAttendanceView: React.FC = () => {
                 <button
                   onClick={() => handleRecordsPageChange(recordsPagination.page + 1)}
                   disabled={!recordsPagination.has_next || isLoading}
-                  className={`px-3 py-1 text-sm border rounded-md transition-colors ${
+                  className={`px-3 py-2 text-sm font-medium border rounded-md transition-all duration-200 whitespace-nowrap ${
                     recordsPagination.has_next && !isLoading
-                      ? 'border-[#a259ff] text-[#a259ff] hover:bg-purple-50'
-                      : 'border-gray-300 text-gray-400 cursor-not-allowed'
-                  } ${theme === 'dark' ? 'hover:bg-accent' : ''}`}
+                      ? 'bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] shadow-sm'
+                      : 'bg-[#a259ff] opacity-50 text-white border-[#a259ff] cursor-not-allowed'
+                  }`}
                 >
                   Next
                 </button>
