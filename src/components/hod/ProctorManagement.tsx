@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import DashboardCard from "../common/DashboardCard";
+import { FaUserGraduate, FaUserCheck, FaUserTimes } from "react-icons/fa";
 import { useToast } from "@/components/ui/use-toast";
 import { getProctors, manageStudents, assignProctorsBulk, getSemesters, manageSections, manageProfile, getProctorBootstrap } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
@@ -388,35 +390,38 @@ const ProctorStudents = () => {
   }
 
   return (
-    <div className={`p-4 sm:p-6 min-h-screen text-sm sm:text-base max-w-[390px] sm:max-w-none mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+    <div className={`sm: min-h-screen text-base sm:text-base max-w-[390px] sm:max-w-none mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <Card className={theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'}>
-          <CardHeader className="pb-2">
-            <CardTitle className={`text-sm sm:text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Total Students</CardTitle>
-          </CardHeader>
-          <CardContent className={`text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-            {state.totalCount}
-          </CardContent>
-        </Card>
+          <div>
+            <DashboardCard
+              title="Total Students"
+              value={state.totalCount}
+              description="Enrolled in selected filters"
+              icon={<FaUserGraduate className={theme === 'dark' ? 'text-blue-400 text-3xl' : 'text-blue-500 text-3xl'} />}
+              onClick={() => {}}
+            />
+          </div>
 
-        <Card className={theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'}>
-          <CardHeader className="pb-2">
-            <CardTitle className={`text-sm sm:text-base ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>Assigned</CardTitle>
-          </CardHeader>
-          <CardContent className={`text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
-            {assigned}
-          </CardContent>
-        </Card>
+          <div>
+            <DashboardCard
+              title="Assigned"
+              value={assigned}
+              description="Students with proctors"
+              icon={<FaUserCheck className={theme === 'dark' ? 'text-green-400 text-3xl' : 'text-green-500 text-3xl'} />}
+              onClick={() => {}}
+            />
+          </div>
 
-        <Card className={theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'}>
-          <CardHeader className="pb-2">
-            <CardTitle className={`text-sm sm:text-base ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>Unassigned</CardTitle>
-          </CardHeader>
-          <CardContent className={`text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
-            {unassigned}
-          </CardContent>
-        </Card>
+          <div>
+            <DashboardCard
+              title="Unassigned"
+              value={unassigned}
+              description="Students without proctors"
+              icon={<FaUserTimes className={theme === 'dark' ? 'text-red-400 text-3xl' : 'text-red-500 text-3xl'} />}
+              onClick={() => {}}
+            />
+          </div>
       </div>
 
       {/* Main Management Card */}
@@ -426,7 +431,7 @@ const ProctorStudents = () => {
             <CardTitle className={`text-lg sm:text-xl ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Proctor Assignment - {state.branchName}
             </CardTitle>
-            <p className={`text-xs sm:text-sm mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+            <p className={`text-sm sm:text-sm mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               View and manage student-proctor assignments
             </p>
           </div>
@@ -452,11 +457,11 @@ const ProctorStudents = () => {
           <div className={`px-4 sm:px-6 py-3 border-t ${theme === 'dark' ? 'border-border bg-card/50' : 'border-gray-200 bg-gray-50'}`}>
             <div className="flex flex-col md:flex-row gap-3 items-start md:items-end w-full">
               <div className="w-full md:flex-1">
-                <label className={`block text-xs sm:text-sm mb-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                <label className={`block text-sm sm:text-sm mb-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                   Choose a Proctor
                 </label>
                 <Select onValueChange={(value) => updateState({ selectedProctor: value })} disabled={state.proctors.length === 0}>
-                  <SelectTrigger className={`text-sm w-full ${theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-300 text-gray-900'}`}>
+                  <SelectTrigger className={`text-base w-full ${theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-300 text-gray-900'}`}>
                     <SelectValue placeholder={state.proctors.length === 0 ? "No proctors" : "Choose a proctor"} />
                   </SelectTrigger>
                   <SelectContent className={theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
@@ -475,7 +480,7 @@ const ProctorStudents = () => {
                     updateState({ saving: false });
                   }}
                   disabled={state.saving || state.selectedUSNs.length === 0 || !state.selectedProctor}
-                  className="flex-1 sm:flex-none text-white bg-green-600 hover:bg-green-700 text-sm font-medium shadow-sm transition-all duration-200 flex items-center justify-center gap-2"
+                  className="flex-1 sm:flex-none text-white bg-green-600 hover:bg-green-700 text-base font-medium shadow-sm transition-all duration-200 flex items-center justify-center gap-2"
                 >
                   {state.saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving</> : "Save Changes"}
                 </Button>
@@ -487,7 +492,7 @@ const ProctorStudents = () => {
                   }}
                   disabled={state.cancelling}
                   variant="outline"
-                  className={`flex-1 sm:flex-none text-sm font-medium px-4 py-2 ${theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-100'}`}
+                  className={`flex-1 sm:flex-none text-base font-medium px-4 py-2 ${theme === 'dark' ? 'text-foreground bg-card border-border hover:bg-accent' : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-100'}`}
                 >
                   {state.cancelling ? <><Loader2 className="w-4 h-4 animate-spin" /> Cancelling</> : "Cancel"}
                 </Button>
@@ -549,10 +554,10 @@ const ProctorStudents = () => {
               </div>
 
               {/* Search on the right */}
-              <div className="flex flex-col sm:flex-row gap-2 w-full">
+                <div className="flex flex-col sm:flex-row gap-2 w-full">
                 <Input
                   placeholder="Search students by name or USN..."
-                  className={`w-full sm:w-80 text-sm ${theme === 'dark' ? 'bg-card text-foreground border border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border border-gray-300 placeholder:text-gray-500'}`}
+                  className={`w-full sm:w-80 text-base ${theme === 'dark' ? 'bg-card text-foreground border border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border border-gray-300 placeholder:text-gray-500'}`}
                   value={state.search}
                   onChange={(e) => updateState({ search: e.target.value })}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -562,7 +567,7 @@ const ProctorStudents = () => {
                   onClick={handleSearch}
                   variant="outline"
                   disabled={state.loading}
-                  className={`text-sm font-medium px-4 whitespace-nowrap w-full sm:w-auto ${theme === 'dark' ? 'bg-card text-foreground border border-border hover:bg-accent' : 'bg-white text-gray-900 border border-gray-300 hover:bg-gray-100'}`}
+                  className={`text-base font-medium px-4 whitespace-nowrap w-full sm:w-auto ${theme === 'dark' ? 'bg-card text-foreground border border-border hover:bg-accent' : 'bg-white text-gray-900 border border-gray-300 hover:bg-gray-100'}`}
                 >
                   Search
                 </Button>
@@ -574,7 +579,7 @@ const ProctorStudents = () => {
         <CardContent className="pt-4">
           {/* Table */}
           <div className="overflow-x-auto mb-4">
-            <table className={`w-full text-[11px] sm:text-sm text-left border-collapse table-auto align-middle`}>
+            <table className={`w-full text-[13px] sm:text-sm text-left border-collapse table-auto align-middle`}>
               <thead className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-card border-b border-border' : 'bg-gray-50 border-b border-gray-200'}`}>
                 <tr>
                   {state.editMode && <th className={`py-2 px-2 sm:px-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Select</th>}
@@ -616,11 +621,11 @@ const ProctorStudents = () => {
                       <td className={`py-2 px-2 sm:px-3 text-center hidden sm:table-cell ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.section}</td>
                       <td className="py-2 px-2 sm:px-3">
                         {student.proctor ? (
-                          <span className={`text-xs sm:text-sm font-medium px-2 py-1 rounded ${theme === 'dark' ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700'}`}>
+                          <span className={`text-sm sm:text-sm font-medium px-2 py-1 rounded ${theme === 'dark' ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-700'}`}>
                             {student.proctor}
                           </span>
                         ) : (
-                          <span className={`text-xs sm:text-sm font-medium px-2 py-1 rounded ${theme === 'dark' ? 'bg-red-900/30 text-red-300' : 'bg-red-100 text-red-700'}`}>
+                          <span className={`text-sm sm:text-sm font-medium px-2 py-1 rounded ${theme === 'dark' ? 'bg-red-900/30 text-red-300' : 'bg-red-100 text-red-700'}`}>
                             Unassigned
                           </span>
                         )}
@@ -634,7 +639,7 @@ const ProctorStudents = () => {
 
           {/* Pagination */}
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mt-6">
-            <div className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+            <div className={`text-sm sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
               Showing {Math.min((state.currentPage - 1) * studentsPerPage + 1, state.totalCount)} to {Math.min(state.currentPage * studentsPerPage, state.totalCount)} of {state.totalCount}
             </div>
             <div className="flex gap-2 items-center justify-center sm:justify-end">
@@ -642,18 +647,18 @@ const ProctorStudents = () => {
                 variant="outline"
                 disabled={state.currentPage === 1 || state.loading || state.students.length === 0}
                 onClick={() => updateState({ currentPage: Math.max(state.currentPage - 1, 1) })}
-                className="text-sm font-medium px-3 py-2 text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-sm transition-all duration-200"
+                className="text-base font-medium px-3 py-2 text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-sm transition-all duration-200"
               >
                 Prev
               </Button>
-              <span className="px-3 text-sm font-medium text-[#a259ff]">
+              <span className="px-3 text-base font-medium text-[#a259ff]">
                 {state.currentPage}
               </span>
               <Button
                 variant="outline"
                 disabled={state.currentPage === state.totalPages || state.loading || state.students.length === 0}
                 onClick={() => updateState({ currentPage: Math.min(state.currentPage + 1, state.totalPages) })}
-                className="text-sm font-medium px-3 py-2 text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-sm transition-all duration-200"
+                className="text-base font-medium px-3 py-2 text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-sm transition-all duration-200"
               >
                 Next
               </Button>

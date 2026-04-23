@@ -4,6 +4,7 @@ import autoTable from "jspdf-autotable";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { FileDown, Loader2, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { FaUsers, FaExclamationTriangle, FaChartLine } from 'react-icons/fa';
 import {
   Select,
   SelectTrigger,
@@ -540,34 +541,43 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
 
   return (
     <ErrorBoundary>
-      <div className={`p-4 sm:p-6 min-h-screen text-sm sm:text-base max-w-[390px] sm:max-w-none mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+      <div className={`min-h-screen text-sm sm:text-base w-full max-w-none mx-auto px-4 sm:px-0 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <Card className={theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'}>
-            <CardHeader className="pb-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <Card className={`${theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'} w-full relative` }>
+            <CardHeader className="pb-2 px-3 sm:px-4">
               <CardTitle className={`text-sm sm:text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Total Students</CardTitle>
             </CardHeader>
-            <CardContent className={`text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-              {totalStudents}
+            <CardContent className={`flex items-center justify-between text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+              <span className="flex-1">{totalStudents}</span>
             </CardContent>
+            <div className={`absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-14 h-14 rounded-full ${theme === 'dark' ? 'bg-blue-900/10' : 'bg-blue-50'}`}>
+              <FaUsers className={theme === 'dark' ? 'text-blue-400 w-8 h-8 block' : 'text-blue-600 w-8 h-8 block'} />
+            </div>
           </Card>
 
-          <Card className={theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'}>
-            <CardHeader className="pb-2">
+          <Card className={`${theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'} w-full relative`}>
+            <CardHeader className="pb-2 px-3 sm:px-4">
               <CardTitle className={`text-sm sm:text-base ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>Low Attendance</CardTitle>
             </CardHeader>
-            <CardContent className={`text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
-              {lowAttendanceCount}
+            <CardContent className={`flex items-center justify-between text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
+              <span className="flex-1">{lowAttendanceCount}</span>
             </CardContent>
+            <div className={`absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-14 h-14 rounded-full ${theme === 'dark' ? 'bg-red-900/10' : 'bg-red-50'}`}>
+              <FaExclamationTriangle className={theme === 'dark' ? 'text-red-400 w-8 h-8 block' : 'text-red-600 w-8 h-8 block'} />
+            </div>
           </Card>
 
-          <Card className={theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'}>
-            <CardHeader className="pb-2">
+          <Card className={`${theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'} w-full relative`}>
+            <CardHeader className="pb-2 px-3 sm:px-4">
               <CardTitle className={`text-sm sm:text-base ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>Avg Attendance</CardTitle>
             </CardHeader>
-            <CardContent className={`text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
-              {avgAttendance}%
+            <CardContent className={`flex items-center justify-between text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+              <span className="flex-1">{avgAttendance}%</span>
             </CardContent>
+            <div className={`absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-14 h-14 rounded-full ${theme === 'dark' ? 'bg-blue-900/10' : 'bg-blue-50'}`}>
+              <FaChartLine className={theme === 'dark' ? 'text-blue-400 w-8 h-8 block' : 'text-blue-600 w-8 h-8 block'} />
+            </div>
           </Card>
         </div>
 
