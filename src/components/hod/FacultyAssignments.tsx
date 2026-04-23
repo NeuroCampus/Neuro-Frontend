@@ -1,12 +1,11 @@
-import { useState, useEffect, ReactNode, Component } from "react";
+import { useState, useEffect, useCallback, ReactNode, Component } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
-import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";
 import { useToast } from "../ui/use-toast";
-import { Pencil, Trash2, Loader2, CheckCircle } from "lucide-react";
+import { Pencil, Trash2, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "../ui/dialog";
-import { manageFacultyAssignments, manageSubjects, manageSections, manageProfile, getSemesters, manageFaculties, getFacultyAssignmentsBootstrap, getHODTimetableSemesterData } from "../../utils/hod_api";
+import { manageFacultyAssignments, manageSections, getFacultyAssignmentsBootstrap, getHODTimetableSemesterData } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
 
 // Interfaces
@@ -120,6 +119,15 @@ interface HODSubjectBootstrapResponse {
   faculties: FacultyData[];
 }
 
+interface ManageAssignmentsResponse {
+  success: boolean;
+  data?: {
+    assignment_id?: string;
+    assignments?: AssignmentData[];
+  };
+  message?: string;
+}
+
 // Define error type for catch blocks
 interface ErrorWithMessage {
   message: string;
@@ -181,9 +189,135 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
     filterSections: [] as Section[],
   });
 
-  // Helper to update state
-  const updateState = (newState: Partial<typeof state>) => {
+  // Helper to update state (stable reference for hooks)
+  const updateState = useCallback((newState: Partial<typeof state>) => {
     setState(prev => ({ ...prev, ...newState }));
+  }, []);
+
+  // Small helpers to reduce cognitive complexity in handlers
+  const buildFacultyName = (id: string) => {
+    const f = state.faculties.find(x => x.id === id);
+    return f ? `${f.first_name} ${f.last_name || ''}`.trim() : 'This faculty';
+  };
+
+  const hasDuplicateAssignment = (subjectId: string, sectionId: string, semesterId: string, excludeId?: string) =>
+    state.assignments.some(a => a.subject_id === subjectId && a.section_id === sectionId && a.semester_id === semesterId && a.id !== excludeId);
+
+  const hasDuplicateFaculty = (facultyId: string, subjectId: string, sectionId: string, semesterId: string, excludeId?: string) =>
+    state.assignments.some(a => a.faculty_id === facultyId && a.subject_id === subjectId && a.section_id === sectionId && a.semester_id === semesterId && a.id !== excludeId);
+
+  const buildAssignmentFromForm = (form?: { facultyId?: string; subjectId?: string; sectionId?: string; semesterId?: string }) => {
+    const fId = form?.facultyId ?? state.facultyId;
+    const sId = form?.subjectId ?? state.subjectId;
+    const secId = form?.sectionId ?? state.sectionId;
+    const semId = form?.semesterId ?? state.semesterId;
+
+    return {
+      faculty_id: fId,
+      subject_id: sId,
+      section_id: secId,
+      semester_id: semId,
+      faculty: buildFacultyName(fId),
+      subject: state.subjects.find(s => s.id === sId)?.name || '',
+      section: state.sections.find(s => s.id === secId)?.name || '',
+      semester: state.semesters.find(s => s.id === semId)?.number || 0,
+    } as Partial<Assignment>;
+  };
+
+    type FormState = {
+      facultyId: string;
+      subjectId: string;
+      sectionId: string;
+      semesterId: string;
+      editingId: string | null;
+    };
+
+  // Optimistic helpers (separate create vs update to avoid branching flag)
+  const applyOptimisticCreate = (tempId?: string) => {
+    const newAssignment: Assignment = {
+      id: tempId || `temp-${Date.now()}`,
+      ...(buildAssignmentFromForm() as Assignment),
+    };
+    updateState({ assignments: [...state.assignments, newAssignment] });
+  };
+
+  const applyOptimisticEdit = () => {
+    const updateFields = buildAssignmentFromForm();
+    const updatedAssignments = state.assignments.map(assignment =>
+      assignment.id === state.editingId ? { ...assignment, ...updateFields } : assignment
+    );
+    updateState({ assignments: updatedAssignments });
+  };
+
+  const reconcileCreateResponse = (response: ManageAssignmentsResponse, originalFormStateLocal: FormState) => {
+    const createdId = response.data?.assignment_id;
+    if (createdId) {
+      const replaced = state.assignments.map((a) => (String(a.id).startsWith('temp-') && a.faculty_id === originalFormStateLocal.facultyId && a.subject_id === originalFormStateLocal.subjectId && a.section_id === originalFormStateLocal.sectionId && a.semester_id === originalFormStateLocal.semesterId)
+        ? { ...a, id: createdId }
+        : a
+      );
+      updateState({ assignments: replaced });
+    }
+  };
+
+  const revertOptimisticChanges = (originalAssignmentsLocal: Assignment[], originalFormStateLocal: FormState) => {
+    updateState({
+      assignments: originalAssignmentsLocal,
+      facultyId: originalFormStateLocal.facultyId,
+      subjectId: originalFormStateLocal.subjectId,
+      sectionId: originalFormStateLocal.sectionId,
+      semesterId: originalFormStateLocal.semesterId,
+      editingId: originalFormStateLocal.editingId,
+    });
+  };
+
+  const saveCreateAssignment = async (data: ManageFacultyAssignmentsRequest, originalAssignmentsLocal: Assignment[], originalFormStateLocal: FormState) => {
+    updateState({ isAssigning: true, loading: true });
+    try {
+      const response = await manageFacultyAssignments(data, "POST") as ManageAssignmentsResponse;
+      if (response.success) {
+        reconcileCreateResponse(response, originalFormStateLocal);
+      } else {
+        throw new Error(response.message || "Failed to save assignment");
+      }
+    } catch (err) {
+      revertOptimisticChanges(originalAssignmentsLocal, originalFormStateLocal);
+      if (isErrorWithMessage(err)) {
+        const errorMessage = err.message || "Network error";
+        toast({ variant: "destructive", title: "Error", description: errorMessage });
+        setError(errorMessage);
+      } else {
+        const errorMessage = "Network error";
+        toast({ variant: "destructive", title: "Error", description: errorMessage });
+        setError(errorMessage);
+      }
+    } finally {
+      updateState({ isAssigning: false, loading: false });
+    }
+  };
+
+  const saveUpdateAssignment = async (data: ManageFacultyAssignmentsRequest, originalAssignmentsLocal: Assignment[], originalFormStateLocal: FormState) => {
+    updateState({ isAssigning: true, loading: true });
+    try {
+      const response = await manageFacultyAssignments(data, "POST") as ManageAssignmentsResponse;
+      if (!response.success) {
+        throw new Error(response.message || "Failed to save assignment");
+      }
+      // No further reconciliation needed for update; optimistic edit already applied
+    } catch (err) {
+      revertOptimisticChanges(originalAssignmentsLocal, originalFormStateLocal);
+      if (isErrorWithMessage(err)) {
+        const errorMessage = err.message || "Network error";
+        toast({ variant: "destructive", title: "Error", description: errorMessage });
+        setError(errorMessage);
+      } else {
+        const errorMessage = "Network error";
+        toast({ variant: "destructive", title: "Error", description: errorMessage });
+        setError(errorMessage);
+      }
+    } finally {
+      updateState({ isAssigning: false, loading: false });
+    }
   };
 
   // Fetch initial data
@@ -223,7 +357,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
       }
     };
     fetchInitialData();
-  }, [toast, setError]);
+  }, [toast, setError, updateState]);
 
   // Fetch subjects and sections when semester changes
   useEffect(() => {
@@ -246,7 +380,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
       }
     };
     fetchSemesterData();
-  }, [state.semesterId, state.branchId]);
+  }, [state.semesterId, state.branchId, updateState]);
 
   // Fetch sections for filter when filter semester changes
   useEffect(() => {
@@ -266,7 +400,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
       }
     };
     fetchFilterSections();
-  }, [state.filterSemesterId, state.branchId]);
+  }, [state.filterSemesterId, state.branchId, updateState]);
 
   // Fetch assignments when filters change
   useEffect(() => {
@@ -297,7 +431,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
     };
 
     fetchAssignments();
-  }, [state.branchId, state.filterSemesterId, state.filterSectionId]);
+  }, [state.branchId, state.filterSemesterId, state.filterSectionId, updateState]);
 
   const resetForm = () => {
     updateState({
@@ -318,19 +452,19 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
       });
       return false;
     }
-    if (!state.faculties.find(f => f.id === state.facultyId)) {
+    if (!state.faculties.some(f => f.id === state.facultyId)) {
       toast({ title: "Error", description: "Invalid faculty selected", variant: "destructive" });
       return false;
     }
-    if (!state.subjects.find(s => s.id === state.subjectId)) {
+    if (!state.subjects.some(s => s.id === state.subjectId)) {
       toast({ title: "Error", description: "Invalid subject selected", variant: "destructive" });
       return false;
     }
-    if (!state.sections.find(s => s.id === state.sectionId)) {
+    if (!state.sections.some(s => s.id === state.sectionId)) {
       toast({ title: "Error", description: "Invalid section selected", variant: "destructive" });
       return false;
     }
-    if (!state.semesters.find(s => s.id === state.semesterId)) {
+    if (!state.semesters.some(s => s.id === state.semesterId)) {
       toast({ title: "Error", description: "Invalid semester selected", variant: "destructive" });
       return false;
     }
@@ -340,45 +474,26 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
   const handleAssignFaculty = async () => {
     if (!validateForm() || !state.branchId) return;
 
-    // 🚨 Case 1: Prevent multiple faculties for the SAME subject + section + semester
-    const duplicateAssignment = state.assignments.find(
-      (a) =>
-        a.subject_id === state.subjectId &&
-        a.section_id === state.sectionId &&
-        a.semester_id === state.semesterId &&
-        a.id !== state.editingId
-    );
-
-    if (duplicateAssignment) {
+    // 🚨 Case 1: Prevent multiple faculties or duplicate faculty assignment for same subject/section/semester
+    if (hasDuplicateAssignment(state.subjectId, state.sectionId, state.semesterId, state.editingId)) {
+      const dup = state.assignments.find(a => a.subject_id === state.subjectId && a.section_id === state.sectionId && a.semester_id === state.semesterId && a.id !== state.editingId);
       toast({
         variant: "destructive",
         title: "Duplicate Assignment",
-        description: `Subject "${duplicateAssignment.subject}" is already assigned to Section ${duplicateAssignment.section}, Semester ${duplicateAssignment.semester}. Only one faculty can be assigned.`,
+        description: `Subject "${dup?.subject || ''}" is already assigned to Section ${dup?.section || ''}, Semester ${dup?.semester || ''}. Only one faculty can be assigned.`,
       });
-      return; // Stop here
+      return;
     }
 
-    // 🚨 Case 2: Prevent same faculty being assigned again to the SAME subject + section + semester
-    const duplicateFaculty = state.assignments.find(
-      (a) =>
-        a.faculty_id === state.facultyId &&
-        a.subject_id === state.subjectId &&
-        a.section_id === state.sectionId &&
-        a.semester_id === state.semesterId &&
-        a.id !== state.editingId
-    );
-
-    if (duplicateFaculty) {
-      const facultyName =
-        state.faculties.find((f) => f.id === state.facultyId)?.first_name + " " +
-        (state.faculties.find((f) => f.id === state.facultyId)?.last_name || "") || "This faculty";
-
+    if (hasDuplicateFaculty(state.facultyId, state.subjectId, state.sectionId, state.semesterId, state.editingId)) {
+      const dupF = state.assignments.find(a => a.faculty_id === state.facultyId && a.subject_id === state.subjectId && a.section_id === state.sectionId && a.semester_id === state.semesterId && a.id !== state.editingId);
+      const facultyName = buildFacultyName(state.facultyId);
       toast({
         variant: "destructive",
         title: "Duplicate Faculty Assignment",
-        description: `${facultyName} is already assigned to ${duplicateFaculty.subject} - Section ${duplicateFaculty.section}, Semester ${duplicateFaculty.semester}.`,
+        description: `${facultyName} is already assigned to ${dupF?.subject || ''} - Section ${dupF?.section || ''}, Semester ${dupF?.semester || ''}.`,
       });
-      return; // Stop here
+      return;
     }
 
     // ✅ Proceed if no duplicates
@@ -393,110 +508,27 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
     };
 
     // Optimistic update
-    if (isEditing) {
-      // Update existing assignment optimistically
-      const updatedAssignments = state.assignments.map(assignment =>
-        assignment.id === state.editingId
-          ? {
-            ...assignment,
-            faculty_id: state.facultyId,
-            subject_id: state.subjectId,
-            section_id: state.sectionId,
-            semester_id: state.semesterId,
-            faculty: `${state.faculties.find(f => f.id === state.facultyId)?.first_name} ${state.faculties.find(f => f.id === state.facultyId)?.last_name || ''}`.trim(),
-            subject: state.subjects.find(s => s.id === state.subjectId)?.name || '',
-            section: state.sections.find(s => s.id === state.sectionId)?.name || '',
-            semester: state.semesters.find(s => s.id === state.semesterId)?.number || 0,
-          }
-          : assignment
-      );
-      updateState({ assignments: updatedAssignments });
-    } else {
-      // Add new assignment optimistically
-      const newAssignment: Assignment = {
-        id: `temp-${Date.now()}`, // Temporary ID
-        faculty_id: state.facultyId,
-        subject_id: state.subjectId,
-        section_id: state.sectionId,
-        semester_id: state.semesterId,
-        faculty: `${state.faculties.find(f => f.id === state.facultyId)?.first_name} ${state.faculties.find(f => f.id === state.facultyId)?.last_name || ''}`.trim(),
-        subject: state.subjects.find(s => s.id === state.subjectId)?.name || '',
-        section: state.sections.find(s => s.id === state.sectionId)?.name || '',
-        semester: state.semesters.find(s => s.id === state.semesterId)?.number || 0,
-      };
-      updateState({ assignments: [...state.assignments, newAssignment] });
-    }
+    const tempId = `temp-${Date.now()}`;
+    if (isEditing) applyOptimisticEdit(); else applyOptimisticCreate(tempId);
 
-    // Clear form optimistically
+    // Clear form optimistically and show success toast
     resetForm();
+    toast({ title: isEditing ? "Updated" : "Success", description: isEditing ? "Assignment updated successfully" : "Faculty assigned successfully", className: "bg-green-100 text-green-800" });
 
-    // Show success toast optimistically
-    toast({
-      title: isEditing ? "Updated" : "Success",
-      description: isEditing
-        ? "Assignment updated successfully"
-        : "Faculty assigned successfully",
-      className: "bg-green-100 text-green-800",
-    });
+    const data: ManageFacultyAssignmentsRequest = {
+      action: isEditing ? "update" : "create",
+      assignment_id: state.editingId,
+      faculty_id: originalFormState.facultyId,
+      subject_id: originalFormState.subjectId,
+      semester_id: originalFormState.semesterId,
+      section_id: originalFormState.sectionId,
+      branch_id: state.branchId,
+    };
 
-    updateState({ isAssigning: true });
-
-    try {
-      const data: ManageFacultyAssignmentsRequest = {
-        action: isEditing ? "update" : "create",
-        assignment_id: state.editingId,
-        faculty_id: originalFormState.facultyId,
-        subject_id: originalFormState.subjectId,
-        semester_id: originalFormState.semesterId,
-        section_id: originalFormState.sectionId,
-        branch_id: state.branchId,
-      };
-
-      const response = await manageFacultyAssignments(data, "POST");
-
-      if (response.success) {
-        // Use POST response to reconcile optimistic UI without refetching
-        const createdId = response.data?.assignment_id as unknown as string;
-        if (!isEditing && createdId) {
-          // Replace temporary ID with real ID
-          const replaced = state.assignments.map((a) => (a.id && String(a.id).startsWith('temp-') && a.faculty_id === originalFormState.facultyId && a.subject_id === originalFormState.subjectId && a.section_id === originalFormState.sectionId && a.semester_id === originalFormState.semesterId)
-            ? { ...a, id: createdId }
-            : a
-          );
-          updateState({ assignments: replaced });
-        }
-        // For updates we already applied optimistic update; no further action required
-      } else {
-        throw new Error(response.message || "Failed to save assignment");
-      }
-    } catch (err) {
-      // Revert optimistic changes
-      updateState({
-        assignments: originalAssignments,
-        facultyId: originalFormState.facultyId,
-        subjectId: originalFormState.subjectId,
-        sectionId: originalFormState.sectionId,
-        semesterId: originalFormState.semesterId,
-        editingId: originalFormState.editingId,
-      });
-
-      if (isErrorWithMessage(err)) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: err.message || "Network error",
-        });
-        setError(err.message || "Network error");
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Network error",
-        });
-        setError("Network error");
-      }
-    } finally {
-      updateState({ isAssigning: false });
+    if (isEditing) {
+      await saveUpdateAssignment(data, originalAssignments, originalFormState as FormState);
+    } else {
+      await saveCreateAssignment(data, originalAssignments, originalFormState as FormState);
     }
   };
 
@@ -515,7 +547,6 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
 
     // Store original state for potential reversion
     const originalAssignments = [...state.assignments];
-    const assignmentToDelete = state.assignments.find(a => a.id === state.deleteId);
 
     // Optimistic update: remove assignment from list
     const updatedAssignments = state.assignments.filter(a => a.id !== state.deleteId);
@@ -575,8 +606,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
 
   return (
     <ErrorBoundary>
-      <div className={`p-6 space-y-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-        <h1 className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Faculty Assignments</h1>
+      <div className={` space-y-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
         <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
           <CardHeader>
             <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>{state.editingId ? "Edit Faculty Assignment" : "Add Faculty Assignment"}</CardTitle>
@@ -584,7 +614,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className={`block mb-1 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Faculty</label>
+                <label className={`block mb-1 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Faculty
                 <Select
                   value={state.facultyId}
                   onValueChange={(value) => updateState({ facultyId: value })}
@@ -597,7 +627,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                     <SelectValue placeholder={state.faculties.length === 0 ? "No faculties available" : "Select Faculty"} />
                   </SelectTrigger>
                   <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
-                    <div className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="px-3 py-2">
                       <input
                         type="text"
                         autoFocus
@@ -605,6 +635,8 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                         value={state.facultySearch}
                         onChange={(e) => updateState({ facultySearch: e.target.value })}
                         onKeyDown={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
                         className={`w-full px-2 py-1 text-sm rounded border placeholder-gray-400 ${theme === 'dark' ? 'bg-card border-border text-foreground placeholder:text-muted-foreground' : 'bg-white border-gray-300 text-gray-900'}`}
                       />
                     </div>
@@ -624,9 +656,10 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                     </div>
                   </SelectContent>
                 </Select>
+                </label>
               </div>
               <div>
-                <label className={`block mb-1 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Semester</label>
+                <label className={`block mb-1 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Semester
                 <Select
                   value={state.semesterId}
                   onValueChange={(value) => updateState({ semesterId: value, subjectId: "", sectionId: "" })}
@@ -643,9 +676,10 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                     ))}
                   </SelectContent>
                 </Select>
+                </label>
               </div>
               <div>
-                <label className={`block mb-1 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Course</label>
+                <label className={`block mb-1 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Course
                 <Select
                   value={state.subjectId}
                   onValueChange={(value) => updateState({ subjectId: value })}
@@ -663,9 +697,10 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                       ))}
                   </SelectContent>
                 </Select>
+                </label>
               </div>
               <div>
-                <label className={`block mb-1 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Section</label>
+                <label className={`block mb-1 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Section
                 <Select
                   value={state.sectionId}
                   onValueChange={(value) => updateState({ sectionId: value })}
@@ -683,6 +718,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                       ))}
                   </SelectContent>
                 </Select>
+                </label>
               </div>
             </div>
             <div className="flex justify-end gap-2">
@@ -702,14 +738,18 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                 disabled={state.loading || state.isAssigning}
                 className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
               >
-                {state.isAssigning ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    {state.editingId ? "Updating..." : "Assigning..."}
-                  </>
-                ) : (
-                  state.editingId ? "Update Assignment" : "+ Assign Faculty"
-                )}
+                {(() => {
+                  const loading = state.isAssigning;
+                  let label = "+ Assign Faculty";
+                  if (state.editingId) label = "Update Assignment";
+                  if (loading) label = state.editingId ? "Updating..." : "Assigning...";
+                  return loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      {label}
+                    </>
+                  ) : label;
+                })()}
               </Button>
             </div>
           </CardContent>
@@ -762,23 +802,19 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                   <Button
                     variant="ghost"
                     onClick={() => updateState({ filterSemesterId: "", filterSectionId: "" })}
-                    className={theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-500 hover:text-gray-900'}
+                    className="bg-[#a259ff] hover:bg-[#9147e0] text-white"
                   >
                     Clear
                   </Button>
                 )}
               </div>
             </div>
-            {state.loading ? (
-              <div className={`text-center py-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Loading...</div>
-            ) : (!state.filterSemesterId || !state.filterSectionId) ? (
-              <div className={`text-center py-8 border-2 border-dashed rounded-lg ${theme === 'dark' ? 'border-border text-muted-foreground' : 'border-gray-200 text-gray-500'}`}>
-                Please select a semester and section to view assignments.
-              </div>
-            ) : filteredAssignments.length === 0 ? (
-              <div className={`text-center py-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No assignments found for the selected criteria.</div>
-            ) : (
-              <>
+            {(() => {
+              if (state.loading) return <div className={`text-center py-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Loading...</div>;
+              if (!state.filterSemesterId || !state.filterSectionId) return <div className={`text-center py-8 border-2 border-dashed rounded-lg ${theme === 'dark' ? 'border-border text-muted-foreground' : 'border-gray-200 text-gray-500'}`}>Please select a semester and section to view assignments.</div>;
+              if (filteredAssignments.length === 0) return <div className={`text-center py-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No assignments found for the selected criteria.</div>;
+
+              return (
                 <div className={`rounded-md overflow-x-auto ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}>
                   <table className="w-full text-sm scroll-smooth">
                     <thead className={theme === 'dark' ? 'bg-card sticky top-0 z-10 border-border' : 'bg-gray-100 sticky top-0 z-10 border-gray-300'}>
@@ -835,13 +871,13 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                     </tbody>
                   </table>
                 </div>
-              </>
-            )}
+              );
+            })()}
           </CardContent>
         </Card>
 
         <Dialog open={state.openDeleteModal} onOpenChange={(open) => updateState({ openDeleteModal: open })}>
-          <DialogContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+          <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} p-4 md:p-6 w-[92%] max-w-sm md:w-auto rounded-2xl md:rounded` }>
             <DialogHeader>
               <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Delete Assignment?</DialogTitle>
               <DialogDescription className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Are you sure you want to delete this assignment?</DialogDescription>
