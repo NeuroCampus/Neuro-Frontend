@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";
 import { manageSubjects, getSemesters, manageProfile, getHODSubjectBootstrap } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
 
@@ -330,23 +331,7 @@ const SubjectManagement = () => {
   };
 
   return (
-    <div className={`p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Manage Courses</h2>
-        <Button
-          onClick={() => {
-            updateState({
-              showModal: "add",
-              newSubject: { code: "", name: "", semester_id: "", subject_type: "regular", credits: 3 },
-              currentSubject: null,
-            });
-          }}
-          className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
-          disabled={state.loading || !state.branchId}
-        >
-          + Add Course
-        </Button>
-      </div>
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
 
       {state.error && <div className={`mb-4 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{state.error}</div>}
       {state.success && <div className={`mb-4 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{state.success}</div>}
@@ -354,7 +339,22 @@ const SubjectManagement = () => {
 
       <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
-          <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Manage Courses</CardTitle>
+          <div className="flex justify-between items-center w-full">
+            <CardTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Manage Courses</CardTitle>
+            <Button
+              onClick={() => {
+                updateState({
+                  showModal: "add",
+                  newSubject: { code: "", name: "", semester_id: "", subject_type: "regular", credits: 3 },
+                  currentSubject: null,
+                });
+              }}
+              className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+              disabled={state.loading || !state.branchId}
+            >
+              + Add Course
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {/* Desktop/Table for md+ */}
@@ -453,7 +453,7 @@ const SubjectManagement = () => {
       {/* Delete Confirmation Modal */}
       {state.deleteConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" onClick={() => confirmDelete(false)}>
-          <div className={`p-6 rounded shadow-lg ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`} onClick={(e) => e.stopPropagation()}>
+          <div className={`p-4 md:p-6 w-[92%] max-w-sm md:w-auto rounded-2xl md:rounded shadow-lg ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`} onClick={(e) => e.stopPropagation()}>
             <h3 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Are you sure you want to delete this course?
             </h3>
@@ -530,44 +530,41 @@ const SubjectManagement = () => {
             {/* Semester */}
             <div className="mb-4">
               <label className={`block mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Semester</label>
-              <select
-                className={`${theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-300 text-gray-900'} w-full px-4 py-2 rounded`}
+              <Select
                 value={state.newSubject.semester_id}
-                onChange={(e) =>
-                  updateState({
-                    newSubject: { ...state.newSubject, semester_id: e.target.value },
-                    modalError: null,
-                  })
-                }
+                onValueChange={(val: string) => updateState({ newSubject: { ...state.newSubject, semester_id: val }, modalError: null })}
                 disabled={state.loading}
               >
-                <option value="">Select Semester</option>
-                {state.semesters.map((semester) => (
-                  <option key={semester.id} value={semester.id}>
-                    Semester {semester.number}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
+                  <SelectValue placeholder="Select Semester" />
+                </SelectTrigger>
+                <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+                  {state.semesters.map((semester) => (
+                    <SelectItem key={semester.id} value={semester.id}>
+                      Semester {semester.number}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Course Type */}
             <div className="mb-4">
               <label className={`block mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Course Type</label>
-              <select
-                className={`${theme === 'dark' ? 'bg-card border border-border text-foreground' : 'bg-white border border-gray-300 text-gray-900'} w-full px-4 py-2 rounded`}
+              <Select
                 value={state.newSubject.subject_type}
-                onChange={(e) =>
-                  updateState({
-                    newSubject: { ...state.newSubject, subject_type: e.target.value },
-                    modalError: null,
-                  })
-                }
+                onValueChange={(val: string) => updateState({ newSubject: { ...state.newSubject, subject_type: val }, modalError: null })}
                 disabled={state.loading}
               >
-                <option value="regular">Regular</option>
-                <option value="elective">Elective Subjects</option>
-                <option value="open_elective">Open Elective Subjects</option>
-              </select>
+                <SelectTrigger className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
+                  <SelectValue placeholder="Select Type" />
+                </SelectTrigger>
+                <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+                  <SelectItem value="regular">Regular</SelectItem>
+                  <SelectItem value="elective">Elective Subjects</SelectItem>
+                  <SelectItem value="open_elective">Open Elective Subjects</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Course Credits */}

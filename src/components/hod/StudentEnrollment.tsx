@@ -260,10 +260,10 @@ const StudentEnrollment = () => {
   };
 
   return (
-    <div className="w-full px-4 sm:px-6 md:px-8 lg:px-4 py-6 sm:py-5 md:py-4 lg:py-6 mx-auto lg:max-w-7xl">
+    <div className="w-full mx-auto lg:max-w-7xl">
       <Card className="shadow-lg">
         <CardHeader className="pb-4 md:pb-2 lg:pb-4">
-          <CardTitle className="text-lg sm:text-xl md:text-lg lg:text-2xl font-bold">Student Enrollment (Elective / Open Elective)</CardTitle>
+          <CardTitle className="text-2xl font-semibold leading-none tracking-tight text-gray-900">Student Enrollment (Elective / Open Elective)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 sm:space-y-5 md:space-y-4 lg:space-y-6 p-4 sm:p-5 md:p-4 lg:p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-3 md:gap-2 lg:gap-4 mb-6">
@@ -339,7 +339,7 @@ const StudentEnrollment = () => {
               <Button 
                 onClick={() => loadStudents(1)} 
                 disabled={!selectedSubjectId || isLoading || !branchId || subjects.length === 0}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  className="w-full bg-[#a259ff] hover:bg-[#9147e0] text-white"
               >
                 {isLoading ? "Loading..." : "Load Students"}
               </Button>
@@ -366,7 +366,7 @@ const StudentEnrollment = () => {
               <Button
                 onClick={() => loadStudents(1, searchTerm)}
                 disabled={!selectedSubjectId || isLoading || !branchId}
-                className="px-3 sm:px-3 md:px-2 lg:px-4 text-xs sm:text-sm bg-purple-600 hover:bg-purple-700 text-white"
+                  className="px-3 sm:px-3 md:px-2 lg:px-4 text-xs sm:text-sm bg-[#a259ff] hover:bg-[#9147e0] text-white"
               >
                 {isLoading ? "Searching..." : "Search"}
               </Button>
@@ -374,7 +374,7 @@ const StudentEnrollment = () => {
             <Button 
               onClick={save} 
               disabled={saving || students.length === 0}
-              className="px-4 sm:px-4 md:px-3 lg:px-6 text-xs sm:text-sm bg-purple-600 hover:bg-purple-700 text-white"
+                className="px-4 sm:px-4 md:px-3 lg:px-6 text-xs sm:text-sm bg-[#a259ff] hover:bg-[#9147e0] text-white"
             >
               {saving ? "Saving..." : "Save Enrollment"}
             </Button>
