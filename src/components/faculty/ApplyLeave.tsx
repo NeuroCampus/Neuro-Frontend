@@ -227,15 +227,13 @@ const LeaveRequests = () => {
   };
 
   return (
-    <div className={`p-2 sm:p-4 lg:p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <h2 className={`text-lg sm:text-2xl lg:text-3xl font-bold mb-3 sm:mb-4 lg:mb-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Apply Leave</h2>
-
+    <div className={`${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'} space-y-4 sm:space-y-6 min-h-screen`}>  
       {/* Main Container with Responsive Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
         {/* Leave Application Form - Left Side */}
         <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'} rounded-lg`}>
-          <CardHeader className="flex items-start justify-start p-2 sm:p-4 lg:p-6 gap-1 sm:gap-2">
-            <CardTitle className={`text-sm sm:text-base lg:text-lg font-semibold text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Application Form</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between p-2 sm:p-4 lg:p-6 gap-1 sm:gap-2 min-h-fit">
+            <CardTitle className={`text-2xl font-semibold leading-none tracking-tight text-gray-900 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Application Form</CardTitle>
           </CardHeader>
           <CardContent className="p-2 sm:p-4 lg:p-6 space-y-3 sm:space-y-4 lg:space-y-6">
             {/* Error Message */}
@@ -247,7 +245,7 @@ const LeaveRequests = () => {
             
             {/* Title */}
             <div className="space-y-0.5 sm:space-y-1 lg:space-y-2">
-              <Label htmlFor="title" className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Title <span className="text-red-500">*</span></Label>
+              <Label htmlFor="title" className={`text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Title <span className="text-red-500">*</span></Label>
               <input
                 id="title"
                 type="text"
@@ -261,7 +259,7 @@ const LeaveRequests = () => {
             
             {/* Branch Selection */}
             <div className="space-y-0.5 sm:space-y-1 lg:space-y-2">
-              <Label className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Branch</Label>
+              <Label className={`text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Branch</Label>
               <Select value={selectedBranch} onValueChange={setSelectedBranch}>
                 <SelectTrigger 
                   className={`text-xs sm:text-sm h-8 sm:h-9 lg:h-10 ${theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}`}
@@ -284,7 +282,7 @@ const LeaveRequests = () => {
 
             {/* Date Range */}
             <div className="space-y-0.5 sm:space-y-1 lg:space-y-2">
-              <Label className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Date Range</Label>
+              <Label className={`text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Date Range</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -327,7 +325,7 @@ const LeaveRequests = () => {
 
             {/* Reason */}
             <div className="space-y-0.5 sm:space-y-1 lg:space-y-2">
-              <Label htmlFor="reason" className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Reason</Label>
+              <Label htmlFor="reason" className={`text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Reason</Label>
               <Textarea
                 id="reason"
                 value={reason}
@@ -355,7 +353,7 @@ const LeaveRequests = () => {
           <CardHeader className="flex flex-row items-center justify-between p-2 sm:p-4 lg:p-6 gap-1 sm:gap-2 min-h-fit">
             {/* Title */}
             <CardTitle
-              className={`text-sm sm:text-base lg:text-lg font-semibold flex-1 min-w-0 truncate ${
+              className={`text-2xl font-semibold leading-none tracking-tight text-gray-900 ${
                 theme === 'dark' ? 'text-foreground' : 'text-gray-900'
               }`}
             >

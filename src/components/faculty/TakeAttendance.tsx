@@ -642,12 +642,12 @@ const TakeAttendance = () => {
                                     <button
                                       onClick={() => handleAttendance(s.id, true)}
                                       className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all duration-200 ${attendance[s.id] === true
-                                          ? (theme === 'dark'
-                                            ? "bg-green-500/20 text-green-400 border-2 border-green-500/50"
-                                            : "bg-green-100 text-green-600 border-2 border-green-200")
-                                          : (theme === 'dark'
-                                            ? "bg-muted text-muted-foreground hover:bg-green-500/10 hover:text-green-400 border border-border"
-                                            : "bg-gray-100 text-gray-500 hover:bg-green-50 hover:text-green-600 border border-gray-200")
+                                        ? (theme === 'dark'
+                                          ? "bg-green-500/20 text-green-400 border-2 border-green-500/50"
+                                          : "bg-green-100 text-green-600 border-2 border-green-200")
+                                        : (theme === 'dark'
+                                          ? "bg-muted text-muted-foreground hover:bg-green-500/10 hover:text-green-400 border border-border"
+                                          : "bg-gray-100 text-gray-500 hover:bg-green-50 hover:text-green-600 border border-gray-200")
                                         }`}
                                       title="Mark Present"
                                     >
@@ -656,12 +656,12 @@ const TakeAttendance = () => {
                                     <button
                                       onClick={() => handleAttendance(s.id, false)}
                                       className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all duration-200 ${attendance[s.id] === false
-                                          ? (theme === 'dark'
-                                            ? "bg-red-500/20 text-red-400 border-2 border-red-500/50"
-                                            : "bg-red-100 text-red-600 border-2 border-red-200")
-                                          : (theme === 'dark'
-                                            ? "bg-muted text-muted-foreground hover:bg-red-500/10 hover:text-red-400 border border-border"
-                                            : "bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-600 border border-gray-200")
+                                        ? (theme === 'dark'
+                                          ? "bg-red-500/20 text-red-400 border-2 border-red-500/50"
+                                          : "bg-red-100 text-red-600 border-2 border-red-200")
+                                        : (theme === 'dark'
+                                          ? "bg-muted text-muted-foreground hover:bg-red-500/10 hover:text-red-400 border border-border"
+                                          : "bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-600 border border-gray-200")
                                         }`}
                                       title="Mark Absent"
                                     >
@@ -763,8 +763,8 @@ const TakeAttendance = () => {
                           <label
                             htmlFor="photo-upload"
                             className={`w-full flex-1 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer text-center transition ${theme === 'dark'
-                                ? 'border-border text-foreground hover:bg-accent'
-                                : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                              ? 'border-border text-foreground hover:bg-accent'
+                              : 'border-gray-300 text-gray-700 hover:bg-gray-100'
                               }`}
                           >
                             {aiPhoto ? aiPhoto.name : 'Upload Photo'}

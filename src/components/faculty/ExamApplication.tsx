@@ -421,7 +421,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
       <CardContent className="space-y-4">
         <div className="flex gap-4">
           <div className="flex-1">
-            <label className="block text-sm font-medium mb-2">Exam Period</label>
+            <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Exam Period</label>
             <Select value={examPeriod} onValueChange={setExamPeriod}>
               <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
                 <SelectValue placeholder="Select exam period" />
@@ -535,7 +535,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
           <DialogContent className="max-w-[95vw] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-[70vw] max-h-[90vh] sm:max-h-[85vh] overflow-y-auto custom-scrollbar">
             <div className="flex justify-between items-center mt-5">
               <DialogHeader>
-                <DialogTitle>Exam Application</DialogTitle>
+                <DialogTitle className="text-xl font-semibold leading-none tracking-tight text-gray-900">Exam Application</DialogTitle>
               </DialogHeader>
               <div className="flex justify-end gap-2">
                 <Button onClick={async () => { await exportPdf(); }} className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white">

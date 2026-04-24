@@ -325,196 +325,226 @@ const COAttainment = () => {
   };
 
   return (
-    <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
-      <CardHeader className="p-4 sm:p-6">
-        <CardTitle className="text-2xl font-semibold leading-none tracking-tight text-gray-900">CO Attainment Calculation</CardTitle>
-      </CardHeader>
-      <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          <Select onValueChange={value => handleSelectChange('subject_id', Number(value))}>
-            <SelectTrigger className={`text-sm sm:text-base ${theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}`}>
-              <SelectValue placeholder="Select Subject" />
-            </SelectTrigger>
-            <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
-              {dropdownData.subject.map((item) => (
-                <SelectItem key={item.id} value={item.id.toString()}>
-                  {item.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        {errorMessage && (
-          <div className={`p-3 sm:p-4 rounded-md text-xs sm:text-sm ${theme === 'dark' ? 'bg-destructive/20 text-destructive' : 'bg-red-100 text-red-700'}`}>
-            {errorMessage}
-          </div>
-        )}
-        
-        {areAllDropdownsSelected() && (
-          <div className="space-y-4 sm:space-y-6">
-            {/* PDF Export Button - Added above Configuration div */}
-            <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
-              <Button 
-                onClick={handleExportCSV} 
-                variant="outline"
-                className="w-full sm:w-auto border-[#a259ff] text-[#a259ff] hover:bg-[#a259ff] hover:text-white text-xs sm:text-sm py-2 sm:py-2.5"
-              >
-                Download CSV
-              </Button>
-              <Button 
-                onClick={handleExportPDF} 
-                className="w-full sm:w-auto bg-[#a259ff] text-white hover:bg-[#8a4dde] text-xs sm:text-sm py-2 sm:py-2.5"
-              >
-                Download PDF
-              </Button>
+    <div className={`w-full max-w-full min-h-screen md:min-h-screen h-auto md:h-auto overflow-visible ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <Card className={`${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'} w-full max-w-full shadow-lg border-none`}>
+        <CardHeader className="p-6 border-b border-border/50">
+          <CardTitle className="text-2xl font-semibold leading-none tracking-tight text-gray-900">CO Attainment Calculation</CardTitle>
+          <p className="text-gray-600 text-sm">
+            Calculate and analyze Course Outcome attainment based on assessment marks
+          </p>
+        </CardHeader>
+        <CardContent className="p-6 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-muted/30 p-4 rounded-xl border border-border/50">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Subject</label>
+              <Select onValueChange={value => handleSelectChange('subject_id', Number(value))}>
+                <SelectTrigger className={`h-11 ${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-200'}`}>
+                  <SelectValue placeholder="Select Subject" />
+                </SelectTrigger>
+                <SelectContent className={theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-200'}>
+                  {dropdownData.subject.map((item) => (
+                    <SelectItem key={item.id} value={item.id.toString()}>
+                      {item.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            
-            {/* Target Threshold Configuration */}
-            <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-300'}>
-              <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="text-base sm:text-lg">Configuration</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                  <label className={`text-sm sm:text-base ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                    Target Threshold:
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={targetThreshold}
-                      onChange={(e) => handleTargetThresholdChange(e.target.value)}
-                      className="w-20 sm:w-24 text-sm"
-                    />
-                    <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>%</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
 
-            
-            {/* CO Attainment Results */}
-            <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-300'}>
-              <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="text-base sm:text-lg">CO Attainment Results</CardTitle>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-2 space-y-1">
-                  <div>Two methods are used for CO attainment calculation:</div>
-                  <div><strong>Method 1:</strong> Average marks per CO</div>
-                  <div><strong>Method 2:</strong> % of students at target per CO</div>
-                </p>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6">
-                <div className="overflow-x-auto -mx-4 sm:-mx-6">
-                  <Table className="text-xs sm:text-sm">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-xs">CO</TableHead>
-                        <TableHead className="text-xs">Max</TableHead>
-                        <TableHead className="text-xs">Target</TableHead>
-                        <TableHead className="text-xs">Avg</TableHead>
-                        <TableHead className="text-xs">% Above</TableHead>
-                        <TableHead className="text-xs">M1 %</TableHead>
-                        <TableHead className="text-xs">M2 %</TableHead>
-                        <TableHead className="text-xs">Indirect</TableHead>
-                        <TableHead className="text-xs">Final</TableHead>
-                        <TableHead className="text-xs">Level</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {Object.values(coAttainment).map((co) => (
-                        <TableRow key={co.co} className="text-xs sm:text-sm">
-                          <TableCell className="text-xs font-medium">{co.co}</TableCell>
-                          <TableCell className="text-xs">{co.maxMarks}</TableCell>
-                          <TableCell className="text-xs">{co.targetMarks.toFixed(1)}</TableCell>
-                          <TableCell className="text-xs">{co.avgMarks.toFixed(2)}</TableCell>
-                          <TableCell className="text-xs">{co.totalStudents > 0 ? ((co.studentsAboveTarget / co.totalStudents) * 100).toFixed(0) : 0}%</TableCell>
-                          <TableCell>
-                            <div className="text-xs font-medium">L{co.attainmentLevel}</div>
-                            <div className="text-xs text-muted-foreground">{co.percentage.toFixed(0)}%</div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-xs font-medium">L{co.method2Level}</div>
-                            <div className="text-xs text-muted-foreground">{co.method2Percentage.toFixed(0)}%</div>
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              min="0"
-                              max="3"
-                              step="0.1"
-                              value={indirectAttainment[co.co] || 0}
-                              onChange={(e) => handleIndirectAttainmentChange(co.co, e.target.value)}
-                              className="w-16 sm:w-20 text-xs"
-                            />
-                          </TableCell>
-                          <TableCell className="text-xs">
-                            {finalAttainment[co.co] ? finalAttainment[co.co].final.toFixed(2) : "N/A"}
-                          </TableCell>
-                          <TableCell>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
-                              finalAttainment[co.co]?.level === 3 
-                                ? 'bg-green-100 text-green-800' 
-                                : finalAttainment[co.co]?.level === 2 
-                                  ? 'bg-yellow-100 text-yellow-800' 
-                                  : 'bg-red-100 text-red-800'
-                            }`}>
-                              Level {finalAttainment[co.co]?.level ?? "N/A"}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-                
-                <div className="mt-4 flex justify-center sm:justify-end">
-                  <Button 
-                    onClick={handleCalculateFinalAttainment} 
-                    className="w-full sm:w-auto bg-[#a259ff] text-white hover:bg-[#8a4dde] text-xs sm:text-sm py-2 sm:py-2.5"
-                  >
-                    Recalculate Final Attainment
-                  </Button>
-                </div>
-                <div className="mt-4 p-3 sm:p-4 bg-muted rounded-lg">
-                  <h4 className="font-medium text-xs sm:text-sm mb-2">Calculation Methods</h4>
-                  <ul className="text-xs sm:text-sm space-y-1">
-                    <li>• <strong>M1:</strong> Average marks per CO</li>
-                    <li>• <strong>M2:</strong> % of students ≥ target</li>
-                    <li>• <strong>Final:</strong> (0.8 × Direct) + (0.2 × Indirect)</li>
-                  </ul>
-                </div>
-                
-                <div className={`mt-4 sm:mt-6 p-3 sm:p-4 rounded-lg ${theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}`}>
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-4">
-                    <h3 className="font-medium text-sm sm:text-base">Overall Course Attainment</h3>
-                    <div className="text-xl sm:text-2xl lg:text-3xl font-bold flex items-baseline gap-2">
-                      {overallAttainment.toFixed(2)} 
-                      <span className="text-xs sm:text-sm font-normal">
-                        (Level {overallAttainment >= 2.7 ? 3 : overallAttainment >= 2.0 ? 2 : 1})
-                      </span>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Target Threshold</label>
+              <div className="relative">
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={targetThreshold}
+                  onChange={(e) => handleTargetThresholdChange(e.target.value)}
+                  className={`h-11 pr-8 ${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-200'}`}
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">%</span>
+              </div>
+            </div>
+
+            {selected.subject_id && (
+              <div className="lg:col-span-2 flex items-end gap-3 h-full">
+                <Button
+                  onClick={handleExportPDF}
+                  className="flex-1 h-11 bg-[#a259ff] text-white hover:bg-[#8a4dde] shadow-md transition-all duration-200"
+                >
+                  Download PDF Report
+                </Button>
+                <Button
+                  onClick={handleExportCSV}
+                  variant="outline"
+                  className="flex-1 h-11 border-[#a259ff] text-[#a259ff] hover:bg-[#a259ff]/10 shadow-sm"
+                >
+                  Export CSV
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {errorMessage && (
+            <div className={`p-4 rounded-xl flex items-center gap-3 border ${theme === 'dark' ? 'bg-destructive/10 border-destructive/20 text-destructive-foreground' : 'bg-red-50 border-red-100 text-red-700'}`}>
+              <div className="w-2 h-2 rounded-full bg-current animate-pulse" />
+              <p className="text-sm font-medium">{errorMessage}</p>
+            </div>
+          )}
+
+          {areAllDropdownsSelected() ? (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                {/* Statistics Overview Card */}
+                <Card className="xl:col-span-1 border border-border/50 shadow-sm overflow-hidden bg-muted/20">
+                  <CardHeader className="p-5 border-b border-border/50 bg-muted/40">
+                    <CardTitle className="text-lg font-semibold leading-none tracking-tight text-gray-900">Attainment Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6 space-y-6">
+                    <div className={`p-6 rounded-2xl text-center border-2 ${theme === 'dark' ? 'bg-background/50 border-primary/20' : 'bg-white border-primary/10'} shadow-inner`}>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Overall Course Attainment</p>
+                      <div className="text-5xl font-semibold text-[#a259ff] tracking-tight">
+                        {overallAttainment.toFixed(2)}
+                      </div>
+                      <div className={`mt-3 inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold ${overallAttainment >= 2.7 ? 'bg-green-500/10 text-green-500' : overallAttainment >= 2.0 ? 'bg-amber-500/10 text-amber-500' : 'bg-red-500/10 text-red-500'}`}>
+                        Level {overallAttainment >= 2.7 ? 3 : overallAttainment >= 2.0 ? 2 : 1}
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* Student-level marks removed from CO Attainment page by default. Use dedicated paginated viewer if needed. */}
-          </div>
-        )}
-        
-        {!areAllDropdownsSelected() && (
-          <div className={`p-6 sm:p-8 text-center rounded-lg ${theme === 'dark' ? 'bg-card border border-border' : 'bg-gray-50 border border-gray-200'}`}>
-            <p className={`text-sm sm:text-base ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-              Please select a subject to calculate CO attainment.
-            </p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="p-4 rounded-xl bg-background border border-border/50">
+                        <h4 className="text-sm font-medium mb-3">Calculation Logic</h4>
+                        <ul className="space-y-3 text-sm">
+                          <li className="flex items-center gap-3">
+                            <span className="w-6 h-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">M1</span>
+                            <span className="text-foreground/80">Average marks per CO</span>
+                          </li>
+                          <li className="flex items-center gap-3">
+                            <span className="w-6 h-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">M2</span>
+                            <span className="text-foreground/80">% of students &ge; {targetThreshold}% target</span>
+                          </li>
+                          <li className="flex items-center gap-3 pt-2 border-t border-border/50">
+                            <span className="w-6 h-6 rounded-lg bg-[#a259ff] text-white flex items-center justify-center font-bold text-xs">F</span>
+                            <span className="font-medium text-foreground">(0.8 &times; Direct) + (0.2 &times; Indirect)</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={handleCalculateFinalAttainment}
+                      className="w-full h-12 bg-[#a259ff] text-white hover:bg-[#8a4dde] shadow-lg shadow-primary/20 font-bold tracking-wide"
+                    >
+                      Recalculate Final Attainment
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Main Results Table Card */}
+                <Card className="xl:col-span-2 border border-border/50 shadow-sm">
+                  <CardHeader className="p-5 border-b border-border/50">
+                    <CardTitle className="text-lg font-semibold leading-none tracking-tight text-gray-900">Course Outcome Results</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader className="bg-muted/50">
+                          <TableRow className="hover:bg-transparent border-none">
+                            <TableHead className="w-16 text-center font-medium">CO</TableHead>
+                            <TableHead className="font-medium">Max</TableHead>
+                            <TableHead className="font-medium">Target</TableHead>
+                            <TableHead className="font-medium">Avg</TableHead>
+                            <TableHead className="font-medium">% Above</TableHead>
+                            <TableHead className="font-medium">M1 (Avg)</TableHead>
+                            <TableHead className="font-medium">M2 (Students)</TableHead>
+                            <TableHead className="w-24 font-medium text-center">Indirect</TableHead>
+                            <TableHead className="text-right font-medium pr-6">Final Level</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {Object.values(coAttainment).map((co) => (
+                            <TableRow key={co.co} className="hover:bg-muted/30 transition-colors">
+                              <TableCell className="text-center font-bold text-primary">{co.co}</TableCell>
+                              <TableCell className="font-medium">{co.maxMarks}</TableCell>
+                              <TableCell className="text-muted-foreground">{co.targetMarks.toFixed(1)}</TableCell>
+                              <TableCell className="font-semibold">{co.avgMarks.toFixed(2)}</TableCell>
+                              <TableCell>
+                                <div className="flex flex-col gap-1">
+                                  <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                                    <div 
+                                      className={`h-full rounded-full ${co.totalStudents > 0 && (co.studentsAboveTarget / co.totalStudents) >= 0.6 ? 'bg-green-500' : 'bg-amber-500'}`}
+                                      style={{ width: `${co.totalStudents > 0 ? (co.studentsAboveTarget / co.totalStudents) * 100 : 0}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-[10px] font-bold text-muted-foreground">
+                                    {co.totalStudents > 0 ? ((co.studentsAboveTarget / co.totalStudents) * 100).toFixed(0) : 0}%
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-col">
+                                  <span className="text-xs font-bold">L{co.attainmentLevel}</span>
+                                  <span className="text-[10px] text-muted-foreground">{co.percentage.toFixed(0)}%</span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-col">
+                                  <span className="text-xs font-bold">L{co.method2Level}</span>
+                                  <span className="text-[10px] text-muted-foreground">{co.method2Percentage.toFixed(0)}%</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  max="3"
+                                  step="0.1"
+                                  value={indirectAttainment[co.co] || 0}
+                                  onChange={(e) => handleIndirectAttainmentChange(co.co, e.target.value)}
+                                  className="w-16 h-8 text-center mx-auto text-xs font-bold bg-muted/50 border-none focus-visible:ring-1 focus-visible:ring-primary"
+                                />
+                              </TableCell>
+                              <TableCell className="text-right pr-6">
+                                <div className="flex flex-col items-end">
+                                  <span className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-tight ${
+                                    finalAttainment[co.co]?.level === 3 
+                                      ? 'bg-green-500/10 text-green-600' 
+                                      : finalAttainment[co.co]?.level === 2 
+                                        ? 'bg-amber-500/10 text-amber-600' 
+                                        : 'bg-red-500/10 text-red-600'
+                                  }`}>
+                                    Level {finalAttainment[co.co]?.level ?? "N/A"}
+                                  </span>
+                                  <span className="text-[10px] font-medium text-muted-foreground mt-1">
+                                    Score: {finalAttainment[co.co] ? finalAttainment[co.co].final.toFixed(2) : "N/A"}
+                                  </span>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          ) : (
+            <div className={`p-12 text-center rounded-3xl border-2 border-dashed ${theme === 'dark' ? 'bg-muted/10 border-border' : 'bg-gray-50 border-gray-200'}`}>
+              <div className="mx-auto w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mb-4">
+                <svg className="w-8 h-8 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900">Select a Subject</h3>
+              <p className="mt-2 text-gray-600 text-sm">
+                Choose a subject from the dropdown above to start calculating CO attainment
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

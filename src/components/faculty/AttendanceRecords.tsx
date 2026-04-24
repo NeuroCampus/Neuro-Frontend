@@ -167,160 +167,160 @@ const AttendanceRecords = () => {
             <div className="overflow-y-auto w-full overscroll-contain min-h-0 max-h-[60vh] md:max-h-none md:overflow-visible border rounded-md" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
               <div className="w-full overflow-x-auto">
                 <Table>
-                <TableHeader className={theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}>
-                  <TableRow>
-                    <TableHead className={`text-xs md:text-xs lg:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Date</TableHead>
-                    <TableHead className={`text-xs md:text-xs lg:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Subject</TableHead>
-                    <TableHead className={`text-xs md:text-xs lg:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Section</TableHead>
-                    <TableHead className={`text-xs md:text-xs lg:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Semester</TableHead>
-                    <TableHead className={`text-xs md:text-xs lg:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Branch</TableHead>
-                    <TableHead className={`hidden lg:table-cell text-xs md:text-xs lg:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Present</TableHead>
-                    <TableHead className={`hidden lg:table-cell text-xs md:text-xs lg:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Absent</TableHead>
-                    <TableHead className={`text-xs md:text-xs lg:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Attendance</TableHead>
-                    <TableHead className={`hidden lg:table-cell text-xs md:text-xs lg:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Status</TableHead>
-                    <TableHead className={`text-xs md:text-xs lg:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {records.map((record) => (
-                    <TableRow key={record.id} className={theme === 'dark' ? 'hover:bg-muted' : 'hover:bg-gray-50'}>
-                      <TableCell className="text-xs md:text-xs lg:text-sm">{record.date}</TableCell>
-                      <TableCell className="text-xs md:text-xs lg:text-sm">{record.subject}</TableCell>
-                      <TableCell className="text-xs md:text-xs lg:text-sm">{record.section}</TableCell>
-                      <TableCell className="text-xs md:text-xs lg:text-sm">{record.semester}</TableCell>
-                      <TableCell className="text-xs md:text-xs lg:text-sm">{record.branch}</TableCell>
-                      <TableCell className={`hidden lg:table-cell text-xs md:text-xs lg:text-sm font-semibold ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{record.summary.present_count}</TableCell>
-                      <TableCell className={`hidden lg:table-cell text-xs md:text-xs lg:text-sm font-semibold ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{record.summary.absent_count}</TableCell>
-                      <TableCell className="text-xs md:text-xs lg:text-sm font-semibold">{record.summary.present_percentage}%</TableCell>
-                      <TableCell className="hidden lg:table-cell text-xs md:text-xs lg:text-sm">{record.status}</TableCell>
-                      <TableCell className="text-xs md:text-xs lg:text-sm">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              size="sm"
-                              className="text-xs md:text-sm px-2 md:px-2 py-1 whitespace-nowrap bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
-                              onClick={() => handleViewDetails(record)}
-                            >
-                              View Details
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className={`w-[95vw] max-w-2xl rounded-2xl p-0 overflow-hidden border-none shadow-2xl ${theme === 'dark' ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
-                            <div className={`p-6 border-b ${theme === 'dark' ? 'border-slate-800 bg-slate-900/50' : 'border-slate-100 bg-slate-50/50'}`}>
-                              <DialogHeader>
-                                <DialogTitle className="text-xl font-semibold tracking-tight">Attendance Details</DialogTitle>
-                                <DialogDescription className={theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>
-                                  Comprehensive record for this session
-                                </DialogDescription>
-                              </DialogHeader>
-                            </div>
+                  <TableHeader className={theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}>
+                    <TableRow>
+                      <TableHead className={`text-xs md:text-xs lg:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Date</TableHead>
+                      <TableHead className={`text-xs md:text-xs lg:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Subject</TableHead>
+                      <TableHead className={`text-xs md:text-xs lg:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Section</TableHead>
+                      <TableHead className={`text-xs md:text-xs lg:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Semester</TableHead>
+                      <TableHead className={`text-xs md:text-xs lg:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Branch</TableHead>
+                      <TableHead className={`hidden lg:table-cell text-xs md:text-xs lg:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Present</TableHead>
+                      <TableHead className={`hidden lg:table-cell text-xs md:text-xs lg:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Absent</TableHead>
+                      <TableHead className={`text-xs md:text-xs lg:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Attendance</TableHead>
+                      <TableHead className={`hidden lg:table-cell text-xs md:text-xs lg:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Status</TableHead>
+                      <TableHead className={`text-xs md:text-xs lg:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {records.map((record) => (
+                      <TableRow key={record.id} className={theme === 'dark' ? 'hover:bg-muted' : 'hover:bg-gray-50'}>
+                        <TableCell className="text-xs md:text-xs lg:text-sm">{record.date}</TableCell>
+                        <TableCell className="text-xs md:text-xs lg:text-sm">{record.subject}</TableCell>
+                        <TableCell className="text-xs md:text-xs lg:text-sm">{record.section}</TableCell>
+                        <TableCell className="text-xs md:text-xs lg:text-sm">{record.semester}</TableCell>
+                        <TableCell className="text-xs md:text-xs lg:text-sm">{record.branch}</TableCell>
+                        <TableCell className={`hidden lg:table-cell text-xs md:text-xs lg:text-sm font-semibold ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{record.summary.present_count}</TableCell>
+                        <TableCell className={`hidden lg:table-cell text-xs md:text-xs lg:text-sm font-semibold ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{record.summary.absent_count}</TableCell>
+                        <TableCell className="text-xs md:text-xs lg:text-sm font-semibold">{record.summary.present_percentage}%</TableCell>
+                        <TableCell className="hidden lg:table-cell text-xs md:text-xs lg:text-sm">{record.status}</TableCell>
+                        <TableCell className="text-xs md:text-xs lg:text-sm">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                className="text-xs md:text-sm px-2 md:px-2 py-1 whitespace-nowrap bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+                                onClick={() => handleViewDetails(record)}
+                              >
+                                View Details
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className={`w-[95vw] max-w-2xl rounded-2xl p-0 overflow-hidden border-none shadow-2xl ${theme === 'dark' ? 'bg-[#0f172a] text-slate-100' : 'bg-white text-slate-900'}`}>
+                              <div className={`p-6 border-b ${theme === 'dark' ? 'border-slate-800 bg-slate-900/50' : 'border-slate-100 bg-slate-50/50'}`}>
+                                <DialogHeader>
+                                  <DialogTitle className="text-xl font-semibold tracking-tight">Attendance Details</DialogTitle>
+                                  <DialogDescription className={theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}>
+                                    Comprehensive record for this session
+                                  </DialogDescription>
+                                </DialogHeader>
+                              </div>
 
-                            <div className="p-4 md:p-6 space-y-4 md:space-y-6 max-h-[60vh] md:max-h-[70vh] overflow-y-auto custom-scrollbar">
-                              {selectedRecord && (
-                                <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 p-4 rounded-xl border ${theme === 'dark' ? 'bg-slate-900/30 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
-                                  <div className="space-y-1">
-                                    <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Date</p>
-                                    <p className="text-sm font-semibold">{selectedRecord.date}</p>
+                              <div className="p-4 md:p-6 space-y-4 md:space-y-6 max-h-[60vh] md:max-h-[70vh] overflow-y-auto custom-scrollbar">
+                                {selectedRecord && (
+                                  <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 p-4 rounded-xl border ${theme === 'dark' ? 'bg-slate-900/30 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                                    <div className="space-y-1">
+                                      <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Date</p>
+                                      <p className="text-sm font-semibold">{selectedRecord.date}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Subject</p>
+                                      <p className="text-sm font-semibold truncate" title={selectedRecord.subject}>{selectedRecord.subject}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Class</p>
+                                      <p className="text-sm font-semibold">Sem {selectedRecord.semester}, {selectedRecord.branch}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Percentage</p>
+                                      <p className={`text-sm font-bold ${Number(selectedRecord.summary.present_percentage) >= 75 ? 'text-green-500' : 'text-orange-500'}`}>
+                                        {selectedRecord.summary.present_percentage}%
+                                      </p>
+                                    </div>
+                                    <div className="space-y-1 pt-2 border-t border-slate-800/10 dark:border-slate-100/10 col-span-2">
+                                      <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Attendance Ratio</p>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <span className="text-xs font-bold text-green-500">{selectedRecord.summary.present_count} Present</span>
+                                        <span className="text-slate-300 dark:text-slate-700">|</span>
+                                        <span className="text-xs font-bold text-red-500">{selectedRecord.summary.absent_count} Absent</span>
+                                      </div>
+                                    </div>
                                   </div>
-                                  <div className="space-y-1">
-                                    <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Subject</p>
-                                    <p className="text-sm font-semibold truncate" title={selectedRecord.subject}>{selectedRecord.subject}</p>
+                                )}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                  <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                      <h4 className="text-sm font-bold flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                        Present Students
+                                      </h4>
+                                      <span className="text-[10px] font-bold bg-green-500/10 text-green-500 px-2 py-0.5 rounded-full">{presentList.length}</span>
+                                    </div>
+                                    <div className={`space-y-2 max-h-48 md:max-h-64 overflow-y-auto pr-2 custom-scrollbar`}>
+                                      {presentList.length > 0 ? (
+                                        presentList.map((s) => (
+                                          <div key={s.usn} className={`p-3 rounded-lg border flex justify-between items-center transition-all hover:translate-x-1 ${theme === 'dark' ? 'bg-slate-900/50 border-slate-800 hover:bg-slate-800' : 'bg-white border-slate-100 hover:border-slate-200 hover:shadow-sm'}`}>
+                                            <span className="text-xs font-medium">{s.name}</span>
+                                            <span className="text-[10px] font-mono opacity-60">{s.usn}</span>
+                                          </div>
+                                        ))
+                                      ) : (
+                                        <div className="text-center py-8 opacity-40 text-xs italic">No students present</div>
+                                      )}
+                                    </div>
                                   </div>
-                                  <div className="space-y-1">
-                                    <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Class</p>
-                                    <p className="text-sm font-semibold">Sem {selectedRecord.semester}, {selectedRecord.branch}</p>
-                                  </div>
-                                  <div className="space-y-1">
-                                    <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Percentage</p>
-                                    <p className={`text-sm font-bold ${Number(selectedRecord.summary.present_percentage) >= 75 ? 'text-green-500' : 'text-orange-500'}`}>
-                                      {selectedRecord.summary.present_percentage}%
-                                    </p>
-                                  </div>
-                                  <div className="space-y-1 pt-2 border-t border-slate-800/10 dark:border-slate-100/10 col-span-2">
-                                    <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500">Attendance Ratio</p>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <span className="text-xs font-bold text-green-500">{selectedRecord.summary.present_count} Present</span>
-                                      <span className="text-slate-300 dark:text-slate-700">|</span>
-                                      <span className="text-xs font-bold text-red-500">{selectedRecord.summary.absent_count} Absent</span>
+
+                                  <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                      <h4 className="text-sm font-bold flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                                        Absent Students
+                                      </h4>
+                                      <span className="text-[10px] font-bold bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full">{absentList.length}</span>
+                                    </div>
+                                    <div className={`space-y-2 max-h-48 md:max-h-64 overflow-y-auto pr-2 custom-scrollbar`}>
+                                      {absentList.length > 0 ? (
+                                        absentList.map((s) => (
+                                          <div key={s.usn} className={`p-3 rounded-lg border flex justify-between items-center transition-all hover:translate-x-1 ${theme === 'dark' ? 'bg-slate-900/50 border-slate-800 hover:bg-slate-800' : 'bg-white border-slate-100 hover:border-slate-200 hover:shadow-sm'}`}>
+                                            <span className="text-xs font-medium">{s.name}</span>
+                                            <span className="text-[10px] font-mono opacity-60">{s.usn}</span>
+                                          </div>
+                                        ))
+                                      ) : (
+                                        <div className="text-center py-8 opacity-40 text-xs italic">No students absent</div>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
-                              )}
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-3">
-                                  <div className="flex items-center justify-between">
-                                    <h4 className="text-sm font-bold flex items-center gap-2">
-                                      <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                      Present Students
-                                    </h4>
-                                    <span className="text-[10px] font-bold bg-green-500/10 text-green-500 px-2 py-0.5 rounded-full">{presentList.length}</span>
-                                  </div>
-                                  <div className={`space-y-2 max-h-48 md:max-h-64 overflow-y-auto pr-2 custom-scrollbar`}>
-                                    {presentList.length > 0 ? (
-                                      presentList.map((s) => (
-                                        <div key={s.usn} className={`p-3 rounded-lg border flex justify-between items-center transition-all hover:translate-x-1 ${theme === 'dark' ? 'bg-slate-900/50 border-slate-800 hover:bg-slate-800' : 'bg-white border-slate-100 hover:border-slate-200 hover:shadow-sm'}`}>
-                                          <span className="text-xs font-medium">{s.name}</span>
-                                          <span className="text-[10px] font-mono opacity-60">{s.usn}</span>
-                                        </div>
-                                      ))
-                                    ) : (
-                                      <div className="text-center py-8 opacity-40 text-xs italic">No students present</div>
-                                    )}
-                                  </div>
-                                </div>
+                              </div>
 
-                                <div className="space-y-3">
-                                  <div className="flex items-center justify-between">
-                                    <h4 className="text-sm font-bold flex items-center gap-2">
-                                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                                      Absent Students
-                                    </h4>
-                                    <span className="text-[10px] font-bold bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full">{absentList.length}</span>
-                                  </div>
-                                  <div className={`space-y-2 max-h-48 md:max-h-64 overflow-y-auto pr-2 custom-scrollbar`}>
-                                    {absentList.length > 0 ? (
-                                      absentList.map((s) => (
-                                        <div key={s.usn} className={`p-3 rounded-lg border flex justify-between items-center transition-all hover:translate-x-1 ${theme === 'dark' ? 'bg-slate-900/50 border-slate-800 hover:bg-slate-800' : 'bg-white border-slate-100 hover:border-slate-200 hover:shadow-sm'}`}>
-                                          <span className="text-xs font-medium">{s.name}</span>
-                                          <span className="text-[10px] font-mono opacity-60">{s.usn}</span>
-                                        </div>
-                                      ))
-                                    ) : (
-                                      <div className="text-center py-8 opacity-40 text-xs italic">No students absent</div>
-                                    )}
-                                  </div>
+                              <div className={`p-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4 ${theme === 'dark' ? 'border-slate-800 bg-slate-900/50' : 'border-slate-100 bg-slate-50/50'}`}>
+                                <div className="text-xs font-medium text-slate-500">
+                                  Total strength: {presentList.length + absentList.length} students
+                                </div>
+                                <div className="flex gap-2 w-full sm:w-auto">
+                                  {selectedRecord && selectedRecord.summary && selectedRecord.summary.total_count > 0 && (
+                                    <Button
+                                      className="flex-1 sm:flex-none bg-[#a259ff] hover:bg-[#8a4dde] text-white font-bold px-6 shadow-lg shadow-purple-500/20 transition-all active:scale-95"
+                                      onClick={handleExportPdf}
+                                      disabled={exporting}
+                                    >
+                                      {exporting ? (
+                                        <><Loader2 className="animate-spin mr-2 h-4 w-4" /> Processing</>
+                                      ) : (
+                                        <><FileDown className="mr-2 h-4 w-4" /> Export Report</>
+                                      )}
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
-                            </div>
-
-                            <div className={`p-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4 ${theme === 'dark' ? 'border-slate-800 bg-slate-900/50' : 'border-slate-100 bg-slate-50/50'}`}>
-                              <div className="text-xs font-medium text-slate-500">
-                                Total strength: {presentList.length + absentList.length} students
-                              </div>
-                              <div className="flex gap-2 w-full sm:w-auto">
-                                {selectedRecord && selectedRecord.summary && selectedRecord.summary.total_count > 0 && (
-                                  <Button
-                                    className="flex-1 sm:flex-none bg-[#a259ff] hover:bg-[#8a4dde] text-white font-bold px-6 shadow-lg shadow-purple-500/20 transition-all active:scale-95"
-                                    onClick={handleExportPdf}
-                                    disabled={exporting}
-                                  >
-                                    {exporting ? (
-                                      <><Loader2 className="animate-spin mr-2 h-4 w-4" /> Processing</>
-                                    ) : (
-                                      <><FileDown className="mr-2 h-4 w-4" /> Export Report</>
-                                    )}
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                            </DialogContent>
+                          </Dialog>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
-          </div>
           )}
         </CardContent>
       </Card>

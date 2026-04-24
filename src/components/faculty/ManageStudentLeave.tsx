@@ -67,14 +67,14 @@ const ManageStudentLeave: React.FC<ManageStudentLeaveProps> = ({ proctorStudents
     try {
       const res = await manageStudentLeave({ leave_id: leaveId, action: "APPROVE" });
       if (res.success) {
-        setLeaveRows(prevRows => 
-          prevRows.map(row => 
-            row.id === leaveId 
-              ? { ...row, status: "APPROVED" } 
+        setLeaveRows(prevRows =>
+          prevRows.map(row =>
+            row.id === leaveId
+              ? { ...row, status: "APPROVED" }
               : row
           )
         );
-        
+
         Swal.fire({
           title: 'Approved!',
           text: 'Leave request approved successfully.',
@@ -113,15 +113,15 @@ const ManageStudentLeave: React.FC<ManageStudentLeaveProps> = ({ proctorStudents
     try {
       const res = await manageStudentLeave({ leave_id: leaveId, action: "REJECT" });
       if (res.success) {
-        setLeaveRows(prevRows => 
-          prevRows.map(row => 
-            row.id === leaveId 
-              ? { ...row, status: "REJECTED" } 
+        setLeaveRows(prevRows =>
+          prevRows.map(row =>
+            row.id === leaveId
+              ? { ...row, status: "REJECTED" }
               : row
           )
         );
         setShowRejectModal(null);
-        
+
         Swal.fire({
           title: 'Rejected',
           text: 'Leave request rejected.',
@@ -187,19 +187,17 @@ const ManageStudentLeave: React.FC<ManageStudentLeaveProps> = ({ proctorStudents
             <Popover open={filterOpen} onOpenChange={setFilterOpen}>
               <PopoverTrigger asChild>
                 <button
-                  className={`flex items-center gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-md border transition-colors text-xs sm:text-sm font-medium ${
-                    theme === 'dark'
+                  className={`flex items-center gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-md border transition-colors text-xs sm:text-sm font-medium ${theme === 'dark'
                       ? 'border-input bg-background text-foreground hover:bg-accent'
                       : 'border-gray-300 bg-white text-gray-900 hover:bg-gray-50'
-                  }`}
+                    }`}
                 >
                   <Filter className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden xs:inline">Filter</span>
                 </button>
               </PopoverTrigger>
-              <PopoverContent className={`w-40 p-2 sm:p-3 rounded-lg ${
-                theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'
-              }`}>
+              <PopoverContent className={`w-40 p-2 sm:p-3 rounded-lg ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'
+                }`}>
                 <div className="space-y-1.5">
                   {statusOptions.map((status) => (
                     <button
@@ -208,15 +206,14 @@ const ManageStudentLeave: React.FC<ManageStudentLeaveProps> = ({ proctorStudents
                         setFilterStatus(status);
                         setFilterOpen(false);
                       }}
-                      className={`w-full text-left px-2.5 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors ${
-                        filterStatus === status
+                      className={`w-full text-left px-2.5 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors ${filterStatus === status
                           ? theme === 'dark'
                             ? 'bg-[#a259ff] text-white'
                             : 'bg-[#a259ff] text-white'
                           : theme === 'dark'
-                          ? 'hover:bg-accent text-foreground'
-                          : 'hover:bg-gray-100 text-gray-900'
-                      }`}
+                            ? 'hover:bg-accent text-foreground'
+                            : 'hover:bg-gray-100 text-gray-900'
+                        }`}
                     >
                       {status === "All" ? "All Statuses" : status.charAt(0) + status.slice(1).toLowerCase()}
                     </button>
@@ -374,8 +371,8 @@ const ManageStudentLeave: React.FC<ManageStudentLeaveProps> = ({ proctorStudents
           <DialogFooter>
             <Button
               variant="outline"
-              className={theme === 'dark' 
-                ? 'text-foreground bg-card border border-border hover:bg-accent' 
+              className={theme === 'dark'
+                ? 'text-foreground bg-card border border-border hover:bg-accent'
                 : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
               onClick={() => setViewReason(null)}
             >

@@ -114,8 +114,7 @@ const GenerateStatistics: React.FC = () => {
   }
 
   return (
-    <div className={`p-3 sm:p-6 space-y-4 sm:space-y-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-        <h2 className="text-lg sm:text-2xl font-bold">Statistics</h2>
+    <div className={`${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'} space-y-4 sm:space-y-6 min-h-screen`}>
       {/* Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
         {/* Attendance Overview */}
@@ -140,7 +139,7 @@ const GenerateStatistics: React.FC = () => {
                 />
                 <YAxis stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'} />
                 <Tooltip
-                  contentStyle={{ 
+                  contentStyle={{  
                     backgroundColor: theme === 'dark' ? '#1c1c1e' : '#ffffff', 
                     border: theme === 'dark' ? '1px solid #2e2e30' : '1px solid #e5e7eb', 
                     color: theme === 'dark' ? '#f3f4f6' : '#1f2937' 
