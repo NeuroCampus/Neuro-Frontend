@@ -38,6 +38,7 @@ interface FacultyAttendanceRecord {
 }
 
 interface FacultySummary {
+  id: string;
   name: string;
   total_days: number;
   present_days: number;
@@ -55,6 +56,9 @@ const FacultyAttendanceView: React.FC = () => {
     start_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days ago
     end_date: new Date().toISOString().split('T')[0] // today
   });
+  const [selectedFaculty, setSelectedFaculty] = useState<FacultySummary | null>(null);
+  const [facultyAttendanceDetails, setFacultyAttendanceDetails] = useState<FacultyAttendanceRecord[]>([]);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [todayPagination, setTodayPagination] = useState({
     page: 1,
     page_size: 50,
@@ -187,6 +191,29 @@ const FacultyAttendanceView: React.FC = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchFacultyDetails = async (faculty: FacultySummary) => {
+    setIsDetailLoading(true);
+    setSelectedFaculty(faculty);
+    try {
+      const response = await getFacultyAttendanceRecords({
+        faculty_id: faculty.id,
+        start_date: dateRange.start_date,
+        end_date: dateRange.end_date,
+        page_size: 1000 // Load all for the selected range to build calendar
+      });
+      if (response.success) {
+        setFacultyAttendanceDetails(response.data || []);
+      } else {
+        Swal.fire("Error", "Failed to load faculty details", "error");
+      }
+    } catch (error) {
+      console.error("Error fetching faculty details:", error);
+      Swal.fire("Error", "Network error while loading faculty details", "error");
+    } finally {
+      setIsDetailLoading(false);
     }
   };
 
@@ -382,7 +409,7 @@ const FacultyAttendanceView: React.FC = () => {
                     </tr>
                   ) : (
                     todayAttendance.map((record) => (
-                      <tr key={record.id} className={`hover:${theme === 'dark' ? 'bg-accent' : 'bg-gray-50'}`}>
+                      <tr key={record.faculty_id} className={`hover:${theme === 'dark' ? 'bg-accent' : 'bg-gray-50'}`}>
                         <td className={`px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                           <div className="font-medium">{record.faculty_name}</div>
                         </td>
@@ -548,30 +575,142 @@ const FacultyAttendanceView: React.FC = () => {
                       <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Present</th>
                       <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Absent</th>
                       <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Attendance %</th>
+                      <th className={`px-6 py-3 text-right text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Actions</th>
                     </tr>
                   </thead>
                   <tbody className={`divide-y ${theme === 'dark' ? 'divide-border' : 'divide-gray-200'}`}>
-                    {facultySummary.map((summary, index) => (
-                      <tr key={index} className={`hover:${theme === 'dark' ? 'bg-accent' : 'bg-gray-50'}`}>
-                        <td className={`px-6 py-4 whitespace-nowrap font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                          {summary.name}
-                        </td>
-                        <td className={`px-6 py-4 whitespace-nowrap ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                          {summary.total_days}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-green-600 font-medium">
-                          {summary.present_days}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-red-600 font-medium">
-                          {summary.absent_days}
-                        </td>
-                        <td className={`px-6 py-4 whitespace-nowrap font-medium ${
-                          summary.attendance_percentage >= 75 ? 'text-green-600' :
-                          summary.attendance_percentage >= 60 ? 'text-yellow-600' : 'text-red-600'
-                        }`}>
-                          {summary.attendance_percentage.toFixed(1)}%
-                        </td>
-                      </tr>
+                    {facultySummary.map((summary) => (
+                      <React.Fragment key={summary.id}>
+                        <tr className={`hover:${theme === 'dark' ? 'bg-accent' : 'bg-gray-50'} ${selectedFaculty?.id === summary.id ? (theme === 'dark' ? 'bg-accent/50' : 'bg-blue-50') : ''}`}>
+                          <td className={`px-6 py-4 whitespace-nowrap font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                            {summary.name}
+                          </td>
+                          <td className={`px-6 py-4 whitespace-nowrap ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                            {summary.total_days}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-green-600 font-medium">
+                            {summary.present_days}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-red-600 font-medium">
+                            {summary.absent_days}
+                          </td>
+                          <td className={`px-6 py-4 whitespace-nowrap font-medium ${
+                            summary.attendance_percentage >= 75 ? 'text-green-600' :
+                            summary.attendance_percentage >= 60 ? 'text-yellow-600' : 'text-red-600'
+                          }`}>
+                            {summary.attendance_percentage.toFixed(1)}%
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right">
+                            <button
+                              onClick={() => {
+                                if (selectedFaculty?.id === summary.id) {
+                                  setSelectedFaculty(null);
+                                } else {
+                                  fetchFacultyDetails(summary);
+                                }
+                              }}
+                              className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                                theme === 'dark' 
+                                  ? 'bg-[#a259ff]/20 text-[#a259ff] hover:bg-[#a259ff]/30' 
+                                  : 'bg-[#a259ff] text-white hover:bg-[#8a4dde]'
+                              }`}
+                            >
+                              {selectedFaculty?.id === summary.id ? (isDetailLoading ? 'Loading...' : 'Close') : 'View'}
+                            </button>
+                          </td>
+                        </tr>
+                        
+                        {/* Inline Calendar View */}
+                        {selectedFaculty?.id === summary.id && (
+                          <tr className={`${theme === 'dark' ? 'bg-accent/10' : 'bg-blue-50/30'}`}>
+                            <td colSpan={6} className="px-4 py-6">
+                              <div className={`p-4 sm:p-6 rounded-2xl shadow-inner transition-all duration-300 ${theme === 'dark' ? 'bg-card/50 border border-white/5' : 'bg-white border border-blue-100'}`}>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                                  <div>
+                                    <h4 className={`text-lg font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                      Attendance Grid
+                                    </h4>
+                                    <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                                      {formatDate(dateRange.start_date)} — {formatDate(dateRange.end_date)}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-1.5">
+                                      <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
+                                      <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">Present</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                      <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]"></div>
+                                      <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">Absent</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {isDetailLoading ? (
+                                  <div className="flex flex-col items-center justify-center py-10 gap-3">
+                                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#a259ff]"></div>
+                                    <p className="text-xs font-semibold animate-pulse">Syncing data...</p>
+                                  </div>
+                                ) : (
+                                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 lg:grid-cols-10 gap-2 sm:gap-3">
+                                    {(() => {
+                                      const start = new Date(dateRange.start_date);
+                                      const end = new Date(dateRange.end_date);
+                                      const days = [];
+                                      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                                        days.push(new Date(d));
+                                      }
+                                      
+                                      return days.map((date) => {
+                                        const dateStr = date.toISOString().split('T')[0];
+                                        const record = facultyAttendanceDetails.find(r => r.date === dateStr);
+                                        const isPresent = record?.status?.toLowerCase() === 'present';
+                                        const isAbsent = record?.status?.toLowerCase() === 'absent';
+                                        
+                                        return (
+                                          <div 
+                                            key={dateStr}
+                                            className={`relative group p-3 rounded-xl border flex flex-col items-center justify-center transition-all duration-300 hover:scale-105 ${
+                                              isPresent 
+                                                ? 'bg-green-500/10 border-green-500/30 text-green-600 shadow-sm' 
+                                                : isAbsent 
+                                                  ? 'bg-red-500/10 border-red-500/30 text-red-600 shadow-sm'
+                                                  : theme === 'dark' 
+                                                    ? 'bg-white/5 border-white/5 text-white/20' 
+                                                    : 'bg-gray-50 border-gray-100 text-gray-300'
+                                            }`}
+                                          >
+                                            <span className="text-[9px] font-black uppercase tracking-tighter mb-0.5 opacity-50">
+                                              {date.toLocaleDateString('en-US', { weekday: 'short' })}
+                                            </span>
+                                            <span className="text-lg font-black leading-tight">{date.getDate()}</span>
+                                            <span className="text-[9px] font-bold uppercase tracking-widest opacity-50">
+                                              {date.toLocaleDateString('en-US', { month: 'short' })}
+                                            </span>
+                                            
+                                            {record && (
+                                              <div className={`mt-1 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter ${
+                                                isPresent ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+                                              }`}>
+                                                {record.status[0]}
+                                              </div>
+                                            )}
+                                            
+                                            <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-[9px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 shadow-lg border border-white/10">
+                                              {date.toLocaleDateString('en-US', { dateStyle: 'medium' })}
+                                              {record?.marked_at && <div className="text-white/70 mt-0.5">{formatTime(record.marked_at)}</div>}
+                                            </div>
+                                          </div>
+                                        );
+                                      });
+                                    })()}
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     ))}
                   </tbody>
                 </table>
@@ -579,132 +718,6 @@ const FacultyAttendanceView: React.FC = () => {
             </div>
           )}
 
-          {/* Detailed Records */}
-          <div className={`rounded-lg shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} overflow-hidden`}>
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                Detailed Attendance Records
-              </h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className={`sticky top-0 ${theme === 'dark' ? 'bg-card' : 'bg-gray-50'}`}>
-                  <tr className={`border-b ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Faculty</th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Date</th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Status</th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Marked At</th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Notes</th>
-                  </tr>
-                </thead>
-                <tbody className={`divide-y ${theme === 'dark' ? 'divide-border' : 'divide-gray-200'}`}>
-                  {attendanceRecords.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className={`px-6 py-4 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                        No attendance records found for the selected date range
-                      </td>
-                    </tr>
-                  ) : (
-                    attendanceRecords.map((record) => (
-                      <tr key={record.id} className={`hover:${theme === 'dark' ? 'bg-accent' : 'bg-gray-50'}`}>
-                        <td className={`px-6 py-4 whitespace-nowrap font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                          {record.faculty_name}
-                        </td>
-                        <td className={`px-6 py-4 whitespace-nowrap ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                          {formatDate(record.date)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(record.status)}
-                            <span className={getStatusBadge(record.status)}>{record.status}</span>
-                          </div>
-                        </td>
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                          {record.marked_at ? new Date(record.marked_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'Not marked'}
-                          {record.location ? (
-                            <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                              {record.location.inside ? (
-                                <>On campus • {record.location.distance_meters ? `${Math.round(record.location.distance_meters)} m` : 'distance unknown'}</>
-                              ) : (
-                                <>Outside campus • {record.location.distance_meters ? `${Math.round(record.location.distance_meters)} m` : 'distance unknown'}</>
-                              )}
-                              {record.location.campus_name ? ` • ${record.location.campus_name}` : ''}
-                            </div>
-                          ) : (
-                            <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Location not recorded</div>
-                          )}
-                        </td>
-                        <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                          {record.notes || '-'}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Records Pagination Controls */}
-          {recordsPagination.total_items > recordsPagination.page_size && (
-            <div className={`flex flex-col sm:flex-row justify-between items-center gap-4 p-4 ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} rounded-lg mt-4`}>
-              <div className="flex items-center gap-4">
-                <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                  Showing {attendanceRecords.length > 0 ? ((recordsPagination.page - 1) * recordsPagination.page_size) + 1 : 0} to{' '}
-                  {Math.min(recordsPagination.page * recordsPagination.page_size, recordsPagination.total_items)} of{' '}
-                  {recordsPagination.total_items} records
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleRecordsPageChange(recordsPagination.page - 1)}
-                  disabled={!recordsPagination.has_prev || isLoading}
-                  className={`px-3 py-2 text-sm font-medium border rounded-md transition-all duration-200 whitespace-nowrap ${
-                    recordsPagination.has_prev && !isLoading
-                      ? 'bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] shadow-sm'
-                      : 'bg-[#a259ff] opacity-50 text-white border-[#a259ff] cursor-not-allowed'
-                  }`}
-                >
-                  Previous
-                </button>
-
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: Math.min(5, recordsPagination.total_pages) }, (_, i) => {
-                    const pageNum = Math.max(1, Math.min(recordsPagination.total_pages - 4, recordsPagination.page - 2)) + i;
-                    if (pageNum > recordsPagination.total_pages) return null;
-
-                    return (
-                      <button
-                        key={pageNum}
-                        onClick={() => handleRecordsPageChange(pageNum)}
-                        disabled={isLoading}
-                        className={`px-3 py-1 text-sm font-medium transition-colors disabled:opacity-50 ${
-                          pageNum === recordsPagination.page
-                            ? 'bg-white text-[#a259ff] font-semibold'
-                            : `bg-white text-gray-600 hover:text-[#a259ff] ${theme === 'dark' ? 'hover:bg-accent' : ''}`
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <button
-                  onClick={() => handleRecordsPageChange(recordsPagination.page + 1)}
-                  disabled={!recordsPagination.has_next || isLoading}
-                  className={`px-3 py-2 text-sm font-medium border rounded-md transition-all duration-200 whitespace-nowrap ${
-                    recordsPagination.has_next && !isLoading
-                      ? 'bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] shadow-sm'
-                      : 'bg-[#a259ff] opacity-50 text-white border-[#a259ff] cursor-not-allowed'
-                  }`}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
         </>
       )}
     </div>
