@@ -15,6 +15,7 @@ import COEDashboard from "./components/dashboards/COEDashboard";
 import FeesManagerDashboard from "./components/FeesManager/FeesManagerDashboard";
 import DeanDashboard from "./components/dashboards/DeanDashboard";
 import HMSDashboard from "./components/dashboards/HMSDashboard";
+import Onboarding from "./pages/Onboarding";
 import FloatingAssistant from "./components/common/FloatingAssistant";
 import AIInterview from "./components/common/AIInterview";
 import { shouldShowFloatingAssistant } from "./utils/config";
@@ -119,6 +120,9 @@ const App = () => {
             {shouldShowFloatingAssistant() && <FloatingAssistant />}
           </>
         } />
+
+        {/* Onboarding route */}
+        <Route path="/neurocampus/:plan" element={<Onboarding />} />
 
         {/* Public results view (students) */}
         <Route path="/results/view/:token" element={
