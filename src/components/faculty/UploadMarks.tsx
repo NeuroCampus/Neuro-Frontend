@@ -466,7 +466,20 @@ const UploadMarks = () => {
   };
 
   const removeQuestion = (id: string) => {
-    setQuestions(questions.filter(q => q.id !== id));
+    MySwal.fire({
+      title: "Are you sure?",
+      text: "This question will be removed from the format.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, remove it!",
+      cancelButtonText: "Cancel",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setQuestions(questions.filter((q) => q.id !== id));
+      }
+    });
   };
 
   const updateQuestion = (id: string, field: "number" | "content" | "maxMarks" | "co" | "bloomsLevel", value: string) => {
@@ -1645,7 +1658,7 @@ const UploadMarks = () => {
   return (
     <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
       <CardHeader>
-        <CardTitle className="text-xl font-bold">Upload Marks</CardTitle>
+        <CardTitle className="text-2xl font-semibold leading-none tracking-tight text-gray-900">Upload Marks</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -2058,6 +2071,7 @@ const UploadMarks = () => {
                         size="sm"
                         onClick={() => removeQuestion(question.id)}
                         disabled={questions.length <= 1}
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -2181,8 +2195,8 @@ const UploadMarks = () => {
           <TabsContent value="bulkUpload">
             <div className={`border rounded-lg p-4 sm:p-6 lg:p-8 w-full space-y-4 sm:space-y-6 ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
               <div className="space-y-1 sm:space-y-2">
-                <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold">Bulk Upload Marks</h2>
-                <p className={`text-sm sm:text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                <h2 className={`text-2xl font-semibold leading-none tracking-tight ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Bulk Upload Marks</h2>
+                <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                   Upload Excel file with student marks
                 </p>
               </div>

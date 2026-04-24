@@ -38,7 +38,7 @@ const ProctorStudents = ({ proctorStudents, proctorStudentsLoading, pagination }
   return (
     <Card className={theme === 'dark' ? 'bg-card text-foreground shadow-md' : 'bg-white text-gray-900 shadow-md'}>
       <CardHeader>
-        <CardTitle className="text-xl font-semibold">Proctor Students</CardTitle>
+        <CardTitle className="text-2xl font-semibold leading-none tracking-tight text-gray-900">Proctor Students</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <Input

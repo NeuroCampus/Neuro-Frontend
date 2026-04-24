@@ -332,7 +332,7 @@ const Revaluation = () => {
         {/* Header Card */}
         <Card className={`mb-4 sm:mb-6 ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
           <CardHeader className="p-3 sm:p-4 lg:p-6">
-            <CardTitle className="text-lg sm:text-xl lg:text-2xl">Exam Revaluation & Photocopy</CardTitle>
+            <CardTitle className="text-2xl font-semibold leading-none tracking-tight text-gray-900">Exam Revaluation & Photocopy</CardTitle>
             <p className={`text-xs sm:text-sm mt-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
               Apply for revaluation of exam papers or request photocopies. Search by student USN and select the exam period.
             </p>

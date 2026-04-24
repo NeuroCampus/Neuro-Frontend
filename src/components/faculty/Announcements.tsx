@@ -183,7 +183,7 @@ const Announcements = ({ role, proctorStudents, proctorStudentsLoading }: Announ
         {/* Received Notifications */}
         <Card className={theme === 'dark' ? 'col-span-2 shadow-sm bg-card text-foreground' : 'col-span-2 shadow-sm bg-white text-gray-900'}>
           <CardHeader>
-            <CardTitle className="text-lg">Received Notifications</CardTitle>
+            <CardTitle className="text-2xl font-semibold leading-none tracking-tight text-gray-900">Received Notifications</CardTitle>
             <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Notifications from HOD and Admin</p>
           </CardHeader>
           <CardContent className="space-y-6">

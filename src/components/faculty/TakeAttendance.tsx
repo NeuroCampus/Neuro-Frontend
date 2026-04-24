@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useToast } from "@/hooks/use-toast";
 import {
   Card,
   CardContent,
@@ -28,6 +29,7 @@ import { useFacultyAssignmentsQuery } from "@/hooks/useApiQueries";
 import { useTheme } from "@/context/ThemeContext";
 
 const TakeAttendance = () => {
+  const { toast } = useToast();
   const { data: assignments = [], isLoading: assignmentsLoading, error: assignmentsError } = useFacultyAssignmentsQuery();
   // Normalize assignment IDs to numbers to avoid string/number mismatch from backend
   const normalizedAssignments = assignments.map(a => ({
@@ -52,7 +54,6 @@ const TakeAttendance = () => {
   const [attendance, setAttendance] = useState<{ [studentId: number]: boolean }>({});
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [recentRecords, setRecentRecords] = useState<GetTakeAttendanceBootstrapResponse['data']['recent_records']>([]);
   const [aiPhoto, setAiPhoto] = useState<File | null>(null);
@@ -170,12 +171,11 @@ const TakeAttendance = () => {
     setStudents([]);
     setAttendance({});
     setRecentRecords([]);
-    setSuccessMsg("");
     setErrorMsg("");
 
     if (!debouncedSubjectId) return;
 
-    
+
 
     // CASE 0: Elective (Branch + Semester + Subject, section optional)
     if (debouncedSubjectId && debouncedBranchId && debouncedSemesterId && subjectType === 'elective') {
@@ -240,7 +240,6 @@ const TakeAttendance = () => {
     setStudents([]);
     setAttendance({});
     setRecentRecords([]);
-    setSuccessMsg("");
     setErrorMsg("");
   }, [subjectId]);
 
@@ -304,7 +303,6 @@ const TakeAttendance = () => {
     }
     setAttendance({});
     setRecentRecords([]);
-    setSuccessMsg("");
     setErrorMsg("");
   }, [branchId]);
 
@@ -318,7 +316,6 @@ const TakeAttendance = () => {
     }
     setAttendance({});
     setRecentRecords([]);
-    setSuccessMsg("");
     setErrorMsg("");
   }, [semesterId]);
 
@@ -350,7 +347,7 @@ const TakeAttendance = () => {
           }
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [page, pageSize, bootstrapParams]);
 
   // When a subject is selected, fetch subject detail first. For open electives, fetch subject-only bootstrap to discover available registrations.
@@ -363,7 +360,7 @@ const TakeAttendance = () => {
       try {
         const subjRes = await getSubjectDetail(subjectId.toString());
         if (cancelled) return;
-          if (subjRes.success && subjRes.data) {
+        if (subjRes.success && subjRes.data) {
           const subjType = subjRes.data.subject_type;
           setSubjectType(subjType);
           if (subjType === 'open_elective') {
@@ -468,7 +465,6 @@ const TakeAttendance = () => {
       if (!branchId || !semesterId) return;
     }
     setSubmitting(true);
-    setSuccessMsg("");
     setErrorMsg("");
     try {
       const attendanceArr = students.map(s => ({ student_id: s.id.toString(), status: !!attendance[s.id] }));
@@ -483,7 +479,10 @@ const TakeAttendance = () => {
       if (sectionId) data.section_id = sectionId.toString();
       const res = await takeAttendance(data);
       if (res.success) {
-        setSuccessMsg("Attendance submitted successfully!");
+        toast({
+          title: "Success",
+          description: "Attendance submitted successfully!",
+        });
       } else {
         setErrorMsg(res.message || "Failed to submit attendance");
       }
@@ -510,7 +509,6 @@ const TakeAttendance = () => {
   const handleAIProcess = async () => {
     if (!branchId || !semesterId || !sectionId || !subjectId || !aiPhoto) return;
     setProcessingAI(true);
-    setSuccessMsg("");
     setErrorMsg("");
     try {
       const res = await aiAttendance({
@@ -522,7 +520,10 @@ const TakeAttendance = () => {
       });
       if (res.success) {
         setAiResults(res.data);
-        setSuccessMsg("AI attendance processed successfully!");
+        toast({
+          title: "Success",
+          description: "AI attendance processed successfully!",
+        });
       } else {
         setErrorMsg(res.message || "Failed to process AI attendance");
       }
@@ -538,17 +539,17 @@ const TakeAttendance = () => {
   };
 
   return (
-    <div className={`p-3 sm:p-6 w-full max-w-full min-h-screen md:min-h-screen h-auto md:h-auto overflow-visible ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <Card className={`${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'} w-full max-w-full` }>
+    <div className={`w-full max-w-full min-h-screen md:min-h-screen h-auto md:h-auto overflow-visible ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <Card className={`${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'} w-full max-w-full`}>
         <CardHeader>
-          <CardTitle className="text-base sm:text-lg">Take Attendance</CardTitle>
+          <CardTitle className="text-2xl font-semibold leading-none tracking-tight text-gray-900">Take Attendance</CardTitle>
           <CardDescription className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Record student attendance for your classes</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4 w-full max-w-full">
             <div className="flex flex-col gap-3 sm:grid sm:grid-cols-2 md:grid-cols-4 w-full">
               <Select value={subjectId?.toString()} onValueChange={v => setSubjectId(Number(v))}>
-                <SelectTrigger className={`${theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'} w-full` }>
+                <SelectTrigger className={`${theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'} w-full`}>
                   <SelectValue placeholder="Select Subject" />
                 </SelectTrigger>
                 <SelectContent className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
@@ -583,18 +584,18 @@ const TakeAttendance = () => {
 
             <Tabs defaultValue="manual">
               <TabsList className={`inline-flex h-10 items-center justify-start gap-2 rounded-md p-1 overflow-auto ${theme === 'dark' ? 'bg-muted text-muted-foreground' : 'bg-gray-100 text-gray-500'}`}>
-                <TabsTrigger 
-                  value="manual" 
-                  className={`inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm ${theme === 'dark' 
-                    ? 'data-[state=active]:bg-[#a259ff] data-[state=active]:text-white data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground' 
+                <TabsTrigger
+                  value="manual"
+                  className={`inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm ${theme === 'dark'
+                    ? 'data-[state=active]:bg-[#a259ff] data-[state=active]:text-white data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground'
                     : 'data-[state=active]:bg-[#a259ff] data-[state=active]:text-white data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
                 >
                   Manual Entry
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="ai" 
-                  className={`inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm ${theme === 'dark' 
-                    ? 'data-[state=active]:bg-[#a259ff] data-[state=active]:text-white data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground' 
+                <TabsTrigger
+                  value="ai"
+                  className={`inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm ${theme === 'dark'
+                    ? 'data-[state=active]:bg-[#a259ff] data-[state=active]:text-white data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground'
                     : 'data-[state=active]:bg-[#a259ff] data-[state=active]:text-white data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
                 >
                   AI Processing
@@ -624,8 +625,8 @@ const TakeAttendance = () => {
                           </thead>
                           <tbody>
                             {students.map((s, idx) => (
-                              <tr 
-                                key={s.id} 
+                              <tr
+                                key={s.id}
                                 className={`border-t ${theme === 'dark' ? 'border-border hover:bg-accent' : 'border-gray-200 hover:bg-gray-50'}`}
                               >
                                 {/* Mobile stacked student cell */}
@@ -640,30 +641,28 @@ const TakeAttendance = () => {
                                   <div className="flex items-center gap-2 flex-wrap justify-end sm:justify-start">
                                     <button
                                       onClick={() => handleAttendance(s.id, true)}
-                                      className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all duration-200 ${
-                                        attendance[s.id] === true 
-                                          ? (theme === 'dark' 
-                                              ? "bg-green-500/20 text-green-400 border-2 border-green-500/50" 
-                                              : "bg-green-100 text-green-600 border-2 border-green-200")
-                                          : (theme === 'dark' 
-                                              ? "bg-muted text-muted-foreground hover:bg-green-500/10 hover:text-green-400 border border-border" 
-                                              : "bg-gray-100 text-gray-500 hover:bg-green-50 hover:text-green-600 border border-gray-200")
-                                      }`}
+                                      className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all duration-200 ${attendance[s.id] === true
+                                          ? (theme === 'dark'
+                                            ? "bg-green-500/20 text-green-400 border-2 border-green-500/50"
+                                            : "bg-green-100 text-green-600 border-2 border-green-200")
+                                          : (theme === 'dark'
+                                            ? "bg-muted text-muted-foreground hover:bg-green-500/10 hover:text-green-400 border border-border"
+                                            : "bg-gray-100 text-gray-500 hover:bg-green-50 hover:text-green-600 border border-gray-200")
+                                        }`}
                                       title="Mark Present"
                                     >
                                       <Check size={16} />
                                     </button>
                                     <button
                                       onClick={() => handleAttendance(s.id, false)}
-                                      className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all duration-200 ${
-                                        attendance[s.id] === false 
-                                          ? (theme === 'dark' 
-                                              ? "bg-red-500/20 text-red-400 border-2 border-red-500/50" 
-                                              : "bg-red-100 text-red-600 border-2 border-red-200")
-                                          : (theme === 'dark' 
-                                              ? "bg-muted text-muted-foreground hover:bg-red-500/10 hover:text-red-400 border border-border" 
-                                              : "bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-600 border border-gray-200")
-                                      }`}
+                                      className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full transition-all duration-200 ${attendance[s.id] === false
+                                          ? (theme === 'dark'
+                                            ? "bg-red-500/20 text-red-400 border-2 border-red-500/50"
+                                            : "bg-red-100 text-red-600 border-2 border-red-200")
+                                          : (theme === 'dark'
+                                            ? "bg-muted text-muted-foreground hover:bg-red-500/10 hover:text-red-400 border border-border"
+                                            : "bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-600 border border-gray-200")
+                                        }`}
                                       title="Mark Absent"
                                     >
                                       <X size={16} />
@@ -710,11 +709,11 @@ const TakeAttendance = () => {
 
                       <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
                         <div className={`text-sm sm:text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                          {Object.keys(attendance).filter(key => attendance[Number(key)] === true).length} Present, 
+                          {Object.keys(attendance).filter(key => attendance[Number(key)] === true).length} Present,
                           {Object.keys(attendance).filter(key => attendance[Number(key)] === false).length} Absent
                         </div>
-                        <Button 
-                          onClick={handleSubmit} 
+                        <Button
+                          onClick={handleSubmit}
                           disabled={submitting}
                           className="w-full sm:w-auto flex items-center justify-center gap-2 text-sm sm:text-base font-medium px-4 py-2 rounded-md transition bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-md"
                         >
@@ -729,7 +728,6 @@ const TakeAttendance = () => {
                         </Button>
                       </div>
 
-                      {successMsg && <div className={`text-green-400 text-sm p-3 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{successMsg}</div>}
                       {errorMsg && <div className={`text-red-400 text-sm p-3 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{errorMsg}</div>}
                     </div>
                   </div>
@@ -737,7 +735,7 @@ const TakeAttendance = () => {
                   <div className={theme === 'dark' ? 'text-muted-foreground mt-4' : 'text-gray-500 mt-4'}>Select class details to load students.</div>
                 )}
               </TabsContent>
-              
+
               {/* AI Tab */}
               <TabsContent value="ai">
                 {loadingStudents ? (
@@ -764,11 +762,10 @@ const TakeAttendance = () => {
                           />
                           <label
                             htmlFor="photo-upload"
-                            className={`w-full flex-1 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer text-center transition ${
-                              theme === 'dark'
+                            className={`w-full flex-1 px-4 py-2 text-sm font-medium rounded-md border cursor-pointer text-center transition ${theme === 'dark'
                                 ? 'border-border text-foreground hover:bg-accent'
                                 : 'border-gray-300 text-gray-700 hover:bg-gray-100'
-                            }`}
+                              }`}
                           >
                             {aiPhoto ? aiPhoto.name : 'Upload Photo'}
                           </label>
@@ -851,7 +848,6 @@ const TakeAttendance = () => {
                         </ul>
                       </div>
                     </div>
-                    {successMsg && <div className={`text-green-400 text-sm p-3 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{successMsg}</div>}
                     {errorMsg && <div className={`text-red-400 text-sm p-3 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>{errorMsg}</div>}
                   </div>
                 ) : (

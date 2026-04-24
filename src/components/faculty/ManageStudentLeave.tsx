@@ -168,7 +168,7 @@ const ManageStudentLeave: React.FC<ManageStudentLeaveProps> = ({ proctorStudents
     <div className={`p-4 sm:p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}>
         <CardHeader>
-          <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Approvals</CardTitle>
+          <CardTitle className={`text-2xl font-semibold leading-none tracking-tight text-gray-900'}`}>Leave Approvals</CardTitle>
           <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Review and manage student leave requests</p>
         </CardHeader>
         <CardContent className="overflow-x-auto">

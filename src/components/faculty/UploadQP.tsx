@@ -537,7 +537,13 @@ const UploadQP = () => {
                         <Input value={q.maxMarks} onChange={e => updateQuestion(q.id, 'maxMarks', e.target.value)} className="w-20" />
                         <Input value={q.co} onChange={e => updateQuestion(q.id, 'co', e.target.value)} className="w-24" />
                         <Input value={q.bloomsLevel} onChange={e => updateQuestion(q.id, 'bloomsLevel', e.target.value)} className="w-24" />
-                        <Button variant="ghost" onClick={() => removeQuestion(q.id)}><Trash2 size={16} /></Button>
+                        <Button 
+                          variant="ghost" 
+                          onClick={() => removeQuestion(q.id)}
+                          className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
                       </div>
                     ))}
                     <div className="flex gap-3 mt-4">

@@ -294,7 +294,7 @@ const StudentInfoScanner = () => {
       {/* Search Card */}
       <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm mb-6' : 'bg-white text-gray-900 border-gray-200 shadow-sm mb-6'}`}>
         <CardHeader>
-          <CardTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Search Student</CardTitle>
+          <CardTitle className={`text-2xl font-semibold leading-none tracking-tight text-gray-900'}`}>Search Student</CardTitle>
           <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Enter USN or use scanner to find student information</p>
         </CardHeader>
         <CardContent>

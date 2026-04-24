@@ -327,7 +327,7 @@ const COAttainment = () => {
   return (
     <Card className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}>
       <CardHeader className="p-4 sm:p-6">
-        <CardTitle className="text-lg sm:text-xl lg:text-2xl font-bold">CO Attainment Calculation</CardTitle>
+        <CardTitle className="text-2xl font-semibold leading-none tracking-tight text-gray-900">CO Attainment Calculation</CardTitle>
       </CardHeader>
       <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">

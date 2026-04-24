@@ -488,7 +488,7 @@ const StudyMaterials = () => {
   return (
     <div className={`w-full ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
       <div className="flex justify-between items-center mb-4 mt-4 gap-2">
-        <h1 className="text-xl font-semibold">Study Materials</h1>
+        <h1 className="text-2xl font-semibold leading-none tracking-tight text-gray-900">Study Materials</h1>
         <Button
           onClick={() => setShowUploadModal(true)}
           className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-1 transition-all duration-200 ease-in-out transform hover:scale-105 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}

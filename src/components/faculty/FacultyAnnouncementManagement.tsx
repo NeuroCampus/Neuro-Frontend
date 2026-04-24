@@ -202,10 +202,10 @@ const FacultyAnnouncementManagement = () => {
     <div className="w-full max-w-7xl mx-auto p-4 space-y-6">
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-2xl font-semibold leading-none tracking-tight text-gray-900">
             Announcements for Proctor Students
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-gray-600 text-sm">
             Create and manage announcements for your proctor group
           </p>
         </div>
@@ -218,7 +218,7 @@ const FacultyAnnouncementManagement = () => {
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="text-2xl font-semibold leading-none tracking-tight text-gray-900">
                 {editingId
                   ? "Edit Announcement"
                   : "Create Announcement for Proctor Students"}
