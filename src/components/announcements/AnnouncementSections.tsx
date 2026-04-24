@@ -229,36 +229,56 @@ export const AnnouncementSections = ({
 }: AnnouncementSectionsProps) => {
   const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("my");
+  const [showExpired, setShowExpired] = useState(false);
+
+  const filteredMyAnnouncements = showExpired 
+    ? myAnnouncements 
+    : myAnnouncements.filter(a => !isExpired(a.expires_at));
+    
+  const filteredReceivedAnnouncements = showExpired 
+    ? receivedAnnouncements 
+    : receivedAnnouncements.filter(a => !isExpired(a.expires_at));
 
   const totalUnread = receivedAnnouncements.filter(
-    (a) => !a.is_read
+    (a) => !a.is_read && !isExpired(a.expires_at)
   ).length;
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="my" className="gap-2">
-          My Announcements
-          {myAnnouncements.length > 0 && (
-            <Badge variant="secondary" className="text-xs">
-              {myAnnouncements.length}
-            </Badge>
-          )}
-        </TabsTrigger>
-        <TabsTrigger value="received" className="gap-2">
-          Received
-          {totalUnread > 0 && (
-            <Badge className="bg-blue-600 text-white text-xs">
-              {totalUnread}
-            </Badge>
-          )}
-          {receivedAnnouncements.length > 0 && (
-            <Badge variant="secondary" className="text-xs ml-1">
-              {receivedAnnouncements.length}
-            </Badge>
-          )}
-        </TabsTrigger>
-      </TabsList>
+      <div className="flex items-center justify-between mb-4">
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsTrigger value="my" className="gap-2">
+            My Announcements
+            {filteredMyAnnouncements.length > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {filteredMyAnnouncements.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="received" className="gap-2">
+            Received
+            {totalUnread > 0 && (
+              <Badge className="bg-blue-600 text-white text-xs">
+                {totalUnread}
+              </Badge>
+            )}
+            {filteredReceivedAnnouncements.length > 0 && (
+              <Badge variant="secondary" className="text-xs ml-1">
+                {filteredReceivedAnnouncements.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowExpired(!showExpired)}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {showExpired ? "Hide Expired" : "Show Expired"}
+        </Button>
+      </div>
 
       <TabsContent value="my" className="space-y-4 mt-6">
         {loading ? (
@@ -275,7 +295,7 @@ export const AnnouncementSections = ({
           </Card>
         ) : (
           <div className="grid gap-4">
-            {myAnnouncements.map((announcement) => (
+            {filteredMyAnnouncements.map((announcement) => (
               <AnnouncementCard
                 key={announcement.id}
                 announcement={announcement}
@@ -305,7 +325,7 @@ export const AnnouncementSections = ({
           </Card>
         ) : (
           <div className="grid gap-4">
-            {receivedAnnouncements.map((announcement) => (
+            {filteredReceivedAnnouncements.map((announcement) => (
               <AnnouncementCard
                 key={announcement.id}
                 announcement={announcement}
