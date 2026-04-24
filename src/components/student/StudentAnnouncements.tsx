@@ -82,11 +82,11 @@ const StudentAnnouncements = () => {
     const response = await fetchAnnouncements(1, 100);
 
     if (response.success && response.data) {
-      let receivedFiltered = response.data.received_announcements?.results || [];
-
-      // Apply filters
       const applyFilters = (announcements: Announcement[]) => {
         let filtered = [...announcements];
+
+        // Filter out expired
+        filtered = filtered.filter((a) => !isExpired(a.expires_at));
 
         // Filter by search query
         if (searchQuery.trim()) {
@@ -112,7 +112,8 @@ const StudentAnnouncements = () => {
         return filtered;
       };
 
-      setReceivedAnnouncements(applyFilters(receivedFiltered));
+      const rawReceived = response.data.received_announcements?.results || [];
+      setReceivedAnnouncements(applyFilters(rawReceived));
       setError(null);
     } else {
       setError(response.message || "Failed to load announcements");
