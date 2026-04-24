@@ -73,3 +73,7 @@ django_backend/credentials.json
 venv/
 .venv/
 .venv/*
+
+# UI/UX Pro Max
+.agent/
+.agent/*    
