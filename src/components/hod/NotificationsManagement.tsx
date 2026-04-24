@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { useToast } from "../ui/use-toast";
 import { sendNotification, getNotificationsBootstrap, manageProfile } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
+import { SkeletonCard, SkeletonTable } from "../ui/skeleton";
 
 interface Notification {
   id: string;
@@ -203,7 +204,17 @@ const NotificationsManagement = () => {
   };
   
   if (loading && !notifications.length && !sentNotifications.length) {
-    return <div className={`text-center py-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading...</div>;
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 min-h-screen">
+        <Card className="md:col-span-2 p-6">
+          <SkeletonTable rows={10} cols={3} />
+        </Card>
+        <SkeletonCard />
+        <Card className="md:col-span-3 p-6">
+          <SkeletonTable rows={5} cols={3} />
+        </Card>
+      </div>
+    );
   }
 
   if (error) {

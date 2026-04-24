@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Loader2, Plus } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
+import { SkeletonCard } from "@/components/ui/skeleton";
 import {
   fetchAnnouncements,
   createAnnouncement,
@@ -357,8 +358,11 @@ const HODAnnouncementManagement = () => {
 
       {/* Loading State */}
       {loading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
         </div>
       )}
 

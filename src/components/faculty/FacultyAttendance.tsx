@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useTheme } from "@/context/ThemeContext";
+import { SkeletonCard, SkeletonList } from "@/components/ui/skeleton";
 import { markFacultyAttendance, getFacultyAttendanceRecords, MarkFacultyAttendanceRequest, FacultyAttendanceRecord } from "@/utils/faculty_api";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -208,8 +209,10 @@ const FacultyAttendance = () => {
 
   if (loading) {
     return (
-      <div className={` text-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-        Loading attendance data...
+      <div className="space-y-6">
+        <SkeletonCard className="h-64" />
+        <SkeletonCard className="h-48" />
+        <SkeletonCard className="h-96" />
       </div>
     );
   }
@@ -481,7 +484,7 @@ const FacultyAttendance = () => {
         </CardHeader>
         <CardContent>
           {historyLoading ? (
-            <p className={`text-center py-8 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Loading history...</p>
+            <SkeletonList items={5} />
           ) : historyRecords.length > 0 ? (
             <>
               <div className="space-y-3">

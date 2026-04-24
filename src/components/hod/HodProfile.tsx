@@ -9,6 +9,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { showSuccessAlert, showErrorAlert, showInfoAlert } from "../../utils/sweetalert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Eye, EyeOff } from "lucide-react";
+import { SkeletonCard } from "../ui/skeleton";
 import { fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
 
@@ -292,8 +293,12 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
     }
   };
 
-  if (loading) {
-    return <div className={`text-center py-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading...</div>;
+  if (loading && !profile.first_name) {
+    return (
+      <div className="min-h-screen flex justify-center items-start p-6">
+        <SkeletonCard className="w-full max-w-4xl h-[500px]" />
+      </div>
+    );
   }
 
   const renderTabContent = () => {

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, Eye, Download } from "lucide-react";
+import { SkeletonTable } from "../ui/skeleton";
 import { useTheme } from "../../context/ThemeContext";
 import { useToast } from "../../hooks/use-toast";
 import { API_ENDPOINT } from "../../utils/config";
@@ -334,7 +335,11 @@ const QPApprovals = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-6">Loading pending QPs...</div>;
+    return (
+      <Card className="p-6">
+        <SkeletonTable rows={5} cols={4} />
+      </Card>
+    );
   }
 
   return (

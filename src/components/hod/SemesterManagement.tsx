@@ -5,6 +5,7 @@ import { Button } from "../ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";
 import { useToast } from "../ui/use-toast";
 import { Pencil, Trash2, Plus, X } from "lucide-react";
+import { SkeletonTable } from "../ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogFooter } from "../ui/dialog";
 import { getSemesters, manageSemesters, manageSections, manageProfile, getSemesterBootstrap } from "../../utils/hod_api";
 import { useHODBootstrap } from "../../context/HODBootstrapContext";
@@ -318,7 +319,9 @@ const SemesterManagement = () => {
           
 
           {loading ? (
-            <div className={`text-center py-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading...</div>
+            <div className="py-4">
+              <SkeletonTable rows={10} cols={4} />
+            </div>
           ) : filteredSemesters.length === 0 ? (
             <div className={`text-center py-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>No semesters found.</div>
           ) : (

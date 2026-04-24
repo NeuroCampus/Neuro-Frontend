@@ -43,6 +43,7 @@ import {
   getPromotionBootstrap,
 } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
+import { SkeletonTable } from "../ui/skeleton";
 
 interface Semester {
   id: string;
@@ -730,6 +731,12 @@ const PromotionPage = ({ theme, onTabChange }: { theme: string; onTabChange: (ta
           </div>
         </CardContent>
       </Card>
+
+      {state.isLoading && state.students.length === 0 && (
+        <Card className="p-6">
+          <SkeletonTable rows={10} cols={6} />
+        </Card>
+      )}
 
       {/* Student List */}
       {state.students.length > 0 && (

@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { Skeleton, SkeletonTable, SkeletonCard } from "../ui/skeleton";
 import DashboardCard from "../common/DashboardCard";
 import { FaUserGraduate, FaUserCheck, FaUserTimes } from "react-icons/fa";
 import { useToast } from "@/components/ui/use-toast";
@@ -381,8 +382,19 @@ const ProctorStudents = () => {
   const assigned = state.totalAssigned;
   const unassigned = state.totalUnassigned;
 
-  if (state.loading && !state.students.length) {
-    return <div className={`text-center py-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading...</div>;
+  if (state.loading && !state.students.length && !state.branchId) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+        <Card className="p-6">
+          <SkeletonTable rows={10} cols={5} />
+        </Card>
+      </div>
+    );
   }
 
   if (state.error) {
@@ -591,7 +603,13 @@ const ProctorStudents = () => {
                 </tr>
               </thead>
               <tbody>
-                {currentStudents.length === 0 ? (
+                {state.loading ? (
+                  <tr>
+                    <td colSpan={state.editMode ? 6 : 5} className="p-4">
+                      <SkeletonTable rows={10} cols={state.editMode ? 6 : 5} />
+                    </td>
+                  </tr>
+                ) : currentStudents.length === 0 ? (
                   <tr>
                     <td colSpan={state.editMode ? 6 : 5} className={`text-center py-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                       No students found

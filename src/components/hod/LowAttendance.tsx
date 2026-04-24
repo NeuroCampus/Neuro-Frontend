@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { SkeletonCard, SkeletonTable } from "../ui/skeleton";
 import { manageSections, sendNotification, getLowAttendanceStudents, getHODDashboardBootstrap } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -543,41 +544,51 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
       <div className={`min-h-screen text-base w-full max-w-none mx-auto sm:px-0 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
-          <Card className={`${theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'} w-full relative`}>
-            <CardHeader className="pb-2 px-3 sm:px-4">
-              <CardTitle className={`text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Total Students</CardTitle>
-            </CardHeader>
-            <CardContent className={`flex items-center justify-between text-3xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-              <span className="flex-1">{totalStudents}</span>
-            </CardContent>
-            <div className={`absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-14 h-14 rounded-full ${theme === 'dark' ? 'bg-blue-900/10' : 'bg-blue-50'}`}>
-              <FaUsers className={theme === 'dark' ? 'text-blue-400 w-8 h-8 block' : 'text-blue-600 w-8 h-8 block'} />
-            </div>
-          </Card>
+          {state.loading && state.students.length === 0 ? (
+            <>
+              <SkeletonCard className="h-32" />
+              <SkeletonCard className="h-32" />
+              <SkeletonCard className="h-32" />
+            </>
+          ) : (
+            <>
+              <Card className={`${theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'} w-full relative`}>
+                <CardHeader className="pb-2 px-3 sm:px-4">
+                  <CardTitle className={`text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Total Students</CardTitle>
+                </CardHeader>
+                <CardContent className={`flex items-center justify-between text-3xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                  <span className="flex-1">{totalStudents}</span>
+                </CardContent>
+                <div className={`absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-14 h-14 rounded-full ${theme === 'dark' ? 'bg-blue-900/10' : 'bg-blue-50'}`}>
+                  <FaUsers className={theme === 'dark' ? 'text-blue-400 w-8 h-8 block' : 'text-blue-600 w-8 h-8 block'} />
+                </div>
+              </Card>
 
-          <Card className={`${theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'} w-full relative`}>
-            <CardHeader className="pb-2 px-3 sm:px-4">
-              <CardTitle className={`text-base ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>Low Attendance</CardTitle>
-            </CardHeader>
-            <CardContent className={`flex items-center justify-between text-3xl font-bold ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
-              <span className="flex-1">{lowAttendanceCount}</span>
-            </CardContent>
-            <div className={`absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-14 h-14 rounded-full ${theme === 'dark' ? 'bg-red-900/10' : 'bg-red-50'}`}>
-              <FaExclamationTriangle className={theme === 'dark' ? 'text-red-400 w-8 h-8 block' : 'text-red-600 w-8 h-8 block'} />
-            </div>
-          </Card>
+              <Card className={`${theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'} w-full relative`}>
+                <CardHeader className="pb-2 px-3 sm:px-4">
+                  <CardTitle className={`text-base ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>Low Attendance</CardTitle>
+                </CardHeader>
+                <CardContent className={`flex items-center justify-between text-3xl font-bold ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
+                  <span className="flex-1">{lowAttendanceCount}</span>
+                </CardContent>
+                <div className={`absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-14 h-14 rounded-full ${theme === 'dark' ? 'bg-red-900/10' : 'bg-red-50'}`}>
+                  <FaExclamationTriangle className={theme === 'dark' ? 'text-red-400 w-8 h-8 block' : 'text-red-600 w-8 h-8 block'} />
+                </div>
+              </Card>
 
-          <Card className={`${theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'} w-full relative`}>
-            <CardHeader className="pb-2 px-3 sm:px-4">
-              <CardTitle className={`text-base ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>Avg Attendance</CardTitle>
-            </CardHeader>
-            <CardContent className={`flex items-center justify-between text-3xl font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
-              <span className="flex-1">{avgAttendance}%</span>
-            </CardContent>
-            <div className={`absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-14 h-14 rounded-full ${theme === 'dark' ? 'bg-blue-900/10' : 'bg-blue-50'}`}>
-              <FaChartLine className={theme === 'dark' ? 'text-blue-400 w-8 h-8 block' : 'text-blue-600 w-8 h-8 block'} />
-            </div>
-          </Card>
+              <Card className={`${theme === 'dark' ? 'bg-card border border-border shadow-sm' : 'bg-white border border-gray-200 shadow-sm'} w-full relative`}>
+                <CardHeader className="pb-2 px-3 sm:px-4">
+                  <CardTitle className={`text-base ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>Avg Attendance</CardTitle>
+                </CardHeader>
+                <CardContent className={`flex items-center justify-between text-3xl font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+                  <span className="flex-1">{avgAttendance}%</span>
+                </CardContent>
+                <div className={`absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-14 h-14 rounded-full ${theme === 'dark' ? 'bg-blue-900/10' : 'bg-blue-50'}`}>
+                  <FaChartLine className={theme === 'dark' ? 'text-blue-400 w-8 h-8 block' : 'text-blue-600 w-8 h-8 block'} />
+                </div>
+              </Card>
+            </>
+          )}
         </div>
 
         {/* Main Management Card */}
@@ -652,9 +663,8 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
           <CardContent className="pt-4">
             {/* Students Table */}
             {state.loading ? (
-              <div className="flex justify-center items-center py-12">
-                <Loader2 className="w-6 h-6 sm:w-8 sm:h-8 animate-spin" />
-                <span className={`ml-2 text-base ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading students...</span>
+              <div className="py-4">
+                <SkeletonTable rows={10} cols={5} />
               </div>
             ) : state.students.length > 0 ? (
               <div className="space-y-4">

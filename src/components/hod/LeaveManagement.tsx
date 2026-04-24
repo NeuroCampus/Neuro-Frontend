@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CheckCircle, XCircle } from "lucide-react";
+import { SkeletonTable, SkeletonCard } from "../ui/skeleton";
 import Swal from 'sweetalert2';
 import { manageLeaves, manageProfile, getFacultyLeavesBootstrap } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
@@ -345,7 +346,13 @@ const LeaveManagement = () => {
 
           {/* Mobile: Stacked Cards View */}
           <div className="md:hidden space-y-3">
-            {leaveRequests.length === 0 ? (
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[...Array(6)].map((_, i) => (
+          <SkeletonCard key={i} className="h-[200px]" />
+        ))}
+      </div>
+            ) : leaveRequests.length === 0 ? (
               <div className={`text-center py-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                 No leave requests found
               </div>
@@ -417,93 +424,98 @@ const LeaveManagement = () => {
             )}
           </div>
 
-          {/* Desktop / Tablet: Table View */}
           <div className={`hidden md:block overflow-x-auto border rounded-lg ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
-            <table className="w-full text-sm">
-              <thead className={`${theme === 'dark' ? 'bg-card text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-                <tr className={`border-b ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
-                  <th className="px-4 py-3 text-left font-semibold">Faculty</th>
-                  <th className="px-4 py-3 text-left font-semibold">Period</th>
-                  <th className="px-4 py-3 text-left font-semibold">Reason</th>
-                  <th className="px-4 py-3 text-left font-semibold">Status</th>
-                  <th className="px-4 py-3 text-left font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {leaveRequests.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className={`px-4 py-6 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                      No leave requests found
-                    </td>
+            {isLoading ? (
+              <div className="p-4">
+                <SkeletonTable rows={10} cols={5} />
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead className={`${theme === 'dark' ? 'bg-card text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+                  <tr className={`border-b ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
+                    <th className="px-4 py-3 text-left font-semibold">Faculty</th>
+                    <th className="px-4 py-3 text-left font-semibold">Period</th>
+                    <th className="px-4 py-3 text-left font-semibold">Reason</th>
+                    <th className="px-4 py-3 text-left font-semibold">Status</th>
+                    <th className="px-4 py-3 text-left font-semibold">Actions</th>
                   </tr>
-                ) : (
-                  leaveRequests.map((row, index) => (
-                    <tr key={row.id} className={`border-b transition-colors duration-200 ${theme === 'dark' ? 'border-border hover:bg-accent' : 'border-gray-200 hover:bg-gray-50'}`}>
-                      <td className={`px-4 py-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-                        <div>
-                          <p className="font-medium">{row.name}</p>
-                          <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{row.dept}</p>
-                        </div>
-                      </td>
-                      <td className={`px-4 py-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{row.period}</td>
-                      <td className="px-4 py-3">
-                        <button
-                          onClick={() => setViewReason(row.reason)}
-                          className={`text-sm font-medium px-2 py-1 rounded-md ${theme === 'dark' ? 'bg-muted/10 text-foreground border border-border' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
-                        >
-                          View
-                        </button>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            row.status === "Pending"
-                              ? theme === 'dark' ? 'bg-yellow-900 text-yellow-200' : 'bg-yellow-100 text-yellow-800'
-                              : row.status === "Approved"
-                              ? theme === 'dark' ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-700'
-                              : theme === 'dark' ? 'bg-red-900 text-red-200' : 'bg-red-100 text-red-700'
-                          }`}
-                        >
-                          {row.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        {row.status === "Pending" ? (
-                          <div className="flex flex-col md:flex-row gap-2">
-                            <Button
-                              variant="outline"
-                              className={`px-3 py-1 text-xs flex items-center gap-1 w-full md:w-auto ${
-                                theme === 'dark' 
-                                  ? 'text-green-400 border-green-400 hover:bg-green-900/20' 
-                                  : 'text-green-700 border-green-600 hover:bg-green-100'
-                              }`}
-                              onClick={() => handleApprove(index)}
-                              disabled={isLoading}
-                            >
-                              <CheckCircle size={16} /> Approve
-                            </Button>
-                            <Button
-                              variant="outline"
-                              className={`px-3 py-1 text-xs flex items-center gap-1 w-full md:w-auto ${
-                                theme === 'dark' 
-                                  ? 'text-red-400 border-red-400 hover:bg-red-900/20' 
-                                  : 'text-red-700 border-red-600 hover:bg-red-100'
-                              }`}
-                              onClick={() => handleReject(index)}
-                              disabled={isLoading}
-                            >
-                              <XCircle size={16} /> Reject
-                            </Button>
-                          </div>
-                        ) : (
-                          <span className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No action needed</span>
-                        )}
+                </thead>
+                <tbody>
+                  {leaveRequests.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className={`px-4 py-6 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                        No leave requests found
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    leaveRequests.map((row, index) => (
+                      <tr key={row.id} className={`border-b transition-colors duration-200 ${theme === 'dark' ? 'border-border hover:bg-accent' : 'border-gray-200 hover:bg-gray-50'}`}>
+                        <td className={`px-4 py-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                          <div>
+                            <p className="font-medium">{row.name}</p>
+                            <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{row.dept}</p>
+                          </div>
+                        </td>
+                        <td className={`px-4 py-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{row.period}</td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => setViewReason(row.reason)}
+                            className={`text-sm font-medium px-2 py-1 rounded-md ${theme === 'dark' ? 'bg-muted/10 text-foreground border border-border' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                          >
+                            View
+                          </button>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              row.status === "Pending"
+                                ? theme === 'dark' ? 'bg-yellow-900 text-yellow-200' : 'bg-yellow-100 text-yellow-800'
+                                : row.status === "Approved"
+                                ? theme === 'dark' ? 'bg-green-900 text-green-200' : 'bg-green-100 text-green-700'
+                                : theme === 'dark' ? 'bg-red-900 text-red-200' : 'bg-red-100 text-red-700'
+                            }`}
+                          >
+                            {row.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {row.status === "Pending" ? (
+                            <div className="flex flex-col md:flex-row gap-2">
+                              <Button
+                                variant="outline"
+                                className={`px-3 py-1 text-xs flex items-center gap-1 w-full md:w-auto ${
+                                  theme === 'dark' 
+                                    ? 'text-green-400 border-green-400 hover:bg-green-900/20' 
+                                    : 'text-green-700 border-green-600 hover:bg-green-100'
+                                }`}
+                                onClick={() => handleApprove(index)}
+                                disabled={isLoading}
+                              >
+                                <CheckCircle size={16} /> Approve
+                              </Button>
+                              <Button
+                                variant="outline"
+                                className={`px-3 py-1 text-xs flex items-center gap-1 w-full md:w-auto ${
+                                  theme === 'dark' 
+                                    ? 'text-red-400 border-red-400 hover:bg-red-900/20' 
+                                    : 'text-red-700 border-red-600 hover:bg-red-100'
+                                }`}
+                                onClick={() => handleReject(index)}
+                                disabled={isLoading}
+                              >
+                                <XCircle size={16} /> Reject
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No action needed</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
 
           {/* Pagination */}

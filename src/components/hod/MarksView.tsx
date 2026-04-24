@@ -18,6 +18,7 @@ import autoTable from "jspdf-autotable";
 import jsPDF from "jspdf";
 import { manageProfile, getStudentPerformance, getSemesters, manageSections, manageSubjects, getMarks, getMarksBootstrap } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
+import { SkeletonChart, SkeletonTable } from "../ui/skeleton";
 
 // Define types for chart components
 interface TooltipProps {
@@ -330,7 +331,12 @@ const MarksView = () => {
         </p>
       </div>
 
-      {state.loading && <p className={`my-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading data...</p>}
+      {state.loading && !state.students.length && (
+        <div className="space-y-6 my-4">
+          <SkeletonChart />
+          <SkeletonTable rows={10} cols={5} />
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-4 my-6">
         <Select

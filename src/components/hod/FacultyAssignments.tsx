@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, ReactNode, Component } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
 import { Button } from "../ui/button";
+import { SkeletonTable } from "../ui/skeleton";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";
 import { useToast } from "../ui/use-toast";
 import { Pencil, Trash2, Loader2 } from "lucide-react";
@@ -810,7 +811,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
               </div>
             </div>
             {(() => {
-              if (state.loading) return <div className={`text-center py-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Loading...</div>;
+              if (state.loading) return <SkeletonTable rows={5} cols={5} />;
               if (!state.filterSemesterId || !state.filterSectionId) return <div className={`text-center py-8 border-2 border-dashed rounded-lg ${theme === 'dark' ? 'border-border text-muted-foreground' : 'border-gray-200 text-gray-500'}`}>Please select a semester and section to view assignments.</div>;
               if (filteredAssignments.length === 0) return <div className={`text-center py-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No assignments found for the selected criteria.</div>;
 

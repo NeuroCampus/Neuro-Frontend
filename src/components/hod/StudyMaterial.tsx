@@ -22,6 +22,7 @@ import {
 import { Download, FileText, UploadCloud, X } from "lucide-react";
 import { uploadStudyMaterial, getStudyMaterials, getBranches, manageSections, getSemesters, manageSubjects } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
+import { SkeletonTable } from "../ui/skeleton";
 
 // Interface for study material from API
 interface ApiStudyMaterial {
@@ -592,11 +593,8 @@ const StudyMaterials = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-10">
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="animate-spin text-[#a259ff]">◌</span>
-                        Loading materials...
-                      </div>
+                    <TableCell colSpan={7} className="p-4">
+                      <SkeletonTable rows={10} cols={7} />
                     </TableCell>
                   </TableRow>
                 ) : filteredMaterials.length === 0 ? (

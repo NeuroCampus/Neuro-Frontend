@@ -7,6 +7,7 @@ import {
 } from "../ui/card";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
+import { SkeletonTable } from "../ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "../ui/dialog";
-import { Pencil, Trash2, UploadCloud, Upload } from "lucide-react";
+import { Pencil, Trash2, UploadCloud, Upload, Loader2 } from "lucide-react";
 // Removed chart imports; performance chart is no longer shown on this page
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
@@ -831,7 +832,6 @@ const StudentManagement = () => {
 
   return (
     <div className={` sm: md: lg: space-y-6 md:space-y-5 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      {state.isLoading && <p className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Loading data...</p>}
       {state.successMessage && (
         <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{state.successMessage}</p>
       )}
@@ -1208,63 +1208,69 @@ const StudentManagement = () => {
             </div>
           </div>
 
-            <div className="overflow-x-auto">
-            <table className="min-w-full text-sm md:text-base text-left">
-              <thead className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-gray-100 text-gray-900 border-gray-300'}>
-                <tr className="border-b">
-                  <th className="py-3 px-3 md:px-4 text-sm md:text-base font-medium">USN</th>
-                  <th className="py-3 px-3 md:px-4 text-sm md:text-base font-medium">Name</th>
-                  <th className="py-3 px-3 md:px-4 text-sm md:text-base font-medium">Email</th>
-                  <th className="hidden sm:table-cell py-3 px-3 md:px-4 text-sm md:text-base font-medium">Phone</th>
-                  <th className="hidden md:table-cell py-3 px-3 md:px-4 text-sm md:text-base font-medium">Section</th>
-                  <th className="py-3 px-3 md:px-4 text-sm md:text-base font-medium">Semester</th>
-                  <th className="py-3 px-3 md:px-4 text-sm md:text-base font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody className={theme === 'dark' ? 'divide-y divide-border' : 'divide-y divide-gray-200'}>
-                {paginatedFilteredStudents.map((student) => (
-                  <tr key={student.usn} className={`${theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-50'} align-middle`}>
-                    <td className="py-3 px-3 md:px-4 text-sm md:text-base">{student.usn}</td>
-                    <td className="py-3 px-3 md:px-4 text-sm md:text-base">{student.name}</td>
-                    <td className="py-3 px-3 md:px-4 text-sm md:text-base">{student.email}</td>
-                    <td className="hidden sm:table-cell py-3 px-3 md:px-4 text-sm md:text-base">{student.phone && student.phone.trim() ? student.phone : '-'}</td>
-                    <td className="hidden md:table-cell py-3 px-3 md:px-4 text-sm md:text-base">Section {student.section}</td>
-                    <td className="py-3 px-3 md:px-4 text-sm md:text-base">{formatSemesterDisplay(student)}</td>
-                    <td className="py-3 px-3 md:px-4 text-sm md:text-base flex gap-2 md:gap-3 items-center">
-                      <button
-                        onClick={() => openEdit(student)}
-                        className={theme === 'dark' ? 'text-primary hover:text-primary/80' : 'text-blue-600 hover:text-blue-800'}
-                        aria-label="Edit student"
-                      >
-                        <Pencil className="w-4 h-4 md:w-5 md:h-5" />
-                      </button>
-                      <button
-                        onClick={() =>
-                          updateState({
-                            selectedStudent: student,
-                            confirmDelete: true,
-                          })
-                        }
-                        className={theme === 'dark' ? 'text-destructive hover:text-destructive/80' : 'text-red-600 hover:text-red-800'}
-                        aria-label="Delete student"
-                      >
-                        <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {paginatedFilteredStudents.length === 0 && (
-              <p className={`text-center mt-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No students found</p>
-            )}
-
-            <div className="text-sm text-gray-500 mt-4">
-              Showing {Math.min((state.currentPage - 1) * state.pageSize + 1, state.totalStudents)} to {Math.min(state.currentPage * state.pageSize, state.totalStudents)} of {state.totalStudents}{" "}
-              students (Page {state.currentPage} of {totalFilteredPages})
+          {state.isLoading ? (
+            <div className="py-4">
+              <SkeletonTable rows={10} cols={7} />
             </div>
-          </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm md:text-base text-left">
+                <thead className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-gray-100 text-gray-900 border-gray-300'}>
+                  <tr className="border-b">
+                    <th className="py-3 px-3 md:px-4 text-sm md:text-base font-medium">USN</th>
+                    <th className="py-3 px-3 md:px-4 text-sm md:text-base font-medium">Name</th>
+                    <th className="py-3 px-3 md:px-4 text-sm md:text-base font-medium">Email</th>
+                    <th className="hidden sm:table-cell py-3 px-3 md:px-4 text-sm md:text-base font-medium">Phone</th>
+                    <th className="hidden md:table-cell py-3 px-3 md:px-4 text-sm md:text-base font-medium">Section</th>
+                    <th className="py-3 px-3 md:px-4 text-sm md:text-base font-medium">Semester</th>
+                    <th className="py-3 px-3 md:px-4 text-sm md:text-base font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className={theme === 'dark' ? 'divide-y divide-border' : 'divide-y divide-gray-200'}>
+                  {paginatedFilteredStudents.map((student) => (
+                    <tr key={student.usn} className={`${theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-50'} align-middle`}>
+                      <td className="py-3 px-3 md:px-4 text-sm md:text-base">{student.usn}</td>
+                      <td className="py-3 px-3 md:px-4 text-sm md:text-base">{student.name}</td>
+                      <td className="py-3 px-3 md:px-4 text-sm md:text-base">{student.email}</td>
+                      <td className="hidden sm:table-cell py-3 px-3 md:px-4 text-sm md:text-base">{student.phone && student.phone.trim() ? student.phone : '-'}</td>
+                      <td className="hidden md:table-cell py-3 px-3 md:px-4 text-sm md:text-base">Section {student.section}</td>
+                      <td className="py-3 px-3 md:px-4 text-sm md:text-base">{formatSemesterDisplay(student)}</td>
+                      <td className="py-3 px-3 md:px-4 text-sm md:text-base flex gap-2 md:gap-3 items-center">
+                        <button
+                          onClick={() => openEdit(student)}
+                          className={theme === 'dark' ? 'text-primary hover:text-primary/80' : 'text-blue-600 hover:text-blue-800'}
+                          aria-label="Edit student"
+                        >
+                          <Pencil className="w-4 h-4 md:w-5 md:h-5" />
+                        </button>
+                        <button
+                          onClick={() =>
+                            updateState({
+                              selectedStudent: student,
+                              confirmDelete: true,
+                            })
+                          }
+                          className={theme === 'dark' ? 'text-destructive hover:text-destructive/80' : 'text-red-600 hover:text-red-800'}
+                          aria-label="Delete student"
+                        >
+                          <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {paginatedFilteredStudents.length === 0 && (
+                <p className={`text-center mt-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No students found</p>
+              )}
+
+              <div className="text-sm text-gray-500 mt-4">
+                Showing {Math.min((state.currentPage - 1) * state.pageSize + 1, state.totalStudents)} to {Math.min(state.currentPage * state.pageSize, state.totalStudents)} of {state.totalStudents}{" "}
+                students (Page {state.currentPage} of {totalFilteredPages})
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-end items-center gap-2 md:gap-3 mt-4">
             <Button
@@ -1530,7 +1536,7 @@ const StudentManagement = () => {
               disabled={!state.selectedFile || state.isLoading}
               className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition disabled:opacity-50 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#9147e0] hover:border-[#9147e0] hover:text-white"
             >
-              {state.isLoading ? "Enrolling..." : "Enroll Students"}
+              {state.isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enroll Students"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1623,7 +1629,7 @@ const StudentManagement = () => {
                     state.editSections.length === 0 || !state.editForm.semester
                       ? "Select semester first"
                       : state.isEditSectionsLoading
-                      ? "Loading sections..."
+                      ? <Loader2 className="h-4 w-4 animate-spin mx-auto" />
                       : "Select Section"
                   }
                 />

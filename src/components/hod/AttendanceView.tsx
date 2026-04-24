@@ -18,6 +18,7 @@ import {
 import { useToast } from "../ui/use-toast";
 import { manageProfile, manageSections, manageSubjects, getBranches, getSemesters, getAttendanceBootstrap } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
+import { SkeletonTable } from "../ui/skeleton";
 
 interface Student {
   student_id: string;
@@ -266,8 +267,12 @@ const currentStudents = filteredStudents;  const handlePrev = () => {
     return subject ? subject.name : "";
   };
 
-  if (state.loading) {
-    return <div className={`text-center py-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading...</div>;
+  if (state.loading && state.students.length === 0) {
+    return (
+      <Card className="p-6">
+        <SkeletonTable rows={10} cols={5} />
+      </Card>
+    );
   }
 
   if (state.error) {

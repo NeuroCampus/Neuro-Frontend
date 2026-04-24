@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Calendar, Users, CheckCircle, XCircle, Clock } from "lucide-react";
 import { getFacultyAttendanceToday, getFacultyAttendanceRecords } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
+import { SkeletonCard, SkeletonTable } from "../ui/skeleton";
 import Swal from "sweetalert2";
 
 interface FacultyAttendanceTodayRecord {
@@ -334,8 +335,14 @@ const FacultyAttendanceView: React.FC = () => {
       </div>
 
       {isLoading && (
-        <div className="flex justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </div>
+          <SkeletonTable rows={10} cols={4} />
         </div>
       )}
 

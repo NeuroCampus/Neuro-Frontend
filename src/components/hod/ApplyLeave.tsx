@@ -7,6 +7,7 @@ import { Label } from "../ui/label";
 import { CalendarIcon, Filter as FilterIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { manageHODLeaves, getLeaveBootstrap } from "../../utils/hod_api";
+import { SkeletonCard, SkeletonTable } from "../ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
@@ -424,7 +425,11 @@ const ApplyLeave = () => {
             {/* Mobile: stacked cards */}
             <div className="md:hidden space-y-3">
               {loading ? (
-                <p className={`text-sm py-6 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Loading...</p>
+                <div className="space-y-3">
+                  <SkeletonCard />
+                  <SkeletonCard />
+                  <SkeletonCard />
+                </div>
               ) : filteredLeaves.length === 0 ? (
                 <p className={`text-sm py-6 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No applications found.</p>
               ) : (
@@ -469,8 +474,8 @@ const ApplyLeave = () => {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={4} className={`text-center py-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                      Loading...
+                    <td colSpan={4} className="p-4">
+                      <SkeletonTable rows={5} cols={4} />
                     </td>
                   </tr>
                 ) : filteredLeaves.length === 0 ? (

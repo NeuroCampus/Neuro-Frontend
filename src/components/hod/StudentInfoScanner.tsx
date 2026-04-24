@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useTheme } from "@/context/ThemeContext";
 import { Search, User, Calendar, BookOpen, TrendingUp, CreditCard, Users, Clock, MapPin, Phone, Mail, Heart, QrCode, X, Camera, AlertCircle } from "lucide-react";
+import { SkeletonCard } from "@/components/ui/skeleton";
 import { showErrorAlert, showSuccessAlert } from "../../utils/sweetalert";
 import { BrowserMultiFormatReader, NotFoundException, ChecksumException, FormatException } from '@zxing/library';
 import { API_ENDPOINT } from "@/utils/config";
@@ -450,6 +451,15 @@ const StudentInfoScanner = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Loading Skeletons */}
+      {loading && !studentData && (
+        <div className="space-y-6">
+          <SkeletonCard className="h-64" />
+          <SkeletonCard className="h-32" />
+          <SkeletonCard className="h-64" />
+        </div>
+      )}
 
       {/* Student Data Display */}
       {studentData && studentData.success && (

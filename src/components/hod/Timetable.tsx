@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
+import { Skeleton, SkeletonTable } from "../ui/skeleton";
 import { DownloadIcon, EditIcon, User } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import jsPDF from "jspdf";
@@ -281,7 +282,7 @@ const EditModal = ({ classDetails, onSave, onCancel, onDelete, subjects, faculty
             <User className={`w-4 h-4 ${theme === 'dark' ? 'text-primary' : 'text-primary'}`} />
             <span className="font-medium">
               {isLoadingAssignments ? (
-                <span className="animate-pulse">Loading assignment...</span>
+                <Skeleton className="h-4 w-32" />
               ) : (
                 newClassDetails.professor || <span className="text-destructive/70 italic">No professor assigned</span>
               )}
@@ -839,8 +840,12 @@ const Timetable = () => {
 
 
 
-  if (state.loading) {
-    return <div className="text-center py-6">Loading...</div>;
+  if (state.loading && state.timetable.length === 0) {
+    return (
+      <div className="bg-background text-foreground p-6">
+        <SkeletonTable rows={10} cols={7} />
+      </div>
+    );
   }
 
   if (state.error) {

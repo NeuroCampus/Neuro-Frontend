@@ -5,11 +5,13 @@ import { Button } from "../ui/button";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "../ui/select";
 import { Checkbox } from "../ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
+import { SkeletonCard } from "../ui/skeleton";
 import { manageStudents, getElectiveEnrollmentBootstrap } from "../../utils/hod_api";
 import { useHODBootstrap } from "../../context/HODBootstrapContext";
 import { useTheme } from "../../context/ThemeContext";
 import { API_ENDPOINT } from "../../utils/config";
 import { fetchWithTokenRefresh } from "../../utils/authService";
+import { Loader2 } from "lucide-react";
 
 const StudentEnrollment = () => {
   useHODBootstrap();
@@ -323,7 +325,6 @@ const StudentEnrollment = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                  {electiveLoading && <div className="text-sm text-muted-foreground mt-1 animate-pulse">Loading subjects...</div>}
                   {electivePage < electiveTotalPages && (
                     <Button
                       variant="outline"
@@ -332,7 +333,7 @@ const StudentEnrollment = () => {
                       disabled={electiveLoading}
                       className="w-full mt-2 bg-purple-600 hover:bg-purple-700 text-white border-purple-600 shadow-sm"
                     >
-                      {electiveLoading ? "Loading..." : "Load More Subjects"}
+                      {electiveLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Load More Subjects"}
                     </Button>
                   )}
                 </div>
@@ -361,14 +362,14 @@ const StudentEnrollment = () => {
                 disabled={!selectedSubjectId || isLoading || !branchId}
                 className="w-full sm:w-auto px-6 bg-[#a259ff] hover:bg-[#9147e0] text-white shadow-md transition-all active:scale-95"
               >
-                {isLoading ? "Searching..." : "Search"}
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
               </Button>
               <Button 
                 onClick={save} 
                 disabled={saving || students.length === 0}
                 className="w-full sm:w-auto px-6 bg-[#a259ff] hover:bg-[#9147e0] text-white shadow-md transition-all active:scale-95"
               >
-                {saving ? "Saving..." : "Save Enrollment"}
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Enrollment"}
               </Button>
             </div>
             <div className="flex flex-row items-center justify-center sm:justify-start gap-4 sm:gap-6 text-sm pt-2 sm:pt-0 border-t sm:border-none border-gray-200 dark:border-gray-800 mt-2 sm:mt-0">
@@ -396,7 +397,10 @@ const StudentEnrollment = () => {
 
           <div>
             {isLoading ? (
-              <div>Loading students...</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <SkeletonCard />
+                <SkeletonCard />
+              </div>
             ) : (
               <>
                 {students.length === 0 ? (
