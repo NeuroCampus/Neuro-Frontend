@@ -8,6 +8,7 @@ import { Button } from "../ui/button";
 import { Filter, X } from "lucide-react";
 import { useHistoricalStudentDataQuery } from "@/hooks/useApiQueries";
 import { useTheme } from "@/context/ThemeContext";
+import { Skeleton, SkeletonTable } from "../ui/skeleton";
 
 const getStatusBadge = (status: string, dueDate: string, theme: string) => {
   const now = new Date();
@@ -169,13 +170,31 @@ const StudentAssignment = () => {
             disabled={isLoading}
             className={theme === 'dark' ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-purple-600 text-white hover:bg-purple-700'}
           >
-            {isLoading ? 'Loading...' : 'Load Assignments'}
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                Loading...
+              </div>
+            ) : 'Load Assignments'}
           </Button>
         )}
       </div>
 
+      {isLoading && !isAssignmentsLoaded && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-24 w-full rounded-lg" />
+            ))}
+          </div>
+          <SkeletonTable rows={8} cols={3} />
+        </div>
+      )}
+
       {/* Summary Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
+      {isAssignmentsLoaded && (
+        <>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
         <div className={theme === 'dark' ? 'bg-card rounded-lg p-4' : 'bg-gray-100 rounded-lg p-4'}>
           <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Total</p>
           <p className={`text-xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{summary.total}</p>
@@ -257,6 +276,8 @@ const StudentAssignment = () => {
           </table>
         </CardContent>
       </Card>
+      </>
+      )}
     </div>
   );
 };

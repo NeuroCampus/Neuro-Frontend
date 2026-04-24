@@ -20,6 +20,7 @@ import {
 import type { CreateAnnouncementRequest } from "@/utils/faculty_api";
 import { Loader2 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
+import { SkeletonList } from "../ui/skeleton";
 
 interface Notification {
   id: string;
@@ -187,7 +188,7 @@ const Announcements = ({ role, proctorStudents, proctorStudentsLoading }: Announ
           </CardHeader>
           <CardContent className="space-y-6">
             {loadingNotifications ? (
-              <div className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Loading...</div>
+              <SkeletonList items={3} />
             ) : notifications.length === 0 ? (
               <div className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>No notifications found.</div>
             ) : (
@@ -338,7 +339,7 @@ const Announcements = ({ role, proctorStudents, proctorStudentsLoading }: Announ
           {/* Scrollable Content */}
           <CardContent className="max-h-72 overflow-y-auto space-y-6 custom-scrollbar">
             {loadingSent ? (
-              <div className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Loading...</div>
+              <SkeletonList items={3} />
             ) : sentNotifications.length === 0 ? (
               <div className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>No sent notifications found.</div>
             ) : (

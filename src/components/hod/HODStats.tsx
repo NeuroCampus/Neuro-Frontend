@@ -23,7 +23,7 @@ import { useNavigate } from "react-router-dom";
 import { getHODStats, manageLeaves, manageProfile, getHODDashboard, getHODDashboardBootstrap } from "../../utils/hod_api";
 import { motion } from "framer-motion";
 import { useTheme } from "../../context/ThemeContext";
-import { SkeletonCard, SkeletonChart, SkeletonList } from "../ui/skeleton";
+import { SkeletonCard, SkeletonChart, SkeletonList, SkeletonStatsGrid, SkeletonTable, Skeleton } from "../ui/skeleton";
 
 interface LeaveRequest {
   id: string;
@@ -311,16 +311,15 @@ const handleApprove = async (index: number) => {
       {/* Loading and Errors */}
       {isLoading && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </div>
+          <SkeletonStatsGrid items={3} />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <SkeletonChart />
             <SkeletonChart />
           </div>
-          <SkeletonList items={4} />
+          <div className="p-6 rounded-lg border bg-card space-y-4">
+            <Skeleton className="h-6 w-1/4 mb-4" />
+            <SkeletonTable rows={5} cols={5} />
+          </div>
         </div>
       )}
       {errors.length > 0 && (

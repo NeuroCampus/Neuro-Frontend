@@ -15,6 +15,7 @@ import {
 import { manageUsers, manageUserAction } from "../../utils/admin_api";
 import { useToast } from "../../hooks/use-toast";
 import { useTheme } from "../../context/ThemeContext";
+import { SkeletonTable, SkeletonPageHeader } from "../ui/skeleton";
 
 interface User {
   id: number;
@@ -355,7 +356,12 @@ const filteredUsers = Array.isArray(users) ? users : [];
   );
 
   if (loading && users.length === 0) {
-    return <div className={`text-center py-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading...</div>;
+    return (
+      <div className="space-y-6">
+        <SkeletonPageHeader />
+        <SkeletonTable rows={10} cols={5} />
+      </div>
+    );
   }
 
   return (

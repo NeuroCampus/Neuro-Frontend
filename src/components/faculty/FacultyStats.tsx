@@ -49,6 +49,7 @@ import DashboardCard from "../common/DashboardCard";
 import { FaUserGraduate, FaChalkboardTeacher, FaUserCheck } from "react-icons/fa";
 import { getFacultyDashboardBootstrap } from "@/utils/faculty_api";
 import { useTheme } from "@/context/ThemeContext";
+import { SkeletonStatsGrid, SkeletonChart, SkeletonCard } from "../ui/skeleton";
 
 interface Stat {
   label: string;
@@ -232,7 +233,16 @@ const FacultyStats = ({ setActivePage }: FacultyStatsProps) => {
   // Charts are replaced by aggregated performance metrics provided by the bootstrap API.
 
   if (loading) {
-    return <div className={`p-6 text-center ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Loading dashboard...</div>;
+    return (
+      <div className="space-y-6">
+        <SkeletonStatsGrid items={3} />
+        <SkeletonChart />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      </div>
+    );
   }
   if (error) {
     return <div className={`p-6 rounded-lg ${theme === 'dark' ? 'bg-destructive/20 text-destructive-foreground' : 'bg-red-100 text-red-700'}`}>{error}</div>;
