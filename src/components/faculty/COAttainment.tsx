@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useFacultyAssignmentsQuery } from "../../hooks/useApiQueries";
-import { getUploadMarksBootstrap, GetUploadMarksBootstrapResponse, getQuestionPapers } from "../../utils/faculty_api";
+import { getUploadMarksBootstrap, GetUploadMarksBootstrapResponse, getQuestionPapers, getCOAttainment } from "../../utils/faculty_api";
 import { useTheme } from "@/context/ThemeContext";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -108,10 +108,12 @@ const COAttainment = () => {
     if (subject_id) {
       // Fetch aggregated CO attainment from server (no per-student marks by default)
       try {
-        const url = `/api/co-attainment/?subject_id=${subject_id}&target_pct=${targetThreshold}`;
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error('Failed to fetch CO attainment');
-        const data = await resp.json();
+        const data = await getCOAttainment({
+          subject_id,
+          target_pct: targetThreshold
+        });
+
+        if (!data || data.error) throw new Error(data.error || 'Failed to fetch CO attainment');
 
         const attainmentData: Record<string, any> = {};
         const finalAttainmentData: Record<string, any> = {};
@@ -172,16 +174,14 @@ const COAttainment = () => {
 
     try {
       // Call backend API with indirect attainment
-      const indirectJson = JSON.stringify(indirectAttainment);
-      let url = `/api/co-attainment/?indirect_attainment=${encodeURIComponent(indirectJson)}&target_pct=${targetThreshold}`;
-      if (selected.question_paper_id) {
-        url += `&question_paper=${selected.question_paper_id}`;
-      } else if (selected.subject_id) {
-        url += `&subject_id=${selected.subject_id}`;
-      }
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch CO attainment');
-      const data = await response.json();
+      const data = await getCOAttainment({
+        subject_id: selected.subject_id,
+        question_paper_id: selected.question_paper_id,
+        target_pct: targetThreshold,
+        indirect_attainment: JSON.stringify(indirectAttainment)
+      });
+
+      if (!data || data.error) throw new Error(data.error || 'Failed to fetch CO attainment');
 
       // Update state with backend results
       const attainmentData: Record<string, any> = {};
@@ -401,11 +401,11 @@ const COAttainment = () => {
             <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-300'}>
               <CardHeader className="p-4 sm:p-6">
                 <CardTitle className="text-base sm:text-lg">CO Attainment Results</CardTitle>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-2 space-y-1">
+                <div className="text-xs sm:text-sm text-muted-foreground mt-2 space-y-1">
                   <div>Two methods are used for CO attainment calculation:</div>
                   <div><strong>Method 1:</strong> Average marks per CO</div>
                   <div><strong>Method 2:</strong> % of students at target per CO</div>
-                </p>
+                </div>
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
                 <div className="overflow-x-auto -mx-4 sm:-mx-6">

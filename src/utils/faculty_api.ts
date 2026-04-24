@@ -1761,3 +1761,30 @@ export const submitQPForApproval = async (qpId: number, comment?: string): Promi
     };
   }
 };
+
+export const getCOAttainment = async (params: { 
+  subject_id?: number; 
+  question_paper_id?: number; 
+  target_pct?: number; 
+  indirect_attainment?: string 
+}) => {
+  try {
+    const query = new URLSearchParams();
+    if (params.subject_id) query.append('subject_id', params.subject_id.toString());
+    if (params.question_paper_id) query.append('question_paper', params.question_paper_id.toString());
+    if (params.target_pct) query.append('target_pct', params.target_pct.toString());
+    if (params.indirect_attainment) query.append('indirect_attainment', params.indirect_attainment);
+
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/co-attainment/?${query.toString()}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get CO Attainment Error:", error);
+    return { success: false, message: "Network error while fetching CO attainment" };
+  }
+};
