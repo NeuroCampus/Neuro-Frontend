@@ -656,6 +656,8 @@ const FacultyAttendanceView: React.FC = () => {
                                     {(() => {
                                       const start = new Date(dateRange.start_date);
                                       const end = new Date(dateRange.end_date);
+                                      const today = new Date();
+                                      today.setHours(0, 0, 0, 0);
                                       const days = [];
                                       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
                                         days.push(new Date(d));
@@ -664,8 +666,11 @@ const FacultyAttendanceView: React.FC = () => {
                                       return days.map((date) => {
                                         const dateStr = date.toISOString().split('T')[0];
                                         const record = facultyAttendanceDetails.find(r => r.date === dateStr);
+                                        const isFuture = date > today;
+                                        
                                         const isPresent = record?.status?.toLowerCase() === 'present';
-                                        const isAbsent = record?.status?.toLowerCase() === 'absent';
+                                        // If no record and not future, it's considered absent
+                                        const isAbsent = record?.status?.toLowerCase() === 'absent' || (!record && !isFuture);
                                         
                                         return (
                                           <div 
@@ -688,17 +693,24 @@ const FacultyAttendanceView: React.FC = () => {
                                               {date.toLocaleDateString('en-US', { month: 'short' })}
                                             </span>
                                             
-                                            {record && (
+                                            {record ? (
                                               <div className={`mt-1 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter ${
                                                 isPresent ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
                                               }`}>
                                                 {record.status[0]}
                                               </div>
+                                            ) : (
+                                              !isFuture && (
+                                                <div className="mt-1 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-tighter bg-red-500 text-white">
+                                                  A
+                                                </div>
+                                              )
                                             )}
                                             
                                             <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-[9px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 shadow-lg border border-white/10">
                                               {date.toLocaleDateString('en-US', { dateStyle: 'medium' })}
                                               {record?.marked_at && <div className="text-white/70 mt-0.5">{formatTime(record.marked_at)}</div>}
+                                              {!record && !isFuture && <div className="text-white/70 mt-0.5 italic">Auto-marked Absent</div>}
                                             </div>
                                           </div>
                                         );
