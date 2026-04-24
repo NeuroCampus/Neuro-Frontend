@@ -257,19 +257,19 @@ const ProctorStudents = () => {
   };
 
   const handleSaveProctor = async () => {
-        if (state.selectedProctor && state.selectedUSNs.length > 0) {
-        updateState({ loading: true });
-        try {
-          // prefer sending student IDs (user ids) to backend
-          const student_ids = state.students
-            .filter((s) => state.selectedUSNs.includes(s.usn))
-            .map((s) => s.student_id)
-            .filter(Boolean);
-          const response = await assignProctorsBulk({
-            student_ids,
-            faculty_id: state.selectedProctor,
-            branch_id: state.branchId,
-          });
+    if (state.selectedProctor && state.selectedUSNs.length > 0) {
+      updateState({ loading: true });
+      try {
+        // prefer sending student IDs (user ids) to backend
+        const student_ids = state.students
+          .filter((s) => state.selectedUSNs.includes(s.usn))
+          .map((s) => s.student_id)
+          .filter(Boolean);
+        const response = await assignProctorsBulk({
+          student_ids,
+          faculty_id: state.selectedProctor,
+          branch_id: state.branchId,
+        });
         if (!response.success) {
           throw new Error(response.message || "Failed to assign proctors");
         }
@@ -321,18 +321,18 @@ const ProctorStudents = () => {
 
   const handleEditToggle = async () => {
     if (state.editMode) {
-        if (state.selectedProctor && state.selectedUSNs.length > 0) {
-          updateState({ loading: true });
-          try {
-            const student_ids = state.students
-              .filter((s) => state.selectedUSNs.includes(s.usn))
-              .map((s) => s.student_id)
-              .filter(Boolean);
-            const response = await assignProctorsBulk({
-              student_ids,
-              faculty_id: state.selectedProctor,
-              branch_id: state.branchId,
-            });
+      if (state.selectedProctor && state.selectedUSNs.length > 0) {
+        updateState({ loading: true });
+        try {
+          const student_ids = state.students
+            .filter((s) => state.selectedUSNs.includes(s.usn))
+            .map((s) => s.student_id)
+            .filter(Boolean);
+          const response = await assignProctorsBulk({
+            student_ids,
+            faculty_id: state.selectedProctor,
+            branch_id: state.branchId,
+          });
           if (!response.success) {
             throw new Error(response.message || "Failed to assign proctors");
           }
@@ -393,35 +393,35 @@ const ProctorStudents = () => {
     <div className={`sm: min-h-screen text-base sm:text-base max-w-[390px] sm:max-w-none mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div>
-            <DashboardCard
-              title="Total Students"
-              value={state.totalCount}
-              description="Enrolled in selected filters"
-              icon={<FaUserGraduate className={theme === 'dark' ? 'text-blue-400 text-3xl' : 'text-blue-500 text-3xl'} />}
-              onClick={() => {}}
-            />
-          </div>
+        <div>
+          <DashboardCard
+            title="Total Students"
+            value={state.totalCount}
+            description="Enrolled in selected filters"
+            icon={<FaUserGraduate className={theme === 'dark' ? 'text-blue-400 text-3xl' : 'text-blue-500 text-3xl'} />}
+            onClick={() => { }}
+          />
+        </div>
 
-          <div>
-            <DashboardCard
-              title="Assigned"
-              value={assigned}
-              description="Students with proctors"
-              icon={<FaUserCheck className={theme === 'dark' ? 'text-green-400 text-3xl' : 'text-green-500 text-3xl'} />}
-              onClick={() => {}}
-            />
-          </div>
+        <div>
+          <DashboardCard
+            title="Assigned"
+            value={assigned}
+            description="Students with proctors"
+            icon={<FaUserCheck className={theme === 'dark' ? 'text-green-400 text-3xl' : 'text-green-500 text-3xl'} />}
+            onClick={() => { }}
+          />
+        </div>
 
-          <div>
-            <DashboardCard
-              title="Unassigned"
-              value={unassigned}
-              description="Students without proctors"
-              icon={<FaUserTimes className={theme === 'dark' ? 'text-red-400 text-3xl' : 'text-red-500 text-3xl'} />}
-              onClick={() => {}}
-            />
-          </div>
+        <div>
+          <DashboardCard
+            title="Unassigned"
+            value={unassigned}
+            description="Students without proctors"
+            icon={<FaUserTimes className={theme === 'dark' ? 'text-red-400 text-3xl' : 'text-red-500 text-3xl'} />}
+            onClick={() => { }}
+          />
+        </div>
       </div>
 
       {/* Main Management Card */}
@@ -554,7 +554,7 @@ const ProctorStudents = () => {
               </div>
 
               {/* Search on the right */}
-                <div className="flex flex-col sm:flex-row gap-2 w-full">
+              <div className="flex flex-col sm:flex-row gap-2 w-full">
                 <Input
                   placeholder="Search students by name or USN..."
                   className={`w-full sm:w-80 text-base ${theme === 'dark' ? 'bg-card text-foreground border border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border border-gray-300 placeholder:text-gray-500'}`}
