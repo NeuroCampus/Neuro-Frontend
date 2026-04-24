@@ -185,6 +185,13 @@ const StudentEnrollment = () => {
     setIsLoading(false);
   };
 
+  // Automatically load students when selection changes
+  useEffect(() => {
+    if (branchId && selectedSubjectId) {
+      loadStudents(1);
+    }
+  }, [branchId, selectedSubjectId, semesterId, sectionId]);
+
   const toggleStudent = (id: string) => {
     setStudents((prev) => prev.map((p) => (p.id === id ? { ...p, checked: !p.checked } : p)));
   };
@@ -259,141 +266,130 @@ const StudentEnrollment = () => {
           <CardTitle className="text-2xl font-semibold leading-none tracking-tight text-gray-900">Student Enrollment (Elective / Open Elective)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 sm:space-y-5 md:space-y-4 lg:space-y-6 p-4 sm:p-5 md:p-4 lg:p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-3 md:gap-2 lg:gap-4 mb-6">
-            <div>
-              <label className="block text-sm font-medium mb-2">Semester
-                <Select value={semesterId} onValueChange={(v: string) => { setSemesterId(v); setSectionId(""); }}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select semester" />
-                </SelectTrigger>
-                <SelectContent>
-                  {semesters.map((sem: any) => (
-                    <SelectItem key={sem.id} value={sem.id}>{`${sem.number}th Semester`}</SelectItem>
-                  ))}
-                </SelectContent>
-                </Select>
-              </label>
+            <div className="w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+                <div className="space-y-2">
+                  <label className="text-sm font-bold block text-gray-700 dark:text-gray-300">Semester</label>
+                  <Select value={semesterId} onValueChange={(v: string) => { setSemesterId(v); setSectionId(""); }}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select semester" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {semesters.map((sem: any) => (
+                        <SelectItem key={sem.id} value={sem.id}>{`${sem.number}th Semester`}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold block text-gray-700 dark:text-gray-300">Section</label>
+                  <Select value={sectionId} onValueChange={setSectionId}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select section" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(() => {
+                        const semObj = semesters.find((s: any) => String(s.id) === String(semesterId));
+                        const semNumberKey = semObj ? String(semObj.number) : "";
+                        const list = sectionsBySemester[String(semesterId)] || sectionsBySemester[semNumberKey] || [];
+                        return list.map((sec: any) => (
+                          <SelectItem key={String(sec.id)} value={String(sec.id)}>{sec.name}</SelectItem>
+                        ));
+                      })()}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold block text-gray-700 dark:text-gray-300">Subject Type</label>
+                  <Select value={subjectType} onValueChange={setSubjectType}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Subject type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="elective">Elective</SelectItem>
+                      <SelectItem value="open_elective">Open Elective</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold block text-gray-700 dark:text-gray-300">Subject</label>
+                  <Select value={selectedSubjectId} onValueChange={setSelectedSubjectId}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select subject" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subjects.map((s: any) => (
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {electiveLoading && <div className="text-sm text-muted-foreground mt-1 animate-pulse">Loading subjects...</div>}
+                  {electivePage < electiveTotalPages && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setElectivePage(prev => prev + 1)}
+                      disabled={electiveLoading}
+                      className="w-full mt-2 bg-purple-600 hover:bg-purple-700 text-white border-purple-600 shadow-sm"
+                    >
+                      {electiveLoading ? "Loading..." : "Load More Subjects"}
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Section
-                <Select value={sectionId} onValueChange={setSectionId}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select section" />
-                </SelectTrigger>
-                <SelectContent>
-                  {(() => {
-                    const semObj = semesters.find((s: any) => String(s.id) === String(semesterId));
-                    const semNumberKey = semObj ? String(semObj.number) : "";
-                    const list = sectionsBySemester[String(semesterId)] || sectionsBySemester[semNumberKey] || [];
-                    return list.map((sec: any) => (
-                      <SelectItem key={String(sec.id)} value={String(sec.id)}>{sec.name}</SelectItem>
-                    ));
-                  })()}
-                </SelectContent>
-                </Select>
-              </label>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Subject Type
-                <Select value={subjectType} onValueChange={setSubjectType}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Subject type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="elective">Elective</SelectItem>
-                  <SelectItem value="open_elective">Open Elective</SelectItem>
-                </SelectContent>
-                </Select>
-              </label>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Subject
-                <Select value={selectedSubjectId} onValueChange={setSelectedSubjectId}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select subject" />
-                </SelectTrigger>
-                <SelectContent>
-                  {subjects.map((s: any) => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                  ))}
-                </SelectContent>
-                </Select>
-              </label>
-              {electiveLoading && <div className="text-sm text-muted-foreground mt-1">Loading subjects...</div>}
-              {electivePage < electiveTotalPages && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setElectivePage(prev => prev + 1)}
-                  disabled={electiveLoading}
-                  className="w-full mt-2 bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
-                >
-                  {electiveLoading ? "Loading..." : "Load More Subjects"}
-                </Button>
-              )}
-            </div>
-            <div className="flex items-end">
-              <Button 
-                onClick={() => loadStudents(1)} 
-                disabled={!selectedSubjectId || isLoading || !branchId || subjects.length === 0}
-                  className="w-full bg-[#a259ff] hover:bg-[#9147e0] text-white"
-              >
-                {isLoading ? "Loading..." : "Load Students"}
-              </Button>
-            </div>
-          </div>
 
-          <div className={`flex flex-col sm:flex-row flex-wrap items-center gap-3 sm:gap-3 md:gap-2 lg:gap-4 mb-6 p-4 sm:p-3 md:p-3 lg:p-4 rounded-lg ${
-            theme === 'dark' ? 'bg-muted/50' : 'bg-gray-50'
+          <div className={`flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mb-6 p-4 sm:p-5 rounded-lg border ${
+            theme === 'dark' ? 'bg-muted/50 border-border' : 'bg-gray-50 border-gray-100'
           }`}>
-            <div className="flex-1 min-w-40 sm:min-w-48 md:min-w-40 lg:min-w-56">
+            <div className="flex-1">
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by USN or name"
-                className={`w-full px-3 py-2 text-sm rounded-md border placeholder-gray-400 ${
+                className={`w-full px-4 py-2.5 text-sm rounded-md border shadow-sm transition-all placeholder-gray-400 focus:ring-2 focus:ring-purple-500/20 ${
                   theme === 'dark'
                     ? 'bg-background border-border text-foreground placeholder:text-muted-foreground'
                     : 'bg-white border-gray-300 text-gray-900'
                 }`}
               />
             </div>
-            <div className="flex items-center ml-1 sm:ml-1 md:ml-0 lg:ml-2">
+            <div className="flex flex-col sm:flex-row items-center gap-3">
               <Button
                 onClick={() => loadStudents(1, searchTerm)}
                 disabled={!selectedSubjectId || isLoading || !branchId}
-                  className="px-3 sm:px-3 md:px-2 lg:px-4 text-xs sm:text-sm bg-[#a259ff] hover:bg-[#9147e0] text-white"
+                className="w-full sm:w-auto px-6 bg-[#a259ff] hover:bg-[#9147e0] text-white shadow-md transition-all active:scale-95"
               >
                 {isLoading ? "Searching..." : "Search"}
               </Button>
+              <Button 
+                onClick={save} 
+                disabled={saving || students.length === 0}
+                className="w-full sm:w-auto px-6 bg-[#a259ff] hover:bg-[#9147e0] text-white shadow-md transition-all active:scale-95"
+              >
+                {saving ? "Saving..." : "Save Enrollment"}
+              </Button>
             </div>
-            <Button 
-              onClick={save} 
-              disabled={saving || students.length === 0}
-                className="px-4 sm:px-4 md:px-3 lg:px-6 text-xs sm:text-sm bg-[#a259ff] hover:bg-[#9147e0] text-white"
-            >
-              {saving ? "Saving..." : "Save Enrollment"}
-            </Button>
-            <div className="flex items-center gap-4 md:gap-2 text-sm">
+            <div className="flex flex-row items-center justify-center sm:justify-start gap-4 sm:gap-6 text-sm pt-2 sm:pt-0 border-t sm:border-none border-gray-200 dark:border-gray-800 mt-2 sm:mt-0">
               <div className="flex items-center gap-2">
-                <span className="font-medium">Enrolled:</span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                <span className="font-bold text-gray-600 dark:text-gray-400">Enrolled:</span>
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
                   theme === 'dark' 
-                    ? 'bg-green-900/20 text-green-400' 
-                    : 'bg-green-100 text-green-800'
+                    ? 'bg-green-900/30 text-green-400 border border-green-800/50' 
+                    : 'bg-green-100 text-green-800 border border-green-200'
                 }`}>
                   {students.filter((s:any)=>s.checked).length}
                 </span>
               </div>
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer group">
                 <input 
                   type="checkbox" 
                   checked={showEnrolledOnly} 
                   onChange={(e)=>setShowEnrolledOnly(e.target.checked)} 
-                  className="rounded"
+                  className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 h-4 w-4 transition-all"
                 />
-                <span>Show enrolled only</span>
+                <span className="font-semibold text-gray-700 dark:text-gray-300 group-hover:text-purple-600 transition-colors">Show enrolled only</span>
               </label>
             </div>
           </div>
