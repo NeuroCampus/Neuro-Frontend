@@ -19,8 +19,8 @@ const UpgradePlanDialog = ({ isOpen, onClose, orgName = "Your Organization", onS
   const [selectedPlan, setSelectedPlan] = useState<"pro" | "advance" | null>(null);
   const [isUpgrading, setIsUpgrading] = useState(false);
 
-  const isBasic = currentPlan.toLowerCase() === 'basic';
-  const isPro = currentPlan.toLowerCase() === 'pro';
+  const isBasic = currentPlan.toLowerCase().includes('basic');
+  const isPro = currentPlan.toLowerCase().includes('pro');
 
   const handleUpgrade = async () => {
     if (!selectedPlan) return;
