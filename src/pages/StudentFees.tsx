@@ -104,6 +104,8 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<number | null>(null);
   const [selectedComponents, setSelectedComponents] = useState<Set<number>>(new Set());
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [invoicePage, setInvoicePage] = useState(1);
+  const [paymentPage, setPaymentPage] = useState(1);
   const { theme } = useTheme();
 
   console.log('StudentFees user object:', user);
@@ -112,9 +114,9 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
 
   // Fetch complete fee data from Django backend
   const { data: feeData, isLoading, error } = useQuery<FeeDataResponse>({
-    queryKey: ['studentCompleteFeeData', user?.usn || user?.username],
+    queryKey: ['studentCompleteFeeData', user?.usn || user?.username, invoicePage, paymentPage],
     queryFn: async (): Promise<FeeDataResponse> => {
-      const response = await fetch(`http://127.0.0.1:8000/api/student/fee-data/`, {
+      const response = await fetch(`http://127.0.0.1:8000/api/student/fee-data/?invoice_page=${invoicePage}&payment_page=${paymentPage}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json',
@@ -276,7 +278,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
         return;
       }
 
-      if (!selectedInvoiceId) return;
+      if (selectedInvoiceId === null) return;
 
       const response = await fetch(`http://127.0.0.1:8000/api/payments/create-checkout-session/${selectedInvoiceId}/`, {
         method: 'POST',
@@ -339,7 +341,9 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
     }
   };
 
-  const currentInvoice = feeData?.invoices?.find(inv => inv.id === selectedInvoiceId);
+  const currentInvoice = selectedInvoiceId === 0 
+    ? { id: 0, balance_amount: feeData?.fee_summary?.remaining_fees || 0, invoice_number: 'ALL' }
+    : feeData?.invoices?.find(inv => inv.id === selectedInvoiceId);
 
   // Animation variants
   const containerVariants = {
@@ -548,10 +552,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                       <Button 
                         className={`bg-[#a259ff] hover:bg-[#8a4dde] text-white font-semibold`}
-                        onClick={() => {
-                          const inv = feeData?.invoices?.find(inv => inv.balance_amount > 0);
-                          if (inv) handlePaymentClick(inv.id);
-                        }}
+                        onClick={() => handlePaymentClick(0)}
                       >
                         <CreditCard className="h-4 w-4 mr-2" />
                         Pay Full Amount
@@ -583,7 +584,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
           <CardHeader>
             <CardTitle className={`flex items-center gap-2 text-lg ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
               <Receipt className="h-5 w-5" />
-              Fee Invoices ({feeData?.invoices?.length || 0})
+              Fee Invoices ({feeData?.statistics?.total_invoices || 0})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -677,6 +678,35 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                     </motion.div>
                   ))}
                 </AnimatePresence>
+                
+                {/* Invoice Pagination */}
+                {feeData && feeData.statistics.total_invoices > 10 && (
+                  <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+                    <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                      Showing {(invoicePage - 1) * 10 + 1} to {Math.min(invoicePage * 10, feeData.statistics.total_invoices)} of {feeData.statistics.total_invoices} invoices
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setInvoicePage(p => Math.max(1, p - 1))}
+                        disabled={invoicePage === 1}
+                        className={theme === 'dark' ? 'border-border' : 'border-gray-200'}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setInvoicePage(p => p + 1)}
+                        disabled={invoicePage * 10 >= feeData.statistics.total_invoices}
+                        className={theme === 'dark' ? 'border-border' : 'border-gray-200'}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             ) : (
               <motion.p 
@@ -697,7 +727,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
           <CardHeader>
             <CardTitle className={`flex items-center gap-2 text-lg ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
               <CreditCard className="h-5 w-5" />
-              Payment History ({feeData?.payments?.length || 0})
+              Payment History ({feeData?.statistics?.total_payments || 0})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -728,10 +758,13 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                         </motion.div>
                         <motion.div variants={itemVariants} className="flex gap-2 flex-shrink-0">
                           <Badge 
-                            variant={payment.status === 'success' ? 'default' : 'secondary'}
-                            className={payment.status === 'success' ? 'bg-green-600 text-white' : 'bg-yellow-100 text-yellow-800 border-yellow-300'}
+                            variant={payment.status === 'success' ? 'default' : (payment.status === 'failed' ? 'destructive' : 'secondary')}
+                            className={
+                              payment.status === 'success' ? 'bg-green-600 text-white' : 
+                              (payment.status === 'failed' ? '' : 'bg-yellow-100 text-yellow-800 border-yellow-300')
+                            }
                           >
-                            {payment.status === 'success' ? '✓ Success' : 'Pending'}
+                            {payment.status === 'success' ? '✓ Success' : (payment.status === 'failed' ? 'Failed' : 'Pending')}
                           </Badge>
                           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                             <Button 
@@ -749,6 +782,35 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                     </motion.div>
                   ))}
                 </AnimatePresence>
+
+                {/* Payment Pagination */}
+                {feeData && feeData.statistics.total_payments > 10 && (
+                  <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+                    <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                      Showing {(paymentPage - 1) * 10 + 1} to {Math.min(paymentPage * 10, feeData.statistics.total_payments)} of {feeData.statistics.total_payments} payments
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPaymentPage(p => Math.max(1, p - 1))}
+                        disabled={paymentPage === 1}
+                        className={theme === 'dark' ? 'border-border' : 'border-gray-200'}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPaymentPage(p => p + 1)}
+                        disabled={paymentPage * 10 >= feeData.statistics.total_payments}
+                        className={theme === 'dark' ? 'border-border' : 'border-gray-200'}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             ) : (
               <motion.p 
@@ -770,7 +832,10 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
             <DialogContent className={`max-w-md ${theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
               <DialogHeader>
                 <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
-                  {paymentType === 'full' ? '💳 Pay Full Amount' : '🧩 Pay by Component'}
+                  {selectedInvoiceId === 0 
+                    ? '💳 Pay Total Remaining Balance' 
+                    : (paymentType === 'full' ? '💳 Pay Full Amount' : '🧩 Pay by Component')
+                  }
                 </DialogTitle>
               </DialogHeader>
 
