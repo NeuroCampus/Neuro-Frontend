@@ -25,6 +25,8 @@ import FacultyAnnouncementManagement from "../faculty/FacultyAnnouncementManagem
 import { API_ENDPOINT } from "../../utils/config";
 import { useTheme } from "../../context/ThemeContext";
 import { useProctorStudentsQuery } from "../../hooks/useApiQueries";
+import { isPageAllowed } from "../../utils/planGating";
+import UpgradeRequired from "../common/UpgradeRequired";
 
 interface FacultyDashboardProps {
   user: {
@@ -162,6 +164,12 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
   };
 
   const renderContent = () => {
+    const orgPlan = (user as any)?.org_plan || "basic";
+    
+    if (!activePage.includes('dashboard') && !isPageAllowed(activePage, orgPlan)) {
+      return <UpgradeRequired featureName={activePage} role={user.role} onBack={() => handlePageChange('dashboard')} />;
+    }
+
     switch (activePage) {
       case "dashboard":
         return <FacultyStats setActivePage={handlePageChange} />;

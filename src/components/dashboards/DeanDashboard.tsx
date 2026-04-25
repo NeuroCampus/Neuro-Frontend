@@ -15,6 +15,8 @@ import DeanAttendanceRecords from "../dean/DeanAttendanceRecords";
 import DeanProfile from "../dean/DeanProfile";
 import ManageAdminLeavesDean from "../dean/ManageAdminLeavesDean";
 import { useTheme } from "../../context/ThemeContext";
+import { isPageAllowed } from "../../utils/planGating";
+import UpgradeRequired from "../common/UpgradeRequired";
 
 interface DeanUser {
   username: string;
@@ -66,6 +68,12 @@ const DeanDashboard = ({ user, setPage }: { user: DeanUser; setPage: (p: string)
   };
 
   const renderContent = () => {
+    const orgPlan = (user as any)?.org_plan || "basic";
+    
+    if (!activePage.includes('dashboard') && !isPageAllowed(activePage, orgPlan)) {
+      return <UpgradeRequired featureName={activePage} role={user.role} onBack={() => handlePageChange('dashboard')} />;
+    }
+
     switch (activePage) {
       case 'dashboard':
         return <div className="p-4"><DeanStats /></div>;

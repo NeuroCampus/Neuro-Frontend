@@ -18,6 +18,8 @@ import AnnouncementManagement from "../admin/AnnouncementManagement";
 import { useToast } from "../../hooks/use-toast";
 import AdminAttendance from "../admin/AdminAttendance";
 import ApplyLeaveAdmin from "../admin/ApplyLeaveAdmin";
+import { isPageAllowed } from "../../utils/planGating";
+import UpgradeRequired from "../common/UpgradeRequired";
 
 import {
   Users,
@@ -83,6 +85,12 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
 
 
   const renderContent = () => {
+    const orgPlan = (user as any)?.org_plan || "basic";
+    
+    if (!activePage.includes('dashboard') && !isPageAllowed(activePage, orgPlan)) {
+      return <UpgradeRequired featureName={activePage} role={user.role} onBack={() => handlePageChange('dashboard')} />;
+    }
+
     switch (activePage) {
       case "dashboard":
         return (

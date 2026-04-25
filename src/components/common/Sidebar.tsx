@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 // Use public directory asset via URL
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
+import { isPageAllowed } from "../../utils/planGating";
 import {
   LayoutDashboard,
   Users,
@@ -147,6 +148,10 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     };
     return iconMap[page] || <LayoutDashboard size={20} />;
   };
+
+  const userStr = localStorage.getItem("user");
+  const user = userStr ? JSON.parse(userStr) : null;
+  const orgPlan = user?.org_plan || "basic";
 
   const menuItems: { [key: string]: { name: string; page: string }[] } = {
   fees_manager: [
@@ -366,6 +371,17 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
               >
                 <h1 className={`font-bold text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>NEURO CAMPUS</h1>
                 <p className={`text-xs capitalize ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{role} Portal</p>
+                <div className="mt-1">
+                  <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
+                    orgPlan.toLowerCase() === 'advance' 
+                      ? 'bg-gradient-to-r from-[#a259ff] to-[#ff59f8] text-white' 
+                      : orgPlan.toLowerCase() === 'pro'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-500 text-white'
+                  }`}>
+                    {orgPlan}
+                  </span>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -380,7 +396,9 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
         transition={{ duration: 0.4, delay: 0.2 }}
       >
         <div className="space-y-1 px-3">
-          {menuItems[role]?.map((item, index) => (
+          {menuItems[role]
+            ?.filter(item => isPageAllowed(item.page, orgPlan))
+            ?.map((item, index) => (
             <motion.div
               key={item.page}
               initial={{ opacity: 0, x: -20 }}

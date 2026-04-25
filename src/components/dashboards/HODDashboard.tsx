@@ -29,7 +29,11 @@ import QPApprovals from "../hod/QPApprovals";
 import HODAnnouncementManagement from "../hod/HODAnnouncementManagement";
 import { HODBootstrapProvider } from "../../context/HODBootstrapContext";
 import { useTheme } from "../../context/ThemeContext";
-import { motion } from "framer-motion";
+import { isPageAllowed } from "../../utils/planGating";
+import UpgradeRequired from "../common/UpgradeRequired";
+import { motion, AnimatePresence } from "framer-motion";
+import { Lock } from "lucide-react";
+import { Button } from "../ui/button";
 
 interface HODUser {
   username: string;
@@ -222,7 +226,15 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
 
 
 
+// ... (inside HODDashboard component)
   const renderContent = () => {
+    const orgPlan = (user as any)?.org_plan || "basic";
+    
+    // Plan Gating Check
+    if (!activePage.includes('dashboard') && !isPageAllowed(activePage, orgPlan)) {
+      return <UpgradeRequired featureName={activePage} role={user.role} onBack={() => handlePageChange('dashboard')} />;
+    }
+
     switch (activePage) {
       case "dashboard":
         return <HODStats setError={setError} setPage={handlePageChange} onBootstrapData={handleBootstrapData} />;

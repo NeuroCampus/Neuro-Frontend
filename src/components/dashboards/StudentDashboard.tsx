@@ -5,6 +5,8 @@ import Chat from "../common/Chat";
 import { logoutUser } from "../../utils/authService";
 import { useTheme } from "../../context/ThemeContext";
 import { SkeletonCard } from "../ui/skeleton";
+import { isPageAllowed } from "../../utils/planGating";
+import UpgradeRequired from "../common/UpgradeRequired";
 
 // Lazy load student components for code splitting
 const StudentStats = lazy(() => import("../student/StudentStats"));
@@ -82,6 +84,12 @@ const StudentDashboard = ({ user, setPage }: StudentDashboardProps) => {
   };
 
   const renderContent = () => {
+    const orgPlan = (user as any)?.org_plan || "basic";
+    
+    if (!activePage.includes('dashboard') && !isPageAllowed(activePage, orgPlan)) {
+      return <UpgradeRequired featureName={activePage} role={user.role} onBack={() => handlePageChange('dashboard')} />;
+    }
+
     switch (activePage) {
       case "dashboard":
         return <StudentDashboardOverview setPage={handlePageChange} user={user} />;

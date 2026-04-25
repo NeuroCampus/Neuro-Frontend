@@ -28,13 +28,23 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  // Check if user is student, if not show access denied
+  // Check if user is student and has required plan
   useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    const user = userStr ? JSON.parse(userStr) : null;
+    const orgPlan = (user?.org_plan || "basic").toLowerCase();
+
     if (role && role !== 'student') {
       toast({
         variant: 'destructive',
         title: 'Access Denied',
         description: 'This feature is only available for students.',
+      });
+    } else if (orgPlan !== 'advance') {
+      toast({
+        variant: 'destructive',
+        title: 'Plan Upgrade Required',
+        description: 'AI Study Mode is only available on the Advance plan.',
       });
     }
   }, [role, toast]);
@@ -44,15 +54,38 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Early return for non-student roles - this is fine since it happens after hooks
-  if (role && role !== 'student') {
+  // Role and Plan Check
+  const userStr = localStorage.getItem("user");
+  const user = userStr ? JSON.parse(userStr) : null;
+  const orgPlan = (user?.org_plan || "basic").toLowerCase();
+
+  if (role && (role !== 'student' || orgPlan !== 'advance')) {
+    const isPlanRestriction = role === 'student' && orgPlan !== 'advance';
+    
     return (
       <div className={`min-h-screen flex flex-col items-center justify-center p-4 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
         <div className={`max-w-md w-full rounded-2xl shadow-xl p-8 ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
           <div className="text-center">
-            <h2 className={`text-2xl font-bold mb-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Access Denied</h2>
-            <p className={`mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>This feature is only available for students.</p>
-            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Please log in with a student account to access Study Mode.</p>
+            <h2 className={`text-2xl font-bold mb-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+              {isPlanRestriction ? 'Upgrade Required' : 'Access Denied'}
+            </h2>
+            <p className={`mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+              {isPlanRestriction 
+                ? 'AI Study Mode is an Enterprise feature exclusive to our Advance plan.' 
+                : 'This feature is only available for students.'}
+            </p>
+            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+              {isPlanRestriction 
+                ? 'Please contact your institution administrator to upgrade your plan and unlock AI-powered learning tools.' 
+                : 'Please log in with a student account to access Study Mode.'}
+            </p>
+            {isPlanRestriction && (
+              <div className="mt-6 p-4 rounded-lg bg-[#a259ff]/10 border border-[#a259ff]/20">
+                <p className="text-sm font-medium text-[#a259ff]">
+                  Current Plan: <span className="uppercase font-bold">{orgPlan}</span>
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
