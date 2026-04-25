@@ -83,14 +83,14 @@ const CampusLocationManager: React.FC = () => {
   const handleMapClick = (e: any) => {
     const lat = roundTo6(e.latLng.lat());
     const lng = roundTo6(e.latLng.lng());
-    
+
     if (markerRef.current) {
       markerRef.current.setPosition({ lat, lng });
     }
     if (circleRef.current) {
       circleRef.current.setCenter({ lat, lng });
     }
-    
+
     setFormData(prev => ({
       ...prev,
       center_latitude: lat,

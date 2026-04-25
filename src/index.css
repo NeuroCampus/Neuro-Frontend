@@ -131,7 +131,8 @@
 
 /* Global scrollbar hiding but still scrollable */
 html, body, #root {
-  @apply overflow-auto; /* enable scrolling */
+  @apply overflow-hidden; /* disable window scrolling */
+  height: 100%;
 }
 
 /* Chrome, Safari, Edge */

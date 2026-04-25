@@ -16,6 +16,7 @@ import withReactContent from 'sweetalert2-react-content';
 import { useTheme } from "../../context/ThemeContext";
 import { useToast } from "../../hooks/use-toast";
 import { API_ENDPOINT } from "../../utils/config";
+import { SkeletonTable, SkeletonCard } from "../ui/skeleton";
 
 interface QPPending {
   id: number;
@@ -323,7 +324,11 @@ const AdminQPApprovals = () => {
   };
 
   if (loading) {
-    return <div className="text-center py-6">Loading pending QPs...</div>;
+    return (
+      <div className="space-y-6">
+        <SkeletonTable rows={5} cols={4} />
+      </div>
+    );
   }
 
   return (
@@ -399,7 +404,10 @@ const AdminQPApprovals = () => {
           </DialogHeader>
           <div className="overflow-auto px-4 py-2 space-y-4 flex-1">
             {detailLoading ? (
-              <div className="text-center py-4">Loading QP details...</div>
+              <div className="space-y-4">
+                <SkeletonCard />
+                <SkeletonCard />
+              </div>
             ) : qpDetail ? (
               <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
                 <h4 className="font-semibold mb-4">Question Paper Preview</h4>

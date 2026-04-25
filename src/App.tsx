@@ -106,7 +106,10 @@ const App = () => {
     <BrowserRouter>
       <Suspense fallback={
         <div className="flex items-center justify-center min-h-screen bg-background">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          <div className="flex flex-col items-center gap-4">
+            <img src="/logo.jpeg" alt="NeuroCampus Logo" className="w-16 h-16 rounded-full object-cover animate-pulse shadow-lg" />
+            <p className="text-sm font-medium text-muted-foreground animate-pulse">Loading NeuroCampus...</p>
+          </div>
         </div>
       }>
         <Routes>

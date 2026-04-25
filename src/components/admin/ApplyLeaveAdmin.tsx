@@ -12,6 +12,7 @@ import { Calendar } from "../ui/calendar";
 import { useTheme } from "../../context/ThemeContext";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
+import { SkeletonList } from "../ui/skeleton";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import {
@@ -139,7 +140,7 @@ const ApplyLeaveAdmin = () => {
   };
 
   return (
-    <div className={` min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Main Container with Flex Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Leave Application Form - Left Side */}
@@ -239,7 +240,7 @@ const ApplyLeaveAdmin = () => {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading leave requests...</div>
+              <SkeletonList items={3} />
             ) : leaves.length === 0 ? (
               <div className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>No leave requests found.</div>
             ) : (

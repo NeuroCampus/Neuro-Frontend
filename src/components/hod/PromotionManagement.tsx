@@ -727,7 +727,7 @@ const PromotionPage = ({ theme, onTabChange }: { theme: string; onTabChange: (ta
               </SelectContent>
             </Select>
 
-            
+
           </div>
         </CardContent>
       </Card>
@@ -1123,7 +1123,7 @@ const DemotionPage = ({ theme, onTabChange }: { theme: string; onTabChange: (tab
         // Update with actual API response data
         const apiData = res.data || {};
         const demotedCount = apiData.demoted_count || 0;
-        
+
         // Only keep students removed if some were actually demoted
         if (demotedCount === 0) {
           // Revert the optimistic removal since no students were demoted
@@ -1132,7 +1132,7 @@ const DemotionPage = ({ theme, onTabChange }: { theme: string; onTabChange: (tab
             selectedStudents: state.selectedStudents.length > 0 ? state.selectedStudents : studentsToDemote.map(s => s.usn),
           });
         }
-        
+
         updateState({
           demotionResults: {
             message: res.message || `${demotedCount} students demoted successfully`,

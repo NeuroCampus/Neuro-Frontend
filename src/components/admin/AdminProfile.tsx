@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Badge } from "../ui/badge";
 import { format } from "date-fns";
 import UpgradePlanDialog from "../common/UpgradePlanDialog";
+import { Skeleton, SkeletonForm } from "../ui/skeleton";
 
 interface AdminProfileProps {
   user: any;
@@ -312,7 +313,16 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
     }
 
     if (activeTab === 'subscription') {
-      if (subLoading) return <div className="text-center py-10"><Loader2 className="animate-spin mx-auto mb-2" /> Loading plan details...</div>;
+      if (subLoading) return (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Skeleton className="h-24 w-full rounded-xl" />
+            <Skeleton className="h-24 w-full rounded-xl" />
+            <Skeleton className="h-24 w-full rounded-xl" />
+          </div>
+          <Skeleton className="h-48 w-full rounded-xl" />
+        </div>
+      );
       if (!subscriptionData) return <div className="text-center py-10 text-muted-foreground">No subscription data found.</div>;
 
       return (
@@ -331,8 +341,8 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                   </div>
                 </div>
                 {subscriptionData.plan_name.toLowerCase() !== 'advance' && (
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     className="bg-primary hover:bg-primary/90 text-white text-xs h-8 px-3 rounded-lg"
                     onClick={() => setIsUpgradeOpen(true)}
                   >
@@ -344,7 +354,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
 
             <Card className={cn("border-none shadow-sm", theme === 'dark' ? 'bg-zinc-900' : 'bg-white')}>
               <CardContent className="p-4 flex items-center gap-4">
-                <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", 
+                <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center",
                   subscriptionData.is_active ? "bg-green-100 text-green-600 dark:bg-green-900/30" : "bg-red-100 text-red-600 dark:bg-red-900/30")}>
                   <Activity size={24} />
                 </div>
@@ -365,9 +375,9 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 <div>
                   <p className="text-xs text-muted-foreground font-medium">Expiry Date</p>
                   <p className="text-sm font-semibold">
-                    {subscriptionData.subscription_expires_at 
+                    {subscriptionData.subscription_expires_at
                       ? format(new Date(subscriptionData.subscription_expires_at), 'dd MMM yyyy')
-                      : subscriptionData.trial_ends_at 
+                      : subscriptionData.trial_ends_at
                         ? format(new Date(subscriptionData.trial_ends_at), 'dd MMM yyyy HH:mm')
                         : 'Lifetime Access'}
                   </p>
@@ -382,7 +392,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
               <CreditCard size={18} className="text-primary" />
               <h3 className="font-bold text-base">Payment History</h3>
             </div>
-            
+
             <div className="rounded-xl border overflow-hidden">
               <Table>
                 <TableHeader className={theme === 'dark' ? 'bg-zinc-900/50' : 'bg-gray-50'}>
@@ -451,11 +461,15 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
   };
 
   if (loading) {
-    return <div className={`text-center py-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading...</div>;
+    return (
+      <div className="w-full max-w-none mx-auto my-2 sm:my-4 md:my-6 px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6">
+        <SkeletonForm fields={6} />
+      </div>
+    );
   }
 
   return (
-    <div className={`min-h-screen flex justify-center items-start ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+    <div className={`flex justify-center items-start ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
       <Card className={`w-full max-w-none mx-auto my-2 sm:my-4 md:my-6  px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6 ${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}`}>
         <CardHeader className="px-2 sm:px-3 md:px-4 lg:px-6 py-3 sm:py-4 md:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 border-b">
           <div className="flex-1 min-w-0">
@@ -603,7 +617,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
         </CardContent>
       </Card>
 
-      <UpgradePlanDialog 
+      <UpgradePlanDialog
         isOpen={isUpgradeOpen}
         onClose={() => setIsUpgradeOpen(false)}
         orgName={localStorage.getItem("org_name") || "Your Institution"}

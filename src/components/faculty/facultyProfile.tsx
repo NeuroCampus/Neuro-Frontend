@@ -356,7 +356,16 @@ const FacultyProfile = () => {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap ml-auto">
-          <Button className="text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-primary text-white border-primary hover:bg-primary/90" onClick={() => { if (isEditing) { handleSave(); } else { setIsEditing(true); } }}>{isEditing ? 'Save' : 'Edit Profile'}</Button>
+          <Button className="text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-primary text-white border-primary hover:bg-primary/90" onClick={() => { if (isEditing) { handleSave(); } else { setIsEditing(true); } }}>
+            {isEditing ? (
+              updateProfileMutation?.isPending ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-white/40 animate-pulse" />
+                  Saving...
+                </div>
+              ) : 'Save'
+            ) : 'Edit Profile'}
+          </Button>
           {isEditing && <button onClick={() => setIsEditing(false)} className={`text-sm px-3 sm:px-4 py-1.5 sm:py-2 border rounded-md transition-colors ${theme === 'dark' ? 'border-muted-foreground text-muted-foreground hover:border-foreground hover:text-foreground' : 'border-gray-600 text-gray-600 hover:border-gray-900 hover:text-gray-900'}`}>Cancel</button>}
           <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
             <DialogTrigger asChild>

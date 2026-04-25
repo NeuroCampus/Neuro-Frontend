@@ -108,15 +108,17 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       .join(" ");
   };
 
+  const isNoAnimation = role === 'admin';
+
   return (
     <motion.div
-      className={`flex min-h-screen ${
+      className={`flex h-screen overflow-hidden ${
         theme === "dark"
           ? "dark bg-background text-foreground"
           : "bg-gray-50 text-gray-900"
       }`}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      initial={isNoAnimation ? false : { opacity: 0 }}
+      animate={isNoAnimation ? false : { opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
       {/* Sidebar */}
@@ -131,15 +133,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
       {/* Main Content Area */}
       <div
-        className={`flex-1 min-w-0 flex flex-col transition-all duration-300 overflow-x-hidden ${
+        className={`flex-1 min-w-0 flex flex-col h-screen overflow-hidden transition-all duration-300 ${
           sidebarCollapsed ? 'ml-0' : 'ml-64'
         }`}
       >
         {/* Navbar */}
         <div
-          className={`fixed top-0 z-10 shadow-sm transition-all duration-300 ${
-            sidebarCollapsed ? 'left-0' : 'left-64'
-          } right-0`}
+          className={`z-10 shadow-sm transition-all duration-300 w-full`}
         >
           <Navbar
             role={role}
@@ -153,11 +153,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
         {/* Page Content */}
         <motion.main
-          className={`flex-1 min-w-0 mt-16 p-4 md:p-6 overflow-y-auto overflow-x-hidden ${
+          className={`flex-1 min-w-0 p-4 mb-2 overflow-y-auto overflow-x-hidden thin-scrollbar ${
             theme === "dark" ? "bg-background" : "bg-gray-50"
           }`}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={isNoAnimation ? false : { opacity: 0, y: 20 }}
+          animate={isNoAnimation ? false : { opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
         >
           {/* Page Header */}
@@ -181,7 +181,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           )}
 
           {/* Children Content */}
-          <AnimatePresence mode="wait">{children}</AnimatePresence>
+          {isNoAnimation ? (
+            <div className="h-full w-full">{children}</div>
+          ) : (
+            <AnimatePresence mode="wait">{children}</AnimatePresence>
+          )}
         </motion.main>
       </div>
     </motion.div>

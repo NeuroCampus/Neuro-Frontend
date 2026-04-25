@@ -3,7 +3,7 @@ import { manageBatches } from "../../utils/admin_api";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "../ui/skeleton";
+import { SkeletonTable } from "../ui/skeleton";
 import { useToast } from "../../hooks/use-toast";
 import {
   Dialog,
@@ -262,7 +262,7 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
   };
 
   return (
-    <div className={` max-w-full min-h-screen mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+    <div className={` max-w-full mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
       {/* Add New Batch Card */}
       <Card className={theme === 'dark' ? 'bg-card border border-border shadow-sm mb-6' : 'bg-white border border-gray-200 shadow-sm mb-6'}>
         <CardHeader className="pb-2 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -318,7 +318,7 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
         </CardHeader>
         <CardContent className="overflow-x-auto md:overflow-x-visible pb-0">
           {loading ? (
-            <Skeleton className="h-8 w-full" />
+            <SkeletonTable rows={5} cols={4} />
           ) : (
             <div className="max-h-[22rem] overflow-y-auto custom-scrollbar">
               <div className="w-full max-w-[320px] mx-auto md:max-w-none md:mx-0">

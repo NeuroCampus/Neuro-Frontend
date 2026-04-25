@@ -361,9 +361,6 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
           theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-100'
         } shadow-sm hover:shadow-md`}>
           <CardContent className="p-5">
-            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform duration-500">
-              <FaBookOpen className="w-16 h-16 text-primary" />
-            </div>
             <div className="flex items-start gap-4">
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-inner ${
                 theme === 'dark' ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'
@@ -400,9 +397,6 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
           theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-100'
         } shadow-sm hover:shadow-md`}>
           <CardContent className="p-5">
-            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform duration-500">
-              <FaCheckCircle className="w-16 h-16 text-green-500" />
-            </div>
             <div className="flex items-start gap-4">
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-inner ${
                 dashboardData.attendance_status.percentage >= 75 

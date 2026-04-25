@@ -24,6 +24,7 @@ import { fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
 import { useToast } from "../../hooks/use-toast";
 import { useTheme } from "../../context/ThemeContext";
+import { SkeletonTable } from "../ui/skeleton";
 
 // Custom SelectContent components without scroll arrows
 const CustomSelectContent = forwardRef<
@@ -207,14 +208,14 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
 
   if (loading) {
     return (
-      <div className={`text-center py-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-        Loading...
+      <div className="space-y-6">
+        <SkeletonTable rows={8} cols={4} />
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+    <div className={`${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
       <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}>
         <CardHeader>
           <div className="w-full flex items-start justify-between">

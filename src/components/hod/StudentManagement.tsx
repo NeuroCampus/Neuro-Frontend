@@ -113,7 +113,7 @@ const StudentManagement = () => {
   // Fetch students
   const fetchStudents = async (branchId: string, page: number = 1, pageSize: number = 50, search: string = '', sectionId: string = '', forceRefresh: boolean = false) => {
     try {
-      const params: any = { 
+      const params: any = {
         branch_id: branchId,
         page: page,
         page_size: pageSize
@@ -176,7 +176,7 @@ const StudentManagement = () => {
       const batchRes = await manageBatches();
       if (batchRes.success && batchRes.batches) {
         const defaultBatch = batchRes.batches[0]?.name || "";
-        updateState({ 
+        updateState({
           batches: batchRes.batches,
           manualForm: { ...state.manualForm, batch: defaultBatch }
         });
@@ -323,8 +323,8 @@ const StudentManagement = () => {
         if (cached) {
           updateState({
             editSections: cached,
-            editForm: { 
-              ...state.editForm, 
+            editForm: {
+              ...state.editForm,
               section: cached.find((s: any) => s.name === state.editForm.section)?.name || cached[0]?.name || "",
               cycle: semesterNumber <= 2 ? state.editForm.cycle : "" // Reset cycle for semesters > 2
             },
@@ -364,8 +364,8 @@ const StudentManagement = () => {
 
   // Handle file selection (just stores the file, doesn't process)
   const handleFileSelect = (file: File) => {
-    updateState({ 
-      selectedFile: file, 
+    updateState({
+      selectedFile: file,
       droppedFileName: file.name,
       uploadErrors: [],
       uploadedCount: 0,
@@ -461,11 +461,11 @@ const StudentManagement = () => {
             }
 
             const cycle = String(entry.cycle || entry.Cycle || "").trim().toUpperCase();
-            
+
             // Validate cycle for semesters 1 and 2 - use UI selected cycle if available
             const semesterNumber = getSemesterNumber(state.manualForm.semester);
             const selectedCycle = state.manualForm.cycle;
-            
+
             if (semesterNumber <= 2) {
               // Use cycle from UI selection, or from CSV if provided
               const finalCycle = selectedCycle || cycle;
@@ -532,10 +532,10 @@ const StudentManagement = () => {
             currentPage: 1, // Reset to first page to show the new students
             isLoading: false,
           });
-            if (createdCount > 0) {
-              updateState({ successMessage: `${createdCount} student${createdCount !== 1 ? 's' : ''} added successfully.` });
-              setTimeout(() => updateState({ successMessage: "" }), 4000);
-            }
+          if (createdCount > 0) {
+            updateState({ successMessage: `${createdCount} student${createdCount !== 1 ? 's' : ''} added successfully.` });
+            setTimeout(() => updateState({ successMessage: "" }), 4000);
+          }
           if (fileInputRef.current) fileInputRef.current.value = "";
           // Note: Removed automatic refresh after bulk upload to avoid GET after POST
         } else {
@@ -714,11 +714,11 @@ const StudentManagement = () => {
       }, "POST");
 
       if (res.success) {
-      // Optimistically remove student from local state
-      const filtered = state.students.filter((s) => s.usn !== state.selectedStudent!.usn);
-      updateState({ students: filtered, confirmDelete: false, uploadErrors: [], currentPage: 1 });
-      updateState({ successMessage: "Student deleted successfully." });
-      setTimeout(() => updateState({ successMessage: "" }), 3000);
+        // Optimistically remove student from local state
+        const filtered = state.students.filter((s) => s.usn !== state.selectedStudent!.usn);
+        updateState({ students: filtered, confirmDelete: false, uploadErrors: [], currentPage: 1 });
+        updateState({ successMessage: "Student deleted successfully." });
+        setTimeout(() => updateState({ successMessage: "" }), 3000);
       } else {
         updateState({ uploadErrors: [res.message || "Error deleting student"] });
       }
@@ -734,10 +734,10 @@ const StudentManagement = () => {
     // Include phone as an additional column in the template
     const headers = ["usn", "name", "email", "phone"];
     const rows = [
-        ["1AM22CI001", "John Doe", "john.doe@example.com", "9876543210"],
-        ["1AM22CI002", "Jane Smith", "jane.smith@example.com", "9123456780"],
-        ["1AM22CI003", "Alice Johnson", "alice.johnson@example.com", "9988776655"],
-      ];
+      ["1AM22CI001", "John Doe", "john.doe@example.com", "9876543210"],
+      ["1AM22CI002", "Jane Smith", "jane.smith@example.com", "9123456780"],
+      ["1AM22CI003", "Alice Johnson", "alice.johnson@example.com", "9988776655"],
+    ];
     return [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");
   };
 
@@ -873,11 +873,10 @@ const StudentManagement = () => {
                     manualErrors: { ...state.manualErrors, usn: error },
                   });
                 }}
-                className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${
-                  state.manualErrors?.usn
+                className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${state.manualErrors?.usn
                     ? "border-red-500"
                     : theme === 'dark' ? 'border-border focus:border-primary' : 'border-gray-300 focus:border-blue-500'
-                }`}
+                  }`}
               />
               <span className="text-red-500 text-xs mt-1">
                 {state.manualErrors?.usn}
@@ -914,11 +913,10 @@ const StudentManagement = () => {
                     manualErrors: { ...state.manualErrors, name: error },
                   });
                 }}
-                className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${
-                  state.manualErrors?.name
+                className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${state.manualErrors?.name
                     ? "border-red-500"
                     : theme === 'dark' ? 'border-border focus:border-primary' : 'border-gray-300 focus:border-blue-500'
-                }`}
+                  }`}
               />
               <span className="text-red-500 text-xs mt-1">
                 {state.manualErrors?.name}
@@ -939,7 +937,7 @@ const StudentManagement = () => {
                   value = value.replace(/[!#$%^&*()_+<>?:"{}]/g, "");
 
                   // Professional-grade email regex
-                  const emailRegex =/^[a-zA-Z0-9]+([._%+-]?[a-zA-Z0-9]+)*@([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\.)+[A-Za-z]{2,10}$/;
+                  const emailRegex = /^[a-zA-Z0-9]+([._%+-]?[a-zA-Z0-9]+)*@([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\.)+[A-Za-z]{2,10}$/;
                   const consecutiveDotRegex = /\.{2,}/;
 
                   const error =
@@ -952,11 +950,10 @@ const StudentManagement = () => {
                     manualErrors: { ...state.manualErrors, email: error },
                   });
                 }}
-                className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${
-                  state.manualErrors?.email
+                className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${state.manualErrors?.email
                     ? "border-red-500"
                     : theme === 'dark' ? 'border-border focus:border-primary' : 'border-gray-300 focus:border-blue-500'
-                }`}
+                  }`}
               />
               <span className="text-red-500 text-xs mt-1">
                 {state.manualErrors?.email}
@@ -981,11 +978,10 @@ const StudentManagement = () => {
                   if (value && !/^\d{10}$/.test(value)) error = "Phone must be 10 digits";
                   updateState({ manualErrors: { ...state.manualErrors, phone: error } });
                 }}
-                className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${
-                  state.manualErrors?.phone
+                className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border placeholder:text-muted-foreground' : 'bg-white text-gray-900 border-gray-300 placeholder:text-gray-500'} focus:ring-0 ${state.manualErrors?.phone
                     ? "border-red-500"
                     : theme === 'dark' ? 'border-border focus:border-primary' : 'border-gray-300 focus:border-blue-500'
-                }`}
+                  }`}
               />
               <span className="text-red-500 text-xs mt-1">{state.manualErrors?.phone}</span>
             </div>
@@ -1079,10 +1075,10 @@ const StudentManagement = () => {
             <Button
               onClick={handleManualEntry}
               disabled={
-                state.isLoading || 
-                !state.branchId || 
-                !state.manualForm.semester || 
-                !state.manualForm.section || 
+                state.isLoading ||
+                !state.branchId ||
+                !state.manualForm.semester ||
+                !state.manualForm.section ||
                 !state.manualForm.batch ||
                 (getSemesterNumber(state.manualForm.semester) <= 2 && !state.manualForm.cycle)
               }
@@ -1188,7 +1184,7 @@ const StudentManagement = () => {
                   <SelectValue
                     placeholder={
                       state.listSections.length === 0 ||
-                      state.semesterFilter === "All"
+                        state.semesterFilter === "All"
                         ? "Select semester first"
                         : "Select Section"
                     }
@@ -1531,7 +1527,7 @@ const StudentManagement = () => {
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleEnrollStudents}
               disabled={!state.selectedFile || state.isLoading}
               className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition disabled:opacity-50 bg-primary text-white border-primary hover:bg-[#9147e0] hover:border-[#9147e0] hover:text-white"
@@ -1544,7 +1540,7 @@ const StudentManagement = () => {
 
 
       <Dialog open={state.confirmDelete} onOpenChange={() => updateState({ confirmDelete: false })}>
-        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} w-[92%] sm:w-auto max-w-sm mx-auto rounded-2xl sm:rounded-md p-4` }>
+        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} w-[92%] sm:w-auto max-w-sm mx-auto rounded-2xl sm:rounded-md p-4`}>
           <DialogHeader>
             <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Delete Student</DialogTitle>
           </DialogHeader>
@@ -1567,7 +1563,7 @@ const StudentManagement = () => {
       </Dialog>
 
       <Dialog open={state.editDialog} onOpenChange={() => updateState({ editDialog: false, editSections: [] })}>
-        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} w-[92%] sm:w-auto max-w-md sm:max-w-2xl rounded-2xl sm:rounded-md` }>
+        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} w-[92%] sm:w-auto max-w-md sm:max-w-2xl rounded-2xl sm:rounded-md`}>
           <DialogHeader>
             <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Edit Student</DialogTitle>
           </DialogHeader>
@@ -1629,8 +1625,8 @@ const StudentManagement = () => {
                     state.editSections.length === 0 || !state.editForm.semester
                       ? "Select semester first"
                       : state.isEditSectionsLoading
-                      ? <Loader2 className="h-4 w-4 animate-spin mx-auto" />
-                      : "Select Section"
+                        ? <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                        : "Select Section"
                   }
                 />
               </SelectTrigger>

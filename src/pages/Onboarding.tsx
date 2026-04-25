@@ -3,9 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Building2, User, Mail, Phone, CheckCircle2, 
-  ArrowRight, Loader2, Shield, Globe, ChevronLeft 
+import {
+  Building2, User, Mail, Phone, CheckCircle2,
+  ArrowRight, Loader2, Shield, Globe, ChevronLeft
 } from "lucide-react";
 import { API_ENDPOINT } from "@/utils/config";
 import { toast } from "@/components/ui/use-toast";
@@ -15,7 +15,7 @@ const Onboarding = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     org_name: "",
     admin_name: "",
@@ -81,7 +81,7 @@ const Onboarding = () => {
   if (success) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 font-sans">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="max-w-md w-full bg-white rounded-2xl shadow-xl p-10 text-center"
@@ -91,10 +91,10 @@ const Onboarding = () => {
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Registration Successful!</h1>
           <p className="text-gray-600 mb-8 leading-relaxed">
-            Congratulations! <strong>{formData.org_name}</strong> is now registered. 
+            Congratulations! <strong>{formData.org_name}</strong> is now registered.
             Login credentials have been sent to <strong>{formData.email}</strong>.
           </p>
-          <Button 
+          <Button
             onClick={() => navigate("/")}
             className="w-full bg-primary hover:bg-primary/90 h-12 rounded-lg text-white font-medium shadow-lg shadow-primary/20"
           >
@@ -109,13 +109,13 @@ const Onboarding = () => {
   return (
     <div className="min-h-screen flex bg-white font-sans overflow-hidden">
       {/* Left Section - Form (Matching Login) */}
-      <motion.div 
+      <motion.div
         className="flex-1 bg-white flex items-center justify-center p-8 lg:p-16 relative"
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
       >
-        <button 
+        <button
           onClick={() => navigate("/neurocampus")}
           className="absolute top-8 left-8 text-gray-400 hover:text-primary transition-colors flex items-center gap-2 text-sm font-medium"
         >
@@ -124,7 +124,7 @@ const Onboarding = () => {
         </button>
 
         <div className="w-full max-w-md">
-          <motion.div 
+          <motion.div
             className="text-center mb-10"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -139,12 +139,12 @@ const Onboarding = () => {
               <label className="text-sm font-medium text-gray-900">Organization Name</label>
               <div className="relative">
                 <Building2 className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-                <Input 
+                <Input
                   required
                   placeholder="e.g. AMC College of Engineering"
                   className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:ring-[hsl(var(--primary))]/20 rounded-lg h-12 transition-all"
                   value={formData.org_name}
-                  onChange={e => setFormData({...formData, org_name: e.target.value})}
+                  onChange={e => setFormData({ ...formData, org_name: e.target.value })}
                 />
               </div>
             </div>
@@ -153,12 +153,12 @@ const Onboarding = () => {
               <label className="text-sm font-medium text-gray-900">Admin/Principal Name</label>
               <div className="relative">
                 <User className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-                <Input 
+                <Input
                   required
                   placeholder="Enter full name"
                   className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:ring-[hsl(var(--primary))]/20 rounded-lg h-12 transition-all"
                   value={formData.admin_name}
-                  onChange={e => setFormData({...formData, admin_name: e.target.value})}
+                  onChange={e => setFormData({ ...formData, admin_name: e.target.value })}
                 />
               </div>
             </div>
@@ -167,13 +167,13 @@ const Onboarding = () => {
               <label className="text-sm font-medium text-gray-900">Official Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-                <Input 
+                <Input
                   required
                   type="email"
                   placeholder="principal@institution.edu"
                   className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:ring-[hsl(var(--primary))]/20 rounded-lg h-12 transition-all"
                   value={formData.email}
-                  onChange={e => setFormData({...formData, email: e.target.value})}
+                  onChange={e => setFormData({ ...formData, email: e.target.value })}
                 />
               </div>
             </div>
@@ -182,19 +182,19 @@ const Onboarding = () => {
               <label className="text-sm font-medium text-gray-900">Contact Number</label>
               <div className="relative">
                 <Phone className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-                <Input 
+                <Input
                   required
                   type="tel"
                   placeholder="Enter 10-digit number"
                   className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:ring-[hsl(var(--primary))]/20 rounded-lg h-12 transition-all"
                   value={formData.phone}
-                  onChange={e => setFormData({...formData, phone: e.target.value})}
+                  onChange={e => setFormData({ ...formData, phone: e.target.value })}
                 />
               </div>
             </div>
 
             <div className="pt-4">
-              <Button 
+              <Button
                 type="submit"
                 disabled={loading}
                 className="w-full bg-primary hover:bg-primary/90 text-white font-medium rounded-lg h-12 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-70"
@@ -218,7 +218,7 @@ const Onboarding = () => {
       </motion.div>
 
       {/* Right Section - Illustration (Matching Login) */}
-      <motion.div 
+      <motion.div
         className="hidden lg:flex flex-1 bg-gradient-to-br from-[hsl(var(--primary))] to-[#7c3aed] items-center justify-center p-12 relative overflow-hidden"
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
@@ -232,7 +232,7 @@ const Onboarding = () => {
         </div>
 
         <div className="relative z-10 text-center text-white max-w-lg">
-          <motion.div 
+          <motion.div
             className="flex justify-center mb-8"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -282,7 +282,7 @@ const Onboarding = () => {
             />
           </motion.div>
 
-          <motion.div 
+          <motion.div
             className="mt-12 space-y-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

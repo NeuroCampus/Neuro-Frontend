@@ -575,4 +575,14 @@ const FacultyAttendance = () => {
   );
 };
 
+export default FacultyAttendance;enter py-8 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+              No history available
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
 export default FacultyAttendance;

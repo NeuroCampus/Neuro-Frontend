@@ -276,7 +276,7 @@ const UploadMarks = () => {
   const [bulkDragActive, setBulkDragActive] = useState(false); // New state for bulk upload drag
   const [errorMessage, setErrorMessage] = useState("");
   const { theme } = useTheme();
-  
+
   // New state for question paper format
   const [questions, setQuestions] = useState<Question[]>([
     { id: "1a", number: "1a", content: "Question 1a", maxMarks: "7", co: "CO2", bloomsLevel: "Apply" },
@@ -397,9 +397,9 @@ const UploadMarks = () => {
         prev.map((student, i) =>
           i === actualIndex
             ? {
-                ...student,
-                [field]: field === "marks" ? normalizeMarks(value) : value,
-              }
+              ...student,
+              [field]: field === "marks" ? normalizeMarks(value) : value,
+            }
             : student
         )
       );
@@ -428,7 +428,7 @@ const UploadMarks = () => {
   const addQuestion = () => {
     const lastQuestion = questions[questions.length - 1];
     const lastNumber = lastQuestion.number;
-    
+
     // Parse the last question number to determine next
     const match = lastNumber.match(/(\d+)([a-z]*)/);
     let newNumber = "1a";
@@ -436,17 +436,17 @@ const UploadMarks = () => {
     let newMaxMarks = "7";
     let newCo = "CO2";
     let newBlooms = "Apply";
-    
+
     if (match) {
       const [, numPart, letterPart] = match;
       const num = parseInt(numPart);
-      
+
       if (letterPart) {
         // If it has a letter part (like 1a, 1b), increment the letter
         const nextChar = String.fromCharCode(letterPart.charCodeAt(0) + 1);
         newNumber = `${numPart}${nextChar}`;
         newContent = `Question ${numPart}${nextChar}`;
-        
+
         // Set marks and CO based on subpart
         if (nextChar === 'c') {
           newMaxMarks = "6";
@@ -459,7 +459,7 @@ const UploadMarks = () => {
         newContent = `Question ${num}a`;
       }
     }
-    
+
     setQuestions([
       ...questions,
       { id: Date.now().toString(), number: newNumber, content: newContent, maxMarks: newMaxMarks, co: newCo, bloomsLevel: newBlooms }
@@ -491,7 +491,7 @@ const UploadMarks = () => {
         // Don't update if it's not a valid number
         return;
       }
-      
+
       // Validate max marks range (1-10)
       const maxMarksNum = parseInt(value, 10);
       if (maxMarksNum > 10) {
@@ -499,8 +499,8 @@ const UploadMarks = () => {
         return;
       }
     }
-    
-    setQuestions(questions.map(q => 
+
+    setQuestions(questions.map(q =>
       q.id === id ? { ...q, [field]: value } : q
     ));
   };
@@ -509,7 +509,7 @@ const UploadMarks = () => {
   const loadExistingQP = async () => {
     // Require branch, semester, subject and testType (section optional)
     if (!selected.branch_id || !selected.semester_id || !selected.subject_id || !selected.testType) return;
-    
+
     try {
       const qpResponse = await getQuestionPapers({
         branch_id: selected.branch_id?.toString(),
@@ -535,7 +535,7 @@ const UploadMarks = () => {
           }
           return q.branch === selected.branch_id && q.semester === selected.semester_id && q.subject === selected.subject_id && q.test_type === selected.testType;
         });
-        
+
         // Only consider the QP usable for marks upload if it is COE-finalized (approved)
         if (existingQp && existingQp.status === 'approved') {
           // Load full QP details immediately and replace default questions
@@ -608,24 +608,24 @@ const UploadMarks = () => {
 
   const saveQuestionFormat = async () => {
     // Validate that all questions have max marks
-    const isValid = questions.every(q => 
-      q.number.trim() !== "" && 
-      q.maxMarks.trim() !== "" && 
-      parseInt(q.maxMarks) > 0 && 
+    const isValid = questions.every(q =>
+      q.number.trim() !== "" &&
+      q.maxMarks.trim() !== "" &&
+      parseInt(q.maxMarks) > 0 &&
       parseInt(q.maxMarks) <= 10
     );
-    
+
     if (!isValid) {
       // Show error message
       setErrorMessage("Please ensure all questions have valid numbers and max marks (1-10)");
       return;
     }
-    
+
     // Clear any previous error messages
     setErrorMessage("");
 
     // NOTE: SEE is supported server-side; allow SEE QP creation
-    
+
     // Check if QP already exists (fetch lightweight summaries)
     const qpResponse = await getQuestionPapers({
       branch_id: selected.branch_id?.toString(),
@@ -653,7 +653,7 @@ const UploadMarks = () => {
         return q.branch === selected.branch_id && q.semester === selected.semester_id && q.subject === selected.subject_id && q.test_type === selected.testType;
       });
     }
-    
+
     // Prepare QP data - group by main question
     const groupedQuestions: Record<string, { co: string; blooms_level: string; subparts: Array<{ subpart_label: string; content: string; max_marks: number }> }> = {};
     questions.forEach(q => {
@@ -710,7 +710,7 @@ const UploadMarks = () => {
           setQpId(response.data.id);
         }
       }
-      
+
       if (response.success) {
         setQuestionFormatSaved(true);
         await loadExistingQP(); // Reload QP data to reflect changes immediately
@@ -953,18 +953,18 @@ const UploadMarks = () => {
   const handleBulkFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     if (file.size > MAX_FILE_SIZE) {
       setErrorMessage('File size exceeds the 5MB limit.');
       return;
     }
-    
+
     const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
     if (!isExcel) {
       setErrorMessage('Unsupported file type. Please upload Excel file (.xlsx or .xls).');
       return;
     }
-    
+
     setBulkUploadFile(file);
     setErrorMessage("");
   };
@@ -1004,77 +1004,77 @@ const UploadMarks = () => {
       await processBulkUpload(bulkUploadFile);
     }
   };
-  
+
   const processBulkUpload = async (file: File) => {
     try {
       setErrorMessage("");
-      
+
       // Read the Excel file
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data);
       const firstSheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[firstSheetName];
-      
+
       // Convert to JSON
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-      
+
       // Skip header rows (first 8 rows based on template)
       const dataRows = jsonData.slice(8) as (string | number)[][];
-      
+
       // Process each row and update student marks
       const updatedStudentMarks: Record<string, Record<string, string>> = {};
-      
+
       // Get student list for the selected class
       const { branch_id, semester_id, section_id, subject_id } = selected;
       const studentsList = await getStudentsForClass(
-        branch_id!, 
-        semester_id!, 
-        section_id!, 
+        branch_id!,
+        semester_id!,
+        section_id!,
         subject_id!
       );
-      
+
       if (!studentsList) {
         setErrorMessage("Failed to fetch student list.");
         return;
       }
-      
+
       // Create USN to student ID mapping
       const usnToIdMap = new Map<string, number>();
       studentsList.forEach((student: ClassStudent) => {
         usnToIdMap.set(student.usn.toUpperCase(), student.id);
       });
-      
+
       console.log('USN to ID mapping:', usnToIdMap);
-      
+
       // Process each row
       for (const row of dataRows) {
         if (row.length < 2) continue;
-        
+
         const usn = String(row[1]).trim().toUpperCase(); // USN is in column B (index 1)
         const studentId = usnToIdMap.get(usn);
-        
+
         console.log(`Processing USN: ${usn}, Found student ID: ${studentId}`);
-        
+
         if (!studentId) {
           console.warn(`Student with USN ${usn} not found in the selected class.`);
           continue;
         }
-        
+
         // Initialize marks for this student
         updatedStudentMarks[studentId.toString()] = {};
-        
+
         // Map Excel columns to question numbers
         // Column mapping based on the template:
         // C(2): 1a, D(3): 1b, E(4): 1c, G(6): 2a, H(7): 2b, I(8): 2c
         // L(11): 3a, M(12): 3b, N(13): 3c, P(15): 4a, Q(16): 4b, R(17): 4c
-        
+
         const columnMapping: Record<number, string> = {
           2: '1a', 3: '1b', 4: '1c',
           6: '2a', 7: '2b', 8: '2c',
           11: '3a', 12: '3b', 13: '3c',
           15: '4a', 16: '4b', 17: '4c'
         };
-        
+
         // Extract marks from columns
         Object.entries(columnMapping).forEach(([colIndex, questionNumber]) => {
           const colIdx = parseInt(colIndex);
@@ -1088,16 +1088,16 @@ const UploadMarks = () => {
           }
         });
       }
-      
+
       // Update student marks state
       console.log('Updating student marks:', updatedStudentMarks);
       setStudentMarks(updatedStudentMarks);
       setBulkUploadCompleted(true);
-      
+
       // Switch to manual tab to show the results
       console.log('Switching to manual tab with marks:', updatedStudentMarks);
       setTabValue("manual");
-      
+
       MySwal.fire({
         title: "Bulk Upload Successful!",
         text: "Marks have been imported successfully. Please review and save.",
@@ -1158,7 +1158,7 @@ const UploadMarks = () => {
   const downloadExcelTemplate = () => {
     // Create a new workbook
     const wb = XLSX.utils.book_new();
-    
+
     // Create worksheet data
     const ws_data = [
       // Header rows
@@ -1191,13 +1191,13 @@ const UploadMarks = () => {
       ["17", "1AM25C017", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""],
       ["18", "1AM25C018", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]
     ];
-    
+
     // Create worksheet
     const ws = XLSX.utils.aoa_to_sheet(ws_data);
-    
+
     // Merge cells for header
     if (!ws['!merges']) ws['!merges'] = [];
-    
+
     // Merge cells for title
     ws['!merges'].push(
       { s: { r: 0, c: 0 }, e: { r: 0, c: 28 } }, // Department title
@@ -1206,7 +1206,7 @@ const UploadMarks = () => {
       { s: { r: 5, c: 0 }, e: { r: 5, c: 10 } }, // Subject code
       { s: { r: 5, c: 28 }, e: { r: 5, c: 28 } } // Subject name
     );
-    
+
     // Set column widths
     const columnWidths = [
       { wch: 8 },   // SL No
@@ -1239,12 +1239,12 @@ const UploadMarks = () => {
       { wch: 8 },   // TOT
       { wch: 10 }   // IA1 (25)
     ];
-    
+
     ws['!cols'] = columnWidths;
-    
+
     // Add worksheet to workbook
     XLSX.utils.book_append_sheet(wb, ws, "Marks Entry");
-    
+
     // Export the workbook
     XLSX.writeFile(wb, "Marks_Entry_Template.xlsx");
   };
@@ -1329,17 +1329,17 @@ const UploadMarks = () => {
           const branches = Array.from(new Map(filteredBySubject.map(a => [a.branch_id, { id: a.branch_id, name: a.branch }])).values());
           const semesters = Array.from(new Map(filteredBySubject.map(a => [a.semester_id, { id: a.semester_id, number: a.semester }])).values());
           const sections = Array.from(new Map(filteredBySubject.map(a => [a.section_id, { id: a.section_id, name: a.section }])).values());
-          
+
           // Keep ALL subjects in dropdown, not just filtered ones
           const allSubjects = Array.from(new Map(assignments.map(a => [a.subject_id, { id: a.subject_id, name: a.subject_name }])).values());
-          
+
           setDropdownData(prev => ({ ...prev, branch: branches, semester: semesters, section: sections, subject: allSubjects }));
-          
+
           // Auto-select if unique values exist (similar to TakeAttendance.tsx logic)
           const uniqBranches = Array.from(new Set(filteredBySubject.map(a => a.branch_id))).filter(Boolean);
           const uniqSemesters = Array.from(new Set(filteredBySubject.map(a => a.semester_id))).filter(Boolean);
           const uniqSections = Array.from(new Set(filteredBySubject.map(a => a.section_id))).filter(Boolean);
-          
+
           // Behavior by subject type:
           // - elective: auto-select branch & semester if unique; do NOT auto-select section (optional)
           // - regular/other: auto-select all unique values including section
@@ -1348,7 +1348,7 @@ const UploadMarks = () => {
             const autoSemesterId = uniqSemesters.length === 1 ? uniqSemesters[0] : undefined;
             const autoBranchName = autoBranchId ? branches.find(b => b.id === autoBranchId)?.name || "" : "";
             const autoSemesterNum = autoSemesterId ? semesters.find(s => s.id === autoSemesterId)?.number.toString() || "" : "";
-            
+
             updated.branch_id = autoBranchId;
             updated.branch = autoBranchName;
             updated.semester_id = autoSemesterId;
@@ -1356,7 +1356,7 @@ const UploadMarks = () => {
             // Auto-select default test type IA1
             updated.testType = "IA1";
             // section remains undefined for elective
-            
+
             setSelected({ ...updated });
           } else {
             // regular or unknown subject_type: auto-select all unique values including section
@@ -1366,7 +1366,7 @@ const UploadMarks = () => {
             const autoBranchName = autoBranchId ? branches.find(b => b.id === autoBranchId)?.name || "" : "";
             const autoSemesterNum = autoSemesterId ? semesters.find(s => s.id === autoSemesterId)?.number.toString() || "" : "";
             const autoSectionName = autoSectionId ? sections.find(s => s.id === autoSectionId)?.name || "" : "";
-            
+
             updated.branch_id = autoBranchId;
             updated.branch = autoBranchName;
             updated.semester_id = autoSemesterId;
@@ -1375,7 +1375,7 @@ const UploadMarks = () => {
             updated.section = autoSectionName;
             // Auto-select default test type IA1
             updated.testType = "IA1";
-            
+
             setSelected({ ...updated });
           }
         }
@@ -1452,10 +1452,10 @@ const UploadMarks = () => {
         setStudents([]);
         setStudentMarks({});
         setActionModes({});
-        
+
         // Load existing QP
         loadExistingQP();
-        
+
         setLoadingStudents(true);
         console.log('UploadMarks: selection triggers student load', { updated, localSubjectType, shouldLoadForOpenElective, shouldLoadForElective, shouldLoadForRegular });
         try {
@@ -1519,7 +1519,7 @@ const UploadMarks = () => {
             }
             console.log('Setting initial marks:', initialMarks);
             setStudentMarks(initialMarks);
-            
+
             // Initialize action modes
             const initialActionModes: Record<string, 'edit' | 'save' | 'view'> = {};
             newStudents.forEach(student => {
@@ -1566,19 +1566,19 @@ const UploadMarks = () => {
   // Add the download PDF function inside the component
   const downloadQuestionPaperPDF = () => {
     const doc = new jsPDF();
-    
+
     // Set font properties
     doc.setFont('helvetica');
-    
+
     // Add title
     doc.setFontSize(22);
     doc.setFont(undefined, 'bold');
     doc.text('Question Paper Format', 105, 20, { align: 'center' });
-    
+
     // Add horizontal line
     doc.setDrawColor(162, 89, 255); // Purple color
     doc.line(20, 25, 190, 25);
-    
+
     // Add subject and test type info
     doc.setFontSize(12);
     doc.setFont(undefined, 'normal');
@@ -1586,13 +1586,13 @@ const UploadMarks = () => {
     doc.text(`Subject: ${selected.subject}`, 20, 35);
     doc.text(`Test Type: ${selected.testType}`, 20, 42);
     doc.text(`Total Marks: ${totalMarks}`, 20, 49);
-    
+
     // Add questions header
     doc.setFontSize(16);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(162, 89, 255); // Purple color
     doc.text('Questions:', 20, 65);
-    
+
     // Add questions with improved formatting
     let yPosition = 75;
     questions.forEach((question, index) => {
@@ -1601,24 +1601,24 @@ const UploadMarks = () => {
         doc.addPage();
         yPosition = 20;
       }
-      
+
       // Add question number with purple color
       doc.setFontSize(12);
       doc.setFont(undefined, 'bold');
       doc.setTextColor(162, 89, 255); // Purple color
       doc.text(`${question.number}.`, 20, yPosition);
-      
+
       // Add question content
       doc.setFont(undefined, 'normal');
       doc.setTextColor(0, 0, 0); // Black color
       const questionText = question.content || "No question content entered";
       const splitText = doc.splitTextToSize(questionText, 120);
       doc.text(splitText, 35, yPosition);
-      
+
       // Calculate text height for proper positioning of metadata
       const textHeight = splitText.length * 5;
       const metadataYPosition = yPosition + textHeight + 5;
-      
+
       // Add CO, Blooms Level, and marks information below the question text
       let additionalInfo = `Marks: ${question.maxMarks}`;
       if (question.co) {
@@ -1627,20 +1627,20 @@ const UploadMarks = () => {
       if (question.bloomsLevel) {
         additionalInfo += ` | Blooms: ${question.bloomsLevel}`;
       }
-      
+
       doc.setFont(undefined, 'italic');
       doc.setTextColor(100, 100, 100); // Gray color
       doc.text(additionalInfo, 35, metadataYPosition);
-      
+
       // Calculate new Y position based on text height with proper spacing
       const metadataHeight = 5; // Height of metadata line
       yPosition += Math.max(textHeight, 10) + metadataHeight + 15;
-      
+
       // Add a subtle separator line
       doc.setDrawColor(200, 200, 200); // Light gray
       doc.line(25, yPosition - 8, 185, yPosition - 8);
     });
-    
+
     // Add footer with page numbers
     const pageCount = doc.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
@@ -1650,7 +1650,7 @@ const UploadMarks = () => {
       doc.setTextColor(150, 150, 150); // Light gray
       doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: 'center' });
     }
-    
+
     // Save the PDF
     const fileName = `Question_Paper_Format_${selected.subject}_${selected.testType}.pdf`;
     doc.save(fileName);
@@ -1726,32 +1726,32 @@ const UploadMarks = () => {
         </div>
         <Tabs value={tabValue} onValueChange={setTabValue} className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
           <TabsList className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-gray-100 border border-gray-300 text-gray-900'}>
-            <TabsTrigger 
-              value="manual" 
+            <TabsTrigger
+              value="manual"
               className={`data-[state=active]:bg-primary data-[state=active]:text-white ${theme === 'dark' ? 'data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground' : 'data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
             >
               Marks Entry
             </TabsTrigger>
-            <TabsTrigger 
-              value="questionFormat" 
+            <TabsTrigger
+              value="questionFormat"
               className={`data-[state=active]:bg-primary data-[state=active]:text-white ${theme === 'dark' ? 'data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground' : 'data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
             >
               Question Format
             </TabsTrigger>
-            <TabsTrigger 
-              value="questionPaper" 
+            <TabsTrigger
+              value="questionPaper"
               className={`data-[state=active]:bg-primary data-[state=active]:text-white ${theme === 'dark' ? 'data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground' : 'data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
             >
               Question Paper
             </TabsTrigger>
-            <TabsTrigger 
-              value="bulkUpload" 
+            <TabsTrigger
+              value="bulkUpload"
               className={`data-[state=active]:bg-primary data-[state=active]:text-white ${theme === 'dark' ? 'data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground' : 'data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
             >
               Bulk Upload
             </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="manual">
             {/* Students Table - only shown after saving question format */}
             {qpReady && areAllDropdownsSelected() && (
@@ -1760,7 +1760,7 @@ const UploadMarks = () => {
                 <div className={`p-4 border-b ${theme === 'dark' ? 'border-border bg-muted' : 'border-gray-300 bg-gray-50'}`}>
                   <h3 className="text-lg font-semibold">Internal Assessment Test</h3>
                 </div>
-                        
+
                 {/* Table with new structure based on question format */}
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-border">
@@ -1769,14 +1769,14 @@ const UploadMarks = () => {
                         <th rowSpan={3} className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider align-middle">#</th>
                         <th rowSpan={3} className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider align-middle">USN</th>
                         <th rowSpan={3} className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider align-middle">Name</th>
-                        
+
                         {/* Dynamic Question Groups based on question format */}
                         {questions.map((question) => (
                           <th key={`q-${question.id}`} colSpan={3} className="px-4 py-2 text-center text-xs font-medium uppercase tracking-wider">
                             Q{question.number}
                           </th>
                         ))}
-                        
+
                         {/* Final Columns - Removed Marks After Weightage */}
                         <th rowSpan={3} className="px-4 py-2 text-center text-xs font-medium uppercase tracking-wider align-middle">Total Marks</th>
                         <th rowSpan={3} className="px-4 py-2 text-center text-xs font-medium uppercase tracking-wider align-middle">Action</th>
@@ -1826,40 +1826,40 @@ const UploadMarks = () => {
                             <td className="px-4 py-2 text-sm">{indexOfFirstStudent + index + 1}</td>
                             <td className="px-4 py-2 text-sm">{student.usn}</td>
                             <td className="px-4 py-2 text-sm">{student.name}</td>
-                            
+
                             {/* Debug information */}
                             {/* <td colSpan={questions.length * 3}>
                               <div className="text-xs">
                                 Student ID: {student.id}, Marks: {JSON.stringify(studentMarks[student.id] || {})}
                               </div>
                             </td> */}
-                            
+
                             {/* Dynamic question inputs based on question format */}
                             {questions.map((question, qIndex) => (
                               <Fragment key={`input-${question.id}-${student.id}`}>
                                 <td className="px-2 py-1 text-center">
-                                  <Input 
-                                    type="text" 
-                                    className="w-16 text-center mx-auto" 
-                                    placeholder="CO" 
+                                  <Input
+                                    type="text"
+                                    className="w-16 text-center mx-auto"
+                                    placeholder="CO"
                                     value={question.co}
                                     readOnly
                                   />
                                 </td>
                                 <td className="px-2 py-1 text-center">
-                                  <Input 
-                                    type="text" 
-                                    className="w-16 text-center mx-auto" 
-                                    placeholder="Max" 
+                                  <Input
+                                    type="text"
+                                    className="w-16 text-center mx-auto"
+                                    placeholder="Max"
                                     value={question.maxMarks}
                                     readOnly
                                   />
                                 </td>
                                 <td className="px-2 py-1 text-center">
-                                  <Input 
-                                    type="number" 
-                                    className="w-16 text-center mx-auto" 
-                                    placeholder="Marks" 
+                                  <Input
+                                    type="number"
+                                    className="w-16 text-center mx-auto"
+                                    placeholder="Marks"
                                     value={studentMarks[student.id]?.[question.number] || ""}
                                     min="0"
                                     max={question.maxMarks}
@@ -1867,13 +1867,13 @@ const UploadMarks = () => {
                                       const value = e.target.value;
                                       const maxMarks = parseInt(question.maxMarks);
                                       const numValue = parseInt(value);
-                                      
+
                                       // Validate that the entered value doesn't exceed max marks
                                       if (value !== "" && (isNaN(numValue) || numValue < 0 || numValue > maxMarks)) {
                                         // If invalid, don't update the state
                                         return;
                                       }
-                                      
+
                                       setStudentMarks(prev => {
                                         const updated = { ...prev };
                                         if (!updated[student.id]) updated[student.id] = {};
@@ -1885,7 +1885,7 @@ const UploadMarks = () => {
                                 </td>
                               </Fragment>
                             ))}
-                            
+
                             {/* Final columns */}
                             <td className="px-4 py-2 text-center">
                               {(() => {
@@ -1970,7 +1970,7 @@ const UploadMarks = () => {
                     </tbody>
                   </table>
                 </div>
-                        
+
                 <div className={`flex justify-between items-center mt-4 px-4 py-2 text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                   <span>
                     Page {currentPage} of {totalPages}
@@ -1998,14 +1998,14 @@ const UploadMarks = () => {
                 </div>
               </div>
             )}
-            
+
             {/* Message to configure question format first */}
             {areAllDropdownsSelected() && !qpReady && (
               <div className={`p-6 text-center rounded-lg ${theme === 'dark' ? 'bg-card border border-border' : 'bg-gray-50 border border-gray-200'}`}>
                 <p className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
                   Please configure the question paper format first.
                 </p>
-                <Button 
+                <Button
                   onClick={() => setTabValue("questionFormat")}
                   className="mt-4 bg-primary text-white hover:bg-primary/90"
                 >
@@ -2014,7 +2014,7 @@ const UploadMarks = () => {
               </div>
             )}
           </TabsContent>
-          
+
           {/* Question Format Tab - For configuring questions */}
           <TabsContent value="questionFormat">
             {areAllDropdownsSelected() ? (
@@ -2029,7 +2029,7 @@ const UploadMarks = () => {
                     <h4 className="font-medium">Questions</h4>
                     <span className="text-sm">Total Marks: {totalMarks}</span>
                   </div>
-                  
+
                   {questions.map((question, index) => (
                     <div key={question.id} className="flex items-center gap-3 mb-3">
                       <div className="w-20">
@@ -2083,9 +2083,9 @@ const UploadMarks = () => {
                       </Button>
                     </div>
                   ))}
-                  
+
                   <div className="flex gap-2 mt-4">
-                    <Button 
+                    <Button
                       onClick={addQuestion}
                       variant="outline"
                       className={theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}
@@ -2093,7 +2093,7 @@ const UploadMarks = () => {
                       <Plus className="h-4 w-4 mr-2" />
                       Add Question
                     </Button>
-                    <Button 
+                    <Button
                       onClick={saveQuestionFormat}
                       className="bg-primary text-white hover:bg-primary/90"
                     >
@@ -2110,7 +2110,7 @@ const UploadMarks = () => {
               </div>
             )}
           </TabsContent>
-          
+
           {/* Question Paper Tab - For viewing the saved format */}
           <TabsContent value="questionPaper">
             {qpReady && areAllDropdownsSelected() ? (
@@ -2118,14 +2118,14 @@ const UploadMarks = () => {
                 <div className={`p-6 rounded-lg ${theme === 'dark' ? 'bg-background border border-border' : 'bg-white border border-gray-300'}`}>
                   <div className="flex justify-between items-center mb-6">
                     <h3 className="text-lg font-semibold">Question Paper Format</h3>
-                    <Button 
+                    <Button
                       onClick={downloadQuestionPaperPDF}
                       className="bg-primary text-white hover:bg-primary/90"
                     >
                       Download PDF
                     </Button>
                   </div>
-                  
+
                   <div className="space-y-6">
                     {questions.map((question, index) => (
                       <div key={question.id} className="flex items-start gap-3">
@@ -2161,14 +2161,14 @@ const UploadMarks = () => {
                       </div>
                     </div>
                     <div className="flex justify-end gap-2 mt-6">
-                      <Button 
+                      <Button
                         onClick={() => setTabValue("questionFormat")}
                         variant="outline"
                         className={theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}
                       >
                         Edit Format
                       </Button>
-                      <Button 
+                      <Button
                         onClick={() => setTabValue("manual")}
                         className="bg-primary text-white hover:bg-primary/90"
                       >
@@ -2181,12 +2181,12 @@ const UploadMarks = () => {
             ) : (
               <div className={`p-6 text-center rounded-lg ${theme === 'dark' ? 'bg-card border border-border' : 'bg-gray-50 border border-gray-200'}`}>
                 <p className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
-                  {areAllDropdownsSelected() 
-                    ? "Please configure the question paper format first." 
+                  {areAllDropdownsSelected()
+                    ? "Please configure the question paper format first."
                     : "Please select all the dropdown options first."}
                 </p>
                 {areAllDropdownsSelected() ? (
-                  <Button 
+                  <Button
                     onClick={() => setTabValue("questionFormat")}
                     className="mt-4 bg-primary text-white hover:bg-primary/90"
                   >
@@ -2206,7 +2206,7 @@ const UploadMarks = () => {
                   Upload Excel file with student marks
                 </p>
               </div>
-              
+
               {areAllDropdownsSelected() ? (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                   {/* Main Upload Area - Takes 2/3 on desktop, full width on tablet/mobile */}
@@ -2215,18 +2215,16 @@ const UploadMarks = () => {
                       onDrop={handleBulkDrop}
                       onDragOver={handleBulkDragOver}
                       onDragLeave={handleBulkDragLeave}
-                      className={`border rounded-md p-6 sm:p-8 lg:p-10 text-center space-y-3 sm:space-y-4 transition-all duration-300 min-h-[300px] sm:min-h-[320px] lg:min-h-[360px] flex flex-col items-center justify-center ${
-                        bulkDragActive
+                      className={`border rounded-md p-6 sm:p-8 lg:p-10 text-center space-y-3 sm:space-y-4 transition-all duration-300 min-h-[300px] sm:min-h-[320px] lg:min-h-[360px] flex flex-col items-center justify-center ${bulkDragActive
                           ? (theme === 'dark' ? "border-primary bg-primary/10" : "border-blue-400 bg-blue-50")
                           : (theme === 'dark' ? "border-dashed border-border bg-muted" : "border-dashed border-gray-300 bg-gray-50")
-                      }`}
+                        }`}
                     >
                       <UploadCloud
-                        className={`mx-auto h-10 w-10 sm:h-12 sm:w-12 lg:h-16 lg:w-16 transition-transform duration-300 ${
-                          bulkDragActive 
-                            ? (theme === 'dark' ? "scale-110 text-primary" : "scale-110 text-blue-400") 
+                        className={`mx-auto h-10 w-10 sm:h-12 sm:w-12 lg:h-16 lg:w-16 transition-transform duration-300 ${bulkDragActive
+                            ? (theme === 'dark' ? "scale-110 text-primary" : "scale-110 text-blue-400")
                             : (theme === 'dark' ? "text-muted-foreground" : "text-gray-400")
-                        }`}
+                          }`}
                       />
                       <div className="space-y-1 sm:space-y-2">
                         <p className={`text-sm sm:text-base lg:text-lg font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
@@ -2259,9 +2257,9 @@ const UploadMarks = () => {
                               ✓ {bulkUploadFile.name}
                             </p>
                           </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={handleClearBulkFile}
                             className="flex-shrink-0"
                           >
@@ -2270,13 +2268,13 @@ const UploadMarks = () => {
                         </div>
                       )}
                     </div>
-                    
+
                     {errorMessage && (
                       <div className={`text-sm font-medium text-center p-3 sm:p-4 rounded-md ${theme === 'dark' ? 'text-destructive border border-destructive/30 bg-destructive/10' : 'text-red-600 border border-red-200 bg-red-50'}`}>
                         {errorMessage}
                       </div>
                     )}
-                    
+
                     <div className="flex gap-2 sm:gap-3 flex-col-reverse sm:flex-row justify-end">
                       <Button
                         onClick={handleProcessBulkUpload}
@@ -2309,13 +2307,13 @@ const UploadMarks = () => {
                         </li>
                       </ul>
                     </div>
-                    
+
                     <div className={`border-t pt-3 sm:pt-4 ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
                       <button
                         onClick={downloadExcelTemplate}
                         className={`w-full text-center py-2 sm:py-2.5 px-3 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 ${theme === 'dark' ? 'bg-primary/10 text-primary hover:bg-primary/20' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}
                       >
-                         Download Template
+                        Download Template
                       </button>
                     </div>
 
@@ -2346,9 +2344,9 @@ const UploadMarks = () => {
           </TabsContent>
         </Tabs>
         <div className="flex justify-end mt-4">
-          <Button 
+          <Button
             className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out shadow-md"
-            onClick={handleSubmit} 
+            onClick={handleSubmit}
             disabled={savingMarks}
           >
             {savingMarks ? (
@@ -2368,4 +2366,4 @@ const UploadMarks = () => {
 
 export default UploadMarks;
 
-  
+

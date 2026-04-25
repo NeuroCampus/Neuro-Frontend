@@ -26,6 +26,12 @@ import {
   GitBranch,
   UserCheck,
 } from "lucide-react";
+import { 
+  SkeletonPageHeader, 
+  SkeletonStatsGrid, 
+  SkeletonChart, 
+  SkeletonTable 
+} from "../ui/skeleton";
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
@@ -189,21 +195,17 @@ const AdminStats = ({ setError, onNavigate }: AdminStatsProps) => {
     ],
   };
 
-  // Animation variants
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-  };
-
-  const chartVariants = {
-    hidden: { opacity: 0, scale: 0.95 },
-    visible: { opacity: 1, scale: 1, transition: { duration: 0.6 } },
-  };
 
   if (loading) {
     return (
-      <div className={`text-center py-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'} animate-pulse`}>
-        Loading Dashboard...
+      <div className="space-y-8">
+        <SkeletonPageHeader />
+        <SkeletonStatsGrid items={4} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SkeletonChart />
+          <SkeletonChart />
+        </div>
+        <SkeletonTable rows={5} cols={3} />
       </div>
     );
   }
@@ -217,47 +219,43 @@ const AdminStats = ({ setError, onNavigate }: AdminStatsProps) => {
   }
 
   return (
-    <div className={`space-y-8 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-      >
+    <div className={`space-y-8 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <div>
         
         {/* Dashboard Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <motion.div variants={cardVariants} initial="hidden" animate="visible">
+          <div>
             <DashboardCard
               title="Total Students"
               value={stats.total_students || 0}
               description="Enrolled in all branches"
               icon={<FaUserGraduate className={theme === 'dark' ? "text-blue-400 text-3xl" : "text-blue-500 text-3xl"} />}
             />
-          </motion.div>
-          <motion.div variants={cardVariants} initial="hidden" animate="visible">
+          </div>
+          <div>
             <DashboardCard
               title="Total Faculty"
               value={stats.total_faculty || 0}
-              description="Teaching staff"
+              description="Across all departments"
               icon={<FaChalkboardTeacher className={theme === 'dark' ? "text-purple-400 text-3xl" : "text-purple-500 text-3xl"} />}
             />
-          </motion.div>
-          <motion.div variants={cardVariants} initial="hidden" animate="visible">
+          </div>
+          <div>
             <DashboardCard
               title="Total HODs"
               value={stats.total_hods || 0}
               description="Department heads"
-              icon={<FaUserTie className={theme === 'dark' ? "text-yellow-400 text-3xl" : "text-yellow-500 text-3xl"} />}
+              icon={<FaUserTie className={theme === 'dark' ? "text-orange-400 text-3xl" : "text-orange-500 text-3xl"} />}
             />
-          </motion.div>
-          <motion.div variants={cardVariants} initial="hidden" animate="visible">
+          </div>
+          <div>
             <DashboardCard
-              title="Total COE"
-              value={stats.total_coe || 0}
-              description="Controller of Examinations"
+              title="Active Now"
+              value={stats.active_users || 0}
+              description="Users currently online"
               icon={<FaUserCheck className={theme === 'dark' ? "text-green-400 text-3xl" : "text-green-500 text-3xl"} />}
             />
-          </motion.div>
+          </div>
         </div>
 
         {/* Search and Export */}
@@ -284,10 +282,7 @@ const AdminStats = ({ setError, onNavigate }: AdminStatsProps) => {
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
           {/* Bar Chart */}
-          <motion.div
-            variants={chartVariants}
-            initial="hidden"
-            animate="visible"
+          <div
             className={`rounded-lg shadow p-6 ${theme === 'dark' ? 'border border-border' : 'border border-gray-200'}`}
           >
             <h3 className={`text-lg font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
@@ -365,36 +360,26 @@ const AdminStats = ({ setError, onNavigate }: AdminStatsProps) => {
                     }}
                   />
                 ) : (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4 }}
+                  <div
                     className={`text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}
                   >
                     <p className="text-lg font-semibold">No data</p>
                     <p className="text-sm">This branch has no records</p>
-                  </motion.div>
+                  </div>
                 );
               })() : (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.4 }}
+                <div
                   className={`text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}
                 >
                   <p className="text-lg font-semibold">No results found</p>
                   <p className="text-sm">Try a different search term</p>
-                </motion.div>
+                </div>
               )}
             </div>
-          </motion.div>
+          </div>
 
           {/* Pie Chart */}
-          <motion.div
-            variants={chartVariants}
-            initial="hidden"
-            animate="visible"
+          <div
             className={`rounded-lg shadow p-6 ${theme === 'dark' ? 'border border-border' : 'border border-gray-200'}`}
           >
             <h3 className={`text-lg font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
@@ -421,14 +406,11 @@ const AdminStats = ({ setError, onNavigate }: AdminStatsProps) => {
                 }}
               />
             </div>
-          </motion.div>
         </div>
+      </div>
 
         {/* Branch Statistics Table */}
-        <motion.div
-          variants={chartVariants}
-          initial="hidden"
-          animate="visible"
+        <div
           className={`rounded-lg shadow p-6 mt-5 ${theme === 'dark' ? 'border border-border' : 'border border-gray-200'}`}
         >
           <h3 className={`text-lg font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
@@ -468,14 +450,11 @@ const AdminStats = ({ setError, onNavigate }: AdminStatsProps) => {
               </tbody>
             </table>
           </div>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
       {/* Action Cards */}
-        <motion.div 
+        <div 
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
         >
           <DashboardCard
             title="Enroll User"
@@ -525,8 +504,8 @@ const AdminStats = ({ setError, onNavigate }: AdminStatsProps) => {
             icon={<Users size={20} />}
             onClick={() => handleCardClick("users")}
           />
-        </motion.div>
-    </div>
+        </div>
+      </div>
   );
 };
 

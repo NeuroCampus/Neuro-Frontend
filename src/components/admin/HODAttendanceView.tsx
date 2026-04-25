@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "../ui/dialog";
+import { SkeletonStatsGrid, SkeletonTable } from "../ui/skeleton";
 
 interface TodayRow {
   branch: string;
@@ -165,14 +166,19 @@ const AdminHODAttendance: React.FC = () => {
   const handleRecordsPageSizeChange = (newSize: number) => setRecordsPagination(prev => ({ ...prev, page_size: newSize, page: 1 }));
 
   return (
-    <div className={`sm: space-y-4 sm:space-y-6 text-sm sm:text-base ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`space-y-4 sm:space-y-6 text-sm sm:text-base ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Tabs */}
       <div className={`flex space-x-1 p-1 rounded-lg ${theme === 'dark' ? 'bg-card' : 'bg-white'} border ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
         <button onClick={() => setActiveTab('today')} className={`flex-1 py-2 px-4 rounded-md text-sm font-medium ${activeTab === 'today' ? 'bg-primary text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Today's Attendance</button>
         <button onClick={() => setActiveTab('records')} className={`flex-1 py-2 px-4 rounded-md text-sm font-medium ${activeTab === 'records' ? 'bg-primary text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Attendance Records</button>
       </div>
 
-      {isLoading && <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>}
+      {isLoading && (
+        <div className="space-y-6">
+          <SkeletonStatsGrid items={4} />
+          <SkeletonTable rows={10} cols={6} />
+        </div>
+      )}
 
       {activeTab === 'today' && !isLoading && (
         <>

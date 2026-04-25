@@ -201,9 +201,8 @@ const Announcements = ({ role, proctorStudents, proctorStudentsLoading }: Announ
                     <div className="flex justify-between items-center">
                       <div className={`font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{item.title}</div>
                       <span
-                        className={`text-xs font-medium rounded-full px-2 py-1 ${
-                          roleColors[item.role] || (theme === 'dark' ? "bg-gray-700 text-gray-300" : "bg-gray-200 text-gray-700")
-                        }`}
+                        className={`text-xs font-medium rounded-full px-2 py-1 ${roleColors[item.role] || (theme === 'dark' ? "bg-gray-700 text-gray-300" : "bg-gray-200 text-gray-700")
+                          }`}
                       >
                         {item.role}
                       </span>
@@ -296,39 +295,39 @@ const Announcements = ({ role, proctorStudents, proctorStudentsLoading }: Announ
                           key={student.usn}
                           className={`flex items-center mb-1 rounded px-1 ${theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-100'}`}
                         >
-                      <Checkbox
-                        checked={selectedStudents.includes(student.usn) || selectAll}
-                        onCheckedChange={() => handleStudentSelect(student.usn)}
-                        id={`student-${student.usn}`}
-                        disabled={selectAll || sending}
-                        className={`border ${theme === 'dark' ? 'border-border bg-background' : 'border-gray-300 bg-white'}`}
-                      />
-                      <label
-                        htmlFor={`student-${student.usn}`}
-                        className={`ml-2 text-sm cursor-pointer ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
-                      >
-                        {student.name} ({student.usn})
-                      </label>
-                    </div>
-                  ))
+                          <Checkbox
+                            checked={selectedStudents.includes(student.usn) || selectAll}
+                            onCheckedChange={() => handleStudentSelect(student.usn)}
+                            id={`student-${student.usn}`}
+                            disabled={selectAll || sending}
+                            className={`border ${theme === 'dark' ? 'border-border bg-background' : 'border-gray-300 bg-white'}`}
+                          />
+                          <label
+                            htmlFor={`student-${student.usn}`}
+                            className={`ml-2 text-sm cursor-pointer ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
+                          >
+                            {student.name} ({student.usn})
+                          </label>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+
+              <Button
+                className="w-full flex items-center justify-center bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out shadow-md"
+                onClick={handleSubmit}
+                disabled={sending}
+              >
+                {sending ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2" size={18} /> Sending...
+                  </>
+                ) : (
+                  "Send Notification"
                 )}
-              </div>
-            </div>
-
-
-            <Button
-              className="w-full flex items-center justify-center bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out shadow-md"
-              onClick={handleSubmit}
-              disabled={sending}
-            >
-              {sending ? (
-                <>
-                  <Loader2 className="animate-spin mr-2" size={18} /> Sending...
-                </>
-              ) : (
-                "Send Notification"
-              )}
-            </Button>
+              </Button>
           </CardContent>
         </Card>
 
@@ -354,9 +353,8 @@ const Announcements = ({ role, proctorStudents, proctorStudentsLoading }: Announ
                   <div className="flex justify-between items-center">
                     <div className={`font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{item.title}</div>
                     <span
-                      className={`text-xs font-medium rounded-full px-2 py-1 ${
-                        roleColors[item.role] || (theme === 'dark' ? "bg-gray-700 text-gray-300" : "bg-gray-200 text-gray-700")
-                      }`}
+                      className={`text-xs font-medium rounded-full px-2 py-1 ${roleColors[item.role] || (theme === 'dark' ? "bg-gray-700 text-gray-300" : "bg-gray-200 text-gray-700")
+                        }`}
                     >
                       {item.role}
                     </span>
