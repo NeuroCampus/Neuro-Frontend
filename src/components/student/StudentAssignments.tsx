@@ -1,14 +1,15 @@
 import { useMemo, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Card, CardContent } from "../ui/card";
+import { Card, CardContent,CardHeader,CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { format, isBefore } from "date-fns";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Filter, X } from "lucide-react";
+import { Filter, X, ClipboardList, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import { useHistoricalStudentDataQuery } from "@/hooks/useApiQueries";
 import { useTheme } from "@/context/ThemeContext";
 import { Skeleton, SkeletonTable } from "../ui/skeleton";
+
 
 const getStatusBadge = (status: string, dueDate: string, theme: string) => {
   const now = new Date();
@@ -102,8 +103,8 @@ const StudentAssignment = () => {
   const [statusFilter, setStatusFilter] = useState("All");
   const { theme } = useTheme();
 
-  // Lazy load historical assignments data only when user clicks "Load Assignments"
-  const { data: assignmentsResponse, isLoading, refetch } = useHistoricalStudentDataQuery(false);
+  // Load assignments data automatically on mount
+  const { data: assignmentsResponse, isLoading } = useHistoricalStudentDataQuery(true);
 
   useEffect(() => {
     if (assignmentsResponse?.success && Array.isArray(assignmentsResponse.data)) {
@@ -126,10 +127,6 @@ const StudentAssignment = () => {
       document.documentElement.style.overflow = 'unset';
     };
   }, [isFilterOpen]);
-
-  const loadAssignments = async () => {
-    await refetch();
-  };
 
   const filtered = useMemo(() => {
     return assignments.filter((a) => {
@@ -160,124 +157,142 @@ const StudentAssignment = () => {
   }, [assignments]);
 
   return (
-    <div className={`p-6 space-y-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      {/* Heading */}
-      <div className="flex justify-between items-center">
-        <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Assignments</h2>
-        {!isAssignmentsLoaded && (
-          <Button
-            onClick={loadAssignments}
-            disabled={isLoading}
-            className={theme === 'dark' ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-purple-600 text-white hover:bg-purple-700'}
-          >
-            {isLoading ? (
-              <div className="flex items-center gap-2">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                Loading...
-              </div>
-            ) : 'Load Assignments'}
-          </Button>
-        )}
-      </div>
-
-      {isLoading && !isAssignmentsLoaded && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-24 w-full rounded-lg" />
-            ))}
-          </div>
-          <SkeletonTable rows={8} cols={3} />
-        </div>
-      )}
-
-      {/* Summary Row */}
-      {isAssignmentsLoaded && (
-        <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
-        <div className={theme === 'dark' ? 'bg-card rounded-lg p-4' : 'bg-gray-100 rounded-lg p-4'}>
-          <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Total</p>
-          <p className={`text-xl font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{summary.total}</p>
-        </div>
-        <div className={theme === 'dark' ? 'bg-yellow-900/20 rounded-lg p-4' : 'bg-yellow-100 rounded-lg p-4'}>
-          <p className={`text-sm ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-800'}`}>Pending</p>
-          <p className={`text-xl font-bold ${theme === 'dark' ? 'text-yellow-300' : 'text-yellow-900'}`}>{summary.pending}</p>
-        </div>
-        <div className={theme === 'dark' ? 'bg-blue-900/20 rounded-lg p-4' : 'bg-blue-100 rounded-lg p-4'}>
-          <p className={`text-sm ${theme === 'dark' ? 'text-blue-400' : 'text-blue-800'}`}>Submitted</p>
-          <p className={`text-xl font-bold ${theme === 'dark' ? 'text-blue-300' : 'text-blue-900'}`}>{summary.submitted}</p>
-        </div>
-        <div className={theme === 'dark' ? 'bg-destructive/20 rounded-lg p-4' : 'bg-red-100 rounded-lg p-4'}>
-          <p className={`text-sm ${theme === 'dark' ? 'text-destructive' : 'text-red-800'}`}>Overdue</p>
-          <p className={`text-xl font-bold ${theme === 'dark' ? 'text-destructive' : 'text-red-900'}`}>{summary.overdue}</p>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="flex items-center justify-between gap-4">
-        <Input
-          placeholder="Search assignments..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className={theme === 'dark' ? 'max-w-sm bg-background text-foreground border-border' : 'max-w-sm bg-white text-gray-900 border-gray-300'}
-        />
-        <Button 
-          variant="outline" 
-          size="icon"
-          onClick={() => setIsFilterOpen(true)}
-          className={theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}
-        >
-          <Filter size={20} />
-        </Button>
-      </div>
-
-      {/* Filter Modal - Rendered via Portal */}
-      <FilterModal 
-        isOpen={isFilterOpen}
-        onClose={() => setIsFilterOpen(false)}
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
-        search={search}
-        setSearch={setSearch}
-        theme={theme}
-      />
-
-      {/* Table */}
+    <div className={`${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <Card className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
-        <CardContent className="p-0 overflow-x-auto">
-          <table className={`min-w-full text-sm text-left ${theme === 'dark' ? 'divide-border' : 'divide-gray-200'}`}>
-            <thead className={theme === 'dark' ? 'bg-muted text-muted-foreground font-medium' : 'bg-gray-100 text-gray-600 font-medium'}>
-              <tr>
-                <th className="px-3 md:px-4 py-3">Title</th>
-                <th className="px-3 md:px-4 py-3">End Date</th>
-                <th className="px-3 md:px-4 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody className={theme === 'dark' ? 'divide-border' : 'divide-gray-100'}>
-              {filtered.map((assignment, idx) => (
-                <tr key={idx} className={theme === 'dark' ? 'hover:bg-accent transition' : 'hover:bg-gray-50 transition'}>
-                  <td className={`px-3 md:px-4 py-3 ${theme === 'dark' ? 'text-foreground' : 'text-gray-800'}`}>{assignment.title}</td>
-                  <td className={`px-3 md:px-4 py-3 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                    {format(new Date(assignment.dueDate), "MMM dd, yyyy")}
-                  </td>
-                  <td className="px-3 md:px-4 py-3">
-                    {getStatusBadge(assignment.status, assignment.dueDate, theme)}
-                  </td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={3} className={`px-4 py-4 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                    No assignments found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        <CardHeader className="p-6 border-b">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className={`text-lg sm:text-xl md:text-2xl font-semibold text-gray-900`}>Assignments</h2>
+              <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                Track and manage your academic assignments and deadlines.
+              </p>
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-6 space-y-8">
+          {isLoading && !isAssignmentsLoaded && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-24 w-full rounded-lg" />
+                ))}
+              </div>
+              <SkeletonTable rows={8} cols={3} />
+            </div>
+          )}
+
+          {isAssignmentsLoaded && (
+            <>
+              {/* Refined Summary Row */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                {[
+                  { label: "Total", value: summary.total, color: "blue", icon: <ClipboardList className="opacity-80" size={20} /> },
+                  { label: "Pending", value: summary.pending, color: "yellow", icon: <Clock className="opacity-80" size={20} /> },
+                  { label: "Submitted", value: summary.submitted, color: "emerald", icon: <CheckCircle2 className="opacity-80" size={20} /> },
+                  { label: "Overdue", value: summary.overdue, color: "red", icon: <AlertCircle className="opacity-80" size={20} /> },
+                ].map((stat, i) => (
+                  <div 
+                    key={i} 
+                    className={`relative overflow-hidden group p-4 rounded-xl border transition-all duration-300 hover:shadow-md ${
+                      theme === 'dark' 
+                        ? 'bg-muted/30 border-border hover:bg-muted/50' 
+                        : 'bg-gray-50/50 border-gray-100 hover:bg-white hover:border-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className={`text-xs font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                          {stat.label}
+                        </p>
+                        <p className={`text-2xl font-bold mt-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                          {stat.value}
+                        </p>
+                      </div>
+                      <div className={`p-2 rounded-lg ${
+                        stat.color === 'blue' ? 'bg-blue-500/10 text-blue-500' :
+                        stat.color === 'yellow' ? 'bg-yellow-500/10 text-yellow-500' :
+                        stat.color === 'emerald' ? 'bg-emerald-500/10 text-emerald-500' :
+                        'bg-red-500/10 text-red-500'
+                      }`}>
+                        {stat.icon}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Filters & Actions */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="relative flex-1 sm:max-w-sm">
+                  <Input
+                    placeholder="Search assignments..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className={`w-full pl-4 ${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-200 shadow-sm'}`}
+                  />
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsFilterOpen(true)}
+                  className={`flex items-center gap-2 px-3 sm:px-4 ${theme === 'dark' ? 'border-border text-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+                >
+                  <Filter size={16} />
+                  <span className="hidden xs:inline sm:inline">Filters</span>
+                </Button>
+              </div>
+
+              {/* Table */}
+              <div className={`rounded-xl border overflow-hidden ${theme === 'dark' ? 'border-border' : 'border-gray-100 shadow-sm'}`}>
+                <div className="overflow-x-auto">
+                  <table className={`min-w-full text-sm text-left ${theme === 'dark' ? 'divide-border' : 'divide-gray-100'}`}>
+                    <thead className={theme === 'dark' ? 'bg-muted/50 text-muted-foreground' : 'bg-gray-50/50 text-gray-500'}>
+                      <tr>
+                        <th className="px-6 py-4 font-semibold uppercase tracking-wider text-[11px]">Assignment Title</th>
+                        <th className="px-6 py-4 font-semibold uppercase tracking-wider text-[11px]">Due Date</th>
+                        <th className="px-6 py-4 font-semibold uppercase tracking-wider text-[11px]">Current Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className={theme === 'dark' ? 'divide-border' : 'divide-gray-50'}>
+                      {filtered.map((assignment, idx) => (
+                        <tr key={idx} className={`${theme === 'dark' ? 'hover:bg-accent/30' : 'hover:bg-blue-50/30'} transition-colors`}>
+                          <td className={`px-6 py-4 font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-800'}`}>
+                            {assignment.title}
+                          </td>
+                          <td className={`px-6 py-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                            {format(new Date(assignment.dueDate), "MMM dd, yyyy")}
+                          </td>
+                          <td className="px-6 py-4">
+                            {getStatusBadge(assignment.status, assignment.dueDate, theme)}
+                          </td>
+                        </tr>
+                      ))}
+                      {filtered.length === 0 && (
+                        <tr>
+                          <td colSpan={3} className={`px-6 py-10 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400 italic'}`}>
+                            No assignments found matching your filters.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Filter Modal - Rendered via Portal */}
+              <FilterModal 
+                isOpen={isFilterOpen}
+                onClose={() => setIsFilterOpen(false)}
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
+                search={search}
+                setSearch={setSearch}
+                theme={theme}
+              />
+            </>
+          )}
         </CardContent>
       </Card>
-      </>
-      )}
     </div>
   );
 };

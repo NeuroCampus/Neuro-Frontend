@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { loadStripe } from '@stripe/stripe-js';
 import { useTheme } from "@/context/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { fetchWithTokenRefresh } from '@/utils/authService';
+import { API_ENDPOINT } from '@/utils/config';
 
 interface InvoiceComponent {
   component_name: string;
@@ -116,9 +118,8 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
   const { data: feeData, isLoading, error } = useQuery<FeeDataResponse>({
     queryKey: ['studentCompleteFeeData', user?.usn || user?.username, invoicePage, paymentPage],
     queryFn: async (): Promise<FeeDataResponse> => {
-      const response = await fetch(`http://127.0.0.1:8000/api/student/fee-data/?invoice_page=${invoicePage}&payment_page=${paymentPage}`, {
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/fee-data/?invoice_page=${invoicePage}&payment_page=${paymentPage}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json',
         },
       });
@@ -198,7 +199,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
 
   if (isLoading) {
     return (
-      <motion.div 
+      <motion.div
         className="flex items-center justify-center min-h-[400px]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -266,7 +267,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
     try {
       setIsProcessingPayment(true);
       const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-      
+
       if (!stripeKey) {
         alert('Payment configuration error. Please contact support.');
         return;
@@ -280,10 +281,9 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
 
       if (selectedInvoiceId === null) return;
 
-      const response = await fetch(`http://127.0.0.1:8000/api/payments/create-checkout-session/${selectedInvoiceId}/`, {
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/payments/create-checkout-session/${selectedInvoiceId}/`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -298,7 +298,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
       }
 
       const { session_id, checkout_url } = await response.json();
-      
+
       // Redirect to Stripe checkout with proper API key
       if (checkout_url) {
         // Use the checkout_url provided by backend if available
@@ -318,14 +318,10 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
 
   const handleDownloadReceipt = async (paymentId: number) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/payments/receipt/${paymentId}/`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-        },
-      });
-      
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/payments/receipt/${paymentId}/`);
+
       if (!response.ok) throw new Error('Failed to download receipt');
-      
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -341,7 +337,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
     }
   };
 
-  const currentInvoice = selectedInvoiceId === 0 
+  const currentInvoice = selectedInvoiceId === 0
     ? { id: 0, balance_amount: feeData?.fee_summary?.remaining_fees || 0, invoice_number: 'ALL' }
     : feeData?.invoices?.find(inv => inv.id === selectedInvoiceId);
 
@@ -373,29 +369,28 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
 
   return (
     <motion.div
-      className={`space-y-6`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      {/* Page Header */}
-      <motion.div 
-        className="mb-6"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        <h1 className={`text-2xl font-bold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-          Fee Information
-        </h1>
-        <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-          View and manage your fee payments
-        </p>
-      </motion.div>
+      <Card className={`overflow-hidden ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
+        <CardHeader className="border-b">
+          <div className="flex justify-between items-center">
+            
+              <CardTitle className={`text-lg sm:text-xl md:text-2xl font-semibold text-gray-900'}`}>
+                Fee Information
+              </CardTitle>
+              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                View and manage your fee payments
+              </p>
+           
+          </div>
+        </CardHeader>
+        <CardContent className="p-6 space-y-8">
 
-      {/* Student Info Card */}
+      {/* Student Info Section */}
       <motion.div variants={cardVariants} initial="hidden" animate="visible">
-        <Card className={`shadow-md border-0 ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
+        <Card className={`shadow-none border ${theme === 'dark' ? 'bg-muted/20 border-border' : 'bg-gray-50/50 border-gray-200'}`}>
           <CardHeader>
             <CardTitle className={`flex items-center gap-2 text-lg ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
               <CreditCard className="h-5 w-5" />
@@ -442,19 +437,19 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
       </motion.div>
 
       {/* Fee Summary Cards */}
-      <motion.div 
+      <motion.div
         className="grid grid-cols-1 md:grid-cols-3 gap-6"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
         {/* Total Fees Card */}
-        <motion.div 
+        <motion.div
           variants={cardVariants}
           whileHover={{ y: -4, scale: 1.02 }}
           className="h-full"
         >
-          <Card className={`shadow-md border-0 h-full ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
+          <Card className={`shadow-none border h-full ${theme === 'dark' ? 'bg-muted/20 border-border' : 'bg-gray-50/50 border-gray-200'}`}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -474,12 +469,12 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
         </motion.div>
 
         {/* Amount Paid Card */}
-        <motion.div 
+        <motion.div
           variants={cardVariants}
           whileHover={{ y: -4, scale: 1.02 }}
           className="h-full"
         >
-          <Card className={`shadow-md border-0 h-full ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
+          <Card className={`shadow-none border h-full ${theme === 'dark' ? 'bg-muted/20 border-border' : 'bg-gray-50/50 border-gray-200'}`}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -499,12 +494,12 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
         </motion.div>
 
         {/* Remaining Fees Card */}
-        <motion.div 
+        <motion.div
           variants={cardVariants}
           whileHover={{ y: -4, scale: 1.02 }}
           className="h-full"
         >
-          <Card className={`shadow-md border-0 h-full ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
+          <Card className={`shadow-none border h-full ${theme === 'dark' ? 'bg-muted/20 border-border' : 'bg-gray-50/50 border-gray-200'}`}>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -524,9 +519,9 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
         </motion.div>
       </motion.div>
 
-      {/* Status Card */}
+      {/* Status Section */}
       <motion.div variants={cardVariants} initial="hidden" animate="visible">
-        <Card className={`shadow-md border-0 ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
+        <Card className={`shadow-none border ${theme === 'dark' ? 'bg-muted/20 border-border' : 'bg-gray-50/50 border-gray-200'}`}>
           <CardHeader>
             <CardTitle className={`flex items-center gap-2 text-lg ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
               {getStatusIcon(feeData?.fee_summary?.remaining_fees || 0)}
@@ -550,7 +545,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                 {(feeData?.fee_summary?.remaining_fees || 0) > 0 && (
                   <>
                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button 
+                      <Button
                         className={`bg-[#a259ff] hover:bg-[#8a4dde] text-white font-semibold`}
                         onClick={() => handlePaymentClick(0)}
                       >
@@ -559,7 +554,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                       </Button>
                     </motion.div>
                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button 
+                      <Button
                         variant="outline"
                         className={theme === 'dark' ? 'border-border text-card-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100 font-semibold'}
                         onClick={() => {
@@ -580,7 +575,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
 
       {/* Invoices Section */}
       <motion.div variants={cardVariants} initial="hidden" animate="visible">
-        <Card className={`shadow-md border-0 ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
+        <Card className={`shadow-none border ${theme === 'dark' ? 'bg-muted/20 border-border' : 'bg-gray-50/50 border-gray-200'}`}>
           <CardHeader>
             <CardTitle className={`flex items-center gap-2 text-lg ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
               <Receipt className="h-5 w-5" />
@@ -589,7 +584,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
           </CardHeader>
           <CardContent>
             {feeData?.invoices?.length ? (
-              <motion.div 
+              <motion.div
                 className="space-y-4"
                 variants={containerVariants}
                 initial="hidden"
@@ -597,7 +592,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
               >
                 <AnimatePresence>
                   {feeData.invoices.map((invoice) => (
-                    <motion.div 
+                    <motion.div
                       key={invoice.id}
                       variants={itemVariants}
                       layout
@@ -614,7 +609,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                           </p>
                         </motion.div>
                         <motion.div whileHover={{ scale: 1.1 }}>
-                          <Badge 
+                          <Badge
                             variant={invoice.status === 'paid' ? 'default' : 'destructive'}
                             className={`font-semibold ${invoice.status === 'paid' ? 'bg-green-600 text-white' : ''}`}
                           >
@@ -649,13 +644,13 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                         </motion.div>
                       </div>
                       {invoice.balance_amount > 0 && (
-                        <motion.div 
+                        <motion.div
                           variants={itemVariants}
                           className="flex gap-2 flex-wrap"
                         >
                           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               className={`bg-[#a259ff] hover:bg-[#8a4dde] text-white font-semibold`}
                               onClick={() => handlePaymentClick(invoice.id)}
                             >
@@ -664,8 +659,8 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                             </Button>
                           </motion.div>
                           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               variant="outline"
                               className={theme === 'dark' ? 'border-border text-card-foreground hover:bg-accent' : 'border-gray-300 text-gray-700 hover:bg-gray-100 font-semibold'}
                               onClick={() => handleComponentPaymentClick(invoice.id)}
@@ -678,7 +673,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                     </motion.div>
                   ))}
                 </AnimatePresence>
-                
+
                 {/* Invoice Pagination */}
                 {feeData && feeData.statistics.total_invoices > 10 && (
                   <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
@@ -709,7 +704,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                 )}
               </motion.div>
             ) : (
-              <motion.p 
+              <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className={`text-center py-12 text-lg ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}
@@ -723,7 +718,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
 
       {/* Payment History Section */}
       <motion.div variants={cardVariants} initial="hidden" animate="visible">
-        <Card className={`shadow-md border-0 ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
+        <Card className={`shadow-none border ${theme === 'dark' ? 'bg-muted/20 border-border' : 'bg-gray-50/50 border-gray-200'}`}>
           <CardHeader>
             <CardTitle className={`flex items-center gap-2 text-lg ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
               <CreditCard className="h-5 w-5" />
@@ -732,7 +727,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
           </CardHeader>
           <CardContent>
             {feeData?.payments?.length ? (
-              <motion.div 
+              <motion.div
                 className="space-y-3"
                 variants={containerVariants}
                 initial="hidden"
@@ -740,7 +735,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
               >
                 <AnimatePresence>
                   {feeData.payments.map((payment) => (
-                    <motion.div 
+                    <motion.div
                       key={payment.id}
                       variants={itemVariants}
                       layout
@@ -757,19 +752,19 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                           </p>
                         </motion.div>
                         <motion.div variants={itemVariants} className="flex gap-2 flex-shrink-0">
-                          <Badge 
+                          <Badge
                             variant={payment.status === 'success' ? 'default' : (payment.status === 'failed' ? 'destructive' : 'secondary')}
                             className={
-                              payment.status === 'success' ? 'bg-green-600 text-white' : 
-                              (payment.status === 'failed' ? '' : 'bg-yellow-100 text-yellow-800 border-yellow-300')
+                              payment.status === 'success' ? 'bg-green-600 text-white' :
+                                (payment.status === 'failed' ? '' : 'bg-yellow-100 text-yellow-800 border-yellow-300')
                             }
                           >
                             {payment.status === 'success' ? '✓ Success' : (payment.status === 'failed' ? 'Failed' : 'Pending')}
                           </Badge>
                           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                            <Button 
+                            <Button
                               variant="ghost"
-                              size="sm" 
+                              size="sm"
                               className={theme === 'dark' ? 'text-primary hover:bg-primary/10' : 'text-blue-600 hover:bg-blue-50'}
                               onClick={() => handleDownloadReceipt(payment.id)}
                               title="Download Receipt"
@@ -813,7 +808,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                 )}
               </motion.div>
             ) : (
-              <motion.p 
+              <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className={`text-center py-12 text-lg ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}
@@ -824,23 +819,26 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
           </CardContent>
         </Card>
       </motion.div>
+    </CardContent>
+  </Card>
 
-      {/* Payment Modal */}
-      <AnimatePresence>
+  {/* Payment Modal and other overlays */}
+  <AnimatePresence>
         {paymentModalOpen && (
           <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
+            {/* ... Modal content remains same ... */}
             <DialogContent className={`max-w-md ${theme === 'dark' ? 'bg-background text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
               <DialogHeader>
                 <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
-                  {selectedInvoiceId === 0 
-                    ? '💳 Pay Total Remaining Balance' 
+                  {selectedInvoiceId === 0
+                    ? '💳 Pay Total Remaining Balance'
                     : (paymentType === 'full' ? '💳 Pay Full Amount' : '🧩 Pay by Component')
                   }
                 </DialogTitle>
               </DialogHeader>
 
               {paymentType === 'full' ? (
-                <motion.div 
+                <motion.div
                   className="space-y-4"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -855,9 +853,9 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                     </p>
                   </div>
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button 
-                      onClick={initiateStripePayment} 
-                      disabled={isProcessingPayment} 
+                    <Button
+                      onClick={initiateStripePayment}
+                      disabled={isProcessingPayment}
                       className={`bg-[#a259ff] hover:bg-[#8a4dde] text-white w-full font-semibold py-6 text-base disabled:opacity-50`}
                     >
                       {isProcessingPayment ? (
@@ -875,7 +873,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                   </motion.div>
                 </motion.div>
               ) : (
-                <motion.div 
+                <motion.div
                   className="space-y-4"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -891,7 +889,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                         variants={itemVariants}
                         className={`flex items-center space-x-3 p-3 border rounded-lg ${theme === 'dark' ? 'border-border hover:bg-accent/50' : 'border-gray-200 hover:bg-gray-50'}`}
                       >
-                        <Checkbox 
+                        <Checkbox
                           checked={selectedComponents.has(idx)}
                           onCheckedChange={() => handleComponentToggle(idx)}
                           className={`w-5 h-5 ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}
@@ -909,7 +907,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                   </div>
 
                   {selectedComponents.size > 0 && (
-                    <motion.div 
+                    <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className={`p-4 rounded-lg border-2 ${theme === 'dark' ? 'bg-purple-500/10 border-purple-500/30' : 'bg-purple-50 border-purple-300'}`}
@@ -928,9 +926,9 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                   )}
 
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button 
-                      onClick={initiateStripePayment} 
-                      disabled={isProcessingPayment || selectedComponents.size === 0} 
+                    <Button
+                      onClick={initiateStripePayment}
+                      disabled={isProcessingPayment || selectedComponents.size === 0}
                       className={`bg-[#a259ff] hover:bg-[#8a4dde] text-white w-full font-semibold py-6 text-base disabled:opacity-50`}
                     >
                       {isProcessingPayment ? (
