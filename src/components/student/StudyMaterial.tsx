@@ -141,7 +141,7 @@ const StudyMaterialsStudent = () => {
   }, [selectedBranch, selectedSemester, selectedSection, searchQuery]);
 
   return (
-    <div className={`w-full p-2 sm:p-3 md:p-4 lg:p-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+    <div className={`w-full ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
       <Card className={`${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
         <CardHeader className="p-3 sm:p-4 lg:p-6 border-b">
           <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900">Study Materials</h1>
@@ -152,7 +152,7 @@ const StudyMaterialsStudent = () => {
         <CardContent className="p-3 sm:p-4 lg:p-6 space-y-6">
           {/* Filters & Search */}
           <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
               <Select value={selectedBranch} onValueChange={setSelectedBranch}>
                 <SelectTrigger className={theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}>
                   <SelectValue placeholder="All Branches" />
