@@ -21,6 +21,8 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { getDashboardOverview } from "../../utils/student_api";
 import { useTheme } from "@/context/ThemeContext";
 
+import { SkeletonStatsGrid, SkeletonChart, SkeletonPageHeader } from "../ui/skeleton";
+
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
@@ -318,10 +320,12 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
 
   if (isLoading) {
     return (
-      <div className={`space-y-6 ${theme === 'dark' ? 'bg-background text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
-        <div className="flex flex-col justify-center items-center min-h-[400px] gap-4">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
-          <p className="text-sm animate-pulse text-muted-foreground">Loading your dashboard...</p>
+      <div className={`p-4 space-y-6 ${theme === 'dark' ? 'bg-background text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
+        <SkeletonPageHeader />
+        <SkeletonStatsGrid items={2} />
+        <div className="space-y-4">
+          <SkeletonChart className="h-[300px]" />
+          <SkeletonChart className="h-[300px]" />
         </div>
       </div>
     );

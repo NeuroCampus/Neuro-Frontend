@@ -26,6 +26,7 @@ import {
 import { useTheme } from "@/context/ThemeContext";
 import { fetchAnnouncements, markAnnouncementRead, Announcement } from "@/utils/announcements_api";
 import { motion, AnimatePresence } from "framer-motion";
+import { SkeletonList } from "../ui/skeleton";
 
 const getPriorityColor = (priority: string, theme: string) => {
   switch (priority) {
@@ -229,10 +230,7 @@ const StudentAnnouncements = () => {
 
           {/* Announcement List */}
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 space-y-4">
-              <Loader2 className="w-10 h-10 animate-spin text-[#a259ff]" />
-              <p className={theme === 'dark' ? "text-muted-foreground" : "text-gray-500"}>Fetching announcements...</p>
-            </div>
+            <SkeletonList items={5} />
           ) : error ? (
             <div className={`p-8 rounded-xl border text-center ${theme === 'dark' ? 'bg-red-900/10 border-red-900/20 text-red-400' : 'bg-red-50 text-red-600 border-red-100'}`}>
               <AlertCircle className="w-10 h-10 mx-auto mb-3 opacity-80" />
