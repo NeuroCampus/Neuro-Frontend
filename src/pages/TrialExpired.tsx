@@ -13,6 +13,15 @@ const TrialExpired = () => {
   const role = localStorage.getItem("role");
   const isAdmin = role === "admin" || role === "principal";
   
+  const [isSubscription] = useState(() => {
+    try {
+      const userData = JSON.parse(localStorage.getItem("user") || "{}");
+      return userData.org_plan && userData.org_plan !== "basic";
+    } catch (e) {
+      return false;
+    }
+  });
+
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<"pro" | "advance" | null>(null);
   const [isUpgrading, setIsUpgrading] = useState(false);
@@ -36,11 +45,12 @@ const TrialExpired = () => {
       });
 
       const result = await response.json();
-      if (result.success) {
+      if (result.success && result.checkout_url) {
+        window.location.href = result.checkout_url;
+      } else if (result.success) {
         toast.success(`Successfully upgraded to ${selectedPlan.toUpperCase()} plan!`);
-        // Small delay to let toast be seen
         setTimeout(() => {
-          window.location.href = "/dashboard"; // Redirect to dashboard
+          window.location.href = "/dashboard";
         }, 1500);
       } else {
         toast.error(result.message || "Upgrade failed");
@@ -73,9 +83,15 @@ const TrialExpired = () => {
             <Clock className="w-12 h-12 text-white" />
           </motion.div>
           
-          <h1 className="text-4xl font-bold text-white mb-4">Trial Period Expired</h1>
+          <h1 className="text-4xl font-bold text-white mb-4">
+            {isSubscription ? "Subscription Expired" : "Trial Period Expired"}
+          </h1>
           <p className="text-indigo-100 text-lg max-w-md mx-auto">
-            The 2-day trial for <span className="font-semibold text-white">{orgName}</span> has come to an end.
+            {isSubscription 
+              ? `The annual subscription for `
+              : `The 2-hour trial for `
+            }
+            <span className="font-semibold text-white">{orgName}</span> has come to an end.
           </p>
         </div>
         
@@ -180,11 +196,11 @@ const TrialExpired = () => {
                   </div>
                   <h3 className="text-2xl font-bold text-slate-900 mb-2">Pro Plan</h3>
                   <div className="flex items-baseline gap-1 mb-6">
-                    <span className="text-4xl font-bold text-slate-900">₹4,999</span>
-                    <span className="text-slate-500">/month</span>
+                    <span className="text-4xl font-bold text-slate-900">₹99,999</span>
+                    <span className="text-slate-500">/year</span>
                   </div>
                   <ul className="space-y-4 mb-8">
-                    {["All Basic features", "Up to 1000 students", "Unlimited Faculty", "Advanced Analytics", "Priority Email Support"].map((feat, i) => (
+                    {["All Basic features", "Unlimited Students", "AI Exam Proctoring", "Face Recognition Attendance", "Priority 24/7 Support"].map((feat, i) => (
                       <li key={i} className="flex items-center text-slate-600 text-sm">
                         <Check className="w-4 h-4 text-emerald-500 mr-3 shrink-0" />
                         {feat}
@@ -210,16 +226,16 @@ const TrialExpired = () => {
                   <div className="mb-6">
                     <span className="px-3 py-1 bg-violet-100 text-violet-700 text-xs font-bold rounded-full uppercase tracking-wider flex items-center w-fit">
                       <Sparkles className="w-3 h-3 mr-1" />
-                      Full Power
+                      Enterprise Power
                     </span>
                   </div>
                   <h3 className="text-2xl font-bold text-slate-900 mb-2">Advance Plan</h3>
                   <div className="flex items-baseline gap-1 mb-6">
-                    <span className="text-4xl font-bold text-slate-900">₹9,999</span>
-                    <span className="text-slate-500">/month</span>
+                    <span className="text-4xl font-bold text-slate-900">₹3,00,000</span>
+                    <span className="text-slate-500">/year</span>
                   </div>
                   <ul className="space-y-4 mb-8">
-                    {["Everything in Pro", "Unlimited Students", "AI Campus Assistant", "Custom Domain Support", "24/7 Dedicated Manager"].map((feat, i) => (
+                    {["Everything in Pro", "White-label Branding", "Custom API Integrations", "On-premise Deployment", "Dedicated Account Manager"].map((feat, i) => (
                       <li key={i} className="flex items-center text-slate-600 text-sm">
                         <Check className="w-4 h-4 text-emerald-500 mr-3 shrink-0" />
                         {feat}

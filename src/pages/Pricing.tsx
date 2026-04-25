@@ -10,7 +10,7 @@ const Pricing = () => {
     {
       name: "Basic",
       price: "Trial",
-      duration: "10 Days",
+      duration: "2 Hours",
       description: "Perfect for exploring the core features of NeuroCampus.",
       features: [
         "Automated Attendance",
@@ -41,8 +41,8 @@ const Pricing = () => {
     },
     {
       name: "Advance",
-      price: "Custom",
-      duration: "Enterprise",
+      price: "₹3,00,000",
+      duration: "/year",
       description: "Complete digital transformation for large universities.",
       features: [
         "All Pro Features",

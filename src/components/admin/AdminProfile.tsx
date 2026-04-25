@@ -9,9 +9,12 @@ import { Textarea } from "../ui/textarea";
 import { useTheme } from "../../context/ThemeContext";
 import { showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, CreditCard, Calendar, Activity, CheckCircle2, Clock, ShieldCheck, Loader2 } from "lucide-react";
 import { fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
+import { Badge } from "../ui/badge";
+import { format } from "date-fns";
 
 interface AdminProfileProps {
   user: any;
@@ -49,8 +52,10 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
   const [showPasswords, setShowPasswords] = useState({ current: false, next: false, confirm: false });
   const passwordDialogContentRef = useRef<HTMLDivElement | null>(null);
 
-  // Tabs: details (Personal + Contact) and other (Address + Bio)
-  const [activeTab, setActiveTab] = useState<'details' | 'other'>('details');
+  // Tabs: details (Personal + Contact), other (Address + Bio), subscription (Plan Details)
+  const [activeTab, setActiveTab] = useState<'details' | 'other' | 'subscription'>('details');
+  const [subscriptionData, setSubscriptionData] = useState<any>(null);
+  const [subLoading, setSubLoading] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -117,6 +122,29 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
 
     fetchProfile();
   }, [propUser, setError]);
+
+  const fetchSubscriptionDetails = async () => {
+    setSubLoading(true);
+    try {
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/subscription-details/`);
+      const result = await response.json();
+      if (result.success) {
+        setSubscriptionData(result.data);
+      } else {
+        console.error('Failed to fetch subscription details', result.message);
+      }
+    } catch (err) {
+      console.error('Network error fetching subscription details', err);
+    } finally {
+      setSubLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'subscription' && !subscriptionData) {
+      fetchSubscriptionDetails();
+    }
+  }, [activeTab]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target as HTMLInputElement;
@@ -275,6 +303,116 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
               <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Mobile</label>
               <Input value={profile.mobile_number} name="mobile_number" onChange={handleChange} disabled={!editing} maxLength={10} placeholder="10-digit mobile" className="text-xs sm:text-sm h-8 sm:h-10 w-full disabled:opacity-80 disabled:placeholder-opacity-80" />
               {localErrors.mobile_number && <p className={`text-xs mt-1 sm:mt-1.5 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.mobile_number}</p>}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (activeTab === 'subscription') {
+      if (subLoading) return <div className="text-center py-10"><Loader2 className="animate-spin mx-auto mb-2" /> Loading plan details...</div>;
+      if (!subscriptionData) return <div className="text-center py-10 text-muted-foreground">No subscription data found.</div>;
+
+      return (
+        <div className="space-y-8 animate-in fade-in duration-500">
+          {/* Plan Overview Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className={cn("border-none shadow-sm", theme === 'dark' ? 'bg-zinc-900' : 'bg-white')}>
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600">
+                  <ShieldCheck size={24} />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium">Current Plan</p>
+                  <p className="text-lg font-bold text-[#a259ff] uppercase tracking-tight">{subscriptionData.plan_name}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className={cn("border-none shadow-sm", theme === 'dark' ? 'bg-zinc-900' : 'bg-white')}>
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center", 
+                  subscriptionData.is_active ? "bg-green-100 text-green-600 dark:bg-green-900/30" : "bg-red-100 text-red-600 dark:bg-red-900/30")}>
+                  <Activity size={24} />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium">Status</p>
+                  <Badge variant={subscriptionData.is_active ? "default" : "destructive"} className="mt-0.5">
+                    {subscriptionData.is_active ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className={cn("border-none shadow-sm", theme === 'dark' ? 'bg-zinc-900' : 'bg-white')}>
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
+                  <Calendar size={24} />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground font-medium">Expiry Date</p>
+                  <p className="text-sm font-semibold">
+                    {subscriptionData.subscription_expires_at 
+                      ? format(new Date(subscriptionData.subscription_expires_at), 'dd MMM yyyy')
+                      : subscriptionData.trial_ends_at 
+                        ? format(new Date(subscriptionData.trial_ends_at), 'dd MMM yyyy HH:mm')
+                        : 'Lifetime Access'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Payment History */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 px-1">
+              <CreditCard size={18} className="text-[#a259ff]" />
+              <h3 className="font-bold text-base">Payment History</h3>
+            </div>
+            
+            <div className="rounded-xl border overflow-hidden">
+              <Table>
+                <TableHeader className={theme === 'dark' ? 'bg-zinc-900/50' : 'bg-gray-50'}>
+                  <TableRow>
+                    <TableHead className="w-[150px]">Date</TableHead>
+                    <TableHead>Plan</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Transaction ID</TableHead>
+                    <TableHead className="text-right">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {subscriptionData.payments && subscriptionData.payments.length > 0 ? (
+                    subscriptionData.payments.map((p: any) => (
+                      <TableRow key={p.id}>
+                        <TableCell className="font-medium text-xs sm:text-sm">
+                          {format(new Date(p.date), 'dd MMM yyyy')}
+                        </TableCell>
+                        <TableCell className="uppercase text-xs font-semibold text-muted-foreground">
+                          {p.plan_type}
+                        </TableCell>
+                        <TableCell className="font-bold">
+                          ₹{p.amount.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-xs font-mono text-muted-foreground">
+                          {p.transaction_id}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800">
+                            {p.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                        No payment records found.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </div>
           </div>
         </div>
@@ -441,6 +579,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
               <div className="flex items-center gap-2 mb-3 sm:mb-4 md:mb-5 lg:mb-6 border-b pb-2 sm:pb-3">
                 <button onClick={() => setActiveTab('details')} className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-colors font-medium ${activeTab === 'details' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Details</button>
                 <button onClick={() => setActiveTab('other')} className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-colors font-medium ${activeTab === 'other' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Other</button>
+                <button onClick={() => setActiveTab('subscription')} className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-colors font-medium ${activeTab === 'subscription' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Plan Details</button>
               </div>
 
               <div className={`p-3 sm:p-4 md:p-5 lg:p-6 rounded-lg border flex-1 ${theme === 'dark' ? 'bg-card border-input' : 'bg-gray-50 border-gray-200'}`}>

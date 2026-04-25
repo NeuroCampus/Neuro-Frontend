@@ -21,6 +21,7 @@ import FloatingAssistant from "./components/common/FloatingAssistant";
 import AIInterview from "./components/common/AIInterview";
 import { shouldShowFloatingAssistant } from "./utils/config";
 import TrialExpired from "./pages/TrialExpired";
+import OnboardingSuccess from "./pages/OnboardingSuccess";
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode; allowedRoles: string[] }) => {
@@ -126,6 +127,7 @@ const App = () => {
         {/* Onboarding routes */}
         <Route path="/neurocampus" element={<Pricing />} />
         <Route path="/neurocampus/:plan" element={<Onboarding />} />
+        <Route path="/onboarding/success" element={<OnboardingSuccess />} />
         <Route path="/trial-expired" element={<TrialExpired />} />
 
         {/* Public results view (students) */}

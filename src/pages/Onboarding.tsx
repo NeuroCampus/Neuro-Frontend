@@ -46,6 +46,15 @@ const Onboarding = () => {
       const data = await response.json();
 
       if (response.ok && data.success) {
+        if (data.requires_payment && data.checkout_url) {
+          toast({
+            title: "Redirecting to Payment",
+            description: "Please complete the payment to activate your institution.",
+          });
+          window.location.href = data.checkout_url;
+          return;
+        }
+
         setSuccess(true);
         toast({
           title: "Success!",
@@ -196,7 +205,7 @@ const Onboarding = () => {
                     Initializing...
                   </div>
                 ) : (
-                  "Complete Registration"
+                  formData.plan === 'basic' ? "Complete Registration" : "Proceed to Payment"
                 )}
               </Button>
             </div>

@@ -63,6 +63,41 @@ const CampusLocationManager: React.FC = () => {
   const markerRef = useRef<any>(null);
   const circleRef = useRef<any>(null);
 
+  const roundTo6 = (num: number) => Math.round(num * 1000000) / 1000000;
+
+  const handleRadiusChange = (value: string) => {
+    const radius = parseInt(value) || 0;
+    setFormData(prev => ({ ...prev, radius_meters: radius }));
+  };
+
+  const handleMarkerDrag = (e: any) => {
+    const lat = roundTo6(e.latLng.lat());
+    const lng = roundTo6(e.latLng.lng());
+    setFormData(prev => ({
+      ...prev,
+      center_latitude: lat,
+      center_longitude: lng
+    }));
+  };
+
+  const handleMapClick = (e: any) => {
+    const lat = roundTo6(e.latLng.lat());
+    const lng = roundTo6(e.latLng.lng());
+    
+    if (markerRef.current) {
+      markerRef.current.setPosition({ lat, lng });
+    }
+    if (circleRef.current) {
+      circleRef.current.setCenter({ lat, lng });
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      center_latitude: lat,
+      center_longitude: lng
+    }));
+  };
+
   const [useIframe, setUseIframe] = useState(false);
   const [iframeUrl, setIframeUrl] = useState('');
 
@@ -346,7 +381,18 @@ const CampusLocationManager: React.FC = () => {
         resetForm();
         loadLocations();
       } else {
-        toast.error(response.message || 'Failed to save campus location');
+        // Handle detailed validation errors
+        if (response.errors) {
+          const errorMessages = Object.entries(response.errors)
+            .map(([field, msgs]) => {
+              const fieldName = field === '__all__' ? '' : `${field}: `;
+              return `${fieldName}${Array.isArray(msgs) ? msgs.join(', ') : msgs}`;
+            })
+            .join(' | ');
+          toast.error(errorMessages || response.message || 'Validation error');
+        } else {
+          toast.error(response.message || 'Failed to save campus location');
+        }
       }
     } catch (error) {
       toast.error('Failed to save campus location');
@@ -412,6 +458,10 @@ const CampusLocationManager: React.FC = () => {
       min_longitude: '',
       max_longitude: ''
     });
+    // Clear map instances so they re-initialize when modal opens next time
+    mapInstanceRef.current = null;
+    markerRef.current = null;
+    circleRef.current = null;
   };
 
   const handleCancel = () => {
@@ -428,7 +478,8 @@ const CampusLocationManager: React.FC = () => {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const { latitude, longitude } = position.coords;
+        const latitude = roundTo6(position.coords.latitude);
+        const longitude = roundTo6(position.coords.longitude);
         setFormData(prev => ({
           ...prev,
           center_latitude: latitude,
@@ -453,7 +504,7 @@ const CampusLocationManager: React.FC = () => {
         switch (error.code) {
           // @ts-ignore
           case error.PERMISSION_DENIED:
-            errorMessage = 'Location access denied. Please enable location permissions.';
+            errorMessage = 'Location access denied. Please enable location permissions or search for a location manually.';
             break;
           // @ts-ignore
           case error.POSITION_UNAVAILABLE:
@@ -464,7 +515,6 @@ const CampusLocationManager: React.FC = () => {
             errorMessage = 'Location request timed out.';
             break;
         }
-        setMapError(prev => prev || errorMessage);
         toast.error(errorMessage);
       },
       {

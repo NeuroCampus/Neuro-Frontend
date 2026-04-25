@@ -20,6 +20,7 @@ interface CampusLocation {
 interface ManageCampusLocationResponse {
   success: boolean;
   message?: string;
+  errors?: any;
   location?: CampusLocation;
   locations?: CampusLocation[];
   count?: number;
@@ -70,7 +71,7 @@ export const manageCampusLocation = async (
     const result = await response.json();
     if (!response.ok) {
       console.error('Manage Campus Location Failed:', { status: response.status, result });
-      return { success: false, message: result.message || `HTTP ${response.status}` };
+      return { success: false, message: result.message || `HTTP ${response.status}`, errors: result.errors };
     }
 
     // Normalize paginated responses: DRF paginator returns {count, next, previous, results}
