@@ -126,6 +126,7 @@ const TrialExpired = () => {
         isOpen={isUpgradeModalOpen}
         onClose={() => setIsUpgradeModalOpen(false)}
         orgName={orgName}
+        currentPlan={localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")!).org_plan : "basic"}
         onSuccess={() => {
           setTimeout(() => {
             window.location.href = "/dashboard";

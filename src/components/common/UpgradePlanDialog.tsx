@@ -12,11 +12,15 @@ interface UpgradePlanDialogProps {
   onClose: () => void;
   orgName?: string;
   onSuccess?: () => void;
+  currentPlan?: string;
 }
 
-const UpgradePlanDialog = ({ isOpen, onClose, orgName = "Your Organization", onSuccess }: UpgradePlanDialogProps) => {
+const UpgradePlanDialog = ({ isOpen, onClose, orgName = "Your Organization", onSuccess, currentPlan = "basic" }: UpgradePlanDialogProps) => {
   const [selectedPlan, setSelectedPlan] = useState<"pro" | "advance" | null>(null);
   const [isUpgrading, setIsUpgrading] = useState(false);
+
+  const isBasic = currentPlan.toLowerCase() === 'basic';
+  const isPro = currentPlan.toLowerCase() === 'pro';
 
   const handleUpgrade = async () => {
     if (!selectedPlan) return;
@@ -90,47 +94,49 @@ const UpgradePlanDialog = ({ isOpen, onClose, orgName = "Your Organization", onS
               </button>
             </div>
 
-            <div className="p-8 grid md:grid-cols-2 gap-8">
-              {/* Pro Plan */}
-              <div 
-                onClick={() => setSelectedPlan("pro")}
-                className={`relative p-8 rounded-2xl border-2 transition-all cursor-pointer group ${
-                  selectedPlan === "pro" 
-                    ? "border-indigo-600 bg-indigo-50/30" 
-                    : "border-slate-100 hover:border-indigo-200"
-                }`}
-              >
-                {selectedPlan === "pro" && (
-                  <div className="absolute top-4 right-4 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center">
-                    <Check className="w-4 h-4 text-white" />
+            <div className={`p-8 grid gap-8 ${isBasic ? 'md:grid-cols-2' : 'max-w-md mx-auto w-full'}`}>
+              {/* Pro Plan - Only show if current plan is basic */}
+              {isBasic && (
+                <div 
+                  onClick={() => setSelectedPlan("pro")}
+                  className={`relative p-8 rounded-2xl border-2 transition-all cursor-pointer group ${
+                    selectedPlan === "pro" 
+                      ? "border-indigo-600 bg-indigo-50/30" 
+                      : "border-slate-100 hover:border-indigo-200"
+                  }`}
+                >
+                  {selectedPlan === "pro" && (
+                    <div className="absolute top-4 right-4 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center">
+                      <Check className="w-4 h-4 text-white" />
+                    </div>
+                  )}
+                  <div className="mb-6">
+                    <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full uppercase tracking-wider">Most Popular</span>
                   </div>
-                )}
-                <div className="mb-6">
-                  <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full uppercase tracking-wider">Most Popular</span>
+                  <h3 className="text-2xl font-bold text-slate-900 mb-2">Pro Plan</h3>
+                  <div className="flex items-baseline gap-1 mb-6">
+                    <span className="text-4xl font-bold text-slate-900">₹99,999</span>
+                    <span className="text-slate-500">/year</span>
+                  </div>
+                  <ul className="space-y-4 mb-8">
+                    {["All Basic features", "Unlimited Students", "AI Exam Proctoring", "Face Recognition Attendance", "Priority 24/7 Support"].map((feat, i) => (
+                      <li key={i} className="flex items-center text-slate-600 text-sm">
+                        <Check className="w-4 h-4 text-emerald-500 mr-3 shrink-0" />
+                        {feat}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">Pro Plan</h3>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="text-4xl font-bold text-slate-900">₹99,999</span>
-                  <span className="text-slate-500">/year</span>
-                </div>
-                <ul className="space-y-4 mb-8">
-                  {["All Basic features", "Unlimited Students", "AI Exam Proctoring", "Face Recognition Attendance", "Priority 24/7 Support"].map((feat, i) => (
-                    <li key={i} className="flex items-center text-slate-600 text-sm">
-                      <Check className="w-4 h-4 text-emerald-500 mr-3 shrink-0" />
-                      {feat}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              )}
 
-              {/* Advance Plan */}
+              {/* Advance Plan - Show for both Basic and Pro */}
               <div 
                 onClick={() => setSelectedPlan("advance")}
                 className={`relative p-8 rounded-2xl border-2 transition-all cursor-pointer group ${
                   selectedPlan === "advance" 
                     ? "border-violet-600 bg-violet-50/30" 
                     : "border-slate-100 hover:border-violet-200"
-                }`}
+                } ${!isBasic ? 'w-full' : ''}`}
               >
                 {selectedPlan === "advance" && (
                   <div className="absolute top-4 right-4 w-6 h-6 bg-violet-600 rounded-full flex items-center justify-center">

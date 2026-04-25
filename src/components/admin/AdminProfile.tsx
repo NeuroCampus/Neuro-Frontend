@@ -330,7 +330,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                     <p className="text-lg font-bold text-[#a259ff] uppercase tracking-tight">{subscriptionData.plan_name}</p>
                   </div>
                 </div>
-                {subscriptionData.plan_name.toLowerCase() === 'basic' && (
+                {subscriptionData.plan_name.toLowerCase() !== 'advance' && (
                   <Button 
                     size="sm" 
                     className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white text-xs h-8 px-3 rounded-lg"
@@ -607,6 +607,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
         isOpen={isUpgradeOpen}
         onClose={() => setIsUpgradeOpen(false)}
         orgName={localStorage.getItem("org_name") || "Your Institution"}
+        currentPlan={subscriptionData?.plan_name || "basic"}
         onSuccess={() => fetchSubscriptionDetails()}
       />
     </div>
