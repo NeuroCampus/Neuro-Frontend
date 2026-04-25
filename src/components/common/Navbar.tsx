@@ -71,7 +71,7 @@ const handleProfileClick = () => {
 
   return (
     <motion.div 
-      className={`w-full flex items-center justify-between px-4 md:px-6 lg:px-8 py-3 backdrop-blur-sm ${
+      className={`w-full h-20 flex items-center justify-between px-4 md:px-6 lg:px-8 backdrop-blur-sm ${
         theme === 'dark' 
           ? 'bg-background border-b border-border' 
           : 'bg-white border-b border-gray-200'
@@ -197,7 +197,7 @@ const handleProfileClick = () => {
           transition={{ duration: 0.3, delay: 0.4 }}
         >
           <motion.div 
-            className="w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm shadow-lg overflow-hidden"
+            className="w-12 h-12 rounded-full flex items-center justify-center font-semibold text-sm shadow-lg overflow-hidden"
             whileHover={{ scale: 1.1 }}
             transition={{ duration: 0.2 }}
           >

@@ -1,5 +1,5 @@
 //sidebar.tsx
- 
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 // Use public directory asset via URL
@@ -75,7 +75,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
 
   const getIcon = (page: string) => {
     const iconMap: { [key: string]: React.ReactNode } = {
-    'exam-applications': <ClipboardList size={20} />,
+      'exam-applications': <ClipboardList size={20} />,
       dashboard: <LayoutDashboard size={20} />,
       overview: <LayoutDashboard size={20} />,
       components: <ClipboardList size={20} />,
@@ -154,189 +154,189 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
   const orgPlan = user?.org_plan || "basic";
 
   const menuItems: { [key: string]: { name: string; page: string }[] } = {
-  fees_manager: [
-    { name: "Dashboard", page: "dashboard" },
-    { name: "Components", page: "components" },
-    { name: "Templates", page: "templates" },
-    { name: "Assignments", page: "assignments" },
-    { name: "Individual Fees", page: "individual-fees" },
-    { name: "Bulk Assignment", page: "bulk-assignment" },
-    { name: "Invoices", page: "invoices" },
-    { name: "Payments", page: "payments" },
-    { name: "Leave", page: "leave" },
-    { name: "Reports", page: "reports" },
-    { name: "Student Fee Reports", page: "student-reports" },
-    { name: "Profile", page: "profile" },
-  ],
-  admin: [
-    // Main
-    { name: "Dashboard", page: "dashboard" },
-    
-    // User Management
-    { name: "Enroll Staff", page: "enroll-user" },
-    { name: "Bulk Upload Faculty", page: "bulk-upload" },
-    
-    // Academic Structure
-    { name: "Branches", page: "branches" },
-    { name: "Faculty Assignments", page: "teacher-assignments" },
-    { name: "Question Paper Approvals", page: "qp-approvals" },
-    { name: "Batches", page: "batches" },
-    
-    // Communication
-    { name: "Announcement Management", page: "announcement-management" },
-    
-    // Leaves
-    { name: "HOD Leaves", page: "hod-leaves" },
-    { name: "HOD Attendance", page: "hod-attendance" },
-    
-    { name: "My Attendance", page: "my-attendance" },
-    { name: "Apply Leave", page: "apply-leave" },
-    
-    // User & Profile
-    { name: "Users", page: "users" },
-    { name: "Profile", page: "profile" },
-  ],
+    fees_manager: [
+      { name: "Dashboard", page: "dashboard" },
+      { name: "Components", page: "components" },
+      { name: "Templates", page: "templates" },
+      { name: "Assignments", page: "assignments" },
+      { name: "Individual Fees", page: "individual-fees" },
+      { name: "Bulk Assignment", page: "bulk-assignment" },
+      { name: "Invoices", page: "invoices" },
+      { name: "Payments", page: "payments" },
+      { name: "Leave", page: "leave" },
+      { name: "Reports", page: "reports" },
+      { name: "Student Fee Reports", page: "student-reports" },
+      { name: "Profile", page: "profile" },
+    ],
+    admin: [
+      // Main
+      { name: "Dashboard", page: "dashboard" },
 
-  hod: [
-    // Main
-    { name: "Dashboard", page: "dashboard" },
-    
-    // Academic Management
-    { name: "Semester Management", page: "semesters" },
-    { name: "Students Enrollment", page: "students" },
-    { name: "Elective Course Enrollment", page: "student-enrollment" },
-    { name: "Courses", page: "subjects" },
-    { name: "Faculty Assignments", page: "faculty-assignments" },
-    { name: "Question Paper Approvals", page: "qp-approvals" },
-    { name: "Timetable", page: "timetable" },
-    { name: "Proctors", page: "proctors" },
-    
-    // Attendance & Marks
-    // { name: "Attendance", page: "attendance" },
- 
-    { name: "Low Attendance", page: "low-attendance" },
-    { name: "Faculty Attendance", page: "faculty-attendance" },
-    { name: "My Attendance", page: "my-attendance" },
-    { name: "Promotion Management", page: "promotion-management" },
-    
-    // Leaves
-    { name: "Faculty Leaves", page: "leaves" },
-    { name: "Apply Leaves", page: "apply-leaves" },
-    
-    // Resources & Communication
-    { name: "Study Material", page: "study-materials" },
-    { name: "Scan for Student Info", page: "scan-student-info" },
-    { name: "Branch Announcements", page: "hod-announcement-management" },
-    
-    // Profile
-    { name: "Profile", page: "hod-profile" },
-  ],
+      // User Management
+      { name: "Enroll Staff", page: "enroll-user" },
+      { name: "Bulk Upload Faculty", page: "bulk-upload" },
 
-  faculty: [
-    // Main
-    { name: "Dashboard", page: "dashboard" },
-    
-    // Attendance & Marks
-    { name: "Take Attendance", page: "take-attendance" },
-    { name: "Attendance Records", page: "attendance-records" },
-    { name: "My Attendance", page: "faculty-attendance" },
-    { name: "Upload Marks", page: "upload-marks" },
-    { name: "Upload QP", page: "upload-qp" },
-    { name: "CO Attainment", page: "co-attainment" },
-    { name: "Generate Statistics", page: "statistics" },
-    
-    // Leave Management
-    { name: "Apply Leave", page: "apply-leave" },
-    { name: "Manage Student Leave", page: "student-leave" },
-    
-    // Academic
-    { name: "Timetable", page: "timetable" },
-    { name: "Exam Applications", page: "exam-applications" },
-    { name: "Revaluation", page: "revaluation" },
-    { name: "Makeup Exam", page: "makeupexam" },
-    { name: "Proctor Students", page: "proctor-students" },
-    { name: "Scan for Student Info", page: "scan-student-info" },
-    { name: "Study Material", page: "study-materials" },
-    { name: "Announcements for Students", page: "faculty-announcement-management" },
-    
-    // Profile
-    { name: "Profile", page: "faculty-profile" },
-  ],
+      // Academic Structure
+      { name: "Branches", page: "branches" },
+      { name: "Faculty Assignments", page: "teacher-assignments" },
+      { name: "Question Paper Approvals", page: "qp-approvals" },
+      { name: "Batches", page: "batches" },
 
-  student: [
-    // Main
-    { name: "Dashboard", page: "dashboard" },
-    // Academic
-    { name: "Timetable", page: "timetable" },
-    { name: "Attendance", page: "attendance" },
-    { name: "Internal Marks", page: "marks" },
-    { name: "Study Materials", page: "student-study-material" },
-    { name: "Assignments", page: "student-assignment" },
-    { name: "Revaluation", page: "revaluation" },
-    { name: "Makeup Exam", page: "makeupexam" },
-    { name: "Fees", page: "fees" },
-    // Hostel Details
-    { name: "Hostel Details", page: "student-hostel-details" },
+      // Communication
+      { name: "Announcement Management", page: "announcement-management" },
 
-    // Interview
-    { name: "AI Interview", page: "ai-interview" },
-    
-    // Communication
-    { name: "Announcements", page: "announcements" },
-    
-    // Leave Management
-    { name: "Leaves", page: "leave" },
-    
-    // Profile
-    { name: "Profile", page: "profile" },
-  ],
+      // Leaves
+      { name: "HOD Leaves", page: "hod-leaves" },
+      { name: "HOD Attendance", page: "hod-attendance" },
 
-  coe: [
-    // Main
-    { name: "Dashboard", page: "dashboard" },
+      { name: "My Attendance", page: "my-attendance" },
+      { name: "Apply Leave", page: "apply-leave" },
 
-    // Leave Management
-    { name: "Apply Leave", page: "apply-leave" },
+      // User & Profile
+      { name: "Users", page: "users" },
+      { name: "Profile", page: "profile" },
+    ],
 
-    // Exam Management
-    { name: "Student Status", page: "student-status" },
-    { name: "Course Statistics", page: "course-statistics" },
-    { name: "Makeup Requests", page: "makeup-requests" },
-    { name: "Revaluation Requests", page: "revaluation-requests" },
-    { name: "Question Paper Approvals", page: "qp-approvals" },
-    { name: "Publish Results", page: "publish-results" },
-    { name: "Publish Results (Reval/Makeup)", page: "publish-results-reval-makeup" },
+    hod: [
+      // Main
+      { name: "Dashboard", page: "dashboard" },
 
-    // Profile
-    { name: "Profile", page: "profile" },
-  ],
-  dean: [
-    { name: "Dashboard", page: "dashboard" },
-    { name: "Today's Attendance", page: "attendance" },
-    { name: "Attendance Filters", page: "attendance-filters" },
-    { name: "Scan for Student Info", page: "performance" },
-    { name: "Exams", page: "exams" },
-    { name: "Faculty", page: "faculty" },
-    { name: "Finance", page: "finance" },
-    { name: "Campus Locations", page: "campus-locations" },
-    { name: "Admin Leaves", page: "admin-leaves" },
-    { name: "Profile", page: "profile" },
-  ],
-  hms: [
-    { name: "Dashboard", page: "dashboard" },
-    { name: "Hostels", page: "hostels" },
-    { name: "Rooms", page: "rooms" },
-    { name: "Students", page: "students" },
-    { name: "Enrollment", page: "enrollment" },
-    { name: "Staff", page: "staff" },
-    { name: "Menu Management", page: "menu-management" },
-    { name: "Issue Tracking", page: "issues" },
-  ],
-};
+      // Academic Management
+      { name: "Semester Management", page: "semesters" },
+      { name: "Students Enrollment", page: "students" },
+      { name: "Elective Course Enrollment", page: "student-enrollment" },
+      { name: "Courses", page: "subjects" },
+      { name: "Faculty Assignments", page: "faculty-assignments" },
+      { name: "Question Paper Approvals", page: "qp-approvals" },
+      { name: "Timetable", page: "timetable" },
+      { name: "Proctors", page: "proctors" },
 
- 
+      // Attendance & Marks
+      // { name: "Attendance", page: "attendance" },
+
+      { name: "Low Attendance", page: "low-attendance" },
+      { name: "Faculty Attendance", page: "faculty-attendance" },
+      { name: "My Attendance", page: "my-attendance" },
+      { name: "Promotion Management", page: "promotion-management" },
+
+      // Leaves
+      { name: "Faculty Leaves", page: "leaves" },
+      { name: "Apply Leaves", page: "apply-leaves" },
+
+      // Resources & Communication
+      { name: "Study Material", page: "study-materials" },
+      { name: "Scan for Student Info", page: "scan-student-info" },
+      { name: "Branch Announcements", page: "hod-announcement-management" },
+
+      // Profile
+      { name: "Profile", page: "hod-profile" },
+    ],
+
+    faculty: [
+      // Main
+      { name: "Dashboard", page: "dashboard" },
+
+      // Attendance & Marks
+      { name: "Take Attendance", page: "take-attendance" },
+      { name: "Attendance Records", page: "attendance-records" },
+      { name: "My Attendance", page: "faculty-attendance" },
+      { name: "Upload Marks", page: "upload-marks" },
+      { name: "Upload QP", page: "upload-qp" },
+      { name: "CO Attainment", page: "co-attainment" },
+      { name: "Generate Statistics", page: "statistics" },
+
+      // Leave Management
+      { name: "Apply Leave", page: "apply-leave" },
+      { name: "Manage Student Leave", page: "student-leave" },
+
+      // Academic
+      { name: "Timetable", page: "timetable" },
+      { name: "Exam Applications", page: "exam-applications" },
+      { name: "Revaluation", page: "revaluation" },
+      { name: "Makeup Exam", page: "makeupexam" },
+      { name: "Proctor Students", page: "proctor-students" },
+      { name: "Scan for Student Info", page: "scan-student-info" },
+      { name: "Study Material", page: "study-materials" },
+      { name: "Announcements for Students", page: "faculty-announcement-management" },
+
+      // Profile
+      { name: "Profile", page: "faculty-profile" },
+    ],
+
+    student: [
+      // Main
+      { name: "Dashboard", page: "dashboard" },
+      // Academic
+      { name: "Timetable", page: "timetable" },
+      { name: "Attendance", page: "attendance" },
+      { name: "Internal Marks", page: "marks" },
+      { name: "Study Materials", page: "student-study-material" },
+      { name: "Assignments", page: "student-assignment" },
+      { name: "Revaluation", page: "revaluation" },
+      { name: "Makeup Exam", page: "makeupexam" },
+      { name: "Fees", page: "fees" },
+      // Hostel Details
+      { name: "Hostel Details", page: "student-hostel-details" },
+
+      // Interview
+      { name: "AI Interview", page: "ai-interview" },
+
+      // Communication
+      { name: "Announcements", page: "announcements" },
+
+      // Leave Management
+      { name: "Leaves", page: "leave" },
+
+      // Profile
+      { name: "Profile", page: "profile" },
+    ],
+
+    coe: [
+      // Main
+      { name: "Dashboard", page: "dashboard" },
+
+      // Leave Management
+      { name: "Apply Leave", page: "apply-leave" },
+
+      // Exam Management
+      { name: "Student Status", page: "student-status" },
+      { name: "Course Statistics", page: "course-statistics" },
+      { name: "Makeup Requests", page: "makeup-requests" },
+      { name: "Revaluation Requests", page: "revaluation-requests" },
+      { name: "Question Paper Approvals", page: "qp-approvals" },
+      { name: "Publish Results", page: "publish-results" },
+      { name: "Publish Results (Reval/Makeup)", page: "publish-results-reval-makeup" },
+
+      // Profile
+      { name: "Profile", page: "profile" },
+    ],
+    dean: [
+      { name: "Dashboard", page: "dashboard" },
+      { name: "Today's Attendance", page: "attendance" },
+      { name: "Attendance Filters", page: "attendance-filters" },
+      { name: "Scan for Student Info", page: "performance" },
+      { name: "Exams", page: "exams" },
+      { name: "Faculty", page: "faculty" },
+      { name: "Finance", page: "finance" },
+      { name: "Campus Locations", page: "campus-locations" },
+      { name: "Admin Leaves", page: "admin-leaves" },
+      { name: "Profile", page: "profile" },
+    ],
+    hms: [
+      { name: "Dashboard", page: "dashboard" },
+      { name: "Hostels", page: "hostels" },
+      { name: "Rooms", page: "rooms" },
+      { name: "Students", page: "students" },
+      { name: "Enrollment", page: "enrollment" },
+      { name: "Staff", page: "staff" },
+      { name: "Menu Management", page: "menu-management" },
+      { name: "Issue Tracking", page: "issues" },
+    ],
+  };
+
+
   const sidebarContent = (
-    <motion.div 
+    <motion.div
       className={`h-full flex flex-col border-r ${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-200'}`}
       initial={{ x: -100, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
@@ -344,7 +344,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     >
       {/* Header */}
       <motion.div 
-        className={`p-4 border-b ${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-200'}`}
+        className={`h-20 px-4 flex items-center border-b ${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-200'}`}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
@@ -368,8 +368,9 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
                 animate={{ opacity: 1, width: "auto" }}
                 exit={{ opacity: 0, width: 0 }}
                 transition={{ duration: 0.2 }}
+                className="flex flex-col justify-center"
               >
-                <h1 className={`font-bold text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>NEURO CAMPUS</h1>
+                <h1 className={`font-bold text-lg whitespace-nowrap ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>NEURO CAMPUS</h1>
                 <p className={`text-xs capitalize ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{role} Portal</p>
                 <div className="mt-1">
                   <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
@@ -387,9 +388,9 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
           </AnimatePresence>
         </div>
       </motion.div>
- 
+
       {/* Menu Items */}
-      <motion.div 
+      <motion.div
         className="flex-1 overflow-y-auto py-4 thin-scrollbar"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -399,50 +400,49 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
           {menuItems[role]
             ?.filter(item => isPageAllowed(item.page, orgPlan))
             ?.map((item, index) => (
-            <motion.div
-              key={item.page}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: 0.1 * index }}
-            >
-              <Button
-                variant={activePage === item.page ? "default" : "ghost"}
-                className={`w-full justify-start gap-3 h-10 transition-all duration-200 ${
-                  activePage === item.page
-                    ? "bg-[#a259ff] hover:bg-[#a259ff]/90 text-white shadow-lg shadow-[#a259ff]/20"
-                    : theme === 'dark' 
-                      ? "text-muted-foreground hover:text-foreground hover:bg-accent" 
-                      : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                } ${collapsed ? "px-2" : "px-3"}`}
-                onClick={() => handlePageChange(item.page)}
+              <motion.div
+                key={item.page}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 * index }}
               >
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  transition={{ duration: 0.1 }}
+                <Button
+                  variant={activePage === item.page ? "default" : "ghost"}
+                  className={`w-full justify-start gap-3 h-10 transition-all duration-200 ${activePage === item.page
+                      ? "bg-[#a259ff] hover:bg-[#a259ff]/90 text-white shadow-lg shadow-[#a259ff]/20"
+                      : theme === 'dark'
+                        ? "text-muted-foreground hover:text-foreground hover:bg-accent"
+                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                    } ${collapsed ? "px-2" : "px-3"}`}
+                  onClick={() => handlePageChange(item.page)}
                 >
-                  {getIcon(item.page)}
-                </motion.div>
-                <AnimatePresence>
-                  {!collapsed && (
-                    <motion.span
-                      className="truncate"
-                      initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: "auto" }}
-                      exit={{ opacity: 0, width: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      {item.name}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </Button>
-            </motion.div>
-          ))}
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    transition={{ duration: 0.1 }}
+                  >
+                    {getIcon(item.page)}
+                  </motion.div>
+                  <AnimatePresence>
+                    {!collapsed && (
+                      <motion.span
+                        className="truncate"
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: "auto" }}
+                        exit={{ opacity: 0, width: 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        {item.name}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </Button>
+              </motion.div>
+            ))}
         </div>
       </motion.div>
- 
+
       {/* Logout Button */}
-      <motion.div 
+      <motion.div
         className={`p-3 border-t ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -450,11 +450,10 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       >
         <Button
           variant="ghost"
-          className={`w-full justify-start gap-3 h-10 transition-all duration-200 ${collapsed ? "px-2" : "px-3"} ${
-            theme === 'dark' 
-              ? "text-red-400 hover:text-red-100 hover:bg-red-900/50" 
+          className={`w-full justify-start gap-3 h-10 transition-all duration-200 ${collapsed ? "px-2" : "px-3"} ${theme === 'dark'
+              ? "text-red-400 hover:text-red-100 hover:bg-red-900/50"
               : "text-red-700 hover:text-red-800 hover:bg-red-200"
-          }`}
+            }`}
           onClick={handleLogoutClick}
         >
           <motion.div
@@ -479,7 +478,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       </motion.div>
     </motion.div>
   );
- 
+
   // For mobile/tablet - use overlay approach
   if (window.innerWidth < 1024) {
     return (
@@ -507,22 +506,19 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
         {/* Logout Dialog - rendered at root level for proper z-index */}
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none">
           <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-            <DialogContent 
-              className={`w-[90%] sm:w-full max-w-md mx-auto rounded-lg ${
-                theme === 'dark' 
-                  ? "bg-background border-border text-foreground" 
+            <DialogContent
+              className={`w-[90%] sm:w-full max-w-md mx-auto rounded-lg ${theme === 'dark'
+                  ? "bg-background border-border text-foreground"
                   : "bg-white border-gray-200 text-gray-900"
-              }`}
+                }`}
             >
               <DialogHeader className="space-y-2">
-                <DialogTitle className={`text-lg md:text-xl font-semibold ${
-                  theme === 'dark' ? "text-foreground" : "text-gray-900"
-                }`}>
+                <DialogTitle className={`text-lg md:text-xl font-semibold ${theme === 'dark' ? "text-foreground" : "text-gray-900"
+                  }`}>
                   Confirm Logout
                 </DialogTitle>
-                <DialogDescription className={`text-sm md:text-base ${
-                  theme === 'dark' ? "text-muted-foreground" : "text-gray-500"
-                }`}>
+                <DialogDescription className={`text-sm md:text-base ${theme === 'dark' ? "text-muted-foreground" : "text-gray-500"
+                  }`}>
                   Are you sure you want to log out?
                 </DialogDescription>
               </DialogHeader>
@@ -530,21 +526,19 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
                 <Button
                   variant="outline"
                   onClick={() => setShowLogoutDialog(false)}
-                  className={`w-full sm:w-auto ${
-                    theme === 'dark' 
-                      ? "border-border text-foreground hover:bg-accent" 
+                  className={`w-full sm:w-auto ${theme === 'dark'
+                      ? "border-border text-foreground hover:bg-accent"
                       : "border-gray-300 text-gray-700 hover:bg-gray-100"
-                  }`}
+                    }`}
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={confirmLogout}
-                  className={`w-full sm:w-auto ${
-                    theme === 'dark' 
-                      ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground" 
+                  className={`w-full sm:w-auto ${theme === 'dark'
+                      ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                       : "bg-red-600 hover:bg-red-700 text-white"
-                  }`}
+                    }`}
                 >
                   Logout
                 </Button>
@@ -555,7 +549,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       </>
     );
   }
- 
+
   // For desktop - show collapsible sidebar
   return (
     <>
@@ -575,22 +569,19 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       {/* Logout Dialog - rendered at root level for proper z-index */}
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none">
         <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-          <DialogContent 
-            className={`w-[90%] sm:w-full max-w-md mx-auto rounded-lg ${
-              theme === 'dark' 
-                ? "bg-background border-border text-foreground" 
+          <DialogContent
+            className={`w-[90%] sm:w-full max-w-md mx-auto rounded-lg ${theme === 'dark'
+                ? "bg-background border-border text-foreground"
                 : "bg-white border-gray-200 text-gray-900"
-            }`}
+              }`}
           >
             <DialogHeader className="space-y-2">
-              <DialogTitle className={`text-lg md:text-xl font-semibold ${
-                theme === 'dark' ? "text-foreground" : "text-gray-900"
-              }`}>
+              <DialogTitle className={`text-lg md:text-xl font-semibold ${theme === 'dark' ? "text-foreground" : "text-gray-900"
+                }`}>
                 Confirm Logout
               </DialogTitle>
-              <DialogDescription className={`text-sm md:text-base ${
-                theme === 'dark' ? "text-muted-foreground" : "text-gray-500"
-              }`}>
+              <DialogDescription className={`text-sm md:text-base ${theme === 'dark' ? "text-muted-foreground" : "text-gray-500"
+                }`}>
                 Are you sure you want to log out?
               </DialogDescription>
             </DialogHeader>
@@ -598,21 +589,19 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
               <Button
                 variant="outline"
                 onClick={() => setShowLogoutDialog(false)}
-                className={`w-full sm:w-auto ${
-                  theme === 'dark' 
-                    ? "border-border text-foreground hover:bg-accent" 
+                className={`w-full sm:w-auto ${theme === 'dark'
+                    ? "border-border text-foreground hover:bg-accent"
                     : "border-gray-300 text-gray-700 hover:bg-gray-100"
-                }`}
+                  }`}
               >
                 Cancel
               </Button>
               <Button
                 onClick={confirmLogout}
-                className={`w-full sm:w-auto ${
-                  theme === 'dark' 
-                    ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground" 
+                className={`w-full sm:w-auto ${theme === 'dark'
+                    ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
                     : "bg-red-600 hover:bg-red-700 text-white"
-                }`}
+                  }`}
               >
                 Logout
               </Button>
@@ -623,5 +612,5 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     </>
   );
 };
- 
+
 export default Sidebar;
