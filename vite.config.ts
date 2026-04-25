@@ -43,6 +43,8 @@ export default defineConfig(({ mode }) => ({
           images: ['browser-image-compression'],
           ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select', '@radix-ui/react-toast', '@radix-ui/react-tabs', 'lucide-react'],
           charts: ['recharts'],
+          utils: ['xlsx', 'framer-motion', 'sweetalert2', 'lodash', 'date-fns'],
+          scanning: ['@zxing/library', '@zxing/browser'],
         },
       },
     },

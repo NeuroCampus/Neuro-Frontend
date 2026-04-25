@@ -1,27 +1,30 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import PaymentSuccess from "./pages/PaymentSuccess";
-import PaymentCancel from "./pages/PaymentCancel";
-import ResultsView from "./pages/ResultsView";
-import StudentDashboard from "./components/dashboards/StudentDashboard";
-import AdminDashboard from "./components/dashboards/AdminDashboard";
-import HODDashboard from "./components/dashboards/HODDashboard";
-import FacultyDashboard from "./components/dashboards/FacultyDashboard";
-import COEDashboard from "./components/dashboards/COEDashboard";
-import FeesManagerDashboard from "./components/FeesManager/FeesManagerDashboard";
-import DeanDashboard from "./components/dashboards/DeanDashboard";
-import HMSDashboard from "./components/dashboards/HMSDashboard";
-import Onboarding from "./pages/Onboarding";
-import Pricing from "./pages/Pricing";
-import FloatingAssistant from "./components/common/FloatingAssistant";
-import AIInterview from "./components/common/AIInterview";
+
+// Lazy loaded components
+const NotFound = lazy(() => import("./pages/NotFound"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+const PaymentCancel = lazy(() => import("./pages/PaymentCancel"));
+const ResultsView = lazy(() => import("./pages/ResultsView"));
+const StudentDashboard = lazy(() => import("./components/dashboards/StudentDashboard"));
+const AdminDashboard = lazy(() => import("./components/dashboards/AdminDashboard"));
+const HODDashboard = lazy(() => import("./components/dashboards/HODDashboard"));
+const FacultyDashboard = lazy(() => import("./components/dashboards/FacultyDashboard"));
+const COEDashboard = lazy(() => import("./components/dashboards/COEDashboard"));
+const FeesManagerDashboard = lazy(() => import("./components/FeesManager/FeesManagerDashboard"));
+const DeanDashboard = lazy(() => import("./components/dashboards/DeanDashboard"));
+const HMSDashboard = lazy(() => import("./components/dashboards/HMSDashboard"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const FloatingAssistant = lazy(() => import("./components/common/FloatingAssistant"));
+const AIInterview = lazy(() => import("./components/common/AIInterview"));
+const TrialExpired = lazy(() => import("./pages/TrialExpired"));
+const OnboardingSuccess = lazy(() => import("./pages/OnboardingSuccess"));
+
 import { shouldShowFloatingAssistant } from "./utils/config";
-import TrialExpired from "./pages/TrialExpired";
-import OnboardingSuccess from "./pages/OnboardingSuccess";
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode; allowedRoles: string[] }) => {
@@ -101,7 +104,12 @@ const App = () => {
     // ✅ NO ThemeProvider here - it's in main.tsx
     // ✅ NO TooltipProvider here - it's in main.tsx
     <BrowserRouter>
-      <Routes>
+      <Suspense fallback={
+        <div className="flex items-center justify-center min-h-screen bg-background">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      }>
+        <Routes>
         {/* Public routes */}
         <Route path="/" element={
           <>
@@ -400,6 +408,7 @@ const App = () => {
           </>
         } />
       </Routes>
+      </Suspense>
 
       {/* ✅ Toast components rendered OUTSIDE routes but INSIDE BrowserRouter */}
       <Toaster />
