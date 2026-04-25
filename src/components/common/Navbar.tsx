@@ -67,28 +67,11 @@ const Navbar = ({ role, user, onNotificationClick, setPage, showHamburger = fals
       }
     }
   };
-
-
   const userStr = localStorage.getItem("user");
   const userData = userStr ? JSON.parse(userStr) : null;
   const orgPlan = (userData?.org_plan || "basic").toLowerCase();
 
-  const getPlanStyles = () => {
-    switch (orgPlan) {
-      case 'advance':
-        return theme === 'dark'
-          ? 'bg-gradient-to-r from-background via-primary/5 to-background border-primary/20'
-          : 'bg-gradient-to-r from-white via-primary/5 to-white border-primary/10';
-      case 'pro':
-        return theme === 'dark'
-          ? 'bg-gradient-to-r from-background via-blue-500/5 to-background border-blue-500/20'
-          : 'bg-gradient-to-r from-white via-blue-500/5 to-white border-blue-500/10';
-      default:
-        return theme === 'dark'
-          ? 'bg-background border-border'
-          : 'bg-white border-gray-200';
-    }
-  };
+
 
   const getBadgeStyles = () => {
     switch (orgPlan) {
@@ -103,7 +86,7 @@ const Navbar = ({ role, user, onNotificationClick, setPage, showHamburger = fals
 
   return (
     <motion.div
-      className={`w-full h-20 flex items-center justify-between px-4 md:px-6 lg:px-8 backdrop-blur-md relative border-b transition-all duration-500 ${getPlanStyles()}`}
+      className={`w-full h-20 flex items-center justify-between p-4 relative border-b transition-all duration-500`}
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -124,7 +107,7 @@ const Navbar = ({ role, user, onNotificationClick, setPage, showHamburger = fals
 
         <div className="flex flex-col">
           <motion.div
-            className={`font-bold text-lg leading-tight ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
+            className={`font-semibold text-lg leading-tight ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
           >
             Welcome,{" "}
             <span className={theme === 'dark' ? 'text-primary' : 'text-blue-600'}>
@@ -156,12 +139,12 @@ const Navbar = ({ role, user, onNotificationClick, setPage, showHamburger = fals
           transition={{ duration: 0.4, delay: 0.1 }}
           className="hidden md:block"
         >
-          <span className={`text-[9px] uppercase tracking-wider font-black px-2.5 py-1 rounded-md border border-white/10 shadow-sm ${getBadgeStyles()}`}>
+          <span className={`text-[9px] uppercase tracking-wider font-semibold px-2.5 py-1 rounded-md border border-white/10 shadow-sm ${getBadgeStyles()}`}>
             {orgPlan}
           </span>
         </motion.div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ">
           <Button
             variant="ghost"
             size="icon"
@@ -178,12 +161,12 @@ const Navbar = ({ role, user, onNotificationClick, setPage, showHamburger = fals
             onClick={handleProfileClick}
           >
             <div className="text-right hidden lg:block">
-              <div className={`text-xs font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+              <div className={`text-xs font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                 {user?.first_name ? `${user.first_name} ${user?.last_name || ''}` : "User"}
               </div>
               <div className="text-[10px] opacity-60 capitalize">{role}</div>
             </div>
-            <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs shadow-inner overflow-hidden">
+            <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-semibold text-xs shadow-inner overflow-hidden">
               {user?.profile_picture ? (
                 <img src={user.profile_picture} alt="P" className="w-full h-full object-cover" />
               ) : (
