@@ -411,8 +411,8 @@ const FloatingAssistant: React.FC = () => {
             onClick={() => handleSuggestedAction(action.text)}
             className={`px-3 py-1.5 text-sm rounded-full transition-all duration-200 ${
               theme === 'dark'
-                ? 'bg-[#a259ff] text-white hover:bg-[#8a4dde]'
-                : 'bg-[#a259ff] text-white hover:bg-[#8a4dde]'
+                ? 'bg-primary text-white hover:bg-primary/90'
+                : 'bg-primary text-white hover:bg-primary/90'
             }`}
           >
             {action.text}
@@ -484,7 +484,7 @@ const FloatingAssistant: React.FC = () => {
             theme === 'dark' ? 'border-slate-700' : 'border-gray-200'
           }`}>
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#a259ff] flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
                 <Bot className="w-4 h-4 text-white" />
               </div>
               <div>
@@ -593,7 +593,7 @@ const FloatingAssistant: React.FC = () => {
                         ? theme === 'dark'
                           ? 'bg-slate-800 text-slate-500'
                           : 'bg-gray-100 text-gray-400'
-                        : 'bg-[#a259ff] text-white hover:bg-[#8a4dde]'
+                        : 'bg-primary text-white hover:bg-primary/90'
                     }`}
                   >
                     <Send className="w-4 h-4" />

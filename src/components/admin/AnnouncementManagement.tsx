@@ -233,7 +233,7 @@ const AdminAnnouncementManagement = () => {
                 <DialogTrigger asChild>
                   <Button
                     onClick={() => resetForm()}
-                    className={`gap-2 ${theme === 'dark' ? 'text-white bg-[#a259ff] hover:bg-[#9147e0] border-border' : 'text-white bg-[#a259ff] hover:bg-[#9147e0] border-[#a259ff]'}`}
+                    className={`gap-2 ${theme === 'dark' ? 'text-white bg-primary hover:bg-[#9147e0] border-border' : 'text-white bg-primary hover:bg-[#9147e0] border-primary'}`}
                   >
                     <Plus className="w-4 h-4" />
                     New Announcement
@@ -408,7 +408,7 @@ const AdminAnnouncementManagement = () => {
                       </Button>
                       <Button
                         onClick={handleCreateOrUpdate}
-                        className={`${theme === 'dark' ? 'text-white bg-[#a259ff] hover:bg-[#9147e0] border-border' : 'text-white bg-[#a259ff] hover:bg-[#9147e0] border-[#a259ff]'}`}
+                        className={`${theme === 'dark' ? 'text-white bg-primary hover:bg-[#9147e0] border-border' : 'text-white bg-primary hover:bg-[#9147e0] border-primary'}`}
                       >
                         {editingId ? "Update" : "Create"} Announcement
                       </Button>

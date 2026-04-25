@@ -220,7 +220,7 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
                 variant="outline"
                 size="sm"
                 type="button"
-                className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                className="text-white bg-primary border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white"
               >
                 Select File
               </Button>
@@ -251,7 +251,7 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
           </div>
 
           <Button
-            className="w-full text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+            className="w-full text-white bg-primary border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white"
             onClick={handleUpload}
             disabled={loading || !file}
           >

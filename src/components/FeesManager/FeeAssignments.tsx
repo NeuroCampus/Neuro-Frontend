@@ -367,7 +367,7 @@ const FeeAssignments: React.FC = () => {
                   }
                   setIsAssignDialogOpen(true);
                 }}
-                className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+                className="bg-primary hover:bg-primary/90 text-white"
               >
               <Plus className="h-4 w-4 mr-2" />
               Assign Fees
@@ -382,13 +382,13 @@ const FeeAssignments: React.FC = () => {
               <TabsList className="grid w-full grid-cols-2 bg-muted border border-border">
                 <TabsTrigger 
                   value="individual" 
-                  className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white border border-border"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-white border border-border"
                 >
                   Individual Student
                 </TabsTrigger>
                 <TabsTrigger 
                   value="batch" 
-                  className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white border border-border"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-white border border-border"
                 >
                   Batch Assignment
                 </TabsTrigger>
@@ -452,7 +452,7 @@ const FeeAssignments: React.FC = () => {
                     <Button
                       onClick={handleIndividualAssignment}
                       disabled={!selectedStudent || !selectedTemplate}
-                      className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+                      className="bg-primary hover:bg-primary/90 text-white"
                     >
                       <UserCheck className="h-4 w-4 mr-2" />
                       Assign to Student
@@ -556,7 +556,7 @@ const FeeAssignments: React.FC = () => {
                     <Button
                       onClick={handleBatchAssignment}
                       disabled={!selectedBatch || !selectedTemplate}
-                      className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+                      className="bg-primary hover:bg-primary/90 text-white"
                     >
                       <Users className="h-4 w-4 mr-2" />
                       Assign to Batch
@@ -629,7 +629,7 @@ const FeeAssignments: React.FC = () => {
               {assignments.length === 0 && (
                 <Button 
                   onClick={() => setIsAssignDialogOpen(true)}
-                  className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+                  className="bg-primary hover:bg-primary/90 text-white"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Create Assignment

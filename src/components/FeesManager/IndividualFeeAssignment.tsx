@@ -543,7 +543,7 @@ const IndividualFeeAssignment: React.FC = () => {
                       resetForm();
                     }}
                     disabled={!selectedStudent || Object.keys(customFees).length === 0}
-                    className="bg-[#a259ff] hover:bg-[#8a4dde] text-white px-4 py-2"
+                    className="bg-primary hover:bg-primary/90 text-white px-4 py-2"
                   >
                     <User className="h-4 w-4 mr-2" />
                     Assign Custom Fees
@@ -672,7 +672,7 @@ const IndividualFeeAssignment: React.FC = () => {
                     resetForm();
                   }}
                   disabled={!selectedStudent}
-                  className="bg-[#a259ff] hover:bg-[#8a4dde] text-white px-4 py-2"
+                  className="bg-primary hover:bg-primary/90 text-white px-4 py-2"
                 >
                   <User className="h-4 w-4 mr-2" />
                   Update Custom Fees
@@ -713,13 +713,13 @@ const IndividualFeeAssignment: React.FC = () => {
         <TabsList>
           <TabsTrigger 
             value="with-custom" 
-            className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white"
+            className="data-[state=active]:bg-primary data-[state=active]:text-white"
           >
             Students with Custom Fees ({assignments.length})
           </TabsTrigger>
           <TabsTrigger 
             value="all-students" 
-            className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white"
+            className="data-[state=active]:bg-primary data-[state=active]:text-white"
           >
             All Students ({filteredStudents.length})
           </TabsTrigger>
@@ -743,7 +743,7 @@ const IndividualFeeAssignment: React.FC = () => {
                   </p>
                   <Button 
                     onClick={openAssignDialog}
-                    className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+                    className="bg-primary hover:bg-primary/90 text-white"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Assign Custom Fees
@@ -890,7 +890,7 @@ const IndividualFeeAssignment: React.FC = () => {
                                 }
                                 setIsEditDialogOpen(true);
                               }}
-                              className="bg-[#a259ff] hover:bg-[#8a4dde] text-white border-[#a259ff]"
+                              className="bg-primary hover:bg-primary/90 text-white border-primary"
                             >
                               <Edit className="h-4 w-4 mr-2" />
                               {customAssignment ? 'Edit Custom Fees' : 'Assign Custom Fees'}
@@ -914,7 +914,7 @@ const IndividualFeeAssignment: React.FC = () => {
                         size="sm"
                         onClick={() => handlePageChange(studentsPage - 1)}
                         disabled={studentsPage === 1}
-                        className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                        className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white"
                       >
                         Previous
                       </Button>
@@ -926,7 +926,7 @@ const IndividualFeeAssignment: React.FC = () => {
                         size="sm"
                         onClick={() => handlePageChange(studentsPage + 1)}
                         disabled={studentsPage === studentsTotalPages}
-                        className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                        className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white"
                       >
                         Next
                       </Button>

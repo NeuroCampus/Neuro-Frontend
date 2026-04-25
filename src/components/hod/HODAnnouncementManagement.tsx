@@ -217,7 +217,7 @@ const HODAnnouncementManagement = () => {
             <DialogTrigger asChild>
               <Button 
                 onClick={() => resetForm()} 
-                className="w-full sm:w-auto gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] transition-all duration-200 shadow-md"
+                className="w-full sm:w-auto gap-2 bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 transition-all duration-200 shadow-md"
               >
                 <Plus className="w-4 h-4" />
                 New Announcement
@@ -345,7 +345,7 @@ const HODAnnouncementManagement = () => {
                 </Button>
                 <Button 
                   onClick={handleCreateOrUpdate}
-                  className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] transition-all duration-200"
+                  className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 transition-all duration-200"
                 >
                   {editingId ? "Update" : "Create"} Announcement
                 </Button>

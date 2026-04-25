@@ -216,7 +216,7 @@ const FacultyAnnouncementManagement = () => {
               <DialogTrigger asChild>
                 <Button 
                   onClick={() => resetForm()} 
-                  className="gap-2 bg-[#a259ff] text-white hover:bg-[#8a4dde] transition-colors"
+                  className="gap-2 bg-primary text-white hover:bg-primary/90 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   New Announcement
@@ -311,7 +311,7 @@ const FacultyAnnouncementManagement = () => {
                     </Button>
                     <Button 
                       onClick={handleCreateOrUpdate}
-                      className="bg-[#a259ff] text-white hover:bg-[#8a4dde] transition-colors"
+                      className="bg-primary text-white hover:bg-primary/90 transition-colors"
                     >
                       {editingId ? "Update" : "Create"} Announcement
                     </Button>

@@ -229,14 +229,14 @@ const DeanProfile = () => {
               }}>
                 Cancel
               </Button>
-              <Button className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde]" onClick={handleUpdateProfile}>Update</Button>
+              <Button className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-primary text-white border-primary hover:bg-primary/90" onClick={handleUpdateProfile}>Update</Button>
             </>
           ) : (
-            <Button className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde]" onClick={() => setEditing(true)}>Edit Profile</Button>
+            <Button className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-primary text-white border-primary hover:bg-primary/90" onClick={() => setEditing(true)}>Edit Profile</Button>
           )}
           <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
             <DialogTrigger asChild>
-              <Button className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde]">Change Password</Button>
+              <Button className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-primary text-white border-primary hover:bg-primary/90">Change Password</Button>
             </DialogTrigger>
             <DialogContent ref={passwordDialogContentRef} className="w-[calc(100vw-1.5rem)] sm:w-full max-w-[420px] rounded-xl sm:rounded-2xl">
               <DialogHeader>
@@ -307,7 +307,7 @@ const DeanProfile = () => {
                   <Button variant="outline" onClick={() => setShowPasswordDialog(false)}>
                     Cancel
                   </Button>
-                  <Button className="font-medium bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={handleChangePassword}>
+                  <Button className="font-medium bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90" onClick={handleChangePassword}>
                     Change Password
                   </Button>
                 </div>
@@ -320,7 +320,7 @@ const DeanProfile = () => {
       <CardContent className="px-2 sm:px-3 md:px-4 lg:px-6 py-3 sm:py-4 md:py-6">
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-8 items-stretch">
           <div className="col-span-1 flex flex-col items-center h-full">
-            <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#a259ff] text-white flex items-center justify-center text-lg sm:text-2xl font-semibold mb-3 sm:mb-4 flex-shrink-0`}>
+            <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary text-white flex items-center justify-center text-lg sm:text-2xl font-semibold mb-3 sm:mb-4 flex-shrink-0`}>
               {(profile.first_name && profile.first_name[0]) || ""}{(profile.last_name && profile.last_name[0]) || ""}
             </div>
             <div className="text-base sm:text-lg font-semibold text-center sm:text-left mb-1">{profile.first_name} {profile.last_name}</div>

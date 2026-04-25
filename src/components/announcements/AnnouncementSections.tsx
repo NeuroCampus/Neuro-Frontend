@@ -207,7 +207,7 @@ const AnnouncementCard = ({
               onClick={() => onToggleActive(announcement.id)}
               className={`gap-1 transition-colors ${
                 !announcement.is_active 
-                  ? "bg-[#a259ff] text-white hover:bg-[#8a4dde] border-[#a259ff]" 
+                  ? "bg-primary text-white hover:bg-primary/90 border-primary" 
                   : "text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-orange-900/30 dark:hover:bg-orange-900/20"
               }`}
             >
@@ -219,7 +219,7 @@ const AnnouncementCard = ({
               size="sm"
               variant="default"
               onClick={() => onMarkRead(announcement.id)}
-              className="gap-1 ml-auto bg-[#a259ff] text-white hover:bg-[#8a4dde] border-[#a259ff]"
+              className="gap-1 ml-auto bg-primary text-white hover:bg-primary/90 border-primary"
             >
               <Eye className="w-3 h-3" />
               Mark as Read

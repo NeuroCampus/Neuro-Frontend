@@ -168,8 +168,8 @@ const AdminHODAttendance: React.FC = () => {
     <div className={`sm: space-y-4 sm:space-y-6 text-sm sm:text-base ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Tabs */}
       <div className={`flex space-x-1 p-1 rounded-lg ${theme === 'dark' ? 'bg-card' : 'bg-white'} border ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
-        <button onClick={() => setActiveTab('today')} className={`flex-1 py-2 px-4 rounded-md text-sm font-medium ${activeTab === 'today' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Today's Attendance</button>
-        <button onClick={() => setActiveTab('records')} className={`flex-1 py-2 px-4 rounded-md text-sm font-medium ${activeTab === 'records' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Attendance Records</button>
+        <button onClick={() => setActiveTab('today')} className={`flex-1 py-2 px-4 rounded-md text-sm font-medium ${activeTab === 'today' ? 'bg-primary text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Today's Attendance</button>
+        <button onClick={() => setActiveTab('records')} className={`flex-1 py-2 px-4 rounded-md text-sm font-medium ${activeTab === 'records' ? 'bg-primary text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Attendance Records</button>
       </div>
 
       {isLoading && <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" /></div>}
@@ -337,7 +337,7 @@ const AdminHODAttendance: React.FC = () => {
               <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Detailed Attendance Records</h3>
               <button 
                 onClick={() => setFilterOpen(!filterOpen)}
-                className="px-4 py-2 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white rounded-md font-medium transition-colors text-sm"
+                className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md font-medium transition-colors text-sm"
               >
                 Filter
               </button>
@@ -368,7 +368,7 @@ const AdminHODAttendance: React.FC = () => {
                   </button>
                   <button 
                     onClick={() => { setRecords([]); setRecordsPagination(prev => ({ ...prev, page: 1 })); fetchRecords(1, recordsPagination.page_size); setFilterOpen(false); }} 
-                    className="px-4 py-2 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white rounded-md font-medium transition-colors"
+                    className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md font-medium transition-colors"
                   >
                     Apply
                   </button>

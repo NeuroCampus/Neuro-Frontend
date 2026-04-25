@@ -483,7 +483,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
                     </div>
 
                     <div className="flex flex-col gap-2">
-                      <Button onClick={() => openFor(student)} className="w-full bg-[#a259ff] hover:bg-[#a259ff]/90 text-white h-9">
+                      <Button onClick={() => openFor(student)} className="w-full bg-primary hover:bg-primary/90 text-white h-9">
                         Open Application
                       </Button>
                       {studentStatuses[student.usn] === 'Applied' && (
@@ -531,7 +531,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
                         <div className="relative w-full flex justify-center items-center h-8">
                           <Button 
                             onClick={() => openFor(student)} 
-                            className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white h-8 px-3 whitespace-nowrap z-10"
+                            className="bg-primary hover:bg-primary/90 text-white h-8 px-3 whitespace-nowrap z-10"
                           >
                             Open
                           </Button>
@@ -599,7 +599,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
                 <DialogTitle className="text-xl font-semibold leading-none tracking-tight text-gray-900">Exam Application</DialogTitle>
               </DialogHeader>
               <div className="flex justify-end gap-2">
-                <Button onClick={async () => { await exportPdf(); }} className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white">
+                <Button onClick={async () => { await exportPdf(); }} className="bg-primary hover:bg-primary/90 text-white">
                   {exporting ? 'Exporting...' : 'Export PDF'}
                 </Button>
               </div>
@@ -1025,7 +1025,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
                       variant: "destructive"
                     });
                   }
-                }} className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white">
+                }} className="bg-primary hover:bg-primary/90 text-white">
                   Apply
                 </Button>
               )}

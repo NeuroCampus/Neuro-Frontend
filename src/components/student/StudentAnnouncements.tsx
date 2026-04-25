@@ -277,7 +277,7 @@ const StudentAnnouncements = () => {
                               {announcement.priority}
                             </Badge>
                             {isRecent(announcement.created_at) && (
-                              <Badge className="bg-[#a259ff] text-white border-none text-[10px]">NEW</Badge>
+                              <Badge className="bg-primary text-white border-none text-[10px]">NEW</Badge>
                             )}
                             {!announcement.is_read && (
                               <span className="w-2 h-2 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50"></span>

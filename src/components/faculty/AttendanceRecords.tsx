@@ -197,7 +197,7 @@ const AttendanceRecords = () => {
                             <DialogTrigger asChild>
                               <Button
                                 size="sm"
-                                className="text-xs md:text-sm px-2 md:px-2 py-1 whitespace-nowrap bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+                                className="text-xs md:text-sm px-2 md:px-2 py-1 whitespace-nowrap bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
                                 onClick={() => handleViewDetails(record)}
                               >
                                 View Details
@@ -298,7 +298,7 @@ const AttendanceRecords = () => {
                                 <div className="flex gap-2 w-full sm:w-auto">
                                   {selectedRecord && selectedRecord.summary && selectedRecord.summary.total_count > 0 && (
                                     <Button
-                                      className="flex-1 sm:flex-none bg-[#a259ff] hover:bg-[#8a4dde] text-white font-bold px-6 shadow-lg shadow-purple-500/20 transition-all active:scale-95"
+                                      className="flex-1 sm:flex-none bg-primary hover:bg-primary/90 text-white font-bold px-6 shadow-lg shadow-purple-500/20 transition-all active:scale-95"
                                       onClick={handleExportPdf}
                                       disabled={exporting}
                                     >
@@ -338,7 +338,7 @@ const AttendanceRecords = () => {
                   onClick={() => pagination.goToPage(1)}
                   disabled={pagination.page === 1}
                   aria-label="First page"
-                  className="text-xs md:text-xs px-1.5 md:px-2 py-0.5 md:py-0.5 whitespace-nowrap bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out shadow-md"
+                  className="text-xs md:text-xs px-1.5 md:px-2 py-0.5 md:py-0.5 whitespace-nowrap bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out shadow-md"
                 >
                   First
                 </Button>
@@ -348,7 +348,7 @@ const AttendanceRecords = () => {
                   onClick={() => pagination.goToPage(pagination.page - 1)}
                   disabled={!pagination.paginationState.hasPrev}
                   aria-label="Previous page"
-                  className="text-xs md:text-xs px-1.5 md:px-2 py-0.5 md:py-0.5 whitespace-nowrap bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out shadow-md"
+                  className="text-xs md:text-xs px-1.5 md:px-2 py-0.5 md:py-0.5 whitespace-nowrap bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out shadow-md"
                 >
                   Prev
                 </Button>
@@ -371,7 +371,7 @@ const AttendanceRecords = () => {
                           onClick={() => pagination.goToPage(p)}
                           aria-current={p === current ? 'page' : undefined}
                           aria-label={`Page ${p}`}
-                          className={`px-1.5 md:px-2 py-0.5 md:py-0.5 text-xs md:text-xs lg:text-sm ${p === current ? 'bg-[#a259ff] text-white border-[#a259ff]' : 'bg-white text-gray-700 border border-gray-200'} rounded-md`}
+                          className={`px-1.5 md:px-2 py-0.5 md:py-0.5 text-xs md:text-xs lg:text-sm ${p === current ? 'bg-primary text-white border-primary' : 'bg-white text-gray-700 border border-gray-200'} rounded-md`}
                         >
                           {p}
                         </Button>
@@ -386,7 +386,7 @@ const AttendanceRecords = () => {
                   onClick={() => pagination.goToPage(pagination.page + 1)}
                   disabled={!pagination.paginationState.hasNext}
                   aria-label="Next page"
-                  className="text-xs md:text-xs px-1.5 md:px-2 py-0.5 md:py-0.5 whitespace-nowrap bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out shadow-md"
+                  className="text-xs md:text-xs px-1.5 md:px-2 py-0.5 md:py-0.5 whitespace-nowrap bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out shadow-md"
                 >
                   Next
                 </Button>
@@ -396,7 +396,7 @@ const AttendanceRecords = () => {
                   onClick={() => pagination.goToPage(pagination.paginationState.totalPages)}
                   disabled={pagination.page === pagination.paginationState.totalPages}
                   aria-label="Last page"
-                  className="text-xs md:text-xs px-1.5 md:px-2 py-0.5 md:py-0.5 whitespace-nowrap bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out shadow-md"
+                  className="text-xs md:text-xs px-1.5 md:px-2 py-0.5 md:py-0.5 whitespace-nowrap bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out shadow-md"
                 >
                   Last
                 </Button>

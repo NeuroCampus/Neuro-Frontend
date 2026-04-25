@@ -222,7 +222,7 @@ const GenerateStatistics: React.FC = () => {
             variant="outline"
             size="sm"
             onClick={handleExportPDF}
-            className="flex items-center bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out shadow-md"
+            className="flex items-center bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out shadow-md"
           >
             <FileTextIcon className="mr-2 h-4 w-4" />
             Export PDF
@@ -270,7 +270,7 @@ const GenerateStatistics: React.FC = () => {
                 variant="outline"
                 onClick={() => setPage(prev => Math.max(1, prev - 1))}
                 disabled={page <= 1}
-                className="text-xs px-2 sm:px-3 h-8 sm:h-9 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                className="text-xs px-2 sm:px-3 h-8 sm:h-9 bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white"
               >
                 Prev
               </Button>
@@ -334,7 +334,7 @@ const GenerateStatistics: React.FC = () => {
                 variant="outline"
                 onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={page >= totalPages}
-                className="text-xs px-2 sm:px-3 h-8 sm:h-9 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                className="text-xs px-2 sm:px-3 h-8 sm:h-9 bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white"
               >
                 Next
               </Button>

@@ -141,7 +141,7 @@ const Timetable = ({ role }: TimetableProps) => {
         <div className="flex space-x-2">
           <Button 
             onClick={exportPDF} 
-            className="hidden md:flex items-center mr-3 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out shadow-md"
+            className="hidden md:flex items-center mr-3 bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out shadow-md"
           >
             <FaDownload />
             <span className="ml-2">Export PDF</span>

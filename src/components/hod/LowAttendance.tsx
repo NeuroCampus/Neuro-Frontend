@@ -184,7 +184,7 @@ const VirtualizedSectionTable = React.memo(({
                   className={`px-4 py-1 text-sm flex items-center gap-1 rounded-md shadow-sm border transition-all duration-200 ease-in-out transform hover:scale-105
                     ${notifiedStudents?.[student.student_id]
                       ? "bg-green-700 border-green-600 text-white cursor-default"
-                      : "bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                      : "bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white"
                     }`}
                   disabled={
                     notifyingStudents?.[student.student_id] ||
@@ -605,7 +605,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
             <Button
               onClick={exportPDF}
               disabled={state.loading || state.students.length === 0}
-              className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-sm transition-all duration-200 w-full sm:w-auto"
+              className="text-white bg-primary border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white shadow-sm transition-all duration-200 w-full sm:w-auto"
             >
               <FileDown className="w-4 h-4 mr-2" />
               Export PDF

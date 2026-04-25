@@ -510,7 +510,7 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
                         fetchLeaves(selectedMonth, pageNum);
                       }}
                       disabled={loading}
-                      className={`w-8 h-8 p-0 ${currentPage === pageNum ? 'bg-[#a259ff] hover:bg-[#a259ff]/90 text-white' : ''}`}
+                      className={`w-8 h-8 p-0 ${currentPage === pageNum ? 'bg-primary hover:bg-primary/90 text-white' : ''}`}
                     >
                       {pageNum}
                     </Button>

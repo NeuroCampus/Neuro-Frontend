@@ -240,7 +240,7 @@ const Revaluation = () => {
       disabled={applied || loading}
       onClick={() => handleApply(subjectMarkId, subjectName)}
       variant={applied ? 'outline' : 'default'}
-      className={`text-xs sm:text-sm h-auto px-2 py-1 ${applied ? '' : 'bg-[#a259ff] hover:bg-[#8a4dde] text-white'}`}
+      className={`text-xs sm:text-sm h-auto px-2 py-1 ${applied ? '' : 'bg-primary hover:bg-primary/90 text-white'}`}
     >
       {applied ? 'Applied' : 'Apply'}
     </Button>
@@ -296,7 +296,7 @@ const Revaluation = () => {
                 <Button
                   onClick={loadStudents}
                   disabled={loading}
-                  className="w-full px-3 py-2 text-xs sm:text-sm h-auto bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+                  className="w-full px-3 py-2 text-xs sm:text-sm h-auto bg-primary hover:bg-primary/90 text-white"
                 >
                   {loading ? 'Searching...' : 'Search'}
                 </Button>
@@ -445,7 +445,7 @@ const Revaluation = () => {
                     setLoading(false);
                   }}
                   disabled={loading}
-                  className="text-xs sm:text-sm h-auto px-3 py-2 bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+                  className="text-xs sm:text-sm h-auto px-3 py-2 bg-primary hover:bg-primary/90 text-white"
                 >
                   {loading ? 'Processing...' : 'Pay & Apply'}
                 </Button>
@@ -468,7 +468,7 @@ const Revaluation = () => {
             <Button variant="outline" onClick={() => setConfirmModal({ open: false })} className="text-xs sm:text-sm h-auto px-3 py-1">
               Cancel
             </Button>
-            <Button onClick={() => confirmApply(confirmModal.subject_mark_id)} className="text-xs sm:text-sm h-auto px-3 py-1 bg-[#a259ff] hover:bg-[#8a4dde] text-white">
+            <Button onClick={() => confirmApply(confirmModal.subject_mark_id)} className="text-xs sm:text-sm h-auto px-3 py-1 bg-primary hover:bg-primary/90 text-white">
               Confirm
             </Button>
           </DialogFooter>
@@ -483,7 +483,7 @@ const Revaluation = () => {
           </DialogHeader>
           <p className="text-xs sm:text-sm">{messageModal.message}</p>
           <DialogFooter>
-            <Button onClick={() => setMessageModal({ open: false })} className="text-xs sm:text-sm h-auto px-3 py-1 bg-[#a259ff] hover:bg-[#8a4dde] text-white">
+            <Button onClick={() => setMessageModal({ open: false })} className="text-xs sm:text-sm h-auto px-3 py-1 bg-primary hover:bg-primary/90 text-white">
               OK
             </Button>
           </DialogFooter>
@@ -510,7 +510,7 @@ const Revaluation = () => {
             <p className="text-xs sm:text-sm">No details available</p>
           )}
           <DialogFooter>
-            <Button onClick={() => setViewModal({ open: false })} className="text-xs sm:text-sm h-auto px-3 py-1 bg-[#a259ff] hover:bg-[#8a4dde] text-white">
+            <Button onClick={() => setViewModal({ open: false })} className="text-xs sm:text-sm h-auto px-3 py-1 bg-primary hover:bg-primary/90 text-white">
               Close
             </Button>
           </DialogFooter>

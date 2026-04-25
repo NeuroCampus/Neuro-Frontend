@@ -196,7 +196,7 @@ const FeeComponents: React.FC = () => {
       confirmButtonText: 'Delete',
       cancelButtonText: 'Cancel',
       confirmButtonColor: '#ef4444',
-      cancelButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+      cancelButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
       background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
       color: currentTheme === 'dark' ? '#ffffff' : '#000000',
     });
@@ -224,7 +224,7 @@ const FeeComponents: React.FC = () => {
         text: 'Fee component deleted successfully.',
         icon: 'success',
         confirmButtonText: 'OK',
-        confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+        confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
         background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
         color: currentTheme === 'dark' ? '#ffffff' : '#000000',
       });
@@ -235,7 +235,7 @@ const FeeComponents: React.FC = () => {
         text: err instanceof Error ? err.message : 'Failed to delete component',
         icon: 'error',
         confirmButtonText: 'OK',
-        confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+        confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
         background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
         color: currentTheme === 'dark' ? '#ffffff' : '#000000',
       });
@@ -274,7 +274,7 @@ const FeeComponents: React.FC = () => {
                 resetForm();
                 setIsCreateDialogOpen(true);
               }}
-              className="bg-[#a259ff] hover:bg-[#8a4dde] text-white max-[480px]:w-full max-[480px]:min-h-11"
+              className="bg-primary hover:bg-primary/90 text-white max-[480px]:w-full max-[480px]:min-h-11"
             >
               <Plus className="h-4 w-4 mr-2" />
               Create Component
@@ -329,7 +329,7 @@ const FeeComponents: React.FC = () => {
                 </Button>
                 <Button 
                   onClick={editingComponent ? handleUpdateComponent : handleCreateComponent}
-                  className="bg-[#a259ff] hover:bg-[#8a4dde] text-white max-[480px]:min-h-10 max-[480px]:w-full"
+                  className="bg-primary hover:bg-primary/90 text-white max-[480px]:min-h-10 max-[480px]:w-full"
                 >
                   <Save className="h-4 w-4 mr-2" />
                   {editingComponent ? 'Update' : 'Create'}
@@ -473,7 +473,7 @@ const FeeComponents: React.FC = () => {
           <div className="mt-4 flex items-center justify-between max-[480px]:flex-col max-[480px]:items-stretch max-[480px]:gap-3">
             <div className="text-sm text-gray-600 max-[480px]:text-center">Page {componentsPage} of {componentsTotalPages}</div>
             <div className="flex items-center space-x-2 max-[480px]:justify-center">
-              <Button size="sm" className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] max-[480px]:h-11 max-[480px]:flex-1" onClick={() => {
+              <Button size="sm" className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 max-[480px]:h-11 max-[480px]:flex-1" onClick={() => {
                 if (componentsPage > 1) {
                   const next = componentsPage - 1;
                   setComponentsPage(next);
@@ -483,7 +483,7 @@ const FeeComponents: React.FC = () => {
               <span className={`min-w-8 text-center text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
                 {componentsPage}
               </span>
-              <Button size="sm" className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] max-[480px]:h-11 max-[480px]:flex-1" onClick={() => {
+              <Button size="sm" className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 max-[480px]:h-11 max-[480px]:flex-1" onClick={() => {
                 if (componentsPage < componentsTotalPages) {
                   const next = componentsPage + 1;
                   setComponentsPage(next);

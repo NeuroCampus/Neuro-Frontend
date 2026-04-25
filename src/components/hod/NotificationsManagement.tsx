@@ -312,7 +312,7 @@ const NotificationsManagement = () => {
           )}
 
           <Button
-            className={`w-full bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}
+            className={`w-full bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 ${theme === 'dark' ? 'shadow-lg shadow-primary/20' : 'shadow-md'}`}
             onClick={handleSendNotification}
             disabled={loading}
           >

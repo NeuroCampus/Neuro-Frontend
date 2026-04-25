@@ -343,7 +343,7 @@ const DeanAttendanceFilters = () => {
                 handleFilter();
                 setIsDateModalOpen(false);
               }}
-              className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+              className="bg-primary hover:bg-primary/90 text-white"
             >
               Apply
             </Button>

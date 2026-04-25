@@ -360,14 +360,14 @@ const StudentEnrollment = () => {
               <Button
                 onClick={() => loadStudents(1, searchTerm)}
                 disabled={!selectedSubjectId || isLoading || !branchId}
-                className="w-full sm:w-auto px-6 bg-[#a259ff] hover:bg-[#9147e0] text-white shadow-md transition-all active:scale-95"
+                className="w-full sm:w-auto px-6 bg-primary hover:bg-[#9147e0] text-white shadow-md transition-all active:scale-95"
               >
                 {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
               </Button>
               <Button 
                 onClick={save} 
                 disabled={saving || students.length === 0}
-                className="w-full sm:w-auto px-6 bg-[#a259ff] hover:bg-[#9147e0] text-white shadow-md transition-all active:scale-95"
+                className="w-full sm:w-auto px-6 bg-primary hover:bg-[#9147e0] text-white shadow-md transition-all active:scale-95"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Enrollment"}
               </Button>

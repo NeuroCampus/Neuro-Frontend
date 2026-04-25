@@ -570,7 +570,7 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
               Clear
             </Button>
             <Button 
-              className="w-full sm:w-auto text-white bg-[#a259ff] hover:bg-[#8a4dde] border-[#a259ff] text-sm"
+              className="w-full sm:w-auto text-white bg-primary hover:bg-primary/90 border-primary text-sm"
               onClick={() => setShowFilter(false)}
             >
               Apply

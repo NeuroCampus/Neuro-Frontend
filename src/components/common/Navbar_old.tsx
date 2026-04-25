@@ -45,7 +45,7 @@ const Navbar = ({ role, user, onNotificationClick }: NavbarProps) => {
       >
         <div className="flex items-center gap-3">
           <motion.div
-            className="w-8 h-8 bg-gradient-to-r from-[#a259ff] to-[#7c3aed] rounded-lg flex items-center justify-center"
+            className="w-8 h-8 bg-gradient-to-r from-[hsl(var(--primary))] to-[#7c3aed] rounded-lg flex items-center justify-center"
             whileHover={{ scale: 1.1, rotate: 5 }}
             transition={{ duration: 0.2 }}
           >
@@ -84,7 +84,7 @@ const Navbar = ({ role, user, onNotificationClick }: NavbarProps) => {
 
         {/* Theme toggle */}
         <motion.button
-          className="text-gray-300 hover:text-[#a259ff] transition-colors duration-200 p-2 rounded-lg hover:bg-gray-800/50"
+          className="text-gray-300 hover:text-primary transition-colors duration-200 p-2 rounded-lg hover:bg-gray-800/50"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -98,9 +98,9 @@ const Navbar = ({ role, user, onNotificationClick }: NavbarProps) => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
         >
-          <FiBell size={20} className="text-gray-300 hover:text-[#a259ff] transition-colors duration-200" />
+          <FiBell size={20} className="text-gray-300 hover:text-primary transition-colors duration-200" />
           <motion.span 
-            className="absolute -top-1 -right-1 text-xs bg-[#a259ff] text-white px-1.5 py-0.5 rounded-full"
+            className="absolute -top-1 -right-1 text-xs bg-primary text-white px-1.5 py-0.5 rounded-full"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.3, delay: 0.5 }}
@@ -118,7 +118,7 @@ const Navbar = ({ role, user, onNotificationClick }: NavbarProps) => {
           transition={{ duration: 0.3, delay: 0.4 }}
         >
           <motion.div 
-            className="w-10 h-10 rounded-full bg-gradient-to-r from-[#a259ff] to-[#7c3aed] flex items-center justify-center font-semibold text-sm text-white shadow-lg"
+            className="w-10 h-10 rounded-full bg-gradient-to-r from-[hsl(var(--primary))] to-[#7c3aed] flex items-center justify-center font-semibold text-sm text-white shadow-lg"
             whileHover={{ scale: 1.1 }}
             transition={{ duration: 0.2 }}
           >

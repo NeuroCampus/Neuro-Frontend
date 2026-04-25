@@ -588,16 +588,16 @@ const TakeAttendance = () => {
                 <TabsTrigger
                   value="manual"
                   className={`inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm ${theme === 'dark'
-                    ? 'data-[state=active]:bg-[#a259ff] data-[state=active]:text-white data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground'
-                    : 'data-[state=active]:bg-[#a259ff] data-[state=active]:text-white data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
+                    ? 'data-[state=active]:bg-primary data-[state=active]:text-white data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground'
+                    : 'data-[state=active]:bg-primary data-[state=active]:text-white data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
                 >
                   Manual Entry
                 </TabsTrigger>
                 <TabsTrigger
                   value="ai"
                   className={`inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 data-[state=active]:shadow-sm ${theme === 'dark'
-                    ? 'data-[state=active]:bg-[#a259ff] data-[state=active]:text-white data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground'
-                    : 'data-[state=active]:bg-[#a259ff] data-[state=active]:text-white data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
+                    ? 'data-[state=active]:bg-primary data-[state=active]:text-white data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground'
+                    : 'data-[state=active]:bg-primary data-[state=active]:text-white data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
                 >
                   AI Processing
                 </TabsTrigger>
@@ -723,7 +723,7 @@ const TakeAttendance = () => {
                         <Button
                           onClick={handleSubmit}
                           disabled={submitting}
-                          className="w-full sm:w-auto flex items-center justify-center gap-2 text-sm sm:text-base font-medium px-4 py-2 rounded-md transition bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-md"
+                          className="w-full sm:w-auto flex items-center justify-center gap-2 text-sm sm:text-base font-medium px-4 py-2 rounded-md transition bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white shadow-md"
                         >
                           {submitting ? (
                             <>
@@ -782,7 +782,7 @@ const TakeAttendance = () => {
                           <Button
                             onClick={handleAIProcess}
                             disabled={processingAI || !aiPhoto}
-                            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white"
                           >
                             {processingAI ? (
                               <>

@@ -1728,25 +1728,25 @@ const UploadMarks = () => {
           <TabsList className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-gray-100 border border-gray-300 text-gray-900'}>
             <TabsTrigger 
               value="manual" 
-              className={`data-[state=active]:bg-[#a259ff] data-[state=active]:text-white ${theme === 'dark' ? 'data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground' : 'data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
+              className={`data-[state=active]:bg-primary data-[state=active]:text-white ${theme === 'dark' ? 'data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground' : 'data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
             >
               Marks Entry
             </TabsTrigger>
             <TabsTrigger 
               value="questionFormat" 
-              className={`data-[state=active]:bg-[#a259ff] data-[state=active]:text-white ${theme === 'dark' ? 'data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground' : 'data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
+              className={`data-[state=active]:bg-primary data-[state=active]:text-white ${theme === 'dark' ? 'data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground' : 'data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
             >
               Question Format
             </TabsTrigger>
             <TabsTrigger 
               value="questionPaper" 
-              className={`data-[state=active]:bg-[#a259ff] data-[state=active]:text-white ${theme === 'dark' ? 'data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground' : 'data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
+              className={`data-[state=active]:bg-primary data-[state=active]:text-white ${theme === 'dark' ? 'data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground' : 'data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
             >
               Question Paper
             </TabsTrigger>
             <TabsTrigger 
               value="bulkUpload" 
-              className={`data-[state=active]:bg-[#a259ff] data-[state=active]:text-white ${theme === 'dark' ? 'data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground' : 'data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
+              className={`data-[state=active]:bg-primary data-[state=active]:text-white ${theme === 'dark' ? 'data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground' : 'data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:text-gray-900'}`}
             >
               Bulk Upload
             </TabsTrigger>
@@ -1808,7 +1808,7 @@ const UploadMarks = () => {
                           <td colSpan={questions.length * 3 + 5} className="p-0">
                             <div className="w-full h-20 flex items-center justify-center">
                               <div className="flex items-center gap-3">
-                                <div className="w-4 h-4 border-2 border-[#a259ff] border-t-transparent rounded-full animate-spin"></div>
+                                <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
                                 <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Loading students...</span>
                               </div>
                             </div>
@@ -1923,7 +1923,7 @@ const UploadMarks = () => {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="border-[#a259ff] text-[#a259ff] hover:bg-[#a259ff] hover:text-white"
+                                  className="border-primary text-primary hover:bg-primary hover:text-white"
                                   onClick={() => {
                                     setActionModes(prev => ({
                                       ...prev,
@@ -1937,7 +1937,7 @@ const UploadMarks = () => {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="border-[#a259ff] text-[#a259ff] hover:bg-[#a259ff] hover:text-white"
+                                  className="border-primary text-primary hover:bg-primary hover:text-white"
                                   onClick={() => {
                                     // Save logic would go here
                                     setActionModes(prev => ({
@@ -1952,7 +1952,7 @@ const UploadMarks = () => {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="border-[#a259ff] text-[#a259ff] hover:bg-[#a259ff] hover:text-white"
+                                  className="border-primary text-primary hover:bg-primary hover:text-white"
                                   onClick={() => {
                                     setActionModes(prev => ({
                                       ...prev,
@@ -1979,7 +1979,7 @@ const UploadMarks = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out"
+                      className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out"
                       onClick={handlePrevPage}
                       disabled={pagination ? !pagination.has_previous : currentPage === 1}
                     >
@@ -1988,7 +1988,7 @@ const UploadMarks = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out"
+                      className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out"
                       onClick={handleNextPage}
                       disabled={pagination ? !pagination.has_next : currentPage === totalPages}
                     >
@@ -2007,7 +2007,7 @@ const UploadMarks = () => {
                 </p>
                 <Button 
                   onClick={() => setTabValue("questionFormat")}
-                  className="mt-4 bg-[#a259ff] text-white hover:bg-[#8a4dde]"
+                  className="mt-4 bg-primary text-white hover:bg-primary/90"
                 >
                   Go to Question Format
                 </Button>
@@ -2095,7 +2095,7 @@ const UploadMarks = () => {
                     </Button>
                     <Button 
                       onClick={saveQuestionFormat}
-                      className="bg-[#a259ff] text-white hover:bg-[#8a4dde]"
+                      className="bg-primary text-white hover:bg-primary/90"
                     >
                       Save Format
                     </Button>
@@ -2120,7 +2120,7 @@ const UploadMarks = () => {
                     <h3 className="text-lg font-semibold">Question Paper Format</h3>
                     <Button 
                       onClick={downloadQuestionPaperPDF}
-                      className="bg-[#a259ff] text-white hover:bg-[#8a4dde]"
+                      className="bg-primary text-white hover:bg-primary/90"
                     >
                       Download PDF
                     </Button>
@@ -2170,7 +2170,7 @@ const UploadMarks = () => {
                       </Button>
                       <Button 
                         onClick={() => setTabValue("manual")}
-                        className="bg-[#a259ff] text-white hover:bg-[#8a4dde]"
+                        className="bg-primary text-white hover:bg-primary/90"
                       >
                         Proceed to Marks Entry
                       </Button>
@@ -2188,7 +2188,7 @@ const UploadMarks = () => {
                 {areAllDropdownsSelected() ? (
                   <Button 
                     onClick={() => setTabValue("questionFormat")}
-                    className="mt-4 bg-[#a259ff] text-white hover:bg-[#8a4dde]"
+                    className="mt-4 bg-primary text-white hover:bg-primary/90"
                   >
                     Go to Question Format
                   </Button>
@@ -2281,7 +2281,7 @@ const UploadMarks = () => {
                       <Button
                         onClick={handleProcessBulkUpload}
                         disabled={!bulkUploadFile}
-                        className="w-full sm:w-auto bg-[#a259ff] text-white hover:bg-[#8a4dde] font-medium py-2 sm:py-2.5 px-4 sm:px-6 transition-all duration-200"
+                        className="w-full sm:w-auto bg-primary text-white hover:bg-primary/90 font-medium py-2 sm:py-2.5 px-4 sm:px-6 transition-all duration-200"
                       >
                         Process Upload
                       </Button>
@@ -2347,7 +2347,7 @@ const UploadMarks = () => {
         </Tabs>
         <div className="flex justify-end mt-4">
           <Button 
-            className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out shadow-md"
+            className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out shadow-md"
             onClick={handleSubmit} 
             disabled={savingMarks}
           >

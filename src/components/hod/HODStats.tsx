@@ -475,7 +475,7 @@ const handleApprove = async (index: number) => {
         <div className="flex justify-between items-center mb-4">
           <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Requests</h3>
           <button
-            className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+            className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white"
             onClick={() => setPage("leaves")}
           >
             View All

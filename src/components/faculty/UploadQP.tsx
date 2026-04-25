@@ -231,7 +231,7 @@ const UploadQP = () => {
       text: 'Are you sure you want to delete this question?',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#a259ff',
+      confirmButtonColor: 'hsl(var(--primary))',
       cancelButtonColor: '#6c757d',
       confirmButtonText: 'Yes, Delete',
       cancelButtonText: 'Cancel',
@@ -318,7 +318,7 @@ const UploadQP = () => {
       text: 'This will save the question paper format. Do you want to continue?',
       icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: '#a259ff',
+      confirmButtonColor: 'hsl(var(--primary))',
       cancelButtonColor: '#6c757d',
       confirmButtonText: 'Yes, Save',
       cancelButtonText: 'Cancel',
@@ -559,14 +559,14 @@ const UploadQP = () => {
                       <Button 
                         onClick={addQuestion} 
                         disabled={!selected.branch_id || !selected.subject_id || !selected.testType}
-                        className="bg-[#a259ff] text-white hover:bg-[#8a4dde] transition-all duration-200"
+                        className="bg-primary text-white hover:bg-primary/90 transition-all duration-200"
                       >
                         <Plus size={14} className="mr-2" /> Add Question
                       </Button>
                       <Button 
                         onClick={saveFormat} 
                         disabled={!selected.branch_id || !selected.subject_id || !selected.testType}
-                        className="bg-[#a259ff] text-white hover:bg-[#8a4dde] transition-all duration-200"
+                        className="bg-primary text-white hover:bg-primary/90 transition-all duration-200"
                       >
                         Save Format
                       </Button>
@@ -582,7 +582,7 @@ const UploadQP = () => {
                   <div className="flex gap-2 flex-shrink-0">
                     <Button 
                       onClick={downloadPDF} 
-                      className="bg-[#a259ff] text-white hover:bg-[#8a4dde] transition-all duration-200"
+                      className="bg-primary text-white hover:bg-primary/90 transition-all duration-200"
                     >
                       Download PDF
                     </Button>

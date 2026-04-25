@@ -80,8 +80,8 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
                 : 'Please log in with a student account to access Study Mode.'}
             </p>
             {isPlanRestriction && (
-              <div className="mt-6 p-4 rounded-lg bg-[#a259ff]/10 border border-[#a259ff]/20">
-                <p className="text-sm font-medium text-[#a259ff]">
+              <div className="mt-6 p-4 rounded-lg bg-primary/10 border border-primary/20">
+                <p className="text-sm font-medium text-primary">
                   Current Plan: <span className="uppercase font-bold">{orgPlan}</span>
                 </p>
               </div>
@@ -408,7 +408,7 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
           <Button
             onClick={handleUpload}
             disabled={!file || loading}
-            className={`w-full mt-3 font-semibold py-2 rounded-md transition disabled:opacity-50 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] ${theme === 'dark' ? 'shadow-md shadow-[#a259ff]/20' : 'shadow-sm'}`}
+            className={`w-full mt-3 font-semibold py-2 rounded-md transition disabled:opacity-50 bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 ${theme === 'dark' ? 'shadow-md shadow-primary/20' : 'shadow-sm'}`}
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Start Revision'}
           </Button>

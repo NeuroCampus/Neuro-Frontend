@@ -190,7 +190,7 @@ const Reports: React.FC = () => {
           <Button 
             variant="outline" 
             onClick={() => downloadReport('pdf')}
-            className="bg-[#a259ff] hover:bg-[#8a4dde] text-white border-[#a259ff]"
+            className="bg-primary hover:bg-primary/90 text-white border-primary"
           >
             <Download className="h-4 w-4 mr-2" />
             PDF
@@ -198,7 +198,7 @@ const Reports: React.FC = () => {
           <Button 
             variant="outline" 
             onClick={() => downloadReport('excel')}
-            className="bg-[#a259ff] hover:bg-[#8a4dde] text-white border-[#a259ff]"
+            className="bg-primary hover:bg-primary/90 text-white border-primary"
           >
             <Download className="h-4 w-4 mr-2" />
             Excel

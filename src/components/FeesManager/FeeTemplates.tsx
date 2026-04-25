@@ -335,7 +335,7 @@ const FeeTemplates: React.FC = () => {
       confirmButtonText: 'Delete',
       cancelButtonText: 'Cancel',
       confirmButtonColor: '#ef4444',
-      cancelButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+      cancelButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
       background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
       color: currentTheme === 'dark' ? '#ffffff' : '#000000',
     });
@@ -362,7 +362,7 @@ const FeeTemplates: React.FC = () => {
         text: 'Fee template deleted successfully.',
         icon: 'success',
         confirmButtonText: 'OK',
-        confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+        confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
         background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
         color: currentTheme === 'dark' ? '#ffffff' : '#000000',
       });
@@ -373,7 +373,7 @@ const FeeTemplates: React.FC = () => {
         text: err instanceof Error ? err.message : 'Failed to delete template',
         icon: 'error',
         confirmButtonText: 'OK',
-        confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+        confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
         background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
         color: currentTheme === 'dark' ? '#ffffff' : '#000000',
       });
@@ -437,7 +437,7 @@ const FeeTemplates: React.FC = () => {
                   }
                   setIsCreateDialogOpen(true);
                 }}
-                className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+                className="bg-primary hover:bg-primary/90 text-white"
               >
               <Plus className="h-4 w-4 mr-2" />
               Create Template
@@ -580,7 +580,7 @@ const FeeTemplates: React.FC = () => {
                 </Button>
                 <Button 
                   onClick={editingTemplate ? handleUpdateTemplate : handleCreateTemplate}
-                  className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+                  className="bg-primary hover:bg-primary/90 text-white"
                 >
                   <Save className="h-4 w-4 mr-2" />
                   {editingTemplate ? 'Update' : 'Create'} Template
@@ -676,7 +676,7 @@ const FeeTemplates: React.FC = () => {
         <div className="p-4 border-t flex items-center justify-between">
           <div className="text-sm text-gray-600">Page {templatesPage} of {templatesTotalPages}</div>
           <div className="flex items-center space-x-2">
-            <Button size="sm" className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={() => {
+            <Button size="sm" className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90" onClick={() => {
               if (templatesPage > 1) {
                 const next = templatesPage - 1;
                 setTemplatesPage(next);
@@ -686,7 +686,7 @@ const FeeTemplates: React.FC = () => {
             <span className={`min-w-8 text-center text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
               {templatesPage}
             </span>
-            <Button size="sm" className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={() => {
+            <Button size="sm" className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90" onClick={() => {
               if (templatesPage < templatesTotalPages) {
                 const next = templatesPage + 1;
                 setTemplatesPage(next);

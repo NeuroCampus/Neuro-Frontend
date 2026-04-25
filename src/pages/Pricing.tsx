@@ -34,7 +34,7 @@ const Pricing = () => {
         "Promotion Tools",
         "AI General Assistance"
       ],
-      icon: <Shield className="text-[#a259ff]" size={24} />,
+      icon: <Shield className="text-primary" size={24} />,
       color: "purple",
       link: "/neurocampus/pro",
       popular: true
@@ -63,7 +63,7 @@ const Pricing = () => {
         <motion.h2 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-[#a259ff] font-semibold tracking-wide uppercase mb-3"
+          className="text-primary font-semibold tracking-wide uppercase mb-3"
         >
           Pricing Plans
         </motion.h2>
@@ -93,11 +93,11 @@ const Pricing = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 * (index + 1) }}
             className={`relative p-8 rounded-3xl border ${
-              plan.popular ? 'border-[#a259ff] shadow-xl shadow-[#a259ff]/10' : 'border-gray-100 shadow-lg shadow-gray-100'
+              plan.popular ? 'border-primary shadow-xl shadow-primary/10' : 'border-gray-100 shadow-lg shadow-gray-100'
             } bg-white flex flex-col`}
           >
             {plan.popular && (
-              <div className="absolute top-0 right-8 -translate-y-1/2 bg-[#a259ff] text-white px-4 py-1 rounded-full text-sm font-medium">
+              <div className="absolute top-0 right-8 -translate-y-1/2 bg-primary text-white px-4 py-1 rounded-full text-sm font-medium">
                 Most Popular
               </div>
             )}
@@ -129,7 +129,7 @@ const Pricing = () => {
               onClick={() => navigate(plan.link)}
               className={`w-full h-12 rounded-xl text-lg font-semibold transition-all ${
                 plan.popular 
-                  ? 'bg-[#a259ff] hover:bg-[#a259ff]/90 text-white' 
+                  ? 'bg-primary hover:bg-primary/90 text-white' 
                   : 'bg-gray-900 hover:bg-gray-800 text-white'
               }`}
             >
@@ -162,7 +162,7 @@ const Pricing = () => {
               <tr className="border-b border-gray-100">
                 <th className="py-6 px-4 text-sm font-semibold text-gray-400 uppercase tracking-wider w-1/2">Features & Capabilities</th>
                 <th className="py-6 px-4 text-center text-[#3b82f6] font-bold text-xs uppercase tracking-widest">Basic</th>
-                <th className="py-6 px-4 text-center text-[#a259ff] font-bold text-xs uppercase tracking-widest">Pro</th>
+                <th className="py-6 px-4 text-center text-primary font-bold text-xs uppercase tracking-widest">Pro</th>
                 <th className="py-6 px-4 text-center text-[#ff59f8] font-bold text-xs uppercase tracking-widest">Advance</th>
               </tr>
             </thead>
@@ -186,7 +186,7 @@ const Pricing = () => {
                     {row.basic ? <Check className="mx-auto text-blue-500" size={20} /> : <span className="text-gray-200">—</span>}
                   </td>
                   <td className="py-5 px-4 text-center">
-                    {row.pro ? <Check className="mx-auto text-[#a259ff]" size={20} /> : <span className="text-gray-200">—</span>}
+                    {row.pro ? <Check className="mx-auto text-primary" size={20} /> : <span className="text-gray-200">—</span>}
                   </td>
                   <td className="py-5 px-4 text-center">
                     {row.advance ? <Check className="mx-auto text-[#ff59f8]" size={20} /> : <span className="text-gray-200">—</span>}

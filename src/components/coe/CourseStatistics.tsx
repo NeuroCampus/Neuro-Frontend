@@ -255,7 +255,7 @@ const CourseStatistics = () => {
               <Button
                 size="sm"
                 onClick={handleExport}
-                className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]"
+                className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90"
               >
                 <Download className="mr-2 h-4 w-4" />
                 {exporting ? 'Exporting...' : 'Export PDF'}
@@ -306,7 +306,7 @@ const CourseStatistics = () => {
                 size="sm"
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] disabled:opacity-50"
+                className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 disabled:opacity-50"
               >
                 Previous
               </Button>
@@ -329,7 +329,7 @@ const CourseStatistics = () => {
                 size="sm"
                 onClick={() => setPage(p => p + 1)}
                 disabled={!pagination?.next}
-                className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] disabled:opacity-50"
+                className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 disabled:opacity-50"
               >
                 Next
               </Button>

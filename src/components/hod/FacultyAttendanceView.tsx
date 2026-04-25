@@ -312,7 +312,7 @@ const FacultyAttendanceView: React.FC = () => {
           onClick={() => setActiveTab('today')}
           className={`flex-1 py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
             activeTab === 'today'
-              ? 'bg-[#a259ff] text-white'
+              ? 'bg-primary text-white'
               : theme === 'dark'
                 ? 'text-muted-foreground hover:text-foreground'
                 : 'text-gray-600 hover:text-gray-900'
@@ -324,7 +324,7 @@ const FacultyAttendanceView: React.FC = () => {
           onClick={() => setActiveTab('records')}
           className={`flex-1 py-2 px-2 sm:px-4 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
             activeTab === 'records'
-              ? 'bg-[#a259ff] text-white'
+              ? 'bg-primary text-white'
               : theme === 'dark'
                 ? 'text-muted-foreground hover:text-foreground'
                 : 'text-gray-600 hover:text-gray-900'
@@ -483,8 +483,8 @@ const FacultyAttendanceView: React.FC = () => {
               disabled={!todayPagination.has_prev || isLoading}
               className={`px-3 py-2 text-sm font-medium border rounded-md transition-all duration-200 whitespace-nowrap ${
                 todayPagination.has_prev && !isLoading
-                  ? 'bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] shadow-sm'
-                  : 'bg-[#a259ff] opacity-50 text-white border-[#a259ff] cursor-not-allowed'
+                  ? 'bg-primary text-white border-primary hover:bg-primary/90 shadow-sm'
+                  : 'bg-primary opacity-50 text-white border-primary cursor-not-allowed'
               }`}
             >
               Previous
@@ -502,8 +502,8 @@ const FacultyAttendanceView: React.FC = () => {
                     disabled={isLoading}
                     className={`px-3 py-1 text-sm font-medium transition-colors disabled:opacity-50 ${
                       pageNum === todayPagination.page
-                        ? 'bg-white text-[#a259ff] font-semibold'
-                        : `bg-white text-gray-600 hover:text-[#a259ff] ${theme === 'dark' ? 'hover:bg-accent' : ''}`
+                        ? 'bg-white text-primary font-semibold'
+                        : `bg-white text-gray-600 hover:text-primary ${theme === 'dark' ? 'hover:bg-accent' : ''}`
                     }`}
                   >
                     {pageNum}
@@ -517,8 +517,8 @@ const FacultyAttendanceView: React.FC = () => {
               disabled={!todayPagination.has_next || isLoading}
               className={`px-3 py-2 text-sm font-medium border rounded-md transition-all duration-200 whitespace-nowrap ${
                 todayPagination.has_next && !isLoading
-                  ? 'bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] shadow-sm'
-                  : 'bg-[#a259ff] opacity-50 text-white border-[#a259ff] cursor-not-allowed'
+                  ? 'bg-primary text-white border-primary hover:bg-primary/90 shadow-sm'
+                  : 'bg-primary opacity-50 text-white border-primary cursor-not-allowed'
               }`}
             >
               Next
@@ -618,8 +618,8 @@ const FacultyAttendanceView: React.FC = () => {
                               }}
                               className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                                 theme === 'dark' 
-                                  ? 'bg-[#a259ff]/20 text-[#a259ff] hover:bg-[#a259ff]/30' 
-                                  : 'bg-[#a259ff] text-white hover:bg-[#8a4dde]'
+                                  ? 'bg-primary/20 text-primary hover:bg-primary/30' 
+                                  : 'bg-primary text-white hover:bg-primary/90'
                               }`}
                             >
                               {selectedFaculty?.id === summary.id ? (isDetailLoading ? 'Loading...' : 'Close') : 'View'}
@@ -655,7 +655,7 @@ const FacultyAttendanceView: React.FC = () => {
 
                                 {isDetailLoading ? (
                                   <div className="flex flex-col items-center justify-center py-10 gap-3">
-                                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#a259ff]"></div>
+                                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
                                     <p className="text-xs font-semibold animate-pulse">Syncing data...</p>
                                   </div>
                                 ) : (

@@ -343,37 +343,25 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       transition={{ duration: 0.3 }}
     >
       {/* Header */}
-      <motion.div 
+      <motion.div
         className={`h-20 px-4 flex items-center border-b ${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-200'}`}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
       >
-        <div className="flex items-center gap-4">
-          <div className="relative group">
-            <div
-              className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-md overflow-hidden border-2 border-[#a259ff] transition-all duration-300 group-hover:shadow-[#a259ff]/20 ${theme === 'dark' ? 'bg-white' : 'bg-white'}`}
-            >
-              <img
-                src="/logo.jpeg"
-                alt="Logo"
-                className="w-full h-full object-contain p-1"
-              />
-            </div>
-            {/* Plan Badge merged with logo bottom */}
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-10">
-              <span className={`text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md shadow-sm border border-white/20 ${
-                orgPlan.toLowerCase() === 'advance' 
-                  ? 'bg-gradient-to-r from-[#a259ff] to-[#ff59f8] text-white' 
-                  : orgPlan.toLowerCase() === 'pro'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-600 text-white'
-              }`}>
-                {orgPlan}
-              </span>
-            </div>
+        <div className="flex items-center gap-3">
+          <div
+            className={`w-12 h-12 rounded-lg flex items-center justify-center shadow-lg overflow-hidden border-2 border-primary ${theme === 'dark' ? 'bg-white' : ''}`}
+            style={{ borderRadius: 8 }}
+          >
+            <img
+              src="/logo.jpeg"
+              alt="Logo"
+              className="w-full h-full object-contain"
+              style={{ borderRadius: '0.5rem' }}
+            />
           </div>
-          
+
           <AnimatePresence>
             {!collapsed && (
               <motion.div
@@ -383,12 +371,18 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
                 transition={{ duration: 0.2 }}
                 className="flex flex-col min-w-0"
               >
-                <h1 className={`font-black text-lg tracking-tighter leading-none mb-0.5 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  NEURO<span className="text-[#a259ff]">CAMPUS</span>
-                </h1>
-                <p className={`text-xs font-bold tracking-widest uppercase opacity-80 ${theme === 'dark' ? 'text-blue-100' : 'text-gray-500'}`}>
-                  {role.replace('_', ' ')}
-                </p>
+                <h1 className={`font-bold text-lg whitespace-nowrap ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>NEURO CAMPUS</h1>
+                <p className={`text-xs capitalize ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{role} Portal</p>
+                <div className="mt-1">
+                  <span className={`text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full ${orgPlan.toLowerCase() === 'advance'
+                      ? 'bg-gradient-to-r from-primary to-[#ff59f8] text-white'
+                      : orgPlan.toLowerCase() === 'pro'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-500 text-white'
+                    }`}>
+                    {orgPlan}
+                  </span>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -415,10 +409,10 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
                 <Button
                   variant={activePage === item.page ? "default" : "ghost"}
                   className={`w-full justify-start gap-3 h-10 transition-all duration-200 ${activePage === item.page
-                      ? "bg-[#a259ff] hover:bg-[#a259ff]/90 text-white shadow-lg shadow-[#a259ff]/20"
-                      : theme === 'dark'
-                        ? "text-muted-foreground hover:text-foreground hover:bg-accent"
-                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                    ? "bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20"
+                    : theme === 'dark'
+                      ? "text-muted-foreground hover:text-foreground hover:bg-accent"
+                      : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                     } ${collapsed ? "px-2" : "px-3"}`}
                   onClick={() => handlePageChange(item.page)}
                 >
@@ -457,8 +451,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
         <Button
           variant="ghost"
           className={`w-full justify-start gap-3 h-10 transition-all duration-200 ${collapsed ? "px-2" : "px-3"} ${theme === 'dark'
-              ? "text-red-400 hover:text-red-100 hover:bg-red-900/50"
-              : "text-red-700 hover:text-red-800 hover:bg-red-200"
+            ? "text-red-400 hover:text-red-100 hover:bg-red-900/50"
+            : "text-red-700 hover:text-red-800 hover:bg-red-200"
             }`}
           onClick={handleLogoutClick}
         >
@@ -514,8 +508,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
           <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
             <DialogContent
               className={`w-[90%] sm:w-full max-w-md mx-auto rounded-lg ${theme === 'dark'
-                  ? "bg-background border-border text-foreground"
-                  : "bg-white border-gray-200 text-gray-900"
+                ? "bg-background border-border text-foreground"
+                : "bg-white border-gray-200 text-gray-900"
                 }`}
             >
               <DialogHeader className="space-y-2">
@@ -533,8 +527,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
                   variant="outline"
                   onClick={() => setShowLogoutDialog(false)}
                   className={`w-full sm:w-auto ${theme === 'dark'
-                      ? "border-border text-foreground hover:bg-accent"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                    ? "border-border text-foreground hover:bg-accent"
+                    : "border-gray-300 text-gray-700 hover:bg-gray-100"
                     }`}
                 >
                   Cancel
@@ -542,8 +536,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
                 <Button
                   onClick={confirmLogout}
                   className={`w-full sm:w-auto ${theme === 'dark'
-                      ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                      : "bg-red-600 hover:bg-red-700 text-white"
+                    ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                    : "bg-red-600 hover:bg-red-700 text-white"
                     }`}
                 >
                   Logout
@@ -577,8 +571,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
         <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
           <DialogContent
             className={`w-[90%] sm:w-full max-w-md mx-auto rounded-lg ${theme === 'dark'
-                ? "bg-background border-border text-foreground"
-                : "bg-white border-gray-200 text-gray-900"
+              ? "bg-background border-border text-foreground"
+              : "bg-white border-gray-200 text-gray-900"
               }`}
           >
             <DialogHeader className="space-y-2">
@@ -596,8 +590,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
                 variant="outline"
                 onClick={() => setShowLogoutDialog(false)}
                 className={`w-full sm:w-auto ${theme === 'dark'
-                    ? "border-border text-foreground hover:bg-accent"
-                    : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                  ? "border-border text-foreground hover:bg-accent"
+                  : "border-gray-300 text-gray-700 hover:bg-gray-100"
                   }`}
               >
                 Cancel
@@ -605,8 +599,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
               <Button
                 onClick={confirmLogout}
                 className={`w-full sm:w-auto ${theme === 'dark'
-                    ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-                    : "bg-red-600 hover:bg-red-700 text-white"
+                  ? "bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                  : "bg-red-600 hover:bg-red-700 text-white"
                   }`}
               >
                 Logout

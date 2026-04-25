@@ -184,7 +184,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email address"
-                  className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
+                  className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:ring-[hsl(var(--primary))]/20 rounded-lg h-12 transition-all duration-300"
                   onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
                 />
               </div>
@@ -213,7 +213,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="Enter 6-digit code"
-                  className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 text-center text-lg tracking-widest transition-all duration-300"
+                  className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:ring-[hsl(var(--primary))]/20 rounded-lg h-12 text-center text-lg tracking-widest transition-all duration-300"
                   onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
                   maxLength={6}
                 />
@@ -246,7 +246,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter new password"
-                  className="pl-10 pr-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
+                  className="pl-10 pr-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:ring-[hsl(var(--primary))]/20 rounded-lg h-12 transition-all duration-300"
                 />
                 <button
                   type="button"
@@ -270,7 +270,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm new password"
-                  className="pl-10 pr-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
+                  className="pl-10 pr-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:ring-[hsl(var(--primary))]/20 rounded-lg h-12 transition-all duration-300"
                   onKeyPress={(e) => e.key === 'Enter' && handleSubmit()}
                 />
                 <button
@@ -375,8 +375,8 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
                         className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
                           isActive
                             ? isCurrent
-                              ? 'bg-[#a259ff] border-[#a259ff] text-white'
-                              : 'bg-[#a259ff]/20 border-[#a259ff] text-[#a259ff]'
+                              ? 'bg-primary border-primary text-white'
+                              : 'bg-primary/20 border-primary text-primary'
                             : 'bg-gray-100 border-gray-200 text-gray-500'
                         }`}
                         animate={{
@@ -398,7 +398,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
                     {index < steps.length - 1 && (
                       <div
                         className={`flex-1 h-0.5 mx-4 transition-all duration-500 ${
-                          index < currentStepIndex ? 'bg-[#a259ff]' : 'bg-gray-200'
+                          index < currentStepIndex ? 'bg-primary' : 'bg-gray-200'
                         }`}
                       />
                     )}
@@ -456,7 +456,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
               <Button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="w-full bg-[#a259ff] hover:bg-[#a259ff]/90 text-white font-medium rounded-lg h-12 shadow-lg shadow-[#a259ff]/20 hover:shadow-[#a259ff]/40 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full bg-primary hover:bg-primary/90 text-white font-medium rounded-lg h-12 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 {loading ? (
                   <div className="flex items-center justify-center gap-2">
@@ -476,7 +476,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
               <button
                 type="button"
                 onClick={() => setPage("login")}
-                className="text-[#a259ff] hover:text-[#a259ff]/80 text-sm transition-colors duration-300 flex items-center justify-center gap-1"
+                className="text-primary hover:text-primary/80 text-sm transition-colors duration-300 flex items-center justify-center gap-1"
               >
                 <ArrowLeft className="h-3 w-3" />
                 Back to Login
@@ -488,7 +488,7 @@ const ForgotPasswordFlow = ({ setPage }: ForgotPasswordFlowProps) => {
 
       {/* Right Section - Illustration */}
       <motion.div 
-        className="flex-1 bg-gradient-to-br from-[#a259ff] to-[#7c3aed] flex items-center justify-center p-8 relative overflow-hidden"
+        className="flex-1 bg-gradient-to-br from-[hsl(var(--primary))] to-[#7c3aed] flex items-center justify-center p-8 relative overflow-hidden"
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}

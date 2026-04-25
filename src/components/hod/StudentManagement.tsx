@@ -1086,7 +1086,7 @@ const StudentManagement = () => {
                 !state.manualForm.batch ||
                 (getSemesterNumber(state.manualForm.semester) <= 2 && !state.manualForm.cycle)
               }
-              className="flex items-center justify-center gap-1 text-sm font-medium px-4 py-1.5 rounded-md transition disabled:opacity-50 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+              className="flex items-center justify-center gap-1 text-sm font-medium px-4 py-1.5 rounded-md transition disabled:opacity-50 bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white"
             >
               + Add Student
             </Button>
@@ -1113,7 +1113,7 @@ const StudentManagement = () => {
             <div className="flex gap-2">
               <Button
                 onClick={() => updateState({ addStudentModal: true })}
-                className="flex-shrink-0 flex items-center gap-1 text-xs md:text-sm font-semibold px-3 py-1.5 rounded-md transition bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white whitespace-nowrap"
+                className="flex-shrink-0 flex items-center gap-1 text-xs md:text-sm font-semibold px-3 py-1.5 rounded-md transition bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white whitespace-nowrap"
                 disabled={state.isLoading || !state.branchId}
               >
                 <Upload className="w-4 h-4" />
@@ -1276,7 +1276,7 @@ const StudentManagement = () => {
             <Button
               onClick={() => handlePageChange(state.currentPage - 1)}
               disabled={state.currentPage === 1}
-              className="w-20 md:w-24 flex items-center justify-center gap-1 text-xs md:text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+              className="w-20 md:w-24 flex items-center justify-center gap-1 text-xs md:text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white"
             >
               Previous
             </Button>
@@ -1286,7 +1286,7 @@ const StudentManagement = () => {
             <Button
               onClick={() => handlePageChange(state.currentPage + 1)}
               disabled={state.currentPage === totalFilteredPages}
-              className="w-20 md:w-24 flex items-center justify-center gap-1 text-xs md:text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+              className="w-20 md:w-24 flex items-center justify-center gap-1 text-xs md:text-sm font-medium py-1.5 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white"
             >
               Next
             </Button>
@@ -1534,7 +1534,7 @@ const StudentManagement = () => {
             <Button 
               onClick={handleEnrollStudents}
               disabled={!state.selectedFile || state.isLoading}
-              className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition disabled:opacity-50 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#9147e0] hover:border-[#9147e0] hover:text-white"
+              className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition disabled:opacity-50 bg-primary text-white border-primary hover:bg-[#9147e0] hover:border-[#9147e0] hover:text-white"
             >
               {state.isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enroll Students"}
             </Button>
@@ -1668,7 +1668,7 @@ const StudentManagement = () => {
             >
               Cancel
             </Button>
-            <Button onClick={handleEditSave} className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition disabled:opacity-50 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#9147e0] hover:border-[#9147e0]">
+            <Button onClick={handleEditSave} className="flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded-md transition disabled:opacity-50 bg-primary text-white border-primary hover:bg-[#9147e0] hover:border-[#9147e0]">
               Save
             </Button>
           </DialogFooter>

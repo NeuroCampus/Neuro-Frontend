@@ -108,7 +108,7 @@ const ForgotPassword = ({ setPage }: ForgotPasswordProps) => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email address"
-                    className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300"
+                    className="pl-10 bg-gray-800/50 border-gray-700 text-white placeholder:text-gray-500 focus:border-primary focus:ring-[hsl(var(--primary))]/20 rounded-lg h-12 transition-all duration-300"
                     onKeyPress={(e) => e.key === 'Enter' && handleForgotPassword()}
                     required
                   />
@@ -119,7 +119,7 @@ const ForgotPassword = ({ setPage }: ForgotPasswordProps) => {
             <Button
               onClick={handleForgotPassword}
               disabled={loading}
-              className="w-full bg-[#a259ff] hover:bg-[#a259ff]/90 text-white font-medium rounded-lg h-12 shadow-lg shadow-[#a259ff]/20 hover:shadow-[#a259ff]/40 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full bg-primary hover:bg-primary/90 text-white font-medium rounded-lg h-12 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
@@ -138,7 +138,7 @@ const ForgotPassword = ({ setPage }: ForgotPasswordProps) => {
               <button
                 type="button"
                 onClick={() => setPage("login")}
-                className="text-[#a259ff] hover:text-[#a259ff]/80 text-sm transition-colors duration-300 flex items-center justify-center gap-1"
+                className="text-primary hover:text-primary/80 text-sm transition-colors duration-300 flex items-center justify-center gap-1"
               >
                 <ArrowLeft className="h-3 w-3" />
                 Back to Login
@@ -150,7 +150,7 @@ const ForgotPassword = ({ setPage }: ForgotPasswordProps) => {
 
       {/* Right Section - Welcome & Illustration */}
       <motion.div 
-        className="flex-1 bg-gradient-to-br from-[#a259ff] to-[#7c3aed] flex items-center justify-center p-8 relative overflow-hidden"
+        className="flex-1 bg-gradient-to-br from-[hsl(var(--primary))] to-[#7c3aed] flex items-center justify-center p-8 relative overflow-hidden"
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}

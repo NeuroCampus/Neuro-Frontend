@@ -249,13 +249,13 @@ const StudentProfile: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap ml-auto">
-            <Button size="sm" onClick={() => { if (editing) handleSave(); else setEditing(true); }} className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde]">
+            <Button size="sm" onClick={() => { if (editing) handleSave(); else setEditing(true); }} className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-primary text-white border-primary hover:bg-primary/90">
               {editing ? (updateProfileMutation.isPending ? 'Saving...' : 'Save') : 'Edit Profile'}
             </Button>
 
             <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
               <DialogTrigger asChild>
-                <Button className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde]">Change Password</Button>
+                <Button className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-primary text-white border-primary hover:bg-primary/90">Change Password</Button>
               </DialogTrigger>
               <DialogContent ref={passwordDialogContentRef} className="w-[calc(100vw-1.5rem)] sm:w-full max-w-[420px] rounded-xl sm:rounded-2xl">
                 <DialogHeader>
@@ -285,7 +285,7 @@ const StudentProfile: React.FC = () => {
                   </div>
                   <div className="flex justify-end space-x-2">
                     <Button variant="outline" onClick={() => setShowPasswordDialog(false)}>Cancel</Button>
-                    <Button className="font-medium bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={handleChangePassword}>Change Password</Button>
+                    <Button className="font-medium bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90" onClick={handleChangePassword}>Change Password</Button>
                   </div>
                 </div>
               </DialogContent>
@@ -300,7 +300,7 @@ const StudentProfile: React.FC = () => {
                 <Avatar className="w-20 h-20 sm:w-24 sm:h-24">
                   {form.profile_picture ? <AvatarImage src={form.profile_picture} alt={`${form.first_name} ${form.last_name}`} /> : <AvatarFallback>{(form.first_name?.[0] || '') + (form.last_name?.[0] || '')}</AvatarFallback>}
                 </Avatar>
-                <label htmlFor="profile-picture-upload" className="absolute bottom-0 right-0 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white p-2 rounded-full cursor-pointer transition-colors shadow-lg"><Camera className="h-4 w-4" /></label>
+                <label htmlFor="profile-picture-upload" className="absolute bottom-0 right-0 bg-primary hover:bg-primary/90 text-white p-2 rounded-full cursor-pointer transition-colors shadow-lg"><Camera className="h-4 w-4" /></label>
                 <input id="profile-picture-upload" type="file" accept="image/*" onChange={handleProfilePictureSelect} className="hidden" />
               </div>
 
@@ -335,10 +335,10 @@ const StudentProfile: React.FC = () => {
 
             <div className="col-span-1 sm:col-span-2 lg:col-span-3 w-full flex flex-col h-full">
               <div className="flex items-center gap-1 sm:gap-2 mb-3 sm:mb-4 md:mb-5 lg:mb-6 border-b pb-2 sm:pb-3 overflow-x-auto flex-shrink-0">
-                <button onClick={() => setActiveTab('profile')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'profile' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Profile</button>
-                <button onClick={() => setActiveTab('personal')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'personal' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Personal</button>
-                <button onClick={() => setActiveTab('academic')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'academic' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Academic</button>
-                <button onClick={() => setActiveTab('face')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'face' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Face Recognition</button>
+                <button onClick={() => setActiveTab('profile')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'profile' ? 'bg-primary text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Profile</button>
+                <button onClick={() => setActiveTab('personal')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'personal' ? 'bg-primary text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Personal</button>
+                <button onClick={() => setActiveTab('academic')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'academic' ? 'bg-primary text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Academic</button>
+                <button onClick={() => setActiveTab('face')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'face' ? 'bg-primary text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Face Recognition</button>
               </div>
 
               <div className={`p-3 sm:p-4 md:p-5 lg:p-6 rounded-lg border flex-1 ${theme === 'dark' ? 'bg-card border-input' : 'bg-gray-50 border-gray-200'}`}>
@@ -510,7 +510,7 @@ const StudentProfile: React.FC = () => {
                       )}
 
                       <div className="flex justify-center">
-                        <Button onClick={trainFace} disabled={faceImages.length < 3 || faceTrainingStatus === 'training'} className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white">{faceTrainingStatus === 'training' ? 'Training...' : 'Train Face AI'}</Button>
+                        <Button onClick={trainFace} disabled={faceImages.length < 3 || faceTrainingStatus === 'training'} className="bg-primary hover:bg-primary/90 text-white">{faceTrainingStatus === 'training' ? 'Training...' : 'Train Face AI'}</Button>
                       </div>
                     </div>
                   </div>
@@ -521,7 +521,7 @@ const StudentProfile: React.FC = () => {
           </div>
 
           <div className="flex justify-end">
-            <Button className="mt-4 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white" onClick={handleSave} disabled={updateProfileMutation.isPending}>{updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}</Button>
+            <Button className="mt-4 bg-primary hover:bg-primary/90 text-white" onClick={handleSave} disabled={updateProfileMutation.isPending}>{updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}</Button>
           </div>
 
         </CardContent>

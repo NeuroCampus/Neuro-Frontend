@@ -349,7 +349,7 @@ const SubjectManagement = () => {
                   currentSubject: null,
                 });
               }}
-              className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+              className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
               disabled={state.loading || !state.branchId}
             >
               + Add Course
@@ -440,7 +440,7 @@ const SubjectManagement = () => {
             <Button
               onClick={() => updateState({ currentPage: Math.max(state.currentPage - 1, 1) })}
               disabled={state.currentPage === 1 || state.loading}
-              className="flex items-center justify-center gap-1 text-sm font-medium py-1.5 px-4 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+              className="flex items-center justify-center gap-1 text-sm font-medium py-1.5 px-4 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white"
             >
               Previous
             </Button>
@@ -450,7 +450,7 @@ const SubjectManagement = () => {
             <Button
               onClick={() => updateState({ currentPage: Math.min(state.currentPage + 1, totalPages) })}
               disabled={state.currentPage === totalPages || state.loading || totalPages === 0}
-              className="flex items-center justify-center gap-1 text-sm font-medium py-1.5 px-4 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+              className="flex items-center justify-center gap-1 text-sm font-medium py-1.5 px-4 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white"
             >
               Next
             </Button>
@@ -675,7 +675,7 @@ const SubjectManagement = () => {
                     updateState({ loading: false });
                   }
                 }}
-                className="bg-[#a259ff] text-white border border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+                className="bg-primary text-white border border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
                 disabled={state.loading}
               >
                 {state.showModal === "add" ? "Add Course" : "Update Course"}

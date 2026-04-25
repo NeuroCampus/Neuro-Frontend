@@ -28,7 +28,7 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
     <div className="min-h-screen flex font-sans">
        {/* Right Section - Welcome & Illustration */}
       <motion.div 
-        className="flex-1 bg-gradient-to-br from-[#a259ff] to-[#7c3aed] flex items-center justify-center p-8 relative overflow-hidden"
+        className="flex-1 bg-gradient-to-br from-[hsl(var(--primary))] to-[#7c3aed] flex items-center justify-center p-8 relative overflow-hidden"
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}
@@ -152,7 +152,7 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
                   onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
                   placeholder="Enter your username"
                   disabled={loading}
-                  className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300 disabled:opacity-50"
+                  className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:ring-[hsl(var(--primary))]/20 rounded-lg h-12 transition-all duration-300 disabled:opacity-50"
                 />
               </div>
             </div>
@@ -171,7 +171,7 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
                   onKeyPress={(e) => e.key === "Enter" && handleLogin()}
                   placeholder="Enter your password"
                   disabled={loading}
-                  className="pl-10 pr-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all duration-300 disabled:opacity-50"
+                  className="pl-10 pr-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:ring-[hsl(var(--primary))]/20 rounded-lg h-12 transition-all duration-300 disabled:opacity-50"
                 />
 
                 {/* Eye Icon Toggle */}
@@ -195,7 +195,7 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
                 type="button"
                 onClick={handleForgotPassword}
                 disabled={loading}
-                className="text-[#a259ff] hover:text-[#a259ff]/80 text-sm transition-colors duration-300 disabled:opacity-50"
+                className="text-primary hover:text-primary/80 text-sm transition-colors duration-300 disabled:opacity-50"
               >
                 Forgot Password?
               </button>
@@ -204,7 +204,7 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
             <Button
               onClick={handleLogin}
               disabled={loading}
-              className="w-full bg-[#a259ff] hover:bg-[#a259ff]/90 text-white font-medium rounded-lg h-12 shadow-lg shadow-[#a259ff]/20 hover:shadow-[#a259ff]/40 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70"
+              className="w-full bg-primary hover:bg-primary/90 text-white font-medium rounded-lg h-12 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70"
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
@@ -218,7 +218,7 @@ const Login = ({ setRole, setPage, setUser }: LoginProps) => {
 
             <div className="text-center text-gray-400 text-sm">
               {" "}
-              <span className="text-[#a259ff] hover:text-[#a259ff]/80 cursor-pointer transition-colors duration-300">
+              <span className="text-primary hover:text-primary/80 cursor-pointer transition-colors duration-300">
                 
               </span>
             </div>

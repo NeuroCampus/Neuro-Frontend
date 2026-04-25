@@ -368,7 +368,7 @@ export default function PublishResults() {
           </Select>
         </div>
         <div className="flex items-end">
-          <Button className="w-full sm:w-auto bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={handleCreate}>
+          <Button className="w-full sm:w-auto bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90" onClick={handleCreate}>
             Create Upload Batch
           </Button>
         </div>
@@ -385,7 +385,7 @@ export default function PublishResults() {
             {upload.is_published ? (
               <Button onClick={() => setUnpublishModalOpen(true)} variant="secondary">Unpublish</Button>
             ) : (
-              <Button className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={() => setPublishModalOpen(true)}>Publish Results</Button>
+              <Button className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90" onClick={() => setPublishModalOpen(true)}>Publish Results</Button>
             )}
           </div>
           </CardContent>
@@ -599,7 +599,7 @@ export default function PublishResults() {
 
           <div className="mt-4 flex flex-wrap gap-2">
             <div className="flex items-center gap-3 mr-auto">
-              <button className="px-3 py-1 rounded border text-sm bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] disabled:opacity-50" disabled={studentsPage <= 1} onClick={() => {
+              <button className="px-3 py-1 rounded border text-sm bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 disabled:opacity-50" disabled={studentsPage <= 1} onClick={() => {
                 if (!upload) return;
                 navigateToPage(Math.max(1, studentsPage - 1));
               }}>Previous</button>
@@ -622,7 +622,7 @@ export default function PublishResults() {
                       {pages.map(p => (
                         <button
                           key={p}
-                          className={`px-2 py-1 rounded border text-xs ${p === studentsPage ? (theme === 'dark' ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-[#a259ff] text-[#a259ff]') : (theme === 'dark' ? 'bg-slate-800 border-slate-700 text-muted-foreground' : 'bg-white border-gray-300 text-gray-700')}`}
+                          className={`px-2 py-1 rounded border text-xs ${p === studentsPage ? (theme === 'dark' ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-primary text-primary') : (theme === 'dark' ? 'bg-slate-800 border-slate-700 text-muted-foreground' : 'bg-white border-gray-300 text-gray-700')}`}
                           onClick={() => upload && navigateToPage(p)}
                         >{p}</button>
                     ))}
@@ -630,13 +630,13 @@ export default function PublishResults() {
                 );
               })()}
 
-              <button className="px-3 py-1 rounded border text-sm bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] disabled:opacity-50" disabled={!studentsPagination?.next} onClick={() => {
+              <button className="px-3 py-1 rounded border text-sm bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 disabled:opacity-50" disabled={!studentsPagination?.next} onClick={() => {
                 if (!upload) return;
                 navigateToPage(studentsPage + 1);
               }}>Next</button>
             </div>
 
-            <Button className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={handleSave} disabled={saving || upload?.is_published}>{saving ? 'Saving...' : 'Save Marks'}</Button>
+            <Button className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90" onClick={handleSave} disabled={saving || upload?.is_published}>{saving ? 'Saving...' : 'Save Marks'}</Button>
             {upload?.is_published && (
               <Button onClick={() => setUnpublishModalOpen(true)} variant="destructive">Unpublish</Button>
             )}

@@ -317,7 +317,7 @@ const Announcements = ({ role, proctorStudents, proctorStudentsLoading }: Announ
 
 
             <Button
-              className="w-full flex items-center justify-center bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out shadow-md"
+              className="w-full flex items-center justify-center bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out shadow-md"
               onClick={handleSubmit}
               disabled={sending}
             >

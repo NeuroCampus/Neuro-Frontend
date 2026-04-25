@@ -289,7 +289,7 @@ const StudentStatus = () => {
                   size="sm"
                   onClick={handleExport}
                   disabled={exporting || !(filters.batch && filters.exam_period && filters.branch && filters.semester)}
-                  className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] export-button text-xs sm:text-sm"
+                  className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 export-button text-xs sm:text-sm"
                 >
                   <Download className="mr-1 sm:mr-2 h-3 sm:h-4 w-3 sm:w-4" />
                   {exporting ? 'Exporting...' : 'Export'}
@@ -342,7 +342,7 @@ const StudentStatus = () => {
                   size="sm"
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] disabled:opacity-50"
+                  className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 disabled:opacity-50"
                 >
                   Previous
                 </Button>
@@ -365,7 +365,7 @@ const StudentStatus = () => {
                   size="sm"
                   onClick={() => setPage(p => p + 1)}
                   disabled={!pagination?.next}
-                  className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] disabled:opacity-50"
+                  className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 disabled:opacity-50"
                 >
                   Next
                 </Button>

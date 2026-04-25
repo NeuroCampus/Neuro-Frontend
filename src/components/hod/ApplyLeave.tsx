@@ -236,7 +236,7 @@ const ApplyLeave = () => {
           text: 'Your leave request has been successfully submitted.',
           icon: 'success',
           confirmButtonText: 'OK',
-          confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+          confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
           background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
           color: currentTheme === 'dark' ? '#ffffff' : '#000000',
         });
@@ -256,7 +256,7 @@ const ApplyLeave = () => {
           text: response.message || 'Failed to submit leave',
           icon: 'error',
           confirmButtonText: 'OK',
-          confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+          confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
           background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
           color: currentTheme === 'dark' ? '#ffffff' : '#000000',
         });
@@ -273,7 +273,7 @@ const ApplyLeave = () => {
         text: 'Network error occurred',
         icon: 'error',
         confirmButtonText: 'OK',
-        confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+        confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
         background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
         color: currentTheme === 'dark' ? '#ffffff' : '#000000',
       });
@@ -373,7 +373,7 @@ const ApplyLeave = () => {
           {/* Submit Button */}
           <Button 
             onClick={handleSubmit} 
-            className={theme === 'dark' ? 'w-full text-white bg-[#a259ff] hover:bg-[#9147e0] border-border' : 'w-full text-white bg-[#a259ff] hover:bg-[#9147e0] border-[#a259ff]'} 
+            className={theme === 'dark' ? 'w-full text-white bg-primary hover:bg-[#9147e0] border-border' : 'w-full text-white bg-primary hover:bg-[#9147e0] border-primary'} 
             disabled={loading || !branchId}
           >
             {loading ? "Submitting..." : "Submit Request"}

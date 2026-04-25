@@ -209,8 +209,8 @@ const ManageStudentLeave: React.FC<ManageStudentLeaveProps> = ({ proctorStudents
                       }}
                       className={`w-full text-left px-2.5 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors ${filterStatus === status
                           ? theme === 'dark'
-                            ? 'bg-[#a259ff] text-white'
-                            : 'bg-[#a259ff] text-white'
+                            ? 'bg-primary text-white'
+                            : 'bg-primary text-white'
                           : theme === 'dark'
                             ? 'hover:bg-accent text-foreground'
                             : 'hover:bg-gray-100 text-gray-900'
