@@ -109,6 +109,20 @@ export const fetchWithTokenRefresh = async (url: string, options: RequestInit = 
       }
     }
 
+    if (response.status === 403) {
+      // Check for trial expiration or account inactivity
+      const clone = response.clone();
+      try {
+        const result = await clone.json();
+        if (result.trial_expired) {
+          window.location.href = "/trial-expired";
+          return response;
+        }
+      } catch (e) {
+        // Not a JSON response or doesn't have the flag
+      }
+    }
+
     return response;
   } catch (error) {
     console.error("Fetch with token refresh error:", error);
