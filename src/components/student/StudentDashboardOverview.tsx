@@ -3,6 +3,8 @@ import {
   FaCheckCircle,
   FaExclamationTriangle,
   FaClock,
+  FaGraduationCap,
+  FaCalendarAlt,
 } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -88,7 +90,7 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentSession, setCurrentSession] = useState<any>(null);
   const [nextSession, setNextSession] = useState<any>(null);
-  const [viewportTrigger, setViewportTrigger] = useState(0); // Force re-render on viewport change
+  const [viewportTrigger, setViewportTrigger] = useState(0);
   const { theme } = useTheme();
 
   // Update current time every second
@@ -99,13 +101,11 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
     return () => clearInterval(interval);
   }, []);
 
-  // Helper function to parse time string to minutes
   const parseTimeToMinutes = useCallback((timeStr: string) => {
     const [hours, minutes] = timeStr.split(':').map(Number);
     return hours * 60 + minutes;
   }, []);
 
-  // Helper function to check if current time falls within a session
   const isCurrentSession = useCallback((startTime: string, endTime: string) => {
     const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
     const startMinutes = parseTimeToMinutes(startTime);
@@ -114,7 +114,6 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
     return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
   }, [currentTime, parseTimeToMinutes]);
 
-  // Helper function to get session status and time remaining
   const getSessionStatus = useCallback((session: any) => {
     if (!session || !session.start_time) return null;
     
@@ -127,7 +126,7 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
     if (timeDifference <= 5) {
       return {
         status: 'starting-soon',
-        message: `Starting in ${timeDifference} minute${timeDifference !== 1 ? 's' : ''}`,
+        message: `Starting in ${timeDifference} min`,
         color: theme === 'dark' ? 'text-orange-400' : 'text-orange-600'
       };
     }
@@ -135,8 +134,8 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
     if (timeDifference <= 15) {
       return {
         status: 'upcoming',
-        message: `Starting in ${timeDifference} minutes`,
-        color: theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'
+        message: `Starting in ${timeDifference} min`,
+        color: theme === 'dark' ? 'text-amber-400' : 'text-amber-600'
       };
     }
     
@@ -147,15 +146,11 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
     };
   }, [currentTime, parseTimeToMinutes, theme]);
 
-  // Update current and next sessions based on real-time
   useEffect(() => {
     if (dashboardData && dashboardData.current_next_session) {
-      // Mock timetable data - in real app, this should come from API
-      // For now, we'll use the backend session data to determine sessions
       const backendCurrentSession = dashboardData.current_next_session.current_session;
       const backendNextSession = dashboardData.current_next_session.next_session;
       
-      // If backend says there's a current session, verify it's actually current
       if (backendCurrentSession && backendCurrentSession.start_time && backendCurrentSession.end_time) {
         if (isCurrentSession(backendCurrentSession.start_time, backendCurrentSession.end_time)) {
           setCurrentSession(backendCurrentSession);
@@ -166,12 +161,10 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
         setCurrentSession(null);
       }
       
-      // Set next session from backend
       setNextSession(backendNextSession);
     }
   }, [dashboardData, currentTime, isCurrentSession]);
 
-  // Fetch dashboard data
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -179,7 +172,6 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
         const response = await getDashboardOverview();
         
         if (response.success && response.data) {
-          // Convert relative profile picture URL to absolute URL
           if (response.data.student_profile?.profile_picture && 
               response.data.student_profile.profile_picture.startsWith('/media/')) {
             response.data.student_profile.profile_picture = 
@@ -199,31 +191,19 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
       }
     };
 
-    // Initial fetch
     fetchDashboardData();
-
-    // Refresh data every 5 minutes to keep sessions updated
-    const dataRefreshInterval = setInterval(() => {
-      fetchDashboardData();
-    }, 5 * 60 * 1000); // 5 minutes
-
+    const dataRefreshInterval = setInterval(fetchDashboardData, 5 * 60 * 1000);
     return () => clearInterval(dataRefreshInterval);
   }, []);
 
-  // Force re-render on window resize to apply Tailwind breakpoints
   useEffect(() => {
     let debounceTimer: NodeJS.Timeout;
-    
     const handleResize = () => {
-      // Clear previous timer
       clearTimeout(debounceTimer);
-      
-      // Debounce to avoid excessive re-renders (250ms delay)
       debounceTimer = setTimeout(() => {
         setViewportTrigger(prev => prev + 1);
       }, 250);
     };
-
     window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
@@ -231,13 +211,9 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
     };
   }, []);
 
-  // Generate performance chart data (memoized)
   const generateChartData = useMemo(() => {
     if (!dashboardData?.performance_overview.subject_performance) {
-      return {
-        labels: [],
-        datasets: []
-      };
+      return { labels: [], datasets: [] };
     }
 
     const subjects = dashboardData.performance_overview.subject_performance;
@@ -248,17 +224,19 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
         {
           label: 'Attendance %',
           data: subjects.map(subject => subject.attendance_percentage),
-          backgroundColor: theme === 'dark' ? 'rgba(59, 130, 246, 0.7)' : 'rgba(37, 99, 235, 0.7)',
+          backgroundColor: theme === 'dark' ? 'rgba(59, 130, 246, 0.8)' : 'rgba(37, 99, 235, 0.8)',
           borderColor: theme === 'dark' ? 'rgba(59, 130, 246, 1)' : 'rgba(37, 99, 235, 1)',
-          borderWidth: 1,
+          borderWidth: 0,
+          borderRadius: 4,
           yAxisID: 'y',
         },
         {
           label: 'Average Marks',
           data: subjects.map(subject => subject.average_mark),
-          backgroundColor: theme === 'dark' ? 'rgba(16, 185, 129, 0.7)' : 'rgba(5, 150, 105, 0.7)',
+          backgroundColor: theme === 'dark' ? 'rgba(16, 185, 129, 0.8)' : 'rgba(5, 150, 105, 0.8)',
           borderColor: theme === 'dark' ? 'rgba(16, 185, 129, 1)' : 'rgba(5, 150, 105, 1)',
-          borderWidth: 1,
+          borderWidth: 0,
+          borderRadius: 4,
           yAxisID: 'y1',
         }
       ]
@@ -274,16 +252,24 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
     },
     plugins: {
       legend: {
+        position: 'top' as const,
         labels: {
+          usePointStyle: true,
+          pointStyle: 'circle',
+          padding: 20,
           color: theme === 'dark' ? "#9ca3af" : "#6b7280",
+          font: { size: 11 }
         },
       },
       tooltip: {
-        backgroundColor: theme === 'dark' ? "#1f1f21" : "#f9fafb",
-        titleColor: theme === 'dark' ? "#e5e7eb" : "#1f2937",
+        backgroundColor: theme === 'dark' ? "rgba(31, 31, 33, 0.95)" : "rgba(255, 255, 255, 0.95)",
+        titleColor: theme === 'dark' ? "#f3f4f6" : "#111827",
         bodyColor: theme === 'dark' ? "#d1d5db" : "#4b5563",
-        borderColor: theme === 'dark' ? "#27272a" : "#e5e7eb",
+        borderColor: theme === 'dark' ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
         borderWidth: 1,
+        padding: 12,
+        boxPadding: 6,
+        usePointStyle: true,
       },
     },
     scales: {
@@ -291,8 +277,9 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
         ticks: { 
           color: theme === 'dark' ? "#9ca3af" : "#6b7280",
           maxRotation: 45,
+          font: { size: 10 }
         },
-        grid: { color: theme === 'dark' ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.1)" },
+        grid: { display: false },
       },
       y: {
         type: 'linear' as const,
@@ -301,10 +288,14 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
         title: {
           display: true,
           text: 'Attendance (%)',
-          color: theme === 'dark' ? '#9ca3af' : '#6b7280'
+          color: theme === 'dark' ? '#9ca3af' : '#6b7280',
+          font: { size: 10 }
         },
-        ticks: { color: theme === 'dark' ? "#9ca3af" : "#6b7280" },
-        grid: { color: theme === 'dark' ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.1)" },
+        ticks: { 
+          color: theme === 'dark' ? "#9ca3af" : "#6b7280",
+          font: { size: 10 }
+        },
+        grid: { color: theme === 'dark' ? "rgba(255, 255, 255, 0.05)" : "rgba(0, 0, 0, 0.05)" },
       },
       y1: {
         type: 'linear' as const,
@@ -312,13 +303,15 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
         position: 'right' as const,
         title: {
           display: true,
-          text: 'Average Marks',
-          color: theme === 'dark' ? '#9ca3af' : '#6b7280'
+          text: 'Avg Marks',
+          color: theme === 'dark' ? '#9ca3af' : '#6b7280',
+          font: { size: 10 }
         },
-        grid: {
-          drawOnChartArea: false,
+        grid: { drawOnChartArea: false },
+        ticks: { 
+          color: theme === 'dark' ? "#9ca3af" : "#6b7280",
+          font: { size: 10 }
         },
-        ticks: { color: theme === 'dark' ? "#9ca3af" : "#6b7280" },
       },
     },
   }), [theme]);
@@ -326,8 +319,9 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
   if (isLoading) {
     return (
       <div className={`space-y-6 ${theme === 'dark' ? 'bg-background text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
-        <div className="flex justify-center items-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+        <div className="flex flex-col justify-center items-center min-h-[400px] gap-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary"></div>
+          <p className="text-sm animate-pulse text-muted-foreground">Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -335,215 +329,250 @@ const StudentDashboardOverview: React.FC<StudentDashboardOverviewProps> = ({ use
 
   if (error) {
     return (
-      <div className={`space-y-6 ${theme === 'dark' ? 'bg-background text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
-        <div className={`rounded-lg p-6 text-center ${theme === 'dark' ? 'bg-destructive/20 border border-destructive' : 'bg-red-100 border border-red-200'}`}>
-          <FaExclamationTriangle className={`w-12 h-12 mx-auto mb-4 ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`} />
-          <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-destructive' : 'text-red-700'}`}>Error Loading Dashboard</h3>
-          <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>{error}</p>
+      <div className={`p-4 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+        <div className={`rounded-xl p-8 text-center shadow-xl ${theme === 'dark' ? 'bg-destructive/10 border border-destructive/20' : 'bg-red-50 border border-red-100'}`}>
+          <div className="bg-destructive/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+            <FaExclamationTriangle className={`w-8 h-8 ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`} />
+          </div>
+          <h3 className={`text-xl font-bold mb-3 ${theme === 'dark' ? 'text-destructive-foreground' : 'text-red-700'}`}>System Interruption</h3>
+          <p className={`max-w-md mx-auto mb-6 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{error}</p>
           <Button 
             onClick={() => window.location.reload()} 
-            className={`mt-4 ${theme === 'dark' ? 'bg-destructive hover:bg-destructive/80 text-destructive-foreground' : 'bg-red-600 hover:bg-red-700 text-white'}`}
+            className="rounded-full px-8 shadow-lg hover:scale-105 transition-transform"
           >
-            Retry
+            Reconnect
           </Button>
         </div>
       </div>
     );
   }
 
-  if (!dashboardData) {
-    return (
-      <div className={`space-y-6 ${theme === 'dark' ? 'bg-background text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
-        <div className="text-center py-12">
-          <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>No dashboard data available</p>
-        </div>
-      </div>
-    );
-  }
-
+  if (!dashboardData) return null;
   return (
-    <div className={`w-full space-y-4 md:space-y-4 px-4 md:px-2 ${theme === 'dark' ? 'bg-background text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
-      {/* Welcome Header with Profile Picture */}
-      <section className={`border rounded-md p-4 md:p-4 shadow-sm ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
-        <div>
-          <h1 className={`text-lg md:text-lg font-bold ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
-            Welcome, {dashboardData.student_profile?.name || `${user?.first_name} ${user?.last_name || ''}`}!
-          </h1>
-          <p className={`text-xs md:text-xs break-words ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-            {dashboardData.student_profile?.usn || user?.username} | {dashboardData.student_profile?.branch || user?.branch || 'Branch'} | Semester: {dashboardData.student_profile?.semester || user?.semester || 'N/A'} | Section: {dashboardData.student_profile?.section || user?.section || 'N/A'}
-          </p>
-        </div>
-      </section>
-
+    <div className={`w-full space-y-5  ${theme === 'dark' ? 'bg-background text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
       {/* Top Cards Row */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-3">
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Today's Lectures Card */}
-        <div className={`border rounded-md p-3 md:p-3 flex items-center gap-3 md:gap-3 relative shadow-sm ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
-          <div className="absolute top-0 left-0 h-full w-1 bg-blue-600 rounded-l-md" />
-          <div className={`p-2 rounded-md flex-shrink-0 ${theme === 'dark' ? 'bg-blue-100 text-blue-600' : 'bg-blue-50 text-blue-700'}`}>
-            <FaBookOpen className="w-4 h-4" />
-          </div>
-          <div className="text-xs md:text-xs line-clamp-3">
-            <p className={theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}>Today's Lectures</p>
-            <p className="text-base md:text-lg font-semibold">{dashboardData.today_lectures.count}</p>
-            <p className={`text-[10px] md:text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-              {dashboardData.today_lectures.next_lecture 
-                ? `Next: ${dashboardData.today_lectures.next_lecture.subject} at ${dashboardData.today_lectures.next_lecture.start_time}`
-                : "No more lectures today"
-              }
-            </p>
-          </div>
-        </div>
+        <Card className={`group relative overflow-hidden transition-all duration-300 ${
+          theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-100'
+        } shadow-sm hover:shadow-md`}>
+          <CardContent className="p-5">
+            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform duration-500">
+              <FaBookOpen className="w-16 h-16 text-primary" />
+            </div>
+            <div className="flex items-start gap-4">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-inner ${
+                theme === 'dark' ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'
+              }`}>
+                <FaCalendarAlt className="w-6 h-6" />
+              </div>
+              <div className="flex-1 space-y-1">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Today's Schedule</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold">{dashboardData.today_lectures.count}</span>
+                  <span className="text-sm font-medium text-muted-foreground">Lectures</span>
+                </div>
+                <div className={`mt-2 flex items-center gap-2 text-xs p-2 rounded-lg ${
+                  theme === 'dark' ? 'bg-muted/50' : 'bg-gray-50'
+                }`}>
+                  <div className={`w-1.5 h-1.5 rounded-full ${dashboardData.today_lectures.next_lecture ? 'bg-blue-500 animate-pulse' : 'bg-gray-400'}`}></div>
+                  <p className="font-medium truncate max-w-[200px]">
+                    {dashboardData.today_lectures.next_lecture 
+                      ? `Next: ${dashboardData.today_lectures.next_lecture.subject}`
+                      : "No more lectures today"
+                    }
+                  </p>
+                  {dashboardData.today_lectures.next_lecture && (
+                    <span className="ml-auto opacity-70 font-bold">{dashboardData.today_lectures.next_lecture.start_time}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Attendance Status Card */}
-        <div className={`border rounded-md p-3 md:p-3 flex items-center gap-3 md:gap-3 relative shadow-sm ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
-          <div className={`absolute top-0 left-0 h-full w-1 rounded-l-md ${
-            dashboardData.attendance_status.percentage >= 75 ? 'bg-green-500' : 'bg-yellow-500'
-          }`} />
-          <div className={`p-2 rounded-md flex-shrink-0 ${
-            dashboardData.attendance_status.percentage >= 75 
-              ? (theme === 'dark' ? 'bg-green-100 text-green-600' : 'bg-green-50 text-green-700') 
-              : (theme === 'dark' ? 'bg-yellow-100 text-yellow-500' : 'bg-yellow-50 text-yellow-700')
-          }`}>
-            <FaCheckCircle className="w-4 h-4" />
-          </div>
-          <div className="text-xs md:text-xs line-clamp-3">
-            <p className={theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}>Attendance Status</p>
-            <p className="text-base font-semibold">{dashboardData.attendance_status.percentage}%</p>
-            <p className={`text-[10px] md:text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-              {dashboardData.attendance_status.warnings.length > 0
-                ? `Warning: Low in ${dashboardData.attendance_status.warnings[0].subject} (${dashboardData.attendance_status.warnings[0].percentage}%)`
-                : "All subjects above 75%"
-              }
-            </p>
-          </div>
-        </div>
+        <Card className={`group relative overflow-hidden transition-all duration-300 ${
+          theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-100'
+        } shadow-sm hover:shadow-md`}>
+          <CardContent className="p-5">
+            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform duration-500">
+              <FaCheckCircle className="w-16 h-16 text-green-500" />
+            </div>
+            <div className="flex items-start gap-4">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-inner ${
+                dashboardData.attendance_status.percentage >= 75 
+                  ? (theme === 'dark' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-emerald-50 text-emerald-600') 
+                  : (theme === 'dark' ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-600')
+              }`}>
+                <FaCheckCircle className="w-6 h-6" />
+              </div>
+              <div className="flex-1 space-y-1">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Attendance Rating</p>
+                <div className="flex items-baseline gap-2">
+                  <span className={`text-2xl font-bold ${
+                    dashboardData.attendance_status.percentage >= 75 ? 'text-emerald-500' : 'text-amber-500'
+                  }`}>{dashboardData.attendance_status.percentage}%</span>
+                  <span className="text-sm font-medium text-muted-foreground">Overall</span>
+                </div>
+                <div className={`mt-2 flex items-center gap-2 text-xs p-2 rounded-lg ${
+                  theme === 'dark' ? 'bg-muted/50' : 'bg-gray-50'
+                }`}>
+                  <p className="font-medium truncate">
+                    {dashboardData.attendance_status.warnings.length > 0
+                      ? `Action required: ${dashboardData.attendance_status.warnings[0].subject}`
+                      : "Excellent consistency across all units"
+                  }
+                  </p>
+                  {dashboardData.attendance_status.warnings.length > 0 && (
+                    <span className="ml-auto font-bold text-destructive">{dashboardData.attendance_status.warnings[0].percentage}%</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
       {/* Current & Next Session */}
-      <section className="w-full px-0 py-3 md:py-2">
-        <Card className={theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
-          <CardHeader className="p-3 md:p-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-2 sm:gap-0">
-              <CardTitle className={theme === 'dark' ? 'text-sm md:text-sm text-card-foreground' : 'text-sm md:text-sm text-gray-900'}>Current & Next Session</CardTitle>
-              <div className="flex items-center gap-2 text-xs md:text-xs">
-                <FaClock className="w-4 h-4" />
-                <span className={`flex items-center gap-2 px-3 py-1 rounded-full font-medium shadow-sm ${
-                  theme === 'dark' ? 'bg-muted text-muted-foreground' : 'bg-gray-100 text-gray-900'
-                }`}>
-                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                  Live: {currentTime.toLocaleTimeString('en-US', { hour12: false })}
+      <section className="w-full">
+        <Card className={`overflow-hidden border border-border shadow-sm ${
+          theme === 'dark' ? 'bg-card' : 'bg-white'
+        }`}>
+          <CardHeader className="p-5 border-b border-border/50">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-6 bg-primary rounded-full"></div>
+                <CardTitle className="text-lg font-bold">Active Timeline</CardTitle>
+              </div>
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold shadow-inner ${
+                theme === 'dark' ? 'bg-white/5 text-primary' : 'bg-primary/10 text-primary'
+              }`}>
+                <FaClock className="w-4 h-4 animate-pulse" />
+                <span className="text-sm">
+                  {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
                 </span>
               </div>
             </div>
           </CardHeader>
 
-          <CardContent className="w-full flex flex-col gap-3 md:gap-4 p-3 md:p-4">
-            {currentSession ? (
-              <>
-                {/* Current Session Card */}
-                <div className={`border-2 border-blue-500 rounded-md p-3 md:p-4 w-full shadow-md flex flex-col items-center sm:items-start gap-2 ${
-                  theme === 'dark' ? 'bg-blue-900/20' : 'bg-blue-50'
+          <CardContent className="p-5">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {currentSession ? (
+                <div className={`relative group p-5 rounded-2xl border transition-all duration-500 overflow-hidden ${
+                  theme === 'dark' 
+                    ? 'border-primary/40 bg-primary/10 hover:bg-primary/20' 
+                    : 'border-primary bg-primary/5 hover:bg-primary/10'
                 }`}>
-                  <h4 className={`font-semibold text-sm mb-2 line-clamp-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
-                    {currentSession.subject}
-                  </h4>
-                  <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                    Teacher: {currentSession.teacher}
-                  </p>
-                  <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                    Room: {currentSession.room}
-                  </p>
-                  <p className={`text-[10px] ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                    {currentSession.start_time} - {currentSession.end_time}
-                  </p>
-                  <p className={`text-xs mt-1 font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>Currently Running</p>
-                </div>
+                  <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/40 transition-colors"></div>
+                  
+                  <div className="relative flex justify-between items-start mb-4">
+                    <div>
+                      <span className="inline-block px-2 py-0.5 rounded-md bg-primary text-white text-[10px] font-bold uppercase tracking-widest mb-2 shadow-lg animate-pulse">
+                        Live Now
+                      </span>
+                      <h4 className="font-bold text-lg leading-tight group-hover:text-primary transition-colors">
+                        {currentSession.subject}
+                      </h4>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] font-bold uppercase opacity-50">Location</p>
+                      <p className="font-bold text-sm">{currentSession.room}</p>
+                    </div>
+                  </div>
 
-                {/* Next Session Card */}
-                {nextSession && (
-                  <div className={`border rounded-md p-3 w-full shadow-md flex flex-col items-center gap-2 ${
-                    getSessionStatus(nextSession)?.status === 'starting-soon' 
-                      ? (theme === 'dark' ? 'border-orange-500 bg-orange-900/20' : 'border-orange-500 bg-orange-50')
-                      : getSessionStatus(nextSession)?.status === 'upcoming'
-                      ? (theme === 'dark' ? 'border-yellow-500 bg-yellow-900/20' : 'border-yellow-500 bg-yellow-50')
-                      : (theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-gray-50')
-                  }`}>
-                    <h4 className={`font-semibold text-sm mb-2 line-clamp-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
-                      {nextSession.subject}
-                    </h4>
-                    <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                      Teacher: {nextSession.teacher}
-                    </p>
-                    <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                      Room: {nextSession.room}
-                    </p>
-                    <p className={`text-[10px] mt-1 font-medium line-clamp-2 ${getSessionStatus(nextSession)?.color || (theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500')}`}>
-                      {getSessionStatus(nextSession)?.message || `Starts at ${nextSession.starts_at || nextSession.start_time}`}
-                    </p>
+                  <div className="grid grid-cols-2 gap-4 mt-auto">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase opacity-50">Instructor</p>
+                      <p className="font-semibold text-sm truncate">{currentSession.teacher}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase opacity-50">Duration</p>
+                      <p className="font-semibold text-sm">{currentSession.start_time} - {currentSession.end_time}</p>
+                    </div>
                   </div>
-                )}
-              </>
-            ) : (
-              <div className="w-full text-center">
-                <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No class is currently running</p>
-                {nextSession && (
-                  <div className={`border rounded-md p-3 mt-3 shadow-md ${
-                    getSessionStatus(nextSession)?.status === 'starting-soon' 
-                      ? (theme === 'dark' ? 'border-orange-500 bg-orange-900/20' : 'border-orange-500 bg-orange-50')
-                      : getSessionStatus(nextSession)?.status === 'upcoming'
-                      ? (theme === 'dark' ? 'border-yellow-500 bg-yellow-900/20' : 'border-yellow-500 bg-yellow-50')
-                      : (theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-gray-50')
-                  }`}>
-                    <h4 className={`font-semibold text-sm mb-2 line-clamp-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
-                      Next: {nextSession.subject}
-                    </h4>
-                    <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                      Teacher: {nextSession.teacher}
-                    </p>
-                    <p className={`text-xs truncate ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                      Room: {nextSession.room}
-                    </p>
-                    <p className={`text-[10px] mt-1 font-medium line-clamp-2 ${getSessionStatus(nextSession)?.color || (theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500')}`}>
-                      {getSessionStatus(nextSession)?.message || `Starts at ${nextSession.starts_at || nextSession.start_time}`}
-                    </p>
-                    {getSessionStatus(nextSession)?.status === 'starting-soon' && (
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
-                        <span className={`text-xs font-medium ${theme === 'dark' ? 'text-orange-400' : 'text-orange-600'}`}>Get ready!</span>
-                      </div>
-                    )}
+                </div>
+              ) : (
+                <div className={`p-8 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center ${
+                  theme === 'dark' ? 'border-border bg-muted/20' : 'border-gray-200 bg-gray-50'
+                }`}>
+                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                    <FaClock className="text-muted-foreground opacity-50" />
                   </div>
-                )}
-              </div>
-            )}
+                  <p className="text-sm font-bold text-muted-foreground">Class Break</p>
+                  <p className="text-xs opacity-60">No academic sessions active right now</p>
+                </div>
+              )}
+
+              {nextSession && (
+                <div className={`relative p-5 rounded-2xl border transition-all duration-300 ${
+                  theme === 'dark' ? 'bg-muted/30 border-border hover:border-primary/50' : 'bg-gray-50 border-gray-100 hover:border-gray-300'
+                }`}>
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest mb-2 ${
+                        getSessionStatus(nextSession)?.status === 'starting-soon' ? 'bg-orange-500 text-white animate-bounce' : 'bg-muted-foreground/20'
+                      }`}>
+                        Next Up
+                      </span>
+                      <h4 className="font-bold text-lg leading-tight">
+                        {nextSession.subject}
+                      </h4>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] font-bold uppercase opacity-50">Starts In</p>
+                      <p className={`font-bold text-sm ${getSessionStatus(nextSession)?.color}`}>
+                        {getSessionStatus(nextSession)?.message.split('at')[0].trim()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mt-auto">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase opacity-50">Room</p>
+                      <p className="font-semibold text-sm">{nextSession.room}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase opacity-50">Instructor</p>
+                      <p className="font-semibold text-sm truncate">{nextSession.teacher}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </section>
 
       {/* Performance Overview */}
       <section>
-        <div className={`p-3 border rounded-lg shadow-lg ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
-          <h2 className={`text-base md:text-base font-semibold mb-2 ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>Performance Overview</h2>
-          <p className={`text-xs md:text-xs mb-2 line-clamp-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-            Subject-wise attendance percentage and average marks comparison
-          </p>
-          <p className={`text-[10px] mb-3 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-            Correlation coefficient: {dashboardData.performance_overview.correlation}
-          </p>
-          
-          {dashboardData.performance_overview.subject_performance.length > 0 ? (
-            <div className="w-full flex items-center justify-center h-[220px] md:h-[280px] mt-3 md:mt-3">
-              <div className="w-full h-[200px] md:h-[240px]">
-                <Bar key={`chart-${viewportTrigger}`} data={generateChartData} options={chartOptions} />
+        <Card className={`overflow-hidden transition-all duration-300 ${
+          theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-100'
+        } shadow-sm`}>
+          <CardHeader className="p-5 pb-0">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                  <CardTitle className="text-lg font-bold">Performance Metrics</CardTitle>
+                </div>
+                <p className="text-xs text-muted-foreground font-medium">Comparative analytics of attendance vs academic scores</p>
               </div>
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>No performance data available</p>
+          </CardHeader>
+          <CardContent className="p-5 pt-6">
+            <div className="w-full h-[250px] md:h-[320px]">
+              {dashboardData.performance_overview.subject_performance.length > 0 ? (
+                <Bar key={`chart-${viewportTrigger}`} data={generateChartData} options={chartOptions} />
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center opacity-40">
+                  <FaBookOpen className="w-12 h-12 mb-2" />
+                  <p className="text-sm font-bold">Awaiting academic results</p>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </CardContent>
+        </Card>
       </section>
     </div>
   );

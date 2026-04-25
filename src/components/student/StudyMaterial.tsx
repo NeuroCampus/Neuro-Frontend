@@ -1,3 +1,12 @@
+import React, { useState, useEffect } from "react";
+import { FileText, Download } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -5,6 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { 
+  getBranches, 
+  getSemesters, 
+  getSections, 
+  getAllStudyMaterials 
+} from "@/utils/student_api";
 
 interface StudyMaterial {
   id: number;
@@ -215,9 +230,6 @@ const StudyMaterialsStudent = () => {
           </div>
         </CardContent>
       </Card>
-    </div>
-  );
-};
     </div>
   );
 };

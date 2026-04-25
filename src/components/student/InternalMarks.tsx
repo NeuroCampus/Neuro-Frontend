@@ -311,8 +311,6 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
   if (isLoading) {
     return (
       <div className={`min-h-screen w-full overflow-x-hidden space-y-4 px-4 sm:px-0 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-        <h2 className={`text-lg sm:text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Internal Marks</h2>
-
         {/* Chart Section */}
         <Card className={theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
           <CardHeader className={theme === 'dark' ? 'bg-card text-card-foreground border-b border-border' : 'bg-white text-gray-900 border-b border-gray-200'}>
@@ -351,12 +349,10 @@ const VirtualizedMarksTable = memo(({ filteredSubjects, marksData, theme }: {
 
   return (
     <div className={`min-h-screen w-full overflow-x-hidden space-y-4 px-4 sm:px-0 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <h2 className={`text-lg sm:text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Internal Marks</h2>
-
       {/* Chart Section */}
      <Card className={theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader className={theme === 'dark' ? 'bg-card text-card-foreground border-b border-border' : 'bg-white text-gray-900 border-b border-gray-200'}>
-          <CardTitle className={theme === 'dark' ? 'text-base text-card-foreground' : 'text-base text-gray-900'}> Performance Overview</CardTitle>
+          <CardTitle className={`text-lg sm:text-xl md:text-2xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}> Performance Overview</CardTitle>
         </CardHeader>
         <CardContent className={theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}>
           <div className="flex items-center justify-center h-[200px] sm:h-[300px]">

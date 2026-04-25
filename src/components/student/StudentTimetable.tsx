@@ -110,9 +110,8 @@ const StudentTimetable = () => {
   return (
     <Card className={`${styles.card} ${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
       <CardHeader className={`${styles.cardHeader} ${theme === 'dark' ? 'bg-card' : 'bg-white'}`}>
-        <CardTitle className={`${styles.cardTitle} ${theme === 'dark' ? 'text-card-foreground' : 'text-gray-900'}`}>
-          <CalendarDays className="w-5 h-5" />
-          <span>Timetable</span>
+        <CardTitle className={`text-lg sm:text-xl md:text-2xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+          Timetable
         </CardTitle>
         <Button 
           variant="outline" 
