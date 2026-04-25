@@ -11,6 +11,7 @@ import { SkeletonCard } from "@/components/ui/skeleton";
 import { showErrorAlert, showSuccessAlert } from "../../utils/sweetalert";
 import { BrowserMultiFormatReader, NotFoundException, ChecksumException, FormatException } from '@zxing/library';
 import { API_ENDPOINT } from "@/utils/config";
+import { fetchWithTokenRefresh } from "@/utils/authService";
 
 interface StudentInfo {
   name: string;
@@ -111,7 +112,7 @@ const StudentInfoScanner = () => {
     try {
       console.debug('Fetching student data for USN:', usnValue.toUpperCase(), 'using API_ENDPOINT:', API_ENDPOINT);
       const url = `${API_ENDPOINT}/public/student-data/?usn=${usnValue.toUpperCase()}`;
-      const response = await fetch(url);
+      const response = await fetchWithTokenRefresh(url);
       if (!response.ok) {
         const text = await response.text();
         throw new Error(text || response.statusText || `HTTP ${response.status}`);
@@ -236,7 +237,7 @@ const StudentInfoScanner = () => {
       try {
         const url = `${API_ENDPOINT}/recognize-face/`;
         console.debug('Posting face blob to:', url);
-        const response = await fetch(url, {
+        const response = await fetchWithTokenRefresh(url, {
           method: 'POST',
           body: formData,
         });
