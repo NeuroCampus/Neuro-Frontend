@@ -349,40 +349,46 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
       >
-        <div className="flex items-center gap-3">
-          <div
-            className={`w-12 h-12 rounded-lg flex items-center justify-center shadow-lg overflow-hidden border-2 border-[#a259ff] ${theme === 'dark' ? 'bg-white' : ''}`}
-            style={{ borderRadius: 8 }}
-          >
-            <img
-              src="/logo.jpeg"
-              alt="Logo"
-              className="w-full h-full object-contain"
-              style={{ borderRadius: '0.5rem' }}
-            />
+        <div className="flex items-center gap-4">
+          <div className="relative group">
+            <div
+              className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-md overflow-hidden border-2 border-[#a259ff] transition-all duration-300 group-hover:shadow-[#a259ff]/20 ${theme === 'dark' ? 'bg-white' : 'bg-white'}`}
+            >
+              <img
+                src="/logo.jpeg"
+                alt="Logo"
+                className="w-full h-full object-contain p-1"
+              />
+            </div>
+            {/* Plan Badge merged with logo bottom */}
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 z-10">
+              <span className={`text-[9px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md shadow-sm border border-white/20 ${
+                orgPlan.toLowerCase() === 'advance' 
+                  ? 'bg-gradient-to-r from-[#a259ff] to-[#ff59f8] text-white' 
+                  : orgPlan.toLowerCase() === 'pro'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-600 text-white'
+              }`}>
+                {orgPlan}
+              </span>
+            </div>
           </div>
+          
           <AnimatePresence>
             {!collapsed && (
               <motion.div
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: "auto" }}
-                exit={{ opacity: 0, width: 0 }}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
                 transition={{ duration: 0.2 }}
-                className="flex flex-col justify-center"
+                className="flex flex-col min-w-0"
               >
-                <h1 className={`font-bold text-lg whitespace-nowrap ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>NEURO CAMPUS</h1>
-                <p className={`text-xs capitalize ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{role} Portal</p>
-                <div className="mt-1">
-                  <span className={`text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full ${
-                    orgPlan.toLowerCase() === 'advance' 
-                      ? 'bg-gradient-to-r from-[#a259ff] to-[#ff59f8] text-white' 
-                      : orgPlan.toLowerCase() === 'pro'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-500 text-white'
-                  }`}>
-                    {orgPlan}
-                  </span>
-                </div>
+                <h1 className={`font-black text-lg tracking-tighter leading-none mb-0.5 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                  NEURO<span className="text-[#a259ff]">CAMPUS</span>
+                </h1>
+                <p className={`text-xs font-bold tracking-widest uppercase opacity-80 ${theme === 'dark' ? 'text-blue-100' : 'text-gray-500'}`}>
+                  {role.replace('_', ' ')}
+                </p>
               </motion.div>
             )}
           </AnimatePresence>
