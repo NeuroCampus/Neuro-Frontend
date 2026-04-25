@@ -20,7 +20,7 @@ import {
 import type { CreateAnnouncementRequest } from "@/utils/faculty_api";
 import { Loader2 } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
-import { SkeletonList } from "../ui/skeleton";
+import { SkeletonList, SkeletonTable } from "@/components/ui/skeleton";
 
 interface Notification {
   id: string;
@@ -264,35 +264,38 @@ const Announcements = ({ role, proctorStudents, proctorStudentsLoading }: Announ
               )}
             </div>
             <div>
-              {/* Select All */}
-              <div className="flex items-center mb-2">
-                <Checkbox
-                  checked={selectAll}
-                  onCheckedChange={(checked) => setSelectAll(!!checked)}
-                  id="select-all"
-                  className={`border ${theme === 'dark' ? 'border-border bg-background' : 'border-gray-300 bg-white'}`}
-                  disabled={sending}
-                />
-                <label
-                  htmlFor="select-all"
-                  className={`ml-2 text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
-                >
-                  Select All Proctor Students
-                </label>
-              </div>
-
-              {/* Scrollable Student List */}
-              <div className={`max-h-52 overflow-y-auto border rounded-lg p-2 custom-scrollbar ${theme === 'dark' ? 'border-border bg-muted' : 'border-gray-300 bg-gray-50'}`}>
-                {proctorStudents.length === 0 ? (
-                  <div className={`text-sm text-center py-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                    No proctor students found.
-                  </div>
-                ) : (
-                  proctorStudents.map((student) => (
-                    <div
-                      key={student.usn}
-                      className={`flex items-center mb-1 rounded px-1 ${theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-100'}`}
+              {proctorStudentsLoading ? (
+                <SkeletonList count={5} />
+              ) : (
+                <>
+                  <div className="flex items-center mb-2">
+                    <Checkbox
+                      checked={selectAll}
+                      onCheckedChange={(checked) => setSelectAll(!!checked)}
+                      id="select-all"
+                      className={`border ${theme === 'dark' ? 'border-border bg-background' : 'border-gray-300 bg-white'}`}
+                      disabled={sending}
+                    />
+                    <label
+                      htmlFor="select-all"
+                      className={`ml-2 text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
                     >
+                      Select All Proctor Students
+                    </label>
+                  </div>
+
+                  {/* Scrollable Student List */}
+                  <div className={`max-h-52 overflow-y-auto border rounded-lg p-2 custom-scrollbar ${theme === 'dark' ? 'border-border bg-muted' : 'border-gray-300 bg-gray-50'}`}>
+                    {proctorStudents.length === 0 ? (
+                      <div className={`text-sm text-center py-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                        No proctor students found.
+                      </div>
+                    ) : (
+                      proctorStudents.map((student) => (
+                        <div
+                          key={student.usn}
+                          className={`flex items-center mb-1 rounded px-1 ${theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-100'}`}
+                        >
                       <Checkbox
                         checked={selectedStudents.includes(student.usn) || selectAll}
                         onCheckedChange={() => handleStudentSelect(student.usn)}

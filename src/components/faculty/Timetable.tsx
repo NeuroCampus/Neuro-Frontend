@@ -6,6 +6,7 @@ import { Button } from "../ui/button";
 import { FaDownload } from 'react-icons/fa';
 import { getTimetable, TimetableEntry } from '../../utils/faculty_api';
 import { useTheme } from "@/context/ThemeContext";
+import { SkeletonTable } from "@/components/ui/skeleton";
 
 interface TimetableProps {
   role: string;
@@ -150,7 +151,7 @@ const Timetable = ({ role }: TimetableProps) => {
 
       <CardContent className="bg-card">
         {loading ? (
-          <div className={`text-center ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading timetable...</div>
+          <SkeletonTable rows={8} cols={7} />
         ) : error ? (
           <div className={`text-center ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>{error}</div>
         ) : (

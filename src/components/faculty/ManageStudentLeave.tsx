@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import Swal from 'sweetalert2';
 import { useTheme } from "@/context/ThemeContext";
+import { SkeletonTable, SkeletonList } from "@/components/ui/skeleton";
 
 interface ManageStudentLeaveProps {
   proctorStudents: ProctorStudent[];
@@ -224,135 +225,148 @@ const ManageStudentLeave: React.FC<ManageStudentLeaveProps> = ({ proctorStudents
           </div>
 
           <div className="overflow-x-auto max-w-full thin-scrollbar">
-            {/* Mobile: stacked cards */}
-            <div className="md:hidden space-y-2 sm:space-y-3">
-              {filteredRows.length > 0 ? (
-                filteredRows.map((row: LeaveRow) => (
-                  <div key={row.id} className={`p-2 sm:p-3 rounded-md border ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-200 text-gray-900'}`}>
-                    <div className="flex items-start justify-between gap-2 sm:gap-3">
-                      <div className="min-w-0 flex-1">
-                        <p className={`font-medium text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} truncate`}>{row.student_name}</p>
-                        <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'} truncate`}>{row.usn}</p>
-                      </div>
-                      <div className="shrink-0">{getStatusBadge(row.status)}</div>
-                    </div>
-                    <div className="mt-2 sm:mt-3 text-xs sm:text-sm space-y-1">
-                      <p className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'} style={{ wordBreak: 'break-word' }}><strong>Period:</strong> {row.start_date} to {row.end_date}</p>
-                    </div>
-                    <div className="mt-3 sm:mt-4 space-y-2">
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <span className={`text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}><strong>Reason:</strong></span>
-                        <button
-                          onClick={() => setViewReason(row.reason)}
-                          className={`flex items-center gap-1 text-xs sm:text-sm font-medium px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-blue-500 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20' : 'border-blue-500 text-blue-700 bg-blue-50 hover:bg-blue-100'}`}
-                        >
-                          <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                          <span>View</span>
-                        </button>
-                      </div>
-                      {row.status === "PENDING" ? (
-                        <div className="flex gap-1.5 sm:gap-2">
-                          <button
-                            onClick={() => handleApprove(row.id)}
-                            className={`flex items-center gap-1 text-xs sm:text-sm font-medium px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-md transition border flex-1 justify-center ${theme === 'dark' ? 'border-green-500 text-green-400 bg-green-500/10 hover:bg-green-500/20' : 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100'}`}
-                            disabled={actionLoading === row.id + "APPROVE"}
-                            title="Approve"
-                          >
-                            <CheckCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                            <span>Approve</span>
-                          </button>
-                          <button
-                            onClick={() => setShowRejectModal(row.id)}
-                            className={`flex items-center gap-1 text-xs sm:text-sm font-medium px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-md transition border flex-1 justify-center ${theme === 'dark' ? 'border-red-500 text-red-400 bg-red-500/10 hover:bg-red-500/20' : 'border-red-500 text-red-700 bg-red-50 hover:bg-red-100'}`}
-                            disabled={actionLoading === row.id + "REJECT"}
-                            title="Reject"
-                          >
-                            <XCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                            <span>Reject</span>
-                          </button>
+            {proctorStudentsLoading ? (
+              <div className="space-y-4">
+                <div className="md:hidden">
+                  <SkeletonList items={3} />
+                </div>
+                <div className="hidden md:block">
+                  <SkeletonTable rows={5} cols={5} />
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Mobile: stacked cards */}
+                <div className="md:hidden space-y-2 sm:space-y-3">
+                  {filteredRows.length > 0 ? (
+                    filteredRows.map((row: LeaveRow) => (
+                      <div key={row.id} className={`p-2 sm:p-3 rounded-md border ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-200 text-gray-900'}`}>
+                        <div className="flex items-start justify-between gap-2 sm:gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className={`font-medium text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} truncate`}>{row.student_name}</p>
+                            <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'} truncate`}>{row.usn}</p>
+                          </div>
+                          <div className="shrink-0">{getStatusBadge(row.status)}</div>
                         </div>
-                      ) : (
-                        <span className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>No action</span>
-                      )}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className={`text-center py-3 sm:py-4 text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No leave requests available.</div>
-              )}
-            </div>
-
-            {/* Desktop / Tablet: table */}
-            <table className="hidden md:table w-full text-sm text-left border-collapse">
-              <thead className={`border-b ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-200 bg-gray-50'}`}>
-                <tr>
-                  <th className={`py-3 px-4 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Student</th>
-                  <th className={`py-3 px-4 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Period</th>
-                  <th className={`py-3 px-4 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Reasons</th>
-                  <th className={`py-3 px-4 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Status</th>
-                  <th className={`py-3 px-4 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRows.length > 0 ? (
-                  filteredRows.map((row: LeaveRow) => (
-                    <tr
-                      key={row.id}
-                      className={`border-b transition-colors duration-200 ${theme === 'dark' ? 'border-border hover:bg-accent' : 'border-gray-200 hover:bg-gray-50'}`}
-                    >
-                      <td className="py-3 px-4">
-                        <div>
-                          <p className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{row.student_name}</p>
-                          <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>{row.usn}</p>
+                        <div className="mt-2 sm:mt-3 text-xs sm:text-sm space-y-1">
+                          <p className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'} style={{ wordBreak: 'break-word' }}><strong>Period:</strong> {row.start_date} to {row.end_date}</p>
                         </div>
-                      </td>
-                      <td className="py-3 px-4">{row.start_date} to {row.end_date}</td>
-                      <td className="py-3 px-4">
-                        <button
-                          onClick={() => setViewReason(row.reason)}
-                          className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-blue-500 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20' : 'border-blue-500 text-blue-700 bg-blue-50 hover:bg-blue-100'}`}
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">View</span>
-                        </button>
-                      </td>
-                      <td className="py-3 px-4">{getStatusBadge(row.status)}</td>
-                      <td className="py-3 px-4">
-                        {row.status === "PENDING" ? (
-                          <div className="flex gap-2">
+                        <div className="mt-3 sm:mt-4 space-y-2">
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <span className={`text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}><strong>Reason:</strong></span>
                             <button
-                              onClick={() => handleApprove(row.id)}
-                              className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-green-500 text-green-400 bg-green-500/10 hover:bg-green-500/20' : 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100'}`}
-                              disabled={actionLoading === row.id + "APPROVE"}
+                              onClick={() => setViewReason(row.reason)}
+                              className={`flex items-center gap-1 text-xs sm:text-sm font-medium px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-blue-500 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20' : 'border-blue-500 text-blue-700 bg-blue-50 hover:bg-blue-100'}`}
                             >
-                              <CheckCircle className="w-3.5 h-3.5" />
-                              <span className="hidden sm:inline">Approve</span>
-                            </button>
-
-                            <button
-                              onClick={() => setShowRejectModal(row.id)}
-                              className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-red-500 text-red-400 bg-red-500/10 hover:bg-red-500/20' : 'border-red-500 text-red-700 bg-red-50 hover:bg-red-100'}`}
-                              disabled={actionLoading === row.id + "REJECT"}
-                            >
-                              <XCircle className="w-3.5 h-3.5" />
-                              <span className="hidden sm:inline">Reject</span>
+                              <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                              <span>View</span>
                             </button>
                           </div>
-                        ) : (
-                          <span className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>No action</span>
-                        )}
-                      </td>
+                          {row.status === "PENDING" ? (
+                            <div className="flex gap-1.5 sm:gap-2">
+                              <button
+                                onClick={() => handleApprove(row.id)}
+                                className={`flex items-center gap-1 text-xs sm:text-sm font-medium px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-md transition border flex-1 justify-center ${theme === 'dark' ? 'border-green-500 text-green-400 bg-green-500/10 hover:bg-green-500/20' : 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100'}`}
+                                disabled={actionLoading === row.id + "APPROVE"}
+                                title="Approve"
+                              >
+                                <CheckCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                <span>Approve</span>
+                              </button>
+                              <button
+                                onClick={() => setShowRejectModal(row.id)}
+                                className={`flex items-center gap-1 text-xs sm:text-sm font-medium px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-md transition border flex-1 justify-center ${theme === 'dark' ? 'border-red-500 text-red-400 bg-red-500/10 hover:bg-red-500/20' : 'border-red-500 text-red-700 bg-red-50 hover:bg-red-100'}`}
+                                disabled={actionLoading === row.id + "REJECT"}
+                                title="Reject"
+                              >
+                                <XCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                <span>Reject</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <span className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>No action</span>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className={`text-center py-3 sm:py-4 text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No leave requests available.</div>
+                  )}
+                </div>
+
+                {/* Desktop / Tablet: table */}
+                <table className="hidden md:table w-full text-sm text-left border-collapse">
+                  <thead className={`border-b ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-200 bg-gray-50'}`}>
+                    <tr>
+                      <th className={`py-3 px-4 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Student</th>
+                      <th className={`py-3 px-4 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Period</th>
+                      <th className={`py-3 px-4 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Reasons</th>
+                      <th className={`py-3 px-4 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Status</th>
+                      <th className={`py-3 px-4 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Action</th>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className={`py-4 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                      No leave requests available.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {filteredRows.length > 0 ? (
+                      filteredRows.map((row: LeaveRow) => (
+                        <tr
+                          key={row.id}
+                          className={`border-b transition-colors duration-200 ${theme === 'dark' ? 'border-border hover:bg-accent' : 'border-gray-200 hover:bg-gray-50'}`}
+                        >
+                          <td className="py-3 px-4">
+                            <div>
+                              <p className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{row.student_name}</p>
+                              <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>{row.usn}</p>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">{row.start_date} to {row.end_date}</td>
+                          <td className="py-3 px-4">
+                            <button
+                              onClick={() => setViewReason(row.reason)}
+                              className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-blue-500 text-blue-400 bg-blue-500/10 hover:bg-blue-500/20' : 'border-blue-500 text-blue-700 bg-blue-50 hover:bg-blue-100'}`}
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">View</span>
+                            </button>
+                          </td>
+                          <td className="py-3 px-4">{getStatusBadge(row.status)}</td>
+                          <td className="py-3 px-4">
+                            {row.status === "PENDING" ? (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleApprove(row.id)}
+                                  className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-green-500 text-green-400 bg-green-500/10 hover:bg-green-500/20' : 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100'}`}
+                                  disabled={actionLoading === row.id + "APPROVE"}
+                                >
+                                  <CheckCircle className="w-3.5 h-3.5" />
+                                  <span className="hidden sm:inline">Approve</span>
+                                </button>
+
+                                <button
+                                  onClick={() => setShowRejectModal(row.id)}
+                                  className={`flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-md transition border ${theme === 'dark' ? 'border-red-500 text-red-400 bg-red-500/10 hover:bg-red-500/20' : 'border-red-500 text-red-700 bg-red-50 hover:bg-red-100'}`}
+                                  disabled={actionLoading === row.id + "REJECT"}
+                                >
+                                  <XCircle className="w-3.5 h-3.5" />
+                                  <span className="hidden sm:inline">Reject</span>
+                                </button>
+                              </div>
+                            ) : (
+                              <span className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>No action</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className={`py-4 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                          No leave requests available.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>

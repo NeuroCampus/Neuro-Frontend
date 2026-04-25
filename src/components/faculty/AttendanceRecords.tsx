@@ -9,6 +9,7 @@ import { getAttendanceRecordsWithSummary, getAttendanceRecordDetails } from "@/u
 import { API_BASE_URL } from "@/utils/config";
 import { fetchWithTokenRefresh } from "@/utils/authService";
 import { useTheme } from "@/context/ThemeContext";
+import { SkeletonTable } from "@/components/ui/skeleton";
 import { usePagination } from "@/hooks/useOptimizations";
 
 interface AttendanceRecord {
@@ -158,9 +159,7 @@ const AttendanceRecords = () => {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className={`flex items-center justify-center p-8 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-              <Loader2 className="animate-spin mr-2" /> Loading records...
-            </div>
+            <SkeletonTable rows={5} columns={8} />
           ) : error ? (
             <div className={`p-4 ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>{error}</div>
           ) : (

@@ -12,6 +12,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { applyLeave, getApplyLeaveBootstrap } from '../../utils/faculty_api';
 import { useTheme } from '@/context/ThemeContext';
+import { SkeletonList } from '@/components/ui/skeleton';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { Circle, CalendarCheck2, CalendarX2, Filter } from 'lucide-react';
@@ -387,7 +388,7 @@ const LeaveRequests = () => {
           </CardHeader>
           <CardContent className="p-2 sm:p-4 lg:p-6">
             {loading ? (
-              <div className={`text-center text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading...</div>
+              <SkeletonList count={3} />
             ) : filteredLeaveList.length === 0 ? (
               <div className={`text-center text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                 {filterStatus === 'All' ? 'No leave requests found.' : `No ${filterStatus.toLowerCase()} leave requests found.`}

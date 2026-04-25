@@ -7,6 +7,7 @@ import { ProctorStudent, getProctorStudentsForStats } from '../../utils/faculty_
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useTheme } from "@/context/ThemeContext";
+import { SkeletonChart, SkeletonTable, SkeletonCard } from "@/components/ui/skeleton";
 
 const GenerateStatistics: React.FC = () => {
   const [proctorStudents, setProctorStudents] = useState<ProctorStudent[]>([]);
@@ -110,7 +111,17 @@ const GenerateStatistics: React.FC = () => {
   }));
 
   if (proctorStudentsLoading) {
-    return <div className={`p-6 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading statistics...</div>;
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <SkeletonChart />
+          <SkeletonChart />
+        </div>
+        <SkeletonCard className="h-[400px]">
+          <SkeletonTable rows={10} cols={4} />
+        </SkeletonCard>
+      </div>
+    );
   }
 
   return (

@@ -4,6 +4,7 @@ import { Button } from "../ui/button";
 import { useState, useEffect } from "react";
 import { ProctorStudent } from "../../utils/faculty_api";
 import { useTheme } from "@/context/ThemeContext";
+import { SkeletonTable } from "@/components/ui/skeleton";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -19,7 +20,16 @@ const ProctorStudents = ({ proctorStudents, proctorStudentsLoading, pagination }
   const { theme } = useTheme();
 
   if (proctorStudentsLoading) {
-    return <div className={`p-6 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading students...</div>;
+    return (
+      <Card className={theme === 'dark' ? 'bg-card text-foreground shadow-md' : 'bg-white text-gray-900 shadow-md'}>
+        <CardHeader>
+          <CardTitle className="text-2xl font-semibold leading-none tracking-tight text-gray-900">Proctor Students</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <SkeletonTable rows={10} cols={5} />
+        </CardContent>
+      </Card>
+    );
   }
 
   // Client-side search (by USN or name) applied to the returned page items

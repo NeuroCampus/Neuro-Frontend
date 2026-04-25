@@ -12,6 +12,7 @@ import { showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Eye, EyeOff } from "lucide-react";
 import { fetchWithTokenRefresh } from "../../utils/authService";
+import { SkeletonCard } from "@/components/ui/skeleton";
 import { API_ENDPOINT } from "../../utils/config";
 
 const FacultyProfile = () => {
@@ -240,7 +241,7 @@ const FacultyProfile = () => {
   };
 
   if (loading) {
-    return <div className={`p-4 sm:p-6 text-center text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading profile...</div>;
+    return <SkeletonCard className="w-full h-[600px]" />;
   }
 
   const renderTabContent = () => {

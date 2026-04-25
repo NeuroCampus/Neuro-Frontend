@@ -41,6 +41,7 @@ import {
   CreateAnnouncementRequest,
 } from "@/utils/announcements_api";
 import AnnouncementSections from "@/components/announcements/AnnouncementSections";
+import { SkeletonList } from "@/components/ui/skeleton";
 
 const FacultyAnnouncementManagement = () => {
   const [myAnnouncements, setMyAnnouncements] = useState<Announcement[]>([]);
@@ -324,8 +325,8 @@ const FacultyAnnouncementManagement = () => {
         <CardContent className="p-4 sm:p-6">
           {/* Loading State */}
           {loading && (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <div className="py-4">
+              <SkeletonList items={5} />
             </div>
           )}
 

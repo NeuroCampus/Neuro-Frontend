@@ -27,6 +27,7 @@ import Papa from 'papaparse';
 import { getSubjectDetail, takeAttendance, aiAttendance, getStudentsForRegular, getStudentsForElective, getStudentsForOpenElective, FacultyAssignment, ClassStudent, GetTakeAttendanceBootstrapResponse } from "@/utils/faculty_api";
 import { useFacultyAssignmentsQuery } from "@/hooks/useApiQueries";
 import { useTheme } from "@/context/ThemeContext";
+import { SkeletonTable } from "@/components/ui/skeleton";
 
 const TakeAttendance = () => {
   const { toast } = useToast();
@@ -605,7 +606,9 @@ const TakeAttendance = () => {
               {/* Manual Entry Tab */}
               <TabsContent value="manual">
                 {loadingStudents ? (
-                  <div className={theme === 'dark' ? 'text-muted-foreground mt-4' : 'text-gray-500 mt-4'}>Loading students...</div>
+                  <div className="mt-4">
+                    <SkeletonTable rows={10} cols={5} />
+                  </div>
                 ) : students.length > 0 ? (
                   <div className={`border rounded-md mt-4 w-full max-w-full overflow-hidden min-h-0 ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
                     <div className={`p-3 sm:p-4 font-semibold border-b ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}>Student Attendance</div>
@@ -744,7 +747,9 @@ const TakeAttendance = () => {
               {/* AI Tab */}
               <TabsContent value="ai">
                 {loadingStudents ? (
-                  <div className={theme === 'dark' ? 'text-muted-foreground mt-4' : 'text-gray-500 mt-4'}>Loading students...</div>
+                  <div className="mt-4">
+                    <SkeletonTable rows={10} cols={5} />
+                  </div>
                 ) : students.length > 0 ? (
                   <div className={`border rounded-md mt-4 w-full max-w-full ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'}`}>
                     <div className={`p-3 font-semibold border-b ${theme === 'dark' ? 'border-border' : 'border-gray-300'}`}>AI Attendance Processing</div>

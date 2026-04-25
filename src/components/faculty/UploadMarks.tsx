@@ -38,6 +38,7 @@ import {
 } from "../../utils/faculty_api";
 import { useFacultyAssignmentsQuery } from "../../hooks/useApiQueries";
 import { useTheme } from "@/context/ThemeContext";
+import { SkeletonTable } from "@/components/ui/skeleton";
 
 const MySwal = withReactContent(Swal);
 
@@ -1804,8 +1805,13 @@ const UploadMarks = () => {
                     <tbody className="divide-y divide-gray-200 dark:divide-border">
                       {loadingStudents ? (
                         <tr>
-                          <td colSpan={questions.length * 3 + 5} className={`text-center text-sm p-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                            Loading students...
+                          <td colSpan={questions.length * 3 + 5} className="p-0">
+                            <div className="w-full h-20 flex items-center justify-center">
+                              <div className="flex items-center gap-3">
+                                <div className="w-4 h-4 border-2 border-[#a259ff] border-t-transparent rounded-full animate-spin"></div>
+                                <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Loading students...</span>
+                              </div>
+                            </div>
                           </td>
                         </tr>
                       ) : currentStudents.length === 0 ? (

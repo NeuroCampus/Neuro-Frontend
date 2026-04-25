@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useProctorStudentsQuery } from "@/hooks/useApiQueries";
 import type { ProctorStudent } from "@/utils/faculty_api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { SkeletonList, SkeletonTable } from "@/components/ui/skeleton";
 
 interface ExamApplicationProps {
   proctorStudents?: ProctorStudent[];
@@ -446,111 +447,119 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
         />
 
         <div className="max-h-[60vh] overflow-auto custom-scrollbar">
-          {/* Mobile view: Stacked cards */}
-          <div className="md:hidden space-y-3">
-            {!(isProctorLoading || proctorStudentsLoading) && filtered.map((student: any) => (
-              <div key={student.usn} className={`p-4 rounded-lg border ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-200 text-gray-900'} shadow-sm`}>
-                <div className="flex justify-between items-start mb-3">
-                  <div className="min-w-0">
-                    <p className="font-semibold text-sm truncate">{student.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{student.usn}</p>
-                  </div>
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${studentStatuses[student.usn] === 'Applied'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-gray-100 text-gray-800'
-                    }`}>
-                    {studentStatuses[student.usn] || 'Not Applied'}
-                  </span>
-                </div>
-                
-                <div className="flex items-center gap-4 mb-4 text-xs">
-                  <div className="px-2 py-1 bg-muted rounded">
-                    <span className="text-muted-foreground mr-1">Semester:</span>
-                    <span className="font-medium">{student.semester}</span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <Button onClick={() => openFor(student)} className="w-full bg-[#a259ff] hover:bg-[#a259ff]/90 text-white h-9">
-                    Open Application
-                  </Button>
-                  {studentStatuses[student.usn] === 'Applied' && (
-                    <Button
-                      onClick={() => downloadHallTicket(student)}
-                      className="w-full bg-green-600 hover:bg-green-700 text-white h-9"
-                    >
-                      Download Hall Ticket
-                    </Button>
-                  )}
-                </div>
+          {isProctorLoading || proctorStudentsLoading ? (
+            <div className="space-y-4">
+              <div className="md:hidden">
+                <SkeletonList items={3} />
               </div>
-            ))}
-            {!(isProctorLoading || proctorStudentsLoading) && filtered.length === 0 && (
-              <div className="text-center py-10 text-muted-foreground">No students found.</div>
-            )}
-          </div>
-
-          {/* Desktop view: Table */}
-          <table className={`hidden md:table w-full rounded-md ${theme === 'dark' ? 'border border-border' : 'border border-gray-200'} border-collapse`}>
-            <thead className={theme === 'dark' ? 'bg-muted text-foreground' : 'bg-gray-100 text-gray-900'}>
-              <tr>
-                <th className="px-4 py-3 text-center text-sm font-semibold">USN</th>
-                <th className="px-4 py-3 text-center text-sm font-semibold">Name</th>
-                <th className="px-4 py-3 text-center text-sm font-semibold">Semester</th>
-                <th className="px-4 py-3 text-center text-sm font-semibold">Status</th>
-                <th className="px-4 py-3 text-center text-sm font-semibold">Action</th>
-              </tr>
-            </thead>
-            <tbody className={theme === 'dark' ? 'divide-border' : 'divide-gray-200'}>
-              {(isProctorLoading || proctorStudentsLoading) && (
-                <tr>
-                  <td colSpan={5} className="text-center py-6">Loading...</td>
-                </tr>
-              )}
-              {!(isProctorLoading || proctorStudentsLoading) && filtered.map((student: any) => (
-                <tr key={student.usn} className={`border-b ${theme === 'dark' ? 'border-border hover:bg-muted' : 'border-gray-100 hover:bg-gray-50'} transition-colors`}>
-                  <td className="px-4 py-3 text-sm font-medium text-center">{student.usn}</td>
-                  <td className="px-4 py-3 text-sm text-center">{student.name}</td>
-                  <td className="px-4 py-3 text-sm text-center">{student.semester}</td>
-                  <td className="px-4 py-3 text-sm text-center">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium inline-block ${studentStatuses[student.usn] === 'Applied'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
-                      }`}>
-                      {studentStatuses[student.usn] || 'Not Applied'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm min-w-[400px]">
-                    <div className="relative w-full flex justify-center items-center h-8">
-                      <Button 
-                        onClick={() => openFor(student)} 
-                        className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white h-8 px-3 whitespace-nowrap z-10"
-                      >
-                        Open
-                      </Button>
-                      <div className="absolute left-[calc(50%+45px)] flex items-center">
-                        {studentStatuses[student.usn] === 'Applied' && (
-                          <Button
-                            onClick={() => downloadHallTicket(student)}
-                            className="bg-green-600 hover:bg-green-700 text-white h-8 px-2 whitespace-nowrap"
-                          >
-                            Download Hall Ticket
-                          </Button>
-                        )}
+              <div className="hidden md:block">
+                <SkeletonTable rows={5} cols={5} />
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Mobile view: Stacked cards */}
+              <div className="md:hidden space-y-3">
+                {filtered.map((student: any) => (
+                  <div key={student.usn} className={`p-4 rounded-lg border ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-200 text-gray-900'} shadow-sm`}>
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm truncate">{student.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{student.usn}</p>
+                      </div>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${studentStatuses[student.usn] === 'Applied'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-800'
+                        }`}>
+                        {studentStatuses[student.usn] || 'Not Applied'}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center gap-4 mb-4 text-xs">
+                      <div className="px-2 py-1 bg-muted rounded">
+                        <span className="text-muted-foreground mr-1">Semester:</span>
+                        <span className="font-medium">{student.semester}</span>
                       </div>
                     </div>
-                  </td>
-                </tr>
-              ))}
-              {!(isProctorLoading || proctorStudentsLoading) && filtered.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="text-center py-6">
-                    {examPeriod ? `No students found with exam applications for ${examPeriod === 'june_july' ? 'June/July' : 'January/February'} period.` : 'No students found.'}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+
+                    <div className="flex flex-col gap-2">
+                      <Button onClick={() => openFor(student)} className="w-full bg-[#a259ff] hover:bg-[#a259ff]/90 text-white h-9">
+                        Open Application
+                      </Button>
+                      {studentStatuses[student.usn] === 'Applied' && (
+                        <Button
+                          onClick={() => downloadHallTicket(student)}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white h-9"
+                        >
+                          Download Hall Ticket
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {filtered.length === 0 && (
+                  <div className="text-center py-10 text-muted-foreground">No students found.</div>
+                )}
+              </div>
+
+              {/* Desktop view: Table */}
+              <table className={`hidden md:table w-full rounded-md ${theme === 'dark' ? 'border border-border' : 'border border-gray-200'} border-collapse`}>
+                <thead className={theme === 'dark' ? 'bg-muted text-foreground' : 'bg-gray-100 text-gray-900'}>
+                  <tr>
+                    <th className="px-4 py-3 text-center text-sm font-semibold">USN</th>
+                    <th className="px-4 py-3 text-center text-sm font-semibold">Name</th>
+                    <th className="px-4 py-3 text-center text-sm font-semibold">Semester</th>
+                    <th className="px-4 py-3 text-center text-sm font-semibold">Status</th>
+                    <th className="px-4 py-3 text-center text-sm font-semibold">Action</th>
+                  </tr>
+                </thead>
+                <tbody className={theme === 'dark' ? 'divide-border' : 'divide-gray-200'}>
+                  {filtered.map((student: any) => (
+                    <tr key={student.usn} className={`border-b ${theme === 'dark' ? 'border-border hover:bg-muted' : 'border-gray-100 hover:bg-gray-50'} transition-colors`}>
+                      <td className="px-4 py-3 text-sm font-medium text-center">{student.usn}</td>
+                      <td className="px-4 py-3 text-sm text-center">{student.name}</td>
+                      <td className="px-4 py-3 text-sm text-center">{student.semester}</td>
+                      <td className="px-4 py-3 text-sm text-center">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium inline-block ${studentStatuses[student.usn] === 'Applied'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-800'
+                          }`}>
+                          {studentStatuses[student.usn] || 'Not Applied'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm min-w-[400px]">
+                        <div className="relative w-full flex justify-center items-center h-8">
+                          <Button 
+                            onClick={() => openFor(student)} 
+                            className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white h-8 px-3 whitespace-nowrap z-10"
+                          >
+                            Open
+                          </Button>
+                          <div className="absolute left-[calc(50%+45px)] flex items-center">
+                            {studentStatuses[student.usn] === 'Applied' && (
+                              <Button
+                                onClick={() => downloadHallTicket(student)}
+                                className="bg-green-600 hover:bg-green-700 text-white h-8 px-2 whitespace-nowrap"
+                              >
+                                Download Hall Ticket
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {filtered.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="text-center py-6">
+                        {examPeriod ? `No students found with exam applications for ${examPeriod === 'june_july' ? 'June/July' : 'January/February'} period.` : 'No students found.'}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </>
+          )}
         </div>
 
         {/* Pagination Controls */}

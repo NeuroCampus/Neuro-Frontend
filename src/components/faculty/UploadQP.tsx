@@ -13,6 +13,7 @@ import withReactContent from 'sweetalert2-react-content';
 import { useFacultyAssignmentsQuery } from "../../hooks/useApiQueries";
 import { createQuestionPaper, updateQuestionPaper, getQuestionPapers, submitQPForApproval, getQuestionPaperDetail } from "../../utils/faculty_api";
 import { useTheme } from "@/context/ThemeContext";
+import { SkeletonList, SkeletonTable } from "@/components/ui/skeleton";
 
 interface QuestionRow {
   id: string;
@@ -101,6 +102,7 @@ const UploadQP = () => {
   const [tabValue, setTabValue] = useState('questionFormat');
   const [qpId, setQpId] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [rejectedQPs, setRejectedQPs] = useState<QuestionPaper[]>([]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const { theme } = useTheme();
@@ -152,6 +154,7 @@ const UploadQP = () => {
         { id: '1c', number: '1c', content: 'Question 1c', maxMarks: '6', co: 'CO1', bloomsLevel: 'Remember' }
       ];
       try {
+        setLoading(true);
         const res = await getQuestionPapers({ branch_id: selected.branch_id?.toString(), semester_id: selected.semester_id?.toString(), section_id: selected.section_id?.toString(), subject_id: selected.subject_id?.toString(), test_type: selected.testType, detail: true });
           if (res?.success && Array.isArray(res?.data) && res.data.length > 0) {
           // prefer exact match on subject+test_type; do NOT fallback to first result
@@ -181,6 +184,8 @@ const UploadQP = () => {
         }
       } catch (err) {
         console.error('Error loading QP:', err);
+      } finally {
+        setLoading(false);
       }
     };
     loadIfReady();
@@ -526,7 +531,11 @@ const UploadQP = () => {
             </TabsList>
             <TabsContent value="questionFormat">
               <div className="space-y-2">
-                {(!selected.branch_id || !selected.subject_id || !selected.testType) ? (
+                {loading ? (
+                  <div className="py-4">
+                    <SkeletonList items={3} />
+                  </div>
+                ) : (!selected.branch_id || !selected.subject_id || !selected.testType) ? (
                   <div className="p-6 text-center text-sm text-muted-foreground">Select Branch, Subject and Test Type to load or create a question paper.</div>
                 ) : (
                   <>
@@ -615,57 +624,58 @@ const UploadQP = () => {
                     )}
                   </div>
                 )}
-
-                <div className={`border rounded-lg p-4 ${theme === 'dark' ? 'bg-gray-800 border-border' : 'bg-gray-50 border-gray-200'}`}>
-                  <div className="space-y-4">
-                    {Object.keys(groupQuestionsByMain()).map((mainQ) => {
-                      const grouped = groupQuestionsByMain();
-                      return (
-                        <div key={mainQ} className="space-y-3">
-                          {grouped[mainQ].map((s, sIndex) => {
-                            const key = `${mainQ}-${sIndex}`;
-                            const isExpanded = !!expanded[key];
-                            const shortContent = (s.content || '').length > 160 ? (s.content || '').slice(0, 160) + '…' : (s.content || '');
-                            return (
-                              <div key={s.id} className={getQuestionCardClassName()}>
-                                <div className="flex items-start gap-3">
-                                  <div className={`flex-shrink-0 w-10 h-10 rounded-full ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'} flex items-center justify-center font-medium text-sm`}>
-                                    {s.number}
-                                  </div>
-                                  <div className="flex-1">
-                                    <div className="flex justify-between items-start gap-4">
-                                      <div className={`text-sm ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'} mb-1 flex-1`}>
-                                        {isExpanded ? s.content : shortContent}
-                                      </div>
-                                      <div className="ml-2 flex-shrink-0">
-                                        <Badge className={`font-semibold text-sm ${getBadgeClassName()}`}>{s.maxMarks}m</Badge>
-                                      </div>
+                  <div className={`border rounded-lg p-4 ${theme === 'dark' ? 'bg-gray-800 border-border' : 'bg-gray-50 border-gray-200'}`}>
+                    <div className="space-y-4">
+                      {loading ? (
+                        <SkeletonList items={4} />
+                      ) : Object.keys(groupQuestionsByMain()).map((mainQ) => {
+                        const grouped = groupQuestionsByMain();
+                        return (
+                          <div key={mainQ} className="space-y-3">
+                            {grouped[mainQ].map((s, sIndex) => {
+                              const key = `${mainQ}-${sIndex}`;
+                              const isExpanded = !!expanded[key];
+                              const shortContent = (s.content || '').length > 160 ? (s.content || '').slice(0, 160) + '…' : (s.content || '');
+                              return (
+                                <div key={s.id} className={getQuestionCardClassName()}>
+                                  <div className="flex items-start gap-3">
+                                    <div className={`flex-shrink-0 w-10 h-10 rounded-full ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'} flex items-center justify-center font-medium text-sm`}>
+                                      {s.number}
                                     </div>
-                                    <div className="flex flex-wrap items-center gap-2 mt-2">
-                                      <Badge className={getBadgeClassName()}>CO: {s.co}</Badge>
-                                      <Badge className={getBadgeClassName()}>{s.bloomsLevel}</Badge>
-                                      {((s.content || '').length > 160) && (
-                                        <button 
-                                          onClick={() => toggleExpanded(key)} 
-                                          className={getButtonClassName()}
-                                        >
-                                          {isExpanded ? 'Show less' : 'Show more'}
-                                        </button>
-                                      )}
+                                    <div className="flex-1">
+                                      <div className="flex justify-between items-start gap-4">
+                                        <div className={`text-sm ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'} mb-1 flex-1`}>
+                                          {isExpanded ? s.content : shortContent}
+                                        </div>
+                                        <div className="ml-2 flex-shrink-0">
+                                          <Badge className={`font-semibold text-sm ${getBadgeClassName()}`}>{s.maxMarks}m</Badge>
+                                        </div>
+                                      </div>
+                                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                                        <Badge className={getBadgeClassName()}>CO: {s.co}</Badge>
+                                        <Badge className={getBadgeClassName()}>{s.bloomsLevel}</Badge>
+                                        {((s.content || '').length > 160) && (
+                                          <button 
+                                            onClick={() => toggleExpanded(key)} 
+                                            className={getButtonClassName()}
+                                          >
+                                            {isExpanded ? 'Show less' : 'Show more'}
+                                          </button>
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })}
-                    <div className={`font-semibold pt-2 border-t ${theme === 'dark' ? 'border-gray-700 text-foreground' : 'border-gray-200 text-gray-900'}`}>
-                      Total Marks: {totalMarks}
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
+                      <div className={`font-semibold pt-2 border-t ${theme === 'dark' ? 'border-gray-700 text-foreground' : 'border-gray-200 text-gray-900'}`}>
+                        Total Marks: {totalMarks}
+                      </div>
                     </div>
                   </div>
-                </div>
               </div>
             </TabsContent>
           </Tabs>

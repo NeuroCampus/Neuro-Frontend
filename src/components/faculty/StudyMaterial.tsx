@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SkeletonList } from "@/components/ui/skeleton";
 
 interface StudyMaterial {
   id: number;
@@ -98,6 +99,7 @@ const StudyMaterialsFaculty = () => {
   const [semesters, setSemesters] = useState<{ id: string; number: number }[]>([]);
   const [sections, setSections] = useState<{ id: string; name: string }[]>([]);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const loadBranches = async () => {
@@ -164,6 +166,7 @@ const StudyMaterialsFaculty = () => {
   }, [selectedBranch, selectedSemester]);
 
   const loadMaterials = async () => {
+    setLoading(true);
     const resp = await getStudyMaterials(selectedBranch === 'All Branches' ? undefined : selectedBranch, selectedSemester === 'All Semesters' ? undefined : selectedSemester, selectedSection === 'All Sections' ? undefined : selectedSection, searchQuery || undefined);
     if (resp && resp.success && Array.isArray(resp.data?.results || resp.data)) {
       setMaterials(resp.data.results || resp.data || []);
@@ -173,6 +176,7 @@ const StudyMaterialsFaculty = () => {
       setMaterials([]);
     }
     setHasSearched(true);
+    setLoading(false);
   };
 
   // Auto-load materials when all filters are selected
@@ -267,7 +271,11 @@ const StudyMaterialsFaculty = () => {
               <div>Action</div>
             </div>
             <div className="space-y-1">
-              {!hasSearched ? (
+              {loading ? (
+                <div className="py-4">
+                  <SkeletonList items={5} />
+                </div>
+              ) : !hasSearched ? (
                 <div className="text-center py-10 text-xs sm:text-sm text-gray-500 italic">Select branch, semester, and section to view study materials.</div>
               ) : materials.length === 0 ? (
                 <div className="text-center py-10 text-xs sm:text-sm text-gray-500">No study materials found for the selected criteria.</div>
