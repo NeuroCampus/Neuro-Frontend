@@ -12,6 +12,7 @@ import { getFullStudentProfile } from "@/utils/student_api";
 import { useStudentProfileUpdateMutation } from "@/hooks/useApiQueries";
 import { useFileUpload } from "../../hooks/useOptimizations";
 import { Progress } from "../ui/progress";
+import { SkeletonForm } from "../ui/skeleton";
 import { showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
 import { API_ENDPOINT } from "../../utils/config";
 import { fetchWithTokenRefresh } from "../../utils/authService";
@@ -57,6 +58,7 @@ const StudentProfile: React.FC = () => {
 
   const [editing, setEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'academic' | 'face' | 'personal'>('profile');
+  const [loading, setLoading] = useState(true);
 
   // password dialog
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
@@ -139,7 +141,7 @@ const StudentProfile: React.FC = () => {
       }
     };
 
-    fetchProfile();
+    fetchProfile().finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -228,6 +230,14 @@ const StudentProfile: React.FC = () => {
       else showErrorAlert('Unable to change password', j.message || 'Failed to change password');
     } catch (err) { console.error(err); showErrorAlert('Unable to change password','Network error'); }
   };
+
+  if (loading) {
+    return (
+      <div className={`min-h-screen p-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50'}`}>
+        <SkeletonForm />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex justify-center items-start">

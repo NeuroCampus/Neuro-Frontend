@@ -24,6 +24,7 @@ import { useStudentCertificatesQuery, useStudentCertificateUploadMutation } from
 import { useTheme } from "@/context/ThemeContext";
 import { useFileUpload, useFormValidation, validationRules } from "@/hooks/useOptimizations";
 import { Progress } from "../ui/progress";
+import { SkeletonTable } from "../ui/skeleton";
 
 // Mock data - replace with actual API data
 const mockCertificates = [
@@ -192,7 +193,7 @@ const CertificatesManagement = () => {
             <div className="space-y-4">
               <h3 className={`font-medium mt-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Uploaded Certificates</h3>
               {isLoading ? (
-                <div className="text-center py-4">Loading certificates...</div>
+                <SkeletonTable rows={3} cols={3} />
               ) : certificates.length > 0 ? (
                 <div className="grid gap-4">
                   {certificates.map((cert) => (

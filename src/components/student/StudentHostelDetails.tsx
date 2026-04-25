@@ -21,6 +21,7 @@ import {
   FaCheckCircle,
   FaExclamationTriangle,
 } from 'react-icons/fa';
+import { SkeletonCard, SkeletonList } from '../ui/skeleton';
 
 type Warden = {
   id?: number;
@@ -270,13 +271,10 @@ const StudentHostelDetails: React.FC = () => {
   // ── Loading skeleton ───────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className={`space-y-4 p-4 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>
-        {[...Array(3)].map((_, i) => (
-          <div
-            key={i}
-            className={`h-28 rounded-xl animate-pulse ${theme === 'dark' ? 'bg-card' : 'bg-gray-100'}`}
-          />
-        ))}
+      <div className={`space-y-4 p-4 ${theme === 'dark' ? 'bg-background text-gray-200' : 'bg-gray-50 text-gray-900'}`}>
+        <SkeletonCard className="h-28" />
+        <SkeletonCard className="h-28" />
+        <SkeletonCard className="h-28" />
       </div>
     );
   }
@@ -507,9 +505,7 @@ const StudentHostelDetails: React.FC = () => {
             </div>
 
             {loadingIssues ? (
-              <div className="flex items-center justify-center py-8">
-                <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Loading issues...</p>
-              </div>
+              <SkeletonList items={3} />
             ) : myIssues.length === 0 ? (
               <div className={`py-8 text-center rounded-lg border-2 border-dashed ${theme === 'dark' ? 'border-border bg-slate-900/30' : 'border-gray-200 bg-gray-50'}`}>
                 <FaExclamationCircle className={`w-10 h-10 mx-auto mb-2 opacity-50 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} />

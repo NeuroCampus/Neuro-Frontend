@@ -20,6 +20,7 @@ import {
   getSections, 
   getAllStudyMaterials 
 } from "@/utils/student_api";
+import { SkeletonList } from "../ui/skeleton";
 
 interface StudyMaterial {
   id: number;
@@ -70,6 +71,7 @@ const StudyMaterialsStudent = () => {
   const [semesters, setSemesters] = useState<{ id: string; number: number }[]>([]);
   const [sections, setSections] = useState<{ id: string; name: string }[]>([]);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const loadBranches = async () => {
@@ -122,6 +124,7 @@ const StudyMaterialsStudent = () => {
   }, [selectedBranch, selectedSemester]);
 
   const loadMaterials = async () => {
+    setLoading(true);
     const resp = await getAllStudyMaterials(selectedBranch === 'All Branches' ? undefined : selectedBranch, selectedSemester === 'All Semesters' ? undefined : selectedSemester, selectedSection === 'All Sections' ? undefined : selectedSection, searchQuery || undefined);
     if (resp && resp.success && Array.isArray(resp.data?.results || resp.data)) {
       setMaterials(resp.data.results || resp.data || []);
@@ -131,6 +134,7 @@ const StudyMaterialsStudent = () => {
       setMaterials([]);
     }
     setHasSearched(true);
+    setLoading(false);
   };
 
   // Auto-load materials when all filters are selected
@@ -219,7 +223,9 @@ const StudyMaterialsStudent = () => {
               <div>Action</div>
             </div>
             <div className="space-y-1">
-              {!hasSearched ? (
+              {loading ? (
+                <SkeletonList items={5} />
+              ) : !hasSearched ? (
                 <div className="text-center py-10 text-xs sm:text-sm text-gray-500 italic">Select branch, semester, and section to view study materials.</div>
               ) : materials.length === 0 ? (
                 <div className="text-center py-10 text-xs sm:text-sm text-gray-500">No study materials found for the selected criteria.</div>

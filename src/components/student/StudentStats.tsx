@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui
 import DashboardCard from "../common/DashboardCard";
 import { Activity, BookOpen, Calendar, Clock } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
+import { SkeletonStatsGrid } from "../ui/skeleton";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
@@ -52,8 +53,8 @@ const StudentStats = () => {
 
   if (loading) {
     return (
-      <div className="w-full h-48 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="space-y-6">
+        <SkeletonStatsGrid items={4} />
       </div>
     );
   }
