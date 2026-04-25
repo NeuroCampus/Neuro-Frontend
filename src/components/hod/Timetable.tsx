@@ -860,7 +860,7 @@ const Timetable = () => {
           <div className="flex space-x-2">
             <Button
               variant="outline"
-              className="flex items-center gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+              className="flex items-center gap-2 bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
               onClick={handleExportPDF}
             >
               <DownloadIcon className="w-4 h-4" />
@@ -868,7 +868,7 @@ const Timetable = () => {
             </Button>
             <Button
               variant="outline"
-              className="flex items-center gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+              className="flex items-center gap-2 bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
               onClick={handleEdit}
             >
               <EditIcon className="w-4 h-4" /> {state.isEditing ? "Save Edit" : "Edit"}

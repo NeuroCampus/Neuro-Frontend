@@ -491,7 +491,7 @@ const StudyMaterials = () => {
         <h1 className="text-2xl font-semibold leading-none tracking-tight text-gray-900">Study Materials</h1>
         <Button
           onClick={() => setShowUploadModal(true)}
-          className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-1 transition-all duration-200 ease-in-out transform hover:scale-105 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white ${theme === 'dark' ? 'shadow-lg shadow-[#a259ff]/20' : 'shadow-md'}`}
+          className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-1 transition-all duration-200 ease-in-out transform hover:scale-105 bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white ${theme === 'dark' ? 'shadow-lg shadow-primary/20' : 'shadow-md'}`}
           disabled={uploading}
         >
           <UploadCloud size={16} />
@@ -743,7 +743,7 @@ const StudyMaterials = () => {
                 className={`
                   relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200
                   ${dragActive 
-                    ? 'border-[#a259ff] bg-[#a259ff]/10 scale-[1.02]' 
+                    ? 'border-primary bg-primary/10 scale-[1.02]' 
                     : theme === 'dark' ? 'border-border bg-background/50' : 'border-gray-300 bg-gray-50'
                   }
                   ${file ? 'border-green-500 bg-green-500/5' : ''}
@@ -786,7 +786,7 @@ const StudyMaterials = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => document.getElementById('study-material-file')?.click()}
-                      className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:text-white"
+                      className="bg-primary text-white border-primary hover:bg-primary/90 hover:text-white"
                     >
                       Select File
                     </Button>
@@ -818,7 +818,7 @@ const StudyMaterials = () => {
             <Button
               onClick={handleUpload}
               disabled={uploading || !file || !title || !branchId || !semesterId || !subjectId}
-              className="bg-[#a259ff] text-white hover:bg-[#8a4dde] min-w-[120px]"
+              className="bg-primary text-white hover:bg-primary/90 min-w-[120px]"
             >
               {uploading ? (
                 <>

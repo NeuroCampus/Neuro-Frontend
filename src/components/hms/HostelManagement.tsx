@@ -161,7 +161,7 @@ const HostelManagement: React.FC = () => {
               <Button onClick={() => {
                 setEditingHostel(null);
                 setFormData({ name: '', gender: 'M', warden: null, caretaker: null });
-              }} className="bg-[#a259ff] hover:bg-[#a259ff]/90">
+              }} className="bg-primary hover:bg-primary/90">
                 Add Hostel
               </Button>
             </DialogTrigger>
@@ -221,7 +221,7 @@ const HostelManagement: React.FC = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button type="submit" className="bg-[#a259ff] hover:bg-[#a259ff]/90">{editingHostel ? 'Update' : 'Create'}</Button>
+                <Button type="submit" className="bg-primary hover:bg-primary/90">{editingHostel ? 'Update' : 'Create'}</Button>
               </form>
             </DialogContent>
           </Dialog>

@@ -339,7 +339,7 @@ const RoomManagement: React.FC = () => {
                     vacant: true, 
                     hostel: selectedHostel || 0 
                   });
-                }} className="bg-[#a259ff] hover:bg-[#a259ff]/90">
+                }} className="bg-primary hover:bg-primary/90">
                   <Plus className="w-4 h-4 mr-2" /> Add Room
                 </Button>
               </DialogTrigger>
@@ -460,7 +460,7 @@ const RoomManagement: React.FC = () => {
                   {/* Room Capacity Information - Show when editing a room */}
                   {editingRoom && (
                     <div className="border-t pt-4 mt-4">
-                      <h3 className="font-semibold text-sm mb-3 text-[#a259ff]">Room Capacity</h3>
+                      <h3 className="font-semibold text-sm mb-3 text-primary">Room Capacity</h3>
                       <div className="bg-gray-50 dark:bg-gray-900/30 p-3 rounded space-y-2">
                         <div className="flex justify-between items-center">
                           <span className="text-xs text-gray-600 dark:text-gray-400">Room Type:</span>
@@ -521,21 +521,21 @@ const RoomManagement: React.FC = () => {
                         <div className="flex items-center justify-center py-6">
                           <div className="space-y-3 w-full text-center">
                             <div className="inline-block">
-                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#a259ff]"></div>
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                             </div>
                             <p className="text-xs text-gray-600 dark:text-gray-400">Loading student data...</p>
                           </div>
                         </div>
                       ) : roomStudents && roomStudents.length > 0 ? (
                         <>
-                          <h3 className="font-semibold text-sm mb-3 text-[#a259ff]">
+                          <h3 className="font-semibold text-sm mb-3 text-primary">
                             Assigned Student(s) ({roomStudents.length})
                           </h3>
                           <div className="space-y-3">
                             {roomStudents.map((student, index) => (
-                              <div key={student.id} className="bg-gray-50 dark:bg-gray-900/30 p-3 rounded border-l-4 border-[#a259ff]">
+                              <div key={student.id} className="bg-gray-50 dark:bg-gray-900/30 p-3 rounded border-l-4 border-primary">
                                 <div className="flex justify-between items-start mb-2">
-                                  <span className="text-xs font-semibold text-[#a259ff]">Student {index + 1}</span>
+                                  <span className="text-xs font-semibold text-primary">Student {index + 1}</span>
                                   {student.room_allotted && (
                                     <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded">
                                       Allotted
@@ -590,7 +590,7 @@ const RoomManagement: React.FC = () => {
                     </div>
                   )}
 
-                  <Button type="submit" className="w-full bg-[#a259ff] hover:bg-[#a259ff]/90">
+                  <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
                     {editingRoom ? 'Update' : 'Create'}
                   </Button>
                 </form>
@@ -612,7 +612,7 @@ const RoomManagement: React.FC = () => {
                 <TabsTrigger 
                   key={hostel.id} 
                   value={hostel.id.toString()}
-                  className="data-[state=active]:bg-[#a259ff] data-[state=active]:text-white"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-white"
                 >
                   {hostel.name}
                 </TabsTrigger>
@@ -631,7 +631,7 @@ const RoomManagement: React.FC = () => {
                 <div className="flex items-center justify-center py-12">
                   <div className="space-y-4 text-center">
                     <div className="inline-block">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#a259ff]"></div>
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
                     </div>
                     <p className="text-gray-600 dark:text-gray-400">Loading rooms...</p>
                   </div>

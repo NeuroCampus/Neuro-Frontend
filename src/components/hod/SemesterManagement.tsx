@@ -309,7 +309,7 @@ const SemesterManagement = () => {
             <Button
               onClick={() => openModal()}
               disabled={loading || !branchId}
-              className="text-foreground bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white justify-center ml-4"
+              className="text-foreground bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white justify-center ml-4"
             >
               + Add Semester
             </Button>
@@ -511,7 +511,7 @@ const SemesterManagement = () => {
           >
             Cancel
           </Button>
-          <Button onClick={handleSave} disabled={loading} className="w-full sm:w-auto bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]">
+          <Button onClick={handleSave} disabled={loading} className="w-full sm:w-auto bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90">
             {editingSemester ? "Save Changes" : "Add Semester"}
           </Button>
             </DialogFooter>
@@ -551,7 +551,7 @@ const SemesterManagement = () => {
         <Button onClick={closeSectionModal} disabled={loading} className={`w-full sm:w-auto ${theme === 'dark' ? 'bg-card border-border hover:bg-accent text-foreground' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-200'}`}>
           Cancel
         </Button>
-        <Button onClick={handleSaveSection} disabled={loading} className="w-full sm:w-auto bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]">
+        <Button onClick={handleSaveSection} disabled={loading} className="w-full sm:w-auto bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90">
           Add Section
         </Button>
           </DialogFooter>

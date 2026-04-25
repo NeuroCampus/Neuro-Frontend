@@ -9,7 +9,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import { PencilIcon, TrashIcon, PlusIcon, UserPlus2Icon,FileDownIcon } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { PencilIcon, TrashIcon, PlusIcon, UserPlus2Icon, FileDownIcon } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { manageBranches, manageUsers, getBranchesWithHODs } from "../../utils/admin_api";
@@ -60,47 +67,47 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
         // Check if the response has the expected structure
         const hasResults = response && typeof response === 'object' && 'results' in response;
         const dataSource = hasResults ? (response as any).results : (response as any);
-        
+
         if (dataSource && dataSource.success) {
           // Handle paginated response format
           const branchData = Array.isArray(dataSource.branches)
             ? dataSource.branches.map((b: any) => {
-                // Support both compact response (hod as string + hod_contact) and full object
-                let hodName: string | null = null;
-                let hodContact: string | null = null;
+              // Support both compact response (hod as string + hod_contact) and full object
+              let hodName: string | null = null;
+              let hodContact: string | null = null;
 
-                if (b.hod) {
-                  if (typeof b.hod === 'string') {
-                    hodName = b.hod;
-                    hodContact = b.hod_contact || null;
-                  } else if (typeof b.hod === 'object') {
-                    hodName = `${b.hod.first_name || ''} ${b.hod.last_name || ''}`.trim() || null;
-                    hodContact = b.hod.mobile_number || b.hod.email || null;
-                  }
+              if (b.hod) {
+                if (typeof b.hod === 'string') {
+                  hodName = b.hod;
+                  hodContact = b.hod_contact || null;
+                } else if (typeof b.hod === 'object') {
+                  hodName = `${b.hod.first_name || ''} ${b.hod.last_name || ''}`.trim() || null;
+                  hodContact = b.hod.mobile_number || b.hod.email || null;
                 }
+              }
 
-                return {
-                  id: b.id,
-                  name: b.name || "",
-                  branch_code: b.branch_code || null,
-                  hod: hodName,
-                  hod_contact: hodContact || (b.hod ? "--" : null),
-                };
-              })
+              return {
+                id: b.id,
+                name: b.name || "",
+                branch_code: b.branch_code || null,
+                hod: hodName,
+                hod_contact: hodContact || (b.hod ? "--" : null),
+              };
+            })
             : [];
           setBranches(branchData);
 
           // Process HODs data
           const hodData = Array.isArray(dataSource.hods)
             ? dataSource.hods.map((u: any) => ({
-                id: u.id,
-                username: u.username,
-                email: u.email,
-                role: "hod",
-                first_name: u.first_name,
-                last_name: u.last_name,
-                mobile_number: u.mobile_number,
-              }))
+              id: u.id,
+              username: u.username,
+              email: u.email,
+              role: "hod",
+              first_name: u.first_name,
+              last_name: u.last_name,
+              mobile_number: u.mobile_number,
+            }))
             : [];
           setUsers(hodData);
 
@@ -122,32 +129,32 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
 
   const filteredBranches = Array.isArray(branches)
     ? branches
-        .filter((branch) =>
-          normalize(branch?.name || "").includes(normalize(filter))
-        )
-        .sort((a, b) => {
-          const aName = normalize(a.name || "");
-          const bName = normalize(b.name || "");
-          const s = normalize(filter);
+      .filter((branch) =>
+        normalize(branch?.name || "").includes(normalize(filter))
+      )
+      .sort((a, b) => {
+        const aName = normalize(a.name || "");
+        const bName = normalize(b.name || "");
+        const s = normalize(filter);
 
-          // 1. Exact match first
-          if (aName === s && bName !== s) return -1;
-          if (bName === s && aName !== s) return 1;
+        // 1. Exact match first
+        if (aName === s && bName !== s) return -1;
+        if (bName === s && aName !== s) return 1;
 
-          // 2. StartsWith gets higher priority
-          const aStarts = aName.startsWith(s);
-          const bStarts = bName.startsWith(s);
-          if (aStarts && !bStarts) return -1;
-          if (bStarts && !aStarts) return 1;
+        // 2. StartsWith gets higher priority
+        const aStarts = aName.startsWith(s);
+        const bStarts = bName.startsWith(s);
+        if (aStarts && !bStarts) return -1;
+        if (bStarts && !aStarts) return 1;
 
-          // 3. Earlier occurrence of search string is better
-          const aIndex = aName.indexOf(s);
-          const bIndex = bName.indexOf(s);
-          if (aIndex !== bIndex) return aIndex - bIndex;
+        // 3. Earlier occurrence of search string is better
+        const aIndex = aName.indexOf(s);
+        const bIndex = bName.indexOf(s);
+        if (aIndex !== bIndex) return aIndex - bIndex;
 
-          // 4. Shorter name is better
-          return aName.length - bName.length;
-        })
+        // 4. Shorter name is better
+        return aName.length - bName.length;
+      })
     : [];
 
   const unassignedHods = users.filter(
@@ -212,10 +219,10 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
       setLoading(true);
       try {
         const response = await manageBranches(
-          { 
-            name: trimmedName, 
+          {
+            name: trimmedName,
             branch_code: trimmedCode || null,
-            hod_id: editData.hod ? users.find((u) => `${u.first_name} ${u.last_name}`.trim() === editData.hod)?.id?.toString() : null 
+            hod_id: editData.hod ? users.find((u) => `${u.first_name} ${u.last_name}`.trim() === editData.hod)?.id?.toString() : null
           },
           editData.id,
           "PUT"
@@ -251,7 +258,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
       // Check if the response has the expected structure
       const hasResults = response && typeof response === 'object' && 'results' in response;
       const dataSource = hasResults ? (response as any).results : (response as any);
-      
+
       if (dataSource && dataSource.success) {
         setBranches(branches.filter((b) => b.id !== deleteId));
         setDeleteId(null);
@@ -336,16 +343,16 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
           const updatedBranchResponse = await manageBranches();
           const hasUpdatedResults = updatedBranchResponse && typeof updatedBranchResponse === 'object' && 'results' in updatedBranchResponse;
           const updatedDataSource = hasUpdatedResults ? (updatedBranchResponse as any).results : (updatedBranchResponse as any);
-          
+
           if (updatedDataSource && updatedDataSource.success) {
             const branchData = Array.isArray(updatedDataSource.branches)
               ? updatedDataSource.branches.map((b: any) => ({
-                  id: b.id,
-                  name: b.name || "",
-                  branch_code: b.branch_code || null,
-                  hod: b.hod ? b.hod.username : null,
-                  hod_contact: b.hod ? (b.hod.mobile_number || b.hod.email || "--") : null,
-                }))
+                id: b.id,
+                name: b.name || "",
+                branch_code: b.branch_code || null,
+                hod: b.hod ? b.hod.username : null,
+                hod_contact: b.hod ? (b.hod.mobile_number || b.hod.email || "--") : null,
+              }))
               : [];
             setBranches(branchData);
           }
@@ -386,10 +393,10 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
       // Check if the response has the expected structure
       const hasResults = response && typeof response === 'object' && 'results' in response;
       const dataSource = hasResults ? (response as any).results : (response as any);
-      
+
       if (dataSource && dataSource.success) {
-        setBranches(branches.map((b) => (b.id === selectedBranchId ? { 
-          ...b, 
+        setBranches(branches.map((b) => (b.id === selectedBranchId ? {
+          ...b,
           hod: users.find((u) => u.id === Number(newHodId)) ? `${users.find((u) => u.id === Number(newHodId))!.first_name} ${users.find((u) => u.id === Number(newHodId))!.last_name}`.trim() : null,
           hod_contact: users.find((u) => u.id === Number(newHodId)) ? (users.find((u) => u.id === Number(newHodId))!.mobile_number || users.find((u) => u.id === Number(newHodId))!.email || "--") : null
         } : b)));
@@ -447,7 +454,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
           <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
             <Button
               size="sm"
-              className="flex items-center justify-center gap-1 text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-sm w-full md:w-auto"
+              className="flex items-center justify-center gap-1 w-full md:w-auto"
               onClick={() => setIsAddDialogOpen(true)}
               disabled={loading}
             >
@@ -456,7 +463,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
 
             <Button
               size="sm"
-              className="flex items-center justify-center gap-1 text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-sm w-full md:w-auto"
+              className="flex items-center justify-center gap-1 w-full md:w-auto"
               onClick={() => setIsAssignDialogOpen(true)}
               disabled={loading}
             >
@@ -465,7 +472,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
 
             <Button
               size="sm"
-              className="flex items-center justify-center gap-1 text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-sm w-full md:w-auto"
+              className="flex items-center justify-center gap-1 w-full md:w-auto"
               onClick={exportToPDF}
               disabled={loading}
             >
@@ -483,141 +490,146 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
               className={theme === 'dark' ? 'w-full sm:w-64 bg-card text-foreground py-1' : 'w-full sm:w-64 bg-white text-gray-900 py-1'}
             />
           </div>
-            <table className="w-full text-xs md:text-base text-left table-fixed">
-              <thead className={`border-b ${theme === 'dark' ? 'border-border bg-card text-foreground' : 'border-gray-200 bg-gray-100 text-gray-900'}`}>
-                <tr>
+          <table className="w-full text-xs md:text-base text-left table-fixed">
+            <thead className={`border-b ${theme === 'dark' ? 'border-border bg-card text-foreground' : 'border-gray-200 bg-gray-100 text-gray-900'}`}>
+              <tr>
                 <th className="py-2 px-2 text-left">Branch</th>
                 <th className="py-2 px-2 hidden sm:table-cell">Branch Code</th>
                 <th className="py-2 px-2">Assigned HOD</th>
                 <th className="py-2 px-2 hidden sm:table-cell">HOD Contact No</th>
                 <th className="py-2 px-2 text-right w-20">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredBranches.map((branch) => (
-                  <tr
-                    key={branch.id}
-                    className={`border-b transition-colors duration-200 ${
-                      theme === 'dark' 
-                        ? 'border-border hover:bg-accent text-foreground' 
-                        : 'border-gray-200 hover:bg-gray-50 text-gray-900'
+              </tr>
+            </thead>
+            <tbody>
+              {filteredBranches.map((branch) => (
+                <tr
+                  key={branch.id}
+                  className={`border-b transition-colors duration-200 ${theme === 'dark'
+                      ? 'border-border hover:bg-accent text-foreground'
+                      : 'border-gray-200 hover:bg-gray-50 text-gray-900'
                     }`}
-                  >
-                  
-                    {/* Branch Name column */}
-                    <td className="py-3 pr-2">
-                      {editingId === branch.id ? (
-                        <select
-                          name="name"
-                          value={editData?.name || ""}
-                          onChange={handleEditChange}
-                          className={theme === 'dark' ? 'bg-card text-foreground px-2 py-1 rounded border border-border w-full' : 'bg-white text-gray-900 px-2 py-1 rounded border border-gray-300 w-full'}
-                        >
+                >
+
+                  {/* Branch Name column */}
+                  <td className="py-3 pr-2">
+                    {editingId === branch.id ? (
+                      <Select
+                        value={editData?.name || ""}
+                        onValueChange={(val) => setEditData(prev => prev ? { ...prev, name: val } : null)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select Branch" />
+                        </SelectTrigger>
+                        <SelectContent>
                           {branches.map((b) => (
-                            <option className={theme === 'dark' ? 'text-foreground bg-card' : 'text-gray-900 bg-white'} key={b.id} value={b.name}>
+                            <SelectItem key={b.id} value={b.name}>
                               {b.name}
-                            </option>
+                            </SelectItem>
                           ))}
-                        </select>
-                      ) : (
-                        <div className="break-words whitespace-normal">{branch.name}</div>
-                      )}
-                    </td>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="break-words whitespace-normal">{branch.name}</div>
+                    )}
+                  </td>
 
-                    {/* Branch Code column */}
-                    <td className="py-3 pr-2 hidden sm:table-cell">
-                      {editingId === branch.id ? (
-                        <Input
-                          name="branch_code"
-                          value={editData?.branch_code || ""}
-                          onChange={handleEditChange}
-                          placeholder="Branch Code"
-                          className={theme === 'dark' ? 'bg-card text-foreground border border-border w-full' : 'bg-white text-gray-900 border border-gray-300 w-full'}
-                        />
-                      ) : (
-                        branch.branch_code || "--"
-                      )}
-                    </td>
+                  {/* Branch Code column */}
+                  <td className="py-3 pr-2 hidden sm:table-cell">
+                    {editingId === branch.id ? (
+                      <Input
+                        name="branch_code"
+                        value={editData?.branch_code || ""}
+                        onChange={handleEditChange}
+                        placeholder="Branch Code"
+                        className={theme === 'dark' ? 'bg-card text-foreground border border-border w-full' : 'bg-white text-gray-900 border border-gray-300 w-full'}
+                      />
+                    ) : (
+                      branch.branch_code || "--"
+                    )}
+                  </td>
 
-                    {/* HOD column */}
-                    <td className="py-3">
-                      {editingId === branch.id ? (
-                        <select
-                          name="hod"
-                          value={editData?.hod || ""}
-                          onChange={handleEditChange}
-                          className={theme === 'dark' ? 'bg-card text-foreground border border-border px-2 py-1 rounded w-full' : 'bg-white text-gray-900 border border-gray-300 px-2 py-1 rounded w-full'}
-                        >
-                          <option value="" className={theme === 'dark' ? 'text-foreground bg-card' : 'text-gray-900 bg-white'}>-- Select HOD --</option>
+                  {/* HOD column */}
+                  <td className="py-3">
+                    {editingId === branch.id ? (
+                      <Select
+                        value={editData?.hod || ""}
+                        onValueChange={(val) => setEditData(prev => prev ? { ...prev, hod: val } : null)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select HOD" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">-- Select HOD --</SelectItem>
                           {users.map((u) => (
-                            <option className={theme === 'dark' ? 'text-foreground bg-card' : 'text-gray-900 bg-white'} key={u.id} value={`${u.first_name} ${u.last_name}`.trim()}>
+                            <SelectItem key={u.id} value={`${u.first_name} ${u.last_name}`.trim()}>
                               {`${u.first_name} ${u.last_name}`.trim()}
-                            </option>
+                            </SelectItem>
                           ))}
-                        </select>
-                      ) : (
-                        <div className="break-words whitespace-normal">{branch.hod || "--"}</div>
-                      )}
-                    </td>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="break-words whitespace-normal">{branch.hod || "--"}</div>
+                    )}
+                  </td>
 
-                    {/* HOD Contact column */}
-                    <td className="py-3 hidden sm:table-cell">
-                      <div className="break-words whitespace-normal">{branch.hod_contact || "--"}</div>
-                    </td>
+                  {/* HOD Contact column */}
+                  <td className="py-3 hidden sm:table-cell">
+                    <div className="break-words whitespace-normal">{branch.hod_contact || "--"}</div>
+                  </td>
 
-                    {/* Actions column */}
-                    <td className="py-3 text-right space-x-2 px-2 w-20 align-top">
-                      {editingId === branch.id ? (
-                        <>
-                          <Button
-                            size="sm"
-                            className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white px-2 py-1 text-xs"
-                            onClick={saveEdit}
-                            disabled={loading}
-                          >
-                            {loading ? "Saving..." : "Save"}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setEditingId(null);
-                              setEditData(null);
-                            }}
-                            disabled={loading}
-                            className={theme === 'dark' ? 'hover:bg-accent px-2 py-1 text-xs' : 'hover:bg-gray-100 px-2 py-1 text-xs'}
-                          >
-                            Cancel
-                          </Button>
-                        </>
-                      ) : (
-                        <div className="flex items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(branch)}
-                            disabled={loading}
-                            className={theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-100'}
-                          >
-                            <PencilIcon className={theme === 'dark' ? 'w-4 h-4 text-primary' : 'w-4 h-4 text-blue-600'} />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => confirmDelete(branch.id)}
-                            disabled={loading}
-                            className={theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-100'}
-                          >
-                            <TrashIcon className={theme === 'dark' ? 'w-4 h-4 text-destructive' : 'w-4 h-4 text-red-600'} />
-                          </Button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+                  {/* Actions column */}
+                  <td className="py-3 text-right space-x-2 px-2 w-20 align-top">
+                    {editingId === branch.id ? (
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={saveEdit}
+                          disabled={loading}
+                          className="px-2 py-1 text-xs"
+                        >
+                          {loading ? "Saving..." : "Save"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditingId(null);
+                            setEditData(null);
+                          }}
+                          disabled={loading}
+                          className={theme === 'dark' ? 'hover:bg-accent px-2 py-1 text-xs' : 'hover:bg-gray-100 px-2 py-1 text-xs'}
+                        >
+                          Cancel
+                        </Button>
+                      </>
+                    ) : (
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(branch)}
+                          disabled={loading}
+                          className={theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-100'}
+                        >
+                          <PencilIcon className={theme === 'dark' ? 'w-4 h-4 text-primary' : 'w-4 h-4 text-blue-600'} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => confirmDelete(branch.id)}
+                          disabled={loading}
+                          className={theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-100'}
+                        >
+                          <TrashIcon className={theme === 'dark' ? 'w-4 h-4 text-destructive' : 'w-4 h-4 text-red-600'} />
+                        </Button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
 
-            </table>
+          </table>
         </CardContent>
       </Card>
 
@@ -630,19 +642,19 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
           <DialogHeader><DialogTitle>Confirm Deletion</DialogTitle></DialogHeader>
           <p>Are you sure you want to delete this branch? This action cannot be undone.</p>
           <DialogFooter className="flex flex-col md:flex-row md:justify-end gap-2 w-full">
-            <Button 
-              variant="outline" 
-              className={theme === 'dark' 
-                ? 'text-foreground bg-card border border-border hover:bg-accent' 
-                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'} 
-              onClick={() => setDeleteId(null)} 
+            <Button
+              variant="outline"
+              className={theme === 'dark'
+                ? 'text-foreground bg-card border border-border hover:bg-accent'
+                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
+              onClick={() => setDeleteId(null)}
               disabled={loading}
             >
               Cancel
             </Button>
-            <Button 
-              variant="destructive" 
-              onClick={deleteBranch} 
+            <Button
+              variant="destructive"
+              onClick={deleteBranch}
               disabled={loading}
               className={theme === 'dark' ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 'bg-red-600 hover:bg-red-700 text-white'}
             >
@@ -660,33 +672,32 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
         }>
           <DialogHeader><DialogTitle>Add New Branch</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <Input 
-              className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'} 
-              placeholder="Branch Name" 
-              value={newBranch.name} 
-              onChange={(e) => setNewBranch({ ...newBranch, name: e.target.value })} 
+            <Input
+              className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}
+              placeholder="Branch Name"
+              value={newBranch.name}
+              onChange={(e) => setNewBranch({ ...newBranch, name: e.target.value })}
             />
-            <Input 
-              className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'} 
-              placeholder="Branch Code (e.g., CSE, ME)" 
-              value={newBranch.branch_code} 
-              onChange={(e) => setNewBranch({ ...newBranch, branch_code: e.target.value })} 
+            <Input
+              className={theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}
+              placeholder="Branch Code (e.g., CSE, ME)"
+              value={newBranch.branch_code}
+              onChange={(e) => setNewBranch({ ...newBranch, branch_code: e.target.value })}
             />
           </div>
           <DialogFooter className="flex flex-col md:flex-row md:justify-end gap-2 w-full">
-            <Button 
-              className={theme === 'dark' 
-                ? 'text-foreground bg-card border border-border hover:bg-accent' 
-                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'} 
-              variant="outline" 
-              onClick={() => setIsAddDialogOpen(false)} 
+            <Button
+              className={theme === 'dark'
+                ? 'text-foreground bg-card border border-border hover:bg-accent'
+                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
+              variant="outline"
+              onClick={() => setIsAddDialogOpen(false)}
               disabled={loading}
             >
               Cancel
             </Button>
-            <Button 
-              className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white" 
-              onClick={handleAddBranch} 
+            <Button
+              onClick={handleAddBranch}
               disabled={loading}
             >
               {loading ? "Adding..." : "Add"}
@@ -707,49 +718,51 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
 
           <div className="space-y-4">
             {/* Branch Dropdown */}
-            <select
-              value={selectedBranchId || ""}
-              onChange={(e) => setSelectedBranchId(Number(e.target.value))}
-              className={theme === 'dark' ? 'w-full border border-border rounded px-3 py-2 text-sm bg-card text-foreground' : 'w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white text-gray-900'}
+            <Select
+              value={selectedBranchId?.toString() || ""}
+              onValueChange={(val) => setSelectedBranchId(Number(val))}
             >
-              <option value="" disabled>
-                Select a branch
-              </option>
-              {branches.map((branch) => (
-                <option
-                  key={branch.id}
-                  value={branch.id}
-                >
-                  {branch.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a branch" />
+              </SelectTrigger>
+              <SelectContent>
+                {branches.map((branch) => (
+                  <SelectItem
+                    key={branch.id}
+                    value={branch.id.toString()}
+                  >
+                    {branch.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             {/* HOD Dropdown */}
-            <select
+            <Select
               value={newHodId}
-              onChange={(e) => setNewHodId(e.target.value)}
-              className={theme === 'dark' ? 'w-full border border-border rounded px-3 py-2 text-sm bg-card text-foreground' : 'w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white text-gray-900'}
+              onValueChange={setNewHodId}
             >
-              <option value="" disabled>
-                Select HOD
-              </option>
-              {users.map((user) => (
-                <option
-                  key={user.id}
-                  value={user.id}
-                >
-                  {`${user.first_name} ${user.last_name}`.trim()}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select HOD" />
+              </SelectTrigger>
+              <SelectContent>
+                {users.map((user) => (
+                  <SelectItem
+                    key={user.id}
+                    value={user.id.toString()}
+                  >
+                    {`${user.first_name} ${user.last_name}`.trim()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <DialogFooter className="flex flex-col md:flex-row md:justify-end gap-2 w-full">
             <Button
               variant="outline"
-              className={theme === 'dark' 
-                ? 'text-foreground bg-card border border-border hover:bg-accent' 
+              className={theme === 'dark'
+                ? 'text-foreground bg-card border border-border hover:bg-accent'
                 : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
               onClick={() => setIsAssignDialogOpen(false)}
               disabled={loading}
@@ -758,7 +771,6 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
             </Button>
             <Button
               onClick={handleAssignHod}
-              className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
               disabled={loading || !selectedBranchId || !newHodId}
             >
               {loading ? "Assigning..." : "Assign"}

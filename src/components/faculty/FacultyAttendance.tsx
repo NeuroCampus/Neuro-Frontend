@@ -517,8 +517,8 @@ const FacultyAttendance = () => {
                     disabled={historyLoading || historyPage === 1} 
                     className={`font-medium transition-all duration-200 ${
                       (historyLoading || historyPage === 1) 
-                        ? 'bg-[#a259ff] opacity-50 text-white cursor-not-allowed' 
-                        : 'bg-[#a259ff] text-white hover:bg-[#8a4dde] shadow-sm'
+                        ? 'bg-primary opacity-50 text-white cursor-not-allowed' 
+                        : 'bg-primary text-white hover:bg-primary/90 shadow-sm'
                     }`}
                   >
                     Previous
@@ -540,7 +540,7 @@ const FacultyAttendance = () => {
                             variant={p === current ? undefined : 'ghost'}
                             onClick={() => fetchHistoryPage(p)}
                             disabled={historyLoading}
-                            className={`px-2 py-1 text-xs font-semibold ${p === current ? 'bg-white text-[#a259ff]' : 'bg-white text-gray-600 hover:text-[#a259ff] dark:bg-gray-700'}`}
+                            className={`px-2 py-1 text-xs font-semibold ${p === current ? 'bg-white text-primary' : 'bg-white text-gray-600 hover:text-primary dark:bg-gray-700'}`}
                           >
                             {p}
                           </Button>
@@ -555,8 +555,8 @@ const FacultyAttendance = () => {
                     disabled={historyLoading || historyPage === historyTotalPages} 
                     className={`font-medium transition-all duration-200 ${
                       (historyLoading || historyPage === historyTotalPages) 
-                        ? 'bg-[#a259ff] opacity-50 text-white cursor-not-allowed' 
-                        : 'bg-[#a259ff] text-white hover:bg-[#8a4dde] shadow-sm'
+                        ? 'bg-primary opacity-50 text-white cursor-not-allowed' 
+                        : 'bg-primary text-white hover:bg-primary/90 shadow-sm'
                     }`}
                   >
                     Next

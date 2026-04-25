@@ -361,7 +361,7 @@ export default function PublishResultsRevalMakeup() {
         <div className="flex items-end">
           <Button
             onClick={handleCreate}
-            className="w-full bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]"
+            className="w-full bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90"
           >
             Create Upload Batch
           </Button>
@@ -379,7 +379,7 @@ export default function PublishResultsRevalMakeup() {
             {upload.is_published ? (
               <Button onClick={() => setUnpublishModalOpen(true)} variant="secondary">Unpublish</Button>
             ) : (
-              <Button className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={() => setPublishModalOpen(true)}>Publish Results</Button>
+              <Button className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90" onClick={() => setPublishModalOpen(true)}>Publish Results</Button>
             )}
           </div>
           </CardContent>
@@ -628,7 +628,7 @@ export default function PublishResultsRevalMakeup() {
             <div className="flex items-center gap-3 mr-auto">
               <Button
                 size="sm"
-                className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] disabled:opacity-50"
+                className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 disabled:opacity-50"
                 disabled={studentsPage <= 1}
                 onClick={() => {
                 if (!upload) return;
@@ -667,7 +667,7 @@ export default function PublishResultsRevalMakeup() {
 
               <Button
                 size="sm"
-                className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] disabled:opacity-50"
+                className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 disabled:opacity-50"
                 disabled={!studentsPagination?.next}
                 onClick={() => {
                 if (!upload) return;
@@ -678,7 +678,7 @@ export default function PublishResultsRevalMakeup() {
               </Button>
             </div>
 
-            <Button className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={handleSave} disabled={saving || upload?.is_published}>{saving ? 'Saving...' : 'Save Marks'}</Button>
+            <Button className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90" onClick={handleSave} disabled={saving || upload?.is_published}>{saving ? 'Saving...' : 'Save Marks'}</Button>
           </div>
           </CardContent>
         </Card>

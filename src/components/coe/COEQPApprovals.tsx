@@ -636,7 +636,7 @@ const COEQPApprovals = () => {
               <>
                 <Button
                   onClick={() => qpDetail && printQP(qpDetail)}
-                  className="w-full sm:w-auto justify-center whitespace-normal text-center bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]"
+                  className="w-full sm:w-auto justify-center whitespace-normal text-center bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90"
                 >
                   Print
                 </Button>
@@ -669,7 +669,7 @@ const COEQPApprovals = () => {
                     });
                     doc.save(`qp-${qpDetail.subject}-${qpDetail.test_type}.pdf`);
                   }}
-                  className="w-full sm:w-auto justify-center whitespace-normal text-center bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]"
+                  className="w-full sm:w-auto justify-center whitespace-normal text-center bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90"
                 >
                   <Download className="w-4 h-4 mr-1" />
                   Download PDF

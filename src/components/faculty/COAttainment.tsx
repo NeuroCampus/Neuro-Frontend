@@ -375,14 +375,14 @@ const COAttainment = () => {
               <div className="lg:col-span-2 flex items-end gap-3 h-full">
                 <Button
                   onClick={handleExportPDF}
-                  className="flex-1 h-11 bg-[#a259ff] text-white hover:bg-[#8a4dde] shadow-md transition-all duration-200"
+                  className="flex-1 h-11 bg-primary text-white hover:bg-primary/90 shadow-md transition-all duration-200"
                 >
                   Download PDF Report
                 </Button>
                 <Button
                   onClick={handleExportCSV}
                   variant="outline"
-                  className="flex-1 h-11 border-[#a259ff] text-[#a259ff] hover:bg-[#a259ff]/10 shadow-sm"
+                  className="flex-1 h-11 border-primary text-primary hover:bg-primary/10 shadow-sm"
                 >
                   Export CSV
                 </Button>
@@ -408,7 +408,7 @@ const COAttainment = () => {
                   <CardContent className="p-6 space-y-6">
                     <div className={`p-6 rounded-2xl text-center border-2 ${theme === 'dark' ? 'bg-background/50 border-primary/20' : 'bg-white border-primary/10'} shadow-inner`}>
                       <p className="text-sm font-medium text-muted-foreground mb-2">Overall Course Attainment</p>
-                      <div className="text-5xl font-semibold text-[#a259ff] tracking-tight">
+                      <div className="text-5xl font-semibold text-primary tracking-tight">
                         {overallAttainment.toFixed(2)}
                       </div>
                       <div className={`mt-3 inline-flex items-center px-4 py-1.5 rounded-full text-sm font-bold ${overallAttainment >= 2.7 ? 'bg-green-500/10 text-green-500' : overallAttainment >= 2.0 ? 'bg-amber-500/10 text-amber-500' : 'bg-red-500/10 text-red-500'}`}>
@@ -429,7 +429,7 @@ const COAttainment = () => {
                             <span className="text-foreground/80">% of students &ge; {targetThreshold}% target</span>
                           </li>
                           <li className="flex items-center gap-3 pt-2 border-t border-border/50">
-                            <span className="w-6 h-6 rounded-lg bg-[#a259ff] text-white flex items-center justify-center font-bold text-xs">F</span>
+                            <span className="w-6 h-6 rounded-lg bg-primary text-white flex items-center justify-center font-bold text-xs">F</span>
                             <span className="font-medium text-foreground">(0.8 &times; Direct) + (0.2 &times; Indirect)</span>
                           </li>
                         </ul>
@@ -438,7 +438,7 @@ const COAttainment = () => {
 
                     <Button
                       onClick={handleCalculateFinalAttainment}
-                      className="w-full h-12 bg-[#a259ff] text-white hover:bg-[#8a4dde] shadow-lg shadow-primary/20 font-bold tracking-wide"
+                      className="w-full h-12 bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20 font-bold tracking-wide"
                     >
                       Recalculate Final Attainment
                     </Button>

@@ -351,7 +351,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       >
         <div className="flex items-center gap-3">
           <div
-            className={`w-12 h-12 rounded-lg flex items-center justify-center shadow-lg overflow-hidden border-2 border-[#a259ff] ${theme === 'dark' ? 'bg-white' : ''}`}
+            className={`w-12 h-12 rounded-lg flex items-center justify-center shadow-lg overflow-hidden border-2 border-primary ${theme === 'dark' ? 'bg-white' : ''}`}
             style={{ borderRadius: 8 }}
           >
             <img
@@ -375,7 +375,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
                 <div className="mt-1">
                   <span className={`text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full ${
                     orgPlan.toLowerCase() === 'advance' 
-                      ? 'bg-gradient-to-r from-[#a259ff] to-[#ff59f8] text-white' 
+                      ? 'bg-gradient-to-r from-primary to-[#ff59f8] text-white' 
                       : orgPlan.toLowerCase() === 'pro'
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-500 text-white'
@@ -409,7 +409,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
                 <Button
                   variant={activePage === item.page ? "default" : "ghost"}
                   className={`w-full justify-start gap-3 h-10 transition-all duration-200 ${activePage === item.page
-                      ? "bg-[#a259ff] hover:bg-[#a259ff]/90 text-white shadow-lg shadow-[#a259ff]/20"
+                      ? "bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20"
                       : theme === 'dark'
                         ? "text-muted-foreground hover:text-foreground hover:bg-accent"
                         : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"

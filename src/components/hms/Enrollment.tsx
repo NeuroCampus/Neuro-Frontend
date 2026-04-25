@@ -171,7 +171,7 @@ const Enrollment: React.FC = () => {
             {/* Warden-specific Fields */}
             {enrollmentType === 'warden' && (
               <div className="space-y-4 p-4 border-t pt-6 mt-6">
-                <h3 className="font-semibold text-[#a259ff]">Warden Details</h3>
+                <h3 className="font-semibold text-primary">Warden Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="designation">Designation</Label>
@@ -201,7 +201,7 @@ const Enrollment: React.FC = () => {
             {/* Caretaker-specific Fields */}
             {enrollmentType === 'caretaker' && (
               <div className="space-y-4 p-4 border-t pt-6 mt-6">
-                <h3 className="font-semibold text-[#a259ff]">Caretaker Details</h3>
+                <h3 className="font-semibold text-primary">Caretaker Details</h3>
                 <div>
                   <Label htmlFor="address">Address</Label>
                   <textarea
@@ -221,7 +221,7 @@ const Enrollment: React.FC = () => {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="bg-[#a259ff] hover:bg-[#a259ff]/90"
+                className="bg-primary hover:bg-primary/90"
               >
                 {isLoading ? 'Enrolling...' : `Enroll ${enrollmentType === 'warden' ? 'Warden' : 'Caretaker'}`}
               </Button>

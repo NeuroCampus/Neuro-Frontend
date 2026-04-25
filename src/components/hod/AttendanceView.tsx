@@ -389,7 +389,7 @@ const currentStudents = filteredStudents;  const handlePrev = () => {
 
           {/* Export Button */}
           <Button
-            className="ml-0 md:ml-4 flex items-center gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+            className="ml-0 md:ml-4 flex items-center gap-2 bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
             onClick={handleExportPDF}
           >
             <FileDown size={16} />
@@ -441,7 +441,7 @@ const currentStudents = filteredStudents;  const handlePrev = () => {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+                        className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
                         onClick={() => updateState({ selectedStudent: student })}
                       >
                         <Eye size={16} /> View Details
@@ -458,7 +458,7 @@ const currentStudents = filteredStudents;  const handlePrev = () => {
           <Button
             onClick={handlePrev}
             disabled={state.pagination.page === 1}
-            className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+            className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
           >
             Previous
           </Button>
@@ -468,7 +468,7 @@ const currentStudents = filteredStudents;  const handlePrev = () => {
           <Button
             onClick={handleNext}
             disabled={state.pagination.page === state.pagination.total_pages}
-            className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+            className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
           >
             Next
           </Button>

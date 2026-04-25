@@ -185,7 +185,7 @@ const MakeupExam = () => {
         disabled={loading}
         onClick={() => handleApplyClick(studentId, subjectId, subjectName)}
         variant="default"
-        className="text-xs sm:text-sm h-auto px-2 py-1 bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+        className="text-xs sm:text-sm h-auto px-2 py-1 bg-primary hover:bg-primary/90 text-white"
       >
         Apply
       </Button>
@@ -276,7 +276,7 @@ const MakeupExam = () => {
                 <Button
                   onClick={loadStudents}
                   disabled={loading}
-                  className="w-full px-3 py-2 text-xs sm:text-sm h-auto bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+                  className="w-full px-3 py-2 text-xs sm:text-sm h-auto bg-primary hover:bg-primary/90 text-white"
                 >
                   {loading ? 'Searching...' : 'Search'}
                 </Button>
@@ -418,7 +418,7 @@ const MakeupExam = () => {
                     setLoading(false);
                   }}
                   disabled={loading}
-                  className="text-xs sm:text-sm h-auto px-3 py-2 bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+                  className="text-xs sm:text-sm h-auto px-3 py-2 bg-primary hover:bg-primary/90 text-white"
                 >
                   {loading ? 'Processing...' : 'Pay & Apply'}
                 </Button>
@@ -441,7 +441,7 @@ const MakeupExam = () => {
             <Button variant="outline" onClick={() => setConfirmMakeup({ open: false })} className="text-xs sm:text-sm h-auto px-3 py-1">
               Cancel
             </Button>
-            <Button onClick={() => { setConfirmMakeup({ open: false }); handleApplyMakeup(); }} className="text-xs sm:text-sm h-auto px-3 py-1 bg-[#a259ff] hover:bg-[#8a4dde] text-white">
+            <Button onClick={() => { setConfirmMakeup({ open: false }); handleApplyMakeup(); }} className="text-xs sm:text-sm h-auto px-3 py-1 bg-primary hover:bg-primary/90 text-white">
               Confirm
             </Button>
           </DialogFooter>
@@ -456,7 +456,7 @@ const MakeupExam = () => {
           </DialogHeader>
           <p className="text-xs sm:text-sm">{messageModal.message}</p>
           <DialogFooter>
-            <Button onClick={() => setMessageModal({ open: false })} className="text-xs sm:text-sm h-auto px-3 py-1 bg-[#a259ff] hover:bg-[#8a4dde] text-white">
+            <Button onClick={() => setMessageModal({ open: false })} className="text-xs sm:text-sm h-auto px-3 py-1 bg-primary hover:bg-primary/90 text-white">
               OK
             </Button>
           </DialogFooter>
@@ -516,7 +516,7 @@ const MakeupExam = () => {
             </div>
           )}
           <DialogFooter>
-            <Button onClick={() => setViewModal({ open: false })} className="text-xs sm:text-sm h-auto px-3 py-1 bg-[#a259ff] hover:bg-[#8a4dde] text-white">
+            <Button onClick={() => setViewModal({ open: false })} className="text-xs sm:text-sm h-auto px-3 py-1 bg-primary hover:bg-primary/90 text-white">
               Close
             </Button>
           </DialogFooter>

@@ -546,7 +546,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                   <>
                     <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                       <Button
-                        className={`bg-[#a259ff] hover:bg-[#8a4dde] text-white font-semibold`}
+                        className={`bg-primary hover:bg-primary/90 text-white font-semibold`}
                         onClick={() => handlePaymentClick(0)}
                       >
                         <CreditCard className="h-4 w-4 mr-2" />
@@ -651,7 +651,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                             <Button
                               size="sm"
-                              className={`bg-[#a259ff] hover:bg-[#8a4dde] text-white font-semibold`}
+                              className={`bg-primary hover:bg-primary/90 text-white font-semibold`}
                               onClick={() => handlePaymentClick(invoice.id)}
                             >
                               <CreditCard className="h-3.5 w-3.5 mr-1" />
@@ -856,7 +856,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                     <Button
                       onClick={initiateStripePayment}
                       disabled={isProcessingPayment}
-                      className={`bg-[#a259ff] hover:bg-[#8a4dde] text-white w-full font-semibold py-6 text-base disabled:opacity-50`}
+                      className={`bg-primary hover:bg-primary/90 text-white w-full font-semibold py-6 text-base disabled:opacity-50`}
                     >
                       {isProcessingPayment ? (
                         <>
@@ -929,7 +929,7 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
                     <Button
                       onClick={initiateStripePayment}
                       disabled={isProcessingPayment || selectedComponents.size === 0}
-                      className={`bg-[#a259ff] hover:bg-[#8a4dde] text-white w-full font-semibold py-6 text-base disabled:opacity-50`}
+                      className={`bg-primary hover:bg-primary/90 text-white w-full font-semibold py-6 text-base disabled:opacity-50`}
                     >
                       {isProcessingPayment ? (
                         <>

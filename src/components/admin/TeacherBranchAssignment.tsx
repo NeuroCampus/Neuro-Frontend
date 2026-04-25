@@ -225,7 +225,7 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
             <div>
               <Button
                 onClick={() => setShowBranchDialog(true)}
-                className="flex items-center gap-2 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white"
+                className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white"
               >
                 <Building className="h-4 w-4" />
                 Assign Primary Branch
@@ -310,7 +310,7 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
                 size="sm"
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
-                className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white border-[#a259ff]"
+                className="bg-primary hover:bg-primary/90 text-white border-primary"
               >
                 Previous
               </Button>
@@ -327,7 +327,7 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
                 size="sm"
                 onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage === totalPages}
-                className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white border-[#a259ff]"
+                className="bg-primary hover:bg-primary/90 text-white border-primary"
               >
                 Next
               </Button>
@@ -385,7 +385,7 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
             <Button
               onClick={handleAssignPrimaryBranch}
               disabled={!selectedTeacher || !selectedBranch}
-              className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white"
+              className="bg-primary hover:bg-primary/90 text-white"
             >
               Assign Branch
             </Button>

@@ -331,7 +331,7 @@ const StudentInfoScanner = () => {
               <Button
                 onClick={() => fetchStudentData()}
                 disabled={loading}
-                className="h-11 bg-[#a259ff] hover:bg-[#9147e0] text-white px-6 sm:px-8"
+                className="h-11 bg-primary hover:bg-[#9147e0] text-white px-6 sm:px-8"
               >
                 {loading ? (
                   <motion.div
@@ -423,7 +423,7 @@ const StudentInfoScanner = () => {
                   {!scanning ? (
                     <Button
                       onClick={startScanning}
-                      className="flex-1 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white"
+                      className="flex-1 bg-primary hover:bg-primary/90 text-white"
                     >
                       <Camera className="h-4 w-4 mr-2" />
                       Start Scanning
@@ -469,7 +469,7 @@ const StudentInfoScanner = () => {
           <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5 text-[#a259ff]" />
+                    <User className="h-5 w-5 text-primary" />
                     Basic Information
                   </CardTitle>
                 </CardHeader>
@@ -583,7 +583,7 @@ const StudentInfoScanner = () => {
           <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Phone className="h-5 w-5 text-[#a259ff]" />
+                    <Phone className="h-5 w-5 text-primary" />
                     Emergency Contacts
                   </CardTitle>
                 </CardHeader>
@@ -634,7 +634,7 @@ const StudentInfoScanner = () => {
           <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-[#a259ff]" />
+                    <Clock className="h-5 w-5 text-primary" />
                     Class Schedule
                   </CardTitle>
                 </CardHeader>
@@ -749,7 +749,7 @@ const StudentInfoScanner = () => {
           <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-[#a259ff]" />
+                    <TrendingUp className="h-5 w-5 text-primary" />
                     Attendance Overview
                   </CardTitle>
                 </CardHeader>
@@ -804,7 +804,7 @@ const StudentInfoScanner = () => {
           <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5 text-[#a259ff]" />
+                    <CreditCard className="h-5 w-5 text-primary" />
                     Fee Summary
                   </CardTitle>
                 </CardHeader>
@@ -854,7 +854,7 @@ const StudentInfoScanner = () => {
             <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <BookOpen className="h-5 w-5 text-[#a259ff]" />
+                      <BookOpen className="h-5 w-5 text-primary" />
                       Internal Marks
                     </CardTitle>
                   </CardHeader>
@@ -889,7 +889,7 @@ const StudentInfoScanner = () => {
               <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <BookOpen className="h-5 w-5 text-[#a259ff]" />
+                    <BookOpen className="h-5 w-5 text-primary" />
                     Registered Subjects
                   </CardTitle>
                 </CardHeader>
@@ -987,7 +987,7 @@ const StudentInfoScanner = () => {
                   {!faceScanning ? (
                     <Button
                       onClick={startFaceScanning}
-                      className="flex-1 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white"
+                      className="flex-1 bg-primary hover:bg-primary/90 text-white"
                     >
                       <Camera className="h-4 w-4 mr-2" />
                       Start Scanning

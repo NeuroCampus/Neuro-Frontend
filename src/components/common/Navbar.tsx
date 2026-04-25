@@ -212,14 +212,14 @@ const handleProfileClick = () => {
                   target.style.display = 'none';
                   const parent = target.parentElement;
                   if (parent) {
-                    parent.innerHTML = `<div class="w-full h-full bg-[#a259ff] text-white flex items-center justify-center font-semibold text-sm">
+                    parent.innerHTML = `<div class="w-full h-full bg-primary text-white flex items-center justify-center font-semibold text-sm">
                       ${user?.first_name?.[0] || role?.[0]?.toUpperCase()}
                     </div>`;
                   }
                 }}
               />
             ) : (
-              <div className="w-full h-full bg-[#a259ff] text-white flex items-center justify-center font-semibold text-sm">
+              <div className="w-full h-full bg-primary text-white flex items-center justify-center font-semibold text-sm">
                 {user?.first_name?.[0] || role?.[0]?.toUpperCase()}
               </div>
             )}

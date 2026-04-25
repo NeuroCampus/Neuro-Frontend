@@ -356,11 +356,11 @@ const FacultyProfile = () => {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap ml-auto">
-          <Button className="text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde]" onClick={() => { if (isEditing) { handleSave(); } else { setIsEditing(true); } }}>{isEditing ? 'Save' : 'Edit Profile'}</Button>
+          <Button className="text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-primary text-white border-primary hover:bg-primary/90" onClick={() => { if (isEditing) { handleSave(); } else { setIsEditing(true); } }}>{isEditing ? 'Save' : 'Edit Profile'}</Button>
           {isEditing && <button onClick={() => setIsEditing(false)} className={`text-sm px-3 sm:px-4 py-1.5 sm:py-2 border rounded-md transition-colors ${theme === 'dark' ? 'border-muted-foreground text-muted-foreground hover:border-foreground hover:text-foreground' : 'border-gray-600 text-gray-600 hover:border-gray-900 hover:text-gray-900'}`}>Cancel</button>}
           <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
             <DialogTrigger asChild>
-              <Button className="text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde]">Change Password</Button>
+              <Button className="text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-primary text-white border-primary hover:bg-primary/90">Change Password</Button>
             </DialogTrigger>
             <DialogContent ref={passwordDialogContentRef} className="w-[calc(100vw-1.5rem)] sm:w-full max-w-[420px] rounded-xl sm:rounded-2xl">
               <DialogHeader>
@@ -429,7 +429,7 @@ const FacultyProfile = () => {
                 </div>
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline" onClick={() => setShowPasswordDialog(false)}>Cancel</Button>
-                  <Button className="font-medium bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={handleChangePassword}>Change Password</Button>
+                  <Button className="font-medium bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90" onClick={handleChangePassword}>Change Password</Button>
                 </div>
               </div>
             </DialogContent>
@@ -442,7 +442,7 @@ const FacultyProfile = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-8 items-stretch">
           {/* Left column: avatar and basic */}
           <div className="col-span-1 flex flex-col items-center h-full">
-            <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#a259ff] text-white flex items-center justify-center text-lg sm:text-2xl font-semibold mb-3 sm:mb-4 mt-4 flex-shrink-0`}>
+            <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary text-white flex items-center justify-center text-lg sm:text-2xl font-semibold mb-3 sm:mb-4 mt-4 flex-shrink-0`}>
               {(formData.firstName && formData.firstName[0]) || ""}{(formData.lastName && formData.lastName[0]) || ""}
             </div>
             <div className="text-base sm:text-lg font-semibold text-center mb-1">{formData.firstName} {formData.lastName}</div>
@@ -472,9 +472,9 @@ const FacultyProfile = () => {
           {/* Right column: tabs and content */}
           <div className="col-span-1 sm:col-span-2 lg:col-span-3 w-full flex flex-col h-full">
             <div className="flex items-center gap-1 sm:gap-2 mb-3 sm:mb-4 md:mb-5 lg:mb-6 border-b pb-2 sm:pb-3 overflow-x-auto flex-shrink-0">
-              <button onClick={() => setActiveTab('personal')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'personal' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Personal</button>
-              <button onClick={() => setActiveTab('academic')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'academic' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Academic</button>
-              <button onClick={() => setActiveTab('contact')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'contact' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Contact</button>
+              <button onClick={() => setActiveTab('personal')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'personal' ? 'bg-primary text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Personal</button>
+              <button onClick={() => setActiveTab('academic')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'academic' ? 'bg-primary text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Academic</button>
+              <button onClick={() => setActiveTab('contact')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'contact' ? 'bg-primary text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Contact</button>
             </div>
 
             <div className={`p-3 sm:p-4 md:p-5 lg:p-6 rounded-lg border flex-1 ${theme === 'dark' ? 'bg-card border-input' : 'bg-gray-50 border-gray-200'}`}>

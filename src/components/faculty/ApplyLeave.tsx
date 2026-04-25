@@ -136,7 +136,7 @@ const LeaveRequests = () => {
           text: 'Your leave request has been successfully submitted.',
           icon: 'success',
           confirmButtonText: 'OK',
-          confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+          confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
           background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
           color: currentTheme === 'dark' ? '#ffffff' : '#000000',
         });
@@ -173,7 +173,7 @@ const LeaveRequests = () => {
         text: error instanceof Error ? error.message : 'Something went wrong. Please try again.',
         icon: 'error',
         confirmButtonText: 'OK',
-        confirmButtonColor: currentTheme === 'dark' ? '#a259ff' : '#3b82f6',
+        confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
         background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
         color: currentTheme === 'dark' ? '#ffffff' : '#000000',
       });
@@ -253,7 +253,7 @@ const LeaveRequests = () => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Enter leave request title"
-                className={`w-full text-xs sm:text-sm h-8 sm:h-9 lg:h-10 px-3 rounded-md border ${theme === 'dark' ? 'bg-background text-foreground border-border focus:outline-none focus:ring-2 focus:ring-[#a259ff]' : 'bg-white text-gray-900 border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#a259ff]'}`}
+                className={`w-full text-xs sm:text-sm h-8 sm:h-9 lg:h-10 px-3 rounded-md border ${theme === 'dark' ? 'bg-background text-foreground border-border focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]' : 'bg-white text-gray-900 border-gray-300 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]'}`}
                 required
               />
             </div>
@@ -341,7 +341,7 @@ const LeaveRequests = () => {
             <Button 
               type="submit" 
               onClick={handleSubmit}
-              className={`w-full text-lg h-8 sm:h-9 lg:h-10 ${theme === 'dark' ? 'text-white bg-[#a259ff] hover:bg-[#8a4dde] border-[#a259ff]' : 'text-white bg-[#a259ff] hover:bg-[#8a4dde] border-[#a259ff]'}`} 
+              className={`w-full text-lg h-8 sm:h-9 lg:h-10 ${theme === 'dark' ? 'text-white bg-primary hover:bg-primary/90 border-primary' : 'text-white bg-primary hover:bg-primary/90 border-primary'}`} 
               disabled={submitting}
             >
               {submitting ? "Submitting..." : "Submit Request"}
@@ -368,7 +368,7 @@ const LeaveRequests = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex items-center gap-0.5 sm:gap-1 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out shadow-md text-xs sm:text-sm h-7 sm:h-8 lg:h-9 px-1.5 sm:px-2 lg:px-3 whitespace-nowrap"
+                    className="flex items-center gap-0.5 sm:gap-1 bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out shadow-md text-xs sm:text-sm h-7 sm:h-8 lg:h-9 px-1.5 sm:px-2 lg:px-3 whitespace-nowrap"
                   >
                     <Filter className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 lg:w-4 lg:h-4" />
                     <span className="hidden sm:inline">Filter</span>

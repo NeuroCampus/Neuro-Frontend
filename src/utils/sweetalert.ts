@@ -14,7 +14,7 @@ export const showSweetAlert = (title: string, text: string, icon: 'success' | 'e
     confirmButtonText: 'OK',
     background: isDarkMode ? '#1f1f1f' : '#ffffff',
     color: isDarkMode ? '#ffffff' : '#000000',
-    confirmButtonColor: '#a259ff',
+    confirmButtonColor: 'hsl(var(--primary))',
     customClass: {
       popup: 'sweetalert-popup',
       title: 'sweetalert-title',

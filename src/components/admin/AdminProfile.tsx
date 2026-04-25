@@ -327,13 +327,13 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground font-medium">Current Plan</p>
-                    <p className="text-lg font-bold text-[#a259ff] uppercase tracking-tight">{subscriptionData.plan_name}</p>
+                    <p className="text-lg font-bold text-primary uppercase tracking-tight">{subscriptionData.plan_name}</p>
                   </div>
                 </div>
                 {subscriptionData.plan_name.toLowerCase() !== 'advance' && (
                   <Button 
                     size="sm" 
-                    className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white text-xs h-8 px-3 rounded-lg"
+                    className="bg-primary hover:bg-primary/90 text-white text-xs h-8 px-3 rounded-lg"
                     onClick={() => setIsUpgradeOpen(true)}
                   >
                     Upgrade Plan
@@ -379,7 +379,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
           {/* Payment History */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 px-1">
-              <CreditCard size={18} className="text-[#a259ff]" />
+              <CreditCard size={18} className="text-primary" />
               <h3 className="font-bold text-base">Payment History</h3>
             </div>
             
@@ -474,7 +474,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
               size="sm"
               onClick={() => { if (editing) handleSaveProfile(); else setEditing(true); }}
               variant="outline"
-              className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+              className="text-white bg-primary border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white"
               disabled={loading}
             >
               {editing ? (loading ? 'Saving...' : 'Save') : 'Edit Profile'}
@@ -482,7 +482,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
 
             <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
               <DialogTrigger asChild>
-                <Button className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-9 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde]">Change Password</Button>
+                <Button className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-9 bg-primary text-white border-primary hover:bg-primary/90">Change Password</Button>
               </DialogTrigger>
               <DialogContent ref={passwordDialogContentRef} className="w-[calc(100vw-1.5rem)] sm:w-full max-w-[420px] rounded-xl sm:rounded-2xl">
                 <DialogHeader>
@@ -551,7 +551,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                   </div>
                   <div className="flex justify-end space-x-2">
                     <Button variant="outline" onClick={() => setShowPasswordDialog(false)}>Cancel</Button>
-                    <Button className="font-medium bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde]" onClick={handleChangePassword}>Change Password</Button>
+                    <Button className="font-medium bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90" onClick={handleChangePassword}>Change Password</Button>
                   </div>
                 </div>
               </DialogContent>
@@ -564,7 +564,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-8 items-start">
             <div className="col-span-1 flex flex-col items-center">
-              <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[#a259ff] text-white flex items-center justify-center text-lg sm:text-2xl font-semibold mb-3 sm:mb-4 mt-4 flex-shrink-0`}>
+              <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary text-white flex items-center justify-center text-lg sm:text-2xl font-semibold mb-3 sm:mb-4 mt-4 flex-shrink-0`}>
                 {(profile.first_name && profile.first_name[0]) || ''}{(profile.last_name && profile.last_name[0]) || ''}
               </div>
 
@@ -590,9 +590,9 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
 
             <div className="col-span-1 sm:col-span-2 lg:col-span-3 w-full flex flex-col h-full">
               <div className="flex items-center gap-2 mb-3 sm:mb-4 md:mb-5 lg:mb-6 border-b pb-2 sm:pb-3">
-                <button onClick={() => setActiveTab('details')} className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-colors font-medium ${activeTab === 'details' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Details</button>
-                <button onClick={() => setActiveTab('other')} className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-colors font-medium ${activeTab === 'other' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Other</button>
-                <button onClick={() => setActiveTab('subscription')} className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-colors font-medium ${activeTab === 'subscription' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Plan Details</button>
+                <button onClick={() => setActiveTab('details')} className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-colors font-medium ${activeTab === 'details' ? 'bg-primary text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Details</button>
+                <button onClick={() => setActiveTab('other')} className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-colors font-medium ${activeTab === 'other' ? 'bg-primary text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Other</button>
+                <button onClick={() => setActiveTab('subscription')} className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-colors font-medium ${activeTab === 'subscription' ? 'bg-primary text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Plan Details</button>
               </div>
 
               <div className={`p-3 sm:p-4 md:p-5 lg:p-6 rounded-lg border flex-1 ${theme === 'dark' ? 'bg-card border-input' : 'bg-gray-50 border-gray-200'}`}>

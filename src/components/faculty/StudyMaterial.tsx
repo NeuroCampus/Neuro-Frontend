@@ -197,7 +197,7 @@ const StudyMaterialsFaculty = () => {
                 View and upload course-related study materials for your assigned subjects.
               </p>
             </div>
-            <button onClick={() => setShowUploadModal(true)} className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1 bg-[#a259ff] text-white hover:bg-[#8a4dde] whitespace-nowrap`}>
+            <button onClick={() => setShowUploadModal(true)} className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1 bg-primary text-white hover:bg-primary/90 whitespace-nowrap`}>
               <UploadCloud size={16} /> Upload
             </button>
           </div>
@@ -381,7 +381,7 @@ const StudyMaterialsFaculty = () => {
                   }
                 }}
                 disabled={uploading}
-                className={`w-full px-3 sm:px-4 py-2 rounded text-xs sm:text-sm font-bold text-white ${uploading ? 'bg-gray-500' : 'bg-[#a259ff] hover:bg-[#8a4dde]'}`}
+                className={`w-full px-3 sm:px-4 py-2 rounded text-xs sm:text-sm font-bold text-white ${uploading ? 'bg-gray-500' : 'bg-primary hover:bg-primary/90'}`}
               >
                 {uploading ? 'Uploading...' : 'Upload'}
               </button>

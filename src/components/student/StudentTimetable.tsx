@@ -116,7 +116,7 @@ const StudentTimetable = () => {
         <Button 
           variant="outline" 
           size="sm" 
-          className={`${styles.exportButton} bg-[#a259ff] hover:bg-[#8a4dde] text-white border-[#a259ff]`}
+          className={`${styles.exportButton} bg-primary hover:bg-primary/90 text-white border-primary`}
           onClick={exportToPDF}
         >
           <FileDown className="w-4 h-4 mr-2" /> Export

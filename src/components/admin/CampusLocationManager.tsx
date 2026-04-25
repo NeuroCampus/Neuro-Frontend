@@ -526,7 +526,7 @@ const CampusLocationManager: React.FC = () => {
             <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Set and manage campus boundaries for geolocation-based attendance</p>
           </div>
           <div>
-            <Button onClick={() => setShowForm(true)} className="flex items-center gap-2 bg-[#a259ff] hover:bg-[#a259ff]/90 text-white">
+            <Button onClick={() => setShowForm(true)} className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white">
               <Plus className="h-4 w-4" />
               Add Location
             </Button>

@@ -737,7 +737,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
               <Button
                 onClick={handleAssignFaculty}
                 disabled={state.loading || state.isAssigning}
-                className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+                className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
               >
                 {(() => {
                   const loading = state.isAssigning;
@@ -803,7 +803,7 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
                   <Button
                     variant="ghost"
                     onClick={() => updateState({ filterSemesterId: "", filterSectionId: "" })}
-                    className="bg-[#a259ff] hover:bg-[#9147e0] text-white"
+                    className="bg-primary hover:bg-[#9147e0] text-white"
                   >
                     Clear
                   </Button>

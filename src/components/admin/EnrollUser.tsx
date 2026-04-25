@@ -241,7 +241,7 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
                 />
               </div>
               <Button
-                className="w-full text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
+                className="w-full text-white bg-primary border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white"
                 onClick={handleSubmit}
                 disabled={loading}
               >

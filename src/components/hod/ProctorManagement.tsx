@@ -457,7 +457,7 @@ const ProctorStudents = () => {
               }
               updateState({ editMode: true });
             }}
-            className="text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-sm transition-all duration-200 w-full sm:w-auto"
+            className="text-white bg-primary border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white shadow-sm transition-all duration-200 w-full sm:w-auto"
             disabled={state.loading}
           >
             Manage Assignments
@@ -665,18 +665,18 @@ const ProctorStudents = () => {
                 variant="outline"
                 disabled={state.currentPage === 1 || state.loading || state.students.length === 0}
                 onClick={() => updateState({ currentPage: Math.max(state.currentPage - 1, 1) })}
-                className="text-base font-medium px-3 py-2 text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-sm transition-all duration-200"
+                className="text-base font-medium px-3 py-2 text-white bg-primary border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white shadow-sm transition-all duration-200"
               >
                 Prev
               </Button>
-              <span className="px-3 text-base font-medium text-[#a259ff]">
+              <span className="px-3 text-base font-medium text-primary">
                 {state.currentPage}
               </span>
               <Button
                 variant="outline"
                 disabled={state.currentPage === state.totalPages || state.loading || state.students.length === 0}
                 onClick={() => updateState({ currentPage: Math.min(state.currentPage + 1, state.totalPages) })}
-                className="text-base font-medium px-3 py-2 text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white shadow-sm transition-all duration-200"
+                className="text-base font-medium px-3 py-2 text-white bg-primary border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white shadow-sm transition-all duration-200"
               >
                 Next
               </Button>

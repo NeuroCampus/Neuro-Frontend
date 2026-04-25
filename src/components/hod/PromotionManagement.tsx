@@ -627,7 +627,7 @@ const PromotionPage = ({ theme, onTabChange }: { theme: string; onTabChange: (ta
               onClick={() => onTabChange("overview")}
               variant="outline"
               size="sm"
-              className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 shadow-md"
+              className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 shadow-md"
             >
               Back to Overview
             </Button>
@@ -1189,7 +1189,7 @@ const DemotionPage = ({ theme, onTabChange }: { theme: string; onTabChange: (tab
               onClick={() => onTabChange("overview")}
               variant="outline"
               size="sm"
-              className="bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 shadow-md"
+              className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 shadow-md"
             >
               Back to Overview
             </Button>

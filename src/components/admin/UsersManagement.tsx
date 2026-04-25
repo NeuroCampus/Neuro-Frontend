@@ -576,7 +576,7 @@ const filteredUsers = Array.isArray(users) ? users : [];
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1 || loading}
-                  className="pagination-btn text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white px-2 py-1 sm:px-3 sm:py-1"
+                  className="pagination-btn text-white bg-primary border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white px-2 py-1 sm:px-3 sm:py-1"
                 >
                   Previous
                 </Button>
@@ -599,7 +599,7 @@ const filteredUsers = Array.isArray(users) ? users : [];
                   size="sm"
                   onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                   disabled={currentPage === totalPages || loading}
-                  className="pagination-btn text-white bg-[#a259ff] border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white px-2 py-1 sm:px-3 sm:py-1"
+                  className="pagination-btn text-white bg-primary border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white px-2 py-1 sm:px-3 sm:py-1"
                 >
                   Next
                 </Button>

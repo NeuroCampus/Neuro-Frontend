@@ -96,7 +96,7 @@ const Onboarding = () => {
           </p>
           <Button 
             onClick={() => navigate("/")}
-            className="w-full bg-[#a259ff] hover:bg-[#a259ff]/90 h-12 rounded-lg text-white font-medium shadow-lg shadow-[#a259ff]/20"
+            className="w-full bg-primary hover:bg-primary/90 h-12 rounded-lg text-white font-medium shadow-lg shadow-primary/20"
           >
             Go to Login
             <ArrowRight className="ml-2" size={18} />
@@ -117,7 +117,7 @@ const Onboarding = () => {
       >
         <button 
           onClick={() => navigate("/neurocampus")}
-          className="absolute top-8 left-8 text-gray-400 hover:text-[#a259ff] transition-colors flex items-center gap-2 text-sm font-medium"
+          className="absolute top-8 left-8 text-gray-400 hover:text-primary transition-colors flex items-center gap-2 text-sm font-medium"
         >
           <ChevronLeft size={16} />
           Back to Plans
@@ -131,7 +131,7 @@ const Onboarding = () => {
             transition={{ delay: 0.2 }}
           >
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Create Organization</h1>
-            <p className="text-gray-600 text-sm">Set up your campus portal with the <span className="text-[#a259ff] font-semibold uppercase">{formData.plan}</span> plan</p>
+            <p className="text-gray-600 text-sm">Set up your campus portal with the <span className="text-primary font-semibold uppercase">{formData.plan}</span> plan</p>
           </motion.div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -142,7 +142,7 @@ const Onboarding = () => {
                 <Input 
                   required
                   placeholder="e.g. AMC College of Engineering"
-                  className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all"
+                  className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:ring-[hsl(var(--primary))]/20 rounded-lg h-12 transition-all"
                   value={formData.org_name}
                   onChange={e => setFormData({...formData, org_name: e.target.value})}
                 />
@@ -156,7 +156,7 @@ const Onboarding = () => {
                 <Input 
                   required
                   placeholder="Enter full name"
-                  className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all"
+                  className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:ring-[hsl(var(--primary))]/20 rounded-lg h-12 transition-all"
                   value={formData.admin_name}
                   onChange={e => setFormData({...formData, admin_name: e.target.value})}
                 />
@@ -171,7 +171,7 @@ const Onboarding = () => {
                   required
                   type="email"
                   placeholder="principal@institution.edu"
-                  className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all"
+                  className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:ring-[hsl(var(--primary))]/20 rounded-lg h-12 transition-all"
                   value={formData.email}
                   onChange={e => setFormData({...formData, email: e.target.value})}
                 />
@@ -186,7 +186,7 @@ const Onboarding = () => {
                   required
                   type="tel"
                   placeholder="Enter 10-digit number"
-                  className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-[#a259ff] focus:ring-[#a259ff]/20 rounded-lg h-12 transition-all"
+                  className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:ring-[hsl(var(--primary))]/20 rounded-lg h-12 transition-all"
                   value={formData.phone}
                   onChange={e => setFormData({...formData, phone: e.target.value})}
                 />
@@ -197,7 +197,7 @@ const Onboarding = () => {
               <Button 
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#a259ff] hover:bg-[#a259ff]/90 text-white font-medium rounded-lg h-12 shadow-lg shadow-[#a259ff]/20 hover:shadow-[#a259ff]/40 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-70"
+                className="w-full bg-primary hover:bg-primary/90 text-white font-medium rounded-lg h-12 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-70"
               >
                 {loading ? (
                   <div className="flex items-center justify-center gap-2">
@@ -212,14 +212,14 @@ const Onboarding = () => {
           </form>
 
           <p className="mt-8 text-center text-sm text-gray-400">
-            Securely hosted under <span className="text-[#a259ff] font-medium">Stalight Technology</span>
+            Securely hosted under <span className="text-primary font-medium">Stalight Technology</span>
           </p>
         </div>
       </motion.div>
 
       {/* Right Section - Illustration (Matching Login) */}
       <motion.div 
-        className="hidden lg:flex flex-1 bg-gradient-to-br from-[#a259ff] to-[#7c3aed] items-center justify-center p-12 relative overflow-hidden"
+        className="hidden lg:flex flex-1 bg-gradient-to-br from-[hsl(var(--primary))] to-[#7c3aed] items-center justify-center p-12 relative overflow-hidden"
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}

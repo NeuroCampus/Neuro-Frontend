@@ -256,7 +256,7 @@ const BulkAssignment: React.FC = () => {
         <div className="flex gap-3">
           <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#a259ff] hover:bg-[#8a4dde] text-white">
+              <Button className="bg-primary hover:bg-primary/90 text-white">
                 <UserCheck className="h-4 w-4 mr-2" />
                 Manual Bulk Assignment
               </Button>
@@ -360,7 +360,7 @@ const BulkAssignment: React.FC = () => {
                   </Button>
                   <Button 
                     type="submit"
-                    className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+                    className="bg-primary hover:bg-primary/90 text-white"
                   >
                     <Play className="h-4 w-4 mr-2" />
                     {bulkForm.dry_run ? 'Preview Assignment' : 'Execute Assignment'}
@@ -372,7 +372,7 @@ const BulkAssignment: React.FC = () => {
 
           <Dialog open={isAutoDialogOpen} onOpenChange={setIsAutoDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="bg-[#a259ff] hover:bg-[#8a4dde] text-white border-[#a259ff]">
+              <Button variant="outline" className="bg-primary hover:bg-primary/90 text-white border-primary">
                 <Settings className="h-4 w-4 mr-2" />
                 Auto Assignment
               </Button>
@@ -475,7 +475,7 @@ const BulkAssignment: React.FC = () => {
                   </Button>
                   <Button 
                     type="submit"
-                    className="bg-[#a259ff] hover:bg-[#8a4dde] text-white"
+                    className="bg-primary hover:bg-primary/90 text-white"
                   >
                     <Play className="h-4 w-4 mr-2" />
                     {autoForm.dry_run ? 'Preview Auto Assignment' : 'Execute Auto Assignment'}

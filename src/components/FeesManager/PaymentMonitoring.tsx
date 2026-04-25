@@ -340,7 +340,7 @@ const PaymentMonitoring: React.FC = () => {
           <h1 className="text-3xl font-bold text-foreground">Payment Monitoring</h1>
           <p className="text-muted-foreground mt-2">Track and manage all fee payments and transactions</p>
         </div>
-        <Button onClick={fetchData} className="bg-[#a259ff] hover:bg-[#8a4dde] text-white">
+        <Button onClick={fetchData} className="bg-primary hover:bg-primary/90 text-white">
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>

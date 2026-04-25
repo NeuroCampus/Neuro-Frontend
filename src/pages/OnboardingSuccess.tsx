@@ -42,7 +42,7 @@ const OnboardingSuccess = () => {
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
-        <Loader2 className="w-12 h-12 text-[#a259ff] animate-spin mb-4" />
+        <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
         <h1 className="text-xl font-semibold text-gray-900">Verifying Payment...</h1>
         <p className="text-gray-500">Please do not close this window.</p>
       </div>
@@ -73,12 +73,12 @@ const OnboardingSuccess = () => {
         animate={{ opacity: 1, scale: 1 }}
         className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-12 text-center relative overflow-hidden"
       >
-        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#a259ff] to-violet-500" />
+        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[hsl(var(--primary))] to-violet-500" />
         
         <div className="w-24 h-24 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-8 text-green-600 relative">
           <PartyPopper size={48} />
           <motion.div 
-            className="absolute -top-2 -right-2 w-8 h-8 bg-[#a259ff] rounded-full flex items-center justify-center text-white"
+            className="absolute -top-2 -right-2 w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.5 }}
@@ -104,13 +104,13 @@ const OnboardingSuccess = () => {
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Plan Activated</span>
-            <span className="text-[#a259ff] font-semibold uppercase tracking-wider text-xs">Annual Subscription</span>
+            <span className="text-primary font-semibold uppercase tracking-wider text-xs">Annual Subscription</span>
           </div>
         </div>
 
         <Button 
           onClick={() => navigate("/")}
-          className="w-full bg-[#a259ff] hover:bg-[#a259ff]/90 h-14 rounded-2xl text-white font-bold text-lg shadow-xl shadow-[#a259ff]/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          className="w-full bg-primary hover:bg-primary/90 h-14 rounded-2xl text-white font-bold text-lg shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
         >
           Login to Campus Portal
           <ArrowRight className="ml-2" size={20} />

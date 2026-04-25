@@ -419,13 +419,13 @@ const MarksView = () => {
           <TabsList className={`w-full justify-center rounded-md p-1 ${theme === 'dark' ? 'bg-card border border-border' : 'bg-gray-200 border border-gray-300'}`}>
             <TabsTrigger 
               value="marks" 
-              className={`w-full rounded-sm ${theme === 'dark' ? 'data-[state=active]:bg-[#a259ff] data-[state=active]:text-white' : 'data-[state=active]:bg-[#a259ff] data-[state=active]:text-white'}`}
+              className={`w-full rounded-sm ${theme === 'dark' ? 'data-[state=active]:bg-primary data-[state=active]:text-white' : 'data-[state=active]:bg-primary data-[state=active]:text-white'}`}
             >
               Marks Report
             </TabsTrigger>
             <TabsTrigger 
               value="attendance" 
-              className={`w-full rounded-sm ${theme === 'dark' ? 'data-[state=active]:bg-[#a259ff] data-[state=active]:text-white' : 'data-[state=active]:bg-[#a259ff] data-[state=active]:text-white'}`}
+              className={`w-full rounded-sm ${theme === 'dark' ? 'data-[state=active]:bg-primary data-[state=active]:text-white' : 'data-[state=active]:bg-primary data-[state=active]:text-white'}`}
             >
               Attendance Report
             </TabsTrigger>
@@ -469,7 +469,7 @@ const MarksView = () => {
                 disabled={state.loading}
               />
               <Button
-                className="flex items-center gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+                className="flex items-center gap-2 bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
                 onClick={() => handleExportPDF("marks")}
                 disabled={state.loading || filteredStudents.length === 0}
               >
@@ -565,7 +565,7 @@ const MarksView = () => {
                           ))}
                           <td className="py-2 px-4">
                             <Button
-                              className="text-sm bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+                              className="text-sm bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
                               size="sm"
                               onClick={() => updateState({ selectedStudent: student })}
                             >
@@ -619,7 +619,7 @@ const MarksView = () => {
                 disabled={state.loading}
               />
               <Button
-                className="flex items-center gap-2 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
+                className="flex items-center gap-2 bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md"
                 onClick={() => handleExportPDF("attendance")}
                 disabled={state.loading || filteredStudents.length === 0}
               >
