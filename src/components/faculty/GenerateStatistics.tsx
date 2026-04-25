@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileTextIcon } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, LineChart, Line, CartesianGrid, ResponsiveContainer,LabelList  } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, LineChart, Line, CartesianGrid, ResponsiveContainer, LabelList } from "recharts";
 import { ProctorStudent, getProctorStudentsForStats } from '../../utils/faculty_api';
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -137,23 +137,23 @@ const GenerateStatistics: React.FC = () => {
           </CardHeader>
           <CardContent className="p-2 sm:p-4">
             <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={attendanceData}>
-                <CartesianGrid stroke={theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#e5e7eb'} />
+              <LineChart data={attendanceData} margin={{ bottom: 30, left: 0, right: 10, top: 10 }}>
+                <CartesianGrid stroke={theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#e5e7eb'} vertical={false} />
                 <XAxis
                   dataKey="name"
                   stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'}
-                  interval={0} // show all labels, but we’ll control them
-                  tick={{ fontSize: 10 }} // smaller font
-                  angle={-45} // rotate labels
+                  interval="preserveStartEnd"
+                  tick={{ fontSize: 9 }}
+                  angle={-45}
                   textAnchor="end"
-                  height={60} // extra space for rotated labels
+                  height={70}
                 />
                 <YAxis stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'} />
                 <Tooltip
-                  contentStyle={{  
-                    backgroundColor: theme === 'dark' ? '#1c1c1e' : '#ffffff', 
-                    border: theme === 'dark' ? '1px solid #2e2e30' : '1px solid #e5e7eb', 
-                    color: theme === 'dark' ? '#f3f4f6' : '#1f2937' 
+                  contentStyle={{
+                    backgroundColor: theme === 'dark' ? '#1c1c1e' : '#ffffff',
+                    border: theme === 'dark' ? '1px solid #2e2e30' : '1px solid #e5e7eb',
+                    color: theme === 'dark' ? '#f3f4f6' : '#1f2937'
                   }}
                   itemStyle={{ color: theme === 'dark' ? '#f3f4f6' : '#1f2937' }}
                 />
@@ -178,29 +178,35 @@ const GenerateStatistics: React.FC = () => {
           </CardHeader>
           <CardContent className="p-2 sm:p-4">
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={marksData}>
-                <CartesianGrid stroke={theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#e5e7eb'} />
+              <BarChart data={marksData} margin={{ bottom: 30, left: 0, right: 10, top: 10 }}>
+                <CartesianGrid stroke={theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#e5e7eb'} vertical={false} />
                 <XAxis
                   dataKey="name"
                   stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'}
-                  interval={0}
-                  tick={{ fontSize: 10 }}
+                  interval="preserveStartEnd"
+                  tick={{ fontSize: 9 }}
                   angle={-45}
                   textAnchor="end"
-                  height={60}
+                  height={70}
                 />
                 <YAxis stroke={theme === 'dark' ? '#d1d5db' : '#6b7280'} />
                 <Tooltip
-                  contentStyle={{ 
-                    backgroundColor: theme === 'dark' ? '#1c1c1e' : '#ffffff', 
-                    border: theme === 'dark' ? '1px solid #2e2e30' : '1px solid #e5e7eb', 
-                    color: theme === 'dark' ? '#f3f4f6' : '#1f2937' 
+                  contentStyle={{
+                    backgroundColor: theme === 'dark' ? '#1c1c1e' : '#ffffff',
+                    border: theme === 'dark' ? '1px solid #2e2e30' : '1px solid #e5e7eb',
+                    color: theme === 'dark' ? '#f3f4f6' : '#1f2937'
                   }}
                   itemStyle={{ color: theme === 'dark' ? '#f3f4f6' : '#1f2937' }}
                 />
-                <Bar dataKey="avgMark" fill="#6366f1">
-                  {/* 👇 Label inside each bar */}
-                  <LabelList dataKey="avgMark" position="insideTop" fill={theme === 'dark' ? '#f3f4f6' : '#1f2937'} fontSize={10} />
+                <Bar dataKey="avgMark" fill="#6366f1" radius={[4, 4, 0, 0]}>
+                  {/* 👇 Label inside each bar, only if marks exist */}
+                  <LabelList
+                    dataKey="avgMark"
+                    position="top"
+                    fill={theme === 'dark' ? '#94a3b8' : '#64748b'}
+                    fontSize={9}
+                    formatter={(val: any) => val > 0 ? val : ''}
+                  />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -212,10 +218,10 @@ const GenerateStatistics: React.FC = () => {
       <Card className={`${theme === 'dark' ? 'shadow-sm bg-card text-foreground' : 'shadow-sm bg-white text-gray-900'} rounded-lg`}>
         <CardHeader className="flex flex-row justify-between items-center gap-3 p-3 sm:p-6">
           <CardTitle className={`text-base sm:text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Proctor Students Table</CardTitle>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleExportPDF} 
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportPDF}
             className="flex items-center bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white transition-all duration-200 ease-in-out shadow-md"
           >
             <FileTextIcon className="mr-2 h-4 w-4" />
@@ -229,7 +235,7 @@ const GenerateStatistics: React.FC = () => {
                 <tr>
                   <th className={`p-2 sm:p-3 text-left text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>USN</th>
                   <th className={`p-2 sm:p-3 text-left text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Name</th>
-                  <th className={`p-2 sm:p-3 text-left text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Att %</th>
+                  <th className={`p-2 sm:p-3 text-left text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Attendance %</th>
                   <th className={`p-2 sm:p-3 text-left text-xs sm:text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Avg</th>
                 </tr>
               </thead>
@@ -259,26 +265,26 @@ const GenerateStatistics: React.FC = () => {
           {/* Pagination controls */}
           <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row items-center justify-end gap-2 sm:gap-4">
             <div className="flex items-center gap-1 sm:gap-2">
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => setPage(prev => Math.max(1, prev - 1))} 
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setPage(prev => Math.max(1, prev - 1))}
                 disabled={page <= 1}
                 className="text-xs px-2 sm:px-3 h-8 sm:h-9 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
               >
                 Prev
               </Button>
-              
+
               {/* Dynamic page numbers */}
               <div className="flex items-center gap-0.5 sm:gap-1 flex-wrap">
                 {(() => {
                   const pages: (number | string)[] = [];
                   const maxPagesToShow = 5;
                   const halfWindow = Math.floor(maxPagesToShow / 2);
-                  
+
                   let startPage = Math.max(1, page - halfWindow);
                   let endPage = Math.min(totalPages, page + halfWindow);
-                  
+
                   // Adjust window if near boundaries
                   if (endPage - startPage + 1 < maxPagesToShow) {
                     if (startPage === 1) {
@@ -287,24 +293,24 @@ const GenerateStatistics: React.FC = () => {
                       startPage = Math.max(1, endPage - maxPagesToShow + 1);
                     }
                   }
-                  
+
                   // Add first page
                   if (startPage > 1) {
                     pages.push(1);
                     if (startPage > 2) pages.push('...');
                   }
-                  
+
                   // Add page range
                   for (let i = startPage; i <= endPage; i++) {
                     pages.push(i);
                   }
-                  
+
                   // Add last page
                   if (endPage < totalPages) {
                     if (endPage < totalPages - 1) pages.push('...');
                     pages.push(totalPages);
                   }
-                  
+
                   return pages.map((p, idx) => (
                     typeof p === 'number' ? (
                       <Button
@@ -322,11 +328,11 @@ const GenerateStatistics: React.FC = () => {
                   ));
                 })()}
               </div>
-              
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => setPage(prev => Math.min(totalPages, prev + 1))} 
+
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={page >= totalPages}
                 className="text-xs px-2 sm:px-3 h-8 sm:h-9 bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde] hover:border-[#8a4dde] hover:text-white"
               >
