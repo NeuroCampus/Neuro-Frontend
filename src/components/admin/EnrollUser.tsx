@@ -142,11 +142,11 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
   };
 
   return (
-    <div className={`px-4 overflow-y-hidden ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+    <div className={`overflow-y-hidden ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
       <div className="w-full mx-auto">
-        <Card className={theme === 'dark' ? 'w-full bg-card border border-border shadow-lg rounded-lg p-6' : 'w-full bg-white border border-gray-200 shadow-lg rounded-lg p-6'}>
+        <Card className={theme === 'dark' ? 'w-full bg-card border border-border shadow-lg rounded-lg' : 'w-full bg-white border border-gray-200 shadow-lg rounded-lg'}>
           <CardHeader className="pb-4">
-            <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Staff Enrollment Form</CardTitle>
+            <CardTitle className={`text-2xl font-semibold leading-none tracking-tight text-gray-900 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Staff Enrollment Form</CardTitle>
             <CardDescription className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
               Add a new staff member to the system
             </CardDescription>

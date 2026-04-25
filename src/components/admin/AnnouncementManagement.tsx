@@ -34,7 +34,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useTheme } from "@/context/ThemeContext";
-import { SkeletonList } from "@/components/ui/skeleton";
+import { SkeletonTable } from "@/components/ui/skeleton";
 import {
   fetchAnnouncements,
   createAnnouncement,
@@ -71,7 +71,8 @@ const AdminAnnouncementManagement = () => {
   const loadAnnouncements = async () => {
     setLoading(true);
     setError(null);
-    const response = await fetchAnnouncements(1, 50);
+    // Fetch all for management view (include inactive and expired)
+    const response = await fetchAnnouncements(1, 100, true, true);
 
     if (response.success && response.data) {
       setMyAnnouncements(response.data.my_announcements.results || []);
@@ -422,7 +423,7 @@ const AdminAnnouncementManagement = () => {
           <CardContent className="announcements-card-content">
             <div className="space-y-6">
               {loading ? (
-                <SkeletonList items={5} />
+                <SkeletonTable rows={5} cols={6} />
               ) : error ? (
                 <div className="p-4 rounded-lg bg-destructive/10 text-destructive">
                   <p className="font-medium">{error}</p>

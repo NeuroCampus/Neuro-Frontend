@@ -449,7 +449,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
         <CardHeader className="pb-2 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           {/* Title + paragraph always full width */}
           <div className="w-full">
-            <CardTitle className={`block text-base md:text-xl ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+            <CardTitle className={`text-2xl font-semibold leading-none tracking-tight text-gray-900 mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Branch Management
             </CardTitle>
             <p className={`block text-xs md:text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>

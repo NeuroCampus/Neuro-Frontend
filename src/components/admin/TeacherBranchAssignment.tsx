@@ -220,8 +220,8 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
         <CardHeader>
           <div className="w-full flex items-start justify-between">
             <div>
-              <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Faculty-Branch Assignments</CardTitle>
-              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Assign primary branches to faculty members</p>
+              <CardTitle className={`text-2xl font-semibold leading-none tracking-tight text-gray-900 mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Faculty-Branch Assignments</CardTitle>
+              <p className={`block text-xs md:text-base text-gray-500 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Assign primary branches to faculty members</p>
             </div>
             <div>
               <Button

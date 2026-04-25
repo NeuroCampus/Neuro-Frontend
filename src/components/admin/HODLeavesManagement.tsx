@@ -267,7 +267,7 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Requests</CardTitle>
+              <CardTitle className={`mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Requests</CardTitle>
               <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Review and approve leave requests from Heads of Departments</p>
             </div>
             <div className="flex items-center gap-2">

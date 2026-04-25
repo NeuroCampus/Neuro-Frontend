@@ -110,7 +110,7 @@ const Navbar = ({ role, user, onNotificationClick, setPage, showHamburger = fals
             className={`font-semibold text-lg leading-tight ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
           >
             Welcome,{" "}
-            <span className={theme === 'dark' ? 'text-primary' : 'text-blue-600'}>
+            <span className={`text-primary`}>
               {user?.first_name || user?.username || "User"}
             </span>
           </motion.div>
