@@ -351,7 +351,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       >
         <div className="flex items-center gap-3">
           <div
-            className={`w-12 h-12 rounded-lg flex items-center justify-center shadow-lg overflow-hidden border-2 border-primary ${theme === 'dark' ? 'bg-white' : ''}`}
+            className={`w-12 h-12 rounded-lg flex items-center justify-center shadow-lg border-2 border-primary ${theme === 'dark' ? 'bg-white' : ''}`}
             style={{ borderRadius: 8 }}
           >
             <img
@@ -371,18 +371,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
                 transition={{ duration: 0.2 }}
                 className="flex flex-col min-w-0"
               >
-                <h1 className={`font-bold text-lg whitespace-nowrap ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>NEURO CAMPUS</h1>
-                <p className={`text-xs capitalize ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{role} Portal</p>
-                <div className="mt-1">
-                  <span className={`text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full ${orgPlan.toLowerCase() === 'advance'
-                      ? 'bg-gradient-to-r from-primary to-[#ff59f8] text-white'
-                      : orgPlan.toLowerCase() === 'pro'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-500 text-white'
-                    }`}>
-                    {orgPlan}
-                  </span>
-                </div>
+                <h1 className={`font-bold text-lg whitespace-nowrap leading-tight ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>NEURO CAMPUS</h1>
+                <p className={`text-[10px] uppercase tracking-wider font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{role} Portal</p>
               </motion.div>
             )}
           </AnimatePresence>

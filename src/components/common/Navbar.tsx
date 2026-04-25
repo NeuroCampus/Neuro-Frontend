@@ -51,202 +51,148 @@ const Navbar = ({ role, user, onNotificationClick, setPage, showHamburger = fals
     }
   };
 
-const handleProfileClick = () => {
-  if (setPage) {
-    if (role === "faculty") {
-      setPage("faculty-profile");
-    } else if (role === "hod") {
-      setPage("hod-profile");
-    } else if (role === "admin") {
-      setPage("profile");
-    } else if (role === "fees_manager") {
-      // For fees manager, we can use the same profile page as admin for now
-      setPage("profile");
-    } else {
-      setPage("profile");
+  const handleProfileClick = () => {
+    if (setPage) {
+      if (role === "faculty") {
+        setPage("faculty-profile");
+      } else if (role === "hod") {
+        setPage("hod-profile");
+      } else if (role === "admin") {
+        setPage("profile");
+      } else if (role === "fees_manager") {
+        // For fees manager, we can use the same profile page as admin for now
+        setPage("profile");
+      } else {
+        setPage("profile");
+      }
     }
-  }
-};
- 
+  };
+
+
+  const userStr = localStorage.getItem("user");
+  const userData = userStr ? JSON.parse(userStr) : null;
+  const orgPlan = (userData?.org_plan || "basic").toLowerCase();
+
+  const getPlanStyles = () => {
+    switch (orgPlan) {
+      case 'advance':
+        return theme === 'dark'
+          ? 'bg-gradient-to-r from-background via-primary/5 to-background border-primary/20'
+          : 'bg-gradient-to-r from-white via-primary/5 to-white border-primary/10';
+      case 'pro':
+        return theme === 'dark'
+          ? 'bg-gradient-to-r from-background via-blue-500/5 to-background border-blue-500/20'
+          : 'bg-gradient-to-r from-white via-blue-500/5 to-white border-blue-500/10';
+      default:
+        return theme === 'dark'
+          ? 'bg-background border-border'
+          : 'bg-white border-gray-200';
+    }
+  };
+
+  const getBadgeStyles = () => {
+    switch (orgPlan) {
+      case 'advance':
+        return 'bg-gradient-to-r from-primary to-[#ff59f8] text-white shadow-primary/20';
+      case 'pro':
+        return 'bg-blue-600 text-white shadow-blue-500/20';
+      default:
+        return 'bg-gray-500 text-white shadow-gray-400/20';
+    }
+  };
 
   return (
-    <motion.div 
-      className={`w-full h-20 flex items-center justify-between px-4 md:px-6 lg:px-8 backdrop-blur-sm ${
-        theme === 'dark' 
-          ? 'bg-background border-b border-border' 
-          : 'bg-white border-b border-gray-200'
-      }`}
+    <motion.div
+      className={`w-full h-20 flex items-center justify-between px-4 md:px-6 lg:px-8 backdrop-blur-md relative border-b transition-all duration-500 ${getPlanStyles()}`}
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
       {/* Left section: Hamburger + Brand */}
-      <div className="flex items-center gap-4">
-        {/* Hamburger Menu Button - Always show when sidebar is collapsed */}
+      <div className="flex items-center gap-4 z-10">
+        {/* Hamburger Menu Button */}
         {showHamburger && (
           <Button
             variant="ghost"
             size="icon"
-            className={`${
-              theme === "dark"
-                ? "hover:bg-accent"
-                : "hover:bg-gray-100"
-            }`}
+            className={theme === "dark" ? "hover:bg-accent" : "hover:bg-gray-100"}
             onClick={onHamburgerClick}
           >
             <FiMenu size={20} />
           </Button>
         )}
-        
-        <motion.div 
-          className="flex items-center gap-4"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-        >
-        <div className="flex items-center gap-3">
-          <div>
-            <motion.div 
-              className={`font-bold text-lg ${
-                theme === 'dark' ? 'text-foreground' : 'text-gray-900'
-              }`}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4, delay: 0.5 }}
-            >
-              Welcome,{" "}
-              <span className={theme === 'dark' ? 'text-primary font-medium' : 'text-blue-600 font-medium'}>
-                {user?.first_name && user?.last_name
-                  ? `${user.first_name.charAt(0).toUpperCase() + user.first_name.slice(1)} ${user.last_name.charAt(0).toUpperCase() + user.last_name.slice(1)}`
-                  : user?.first_name
-                  ? user.first_name.charAt(0).toUpperCase() + user.first_name.slice(1)
-                  : user?.username || "User"}
-              </span>
-            </motion.div>
-            <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-              {role === "admin"
-                ? "Principal"
-                : role === "hod"
-                ? `Head of Department${user?.branch ? ` - ${user.branch}` : ""}`
-                : role === "faculty"
-                ? `${user?.branch || "Faculty Member"}`
-                : role === "coe"
-                ? "Controller of Examinations"
-                : role === "fees_manager"
-                ? "Fees Manager"
-                : "Student"}
-            </p>
-          </div>
 
-
+        <div className="flex flex-col">
+          <motion.div
+            className={`font-bold text-lg leading-tight ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
+          >
+            Welcome,{" "}
+            <span className={theme === 'dark' ? 'text-primary' : 'text-blue-600'}>
+              {user?.first_name || user?.username || "User"}
+            </span>
+          </motion.div>
+          <p className={`text-[10px] uppercase tracking-wider font-semibold ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+            {role === "admin" ? "Principal" : role.replace('_', ' ')} Portal
+          </p>
         </div>
-        </motion.div>
       </div>
 
       {/* Right section */}
-      <motion.div 
-        className="flex items-center gap-5"
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.4, delay: 0.2 }}
-      >
+      <div className="flex items-center gap-4 z-10">
         {/* Date & Time */}
-        <motion.div 
-          className={`text-right text-sm hidden md:block ${
-            theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'
-          }`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.3 }}
-        >
-          {currentTime.toLocaleDateString("en-US", {
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-          })}
-          <div className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-400'}`}>
+        <div className={`text-right hidden xl:block ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+          <div className="text-xs font-medium">
+            {currentTime.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
+          </div>
+          <div className="text-[10px] opacity-70">
             {currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </div>
+        </div>
+
+        {/* Plan Badge */}
+        <motion.div
+          initial={{ opacity: 0, x: 10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="hidden md:block"
+        >
+          <span className={`text-[9px] uppercase tracking-wider font-black px-2.5 py-1 rounded-md border border-white/10 shadow-sm ${getBadgeStyles()}`}>
+            {orgPlan}
+          </span>
         </motion.div>
 
-        {/* Theme toggle */}
-        <motion.button
-          className={`transition-colors duration-200 p-2 rounded-lg ${
-            theme === 'dark'
-              ? 'text-foreground hover:text-primary hover:bg-accent'
-              : 'text-gray-700 hover:text-blue-600 hover:bg-gray-100'
-          }`}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={toggleTheme}
-        >
-          {theme === 'dark' ? <FiSun size={20} /> : <FiMoon size={20} />}
-        </motion.button>
-
-        {/* Profile section */}
-        <motion.div 
-          className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 cursor-pointer ${
-            theme === 'dark'
-              ? 'hover:bg-accent'
-              : 'hover:bg-gray-100'
-          }`}
-          onClick={handleProfileClick}  
-          whileHover={{ scale: 1.02 }}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3, delay: 0.4 }}
-        >
-          <motion.div 
-            className="w-12 h-12 rounded-full flex items-center justify-center font-semibold text-sm shadow-lg overflow-hidden"
-            whileHover={{ scale: 1.1 }}
-            transition={{ duration: 0.2 }}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleTheme}
+            className="rounded-full w-9 h-9"
           >
-            {user?.profile_picture || user?.profile_image ? (
-              <img
-                src={user.profile_picture || user.profile_image}
-                alt="Profile"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  // Fallback to initial if image fails to load
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const parent = target.parentElement;
-                  if (parent) {
-                    parent.innerHTML = `<div class="w-full h-full bg-primary text-white flex items-center justify-center font-semibold text-sm">
-                      ${user?.first_name?.[0] || role?.[0]?.toUpperCase()}
-                    </div>`;
-                  }
-                }}
-              />
-            ) : (
-              <div className="w-full h-full bg-primary text-white flex items-center justify-center font-semibold text-sm">
-                {user?.first_name?.[0] || role?.[0]?.toUpperCase()}
-              </div>
-            )}
-          </motion.div>
+            {theme === 'dark' ? <FiSun size={18} /> : <FiMoon size={18} />}
+          </Button>
 
-          <div className="text-sm hidden sm:block">
-            <div className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-              {user?.first_name && user?.last_name
-                ? `${user.first_name.charAt(0).toUpperCase() + user.first_name.slice(1)} ${user.last_name.charAt(0).toUpperCase() + user.last_name.slice(1)}`
-                : user?.first_name
-                ? user.first_name.charAt(0).toUpperCase() + user.first_name.slice(1)
-                : (role ? role.charAt(0).toUpperCase() + role.slice(1) : "User")}
+          {/* Profile Button */}
+          <div
+            className={`flex items-center gap-3 pl-3 pr-1 py-1 rounded-full border transition-all duration-200 cursor-pointer ${theme === 'dark' ? 'border-border bg-accent/50 hover:bg-accent' : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+              }`}
+            onClick={handleProfileClick}
+          >
+            <div className="text-right hidden lg:block">
+              <div className={`text-xs font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                {user?.first_name ? `${user.first_name} ${user?.last_name || ''}` : "User"}
+              </div>
+              <div className="text-[10px] opacity-60 capitalize">{role}</div>
             </div>
-            <div className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-              {role === "admin"
-                ? "Principal"
-                : role === "hod"
-                ? "Head of Department"
-                : role === "faculty"
-                ? "Faculty Member"
-                : role === "fees_manager"
-                ? "Fees Manager"
-                : "Student"}
+            <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs shadow-inner overflow-hidden">
+              {user?.profile_picture ? (
+                <img src={user.profile_picture} alt="P" className="w-full h-full object-cover" />
+              ) : (
+                user?.first_name?.[0] || role?.[0]?.toUpperCase()
+              )}
             </div>
           </div>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </motion.div>
   );
 };
