@@ -162,7 +162,7 @@ const StudentAssignment = () => {
         <CardHeader className="p-6 border-b">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className={`text-lg sm:text-xl md:text-2xl font-semibold text-gray-900`}>Assignments</h2>
+              <h2 className={`text-lg sm:text-xl md:text-2xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Assignments</h2>
               <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                 Track and manage your academic assignments and deadlines.
               </p>

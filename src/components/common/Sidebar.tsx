@@ -373,7 +373,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
                 <h1 className={`font-bold text-lg whitespace-nowrap ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>NEURO CAMPUS</h1>
                 <p className={`text-xs capitalize ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{role} Portal</p>
                 <div className="mt-1">
-                  <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
+                  <span className={`text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full ${
                     orgPlan.toLowerCase() === 'advance' 
                       ? 'bg-gradient-to-r from-[#a259ff] to-[#ff59f8] text-white' 
                       : orgPlan.toLowerCase() === 'pro'
