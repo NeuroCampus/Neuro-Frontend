@@ -15,6 +15,7 @@ import { API_ENDPOINT } from "../../utils/config";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Badge } from "../ui/badge";
 import { format } from "date-fns";
+import UpgradePlanDialog from "../common/UpgradePlanDialog";
 
 interface AdminProfileProps {
   user: any;
@@ -56,6 +57,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
   const [activeTab, setActiveTab] = useState<'details' | 'other' | 'subscription'>('details');
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
   const [subLoading, setSubLoading] = useState(false);
+  const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -318,14 +320,25 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
           {/* Plan Overview Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className={cn("border-none shadow-sm", theme === 'dark' ? 'bg-zinc-900' : 'bg-white')}>
-              <CardContent className="p-4 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600">
-                  <ShieldCheck size={24} />
+              <CardContent className="p-4 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600">
+                    <ShieldCheck size={24} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground font-medium">Current Plan</p>
+                    <p className="text-lg font-bold text-[#a259ff] uppercase tracking-tight">{subscriptionData.plan_name}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground font-medium">Current Plan</p>
-                  <p className="text-lg font-bold text-[#a259ff] uppercase tracking-tight">{subscriptionData.plan_name}</p>
-                </div>
+                {subscriptionData.plan_name.toLowerCase() === 'basic' && (
+                  <Button 
+                    size="sm" 
+                    className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white text-xs h-8 px-3 rounded-lg"
+                    onClick={() => setIsUpgradeOpen(true)}
+                  >
+                    Upgrade Plan
+                  </Button>
+                )}
               </CardContent>
             </Card>
 
@@ -589,6 +602,13 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
           </div>
         </CardContent>
       </Card>
+
+      <UpgradePlanDialog 
+        isOpen={isUpgradeOpen}
+        onClose={() => setIsUpgradeOpen(false)}
+        orgName={localStorage.getItem("org_name") || "Your Institution"}
+        onSuccess={() => fetchSubscriptionDetails()}
+      />
     </div>
   );
 };
