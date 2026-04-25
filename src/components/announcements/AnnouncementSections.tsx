@@ -63,6 +63,13 @@ const isExpired = (expiresAt: string) => {
   return new Date(expiresAt) < new Date();
 };
 
+const isRecent = (dateString: string) => {
+  const createdDate = new Date(dateString);
+  const now = new Date();
+  const diffInHours = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60);
+  return diffInHours < 48; // New if less than 48 hours old
+};
+
 const AnnouncementCard = ({
   announcement,
   isOwner,
@@ -86,7 +93,7 @@ const AnnouncementCard = ({
   return (
     <Card
       className={`transition-all ${
-        unread
+        unread && !isOwner
           ? "border-2 border-blue-500 shadow-md"
           : "border-gray-200 dark:border-gray-700"
       } ${
@@ -100,8 +107,11 @@ const AnnouncementCard = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
               <h3 className="text-lg font-semibold truncate">{announcement.title}</h3>
-              {unread && (
+              {isRecent(announcement.created_at) && (
                 <Badge className="bg-blue-600 text-white text-xs">NEW</Badge>
+              )}
+              {unread && !isOwner && !isRecent(announcement.created_at) && (
+                <Badge variant="outline" className="text-blue-600 border-blue-200 text-xs">UNREAD</Badge>
               )}
               {expired && (
                 <Badge className="bg-gray-600 text-white text-xs">EXPIRED</Badge>

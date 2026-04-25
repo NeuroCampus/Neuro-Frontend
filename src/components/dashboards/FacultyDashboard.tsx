@@ -86,7 +86,6 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
 
   // Only fetch proctor students when a page requires them (lazy load)
   const pagesNeedingProctor = [
-    'announcements',
     'proctor-students',
     'student-leave'
   ];

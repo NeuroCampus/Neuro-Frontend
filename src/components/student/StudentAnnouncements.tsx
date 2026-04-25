@@ -67,6 +67,17 @@ const isExpired = (expiresAt: string) => {
   }
 };
 
+const isRecent = (dateString: string) => {
+  try {
+    const createdDate = new Date(dateString);
+    const now = new Date();
+    const diffInHours = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60);
+    return diffInHours < 48;
+  } catch {
+    return false;
+  }
+};
+
 const StudentAnnouncements = () => {
   const [receivedAnnouncements, setReceivedAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -214,8 +225,11 @@ const StudentAnnouncements = () => {
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
                           <CardTitle className="text-lg">{announcement.title}</CardTitle>
-                          {!announcement.is_read && (
+                          {isRecent(announcement.created_at) && (
                             <Badge className="bg-blue-500">NEW</Badge>
+                          )}
+                          {!announcement.is_read && !isRecent(announcement.created_at) && (
+                            <Badge variant="outline" className="text-blue-500 border-blue-200">UNREAD</Badge>
                           )}
                           {isExpired(announcement.expires_at) && (
                             <Badge variant="destructive">EXPIRED</Badge>

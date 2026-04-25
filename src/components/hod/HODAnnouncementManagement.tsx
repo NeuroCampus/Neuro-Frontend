@@ -58,7 +58,7 @@ const HODAnnouncementManagement = () => {
   const [formData, setFormData] = useState<CreateAnnouncementRequest>({
     title: "",
     message: "",
-    target_roles: ["student", "teacher"],
+    target_roles: ["student", "faculty"],
     is_global: false,
     expires_at: "",
     priority: "normal",
@@ -194,14 +194,14 @@ const HODAnnouncementManagement = () => {
     setFormData({
       title: "",
       message: "",
-      target_roles: ["student", "teacher"],
+      target_roles: ["student", "faculty"],
       is_global: false,
       expires_at: "",
       priority: "normal",
     });
   };
 
-  const roles = ["student", "teacher", "faculty"];
+  const roles = ["student", "faculty"];
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6">

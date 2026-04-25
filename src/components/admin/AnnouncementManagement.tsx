@@ -202,7 +202,7 @@ const AdminAnnouncementManagement = () => {
     });
   };
 
-  const roles = ["student", "teacher", "hod", "faculty"];
+  const roles = ["student", "hod", "faculty"];
 
   return (
     <>
