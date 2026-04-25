@@ -193,9 +193,13 @@ const AnnouncementCard = ({
           {isOwner && onToggleActive && (
             <Button
               size="sm"
-              variant={announcement.is_active ? "default" : "outline"}
+              variant={announcement.is_active ? "outline" : "default"}
               onClick={() => onToggleActive(announcement.id)}
-              className="gap-1"
+              className={`gap-1 transition-colors ${
+                !announcement.is_active 
+                  ? "bg-[#a259ff] text-white hover:bg-[#8a4dde] border-[#a259ff]" 
+                  : "text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-orange-900/30 dark:hover:bg-orange-900/20"
+              }`}
             >
               {announcement.is_active ? "Deactivate" : "Activate"}
             </Button>
@@ -203,9 +207,9 @@ const AnnouncementCard = ({
           {!isOwner && unread && onMarkRead && (
             <Button
               size="sm"
-              variant="outline"
+              variant="default"
               onClick={() => onMarkRead(announcement.id)}
-              className="gap-1 ml-auto"
+              className="gap-1 ml-auto bg-[#a259ff] text-white hover:bg-[#8a4dde] border-[#a259ff]"
             >
               <Eye className="w-3 h-3" />
               Mark as Read

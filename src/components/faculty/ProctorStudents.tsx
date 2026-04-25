@@ -46,7 +46,7 @@ const ProctorStudents = ({ proctorStudents, proctorStudentsLoading, pagination }
           value={search}
           onChange={e => {
             setSearch(e.target.value.replace(/[^a-zA-Z0-9\s]/g, ''));
-            setPage(1);
+            pagination?.goToPage?.(1);
           }}
           className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}
         />
@@ -54,11 +54,11 @@ const ProctorStudents = ({ proctorStudents, proctorStudentsLoading, pagination }
           <table className={`min-w-full rounded-md ${theme === 'dark' ? 'border border-border' : 'border border-gray-200'}`}>
             <thead className={theme === 'dark' ? 'bg-muted text-foreground' : 'bg-gray-100 text-gray-900'}>
               <tr>
-                <th className={`px-4 py-2 text-left text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>USN</th>
-                <th className={`px-4 py-2 text-left text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Name</th>
-                <th className={`px-4 py-2 text-left text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Semester</th>
-                <th className={`px-4 py-2 text-left text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Section</th>
-                <th className={`px-4 py-2 text-left text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Contact No</th>
+                <th className={`px-9 py-2 text-left text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>USN</th>
+                <th className={`px-8 py-2 text-left text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Name</th>
+                <th className={`px-4 py-2 text-center text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Semester</th>
+                <th className={`px-4 py-2 text-center text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Section</th>
+                <th className={`px-4 py-2 text-center text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Contact No</th>
               </tr>
             </thead>
             <tbody className={theme === 'dark' ? 'divide-border' : 'divide-gray-200'}>
@@ -66,9 +66,9 @@ const ProctorStudents = ({ proctorStudents, proctorStudentsLoading, pagination }
                 <tr key={index} className={theme === 'dark' ? 'hover:bg-muted' : 'hover:bg-gray-100'}>
                   <td className={`px-4 py-2 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.usn}</td>
                   <td className={`px-4 py-2 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.name}</td>
-                  <td className={`px-4 py-2 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.semester}</td>
-                  <td className={`px-4 py-2 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.section}</td>
-                  <td className={`px-4 py-2 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.contact || '-'}</td>
+                  <td className={`px-4 py-2 text-center text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.semester}</td>
+                  <td className={`px-4 py-2 text-center text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.section}</td>
+                  <td className={`px-4 py-2 text-center text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{student.contact || '-'}</td>
                 </tr>
               ))}
               {proctorStudents.length === 0 && (

@@ -240,7 +240,7 @@ const FacultyProfile = () => {
   };
 
   if (loading) {
-    return <div className={`p-4 sm:p-6 text-center text-sm sm:text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading profile...</div>;
+    return <div className={`p-4 sm:p-6 text-center text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading profile...</div>;
   }
 
   const renderTabContent = () => {
@@ -250,26 +250,26 @@ const FacultyProfile = () => {
           <div className="space-y-4 sm:space-y-5 md:space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
               <div className="w-full">
-                <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>First Name</label>
-                <Input value={formData.firstName} onChange={(e) => handleChange("firstName", e.target.value)} disabled={!isEditing} placeholder="First name" className="text-xs sm:text-sm h-8 sm:h-9 md:h-10 w-full" />
-                {localErrors.firstName && <p className={`text-xs mt-1 sm:mt-1.5 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.firstName}</p>}
+                <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>First Name</label>
+                <Input value={formData.firstName} onChange={(e) => handleChange("firstName", e.target.value)} disabled={!isEditing} placeholder="First name" className="text-sm h-8 sm:h-9 md:h-10 w-full" />
+                {localErrors.firstName && <p className={`text-sm mt-1 sm:mt-1.5 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.firstName}</p>}
               </div>
 
               <div className="w-full">
-                <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Last Name</label>
-                <Input value={formData.lastName} onChange={(e) => handleChange("lastName", e.target.value)} disabled={!isEditing} placeholder="Last name" className="text-xs sm:text-sm h-8 sm:h-9 md:h-10 w-full" />
-                {localErrors.lastName && <p className={`text-xs mt-1 sm:mt-1.5 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.lastName}</p>}
+                <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Last Name</label>
+                <Input value={formData.lastName} onChange={(e) => handleChange("lastName", e.target.value)} disabled={!isEditing} placeholder="Last name" className="text-sm h-8 sm:h-9 md:h-10 w-full" />
+                {localErrors.lastName && <p className={`text-sm mt-1 sm:mt-1.5 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.lastName}</p>}
               </div>
             </div>
 
             <div className="w-full">
-              <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Date of Birth</label>
-              <Input value={formData.date_of_birth} onChange={(e) => handleChange("date_of_birth", e.target.value)} disabled={!isEditing} placeholder="YYYY-MM-DD" className="text-xs sm:text-sm h-8 sm:h-9 md:h-10 w-full" />
+              <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Date of Birth</label>
+              <Input value={formData.date_of_birth} onChange={(e) => handleChange("date_of_birth", e.target.value)} disabled={!isEditing} placeholder="YYYY-MM-DD" className="text-sm h-8 sm:h-9 md:h-10 w-full" />
             </div>
 
             <div className="w-full">
-              <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Gender</label>
-              <Input value={formData.gender} onChange={(e) => handleChange("gender", e.target.value)} disabled={!isEditing} placeholder="Gender" className="text-xs sm:text-sm h-8 sm:h-9 md:h-10 w-full" />
+              <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Gender</label>
+              <Input value={formData.gender} onChange={(e) => handleChange("gender", e.target.value)} disabled={!isEditing} placeholder="Gender" className="text-sm h-8 sm:h-9 md:h-10 w-full" />
             </div>
           </div>
         );
@@ -279,34 +279,34 @@ const FacultyProfile = () => {
           <div className="space-y-4 sm:space-y-5 md:space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
               <div className="w-full">
-                <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Department</label>
-                <Input value={formData.department} onChange={(e) => handleChange("department", e.target.value)} disabled={!isEditing} placeholder="Department" className="text-xs sm:text-sm h-8 sm:h-9 md:h-10 w-full" />
+                <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Department</label>
+                <Input value={formData.department} onChange={(e) => handleChange("department", e.target.value)} disabled={!isEditing} placeholder="Department" className="text-sm h-8 sm:h-9 md:h-10 w-full" />
               </div>
               <div className="w-full">
-                <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Designation</label>
-                <Input value={formData.designation} onChange={(e) => handleChange("designation", e.target.value)} disabled={!isEditing} placeholder="Designation" className="text-xs sm:text-sm h-8 sm:h-9 md:h-10 w-full" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
-              <div className="w-full">
-                <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Qualification</label>
-                <Input value={formData.qualification} onChange={(e) => handleChange("qualification", e.target.value)} disabled={!isEditing} placeholder="Qualification" className="text-xs sm:text-sm h-8 sm:h-9 md:h-10 w-full" />
-              </div>
-              <div className="w-full">
-                <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Branch</label>
-                <Input value={formData.branch} onChange={(e) => handleChange("branch", e.target.value)} disabled={!isEditing} placeholder="Branch" className="text-xs sm:text-sm h-8 sm:h-9 md:h-10 w-full" />
+                <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Designation</label>
+                <Input value={formData.designation} onChange={(e) => handleChange("designation", e.target.value)} disabled={!isEditing} placeholder="Designation" className="text-sm h-8 sm:h-9 md:h-10 w-full" />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
               <div className="w-full">
-                <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Experience (years)</label>
-                <Input value={formData.experience_years} onChange={(e) => handleChange("experience_years", e.target.value)} disabled={!isEditing} placeholder="Experience" className="text-xs sm:text-sm h-8 sm:h-9 md:h-10 w-full" />
+                <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Qualification</label>
+                <Input value={formData.qualification} onChange={(e) => handleChange("qualification", e.target.value)} disabled={!isEditing} placeholder="Qualification" className="text-sm h-8 sm:h-9 md:h-10 w-full" />
               </div>
               <div className="w-full">
-                <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Office Location</label>
-                <Input value={formData.office_location} onChange={(e) => handleChange("office_location", e.target.value)} disabled={!isEditing} placeholder="Office" className="text-xs sm:text-sm h-8 sm:h-9 md:h-10 w-full" />
+                <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Branch</label>
+                <Input value={formData.branch} onChange={(e) => handleChange("branch", e.target.value)} disabled={!isEditing} placeholder="Branch" className="text-sm h-8 sm:h-9 md:h-10 w-full" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
+              <div className="w-full">
+                <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Experience (years)</label>
+                <Input value={formData.experience_years} onChange={(e) => handleChange("experience_years", e.target.value)} disabled={!isEditing} placeholder="Experience" className="text-sm h-8 sm:h-9 md:h-10 w-full" />
+              </div>
+              <div className="w-full">
+                <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Office Location</label>
+                <Input value={formData.office_location} onChange={(e) => handleChange("office_location", e.target.value)} disabled={!isEditing} placeholder="Office" className="text-sm h-8 sm:h-9 md:h-10 w-full" />
               </div>
             </div>
           </div>
@@ -316,27 +316,27 @@ const FacultyProfile = () => {
         return (
           <div className="space-y-4 sm:space-y-5">
             <div>
-              <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Email</label>
-              <Input value={formData.email} onChange={(e) => handleChange("email", e.target.value)} disabled={!isEditing} placeholder="Email address" className="text-xs sm:text-sm h-8 sm:h-10" />
-              {localErrors.email && <p className={`text-xs mt-1 sm:mt-1.5 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.email}</p>}
+              <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Email</label>
+              <Input value={formData.email} onChange={(e) => handleChange("email", e.target.value)} disabled={!isEditing} placeholder="Email address" className="text-sm h-8 sm:h-10" />
+              {localErrors.email && <p className={`text-sm mt-1 sm:mt-1.5 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.email}</p>}
             </div>
 
             <div>
-              <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Mobile</label>
-              <Input value={formData.mobile} onChange={(e) => handleChange("mobile", e.target.value)} disabled={!isEditing} maxLength={10} placeholder="10-digit mobile" className="text-xs sm:text-sm h-8 sm:h-10" />
-              {localErrors.mobile && <p className={`text-xs mt-1 sm:mt-1.5 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.mobile}</p>}
+              <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Mobile</label>
+              <Input value={formData.mobile} onChange={(e) => handleChange("mobile", e.target.value)} disabled={!isEditing} maxLength={10} placeholder="10-digit mobile" className="text-sm h-8 sm:h-10" />
+              {localErrors.mobile && <p className={`text-sm mt-1 sm:mt-1.5 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.mobile}</p>}
             </div>
 
             <div>
-              <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Address</label>
-              <Textarea value={formData.address} onChange={(e) => handleChange("address", e.target.value)} disabled={!isEditing} placeholder="Address" rows={3} className="text-xs sm:text-sm" />
-              {localErrors.address && <p className={`text-xs mt-1 sm:mt-1.5 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.address}</p>}
+              <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Address</label>
+              <Textarea value={formData.address} onChange={(e) => handleChange("address", e.target.value)} disabled={!isEditing} placeholder="Address" rows={3} className="text-sm" />
+              {localErrors.address && <p className={`text-sm mt-1 sm:mt-1.5 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.address}</p>}
             </div>
 
             <div>
-              <label className={`block text-xs sm:text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Bio</label>
-              <Textarea value={formData.bio} onChange={(e) => handleChange("bio", e.target.value)} disabled={!isEditing} placeholder="Tell us about yourself" rows={4} className="text-xs sm:text-sm" />
-              {localErrors.bio && <p className={`text-xs mt-1 sm:mt-1.5 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.bio}</p>}
+              <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Bio</label>
+              <Textarea value={formData.bio} onChange={(e) => handleChange("bio", e.target.value)} disabled={!isEditing} placeholder="Tell us about yourself" rows={4} className="text-sm" />
+              {localErrors.bio && <p className={`text-sm mt-1 sm:mt-1.5 ${theme === 'dark' ? 'text-destructive' : 'text-red-500'}`}>{localErrors.bio}</p>}
             </div>
           </div>
         );
@@ -347,19 +347,19 @@ const FacultyProfile = () => {
   };
 
   return (
-    <Card className={`w-full max-w-none mx-auto my-2 sm:my-4 md:  px-2 sm:px-4 md:px-6 py-2 sm:py-4 md: ${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}`}>
+    <Card className={`w-full max-w-none mx-auto ${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}`}>
       <CardHeader className="px-2 sm:px-3 md:px-4 lg:px-6 py-3 sm:py-4 md:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 border-b">
         <div className="flex-1 min-w-0">
-          <CardTitle className="text-lg sm:text-xl md:text-2xl font-bold line-clamp-2">Faculty Profile</CardTitle>
-          <p className={`text-xs sm:text-sm mt-1 line-clamp-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Manage your profile and academic details</p>
+          <CardTitle className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900">Faculty Profile</CardTitle>
+          <p className={`text-sm mt-1 line-clamp-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Manage your profile and academic details</p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap ml-auto">
-          <Button className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde]" onClick={() => { if (isEditing) { handleSave(); } else { setIsEditing(true); } }}>{isEditing ? 'Save' : 'Edit Profile'}</Button>
-          {isEditing && <button onClick={() => setIsEditing(false)} className={`text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 border rounded-md transition-colors ${theme === 'dark' ? 'border-muted-foreground text-muted-foreground hover:border-foreground hover:text-foreground' : 'border-gray-600 text-gray-600 hover:border-gray-900 hover:text-gray-900'}`}>Cancel</button>}
+          <Button className="text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde]" onClick={() => { if (isEditing) { handleSave(); } else { setIsEditing(true); } }}>{isEditing ? 'Save' : 'Edit Profile'}</Button>
+          {isEditing && <button onClick={() => setIsEditing(false)} className={`text-sm px-3 sm:px-4 py-1.5 sm:py-2 border rounded-md transition-colors ${theme === 'dark' ? 'border-muted-foreground text-muted-foreground hover:border-foreground hover:text-foreground' : 'border-gray-600 text-gray-600 hover:border-gray-900 hover:text-gray-900'}`}>Cancel</button>}
           <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
             <DialogTrigger asChild>
-              <Button className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde]">Change Password</Button>
+              <Button className="text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-[#a259ff] text-white border-[#a259ff] hover:bg-[#8a4dde]">Change Password</Button>
             </DialogTrigger>
             <DialogContent ref={passwordDialogContentRef} className="w-[calc(100vw-1.5rem)] sm:w-full max-w-[420px] rounded-xl sm:rounded-2xl">
               <DialogHeader>
@@ -437,7 +437,7 @@ const FacultyProfile = () => {
       </CardHeader>
 
       <CardContent className="px-2 sm:px-3 md:px-4 lg:px-6 py-3 sm:py-4 md:py-6">
-        {error && <div className={`mb-3 sm:mb-4 text-xs sm:text-sm ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>{error}</div>}
+        {error && <div className={`mb-3 sm:mb-4 text-sm ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>{error}</div>}
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-8 items-stretch">
           {/* Left column: avatar and basic */}
           <div className="col-span-1 flex flex-col items-center h-full">
@@ -445,23 +445,23 @@ const FacultyProfile = () => {
               {(formData.firstName && formData.firstName[0]) || ""}{(formData.lastName && formData.lastName[0]) || ""}
             </div>
             <div className="text-base sm:text-lg font-semibold text-center mb-1">{formData.firstName} {formData.lastName}</div>
-            <div className={`text-xs sm:text-sm mb-4 sm:mb-6 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Faculty</div>
+            <div className={`text-sm mb-4 sm:mb-6 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Faculty</div>
 
             <div className="w-full mt-4 sm:mt-6 flex-1 flex flex-col">
-              <h4 className={`text-xs sm:text-sm font-bold mb-2.5 sm:mb-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Quick Info</h4>
+              <h4 className={`text-sm font-bold mb-2.5 sm:mb-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Quick Info</h4>
               <div className={`border rounded-lg p-2.5 sm:p-4 flex-1 ${theme === 'dark' ? 'bg-card border-input' : 'bg-gray-50 border-gray-200'}`}>
                 <div className="grid grid-cols-1 gap-2.5 sm:gap-3.5 h-full">
                   <div className="flex flex-col justify-start">
-                    <span className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Department</span>
-                    <span className={`text-xs sm:text-sm break-words px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-2xl line-clamp-2 ${theme === 'dark' ? 'bg-accent text-foreground' : 'bg-purple-100 text-purple-700'}`}>{formData.department || '—'}</span>
+                    <span className={`text-sm font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Department</span>
+                    <span className={`text-sm break-words px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-2xl line-clamp-2 ${theme === 'dark' ? 'bg-accent text-foreground' : 'bg-purple-100 text-purple-700'}`}>{formData.department || '—'}</span>
                   </div>
                   <div className="flex flex-col justify-start">
-                    <span className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Designation</span>
-                    <span className={`text-xs sm:text-sm break-words px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-2xl line-clamp-2 ${theme === 'dark' ? 'bg-accent text-foreground' : 'bg-purple-100 text-purple-700'}`}>{formData.designation || '—'}</span>
+                    <span className={`text-sm font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Designation</span>
+                    <span className={`text-sm break-words px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-2xl line-clamp-2 ${theme === 'dark' ? 'bg-accent text-foreground' : 'bg-purple-100 text-purple-700'}`}>{formData.designation || '—'}</span>
                   </div>
                   <div className="flex flex-col justify-start">
-                    <span className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Office</span>
-                    <span className={`text-xs sm:text-sm break-words px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-2xl line-clamp-2 ${theme === 'dark' ? 'bg-accent text-foreground' : 'bg-purple-100 text-purple-700'}`}>{formData.office_location || '—'}</span>
+                    <span className={`text-sm font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Office</span>
+                    <span className={`text-sm break-words px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-2xl line-clamp-2 ${theme === 'dark' ? 'bg-accent text-foreground' : 'bg-purple-100 text-purple-700'}`}>{formData.office_location || '—'}</span>
                   </div>
                 </div>
               </div>
@@ -471,9 +471,9 @@ const FacultyProfile = () => {
           {/* Right column: tabs and content */}
           <div className="col-span-1 sm:col-span-2 lg:col-span-3 w-full flex flex-col h-full">
             <div className="flex items-center gap-1 sm:gap-2 mb-3 sm:mb-4 md:mb-5 lg:mb-6 border-b pb-2 sm:pb-3 overflow-x-auto flex-shrink-0">
-              <button onClick={() => setActiveTab('personal')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'personal' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Personal</button>
-              <button onClick={() => setActiveTab('academic')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'academic' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Academic</button>
-              <button onClick={() => setActiveTab('contact')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'contact' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Contact</button>
+              <button onClick={() => setActiveTab('personal')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'personal' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Personal</button>
+              <button onClick={() => setActiveTab('academic')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'academic' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Academic</button>
+              <button onClick={() => setActiveTab('contact')} className={`px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-sm rounded-md whitespace-nowrap transition-colors font-medium flex-shrink-0 ${activeTab === 'contact' ? 'bg-[#a259ff] text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Contact</button>
             </div>
 
             <div className={`p-3 sm:p-4 md:p-5 lg:p-6 rounded-lg border flex-1 ${theme === 'dark' ? 'bg-card border-input' : 'bg-gray-50 border-gray-200'}`}>

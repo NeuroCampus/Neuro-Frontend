@@ -3,6 +3,13 @@ import { Card, CardContent, CardHeader } from "../ui/card";
 import { Download, FileText, UploadCloud, X } from "lucide-react";
 import { getStudyMaterials, uploadStudyMaterial, getAssignedSubjectsGrouped, getBranches, getSemesters, getSections, AssignedSubject } from "../../utils/faculty_api";
 import { useTheme } from "../../context/ThemeContext";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface StudyMaterial {
   id: number;
@@ -176,66 +183,99 @@ const StudyMaterialsFaculty = () => {
   }, [selectedBranch, selectedSemester, selectedSection, searchQuery]);
 
   return (
-    <div className={`w-full p-2 sm:p-3 md:p-4 lg:p-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-      <div className="flex flex-row justify-between items-center mb-4 sm:mb-6 gap-2 sm:gap-3">
-        <h1 className="text-lg sm:text-xl md:text-2xl font-semibold">Study Materials</h1>
-        <button onClick={() => setShowUploadModal(true)} className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1 bg-[#a259ff] text-white hover:bg-[#8a4dde] whitespace-nowrap`}>
-          <UploadCloud size={16} /> Upload
-        </button>
-      </div>
-
-      <div className="flex flex-col gap-2 sm:gap-3 md:gap-4 mb-4 md:mb-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
-          <select value={selectedBranch} onChange={(e) => setSelectedBranch(e.target.value)} className={`border rounded px-2 sm:px-3 py-2 text-xs sm:text-sm ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}>
-            <option value="All Branches">All Branches</option>
-            {branches.map((b) => (
-              <option key={b.id} value={b.id.toString()}>{b.name}</option>
-            ))}
-          </select>
-
-          <select value={selectedSemester} onChange={(e) => setSelectedSemester(e.target.value)} className={`border rounded px-2 sm:px-3 py-2 text-xs sm:text-sm ${semesters.length === 0 ? 'opacity-50 cursor-not-allowed' : ''} ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`} disabled={semesters.length === 0}>
-            <option value="All Semesters">All Semesters</option>
-            {semesters.map((s) => (
-              <option key={s.id} value={s.id.toString()}>Semester {s.number}</option>
-            ))}
-          </select>
-
-          <select value={selectedSection} onChange={(e) => setSelectedSection(e.target.value)} className={`border rounded px-2 sm:px-3 py-2 text-xs sm:text-sm ${sections.length === 0 ? 'opacity-50 cursor-not-allowed' : ''} ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`} disabled={sections.length === 0}>
-            <option value="All Sections">All Sections</option>
-            {sections.map((sec) => (
-              <option key={sec.id} value={sec.id.toString()}>{sec.name}</option>
-            ))}
-          </select>
-        </div>
-
-        <input
-          type="text"
-          placeholder="Search by title, course name, course code, semester, or uploaded by..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className={`w-full px-2 sm:px-3 py-2 border rounded text-xs sm:text-sm ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
-        />
-      </div>
-
-      <Card>
-        <CardHeader className="p-2 sm:p-3 md:p-4 lg:p-6">
-          <div className="hidden md:grid grid-cols-6 font-semibold text-xs sm:text-sm gap-2">
-            <div>Type</div>
-            <div>Title</div>
-            <div>Course</div>
-            <div>Semester</div>
-            <div>Uploaded By</div>
-            <div>Action</div>
+    <div className={`w-full ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+      <Card className={`${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
+        <CardHeader className="p-3 sm:p-4 lg:p-6 border-b">
+          <div className="flex flex-row justify-between items-center gap-2 sm:gap-3">
+            <div>
+              <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900">Study Materials</h1>
+              <p className={`text-xs sm:text-sm mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                View and upload course-related study materials for your assigned subjects.
+              </p>
+            </div>
+            <button onClick={() => setShowUploadModal(true)} className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-1 bg-[#a259ff] text-white hover:bg-[#8a4dde] whitespace-nowrap`}>
+              <UploadCloud size={16} /> Upload
+            </button>
           </div>
         </CardHeader>
-        <CardContent className="p-2 sm:p-3 md:p-4 lg:p-6">
-          {!hasSearched ? (
-            <div className="text-center py-4 text-xs sm:text-sm text-gray-500">Select branch, semester, and section to view study materials.</div>
-          ) : materials.length === 0 ? (
-            <div className="text-center py-4 text-xs sm:text-sm">No study materials found.</div>
-          ) : (
-            materials.map((m: StudyMaterial) => <StudyMaterialRow key={m.id} material={m} theme={theme} />)
-          )}
+        <CardContent className="p-3 sm:p-4 lg:p-6 space-y-6">
+          {/* Filters & Search */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+              <Select value={selectedBranch} onValueChange={(value) => setSelectedBranch(value)}>
+                <SelectTrigger className={theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}>
+                  <SelectValue placeholder="All Branches" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All Branches">All Branches</SelectItem>
+                  {branches.map((b) => (
+                    <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={selectedSemester}
+                onValueChange={(value) => setSelectedSemester(value)}
+                disabled={semesters.length === 0}
+              >
+                <SelectTrigger className={`${semesters.length === 0 ? 'opacity-50 cursor-not-allowed' : ''} ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}>
+                  <SelectValue placeholder="All Semesters" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All Semesters">All Semesters</SelectItem>
+                  {semesters.map((s) => (
+                    <SelectItem key={s.id} value={s.id.toString()}>Semester {s.number}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={selectedSection}
+                onValueChange={(value) => setSelectedSection(value)}
+                disabled={sections.length === 0}
+              >
+                <SelectTrigger className={`${sections.length === 0 ? 'opacity-50 cursor-not-allowed' : ''} ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}>
+                  <SelectValue placeholder="All Sections" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All Sections">All Sections</SelectItem>
+                  {sections.map((sec) => (
+                    <SelectItem key={sec.id} value={sec.id.toString()}>{sec.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <input
+              type="text"
+              placeholder="Search by title, course name, course code, semester, or uploaded by..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={`w-full px-2 sm:px-3 py-2 border rounded text-xs sm:text-sm ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
+            />
+          </div>
+
+          {/* Materials Table Section */}
+          <div className="pt-4 border-t">
+            <div className="hidden md:grid grid-cols-6 font-semibold text-xs sm:text-sm gap-2 mb-4 px-2">
+              <div>Type</div>
+              <div>Title</div>
+              <div>Course</div>
+              <div>Semester</div>
+              <div>Uploaded By</div>
+              <div>Action</div>
+            </div>
+            <div className="space-y-1">
+              {!hasSearched ? (
+                <div className="text-center py-10 text-xs sm:text-sm text-gray-500 italic">Select branch, semester, and section to view study materials.</div>
+              ) : materials.length === 0 ? (
+                <div className="text-center py-10 text-xs sm:text-sm text-gray-500">No study materials found for the selected criteria.</div>
+              ) : (
+                materials.map((m: StudyMaterial) => <StudyMaterialRow key={m.id} material={m} theme={theme} />)
+              )}
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -249,10 +289,9 @@ const StudyMaterialsFaculty = () => {
               </button>
             </div>
             <div className="space-y-3 sm:space-y-4">
-              <select
+              <Select
                 value={uploadSubject}
-                onChange={(e) => {
-                  const subjId = e.target.value;
+                onValueChange={(subjId) => {
                   setUploadSubject(subjId);
                   const subj = grouped.find(g => String(g.subject_id) === subjId);
                   if (subj && subj.sections.length > 0) {
@@ -262,13 +301,16 @@ const StudyMaterialsFaculty = () => {
                     setUploadSection(String(s.section_id));
                   }
                 }}
-                className={`w-full px-2 sm:px-3 py-2 border rounded text-xs sm:text-sm ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
               >
-                <option value="">Select Subject</option>
-                {grouped.map(g => (
-                  <option key={g.subject_id} value={g.subject_id}>{g.subject_name} ({g.subject_code})</option>
-                ))}
-              </select>
+                <SelectTrigger className={theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}>
+                  <SelectValue placeholder="Select Subject" />
+                </SelectTrigger>
+                <SelectContent>
+                  {grouped.map(g => (
+                    <SelectItem key={g.subject_id} value={String(g.subject_id)}>{g.subject_name} ({g.subject_code})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <div className={`px-2 sm:px-3 py-2 border rounded text-xs sm:text-sm ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}>
                 Branch: {uploadBranch ? grouped.find(g => String(g.subject_id) === uploadSubject)?.sections.find(s => String(s.branch_id) === uploadBranch)?.branch : 'N/A'}
               </div>

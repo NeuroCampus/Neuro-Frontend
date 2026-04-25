@@ -13,6 +13,13 @@ import {
   AlertCircle,
   Clock,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { useStudentCertificatesQuery, useStudentCertificateUploadMutation } from "@/hooks/useApiQueries";
 import { useTheme } from "@/context/ThemeContext";
 import { useFileUpload, useFormValidation, validationRules } from "@/hooks/useOptimizations";
@@ -63,6 +70,7 @@ const CertificatesManagement = () => {
   const [activeTab, setActiveTab] = useState("view");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadDescription, setUploadDescription] = useState("");
+  const [certificateType, setCertificateType] = useState("");
   const { theme } = useTheme();
 
   // Use the new file upload hook with compression and validation
@@ -368,18 +376,16 @@ const CertificatesManagement = () => {
             <form className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="certificate-type" className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Certificate Type</Label>
-                <select
-                  id="certificate-type"
-                  className={theme === 'dark' ? 
-                    'flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50' : 
-                    'flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
-                  }
-                >
-                  <option value="" className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>Select certificate type</option>
-                  <option value="bonafide" className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>Bonafide Certificate</option>
-                  <option value="transfer" className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>Transfer Certificate</option>
-                  <option value="completion" className={theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'}>Course Completion</option>
-                </select>
+                <Select value={certificateType} onValueChange={setCertificateType}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select certificate type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bonafide">Bonafide Certificate</SelectItem>
+                    <SelectItem value="transfer">Transfer Certificate</SelectItem>
+                    <SelectItem value="completion">Course Completion</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">

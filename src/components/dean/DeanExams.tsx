@@ -1,6 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { API_ENDPOINT } from '@/utils/config';
-import { fetchWithTokenRefresh } from '@/utils/authService';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type ExamEntry = {
   id: string | number;
@@ -58,7 +62,7 @@ const DeanExams: React.FC = () => {
   const [exams, setExams] = useState<ExamEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [branches, setBranches] = useState<any[]>([]);
-  const [branchId, setBranchId] = useState<string>('');
+  const [branchId, setBranchId] = useState<string>('all');
   const [upcomingOnly, setUpcomingOnly] = useState<boolean>(false);
 
   const load = async () => {
@@ -66,7 +70,7 @@ const DeanExams: React.FC = () => {
     try {
       // build query params
       const qs: string[] = [];
-      if (branchId) qs.push(`branch_id=${encodeURIComponent(branchId)}`);
+      if (branchId && branchId !== 'all') qs.push(`branch_id=${encodeURIComponent(branchId)}`);
       if (upcomingOnly) qs.push(`upcoming=1`);
       const url = `${API_ENDPOINT}/dean/reports/exams/${qs.length ? `?${qs.join('&')}` : ''}`;
       console.debug('Loading exams from', url);
@@ -88,7 +92,7 @@ const DeanExams: React.FC = () => {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [branchId, upcomingOnly]);
 
   // load branches for filter
   useEffect(() => {
@@ -97,7 +101,7 @@ const DeanExams: React.FC = () => {
         const res = await fetchWithTokenRefresh(`${API_ENDPOINT}/dean/reports/branches/`);
         const json = await res.json();
         if (json.success) {
-          const normalized = (json.data || []).map((b: any) => ({ id: b.id || b.branch_id, name: b.name || b.branch }));
+          const normalized = (json.data || []).map((b: any) => ({ id: (b.id || b.branch_id).toString(), name: b.name || b.branch }));
           setBranches(normalized);
         }
       } catch (e) {
@@ -155,10 +159,17 @@ const DeanExams: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
         <div>
           <label className="text-sm block mb-1">Branch</label>
-          <select value={branchId} onChange={e => setBranchId(e.target.value)} className="w-full p-2 border rounded">
-            <option value="">All branches</option>
-            {branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-          </select>
+          <Select value={branchId} onValueChange={setBranchId}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="All branches" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All branches</SelectItem>
+              {branches.map(b => (
+                <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         {countCards.map(c => (
           <div key={c.key} className="p-4 bg-white rounded shadow flex items-center justify-between">

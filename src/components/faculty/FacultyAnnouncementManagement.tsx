@@ -199,146 +199,158 @@ const FacultyAnnouncementManagement = () => {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold leading-none tracking-tight text-gray-900">
-            Announcements for Proctor Students
-          </h1>
-          <p className="text-gray-600 text-sm">
-            Create and manage announcements for your proctor group
-          </p>
-        </div>
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button onClick={() => resetForm()} className="gap-2">
-              <Plus className="w-4 h-4" />
-              New Announcement
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-semibold leading-none tracking-tight text-gray-900">
-                {editingId
-                  ? "Edit Announcement"
-                  : "Create Announcement for Proctor Students"}
-              </DialogTitle>
-              <DialogDescription>
-                {editingId
-                  ? "Update the announcement details below"
-                  : "Create a new announcement that will be sent to your proctor students"}
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  placeholder="Announcement title"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="message">Message *</Label>
-                <Textarea
-                  id="message"
-                  placeholder="Announcement message"
-                  value={formData.message}
-                  onChange={(e) =>
-                    setFormData({ ...formData, message: e.target.value })
-                  }
-                  rows={6}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="priority">Priority</Label>
-                  <Select
-                    value={formData.priority}
-                    onValueChange={(value: any) =>
-                      setFormData({ ...formData, priority: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="normal">Normal</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="urgent">Urgent</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="expires_at">Expires At</Label>
-                  <Input
-                    id="expires_at"
-                    type="date"
-                    value={formData.expires_at}
-                    onChange={(e) =>
-                      setFormData({ ...formData, expires_at: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="p-3 rounded-lg bg-muted">
-                <p className="text-sm text-muted-foreground">
-                  ℹ️ This announcement will be visible to your proctor students only
-                </p>
-              </div>
-
-              <div className="flex gap-3 justify-end pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowCreateDialog(false)}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleCreateOrUpdate}>
-                  {editingId ? "Update" : "Create"} Announcement
-                </Button>
-              </div>
+    <div className="w-full max-w-7xl mx-auto">
+      <Card className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
+        <CardHeader className="p-4 border-b">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <CardTitle className={`text-xl sm:text-2xl font-semibold leading-none tracking-tight ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                Announcements for Proctor Students
+              </CardTitle>
+              <p className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>
+                Create and manage announcements for your proctor group
+              </p>
             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+              <DialogTrigger asChild>
+                <Button 
+                  onClick={() => resetForm()} 
+                  className="gap-2 bg-[#a259ff] text-white hover:bg-[#8a4dde] transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  New Announcement
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className={`text-2xl font-semibold leading-none tracking-tight ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                    {editingId
+                      ? "Edit Announcement"
+                      : "Create Announcement for Proctor Students"}
+                  </DialogTitle>
+                  <DialogDescription className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>
+                    {editingId
+                      ? "Update the announcement details below"
+                      : "Create a new announcement that will be sent to your proctor students"}
+                  </DialogDescription>
+                </DialogHeader>
 
-      {/* Loading State */}
-      {loading && (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      )}
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Title *</Label>
+                    <Input
+                      id="title"
+                      placeholder="Announcement title"
+                      value={formData.title}
+                      onChange={(e) =>
+                        setFormData({ ...formData, title: e.target.value })
+                      }
+                    />
+                  </div>
 
-      {/* Error State */}
-      {error && (
-        <div className="p-4 rounded-lg bg-destructive/10 text-destructive">
-          <p className="font-medium">{error}</p>
-        </div>
-      )}
+                  <div className="space-y-2">
+                    <Label htmlFor="message">Message *</Label>
+                    <Textarea
+                      id="message"
+                      placeholder="Announcement message"
+                      value={formData.message}
+                      onChange={(e) =>
+                        setFormData({ ...formData, message: e.target.value })
+                      }
+                      rows={6}
+                    />
+                  </div>
 
-      {/* Announcement Sections */}
-      {!loading && !error && (
-        <AnnouncementSections
-          myAnnouncements={myAnnouncements}
-          receivedAnnouncements={receivedAnnouncements}
-          onEdit={handleEdit}
-          onDelete={(id) => setDeletingId(id)}
-          onToggleActive={handleToggleActive}
-          onMarkRead={handleMarkRead}
-          loading={loading}
-          showActions={true}
-        />
-      )}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="priority">Priority</Label>
+                      <Select
+                        value={formData.priority}
+                        onValueChange={(value: any) =>
+                          setFormData({ ...formData, priority: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="normal">Normal</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                          <SelectItem value="urgent">Urgent</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="expires_at">Expires At</Label>
+                      <Input
+                        id="expires_at"
+                        type="date"
+                        value={formData.expires_at}
+                        onChange={(e) =>
+                          setFormData({ ...formData, expires_at: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-muted">
+                    <p className="text-sm text-muted-foreground">
+                      ℹ️ This announcement will be visible to your proctor students only
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3 justify-end pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowCreateDialog(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={handleCreateOrUpdate}
+                      className="bg-[#a259ff] text-white hover:bg-[#8a4dde] transition-colors"
+                    >
+                      {editingId ? "Update" : "Create"} Announcement
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-4 sm:p-6">
+          {/* Loading State */}
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="p-4 rounded-lg bg-destructive/10 text-destructive mb-6">
+              <p className="font-medium">{error}</p>
+            </div>
+          )}
+
+          {/* Announcement Sections */}
+          {!loading && !error && (
+            <AnnouncementSections
+              myAnnouncements={myAnnouncements}
+              receivedAnnouncements={receivedAnnouncements}
+              onEdit={handleEdit}
+              onDelete={(id) => setDeletingId(id)}
+              onToggleActive={handleToggleActive}
+              onMarkRead={handleMarkRead}
+              loading={loading}
+              showActions={true}
+            />
+          )}
+        </CardContent>
+      </Card>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>

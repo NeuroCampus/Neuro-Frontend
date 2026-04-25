@@ -1,9 +1,10 @@
-import { useEffect, useState, useRef } from "react";
-import { createPortal } from "react-dom";
-import { Card, CardContent, CardHeader } from "../ui/card";
-import { Download, FileText, ChevronDown } from "lucide-react";
-import { getAllStudyMaterials, getBranches, getSemesters, getSections } from "../../utils/student_api";
-import { useTheme } from "../../context/ThemeContext";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface StudyMaterial {
   id: number;
@@ -15,97 +16,8 @@ interface StudyMaterial {
   file_url: string;
 }
 
-// Custom Dropdown Component
-interface CustomSelectProps {
-  value: string;
-  onChange: (value: string) => void;
-  options: Array<{ value: string; label: string }>;
-  disabled?: boolean;
-  theme: string;
-}
-
-const CustomSelect = ({ value, onChange, options, disabled = false, theme }: CustomSelectProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
-
-  useEffect(() => {
-    if (isOpen && triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      setPosition({
-        top: rect.bottom + 8,
-        left: rect.left,
-        width: rect.width,
-      });
-    }
-  }, [isOpen]);
-
-  const selectedLabel = options.find(opt => opt.value === value)?.label || "Select...";
-
-  return (
-    <div className="relative w-full">
-      <button
-        ref={triggerRef}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        disabled={disabled}
-        className={`w-full border rounded px-3 py-2 text-sm md:text-base flex items-center justify-between ${
-          disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-        } ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
-      >
-        <span className="truncate">{selectedLabel}</span>
-        <ChevronDown size={16} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-
-      {isOpen && createPortal(
-        <div
-          className="fixed inset-0 z-[9998]"
-          onClick={() => setIsOpen(false)}
-        />,
-        document.body
-      )}
-
-      {isOpen && createPortal(
-        <div
-          className={`absolute z-[9999] border rounded shadow-lg ${
-            theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'
-          }`}
-          style={{
-            top: `${position.top}px`,
-            left: `${position.left}px`,
-            width: `${position.width}px`,
-            maxHeight: '240px',
-            overflowY: 'auto',
-          }}
-        >
-          {options.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => {
-                onChange(opt.value);
-                setIsOpen(false);
-              }}
-              className={`w-full text-left px-3 py-2 text-sm hover:bg-accent transition ${
-                value === opt.value
-                  ? theme === 'dark'
-                    ? 'bg-accent text-foreground'
-                    : 'bg-blue-50 text-blue-600'
-                  : theme === 'dark'
-                  ? 'text-foreground'
-                  : 'text-gray-900'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>,
-        document.body
-      )}
-    </div>
-  );
-};
-
 const StudyMaterialRow = ({ material, theme }: { material: StudyMaterial; theme: string }) => (
-  <div className={`grid grid-cols-3 md:grid-cols-7 gap-2 md:gap-2 items-start md:items-center text-xs md:text-sm py-3 md:py-2 px-3 md:px-0 md:border-b ${theme === 'dark' ? 'md:border-border' : 'md:border-gray-200'}`}>
+  <div className={`grid grid-cols-3 md:grid-cols-7 gap-2 md:gap-2 items-start md:items-center text-xs md:text-sm py-3 md:py-2 px-3 md:px-0 md:border-b ${theme === 'dark' ? 'md:border-border' : 'md:border-gray-200'} last:border-b-0`}>
     <div className="hidden md:flex items-center">
       <FileText className="text-red-500" size={18} />
     </div>
@@ -214,77 +126,98 @@ const StudyMaterialsStudent = () => {
   }, [selectedBranch, selectedSemester, selectedSection, searchQuery]);
 
   return (
-    <div className={`w-full p-3 md:p-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 md:mb-4 gap-2">
-        <h1 className="text-lg md:text-xl font-semibold">Study Materials</h1>
-      </div>
-
-      <div className="flex flex-col gap-3 md:gap-4 mb-3 md:mb-4">
-        <div className="flex flex-col gap-2 md:gap-4 md:flex-row">
-          <CustomSelect
-            value={selectedBranch}
-            onChange={(value) => setSelectedBranch(value)}
-            options={[
-              { value: "All Branches", label: "All Branches" },
-              ...branches.map((b) => ({ value: b.id.toString(), label: b.name })),
-            ]}
-            theme={theme}
-          />
-
-          <CustomSelect
-            value={selectedSemester}
-            onChange={(value) => setSelectedSemester(value)}
-            options={[
-              { value: "All Semesters", label: "All Semesters" },
-              ...semesters.map((s) => ({ value: s.id.toString(), label: `Sem ${s.number}` })),
-            ]}
-            disabled={semesters.length === 0}
-            theme={theme}
-          />
-
-          <CustomSelect
-            value={selectedSection}
-            onChange={(value) => setSelectedSection(value)}
-            options={[
-              { value: "All Sections", label: "All Sections" },
-              ...sections.map((sec) => ({ value: sec.id.toString(), label: sec.name })),
-            ]}
-            disabled={sections.length === 0}
-            theme={theme}
-          />
-        </div>
-
-        <input
-          type="text"
-          placeholder="Search materials..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className={`w-full px-3 py-2 text-sm md:text-base border rounded ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
-        />
-      </div>
-
-      <Card className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
-        <CardHeader className="hidden md:block">
-          <div className="grid grid-cols-1 md:grid-cols-7 font-semibold text-xs md:text-sm gap-2">
-            <div>Type</div>
-            <div>Title</div>
-            <div>Course Name</div>
-            <div>Course Code</div>
-            <div>Semester</div>
-            <div>Uploaded By</div>
-            <div>Action</div>
-          </div>
+    <div className={`w-full p-2 sm:p-3 md:p-4 lg:p-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+      <Card className={`${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
+        <CardHeader className="p-3 sm:p-4 lg:p-6 border-b">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-900">Study Materials</h1>
+          <p className={`text-xs sm:text-sm mt-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+            Access and download study materials shared by your professors.
+          </p>
         </CardHeader>
-        <CardContent className="p-2 md:p-4">
-          {!hasSearched ? (
-            <div className={`text-center py-6 md:py-4 text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Select branch, semester, and section to view study materials.</div>
-          ) : materials.length === 0 ? (
-            <div className={`text-center py-6 md:py-4 text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No study materials found.</div>
-          ) : (
-            materials.map((m: StudyMaterial) => <StudyMaterialRow key={m.id} material={m} theme={theme} />)
-          )}
+        <CardContent className="p-3 sm:p-4 lg:p-6 space-y-6">
+          {/* Filters & Search */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+              <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+                <SelectTrigger className={theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}>
+                  <SelectValue placeholder="All Branches" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All Branches">All Branches</SelectItem>
+                  {branches.map((b) => (
+                    <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={selectedSemester}
+                onValueChange={setSelectedSemester}
+                disabled={semesters.length === 0}
+              >
+                <SelectTrigger className={`${semesters.length === 0 ? 'opacity-50 cursor-not-allowed' : ''} ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}>
+                  <SelectValue placeholder="All Semesters" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All Semesters">All Semesters</SelectItem>
+                  {semesters.map((s) => (
+                    <SelectItem key={s.id} value={s.id.toString()}>Sem {s.number}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={selectedSection}
+                onValueChange={setSelectedSection}
+                disabled={sections.length === 0}
+              >
+                <SelectTrigger className={`${sections.length === 0 ? 'opacity-50 cursor-not-allowed' : ''} ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}>
+                  <SelectValue placeholder="All Sections" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All Sections">All Sections</SelectItem>
+                  {sections.map((sec) => (
+                    <SelectItem key={sec.id} value={sec.id.toString()}>{sec.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <input
+              type="text"
+              placeholder="Search by title, course name, course code, semester, or uploaded by..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={`w-full px-2 sm:px-3 py-2 border rounded text-xs sm:text-sm ${theme === 'dark' ? 'border-border bg-background text-foreground' : 'border-gray-300 bg-white text-gray-900'}`}
+            />
+          </div>
+
+          {/* Materials Table Section */}
+          <div className="pt-4 border-t">
+            <div className="hidden md:grid grid-cols-7 font-semibold text-xs sm:text-sm gap-2 mb-4 px-2">
+              <div>Type</div>
+              <div>Title</div>
+              <div>Course Name</div>
+              <div>Course Code</div>
+              <div>Semester</div>
+              <div>Uploaded By</div>
+              <div>Action</div>
+            </div>
+            <div className="space-y-1">
+              {!hasSearched ? (
+                <div className="text-center py-10 text-xs sm:text-sm text-gray-500 italic">Select branch, semester, and section to view study materials.</div>
+              ) : materials.length === 0 ? (
+                <div className="text-center py-10 text-xs sm:text-sm text-gray-500">No study materials found for the selected criteria.</div>
+              ) : (
+                materials.map((m: StudyMaterial) => <StudyMaterialRow key={m.id} material={m} theme={theme} />)
+              )}
+            </div>
+          </div>
         </CardContent>
       </Card>
+    </div>
+  );
+};
     </div>
   );
 };

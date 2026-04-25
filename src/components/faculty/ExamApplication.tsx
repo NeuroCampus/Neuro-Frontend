@@ -421,7 +421,7 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
       <CardContent className="space-y-4">
         <div className="flex gap-4">
           <div className="flex-1">
-            <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Exam Period</label>
+            <label className={`block text-lg font-medium mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Exam Period</label>
             <Select value={examPeriod} onValueChange={setExamPeriod}>
               <SelectTrigger className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}>
                 <SelectValue placeholder="Select exam period" />
@@ -445,15 +445,60 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
           className={theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}
         />
 
-        <div className="max-h-[60vh] overflow-auto">
-          <table className={`min-w-full rounded-md ${theme === 'dark' ? 'border border-border' : 'border border-gray-200'}`}>
+        <div className="max-h-[60vh] overflow-auto custom-scrollbar">
+          {/* Mobile view: Stacked cards */}
+          <div className="md:hidden space-y-3">
+            {!(isProctorLoading || proctorStudentsLoading) && filtered.map((student: any) => (
+              <div key={student.usn} className={`p-4 rounded-lg border ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-200 text-gray-900'} shadow-sm`}>
+                <div className="flex justify-between items-start mb-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm truncate">{student.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{student.usn}</p>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${studentStatuses[student.usn] === 'Applied'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-gray-100 text-gray-800'
+                    }`}>
+                    {studentStatuses[student.usn] || 'Not Applied'}
+                  </span>
+                </div>
+                
+                <div className="flex items-center gap-4 mb-4 text-xs">
+                  <div className="px-2 py-1 bg-muted rounded">
+                    <span className="text-muted-foreground mr-1">Semester:</span>
+                    <span className="font-medium">{student.semester}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Button onClick={() => openFor(student)} className="w-full bg-[#a259ff] hover:bg-[#a259ff]/90 text-white h-9">
+                    Open Application
+                  </Button>
+                  {studentStatuses[student.usn] === 'Applied' && (
+                    <Button
+                      onClick={() => downloadHallTicket(student)}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white h-9"
+                    >
+                      Download Hall Ticket
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+            {!(isProctorLoading || proctorStudentsLoading) && filtered.length === 0 && (
+              <div className="text-center py-10 text-muted-foreground">No students found.</div>
+            )}
+          </div>
+
+          {/* Desktop view: Table */}
+          <table className={`hidden md:table w-full rounded-md ${theme === 'dark' ? 'border border-border' : 'border border-gray-200'} border-collapse`}>
             <thead className={theme === 'dark' ? 'bg-muted text-foreground' : 'bg-gray-100 text-gray-900'}>
               <tr>
-                <th className="px-4 py-2 text-left text-sm">USN</th>
-                <th className="px-4 py-2 text-left text-sm">Name</th>
-                <th className="px-4 py-2 text-left text-sm">Semester</th>
-                <th className="px-4 py-2 text-left text-sm">Status</th>
-                <th className="px-4 py-2 text-left text-sm">Action</th>
+                <th className="px-4 py-3 text-center text-sm font-semibold">USN</th>
+                <th className="px-4 py-3 text-center text-sm font-semibold">Name</th>
+                <th className="px-4 py-3 text-center text-sm font-semibold">Semester</th>
+                <th className="px-4 py-3 text-center text-sm font-semibold">Status</th>
+                <th className="px-4 py-3 text-center text-sm font-semibold">Action</th>
               </tr>
             </thead>
             <tbody className={theme === 'dark' ? 'divide-border' : 'divide-gray-200'}>
@@ -463,29 +508,36 @@ const ExamApplication: React.FC<ExamApplicationProps> = ({ proctorStudents: init
                 </tr>
               )}
               {!(isProctorLoading || proctorStudentsLoading) && filtered.map((student: any) => (
-                <tr key={student.usn} className={theme === 'dark' ? 'hover:bg-muted' : 'hover:bg-gray-50'}>
-                  <td className="px-4 py-2 text-sm">{student.usn}</td>
-                  <td className="px-4 py-2 text-sm">{student.name}</td>
-                  <td className="px-4 py-2 text-sm">{student.semester}</td>
-                  <td className="px-4 py-2 text-sm">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${studentStatuses[student.usn] === 'Applied'
+                <tr key={student.usn} className={`border-b ${theme === 'dark' ? 'border-border hover:bg-muted' : 'border-gray-100 hover:bg-gray-50'} transition-colors`}>
+                  <td className="px-4 py-3 text-sm font-medium text-center">{student.usn}</td>
+                  <td className="px-4 py-3 text-sm text-center">{student.name}</td>
+                  <td className="px-4 py-3 text-sm text-center">{student.semester}</td>
+                  <td className="px-4 py-3 text-sm text-center">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium inline-block ${studentStatuses[student.usn] === 'Applied'
                       ? 'bg-green-100 text-green-800'
                       : 'bg-gray-100 text-gray-800'
                       }`}>
                       {studentStatuses[student.usn] || 'Not Applied'}
                     </span>
                   </td>
-                  <td className="px-4 py-2 text-sm">
-                    <div className="flex gap-2">
-                      <Button onClick={() => openFor(student)} className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white">Open</Button>
-                      {studentStatuses[student.usn] === 'Applied' && (
-                        <Button
-                          onClick={() => downloadHallTicket(student)}
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          Download Hall Ticket
-                        </Button>
-                      )}
+                  <td className="px-4 py-3 text-sm min-w-[400px]">
+                    <div className="relative w-full flex justify-center items-center h-8">
+                      <Button 
+                        onClick={() => openFor(student)} 
+                        className="bg-[#a259ff] hover:bg-[#a259ff]/90 text-white h-8 px-3 whitespace-nowrap z-10"
+                      >
+                        Open
+                      </Button>
+                      <div className="absolute left-[calc(50%+45px)] flex items-center">
+                        {studentStatuses[student.usn] === 'Applied' && (
+                          <Button
+                            onClick={() => downloadHallTicket(student)}
+                            className="bg-green-600 hover:bg-green-700 text-white h-8 px-2 whitespace-nowrap"
+                          >
+                            Download Hall Ticket
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </td>
                 </tr>

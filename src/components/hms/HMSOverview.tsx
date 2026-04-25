@@ -4,6 +4,13 @@ import { Building2, Users, Grid3X3, Shield, AlertCircle, Loader } from "lucide-r
 import { useToast } from "../../hooks/use-toast";
 import { getDashboardStats, getRoomsByHostelId } from "../../utils/hms_api";
 import { useTheme } from "../../context/ThemeContext";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 interface Hostel {
   id: number;
@@ -333,22 +340,26 @@ const HMSOverview = () => {
             <label className={`text-sm font-medium block mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
               Select Hostel
             </label>
-            <select
-              value={selectedHostel || ''}
-              onChange={(e) => setSelectedHostel(Number(e.target.value))}
-              className={`w-full md:w-64 px-4 py-2 rounded-lg border-2 ${
+            <Select
+              value={selectedHostel?.toString() || 'all'}
+              onValueChange={(v) => setSelectedHostel(v === 'all' ? null : Number(v))}
+            >
+              <SelectTrigger className={`w-full md:w-64 border-2 ${
                 theme === 'dark'
                   ? 'bg-gray-700 border-gray-600 text-white'
                   : 'bg-white border-gray-300 text-gray-900'
-              } focus:outline-none focus:border-blue-500`}
-            >
-              <option value="">All Hostels</option>
-              {hostels.map((hostel) => (
-                <option key={hostel.id} value={hostel.id}>
-                  {hostel.name}
-                </option>
-              ))}
-            </select>
+              }`}>
+                <SelectValue placeholder="All Hostels" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Hostels</SelectItem>
+                {hostels.map((hostel) => (
+                  <SelectItem key={hostel.id} value={hostel.id.toString()}>
+                    {hostel.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Legend */}

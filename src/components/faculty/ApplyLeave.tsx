@@ -259,7 +259,7 @@ const LeaveRequests = () => {
             
             {/* Branch Selection */}
             <div className="space-y-0.5 sm:space-y-1 lg:space-y-2">
-              <Label className={`text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Branch</Label>
+              <Label className={`text-lg font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Branch</Label>
               <Select value={selectedBranch} onValueChange={setSelectedBranch}>
                 <SelectTrigger 
                   className={`text-xs sm:text-sm h-8 sm:h-9 lg:h-10 ${theme === 'dark' ? 'bg-background border border-input text-foreground' : 'bg-white border border-gray-300 text-gray-900'}`}
@@ -282,7 +282,7 @@ const LeaveRequests = () => {
 
             {/* Date Range */}
             <div className="space-y-0.5 sm:space-y-1 lg:space-y-2">
-              <Label className={`text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Date Range</Label>
+              <Label className={`text-lg font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Date Range</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -325,7 +325,7 @@ const LeaveRequests = () => {
 
             {/* Reason */}
             <div className="space-y-0.5 sm:space-y-1 lg:space-y-2">
-              <Label htmlFor="reason" className={`text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Reason</Label>
+              <Label htmlFor="reason" className={`text-lg font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Reason</Label>
               <Textarea
                 id="reason"
                 value={reason}
@@ -340,7 +340,7 @@ const LeaveRequests = () => {
             <Button 
               type="submit" 
               onClick={handleSubmit}
-              className={`w-full text-xs sm:text-sm h-8 sm:h-9 lg:h-10 ${theme === 'dark' ? 'text-white bg-[#a259ff] hover:bg-[#8a4dde] border-[#a259ff]' : 'text-white bg-[#a259ff] hover:bg-[#8a4dde] border-[#a259ff]'}`} 
+              className={`w-full text-lg h-8 sm:h-9 lg:h-10 ${theme === 'dark' ? 'text-white bg-[#a259ff] hover:bg-[#8a4dde] border-[#a259ff]' : 'text-white bg-[#a259ff] hover:bg-[#8a4dde] border-[#a259ff]'}`} 
               disabled={submitting}
             >
               {submitting ? "Submitting..." : "Submit Request"}
@@ -400,23 +400,23 @@ const LeaveRequests = () => {
                     <div key={leave.id} className={`p-1.5 sm:p-2 lg:p-3 border rounded-lg ${theme === 'dark' ? 'bg-background border-border hover:bg-accent/50' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'}`}>
                       <div className="flex justify-between items-start gap-1.5 sm:gap-2">
                         <div className="flex-1 min-w-0">
-                          <div className={`font-semibold mb-0.5 sm:mb-1 text-xs sm:text-sm truncate ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{leave.title}</div>
-                          <div className={`text-xs mb-0.5 sm:mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'} truncate`}>
+                          <div className={`font-semibold mb-0.5 sm:mb-1 text-lg  ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{leave.title}</div>
+                          <div className={`text-sm mb-0.5 sm:mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'} truncate`}>
                             {leave.from && leave.to ? (
                               <>From: {leave.from} To: {leave.to}</>
                             ) : (
                               <>Date: {leave.date}</>
                             )}
                           </div>
-                          <div className="mb-0.5 sm:mb-1">
+                          <div className="mb-0.5 sm:mb-1 flex items-center justify-end">
                             <button
                               onClick={() => setViewReason(leave.reason)}
-                              className={`text-xs font-medium px-2 py-1 rounded-md ${theme === 'dark' ? 'bg-muted/10 text-foreground border border-border' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
+                              className={`text-lg px-2 py-1 rounded-md ${theme === 'dark' ? 'bg-muted/10 text-foreground border border-border' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
                             >
                               View Reason
                             </button>
                           </div>
-                          <div className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Applied: {leave.appliedOn}</div>
+                          <div className={`text-lg ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Applied: {leave.appliedOn}</div>
                         </div>
                         <div className="ml-1 sm:ml-2 flex-shrink-0">
                           {renderStatus(leave.status)}

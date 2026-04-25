@@ -7,97 +7,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/context/ThemeContext";
 import { ChevronDown } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Filters = { usn: string; exam_period: string };
 
-// Custom Dropdown Component
-interface CustomSelectProps {
-  value: string;
-  onChange: (value: string) => void;
-  options: Array<{ value: string; label: string }>;
-  disabled?: boolean;
-  theme: string;
-}
 
-const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, disabled = false, theme }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
-
-  useEffect(() => {
-    if (isOpen && triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      setPosition({
-        top: rect.bottom + 8,
-        left: rect.left,
-        width: rect.width,
-      });
-    }
-  }, [isOpen]);
-
-  const selectedLabel = options.find(opt => opt.value === value)?.label || "Select...";
-
-  return (
-    <div className="relative w-full">
-      <button
-        ref={triggerRef}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        disabled={disabled}
-        className={`w-full border rounded px-2 sm:px-3 py-2 text-xs sm:text-sm flex items-center justify-between ${
-          disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-        } ${theme === 'dark' ? 'bg-input border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`}
-      >
-        <span className="truncate">{selectedLabel}</span>
-        <ChevronDown size={16} className={`transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-
-      {isOpen && createPortal(
-        <div
-          className="fixed inset-0 z-[9998]"
-          onClick={() => setIsOpen(false)}
-        />,
-        document.body
-      )}
-
-      {isOpen && createPortal(
-        <div
-          className={`absolute z-[9999] border rounded shadow-lg ${
-            theme === 'dark' ? 'border-border bg-card' : 'border-gray-300 bg-white'
-          }`}
-          style={{
-            top: `${position.top}px`,
-            left: `${position.left}px`,
-            width: `${position.width}px`,
-            maxHeight: '240px',
-            overflowY: 'auto',
-          }}
-        >
-          {options.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => {
-                onChange(opt.value);
-                setIsOpen(false);
-              }}
-              className={`w-full text-left px-2 sm:px-3 py-2 text-xs sm:text-sm hover:bg-accent transition ${
-                value === opt.value
-                  ? theme === 'dark'
-                    ? 'bg-accent text-foreground'
-                    : 'bg-blue-50 text-blue-600'
-                  : theme === 'dark'
-                  ? 'text-foreground'
-                  : 'text-gray-900'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>,
-        document.body
-      )}
-    </div>
-  );
-};
 
 const Revaluation = () => {
   const [filters, setFilters] = useState<Filters>({ usn: "", exam_period: "" });
@@ -155,7 +75,7 @@ const Revaluation = () => {
   };
 
   const updateSubjectInStudent = (st: typeof students[0], subjectMarkId: number) => {
-    const newSubjects = st.subjects.map((sb) => 
+    const newSubjects = st.subjects.map((sb) =>
       sb.subject_mark_id === subjectMarkId ? { ...sb, applied: true } : sb
     );
     return { ...st, subjects: newSubjects };
@@ -169,7 +89,7 @@ const Revaluation = () => {
     const success = json.success as boolean | undefined;
     const applied = json.applied as boolean | undefined;
     const message = json.message as string | undefined;
-    
+
     if (success) {
       markSubjectAsApplied(subjectMarkId);
       setMessageModal({ open: true, title: 'Success', message: 'Revaluation requested' });
@@ -196,7 +116,7 @@ const Revaluation = () => {
       const success = payload.success as boolean | undefined;
       const students = payload.students as Array<{ usn: string; name: string; student_id: number; subjects: Array<{ subject_id: number; subject_name: string; cie_marks?: number; see_marks?: number; total_marks?: number; status: string; applied?: boolean; subject_mark_id: number }> }> | undefined;
       const message = payload.message as string | undefined;
-      
+
       if (success) {
         const safeStudents = (students || []).map((st) => ({
           ...st,
@@ -216,7 +136,7 @@ const Revaluation = () => {
     setLoading(false);
   };
 
-  
+
 
   const getStatusBadge = (status: string, applied: boolean) => {
     if (applied) {
@@ -327,21 +247,17 @@ const Revaluation = () => {
   );
 
   return (
-    <div className={`min-h-screen p-2 sm:p-4 lg:p-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <div className="max-w-6xl mx-auto">
-        {/* Header Card */}
-        <Card className={`mb-4 sm:mb-6 ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
-          <CardHeader className="p-3 sm:p-4 lg:p-6">
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <div className="w-full mx-auto">
+        <Card className={`${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
+          <CardHeader className="p-3 sm:p-4 lg:p-6 border-b">
             <CardTitle className="text-2xl font-semibold leading-none tracking-tight text-gray-900">Exam Revaluation & Photocopy</CardTitle>
             <p className={`text-xs sm:text-sm mt-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
               Apply for revaluation of exam papers or request photocopies. Search by student USN and select the exam period.
             </p>
           </CardHeader>
-        </Card>
-
-        {/* Filter Card */}
-        <Card className={`mb-4 sm:mb-6 ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
-          <CardContent className="p-3 sm:p-4 lg:p-6">
+          <CardContent className="p-3 sm:p-4 lg:p-6 space-y-6">
+            {/* Filter Section */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3 lg:gap-4 items-end">
               <div className="sm:col-span-1">
                 <label htmlFor="usn-input" className="text-xs sm:text-sm block mb-1 font-medium">USN</label>
@@ -350,29 +266,30 @@ const Revaluation = () => {
                   value={filters.usn}
                   onChange={e => setFilters({ ...filters, usn: e.target.value })}
                   placeholder="Enter student USN"
-                  className={`w-full px-2 sm:px-3 py-2 text-xs sm:text-sm rounded border ${
-                    theme === 'dark'
+                  className={`w-full px-2 sm:px-3 py-2 text-xs sm:text-sm rounded border ${theme === 'dark'
                       ? 'bg-input border-border text-foreground'
                       : 'bg-white border-gray-300 text-gray-900'
-                  }`}
+                    }`}
                 />
               </div>
 
               <div className="sm:col-span-1">
                 <label className="text-xs sm:text-sm block mb-1 font-medium">Exam Period</label>
-                <CustomSelect
+                <Select
                   value={filters.exam_period}
-                  onChange={(value) => setFilters({ ...filters, exam_period: value })}
-                  options={[
-                    { value: "", label: "Select Exam Period" },
-                    { value: "june_july", label: "June/July" },
-                    { value: "nov_dec", label: "Nov/Dec" },
-                    { value: "jan_feb", label: "Jan/Feb" },
-                    { value: "apr_may", label: "Apr/May" },
-                    { value: "supplementary", label: "Supplementary" },
-                  ]}
-                  theme={theme}
-                />
+                  onValueChange={(value) => setFilters({ ...filters, exam_period: value })}
+                >
+                  <SelectTrigger className={theme === 'dark' ? 'bg-input border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}>
+                    <SelectValue placeholder="Select Exam Period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="june_july">June/July</SelectItem>
+                    <SelectItem value="nov_dec">Nov/Dec</SelectItem>
+                    <SelectItem value="jan_feb">Jan/Feb</SelectItem>
+                    <SelectItem value="apr_may">Apr/May</SelectItem>
+                    <SelectItem value="supplementary">Supplementary</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="sm:col-span-2 md:col-span-1">
@@ -385,98 +302,98 @@ const Revaluation = () => {
                 </Button>
               </div>
             </div>
+
+            {/* Results Section */}
+            {!loading && students.length > 0 ? (
+              <div className="space-y-6 pt-4 border-t">
+                {students.map(s => (
+                  <div key={s.student_id} className={`rounded-xl border ${theme === 'dark' ? 'bg-background/50 border-border' : 'bg-gray-50 border-gray-200'} overflow-hidden`}>
+                    <div className="p-3 sm:p-4 lg:p-6 pb-2 sm:pb-3">
+                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                        <div>
+                          <p className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Student</p>
+                          <h3 className="text-sm sm:text-base lg:text-lg font-semibold">{s.usn} - {s.name}</h3>
+                        </div>
+                        <div className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                          Exam: {filters.exam_period ? filters.exam_period.replace('_', ' / ') : '-'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-3 sm:p-4 lg:p-6 pt-0">
+                      {/* Desktop Table */}
+                      <div className="hidden sm:block overflow-x-auto">
+                        <table className="w-full text-xs sm:text-sm">
+                          <thead>
+                            <tr className={`border-b ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
+                              <th className="text-left p-2 sm:p-3">Subject</th>
+                              <th className="text-right p-2 sm:p-3">CIE</th>
+                              <th className="text-right p-2 sm:p-3">SEE</th>
+                              <th className="text-right p-2 sm:p-3">Total</th>
+                              <th className="text-left p-2 sm:p-3">Status</th>
+                              <th className="text-left p-2 sm:p-3">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {s.subjects.map((sub) => (
+                              <tr key={sub.subject_id} className={`border-b ${theme === 'dark' ? 'border-border' : 'border-gray-100'}`}>
+                                <td className="p-2 sm:p-3">{sub.subject_name}</td>
+                                <td className="text-right p-2 sm:p-3">{sub.cie_marks ?? '-'}</td>
+                                <td className="text-right p-2 sm:p-3">{sub.see_marks ?? '-'}</td>
+                                <td className="text-right p-2 sm:p-3">{sub.total_marks ?? '-'}</td>
+                                <td className="p-2 sm:p-3">
+                                  {getStatusBadge(sub.status, sub.applied)}
+                                </td>
+                                <td className="p-2 sm:p-3">
+                                  {renderActionCell(sub, role === 'student')}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Mobile Cards */}
+                      <div className="sm:hidden space-y-2">
+                        {s.subjects.map((sub) => (
+                          <div
+                            key={sub.subject_id}
+                            className={`p-2 rounded border ${theme === 'dark' ? 'bg-background border-border' : 'bg-gray-50 border-gray-200'}`}
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex-1">
+                                <p className="text-xs font-medium">{sub.subject_name}</p>
+                                <div className="flex gap-2 mt-1 text-xs">
+                                  <span>CIE: {sub.cie_marks ?? '-'}</span>
+                                  <span>SEE: {sub.see_marks ?? '-'}</span>
+                                </div>
+                              </div>
+                              <div className="text-right ml-2">
+                                {getStatusBadge(sub.status, sub.applied)}
+                              </div>
+                            </div>
+
+                            {sub.subject_mark_id ? (
+                              renderActionCell(sub, role === 'student')
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              !loading && (
+                <div className={`text-center p-6 sm:p-8 rounded-lg border border-dashed ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
+                  <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+                    No students found. Try different search criteria.
+                  </p>
+                </div>
+              )
+            )}
           </CardContent>
         </Card>
-
-        {/* Students Results */}
-        {!loading && students.length > 0 ? (
-          <div className="space-y-3 sm:space-y-4 lg:space-y-6 mb-4">
-            {students.map(s => (
-              <Card key={s.student_id} className={`${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
-                <CardHeader className="p-3 sm:p-4 lg:p-6 pb-2 sm:pb-3">
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
-                    <div>
-                      <p className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Student</p>
-                      <CardTitle className="text-sm sm:text-base lg:text-lg">{s.usn} - {s.name}</CardTitle>
-                    </div>
-                    <div className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                      Exam: {filters.exam_period ? filters.exam_period.replace('_', ' / ') : '-'}
-                    </div>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="p-3 sm:p-4 lg:p-6">
-                  {/* Desktop Table */}
-                  <div className="hidden sm:block overflow-x-auto">
-                    <table className="w-full text-xs sm:text-sm">
-                      <thead>
-                        <tr className={`border-b ${theme === 'dark' ? 'border-border' : 'border-gray-200'}`}>
-                          <th className="text-left p-2 sm:p-3">Subject</th>
-                          <th className="text-right p-2 sm:p-3">CIE</th>
-                          <th className="text-right p-2 sm:p-3">SEE</th>
-                          <th className="text-right p-2 sm:p-3">Total</th>
-                          <th className="text-left p-2 sm:p-3">Status</th>
-                          <th className="text-left p-2 sm:p-3">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {s.subjects.map((sub) => (
-                          <tr key={sub.subject_id} className={`border-b ${theme === 'dark' ? 'border-border' : 'border-gray-100'}`}>
-                            <td className="p-2 sm:p-3">{sub.subject_name}</td>
-                            <td className="text-right p-2 sm:p-3">{sub.cie_marks ?? '-'}</td>
-                            <td className="text-right p-2 sm:p-3">{sub.see_marks ?? '-'}</td>
-                            <td className="text-right p-2 sm:p-3">{sub.total_marks ?? '-'}</td>
-                            <td className="p-2 sm:p-3">
-                              {getStatusBadge(sub.status, sub.applied)}
-                            </td>
-                            <td className="p-2 sm:p-3">
-                              {renderActionCell(sub, role === 'student')}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* Mobile Cards */}
-                  <div className="sm:hidden space-y-2">
-                    {s.subjects.map((sub) => (
-                      <div
-                        key={sub.subject_id}
-                        className={`p-2 rounded border ${theme === 'dark' ? 'bg-background border-border' : 'bg-gray-50 border-gray-200'}`}
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex-1">
-                            <p className="text-xs font-medium">{sub.subject_name}</p>
-                            <div className="flex gap-2 mt-1 text-xs">
-                              <span>CIE: {sub.cie_marks ?? '-'}</span>
-                              <span>SEE: {sub.see_marks ?? '-'}</span>
-                            </div>
-                          </div>
-                          <div className="text-right ml-2">
-                            {getStatusBadge(sub.status, sub.applied)}
-                          </div>
-                        </div>
-
-                        {sub.subject_mark_id ? (
-                          renderActionCell(sub, role === 'student')
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          !loading && (
-            <Card className={`text-center p-6 sm:p-8 ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
-              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                No students found. Try different search criteria.
-              </p>
-            </Card>
-          )
-        )}
 
         {/* Student Payment Section */}
         {role === 'student' && students.length > 0 && (
@@ -515,7 +432,7 @@ const Revaluation = () => {
                       const success = json.success as boolean | undefined;
                       const checkoutUrl = json.checkout_url as string | undefined;
                       const message = json.message as string | undefined;
-                      
+
                       if (success && checkoutUrl && globalThis.window) {
                         globalThis.window.location.href = checkoutUrl;
                       } else {

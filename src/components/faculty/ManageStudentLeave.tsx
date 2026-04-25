@@ -165,7 +165,7 @@ const ManageStudentLeave: React.FC<ManageStudentLeaveProps> = ({ proctorStudents
   });
 
   return (
-    <div className={`p-4 sm:p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}>
         <CardHeader>
           <CardTitle className={`text-2xl font-semibold leading-none tracking-tight text-gray-900'}`}>Leave Approvals</CardTitle>
@@ -346,7 +346,7 @@ const ManageStudentLeave: React.FC<ManageStudentLeaveProps> = ({ proctorStudents
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={4} className={`py-4 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                    <td colSpan={5} className={`py-4 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                       No leave requests available.
                     </td>
                   </tr>
