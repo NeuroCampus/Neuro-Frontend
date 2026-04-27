@@ -177,10 +177,10 @@ const DeanAttendanceFilters = () => {
         <>
           {/* Filter Controls Card */}
           <div className={`p-4 rounded-lg shadow ${theme === "dark" ? "bg-card border border-border" : "bg-white border border-gray-200"}`}>
-            <div className="flex flex-wrap md:flex-nowrap items-end justify-between gap-4">
+            <div className="flex flex-wrap lg:flex-nowrap items-end justify-between gap-4">
               {/* Left Side: Role & Select */}
               <div className="flex gap-4 items-end flex-wrap w-full">
-                <div className="w-full md:w-auto">
+                <div className="w-full lg:w-auto">
                   <label htmlFor="dean-filter-role" className={`block text-sm font-medium mb-2 ${theme === "dark" ? "text-foreground" : "text-gray-700"}`}>
                     Role
                   </label>
@@ -188,7 +188,7 @@ const DeanAttendanceFilters = () => {
                     setSelectedRole(value);
                     setSelectedPersonId(null);
                   }}>
-                    <SelectTrigger className={`w-full md:w-[120px] ${theme === "dark" ? "bg-background border-border" : "bg-white border-gray-300"}`}>
+                    <SelectTrigger className={`w-full lg:w-[120px] ${theme === "dark" ? "bg-background border-border" : "bg-white border-gray-300"}`}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -198,12 +198,12 @@ const DeanAttendanceFilters = () => {
                   </Select>
                 </div>
 
-                <div className="w-full md:w-auto">
+                <div className="w-full lg:w-auto">
                   <label htmlFor="dean-filter-person" className={`block text-sm font-medium mb-2 ${theme === "dark" ? "text-foreground" : "text-gray-700"}`}>
                     Select
                   </label>
                   <Select value={selectedPersonId || ""} onValueChange={(value) => setSelectedPersonId(value || null)}>
-                    <SelectTrigger className={`w-full md:w-[180px] ${theme === "dark" ? "bg-background border-border" : "bg-white border-gray-300"}`}>
+                    <SelectTrigger className={`w-full lg:w-[180px] ${theme === "dark" ? "bg-background border-border" : "bg-white border-gray-300"}`}>
                       <SelectValue placeholder={selectedRole === "hod" ? "Select hod" : "Select admin"} />
                     </SelectTrigger>
                     <SelectContent>
@@ -223,7 +223,7 @@ const DeanAttendanceFilters = () => {
               </div>
 
               {/* Right Side: Date Range & Clear */}
-              <div className="flex flex-col md:flex-row md:items-center gap-4 w-full md:w-auto">
+              <div className="flex flex-col lg:flex-row lg:items-center gap-4 w-full lg:w-auto">
                 <label className={`text-sm font-medium whitespace-nowrap ${theme === "dark" ? "text-foreground" : "text-gray-700"}`}>
                   Date Range to filter
                 </label>
@@ -232,7 +232,7 @@ const DeanAttendanceFilters = () => {
                   onClick={() => setIsDateModalOpen(true)}
                   disabled={!selectedPersonId}
                   className={cn(
-                    "w-full md:w-auto justify-start text-left font-normal gap-2",
+                    "w-full lg:w-auto justify-start text-left font-normal gap-2",
                     !startDate && "text-muted-foreground",
                     theme === "dark" ? "bg-background border-border" : "bg-white border-gray-300"
                   )}
@@ -249,7 +249,7 @@ const DeanAttendanceFilters = () => {
                     setEndDate("");
                     fetchData();
                   }}
-                  className="gap-2 w-full md:w-auto"
+                  className="gap-2 w-full lg:w-auto"
                 >
                   <Trash2 className="w-4 h-4" />
                   Clear
