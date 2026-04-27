@@ -223,7 +223,7 @@ interface AllLeave {
   id: number;
   faculty_name: string;
   department: string;
-  faculty_type: 'admin' | 'coe' | 'fees_manager';
+  faculty_type: 'principal' | 'coe' | 'fees_manager';
   start_date: string;
   end_date: string;
   title: string;

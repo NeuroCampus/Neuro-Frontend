@@ -149,6 +149,7 @@ const FloatingAssistant: React.FC = () => {
           ];
           break;
         case 'admin':
+        case 'principal':
           welcomeContent = `Hello ${displayName} 👋 — I can help with system management, user accounts, and overall analytics. Try: 'System status', 'User management', or 'Generate analytics report'.`;
           suggestedActions = [
             { text: "System status" },

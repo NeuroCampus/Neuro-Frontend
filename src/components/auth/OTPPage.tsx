@@ -63,6 +63,7 @@ const OTPPage = ({ setRole, setPage, setUser }: OTPPageProps) => {
         setTimeout(() => {
           switch (userRole) {
             case "admin":
+            case "principal":
               navigate("/admin", { replace: true });
               break;
             case "hod":

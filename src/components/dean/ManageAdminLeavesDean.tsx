@@ -23,7 +23,7 @@ interface UnifiedLeave {
   title?: string;
   faculty_name: string;
   department: string;
-  faculty_type: 'admin' | 'coe' | 'fees_manager';
+  faculty_type: 'principal' | 'coe' | 'fees_manager';
   start_date: string;
   end_date: string;
   reason: string;
@@ -337,7 +337,7 @@ const ManageAdminLeavesDean = () => {
                             <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                               leave.faculty_type === 'coe'
                                 ? (theme === 'dark' ? 'bg-green-400 text-green-900' : 'bg-green-600 text-white')
-                                : leave.faculty_type === 'admin'
+                                : leave.faculty_type === 'principal'
                                 ? (theme === 'dark' ? 'bg-blue-100 text-blue-800' : 'bg-blue-100 text-blue-800')
                                 : (theme === 'dark' ? 'bg-purple-100 text-purple-800' : 'bg-purple-100 text-purple-800')
                             }`}>{leave.faculty_type.toUpperCase()}</span>

@@ -337,7 +337,7 @@ const App = () => {
 
           {/* Admin routes */}
           <Route path="/admin/*" element={
-            <ProtectedRoute allowedRoles={["admin"]}>
+            <ProtectedRoute allowedRoles={["admin", "principal"]}>
               <>
                 <AdminDashboard user={userData} setPage={() => { }} />
                 {shouldShowFloatingAssistant() && <FloatingAssistant />}

@@ -17,7 +17,7 @@ interface User {
 }
 
 interface NavbarProps {
-  role: "admin" | "hod" | "faculty" | "student" | "fees_manager" | "coe";
+  role: "admin" | "principal" | "hod" | "faculty" | "student" | "fees_manager" | "coe";
   user?: User;
   onNotificationClick?: () => void;
   setPage: (page: string) => void;
@@ -57,7 +57,7 @@ const Navbar = ({ role, user, onNotificationClick, setPage, showHamburger = fals
         setPage("faculty-profile");
       } else if (role === "hod") {
         setPage("hod-profile");
-      } else if (role === "admin") {
+      } else if (role === "admin" || role === "principal") {
         setPage("profile");
       } else if (role === "fees_manager") {
         // For fees manager, we can use the same profile page as admin for now
@@ -115,7 +115,7 @@ const Navbar = ({ role, user, onNotificationClick, setPage, showHamburger = fals
             </span>
           </motion.div>
           <p className={`text-[10px] uppercase tracking-wider font-semibold ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-            {role === "admin" ? "Principal" : role.replace('_', ' ')} Portal
+            {role === "admin" || role === "principal" ? "Principal" : role.replace('_', ' ')} Portal
           </p>
         </div>
       </div>
