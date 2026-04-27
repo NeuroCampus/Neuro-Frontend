@@ -16,7 +16,7 @@ interface UpgradeRequiredProps {
 const UpgradeRequired = ({ featureName, role, onBack }: UpgradeRequiredProps) => {
   const navigate = useNavigate();
   const { theme } = useTheme();
-  const isAdmin = role === 'admin';
+  const isAdmin = role === 'admin' || role === 'principal';
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
   const orgName = localStorage.getItem("org_name") || "Your Institution";
 

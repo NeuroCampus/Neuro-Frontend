@@ -18,7 +18,7 @@ interface User {
 }
 
 interface DashboardLayoutProps {
-  role: "admin" | "hod" | "faculty" | "student" | "fees_manager" | "coe" | "dean" | "hms";
+  role: "admin" | "principal" | "hod" | "faculty" | "student" | "fees_manager" | "coe" | "dean" | "hms";
   user: User;
   activePage: string;
   onPageChange: (page: string) => void;
@@ -108,7 +108,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       .join(" ");
   };
 
-  const isNoAnimation = role === 'admin';
+  const isNoAnimation = role === 'admin' || role === 'principal';
 
   return (
     <motion.div

@@ -168,6 +168,34 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       { name: "Student Fee Reports", page: "student-reports" },
       { name: "Profile", page: "profile" },
     ],
+    principal: [
+      // Main
+      { name: "Dashboard", page: "dashboard" },
+
+      // User Management
+      { name: "Enroll Staff", page: "enroll-user" },
+      { name: "Bulk Upload Faculty", page: "bulk-upload" },
+
+      // Academic Structure
+      { name: "Branches", page: "branches" },
+      { name: "Faculty Assignments", page: "teacher-assignments" },
+      { name: "Question Paper Approvals", page: "qp-approvals" },
+      { name: "Batches", page: "batches" },
+
+      // Communication
+      { name: "Announcement Management", page: "announcement-management" },
+
+      // Leaves
+      { name: "HOD Leaves", page: "hod-leaves" },
+      { name: "HOD Attendance", page: "hod-attendance" },
+
+      { name: "My Attendance", page: "my-attendance" },
+      { name: "Apply Leave", page: "apply-leave" },
+
+      // User & Profile
+      { name: "Users", page: "users" },
+      { name: "Profile", page: "profile" },
+    ],
     admin: [
       // Main
       { name: "Dashboard", page: "dashboard" },

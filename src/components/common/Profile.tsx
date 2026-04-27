@@ -108,19 +108,19 @@ const Profile = ({ role, user }: ProfileProps) => {
       }
 
       const endpoint =
-        role === "admin"
+        role === "admin" || role === "principal"
           ? `${API_BASE_URL}admin/users/`
           : role === "student"
           ? `${API_BASE_URL}student/update-profile/`
           : `${API_BASE_URL}${role}/profile/`;
 
-      const method = role === "admin" ? "POST" : role === "student" ? "POST" : "PATCH";
-      const body = role === "admin" ? { user_id: user.user_id, action: "edit", updates: Object.fromEntries(formDataObj) } : formDataObj;
+      const method = (role === "admin" || role === "principal") ? "POST" : role === "student" ? "POST" : "PATCH";
+      const body = (role === "admin" || role === "principal") ? { user_id: user.user_id, action: "edit", updates: Object.fromEntries(formDataObj) } : formDataObj;
 
       const response = await fetchWithTokenRefresh(endpoint, {
         method,
-        headers: role === "admin" ? { "Content-Type": "application/json" } : {},
-        body: role === "admin" ? JSON.stringify(body) : formDataObj,
+        headers: (role === "admin" || role === "principal") ? { "Content-Type": "application/json" } : {},
+        body: (role === "admin" || role === "principal") ? JSON.stringify(body) : formDataObj,
       });
 
       const data = await response.json();

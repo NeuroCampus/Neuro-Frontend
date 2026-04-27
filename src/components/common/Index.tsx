@@ -53,6 +53,7 @@ const Index = () => {
             // Redirect to appropriate dashboard based on role
             switch (parsedUser.role) {
               case "admin":
+              case "principal":
                 navigate("/admin", { replace: true });
                 break;
               case "hod":

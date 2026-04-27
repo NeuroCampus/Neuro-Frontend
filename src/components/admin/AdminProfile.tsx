@@ -77,7 +77,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
           if (userData) {
             const parsed = JSON.parse(userData);
             if (parsed.user_id) {
-              currentUser = { user_id: parsed.user_id, username: parsed.username || parsed.first_name || '', email: parsed.email || '', role: parsed.role || 'admin' };
+              currentUser = { user_id: parsed.user_id, username: parsed.username || parsed.first_name || '', email: parsed.email || '', role: parsed.role || 'principal' };
               setFetchedUser(currentUser);
             }
           }
@@ -837,7 +837,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
               </div>
 
               <div className="text-base sm:text-lg font-semibold text-center mb-1">{profile.first_name} {profile.last_name}</div>
-              <div className={`text-xs sm:text-sm mb-4 sm:mb-2 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Administrator</div>
+              <div className={`text-xs sm:text-sm mb-4 sm:mb-2 text-center ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Principal</div>
 
               <div className="w-full mt-4 sm:mt-6 flex flex-col">
                 <h4 className={`text-xs sm:text-sm font-bold mb-2.5 sm:mb-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Quick Info</h4>

@@ -52,6 +52,7 @@ export const useLoginLogic = ({ setRole, setPage, setUser }: UseLoginProps) => {
           const userRole = response.role;
           switch (userRole) {
             case "admin":
+            case "principal":
               navigate("/admin", { replace: true });
               break;
             case "hod":
