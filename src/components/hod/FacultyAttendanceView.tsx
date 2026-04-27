@@ -716,8 +716,8 @@ const FacultyAttendanceView: React.FC = () => {
                                             
                                             <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-black text-white text-[9px] rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 shadow-lg border border-white/10">
                                               {date.toLocaleDateString('en-US', { dateStyle: 'medium' })}
-                                              {record?.marked_at && <div className="text-white/70 mt-0.5">{formatTime(record.marked_at)}</div>}
                                               {!record && !isFuture && <div className="text-white/70 mt-0.5 italic">Auto-marked Absent</div>}
+                                              {record && <div className="text-white/70 mt-0.5 font-bold uppercase">{record.status}</div>}
                                             </div>
                                           </div>
                                         );
