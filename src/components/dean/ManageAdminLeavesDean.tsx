@@ -122,9 +122,7 @@ const ManageAdminLeavesDean = () => {
   }, [showFilter]);
 
   return (
-    <div className={`p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <h2 className={`text-3xl font-bold mb-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Manage Faculty Leaves</h2>
-
+    <div className={`${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Error Message */}
       {error && (
         <Alert variant="destructive" className="mb-4">

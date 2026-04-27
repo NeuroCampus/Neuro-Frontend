@@ -7,7 +7,7 @@ import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
-import { User, Mail, Phone, MapPin, Calendar, Edit, Save, X, Eye, EyeOff } from "lucide-react";
+import { User, Mail, Phone, MapPin, Calendar, Edit, Save, X, Eye, EyeOff, BookOpen } from "lucide-react";
 import Swal from "sweetalert2";
 import { showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
 import { useTheme } from "../../context/ThemeContext";
@@ -56,6 +56,7 @@ const DeanProfile = () => {
     confirm: false,
   });
   const passwordDialogContentRef = useRef<HTMLDivElement | null>(null);
+  const [activeTab, setActiveTab] = useState<'personal' | 'contact'>('personal');
 
   const getInitials = (p: DeanProfileShape) => {
     const fn = p.first_name || "";
@@ -190,7 +191,7 @@ const DeanProfile = () => {
 
   if (loading) {
     return (
-      <div className={`space-y-6 p-6 min-h-screen ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+      <div className={`${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
         <SkeletonPageHeader />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <SkeletonCard className="h-64" />
@@ -209,17 +210,19 @@ const DeanProfile = () => {
   }
 
   return (
-    <Card className={`w-full max-w-none mx-auto my-2 sm:my-4 md:my-6 lg:my-8 px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6 ${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}`}>
+    <Card>
       <CardHeader className="px-2 sm:px-3 md:px-4 lg:px-6 py-3 sm:py-4 md:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 border-b">
         <div className="flex-1 min-w-0">
-          <CardTitle className="text-lg sm:text-xl md:text-2xl font-bold line-clamp-2">Profile</CardTitle>
+          <CardTitle className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+            Profile
+          </CardTitle>
           <p className="text-xs sm:text-sm mt-1 text-gray-500">Manage your dean profile and account settings</p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap ml-auto">
           {editing ? (
-            <>
-              <Button variant="outline" className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto" onClick={() => {
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => {
                 setEditing(false);
                 setFormData({
                   first_name: profile.first_name || "",
@@ -231,14 +234,14 @@ const DeanProfile = () => {
               }}>
                 Cancel
               </Button>
-              <Button className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-primary text-white border-primary hover:bg-primary/90" onClick={handleUpdateProfile}>Update</Button>
-            </>
+              <Button size="sm" className="bg-primary text-white border-primary hover:bg-primary/90" onClick={handleUpdateProfile}>Save Changes</Button>
+            </div>
           ) : (
-            <Button className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-primary text-white border-primary hover:bg-primary/90" onClick={() => setEditing(true)}>Edit Profile</Button>
+            <Button size="sm" className="bg-primary text-white border-primary hover:bg-primary/90" onClick={() => setEditing(true)}>Edit Profile</Button>
           )}
           <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
             <DialogTrigger asChild>
-              <Button className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 h-auto bg-primary text-white border-primary hover:bg-primary/90">Change Password</Button>
+              <Button size="sm" className="bg-primary text-white border-primary hover:bg-primary/90">Change Password</Button>
             </DialogTrigger>
             <DialogContent ref={passwordDialogContentRef} className="w-[calc(100vw-1.5rem)] sm:w-full max-w-[420px] rounded-xl sm:rounded-2xl">
               <DialogHeader>
@@ -352,71 +355,165 @@ const DeanProfile = () => {
           </div>
 
           <div className="col-span-1 sm:col-span-2 lg:col-span-3 w-full flex flex-col h-full">
-            <div className={`p-3 sm:p-4 md:p-5 lg:p-6 rounded-lg border flex-1 ${theme === 'dark' ? 'bg-muted/30 border-border' : 'bg-gray-50 border-gray-200'}`}>
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Personal Information</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="first_name">First Name</Label>
+            <div className="flex items-center gap-1 sm:gap-2 mb-4 sm:mb-6 border-b pb-2 sm:pb-3 overflow-x-auto">
+              <button 
+                onClick={() => setActiveTab('personal')} 
+                className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-md transition-all font-medium whitespace-nowrap ${
+                  activeTab === 'personal' 
+                    ? 'bg-primary text-white shadow-sm' 
+                    : theme === 'dark' ? 'text-muted-foreground hover:text-foreground hover:bg-muted/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                Personal
+              </button>
+              <button 
+                onClick={() => setActiveTab('contact')} 
+                className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-md transition-all font-medium whitespace-nowrap ${
+                  activeTab === 'contact' 
+                    ? 'bg-primary text-white shadow-sm' 
+                    : theme === 'dark' ? 'text-muted-foreground hover:text-foreground hover:bg-muted/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                Contact
+              </button>
+            </div>
+
+            <div className={`p-4 sm:p-6 rounded-xl border flex-1 ${theme === 'dark' ? 'bg-muted/30 border-border' : 'bg-gray-50 border-gray-200'}`}>
+              {activeTab === 'personal' ? (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <User className="w-5 h-5 text-primary" />
+                      Personal Information
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="first_name" className="text-sm font-semibold">First Name</Label>
+                        {editing ? (
+                          <Input
+                            id="first_name"
+                            value={formData.first_name}
+                            onChange={(e) => setFormData({...formData, first_name: e.target.value})}
+                            className="bg-background"
+                          />
+                        ) : (
+                          <p className={`text-sm p-2.5 rounded-lg border ${theme === 'dark' ? 'bg-background/50 border-border' : 'bg-white border-gray-200'}`}>{profile.first_name}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="last_name" className="text-sm font-semibold">Last Name</Label>
+                        {editing ? (
+                          <Input
+                            id="last_name"
+                            value={formData.last_name}
+                            onChange={(e) => setFormData({...formData, last_name: e.target.value})}
+                            className="bg-background"
+                          />
+                        ) : (
+                          <p className={`text-sm p-2.5 rounded-lg border ${theme === 'dark' ? 'bg-background/50 border-border' : 'bg-white border-gray-200'}`}>{profile.last_name}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <BookOpen className="w-5 h-5 text-primary" />
+                      Academic Information
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold">Department</Label>
+                        <p className={`text-sm p-2.5 rounded-lg border ${theme === 'dark' ? 'bg-background/50 border-border' : 'bg-white border-gray-200'}`}>{profile.department || '—'}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold">Designation</Label>
+                        <p className={`text-sm p-2.5 rounded-lg border ${theme === 'dark' ? 'bg-background/50 border-border' : 'bg-white border-gray-200'}`}>{profile.designation || '—'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Mail className="w-5 h-5 text-primary" />
+                      Communication
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="email" className="text-sm font-semibold">Email Address</Label>
+                        {editing ? (
+                          <Input
+                            id="email"
+                            value={formData.email}
+                            onChange={(e) => setFormData({...formData, email: e.target.value})}
+                            className="bg-background"
+                          />
+                        ) : (
+                          <p className={`text-sm p-2.5 rounded-lg border ${theme === 'dark' ? 'bg-background/50 border-border' : 'bg-white border-gray-200'}`}>{profile.email}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="phone_number" className="text-sm font-semibold">Phone Number</Label>
+                        {editing ? (
+                          <Input
+                            id="phone_number"
+                            value={formData.phone_number}
+                            onChange={(e) => setFormData({...formData, phone_number: e.target.value})}
+                            className="bg-background"
+                          />
+                        ) : (
+                          <p className={`text-sm p-2.5 rounded-lg border ${theme === 'dark' ? 'bg-background/50 border-border' : 'bg-white border-gray-200'}`}>{profile.phone_number || '—'}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <MapPin className="w-5 h-5 text-primary" />
+                      Address Details
+                    </h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="address" className="text-sm font-semibold">Residential Address</Label>
                       {editing ? (
-                        <Input
-                          id="first_name"
-                          value={formData.first_name}
-                          onChange={(e) => setFormData({...formData, first_name: e.target.value})}
+                        <Textarea
+                          id="address"
+                          value={formData.address}
+                          onChange={(e) => setFormData({...formData, address: e.target.value})}
+                          className="bg-background min-h-[100px]"
                         />
                       ) : (
-                        <p className="text-sm text-muted-foreground mt-1">{profile.first_name}</p>
+                        <p className={`text-sm p-2.5 rounded-lg border min-h-[100px] ${theme === 'dark' ? 'bg-background/50 border-border' : 'bg-white border-gray-200'}`}>
+                          {profile.address || 'No address provided'}
+                        </p>
                       )}
                     </div>
+                  </div>
 
-                    <div>
-                      <Label htmlFor="last_name">Last Name</Label>
-                      {editing ? (
-                        <Input
-                          id="last_name"
-                          value={formData.last_name}
-                          onChange={(e) => setFormData({...formData, last_name: e.target.value})}
-                        />
-                      ) : (
-                        <p className="text-sm text-muted-foreground mt-1">{profile.last_name}</p>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Calendar className="w-5 h-5 text-primary" />
+                      Account History
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label className="text-sm font-semibold">Joined On</Label>
+                        <p className={`text-sm p-2.5 rounded-lg border ${theme === 'dark' ? 'bg-background/50 border-border' : 'bg-white border-gray-200'}`}>{new Date(profile.date_joined).toLocaleDateString()}</p>
+                      </div>
+                      {profile.last_login && (
+                        <div className="space-y-2">
+                          <Label className="text-sm font-semibold">Last Login</Label>
+                          <p className={`text-sm p-2.5 rounded-lg border ${theme === 'dark' ? 'bg-background/50 border-border' : 'bg-white border-gray-200'}`}>{new Date(profile.last_login).toLocaleString()}</p>
+                        </div>
                       )}
                     </div>
                   </div>
                 </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Account Information</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <Label>Username</Label>
-                      <div className="flex items-center mt-1">
-                        <User className="mr-2 h-4 w-4 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">{profile.username}</p>
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label>Role</Label>
-                      <div className="mt-1">
-                        <Badge variant="secondary" className="bg-blue-100 text-blue-800">{profile.role}</Badge>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {profile.last_login && (
-                    <div className="mt-4">
-                      <Label>Last Login</Label>
-                      <div className="flex items-center mt-1">
-                        <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">{new Date(profile.last_login).toLocaleString()}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Buttons moved to header when editing */}
-              </div>
+              )}
             </div>
           </div>
         </div>
