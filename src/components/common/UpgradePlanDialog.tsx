@@ -74,117 +74,121 @@ const UpgradePlanDialog = ({ isOpen, onClose, orgName = "Your Organization", onS
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full overflow-hidden"
+            className="bg-white rounded-[2rem] shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]"
           >
-            <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <div className="p-5 md:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0">
               <div>
-                <h2 className="text-2xl font-bold text-slate-900">Select Your New Plan</h2>
-                <p className="text-slate-500 text-sm">Upgrade <span className="font-medium text-indigo-600">{orgName}</span> to continue</p>
+                <h2 className="text-lg md:text-xl font-bold text-slate-900">Upgrade Plan</h2>
+                <p className="text-slate-500 text-xs">Unlock premium features for <span className="font-medium text-indigo-600">{orgName}</span></p>
               </div>
               <button 
                 onClick={onClose}
-                className="p-2 hover:bg-white rounded-full transition-colors border border-transparent hover:border-slate-200"
+                className="p-1.5 hover:bg-white rounded-full transition-colors border border-transparent hover:border-slate-200"
               >
-                <X className="w-6 h-6 text-slate-400" />
+                <X className="w-5 h-5 text-slate-400" />
               </button>
             </div>
 
-            <div className={`p-8 grid gap-8 ${isBasic ? 'md:grid-cols-2' : 'max-w-md mx-auto w-full'}`}>
-              {/* Pro Plan - Only show if current plan is basic */}
-              {isBasic && (
+            <div className="overflow-y-auto p-4 md:p-6 custom-scrollbar">
+              <div className={`grid gap-4 md:gap-6 ${isBasic ? 'md:grid-cols-2' : 'max-w-sm mx-auto w-full'}`}>
+                {/* Pro Plan - Only show if current plan is basic */}
+                {isBasic && (
+                  <div 
+                    onClick={() => setSelectedPlan("pro")}
+                    className={`relative p-5 md:p-6 rounded-2xl border-2 transition-all cursor-pointer group ${
+                      selectedPlan === "pro" 
+                        ? "border-indigo-600 bg-indigo-50/30" 
+                        : "border-slate-100 hover:border-indigo-200"
+                    }`}
+                  >
+                    {selectedPlan === "pro" && (
+                      <div className="absolute top-3 right-3 w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center">
+                        <Check className="w-3 h-3 text-white" />
+                      </div>
+                    )}
+                    <div className="mb-3">
+                      <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-full uppercase tracking-wider">Most Popular</span>
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900 mb-1">Pro Plan</h3>
+                    <div className="flex items-baseline gap-1 mb-4">
+                      <span className="text-2xl font-bold text-slate-900">₹99,999</span>
+                      <span className="text-slate-400 text-xs">/year</span>
+                    </div>
+                    <ul className="space-y-2.5 mb-6">
+                      {["All Basic features", "Unlimited Students", "AI Exam Proctoring", "Priority 24/7 Support"].map((feat, i) => (
+                        <li key={i} className="flex items-center text-slate-600 text-[11px] md:text-xs">
+                          <Check className="w-3.5 h-3.5 text-emerald-500 mr-2 shrink-0" />
+                          {feat}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Advance Plan - Show for both Basic and Pro */}
                 <div 
-                  onClick={() => setSelectedPlan("pro")}
-                  className={`relative p-8 rounded-2xl border-2 transition-all cursor-pointer group ${
-                    selectedPlan === "pro" 
-                      ? "border-indigo-600 bg-indigo-50/30" 
-                      : "border-slate-100 hover:border-indigo-200"
+                  onClick={() => setSelectedPlan("advance")}
+                  className={`relative p-5 md:p-6 rounded-2xl border-2 transition-all cursor-pointer group ${
+                    selectedPlan === "advance" 
+                      ? "border-amber-600 bg-amber-50/30" 
+                      : "border-slate-100 hover:border-amber-200"
                   }`}
                 >
-                  {selectedPlan === "pro" && (
-                    <div className="absolute top-4 right-4 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center">
-                      <Check className="w-4 h-4 text-white" />
+                  {selectedPlan === "advance" && (
+                    <div className="absolute top-3 right-3 w-5 h-5 bg-amber-600 rounded-full flex items-center justify-center">
+                      <Check className="w-3 h-3 text-white" />
                     </div>
                   )}
-                  <div className="mb-6">
-                    <span className="px-3 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full uppercase tracking-wider">Most Popular</span>
+                  <div className="mb-3">
+                    <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full uppercase tracking-wider">Best Value</span>
                   </div>
-                  <h3 className="text-2xl font-bold text-slate-900 mb-2">Pro Plan</h3>
-                  <div className="flex items-baseline gap-1 mb-6">
-                    <span className="text-4xl font-bold text-slate-900">₹99,999</span>
-                    <span className="text-slate-500">/year</span>
+                  <h3 className="text-lg font-bold text-slate-900 mb-1">Advance Plan</h3>
+                  <div className="flex items-baseline gap-1 mb-4">
+                    <span className="text-2xl font-bold text-slate-900">₹3,00,000</span>
+                    <span className="text-slate-400 text-xs">/year</span>
                   </div>
-                  <ul className="space-y-4 mb-8">
-                    {["All Basic features", "Unlimited Students", "AI Exam Proctoring", "Face Recognition Attendance", "Priority 24/7 Support"].map((feat, i) => (
-                      <li key={i} className="flex items-center text-slate-600 text-sm">
-                        <Check className="w-4 h-4 text-emerald-500 mr-3 shrink-0" />
+                  <ul className="space-y-2.5 mb-6">
+                    {["Everything in Pro", "Custom Branding", "Enterprise Security", "Dedicated Account Manager"].map((feat, i) => (
+                      <li key={i} className="flex items-center text-slate-600 text-[11px] md:text-xs">
+                        <Check className="w-3.5 h-3.5 text-emerald-500 mr-2 shrink-0" />
                         {feat}
                       </li>
                     ))}
                   </ul>
                 </div>
-              )}
-
-              {/* Advance Plan - Show for both Basic and Pro */}
-              <div 
-                onClick={() => setSelectedPlan("advance")}
-                className={`relative p-8 rounded-2xl border-2 transition-all cursor-pointer group ${
-                  selectedPlan === "advance" 
-                    ? "border-violet-600 bg-violet-50/30" 
-                    : "border-slate-100 hover:border-violet-200"
-                } ${!isBasic ? 'w-full' : ''}`}
-              >
-                {selectedPlan === "advance" && (
-                  <div className="absolute top-4 right-4 w-6 h-6 bg-violet-600 rounded-full flex items-center justify-center">
-                    <Check className="w-4 h-4 text-white" />
-                  </div>
-                )}
-                <div className="mb-6">
-                  <span className="px-3 py-1 bg-violet-100 text-violet-700 text-xs font-bold rounded-full uppercase tracking-wider flex items-center w-fit">
-                    <Sparkles className="w-3 h-3 mr-1" />
-                    Enterprise Power
-                  </span>
-                </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">Advance Plan</h3>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="text-4xl font-bold text-slate-900">₹3,00,000</span>
-                  <span className="text-slate-500">/year</span>
-                </div>
-                <ul className="space-y-4 mb-8">
-                  {["Everything in Pro", "White-label Branding", "Custom API Integrations", "On-premise Deployment", "Dedicated Account Manager"].map((feat, i) => (
-                    <li key={i} className="flex items-center text-slate-600 text-sm">
-                      <Check className="w-4 h-4 text-emerald-500 mr-3 shrink-0" />
-                      {feat}
-                    </li>
-                  ))}
-                </ul>
               </div>
             </div>
 
-            <div className="p-8 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-              <p className="text-slate-500 text-sm">
-                Your organization will be upgraded instantly.
+            <div className="p-4 md:p-6 border-t border-slate-100 bg-slate-50/50 shrink-0">
+              <Button 
+                onClick={handleUpgrade}
+                disabled={!selectedPlan || isUpgrading}
+                className={`w-full h-11 md:h-12 rounded-xl font-bold text-sm transition-all ${
+                  selectedPlan === "advance" 
+                    ? "bg-amber-600 hover:bg-amber-700 shadow-amber-200 shadow-lg" 
+                    : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200 shadow-lg"
+                }`}
+              >
+                {isUpgrading ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Processing...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    Upgrade to {selectedPlan?.toUpperCase() || "Plan"}
+                    <Zap className="w-4 h-4" />
+                  </span>
+                )}
+              </Button>
+              <p className="text-center text-[10px] text-slate-400 mt-3">
+                Secure payment powered by Stripe. You'll be redirected to complete checkout.
               </p>
-              <div className="flex gap-4">
-                <Button 
-                  variant="outline"
-                  onClick={onClose}
-                  className="h-11 rounded-xl"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  disabled={!selectedPlan || isUpgrading}
-                  onClick={handleUpgrade}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white h-11 px-8 rounded-xl font-semibold shadow-lg shadow-indigo-200"
-                >
-                  {isUpgrading ? "Upgrading..." : `Confirm & Upgrade to ${selectedPlan ? selectedPlan.toUpperCase() : ""}`}
-                </Button>
-              </div>
             </div>
           </motion.div>
         </div>
