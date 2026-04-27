@@ -23,6 +23,7 @@ const FloatingAssistant = lazy(() => import("./components/common/FloatingAssista
 const AIInterview = lazy(() => import("./components/common/AIInterview"));
 const TrialExpired = lazy(() => import("./components/common/TrialExpired"));
 const OnboardingSuccess = lazy(() => import("./components/common/OnboardingSuccess"));
+const SuperAdminIndex = lazy(() => import("./superadmin/index"));
 
 import { shouldShowFloatingAssistant } from "./utils/config";
 
@@ -64,10 +65,10 @@ const App = () => {
       const token = localStorage.getItem("access_token");
       const role = localStorage.getItem("role");
       const user = localStorage.getItem("user");
-      
+
       const isAuth = !!(token && role && user);
       const currentUserData = getUserData();
-      
+
       // Only update state if values actually changed
       setIsAuthenticated(prev => prev !== isAuth ? isAuth : prev);
       setUserRole(prev => prev !== role ? role : prev);
@@ -89,7 +90,7 @@ const App = () => {
     };
 
     window.addEventListener("storage", handleStorageChange);
-    
+
     // Check less frequently - every 5 seconds instead of 1 second
     const interval = setInterval(checkAuth, 5000);
 
@@ -113,304 +114,305 @@ const App = () => {
         </div>
       }>
         <Routes>
-        {/* Public routes */}
-        <Route path="/" element={
-          <>
-            <Index />
-          </>
-        } />
-
-        {/* Payment routes */}
-        <Route path="/payment/success" element={
-          <>
-            <PaymentSuccess />
-            {shouldShowFloatingAssistant() && <FloatingAssistant />}
-          </>
-        } />
-        
-        <Route path="/payment/cancel" element={
-          <>
-            <PaymentCancel />
-            {shouldShowFloatingAssistant() && <FloatingAssistant />}
-          </>
-        } />
-
-        {/* Onboarding routes */}
-        <Route path="/neurocampus" element={<Pricing />} />
-        <Route path="/neurocampus/:plan" element={<Onboarding />} />
-        <Route path="/onboarding/success" element={<OnboardingSuccess />} />
-        <Route path="/trial-expired" element={<TrialExpired />} />
-
-        {/* Public results view (students) */}
-        <Route path="/results/view/:token" element={
-          <>
-            <ResultsView />
-            {shouldShowFloatingAssistant() && <FloatingAssistant />}
-          </>
-        } />
-
-        {/* Revaluation & Makeup routes: accessible to both teachers and students. Render appropriate dashboard based on current role. */}
-        <Route path="/revaluation" element={
-          <ProtectedRoute allowedRoles={["teacher","student"]}>
+          {/* Public routes */}
+          <Route path="/" element={
             <>
-              {(() => {
-                const roleNow = localStorage.getItem('role');
-                return roleNow === 'teacher' ? <FacultyDashboard user={userData} setPage={() => {}} /> : <StudentDashboard user={userData} setPage={() => {}} />;
-              })()}
+              <Index />
+            </>
+          } />
+
+          {/* Payment routes */}
+          <Route path="/payment/success" element={
+            <>
+              <PaymentSuccess />
               {shouldShowFloatingAssistant() && <FloatingAssistant />}
             </>
-          </ProtectedRoute>
-        } />
+          } />
 
-        <Route path="/makeupexam" element={
-          <ProtectedRoute allowedRoles={["teacher","student"]}>
+          <Route path="/payment/cancel" element={
             <>
-              {(() => {
-                const roleNow = localStorage.getItem('role');
-                return roleNow === 'teacher' ? <FacultyDashboard user={userData} setPage={() => {}} /> : <StudentDashboard user={userData} setPage={() => {}} />;
-              })()}
+              <PaymentCancel />
               {shouldShowFloatingAssistant() && <FloatingAssistant />}
             </>
-          </ProtectedRoute>
-        } />
+          } />
 
-        <Route path="/dashboard" element={
-          <ProtectedRoute allowedRoles={["student"]}>
+          {/* Onboarding routes */}
+          <Route path="/neurocampus" element={<Pricing />} />
+          <Route path="/neurocampus/admin/*" element={<SuperAdminIndex />} />
+          <Route path="/neurocampus/:plan" element={<Onboarding />} />
+          <Route path="/onboarding/success" element={<OnboardingSuccess />} />
+          <Route path="/trial-expired" element={<TrialExpired />} />
+
+          {/* Public results view (students) */}
+          <Route path="/results/view/:token" element={
             <>
-              <StudentDashboard user={userData} setPage={() => {}} />
+              <ResultsView />
               {shouldShowFloatingAssistant() && <FloatingAssistant />}
             </>
-          </ProtectedRoute>
-        } />
+          } />
 
-        <Route path="/timetable" element={
-          <ProtectedRoute allowedRoles={["student"]}>
+          {/* Revaluation & Makeup routes: accessible to both teachers and students. Render appropriate dashboard based on current role. */}
+          <Route path="/revaluation" element={
+            <ProtectedRoute allowedRoles={["teacher", "student"]}>
+              <>
+                {(() => {
+                  const roleNow = localStorage.getItem('role');
+                  return roleNow === 'teacher' ? <FacultyDashboard user={userData} setPage={() => { }} /> : <StudentDashboard user={userData} setPage={() => { }} />;
+                })()}
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/makeupexam" element={
+            <ProtectedRoute allowedRoles={["teacher", "student"]}>
+              <>
+                {(() => {
+                  const roleNow = localStorage.getItem('role');
+                  return roleNow === 'teacher' ? <FacultyDashboard user={userData} setPage={() => { }} /> : <StudentDashboard user={userData} setPage={() => { }} />;
+                })()}
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/dashboard" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <>
+                <StudentDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/timetable" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <>
+                <StudentDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/attendance" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <>
+                <StudentDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/marks" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <>
+                <StudentDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/leave-request" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <>
+                <StudentDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/leave" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <>
+                <StudentDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/leave-status" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <>
+                <StudentDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/fees" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <>
+                <StudentDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/profile" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <>
+                <StudentDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+          <Route path="/student-hostel-details" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <StudentDashboard user={userData} setPage={() => { }} />
+              {shouldShowFloatingAssistant() && <FloatingAssistant />}
+            </ProtectedRoute>
+          } />
+
+          <Route path="/announcements" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <>
+                <StudentDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/chat" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <>
+                <StudentDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/notifications" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <>
+                <StudentDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/face-recognition" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <>
+                <StudentDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/student-study-material" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <>
+                <StudentDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/student-assignment" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <>
+                <StudentDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/study-mode" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <>
+                <StudentDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/ai-interview" element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <>
+                <StudentDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          {/* Admin routes */}
+          <Route path="/admin/*" element={
+            <ProtectedRoute allowedRoles={["admin"]}>
+              <>
+                <AdminDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          {/* HOD routes */}
+          <Route path="/hod/*" element={
+            <ProtectedRoute allowedRoles={["hod"]}>
+              <>
+                <HODDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          {/* Faculty routes */}
+          <Route path="/faculty/*" element={
+            <ProtectedRoute allowedRoles={["teacher"]}>
+              <>
+                <FacultyDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          {/* Fees Manager routes */}
+          <Route path="/fees-manager/*" element={
+            <ProtectedRoute allowedRoles={["fees_manager"]}>
+              <>
+                <FeesManagerDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          {/* HMS routes */}
+          <Route path="/hms/*" element={
+            <ProtectedRoute allowedRoles={["hms_admin"]}>
+              <>
+                <HMSDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          {/* COE routes */}
+          <Route path="/coe/*" element={
+            <ProtectedRoute allowedRoles={["coe"]}>
+              <>
+                <COEDashboard user={userData} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          {/* Dean routes */}
+          <Route path="/dean/*" element={
+            <ProtectedRoute allowedRoles={["dean"]}>
+              <>
+                <DeanDashboard user={userData} setPage={() => { }} />
+                {shouldShowFloatingAssistant() && <FloatingAssistant />}
+              </>
+            </ProtectedRoute>
+          } />
+
+          {/* 404 route */}
+          <Route path="*" element={
             <>
-              <StudentDashboard user={userData} setPage={() => {}} />
+              <NotFound />
               {shouldShowFloatingAssistant() && <FloatingAssistant />}
             </>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/attendance" element={
-          <ProtectedRoute allowedRoles={["student"]}>
-            <>
-              <StudentDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/marks" element={
-          <ProtectedRoute allowedRoles={["student"]}>
-            <>
-              <StudentDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/leave-request" element={
-          <ProtectedRoute allowedRoles={["student"]}>
-            <>
-              <StudentDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/leave" element={
-          <ProtectedRoute allowedRoles={["student"]}>
-            <>
-              <StudentDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/leave-status" element={
-          <ProtectedRoute allowedRoles={["student"]}>
-            <>
-              <StudentDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/fees" element={
-          <ProtectedRoute allowedRoles={["student"]}>
-            <>
-              <StudentDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/profile" element={
-          <ProtectedRoute allowedRoles={["student"]}>
-            <>
-              <StudentDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-                <Route path="/student-hostel-details" element={
-          <ProtectedRoute allowedRoles={["student"]}>
-            <StudentDashboard user={userData} setPage={() => {}} />
-            {shouldShowFloatingAssistant() && <FloatingAssistant />}
-          </ProtectedRoute>
-        } />
-
-        <Route path="/announcements" element={
-          <ProtectedRoute allowedRoles={["student"]}>
-            <>
-              <StudentDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/chat" element={
-          <ProtectedRoute allowedRoles={["student"]}>
-            <>
-              <StudentDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/notifications" element={
-          <ProtectedRoute allowedRoles={["student"]}>
-            <>
-              <StudentDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/face-recognition" element={
-          <ProtectedRoute allowedRoles={["student"]}>
-            <>
-              <StudentDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/student-study-material" element={
-          <ProtectedRoute allowedRoles={["student"]}>
-            <>
-              <StudentDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/student-assignment" element={
-          <ProtectedRoute allowedRoles={["student"]}>
-            <>
-              <StudentDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/study-mode" element={
-          <ProtectedRoute allowedRoles={["student"]}>
-            <>
-              <StudentDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/ai-interview" element={
-          <ProtectedRoute allowedRoles={["student"]}>
-            <>
-              <StudentDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        {/* Admin routes */}
-        <Route path="/admin/*" element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <>
-              <AdminDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        {/* HOD routes */}
-        <Route path="/hod/*" element={
-          <ProtectedRoute allowedRoles={["hod"]}>
-            <>
-              <HODDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        {/* Faculty routes */}
-        <Route path="/faculty/*" element={
-          <ProtectedRoute allowedRoles={["teacher"]}>
-            <>
-              <FacultyDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        {/* Fees Manager routes */}
-        <Route path="/fees-manager/*" element={
-          <ProtectedRoute allowedRoles={["fees_manager"]}>
-            <>
-              <FeesManagerDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        {/* HMS routes */}
-        <Route path="/hms/*" element={
-          <ProtectedRoute allowedRoles={["hms_admin"]}>
-            <>
-              <HMSDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        {/* COE routes */}
-        <Route path="/coe/*" element={
-          <ProtectedRoute allowedRoles={["coe"]}>
-            <>
-              <COEDashboard user={userData} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        {/* Dean routes */}
-        <Route path="/dean/*" element={
-          <ProtectedRoute allowedRoles={["dean"]}>
-            <>
-              <DeanDashboard user={userData} setPage={() => {}} />
-              {shouldShowFloatingAssistant() && <FloatingAssistant />}
-            </>
-          </ProtectedRoute>
-        } />
-
-        {/* 404 route */}
-        <Route path="*" element={
-          <>
-            <NotFound />
-            {shouldShowFloatingAssistant() && <FloatingAssistant />}
-          </>
-        } />
-      </Routes>
+          } />
+        </Routes>
       </Suspense>
 
       {/* ✅ Toast components rendered OUTSIDE routes but INSIDE BrowserRouter */}

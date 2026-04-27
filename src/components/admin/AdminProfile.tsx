@@ -55,10 +55,15 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
   const passwordDialogContentRef = useRef<HTMLDivElement | null>(null);
 
   // Tabs: details (Personal + Contact), other (Address + Bio), subscription (Plan Details)
-  const [activeTab, setActiveTab] = useState<'details' | 'other' | 'subscription'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'other' | 'subscription' | 'support'>('details');
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
   const [subLoading, setSubLoading] = useState(false);
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
+  
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [loadingTickets, setLoadingTickets] = useState(false);
+  const [showTicketModal, setShowTicketModal] = useState(false);
+  const [ticketForm, setTicketForm] = useState({ subject: '', description: '', priority: 'Medium' });
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -147,7 +152,48 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
     if (activeTab === 'subscription' && !subscriptionData) {
       fetchSubscriptionDetails();
     }
+    if (activeTab === 'support') {
+      fetchTickets();
+    }
   }, [activeTab]);
+
+  const fetchTickets = async () => {
+    setLoadingTickets(true);
+    try {
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/support-tickets/`);
+      const res = await response.json();
+      if (res.tickets) setTickets(res.tickets);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingTickets(false);
+    }
+  };
+
+  const handleRaiseTicket = async () => {
+    if (!ticketForm.subject || !ticketForm.description) return showErrorAlert('Error', 'Subject and description are required');
+    try {
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/support-tickets/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ticketForm)
+      });
+      const res = await response.json();
+      if (res.success) {
+        showSuccessAlert('Ticket raised', res.message);
+        setShowTicketModal(false);
+        setTicketForm({ subject: '', description: '', priority: 'Medium' });
+        // Add the new ticket to the start of the list without triggering a GET request
+        if (res.ticket) {
+          setTickets(prev => [res.ticket, ...prev]);
+        }
+      } else {
+        showErrorAlert('Error', res.error || 'Failed to raise ticket');
+      }
+    } catch (e) {
+      showErrorAlert('Error', 'Network error');
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target as HTMLInputElement;
@@ -442,6 +488,100 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
       );
     }
 
+    if (activeTab === 'support') {
+      return (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-lg font-bold">Support Tickets</h3>
+              <p className="text-sm text-muted-foreground">Raise and track issues with Super Admin HQ.</p>
+            </div>
+            <Dialog open={showTicketModal} onOpenChange={setShowTicketModal}>
+              <DialogTrigger asChild>
+                <Button className="bg-primary text-white">Raise Ticket</Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>Raise Support Ticket</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-4">
+                  <div>
+                    <Label>Subject</Label>
+                    <Input value={ticketForm.subject} onChange={e => setTicketForm({...ticketForm, subject: e.target.value})} placeholder="Brief summary of the issue" />
+                  </div>
+                  <div>
+                    <Label>Priority</Label>
+                    <select 
+                      className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                      value={ticketForm.priority} 
+                      onChange={e => setTicketForm({...ticketForm, priority: e.target.value})}
+                    >
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                      <option value="Critical">Critical</option>
+                    </select>
+                  </div>
+                  <div>
+                    <Label>Description</Label>
+                    <Textarea value={ticketForm.description} onChange={e => setTicketForm({...ticketForm, description: e.target.value})} placeholder="Detailed description..." rows={4} />
+                  </div>
+                  <Button className="w-full" onClick={handleRaiseTicket} disabled={loadingTickets}>
+                    {loadingTickets ? 'Submitting...' : 'Submit Ticket'}
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+          
+          <div className="rounded-md border bg-card shadow-sm overflow-hidden">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead>Ticket ID</TableHead>
+                  <TableHead>Subject</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loadingTickets ? <TableRow><TableCell colSpan={5} className="text-center h-24">Loading tickets...</TableCell></TableRow> : 
+                 tickets.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center h-24 text-muted-foreground">No support tickets found.</TableCell></TableRow> :
+                 tickets.map(t => (
+                  <TableRow key={t.id}>
+                    <TableCell className="font-medium">{t.id}</TableCell>
+                    <TableCell>
+                      {t.subject}
+                      {t.response && <p className="text-xs text-muted-foreground mt-1"><span className="font-semibold">HQ Response:</span> {t.response}</p>}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={
+                        t.priority === 'Critical' ? 'border-red-500 text-red-600 bg-red-50 dark:bg-red-900/10' :
+                        t.priority === 'High' ? 'border-orange-500 text-orange-600 bg-orange-50 dark:bg-orange-900/10' :
+                        'border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/10'
+                      }>{t.priority}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={
+                        t.status === 'Resolved' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border-emerald-200' :
+                        t.status === 'Closed'   ? 'bg-gray-100 text-gray-600 hover:bg-gray-200 border-gray-300' :
+                        t.status === 'Pending'  ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-200' :
+                        'bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-200'
+                      } variant="outline">
+                        {t.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{t.date}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      );
+    }
+
     // other tab: Address + Bio
     return (
       <div className="space-y-6">
@@ -607,6 +747,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 <button onClick={() => setActiveTab('details')} className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-colors font-medium ${activeTab === 'details' ? 'bg-primary text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Details</button>
                 <button onClick={() => setActiveTab('other')} className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-colors font-medium ${activeTab === 'other' ? 'bg-primary text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Other</button>
                 <button onClick={() => setActiveTab('subscription')} className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-colors font-medium ${activeTab === 'subscription' ? 'bg-primary text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Plan Details</button>
+                <button onClick={() => setActiveTab('support')} className={`px-3 py-1.5 text-xs sm:text-sm rounded-md transition-colors font-medium ${activeTab === 'support' ? 'bg-primary text-white' : theme === 'dark' ? 'text-muted-foreground hover:text-foreground' : 'text-gray-600 hover:text-gray-900'}`}>Support Tickets</button>
               </div>
 
               <div className={`p-3 sm:p-4 md:p-5 lg:p-6 rounded-lg border flex-1 ${theme === 'dark' ? 'bg-card border-input' : 'bg-gray-50 border-gray-200'}`}>
