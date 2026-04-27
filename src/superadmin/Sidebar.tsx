@@ -15,6 +15,16 @@ import {
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useTheme } from "../context/ThemeContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
 
 interface SidebarProps {
   activePage: string;
@@ -37,6 +47,7 @@ const menuItems = [
 
 const Sidebar = ({ activePage, setActivePage, onLogout, collapsed, toggleCollapse }: SidebarProps) => {
   const { theme } = useTheme();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   return (
     <motion.div
@@ -88,13 +99,30 @@ const Sidebar = ({ activePage, setActivePage, onLogout, collapsed, toggleCollaps
         <Button
           variant="ghost"
           className={`w-full text-red-500 hover:bg-red-50 hover:text-red-600 ${theme === 'dark' ? 'hover:bg-red-950/30' : ''} ${collapsed ? 'px-0 justify-center' : 'justify-start gap-3'}`}
-          onClick={onLogout}
+          onClick={() => setShowLogoutDialog(true)}
           title={collapsed ? "Logout" : undefined}
         >
           <LogOut size={20} />
           {!collapsed && <span>Logout</span>}
         </Button>
       </div>
+
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to log out of the Super Admin portal? You will need to enter your credentials again to access it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={onLogout} className="bg-red-600 hover:bg-red-700 text-white">
+              Log out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 };
