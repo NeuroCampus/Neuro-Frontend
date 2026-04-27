@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, X, Sparkles, Zap } from "lucide-react";
+import { Check, X, Sparkles, Zap, Rocket, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { API_ENDPOINT } from "@/utils/config";
 import { fetchWithTokenRefresh } from "@/utils/authService";
@@ -114,7 +114,10 @@ const UpgradePlanDialog = ({ isOpen, onClose, orgName = "Your Organization", onS
                     <div className="mb-3">
                       <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold rounded-full uppercase tracking-wider">Most Popular</span>
                     </div>
-                    <h3 className="text-lg font-bold text-slate-900 mb-1">Pro Plan</h3>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Rocket className="w-5 h-5 text-indigo-600" />
+                      <h3 className="text-lg font-bold text-slate-900">Pro Plan</h3>
+                    </div>
                     <div className="flex items-baseline gap-1 mb-4">
                       <span className="text-2xl font-bold text-slate-900">₹99,999</span>
                       <span className="text-slate-400 text-xs">/year</span>
@@ -147,7 +150,10 @@ const UpgradePlanDialog = ({ isOpen, onClose, orgName = "Your Organization", onS
                   <div className="mb-3">
                     <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full uppercase tracking-wider">Best Value</span>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-1">Advance Plan</h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Crown className="w-5 h-5 text-amber-600" />
+                    <h3 className="text-lg font-bold text-slate-900">Advance Plan</h3>
+                  </div>
                   <div className="flex items-baseline gap-1 mb-4">
                     <span className="text-2xl font-bold text-slate-900">₹3,00,000</span>
                     <span className="text-slate-400 text-xs">/year</span>
@@ -182,7 +188,7 @@ const UpgradePlanDialog = ({ isOpen, onClose, orgName = "Your Organization", onS
                 ) : (
                   <span className="flex items-center gap-2">
                     Upgrade to {selectedPlan?.toUpperCase() || "Plan"}
-                    <Zap className="w-4 h-4" />
+                    <Rocket className="w-4 h-4" />
                   </span>
                 )}
               </Button>

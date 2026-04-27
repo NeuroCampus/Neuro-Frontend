@@ -1,13 +1,10 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Clock, ShieldAlert, CreditCard, ArrowRight, Mail, Check, X, Sparkles, Zap } from "lucide-react";
+import { motion } from "framer-motion";
+import { Clock, ShieldAlert, CreditCard, Mail, Check, Zap, Sparkles, Rocket, Crown, ArrowUpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { API_ENDPOINT } from "@/utils/config";
-import { fetchWithTokenRefresh } from "@/utils/authService";
-import { toast } from "sonner";
-
 import UpgradePlanDialog from "@/components/common/UpgradePlanDialog";
+import { cn } from "@/lib/utils";
 
 const TrialExpired = () => {
   const navigate = useNavigate();
@@ -32,92 +29,106 @@ const TrialExpired = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 md:p-6 font-sans">
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-2xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="max-w-2xl w-full bg-white rounded-[2rem] shadow-2xl shadow-purple-100/50 overflow-hidden border border-slate-100"
       >
-        <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-12 text-center relative overflow-hidden">
-          {/* Decorative circles */}
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
+        {/* Header - Visual & Info */}
+        <div className="bg-primary p-8 md:p-10 text-white text-center relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -mr-24 -mt-24" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -ml-24 -mb-24" />
           
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 260, damping: 20 }}
-            className="w-24 h-24 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-6 border border-white/30"
-          >
-            <Clock className="w-12 h-12 text-white" />
-          </motion.div>
-          
-          <h1 className="text-4xl font-bold text-white mb-4">
-            {isSubscription ? "Subscription Expired" : "Trial Period Expired"}
-          </h1>
-          <p className="text-indigo-100 text-lg max-w-md mx-auto">
-            {isSubscription 
-              ? `The annual subscription for `
-              : `The 2-hour trial for `
-            }
-            <span className="font-semibold text-white">{orgName}</span> has come to an end.
-          </p>
-        </div>
-        
-        <div className="p-12">
-          <div className="grid md:grid-cols-2 gap-8 mb-10">
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100">
-              <ShieldAlert className="w-8 h-8 text-indigo-600 mb-4" />
-              <h3 className="font-bold text-slate-900 mb-2">Access Restricted</h3>
-              <p className="text-slate-600 text-sm leading-relaxed">
-                Your data is safe, but administrative and faculty features are temporarily locked until the plan is upgraded.
-              </p>
+          <div className="relative z-10 flex flex-col items-center">
+            <div className="w-14 h-14 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center mb-6 border border-white/30 shadow-lg">
+              <Clock className="w-7 h-7 text-white" />
             </div>
             
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100">
-              <CreditCard className="w-8 h-8 text-indigo-600 mb-4" />
-              <h3 className="font-bold text-slate-900 mb-2">Upgrade to Continue</h3>
-              <p className="text-slate-600 text-sm leading-relaxed">
-                Choose from our Pro or Advance plans to unlock full institutional management features.
-              </p>
+            <h1 className="text-2xl md:text-3xl font-bold mb-3 tracking-tight">
+              {isSubscription ? "Subscription Expired" : "Trial Period Ended"}
+            </h1>
+            <p className="text-primary-foreground/80 text-sm md:text-base max-w-md">
+              Access to <span className="text-white font-semibold">{orgName}</span> is restricted. Upgrade your plan to resume operations.
+            </p>
+          </div>
+        </div>
+        
+        {/* Body - Plans & Action */}
+        <div className="p-8 md:p-10 bg-white">
+          <div className="grid grid-cols-1 gap-4 mb-8">
+            <div 
+              className="p-5 rounded-2xl border border-slate-100 bg-slate-50/50 flex items-center justify-between group hover:border-primary/30 transition-all cursor-pointer" 
+              onClick={() => setIsUpgradeModalOpen(true)}
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center">
+                  <Rocket className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm">Pro Plan</h3>
+                  <p className="text-xs text-slate-500">Essential institutional tools</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-bold text-slate-900">₹99,999</p>
+                <p className="text-[10px] text-slate-400">/year</p>
+              </div>
+            </div>
+
+            <div 
+              className="p-5 rounded-2xl border-2 border-primary bg-primary/5 flex items-center justify-between group cursor-pointer relative overflow-hidden" 
+              onClick={() => setIsUpgradeModalOpen(true)}
+            >
+              <div className="absolute top-0 right-0 px-2 py-0.5 bg-primary text-white text-[9px] font-black uppercase tracking-tighter rounded-bl-lg">Popular</div>
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center border border-primary/10">
+                  <Crown className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm">Advance Plan</h3>
+                  <p className="text-xs text-slate-500">Full AI governance suite</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-bold text-slate-900">₹3,00,000</p>
+                <p className="text-[10px] text-slate-400">/year</p>
+              </div>
             </div>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col gap-4">
             {isAdmin ? (
               <Button 
                 onClick={() => setIsUpgradeModalOpen(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 h-12 rounded-xl text-base font-semibold transition-all group"
+                className="bg-primary hover:bg-primary/90 text-white w-full h-14 rounded-2xl text-lg font-bold transition-all shadow-lg shadow-purple-100 group"
               >
                 Renew & Upgrade Now
-                <Zap className="ml-2 w-4 h-4 fill-white" />
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             ) : (
-              <Button 
-                disabled
-                className="bg-slate-100 text-slate-400 px-8 h-12 rounded-xl text-base font-semibold cursor-not-allowed"
-              >
-                Contact Admin to Renew
-              </Button>
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 text-center">
+                 <p className="text-slate-600 font-medium text-sm">Please contact your Institution Admin to renew the subscription.</p>
+              </div>
             )}
             
-            <Button 
-              variant="outline"
-              onClick={() => window.location.href = "mailto:support@stalight.in"}
-              className="border-slate-200 text-slate-700 px-8 h-12 rounded-xl text-base font-semibold hover:bg-slate-50"
-            >
-              <Mail className="mr-2 w-4 h-4" />
-              Contact Support
-            </Button>
-          </div>
-          
-          <div className="mt-10 pt-8 border-t border-slate-100 text-center">
-            <button 
-              onClick={handleLogout}
-              className="text-slate-400 hover:text-indigo-600 text-sm font-medium transition-colors"
-            >
-              Logout and return to home
-            </button>
+            <div className="flex items-center justify-between mt-4">
+              <button 
+                onClick={handleLogout}
+                className="text-slate-400 hover:text-primary text-xs font-medium transition-colors"
+              >
+                Logout Account
+              </button>
+              
+              <Button 
+                variant="ghost"
+                onClick={() => window.location.href = "mailto:support@stalight.in"}
+                className="text-slate-500 hover:text-slate-900 h-8 rounded-xl text-xs font-semibold px-2"
+              >
+                <Mail className="mr-2 w-3.5 h-3.5" />
+                Contact Support
+              </Button>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -136,5 +147,23 @@ const TrialExpired = () => {
     </div>
   );
 };
+
+const ArrowRight = ({ className }: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width="24" 
+    height="24" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="M5 12h14" />
+    <path d="m12 5 7 7-7 7" />
+  </svg>
+);
 
 export default TrialExpired;
