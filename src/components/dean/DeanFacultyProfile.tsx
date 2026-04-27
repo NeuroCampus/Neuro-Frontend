@@ -292,7 +292,7 @@ const DeanFacultyProfile = ({ facultyId: initialFacultyId, initialStartDate, ini
           ) : (
             <div className="flex w-full justify-between items-center">
               <div>
-                <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Faculty Profile</CardTitle>
+                <CardTitle className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Faculty Profile</CardTitle>
                 <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>View faculty attendance, schedule and assignments</p>
               </div>
             </div>

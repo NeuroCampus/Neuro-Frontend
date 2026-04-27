@@ -9,10 +9,12 @@ import {
 import { API_ENDPOINT } from "@/utils/config";
 import { fetchWithTokenRefresh } from "@/utils/authService";
 import { useTheme } from "../../context/ThemeContext";
-import { SkeletonStatsGrid, SkeletonTable, SkeletonPageHeader } from "../ui/skeleton";
+import { SkeletonStatsGrid, SkeletonTable, SkeletonPageHeader, SkeletonCard } from "../ui/skeleton";
 import { Button } from "../ui/button";
 import { Alert, AlertDescription } from "../ui/alert";
-import { RefreshCcw } from "lucide-react";
+import { RefreshCcw, BookOpen, Clock, Calendar, CheckCircle2, History } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Badge } from "../ui/badge";
 
 type ExamEntry = {
   id: string | number;
@@ -73,6 +75,7 @@ const DeanExams: React.FC = () => {
   const [branches, setBranches] = useState<any[]>([]);
   const [branchId, setBranchId] = useState<string>('all');
   const [upcomingOnly, setUpcomingOnly] = useState<boolean>(false);
+  const [firstLoad, setFirstLoad] = useState(true);
 
   const load = async () => {
     setLoading(true); setError(null);
@@ -98,6 +101,7 @@ const DeanExams: React.FC = () => {
       setError(e?.message || 'Network error');
     } finally {
       setLoading(false);
+      setFirstLoad(false);
     }
   };
 
@@ -157,139 +161,216 @@ const DeanExams: React.FC = () => {
   ];
 
   return (
-    <div className={`space-y-6 p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      {loading && exams.length === 0 ? (
-        <div className="space-y-6">
-          <SkeletonPageHeader />
-          <SkeletonStatsGrid items={4} />
-          <SkeletonTable rows={10} cols={8} />
-        </div>
-      ) : (
-        <>
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">Exams</h2>
-            <div>
-              <Button 
-                onClick={load} 
-                disabled={loading}
-                className="gap-2"
-              >
-                <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                {loading ? 'Refreshing...' : 'Refresh'}
-              </Button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
-            <div>
-              <label className={`text-sm block mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Branch</label>
-              <Select value={branchId} onValueChange={setBranchId}>
-                <SelectTrigger className={`w-full ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
-                  <SelectValue placeholder="All branches" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All branches</SelectItem>
-                  {branches.map(b => (
-                    <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {countCards.map(c => (
-              <div key={c.key} className={`p-4 rounded-lg shadow-sm border ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'} flex items-center justify-between`}>
-                <div>
-                  <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{c.title}</div>
-                  <div className={`text-2xl font-bold ${c.color === 'green' ? 'text-green-500' : c.color === 'blue' ? 'text-blue-500' : 'text-gray-500'}`}>{c.count}</div>
-                </div>
+    <div className={`${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <Card className={theme === 'dark' ? 'bg-card border border-border shadow-md' : 'bg-white border border-gray-200 shadow-md'}>
+        <CardContent className="px-6 pb-6 pt-2 space-y-8">
+          {firstLoad ? (
+            <div className="space-y-6">
+              <SkeletonStatsGrid items={4} />
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <SkeletonCard className="h-24" />
+                <SkeletonCard className="h-24" />
+                <SkeletonCard className="h-24" />
+                <SkeletonCard className="h-24" />
               </div>
-            ))}
-            <div>
-              <label className={`text-sm block mb-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Options</label>
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 text-sm cursor-pointer">
-                  <input type="checkbox" className="rounded border-gray-300 text-primary focus:ring-primary" checked={upcomingOnly} onChange={e=>setUpcomingOnly(e.target.checked)} /> 
-                  Upcoming only
-                </label>
-              </div>
+              <SkeletonTable rows={10} cols={8} />
             </div>
-          </div>
-
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          <div className="space-y-8">
-            {['ongoing','upcoming','past','other'].map((sectionKey) => {
-              const list = (grouped as any)[sectionKey];
-              if (list.length === 0 && sectionKey !== 'upcoming' && sectionKey !== 'ongoing') return null;
+          ) : (
+            <div className={loading ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}>
               
-              return (
-                <div key={sectionKey} className={`rounded-lg border shadow-sm overflow-hidden ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
-                  <div className={`px-4 py-3 border-b ${theme === 'dark' ? 'bg-muted/50' : 'bg-gray-50'}`}>
-                    <h3 className="font-semibold text-lg capitalize">{sectionKey === 'other' ? 'Scheduled' : sectionKey}</h3>
+
+              {/* Stats Cards Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                {countCards.map(c => (
+                  <div key={c.key} className={`p-6 rounded-xl border shadow-sm transition-all hover:shadow-md flex items-center gap-6 ${
+                    theme === 'dark' ? 'bg-muted/30 border-border' : 'bg-gray-50 border-gray-300'
+                  }`}>
+                    <div className={`p-3 rounded-xl ${
+                      c.color === 'green' ? (theme === 'dark' ? 'bg-green-900/20 text-green-400' : 'bg-green-50 text-green-600') :
+                      c.color === 'blue' ? (theme === 'dark' ? 'bg-blue-900/20 text-blue-400' : 'bg-blue-50 text-blue-600') :
+                      (theme === 'dark' ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600')
+                    }`}>
+                      {c.key === 'ongoing' ? <Clock className="w-6 h-6" /> : 
+                       c.key === 'upcoming' ? <Calendar className="w-6 h-6" /> : 
+                       <History className="w-6 h-6" />}
+                    </div>
+                    <div>
+                      <div className={`text-xs font-bold uppercase tracking-widest ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                        {c.title}
+                      </div>
+                      <div className={`text-3xl font-bold mt-1 ${
+                        c.color === 'green' ? (theme === 'dark' ? 'text-green-400' : 'text-green-600') :
+                        c.color === 'blue' ? (theme === 'dark' ? 'text-blue-400' : 'text-blue-600') :
+                        (theme === 'dark' ? 'text-foreground' : 'text-gray-900')
+                      }`}>
+                        {c.count}
+                      </div>
+                    </div>
                   </div>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-border">
-                      <thead>
-                        <tr className={`text-left text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                          <th className="px-4 py-3 font-semibold">Title</th>
-                          <th className="px-4 py-3 font-semibold">Subject</th>
-                          <th className="px-4 py-3 font-semibold">Date</th>
-                          <th className="px-4 py-3 font-semibold">Time</th>
-                          <th className="px-4 py-3 font-semibold">Venue</th>
-                          <th className="px-4 py-3 font-semibold">Semester</th>
-                          <th className="px-4 py-3 font-semibold">Status</th>
-                          <th className="px-4 py-3 font-semibold">Published</th>
-                          <th className="px-4 py-3 font-semibold text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className={`divide-y ${theme === 'dark' ? 'divide-border' : 'divide-gray-200'}`}>
-                        {list.length === 0 ? (
-                          <tr>
-                            <td colSpan={9} className="px-4 py-6 text-center text-gray-500 italic">No exams found in this section</td>
-                          </tr>
-                        ) : list.map((ex: ExamEntry) => (
-                          <tr key={ex.id} className={`text-sm hover:${theme === 'dark' ? 'bg-muted/50' : 'bg-gray-50'} transition-colors`}>
-                            <td className="px-4 py-3 font-medium">{ex.title || ex.faculty_assignment?.subject || ex.subject || 'Exam'}</td>
-                            <td className="px-4 py-3">{ex.faculty_assignment?.subject || ex.subject || '-'}</td>
-                            <td className="px-4 py-3">{formatDate(ex.date)}</td>
-                            <td className="px-4 py-3">{ex.start_time || '-'} - {ex.end_time || '-'}</td>
-                            <td className="px-4 py-3">{ex.room || '-'}</td>
-                            <td className="px-4 py-3">{ex.faculty_assignment ? `Sem ${ex.faculty_assignment.semester} • ${ex.faculty_assignment.section}` : '-'}</td>
-                            <td className="px-4 py-3">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${
-                                computeStatus(ex) === 'ongoing' ? 'bg-green-100 text-green-800' :
-                                computeStatus(ex) === 'upcoming' ? 'bg-blue-100 text-blue-800' :
-                                'bg-gray-100 text-gray-800'
-                              }`}>
-                                {computeStatus(ex)}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3">{ex.is_published ? 'Yes' : 'No'}</td>
-                            <td className="px-4 py-3 text-right">
-                              {!ex.is_published && (
-                                <Button 
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => publishExam(ex.id)}
-                                >
-                                  Publish
-                                </Button>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                ))}
+              </div>
+
+              {/* Filters Row */}
+              <div className="flex flex-col md:flex-row items-end gap-6 mt-4 mb-4">
+                <div className="w-full md:w-72">
+                  <label className={`text-sm font-medium block  ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
+                    Branch
+                  </label>
+                  <Select value={branchId} onValueChange={setBranchId}>
+                    <SelectTrigger className={`w-full ${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}`}>
+                      <SelectValue placeholder="All branches" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All branches</SelectItem>
+                      {branches.map(b => (
+                        <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              );
-            })}
-          </div>
-        </>
-      )}
+
+                <div className={`p-3 px-4 rounded-xl border h-[42px] flex items-center ${theme === 'dark' ? 'bg-muted/30 border-border' : 'bg-gray-50 border-gray-200'}`}>
+                  <label className="flex items-center gap-3 text-sm font-medium cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" 
+                      checked={upcomingOnly} 
+                      onChange={e => setUpcomingOnly(e.target.checked)} 
+                    /> 
+                    <span>Show upcoming only</span>
+                  </label>
+                </div>
+              </div>
+
+              {error && (
+                <Alert variant="destructive" className="border-red-500/50 bg-red-500/10">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              <div className="space-y-10">
+                {['ongoing','upcoming','past','other'].map((sectionKey) => {
+                  const list = (grouped as any)[sectionKey];
+                  if (list.length === 0 && sectionKey !== 'upcoming' && sectionKey !== 'ongoing') return null;
+                  
+                  return (
+                    <div key={sectionKey} className="space-y-4">
+                      <div className="flex items-center gap-2 px-1">
+                        <div className={`w-2 h-2 rounded-full ${
+                          sectionKey === 'ongoing' ? 'bg-green-500' :
+                          sectionKey === 'upcoming' ? 'bg-blue-500' :
+                          'bg-gray-400'
+                        }`} />
+                        <h3 className="font-semibold text-lg capitalize tracking-tight">
+                          {sectionKey === 'other' ? 'Scheduled' : sectionKey} Exams
+                        </h3>
+                        <Badge variant="outline" className="ml-2 font-normal">
+                          {list.length} {list.length === 1 ? 'Exam' : 'Exams'}
+                        </Badge>
+                      </div>
+
+                      <div className={`rounded-xl border shadow-sm overflow-hidden ${
+                        theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'
+                      }`}>
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full divide-y divide-gray-200 dark:divide-border">
+                            <thead className={theme === 'dark' ? 'bg-muted/50' : 'bg-gray-50'}>
+                              <tr className={`text-left text-xs font-semibold uppercase tracking-wider ${
+                                theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'
+                              }`}>
+                                <th className="px-6 py-4">Exam Details</th>
+                                <th className="px-6 py-4 text-center">Date & Time</th>
+                                <th className="px-6 py-4">Venue</th>
+                                <th className="px-6 py-4">Assignment</th>
+                                <th className="px-6 py-4 text-center">Status</th>
+                                <th className="px-6 py-4 text-center">Published</th>
+                                <th className="px-6 py-4 text-right">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className={`divide-y ${theme === 'dark' ? 'divide-border' : 'divide-gray-200'}`}>
+                              {list.length === 0 ? (
+                                <tr>
+                                  <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground italic">
+                                    <div className="flex flex-col items-center gap-2">
+                                      <BookOpen className="w-8 h-8 opacity-20" />
+                                      <p>No {sectionKey} exams found</p>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ) : list.map((ex: ExamEntry) => (
+                                <tr key={ex.id} className={`text-sm hover:${theme === 'dark' ? 'bg-muted/30' : 'bg-gray-50'} transition-colors`}>
+                                  <td className="px-6 py-4">
+                                    <div className="font-semibold text-foreground">
+                                      {ex.title || ex.faculty_assignment?.subject || ex.subject || 'Exam'}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground mt-0.5">
+                                      ID: #{ex.id}
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 text-center whitespace-nowrap">
+                                    <div className="font-medium">{formatDate(ex.date)}</div>
+                                    <div className="text-xs text-muted-foreground flex items-center justify-center gap-1 mt-1">
+                                      <Clock className="w-3 h-3" />
+                                      {ex.start_time || '-'} - {ex.end_time || '-'}
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <Badge variant="secondary" className="font-medium">
+                                      {ex.room || 'TBD'}
+                                    </Badge>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    {ex.faculty_assignment ? (
+                                      <div className="flex flex-col gap-1">
+                                        <div className="text-xs font-medium">Sem {ex.faculty_assignment.semester} • {ex.faculty_assignment.section}</div>
+                                        <div className="text-[10px] text-muted-foreground truncate max-w-[120px]">
+                                          {ex.faculty_assignment.faculty}
+                                        </div>
+                                      </div>
+                                    ) : '-'}
+                                  </td>
+                                  <td className="px-6 py-4 text-center">
+                                    <Badge className={`capitalize ${
+                                      computeStatus(ex) === 'ongoing' ? 'bg-green-500/10 text-green-600 border-green-500/20' :
+                                      computeStatus(ex) === 'upcoming' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' :
+                                      'bg-gray-500/10 text-gray-600 border-gray-500/20'
+                                    }`} variant="outline">
+                                      {computeStatus(ex)}
+                                    </Badge>
+                                  </td>
+                                  <td className="px-6 py-4 text-center">
+                                    {ex.is_published ? (
+                                      <CheckCircle2 className="w-5 h-5 text-green-500 mx-auto" />
+                                    ) : (
+                                      <span className="text-xs text-muted-foreground italic">Draft</span>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4 text-right">
+                                    {!ex.is_published && (
+                                      <Button 
+                                        variant="default"
+                                        size="sm"
+                                        onClick={() => publishExam(ex.id)}
+                                        className="h-8 text-xs font-semibold"
+                                      >
+                                        Publish
+                                      </Button>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
