@@ -75,6 +75,7 @@ const DeanExams: React.FC = () => {
   const [branches, setBranches] = useState<any[]>([]);
   const [branchId, setBranchId] = useState<string>('all');
   const [upcomingOnly, setUpcomingOnly] = useState<boolean>(false);
+  const [firstLoad, setFirstLoad] = useState(true);
 
   const load = async () => {
     setLoading(true); setError(null);
@@ -100,6 +101,7 @@ const DeanExams: React.FC = () => {
       setError(e?.message || 'Network error');
     } finally {
       setLoading(false);
+      setFirstLoad(false);
     }
   };
 
@@ -162,7 +164,7 @@ const DeanExams: React.FC = () => {
     <div className={`${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <Card className={theme === 'dark' ? 'bg-card border border-border shadow-md' : 'bg-white border border-gray-200 shadow-md'}>
         <CardContent className="px-6 pb-6 pt-2 space-y-8">
-          {loading && exams.length === 0 ? (
+          {firstLoad ? (
             <div className="space-y-6">
               <SkeletonStatsGrid items={4} />
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -174,14 +176,14 @@ const DeanExams: React.FC = () => {
               <SkeletonTable rows={10} cols={8} />
             </div>
           ) : (
-            <>
+            <div className={loading ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}>
               
 
               {/* Stats Cards Row */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 {countCards.map(c => (
                   <div key={c.key} className={`p-6 rounded-xl border shadow-sm transition-all hover:shadow-md flex items-center gap-6 ${
-                    theme === 'dark' ? 'bg-muted/30 border-border' : 'bg-gray-50 border-gray-200'
+                    theme === 'dark' ? 'bg-muted/30 border-border' : 'bg-gray-50 border-gray-300'
                   }`}>
                     <div className={`p-3 rounded-xl ${
                       c.color === 'green' ? (theme === 'dark' ? 'bg-green-900/20 text-green-400' : 'bg-green-50 text-green-600') :
@@ -209,9 +211,9 @@ const DeanExams: React.FC = () => {
               </div>
 
               {/* Filters Row */}
-              <div className="flex flex-col md:flex-row items-end gap-6">
+              <div className="flex flex-col md:flex-row items-end gap-6 mt-4 mb-4">
                 <div className="w-full md:w-72">
-                  <label className={`text-sm font-medium block mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
+                  <label className={`text-sm font-medium block  ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
                     Branch
                   </label>
                   <Select value={branchId} onValueChange={setBranchId}>
@@ -365,7 +367,7 @@ const DeanExams: React.FC = () => {
                   );
                 })}
               </div>
-            </>
+            </div>
           )}
         </CardContent>
       </Card>

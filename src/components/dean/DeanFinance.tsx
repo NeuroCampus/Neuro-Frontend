@@ -50,10 +50,6 @@ const DeanFinance = () => {
   return (
     <div className={` ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <Card className={theme === 'dark' ? 'bg-card border border-border shadow-md' : 'bg-white border border-gray-200 shadow-md'}>
-        <CardHeader className="flex flex-col items-start gap-2 px-6 pt-6 pb-4">
-          <CardTitle className={`text-xl font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Finance Summary</CardTitle>
-          <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>View collection and outstanding invoice metrics</p>
-        </CardHeader>
         <CardContent className="px-6 pb-6 pt-2 space-y-6">
           {loading ? (
             <div className="space-y-6">
