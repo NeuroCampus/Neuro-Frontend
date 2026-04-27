@@ -67,6 +67,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
   const [showTicketModal, setShowTicketModal] = useState(false);
   const [viewTicket, setViewTicket] = useState<any>(null);
   const [ticketForm, setTicketForm] = useState({ subject: '', description: '', priority: 'Medium' });
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -152,6 +153,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
   };
 
   const handleDownloadReceipt = async (paymentId: number) => {
+    setDownloadingId(paymentId);
     try {
       const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/subscription-receipt/${paymentId}/`);
       if (response.ok) {
@@ -160,13 +162,16 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        // If the backend returned HTML (fallback), download as .html
-        const extension = contentType?.includes('pdf') ? 'pdf' : 'html';
-        a.download = `subscription_receipt_${paymentId}.${extension}`;
+        
+        // Use PDF as default extension, but respect content-type if it's HTML fallback
+        const extension = contentType?.includes('html') ? 'html' : 'pdf';
+        a.download = `Stalight_Receipt_${paymentId}.${extension}`;
+        
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
+        showSuccessAlert('Success', 'Receipt downloaded successfully');
       } else {
         const result = await response.json();
         showErrorAlert('Error', result.message || 'Failed to download receipt');
@@ -174,6 +179,8 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
     } catch (err) {
       console.error('Download receipt error', err);
       showErrorAlert('Error', 'Network error while downloading receipt');
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -472,7 +479,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
               <Table>
                 <TableHeader className={theme === 'dark' ? 'bg-zinc-900/50' : 'bg-gray-50'}>
                   <TableRow>
-                    <TableHead className="w-[150px]">Date</TableHead>
+                    <TableHead className="w-[180px]">Date</TableHead>
                     <TableHead>Plan</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Transaction ID</TableHead>
@@ -484,7 +491,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                   {subscriptionData.payments && subscriptionData.payments.length > 0 ? (
                     subscriptionData.payments.map((p: any) => (
                       <TableRow key={p.id}>
-                        <TableCell className="font-medium text-xs sm:text-sm">
+                        <TableCell className="font-medium text-xs sm:text-sm whitespace-nowrap">
                           {format(new Date(p.date), 'dd MMM yyyy')}
                         </TableCell>
                         <TableCell className="uppercase text-xs font-semibold text-muted-foreground">
@@ -507,9 +514,14 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                             size="sm"
                             className="h-8 w-8 p-0"
                             onClick={() => handleDownloadReceipt(p.id)}
+                            disabled={downloadingId === p.id}
                             title="Download Receipt"
                           >
-                            <Download size={14} className="text-primary" />
+                            {downloadingId === p.id ? (
+                              <Loader2 size={14} className="text-primary animate-spin" />
+                            ) : (
+                              <Download size={14} className="text-primary" />
+                            )}
                           </Button>
                         </TableCell>
                       </TableRow>
