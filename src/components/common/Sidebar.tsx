@@ -29,6 +29,7 @@ import {
   Home,
   Utensils,
   AlertCircle,
+  Shield,
 } from "lucide-react";
 import { useIsMobile } from "../../hooks/use-mobile";
 import {
@@ -141,6 +142,11 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       "enrollment": <UserCheck size={20} />,
       "menu-management": <Utensils size={20} />,
       "issues": <AlertCircle size={20} />,
+      "staff": <Users size={20} />,
+      "wardens": <Shield size={20} />,
+      "mess-billing": <Receipt size={20} />,
+      "courses": <BookOpen size={20} />,
+      "student-meals": <Utensils size={20} />,
       "announcement-management": <Bell size={20} />,
       "hod-announcement-management": <Bell size={20} />,
       "faculty-announcement-management": <Bell size={20} />,
@@ -355,9 +361,13 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       { name: "Hostels", page: "hostels" },
       { name: "Rooms", page: "rooms" },
       { name: "Students", page: "students" },
+      { name: "Wardens", page: "wardens" },
       { name: "Enrollment", page: "enrollment" },
       { name: "Staff", page: "staff" },
+      { name: "Courses", page: "courses" },
       { name: "Menu Management", page: "menu-management" },
+      { name: "Mess Billing", page: "mess-billing" },
+      { name: "Today's Menu", page: "student-meals" },
       { name: "Issue Tracking", page: "issues" },
     ],
   };

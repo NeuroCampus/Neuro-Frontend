@@ -1,10 +1,26 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '../../hooks/use-toast';
+import { 
+  UserPlus, 
+  User, 
+  Mail, 
+  Phone, 
+  Briefcase, 
+  Building2, 
+  MapPin, 
+  GraduationCap,
+  ArrowRight,
+  ShieldCheck,
+  CheckCircle2,
+  Users
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 const Enrollment: React.FC = () => {
   const [enrollmentType, setEnrollmentType] = useState<'warden' | 'caretaker'>('warden');
@@ -97,133 +113,180 @@ const Enrollment: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Enrollment</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900/30 rounded-lg">
-            <Label htmlFor="enrollment-type" className="mb-3 block">Select Enrollment Type</Label>
-            <Select value={enrollmentType} onValueChange={(value: any) => setEnrollmentType(value)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="warden">Enroll Warden</SelectItem>
-                <SelectItem value="caretaker">Enroll Caretaker</SelectItem>
-              </SelectContent>
-            </Select>
+    <div className="space-y-8">
+      <Card className="border-primary/10 shadow-xl overflow-hidden">
+        <CardHeader className="bg-muted/30">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <CardTitle>
+                Enrollment Form
+              </CardTitle>
+              <CardDescription>Fill in the professional details of the staff member.</CardDescription>
+            </div>
+            <div className="bg-background p-1 rounded-lg border shadow-sm inline-flex">
+              <button 
+                onClick={() => setEnrollmentType('warden')}
+                className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${enrollmentType === 'warden' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted'}`}
+              >
+                WARDEN
+              </button>
+              <button 
+                onClick={() => setEnrollmentType('caretaker')}
+                className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${enrollmentType === 'caretaker' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted'}`}
+              >
+                CARETAKER
+              </button>
+            </div>
           </div>
+        </CardHeader>
+        <CardContent className="pt-8">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+              {/* Personal Information Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-primary font-semibold text-sm mb-2 uppercase tracking-widest">
+                  <User className="w-4 h-4" /> Personal info
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name *</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      placeholder="e.g. John Doe"
+                      className="pl-10 h-11"
+                      required
+                    />
+                  </div>
+                </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Common Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="name">Name *</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  placeholder="Full name"
-                  required
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="john@university.edu"
+                      className="pl-10 h-11"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Contact Number</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      placeholder="+91 XXXXX XXXXX"
+                      className="pl-10 h-11"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="email@example.com"
-                />
-              </div>
+              {/* Professional Information Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-primary font-semibold text-sm mb-2 uppercase tracking-widest">
+                  <Briefcase className="w-4 h-4" /> Professional info
+                </div>
 
-              <div>
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                  placeholder="+91 XXXXX XXXXX"
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="experience">Years of Experience</Label>
+                  <div className="relative">
+                    <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="experience"
+                      name="experience"
+                      type="number"
+                      value={formData.experience}
+                      onChange={handleInputChange}
+                      placeholder="0"
+                      min="0"
+                      className="pl-10 h-11"
+                    />
+                  </div>
+                </div>
 
-              <div>
-                <Label htmlFor="experience">Experience (Years)</Label>
-                <Input
-                  id="experience"
-                  name="experience"
-                  type="number"
-                  value={formData.experience}
-                  onChange={handleInputChange}
-                  placeholder="0"
-                  min="0"
-                />
+                {enrollmentType === 'warden' ? (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="designation">Designation</Label>
+                      <div className="relative">
+                        <Badge className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px]" variant="secondary">Warden</Badge>
+                        <Input
+                          id="designation"
+                          name="designation"
+                          value={formData.designation}
+                          onChange={handleInputChange}
+                          placeholder="e.g. Senior Warden"
+                          className="h-11"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="department">Department</Label>
+                      <div className="relative">
+                        <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="department"
+                          name="department"
+                          value={formData.department}
+                          onChange={handleInputChange}
+                          placeholder="e.g. Student Affairs"
+                          className="pl-10 h-11"
+                        />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Permanent Address</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <textarea
+                        id="address"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        placeholder="Complete residential address..."
+                        className="w-full pl-10 pr-3 py-2 text-sm border rounded-md focus:ring-1 focus:ring-primary outline-none min-h-[108px] resize-none"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Warden-specific Fields */}
-            {enrollmentType === 'warden' && (
-              <div className="space-y-4 p-4 border-t pt-6 mt-6">
-                <h3 className="font-semibold text-primary">Warden Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="designation">Designation</Label>
-                    <Input
-                      id="designation"
-                      name="designation"
-                      value={formData.designation}
-                      onChange={handleInputChange}
-                      placeholder="e.g., Senior Warden"
-                    />
-                  </div>
+            <Separator />
 
-                  <div>
-                    <Label htmlFor="department">Department</Label>
-                    <Input
-                      id="department"
-                      name="department"
-                      value={formData.department}
-                      onChange={handleInputChange}
-                      placeholder="e.g., Administration"
-                    />
-                  </div>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-muted/20 p-6 rounded-xl border border-dashed">
+              <div className="flex items-center gap-4">
+                <div className="bg-green-500/20 p-3 rounded-full">
+                  <CheckCircle2 className="w-6 h-6 text-green-600" />
                 </div>
-              </div>
-            )}
-
-            {/* Caretaker-specific Fields */}
-            {enrollmentType === 'caretaker' && (
-              <div className="space-y-4 p-4 border-t pt-6 mt-6">
-                <h3 className="font-semibold text-primary">Caretaker Details</h3>
                 <div>
-                  <Label htmlFor="address">Address</Label>
-                  <textarea
-                    id="address"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    placeholder="Full address"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-800"
-                    rows={4}
-                  />
+                  <p className="font-semibold text-sm">Ready to Onboard</p>
                 </div>
               </div>
-            )}
-
-            <div className="flex justify-end gap-3 pt-6">
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="bg-primary hover:bg-primary/90"
+                className="w-full md:w-auto h-12 px-8 bg-primary hover:bg-primary/90 font-semibold group"
               >
-                {isLoading ? 'Enrolling...' : `Enroll ${enrollmentType === 'warden' ? 'Warden' : 'Caretaker'}`}
+                {isLoading ? 'Processing...' : `Enroll ${enrollmentType === 'warden' ? 'Warden' : 'Caretaker'}`}
+                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
             </div>
           </form>

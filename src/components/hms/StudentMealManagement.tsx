@@ -1,12 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { getTodayMenu } from '../../utils/hms_api';
-import { useTheme } from '../../context/ThemeContext';
 import { useToast } from '../../hooks/use-toast';
 import {
   ChefHat,
   Clock,
   Leaf,
+  Utensils,
+  Coffee,
+  Sun,
+  Moon,
+  Info
 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { motion } from 'framer-motion';
 
 interface MenuItem {
   id: number;
@@ -29,9 +37,7 @@ interface Meal {
 }
 
 const StudentMealManagement: React.FC = () => {
-  const { theme } = useTheme();
   const { toast } = useToast();
-  const isDark = theme === 'dark';
 
   const [todayMenu, setTodayMenu] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(false);
@@ -58,64 +64,114 @@ const StudentMealManagement: React.FC = () => {
     }
   };
 
-  return (
-    <div className={`rounded-xl border ${isDark ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-white'} p-6 shadow-sm`}>
-      <div className="mb-6 flex items-center gap-3">
-        <ChefHat className={`h-6 w-6 ${isDark ? 'text-orange-400' : 'text-orange-600'}`} />
-        <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-          Today's Menu
-        </h2>
-      </div>
+  const getMealIcon = (name: string) => {
+    const lower = name.toLowerCase();
+    if (lower.includes('breakfast')) return <Coffee className="w-5 h-5" />;
+    if (lower.includes('lunch')) return <Sun className="w-5 h-5" />;
+    if (lower.includes('dinner')) return <Moon className="w-5 h-5" />;
+    return <Utensils className="w-5 h-5" />;
+  };
 
-      {loading ? (
-        <div className="flex justify-center py-8">
-          <div className={`h-6 w-6 animate-spin rounded-full border-4 ${isDark ? 'border-slate-700 border-t-orange-400' : 'border-gray-300 border-t-orange-600'}`} />
-        </div>
-      ) : todayMenu.length === 0 ? (
-        <div className={`rounded-lg border-2 border-dashed ${isDark ? 'border-slate-700 bg-slate-900' : 'border-gray-300 bg-gray-50'} py-6 text-center`}>
-          <ChefHat className={`mx-auto h-10 w-10 ${isDark ? 'text-slate-600' : 'text-gray-400'}`} />
-          <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            No meals scheduled for today
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {todayMenu.map((meal) => (
-            <div
-              key={meal.id}
-              className={`rounded-lg border ${isDark ? 'border-slate-700 bg-slate-900' : 'border-gray-200 bg-gray-50'} p-4`}
-            >
-              <h4 className={`mb-3 text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                {meal.meal_type_detail.name}
-              </h4>
-              <p className={`mb-3 flex items-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                <Clock className="mr-2 h-4 w-4" />
-                {meal.meal_type_detail.time_from} - {meal.meal_type_detail.time_to}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {meal.items.map((item) => (
-                  <span
-                    key={item.id}
-                    className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${
-                      item.vegetarian
-                        ? isDark
-                          ? 'bg-green-900/30 text-green-300'
-                          : 'bg-green-100 text-green-700'
-                        : isDark
-                          ? 'bg-red-900/30 text-red-300'
-                          : 'bg-red-100 text-red-700'
-                    }`}
-                  >
-                    {item.vegetarian && <Leaf className="h-3 w-3" />}
-                    {item.name}
-                  </span>
-                ))}
-              </div>
+  const getMealGradient = (name: string) => {
+    const lower = name.toLowerCase();
+    if (lower.includes('breakfast')) return "from-orange-500/20 to-yellow-500/10 border-orange-200/50";
+    if (lower.includes('lunch')) return "from-blue-500/20 to-cyan-500/10 border-blue-200/50";
+    if (lower.includes('dinner')) return "from-indigo-500/20 to-purple-500/10 border-indigo-200/50";
+    return "from-slate-500/20 to-slate-500/10 border-slate-200/50";
+  };
+
+  const getMealAccentColor = (name: string) => {
+    const lower = name.toLowerCase();
+    if (lower.includes('breakfast')) return "text-orange-600";
+    if (lower.includes('lunch')) return "text-blue-600";
+    if (lower.includes('dinner')) return "text-indigo-600";
+    return "text-slate-600";
+  };
+
+  return (
+    <Card className="border-primary/10 shadow-sm overflow-hidden">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-orange-500/10 p-2 rounded-lg">
+              <ChefHat className="w-6 h-6 text-orange-600" />
             </div>
-          ))}
+            <div>
+              <CardTitle className="text-xl">Today's Mess Menu</CardTitle>
+              <CardDescription>Scheduled meals and nutrition info</CardDescription>
+            </div>
+          </div>
+          <Badge variant="secondary" className="bg-orange-100 text-orange-700 hover:bg-orange-100 border-none">
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+          </Badge>
         </div>
-      )}
-    </div>
+      </CardHeader>
+      
+      <CardContent>
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            {[1, 2].map((i) => (
+              <div key={i} className="h-32 w-full bg-muted/50 animate-pulse rounded-xl" />
+            ))}
+          </div>
+        ) : todayMenu.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed rounded-xl bg-muted/5">
+            <div className="bg-muted p-4 rounded-full mb-4">
+              <Info className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <p className="font-bold text-muted-foreground">No menu scheduled</p>
+            <p className="text-sm text-muted-foreground">The mess menu for today hasn't been uploaded yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {todayMenu.map((meal) => (
+              <motion.div
+                key={meal.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`group relative rounded-2xl border p-5 bg-gradient-to-br ${getMealGradient(meal.meal_type_detail.name)} transition-all hover:shadow-md`}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-xl bg-background/80 shadow-sm ${getMealAccentColor(meal.meal_type_detail.name)}`}>
+                      {getMealIcon(meal.meal_type_detail.name)}
+                    </div>
+                    <h3 className="font-bold text-lg">{meal.meal_type_detail.name}</h3>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider bg-background/50 px-2 py-1 rounded-md border">
+                    <Clock className="w-3 h-3" />
+                    {meal.meal_type_detail.time_from} - {meal.meal_type_detail.time_to}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {meal.items.map((item) => (
+                    <Badge
+                      key={item.id}
+                      variant="outline"
+                      className={`h-7 px-3 flex items-center gap-1.5 bg-background/90 shadow-sm transition-all hover:scale-105 ${
+                        item.vegetarian 
+                        ? "border-green-500/20 text-green-700" 
+                        : "border-red-500/20 text-red-700"
+                      }`}
+                    >
+                      {item.vegetarian && <Leaf className="w-3 h-3" />}
+                      <span className="font-medium text-[11px]">{item.name}</span>
+                      {item.calories && (
+                        <>
+                          <Separator orientation="vertical" className="h-3" />
+                          <span className="text-[9px] opacity-60 font-mono">{item.calories} kcal</span>
+                        </>
+                      )}
+                    </Badge>
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

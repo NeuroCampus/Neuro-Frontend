@@ -6,7 +6,7 @@ import {
   manageMenuItem,
   getHostels,
 } from '../../utils/hms_api';
-import { useTheme } from '../../context/ThemeContext';
+
 import { useToast } from '../../hooks/use-toast';
 import {
   Plus,
@@ -16,9 +16,28 @@ import {
   UtensilsCrossed,
   Calendar,
   Clock,
-  Users,
-  TrendingUp,
+  Search,
+  Filter,
+  Save,
+  X,
+  History,
+  Repeat
 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { SkeletonPageHeader, SkeletonCard } from '../ui/skeleton';
+import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar as CalendarPicker } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface MealType {
   id: number;
@@ -64,12 +83,11 @@ const DAY_OPTIONS = [
   { value: '6', label: 'Sunday' },
 ];
 
-// Map of choice codes to display names and times
 const MEAL_TYPE_DISPLAY = {
-  'BR': { label: 'Breakfast', time_from: '07:30', time_to: '09:00' },
-  'LN': { label: 'Lunch', time_from: '12:00', time_to: '14:00' },
-  'SN': { label: 'Snacks', time_from: '16:00', time_to: '17:30' },
-  'DN': { label: 'Dinner', time_from: '19:00', time_to: '21:00' },
+  'BR': { label: 'Breakfast', time_from: '07:30', time_to: '09:00', color: 'bg-orange-500/10 text-orange-600 border-orange-200' },
+  'LN': { label: 'Lunch', time_from: '12:00', time_to: '14:00', color: 'bg-blue-500/10 text-blue-600 border-blue-200' },
+  'SN': { label: 'Snacks', time_from: '16:00', time_to: '17:30', color: 'bg-purple-500/10 text-purple-600 border-purple-200' },
+  'DN': { label: 'Dinner', time_from: '19:00', time_to: '21:00', color: 'bg-indigo-500/10 text-indigo-600 border-indigo-200' },
 };
 
 const DEFAULT_MEAL_TYPES = [
@@ -84,21 +102,20 @@ const getMealTypeLabel = (code: string) => {
 };
 
 const MenuManagement: React.FC = () => {
-  const { theme } = useTheme();
   const { toast } = useToast();
-  const isDark = theme === 'dark';
 
   const [menus, setMenus] = useState<Menu[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  
+
   const [hostels, setHostels] = useState<Hostel[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingMenu, setEditingMenu] = useState<Menu | null>(null);
   const [selectedHostel, setSelectedHostel] = useState<string>('');
   const [dayFilter, setDayFilter] = useState<string>('all');
-  
-  // Food Item Management
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+
   const [showFoodForm, setShowFoodForm] = useState(false);
   const [editingFoodItem, setEditingFoodItem] = useState<MenuItem | null>(null);
   const [foodFormData, setFoodFormData] = useState({
@@ -114,11 +131,20 @@ const MenuManagement: React.FC = () => {
     day_of_week: '0',
     meal_type: '',
     date: '',
-    items: [],
+    items: [] as number[],
     is_recurring: true,
   });
 
-  // Load menus for a specific hostel only
+  useEffect(() => {
+    fetchInitialData();
+  }, []);
+
+  const fetchInitialData = async () => {
+    setInitialLoading(true);
+    await loadHostels();
+    setInitialLoading(false);
+  };
+
   const loadMenusForHostel = async (hostelId: string) => {
     if (!hostelId) {
       setMenus([]);
@@ -211,13 +237,13 @@ const MenuManagement: React.FC = () => {
 
     try {
       const data: any = {
-          hostel: parseInt(formData.hostel),
-          day_of_week: formData.day_of_week,
-          // frontend uses mocked meal type codes (e.g., 'BR','LN')
-          meal_type: formData.meal_type || null,
-          items: formData.items,
-          is_recurring: formData.is_recurring,
-        };
+        hostel: parseInt(formData.hostel),
+        day_of_week: formData.day_of_week,
+        // frontend uses mocked meal type codes (e.g., 'BR','LN')
+        meal_type: formData.meal_type || null,
+        items: formData.items,
+        is_recurring: formData.is_recurring,
+      };
 
       // include date when provided (for one-time menus)
       if (formData.date && !formData.is_recurring) {
@@ -260,15 +286,15 @@ const MenuManagement: React.FC = () => {
           // The backend may return either an array of IDs or an array of full item objects.
           const fullItems = Array.isArray(updatedMenu.items)
             ? updatedMenu.items.map((it: any) => {
-                if (typeof it === 'number') {
-                  return menuItems.find((m) => m.id === it) || { id: it, name: 'Unknown', vegetarian: false };
-                }
-                if (it && typeof it === 'object' && it.id) {
-                  // already a full item object returned by backend
-                  return it;
-                }
-                return { id: it, name: 'Unknown', vegetarian: false };
-              })
+              if (typeof it === 'number') {
+                return menuItems.find((m) => m.id === it) || { id: it, name: 'Unknown', vegetarian: false };
+              }
+              if (it && typeof it === 'object' && it.id) {
+                // already a full item object returned by backend
+                return it;
+              }
+              return { id: it, name: 'Unknown', vegetarian: false };
+            })
             : [];
 
           const merged = {
@@ -465,575 +491,357 @@ const MenuManagement: React.FC = () => {
 
   const displayedMenus = applyDayFilter(filteredMenus);
 
+  if (initialLoading) {
+    return (
+      <div className="space-y-6">
+        <SkeletonPageHeader />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`rounded-xl border ${isDark ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-white'} p-6 shadow-sm`}>
-      <div className="mb-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <ChefHat className={`h-6 w-6 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
-          <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            Menu Management
-          </h2>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => {
-              setShowForm(true);
-              setEditingMenu(null);
-              setFormData({
-                hostel: '',
-                day_of_week: '0',
-                meal_type: '',
-                date: '',
-                items: [],
-                is_recurring: true,
-              });
-              // Load required data for form lazily
-                    loadHostels();
-                    loadMenuItems();
-            }}
-            className={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors ${
-              isDark
-                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-          >
-            <Plus className="h-4 w-4" />
-            Add Menu
-          </button>
-          
-        </div>
-      </div>
-
-      {/* Hostel Filter */}
-      <div className="mb-6">
-        <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-          Select Hostel
-        </label>
-        <select
-          value={selectedHostel}
-          onChange={(e) => {
-            const val = e.target.value;
-            setSelectedHostel(val);
-            // Only load menus when a hostel is selected
-            if (val) loadMenusForHostel(val);
-            else setMenus([]);
-          }}
-          onFocus={() => loadHostels()}
-          className={`w-full rounded-lg border ${
-            isDark
-              ? 'border-slate-600 bg-slate-900 text-white'
-              : 'border-gray-300 bg-white text-gray-900'
-          } px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
-        >
-          <option value="">Select Hostel</option>
-          {hostels.map((hostel) => (
-            <option key={hostel.id} value={hostel.id}>
-              {hostel.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Day Filter */}
-      <div className="mb-6">
-        <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-          Filter by Day
-        </label>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setDayFilter('all')}
-            className={`px-3 py-1 rounded-md text-sm ${dayFilter === 'all' ? (isDark ? 'bg-blue-600 text-white' : 'bg-blue-600 text-white') : (isDark ? 'bg-slate-700 text-gray-200' : 'bg-gray-100 text-gray-700')}`}
-          >
-            All
-          </button>
-          {DAY_OPTIONS.map((d) => (
-            <button
-              key={d.value}
-              onClick={() => setDayFilter(d.value)}
-              className={`px-3 py-1 rounded-md text-sm ${dayFilter === d.value ? (isDark ? 'bg-blue-600 text-white' : 'bg-blue-600 text-white') : (isDark ? 'bg-slate-700 text-gray-200' : 'bg-gray-100 text-gray-700')}`}
-            >
-              {d.label.substring(0,3)}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Form */}
-      {showForm && (
-        <div className={`mb-6 rounded-lg border ${isDark ? 'border-slate-700 bg-slate-900' : 'border-gray-200 bg-gray-50'} p-6`}>
-          <h3 className={`mb-4 text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            {editingMenu ? 'Edit Menu' : 'Create New Menu'}
-          </h3>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {/* Hostel Selection */}
-              <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Hostel *
-                </label>
-                <select
-                  value={formData.hostel}
-                  onChange={(e) => setFormData({ ...formData, hostel: e.target.value })}
-                  className={`mt-1 w-full rounded-lg border ${
-                    isDark
-                      ? 'border-slate-600 bg-slate-900 text-white'
-                      : 'border-gray-300 bg-white text-gray-900'
-                  } px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                >
-                  <option value="">Select Hostel</option>
-                  {hostels.map((hostel) => (
-                    <option key={hostel.id} value={hostel.id}>
-                      {hostel.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Day of Week */}
-              <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Day of Week *
-                </label>
-                <select
-                  value={formData.day_of_week}
-                  onChange={(e) => setFormData({ ...formData, day_of_week: e.target.value })}
-                  className={`mt-1 w-full rounded-lg border ${
-                    isDark
-                      ? 'border-slate-600 bg-slate-900 text-white'
-                      : 'border-gray-300 bg-white text-gray-900'
-                  } px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                >
-                  {DAY_OPTIONS.map((day) => (
-                    <option key={day.value} value={day.value}>
-                      {day.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Meal Type */}
-              <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Meal Type *
-                </label>
-                <div className="mt-1 flex gap-2 items-center">
-                  <select
-                    value={formData.meal_type}
-                    onChange={(e) => setFormData({ ...formData, meal_type: e.target.value })}
-                    className={`flex-1 rounded-lg border ${
-                      isDark
-                        ? 'border-slate-600 bg-slate-900 text-white'
-                        : 'border-gray-300 bg-white text-gray-900'
-                    } px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  >
-                    <option value="">Select Meal Type</option>
-                    {DEFAULT_MEAL_TYPES.map((m) => (
-                      <option key={m.name} value={m.name}>
-                        {getMealTypeLabel(m.name)} ({m.time_from}-{m.time_to})
-                      </option>
+    <div className="space-y-8 pb-10">
+      {/* Header */}
+      <Card className="border-primary/10 shadow-sm overflow-hidden">
+        <CardHeader className="pb-6 border-b bg-muted/30">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <CardTitle className="text-2xl font-semibold tracking-tight">Menu Management</CardTitle>
+              <CardDescription>Plan and manage daily mess menus and food items.</CardDescription>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+              <div className="flex items-center gap-2">
+                <Select value={selectedHostel} onValueChange={(val) => {
+                  setSelectedHostel(val);
+                  if (val) loadMenusForHostel(val);
+                  else setMenus([]);
+                }}>
+                  <SelectTrigger className="w-[180px] bg-background">
+                    <SelectValue placeholder="Select Hostel" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hostels.map((h) => (
+                      <SelectItem key={h.id} value={h.id.toString()}>{h.name}</SelectItem>
                     ))}
-                  </select>
+                  </SelectContent>
+                </Select>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const today = new Date();
-                      const todayStr = today.toISOString().slice(0, 10);
-                      // Map JS getDay() (0=Sun..6=Sat) to our DAY_OPTIONS (0=Mon..6=Sun)
-                      const mapped = ((today.getDay() + 6) % 7).toString();
-                      setFormData((f) => ({ ...f, is_recurring: false, date: todayStr, day_of_week: mapped }));
-                    }}
-                    className={`rounded-lg px-3 py-2 text-sm ${isDark ? 'bg-slate-700 text-white' : 'bg-gray-100 text-gray-900'}`}
-                  >
-                    Apply to Today
-                  </button>
-                </div>
+                <Select value={dayFilter} onValueChange={setDayFilter}>
+                  <SelectTrigger className="w-[150px] bg-background">
+                    <SelectValue placeholder="All Days" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Days</SelectItem>
+                    {DAY_OPTIONS.map((d) => (
+                      <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Date (optional for one-time menus) */}
-              <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Date (optional)
-                </label>
-                <input
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className={`mt-1 w-full rounded-lg border ${
-                    isDark
-                      ? 'border-slate-600 bg-slate-900 text-white'
-                      : 'border-gray-300 bg-white text-gray-900'
-                  } px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                />
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowFoodForm(true);
+                    setEditingFoodItem(null);
+                    setFoodFormData({ name: '', description: '', vegetarian: true, cost: '', calories: '' });
+                    loadMenuItems();
+                  }}
+                  className="border-primary/20 hover:bg-primary/5 bg-background"
+                >
+                  <UtensilsCrossed className="w-4 h-4 mr-2" /> Food Items
+                </Button>
+                <Button onClick={() => {
+                  setShowForm(true);
+                  setEditingMenu(null);
+                  setFormData({ hostel: selectedHostel, day_of_week: '0', meal_type: '', date: '', items: [], is_recurring: true });
+                  loadMenuItems();
+                }} className="bg-primary hover:bg-primary/90">
+                  <Plus className="w-4 h-4 mr-2" /> Add Menu
+                </Button>
               </div>
-
-              {/* Recurring */}
-              <div className="flex items-center pt-6">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_recurring}
-                    onChange={(e) => setFormData({ ...formData, is_recurring: e.target.checked })}
-                    className="rounded"
-                  />
-                  <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Recurring Weekly
-                  </span>
-                </label>
-              </div>
-
-              {/* Menu Items Selection - Full Width */}
-              <div className="col-span-full">
-                <div className="flex items-center justify-between mb-3">
-                  <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Food Items
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingFoodItem(null);
-                      setFoodFormData({
-                        name: '',
-                        description: '',
-                        vegetarian: true,
-                        cost: '',
-                        calories: '',
-                      });
-                      setShowFoodForm(true);
-                    }}
-                    className={`flex items-center gap-2 rounded-lg px-3 py-1 text-sm font-medium transition-colors ${
-                      isDark
-                        ? 'bg-green-900/30 text-green-300 hover:bg-green-900/50'
-                        : 'bg-green-100 text-green-700 hover:bg-green-200'
-                    }`}
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Food
-                  </button>
-                </div>
-                <div className={`space-y-2 rounded-lg border ${isDark ? 'border-slate-600 bg-slate-800/50' : 'border-gray-300 bg-gray-50'} p-4 max-h-96 overflow-y-auto`}>
-                  {menuItems.length === 0 ? (
-                    <p className={`text-sm text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                      No food items available
-                    </p>
-                  ) : (
-                    menuItems.map((item) => (
-                      <div key={item.id} className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
-                        formData.items.includes(item.id)
-                          ? isDark ? 'bg-blue-900/30 border border-blue-700' : 'bg-blue-50 border border-blue-300'
-                          : isDark ? 'hover:bg-slate-700/50' : 'hover:bg-gray-100'
-                      }`}>
-                        <input
-                          type="checkbox"
-                          checked={formData.items.includes(item.id)}
-                          onChange={() => toggleItemSelection(item.id)}
-                          className="mt-1 rounded cursor-pointer"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                              {item.name}
-                            </span>
-                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                              item.vegetarian
-                                ? isDark ? 'bg-green-900/40 text-green-300' : 'bg-green-100 text-green-700'
-                                : isDark ? 'bg-red-900/40 text-red-300' : 'bg-red-100 text-red-700'
-                            }`}>
-                              {item.vegetarian ? '🥗 Veg' : '🍗 Non-Veg'}
-                            </span>
-                          </div>
-                          {item.description && (
-                            <p className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                              {item.description}
-                            </p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-6">
+          {/* Menu Grid */}
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+            </div>
+          ) : selectedHostel ? (
+            displayedMenus.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {displayedMenus.map((menu) => (
+                  <Card key={menu.id} className="group hover:shadow-md transition-all shadow-sm">
+                    <CardHeader className="pb-3 flex flex-row items-start justify-between space-y-0">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Badge className={MEAL_TYPE_DISPLAY[menu.meal_type_detail?.name as keyof typeof MEAL_TYPE_DISPLAY]?.color}>
+                            {getMealTypeLabel(menu.meal_type_detail?.name || '')}
+                          </Badge>
+                          {menu.is_recurring ? (
+                            <Badge variant="outline" className="text-[10px] uppercase tracking-wider bg-muted/50">
+                              <Repeat className="w-3 h-3 mr-1" /> Weekly
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[10px] uppercase tracking-wider bg-orange-50 text-orange-600 border-orange-100">
+                              <Calendar className="w-3 h-3 mr-1" /> Special
+                            </Badge>
                           )}
-                          <div className="flex gap-4 mt-2 text-xs">
-                            {item.cost !== undefined && (
-                              <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>
-                                <strong>₹{item.cost}</strong>
-                              </span>
-                            )}
-                            {item.calories !== undefined && (
-                              <span className={isDark ? 'text-gray-300' : 'text-gray-700'}>
-                                <strong>{item.calories}</strong> cal
-                              </span>
-                            )}
-                          </div>
                         </div>
-                        <div className="flex gap-2 flex-shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => handleEditFoodItem(item)}
-                            className={`rounded-lg p-1.5 ${isDark ? 'bg-blue-900/30 text-blue-400 hover:bg-blue-900/50' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'} transition-colors`}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteFoodItem(item.id)}
-                            className={`rounded-lg p-1.5 ${isDark ? 'bg-red-900/30 text-red-400 hover:bg-red-900/50' : 'bg-red-100 text-red-600 hover:bg-red-200'} transition-colors`}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                        <CardTitle className="text-lg font-semibold pt-1">{DAY_OPTIONS.find(d => d.value === menu.day_of_week)?.label}</CardTitle>
+                        {menu.date && <CardDescription>{menu.date}</CardDescription>}
+                      </div>
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:bg-blue-50" onClick={() => handleEdit(menu)}>
+                          <Edit size={14} />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:bg-red-50" onClick={() => handleDelete(menu.id)}>
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <ScrollArea className="h-40 pr-4">
+                        <div className="space-y-2">
+                          {menu.items.map((item, idx) => (
+                            <div key={idx} className="flex items-center justify-between text-sm p-2 rounded-md bg-muted/30 group/item hover:bg-muted/50 transition-colors">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${item.vegetarian ? 'bg-green-500' : 'bg-red-500'}`} />
+                                <span className="truncate font-medium">{item.name}</span>
+                              </div>
+                              <span className="text-[10px] text-muted-foreground bg-background px-1.5 py-0.5 rounded border border-muted-foreground/10">
+                                {item.calories || 0} cal
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                      <Separator className="my-4" />
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5" />
+                          {MEAL_TYPE_DISPLAY[menu.meal_type_detail?.name as keyof typeof MEAL_TYPE_DISPLAY]?.time_from} - {MEAL_TYPE_DISPLAY[menu.meal_type_detail?.name as keyof typeof MEAL_TYPE_DISPLAY]?.time_to}
+                        </div>
+                        <div className="font-medium text-primary">
+                          {menu.items.length} Items
                         </div>
                       </div>
-                    ))
-                  )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="border-dashed border-2 py-20 rounded-xl">
+                <div className="flex flex-col items-center justify-center text-center">
+                  <div className="bg-muted rounded-full p-6 mb-4">
+                    <Calendar className="w-10 h-10 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-xl font-semibold">No menus planned</h3>
+                  <p className="text-muted-foreground max-w-sm mx-auto mt-2">
+                    There are no menus scheduled for {dayFilter === 'all' ? 'any day' : DAY_OPTIONS.find(d => d.value === dayFilter)?.label}.
+                  </p>
+                  <Button className="mt-6" onClick={() => { setShowForm(true); setEditingMenu(null); }}>
+                    <Plus className="w-4 h-4 mr-2" /> Add First Menu
+                  </Button>
                 </div>
-                <p className={`mt-2 text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Selected: {formData.items.length} item{formData.items.length !== 1 ? 's' : ''}
+              </div>
+            )
+          ) : (
+            <div className="border-dashed border-2 py-20 rounded-xl">
+              <div className="flex flex-col items-center justify-center text-center">
+                <div className="bg-muted rounded-full p-6 mb-4">
+                  <Search className="w-10 h-10 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold">Select a hostel</h3>
+                <p className="text-muted-foreground max-w-sm mx-auto mt-2">
+                  Choose a hostel from the dropdown above to view and manage its mess menus.
                 </p>
               </div>
             </div>
+          )}
+        </CardContent>
+      </Card>
 
-            {/* Buttons */}
-            <div className="flex gap-3">
-              <button
-                type="submit"
-                className="flex-1 rounded-lg bg-blue-600 py-2 font-medium text-white hover:bg-blue-700 transition-colors"
-              >
-                {editingMenu ? 'Update Menu' : 'Create Menu'}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowForm(false);
-                  setEditingMenu(null);
-                }}
-                className={`flex-1 rounded-lg border ${
-                  isDark
-                    ? 'border-slate-600 text-gray-300 hover:bg-slate-900'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                } py-2 font-medium transition-colors`}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* Food Item Form */}
-      {showFoodForm && (
-        <div className={`mb-6 rounded-lg border ${isDark ? 'border-slate-700 bg-slate-900' : 'border-gray-200 bg-gray-50'} p-6`}>
-          <h3 className={`mb-4 text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-            {editingFoodItem ? 'Edit Food Item' : 'Add New Food Item'}
-          </h3>
-          <form onSubmit={handleFoodItemSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {/* Name */}
-              <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  value={foodFormData.name}
-                  onChange={(e) => setFoodFormData({ ...foodFormData, name: e.target.value })}
-                  className={`mt-1 w-full rounded-lg border ${
-                    isDark
-                      ? 'border-slate-600 bg-slate-900 text-white'
-                      : 'border-gray-300 bg-white text-gray-900'
-                  } px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  placeholder="e.g., Paneer Butter Masala"
-                />
+      {/* Menu Form Dialog */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="sm:max-w-[500px] w-[90vw] rounded-xl max-h-[80vh] overflow-y-auto custom-scrollbar">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ChefHat className="w-5 h-5 text-primary" />
+              {editingMenu ? 'Edit Menu' : 'Create New Menu'}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-6 pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Hostel</Label>
+                <Select value={formData.hostel} onValueChange={(val) => setFormData({ ...formData, hostel: val })}>
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Select Hostel" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hostels.map((h) => (
+                      <SelectItem key={h.id} value={h.id.toString()}>{h.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-
-              {/* Cost */}
-              <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Cost (₹) *
-                </label>
-                <input
-                  type="number"
-                  value={foodFormData.cost}
-                  onChange={(e) => setFoodFormData({ ...foodFormData, cost: e.target.value })}
-                  className={`mt-1 w-full rounded-lg border ${
-                    isDark
-                      ? 'border-slate-600 bg-slate-900 text-white'
-                      : 'border-gray-300 bg-white text-gray-900'
-                  } px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  placeholder="100"
-                />
+              <div className="space-y-2">
+                <Label>Day of Week</Label>
+                <Select value={formData.day_of_week} onValueChange={(val) => setFormData({ ...formData, day_of_week: val })}>
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Select Day" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DAY_OPTIONS.map((d) => (
+                      <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-
-              {/* Calories */}
-              <div>
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Calories
-                </label>
-                <input
-                  type="number"
-                  value={foodFormData.calories}
-                  onChange={(e) => setFoodFormData({ ...foodFormData, calories: e.target.value })}
-                  className={`mt-1 w-full rounded-lg border ${
-                    isDark
-                      ? 'border-slate-600 bg-slate-900 text-white'
-                      : 'border-gray-300 bg-white text-gray-900'
-                  } px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  placeholder="180"
-                />
+              <div className="space-y-2">
+                <Label>Meal Type</Label>
+                <Select value={formData.meal_type} onValueChange={(val) => setFormData({ ...formData, meal_type: val })}>
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Select Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DEFAULT_MEAL_TYPES.map((m) => (
+                      <SelectItem key={m.name} value={m.name}>
+                        {getMealTypeLabel(m.name)} ({m.time_from}-{m.time_to})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-
-              {/* Vegetarian */}
-              <div className="flex items-center pt-6">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={foodFormData.vegetarian}
-                    onChange={(e) => setFoodFormData({ ...foodFormData, vegetarian: e.target.checked })}
-                    className="rounded"
-                  />
-                  <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                    Vegetarian
-                  </span>
-                </label>
-              </div>
-
-              {/* Description */}
-              <div className="col-span-full">
-                <label className={`block text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Description
-                </label>
-                <textarea
-                  value={foodFormData.description}
-                  onChange={(e) => setFoodFormData({ ...foodFormData, description: e.target.value })}
-                  className={`mt-1 w-full rounded-lg border ${
-                    isDark
-                      ? 'border-slate-600 bg-slate-900 text-white'
-                      : 'border-gray-300 bg-white text-gray-900'
-                  } px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  rows={3}
-                  placeholder="Description of the food item..."
-                />
+              <div className="space-y-2">
+                <Label>Date (Optional)</Label>
+                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !formData.date && "text-muted-foreground"
+                      )}
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      {formData.date ? format(new Date(formData.date), "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <CalendarPicker
+                      mode="single"
+                      selected={formData.date ? new Date(formData.date) : undefined}
+                      onSelect={(date) => {
+                        setFormData({ ...formData, date: date ? format(date, "yyyy-MM-dd") : "" });
+                        setIsCalendarOpen(false);
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 
-            {/* Buttons */}
-            <div className="flex gap-3">
-              <button
-                type="submit"
-                className="flex-1 rounded-lg bg-blue-600 py-2 font-medium text-white hover:bg-blue-700 transition-colors"
-              >
-                {editingFoodItem ? 'Update Food Item' : 'Add Food Item'}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowFoodForm(false);
-                  setEditingFoodItem(null);
-                  setFoodFormData({
-                    name: '',
-                    description: '',
-                    vegetarian: true,
-                    cost: '',
-                    calories: '',
-                  });
-                }}
-                className={`flex-1 rounded-lg border ${
-                  isDark
-                    ? 'border-slate-600 text-gray-300 hover:bg-slate-900'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                } py-2 font-medium transition-colors`}
-              >
-                Cancel
-              </button>
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 border border-primary/5">
+              <input
+                type="checkbox"
+                id="recurring"
+                checked={formData.is_recurring}
+                onChange={(e) => setFormData({ ...formData, is_recurring: e.target.checked })}
+                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <Label htmlFor="recurring" className="font-medium cursor-pointer">Recurring Weekly Menu</Label>
             </div>
-          </form>
-        </div>
-      )}
 
-      {/* Menus List */}
-      {!showForm && (loading ? (
-        <div className="flex justify-center py-8">
-          <div className={`h-8 w-8 animate-spin rounded-full border-4 ${isDark ? 'border-slate-700 border-t-blue-400' : 'border-gray-300 border-t-blue-600'}`} />
-        </div>
-      ) : displayedMenus.length === 0 ? (
-        <div className={`rounded-lg border-2 border-dashed ${isDark ? 'border-slate-700 bg-slate-900' : 'border-gray-300 bg-gray-50'} py-8 text-center`}>
-          <ChefHat className={`mx-auto h-12 w-12 ${isDark ? 'text-slate-600' : 'text-gray-400'}`} />
-          <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            No menus created yet. Create your first menu to get started.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {displayedMenus.map((menu) => {
-            const today = new Date();
-            const todayStr = today.toISOString().slice(0, 10);
-            const todayWeekday = ((today.getDay() + 6) % 7).toString();
-            const isToday = (menu.date === todayStr) || (menu.is_recurring && menu.day_of_week === todayWeekday);
-            return (
-            <div
-              key={menu.id}
-              className={`rounded-lg border ${isDark ? 'border-slate-700 bg-slate-900' : 'border-gray-200 bg-gray-50'} p-4`}
-            >
-              <div className="mb-3 flex items-start justify-between">
-                <div>
-                  <h4 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    {menu.hostel_name} - {menu.day_name}
-                    {isToday && (
-                      <span className="ml-3 inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
-                        Today
-                      </span>
-                    )}
-                  </h4>
-                  <div className="mt-1 flex flex-wrap gap-4">
-                    <div className="flex items-center gap-2">
-                      <Clock className={`h-4 w-4 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
-                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                        {getMealTypeLabel(menu.meal_type_detail?.name || '')}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className={`h-4 w-4 ${isDark ? 'text-green-400' : 'text-green-600'}`} />
-                      <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                        {menu.is_recurring ? 'Weekly' : 'One-time'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleEdit(menu)}
-                    className={`rounded-lg p-2 ${isDark ? 'bg-blue-900/30 text-blue-400 hover:bg-blue-900/50' : 'bg-blue-100 text-blue-600 hover:bg-blue-200'} transition-colors`}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(menu.id)}
-                    className={`rounded-lg p-2 ${isDark ? 'bg-red-900/30 text-red-400 hover:bg-red-900/50' : 'bg-red-100 text-red-600 hover:bg-red-200'} transition-colors`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Menu Items */}
-              {menu.items.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {menu.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${
-                        item.vegetarian
-                          ? isDark
-                            ? 'bg-green-900/30 text-green-300'
-                            : 'bg-green-100 text-green-700'
-                          : isDark
-                            ? 'bg-red-900/30 text-red-300'
-                            : 'bg-red-100 text-red-700'
+            <div className="space-y-3">
+              <Label className="text-base font-semibold flex items-center justify-between">
+                Select Food Items
+                <Badge variant="secondary" className="font-normal">{formData.items.length} Selected</Badge>
+              </Label>
+              <div className="border rounded-lg p-2 max-h-[300px] overflow-y-auto bg-muted/10 custom-scrollbar">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {menuItems.map((item) => (
+                    <div 
+                      key={item.id} 
+                      onClick={() => toggleItemSelection(item.id!)}
+                      className={`flex items-center gap-3 p-3 rounded-md cursor-pointer border transition-all ${
+                        formData.items.includes(item.id!) 
+                          ? 'bg-primary/5 border-primary/30 shadow-sm ring-1 ring-primary/20' 
+                          : 'bg-background hover:bg-muted/50 border-transparent'
                       }`}
                     >
-                      {item.name} {item.vegetarian ? '🥗' : '🍗'}
+                      <div className={`w-3 h-3 rounded-full flex-shrink-0 ${item.vegetarian ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]'}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold truncate">{item.name}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{item.cost} ₹ • {item.calories} cal</p>
+                      </div>
+                      {formData.items.includes(item.id!) && <Save className="w-3.5 h-3.5 text-primary" />}
                     </div>
                   ))}
                 </div>
-              )}
+              </div>
             </div>
-            );
-          })}
-        </div>
-      ))}
+
+            <DialogFooter className="gap-2">
+              <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button>
+              <Button type="submit" className="flex-1">{editingMenu ? 'Update Menu Plan' : 'Save Menu Plan'}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Food Item Dialog */}
+      <Dialog open={showFoodForm} onOpenChange={setShowFoodForm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingFoodItem ? 'Edit Food Item' : 'Add New Food Item'}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleFoodItemSubmit} className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label>Item Name</Label>
+              <Input value={foodFormData.name} onChange={(e) => setFoodFormData({ ...foodFormData, name: e.target.value })} placeholder="e.g. Paneer Butter Masala" required />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Input value={foodFormData.description} onChange={(e) => setFoodFormData({ ...foodFormData, description: e.target.value })} placeholder="Ingredients, taste, etc." />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Cost (₹)</Label>
+                <Input type="number" value={foodFormData.cost} onChange={(e) => setFoodFormData({ ...foodFormData, cost: e.target.value })} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Calories</Label>
+                <Input type="number" value={foodFormData.calories} onChange={(e) => setFoodFormData({ ...foodFormData, calories: e.target.value })} />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 pt-2">
+              <input
+                type="checkbox"
+                id="veg"
+                checked={foodFormData.vegetarian}
+                onChange={(e) => setFoodFormData({ ...foodFormData, vegetarian: e.target.checked })}
+                className="w-4 h-4 rounded border-gray-300 text-primary"
+              />
+              <Label htmlFor="veg" className="cursor-pointer">Vegetarian Item</Label>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setShowFoodForm(false)}>Cancel</Button>
+              <Button type="submit" className="bg-primary">{editingFoodItem ? 'Update Item' : 'Create Item'}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

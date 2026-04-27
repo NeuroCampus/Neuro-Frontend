@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Building2, Users, Grid3X3, Shield, AlertCircle, Loader } from "lucide-react";
+import { Building2, Users, Grid3X3, Shield, AlertCircle } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
 import { getDashboardStats, getRoomsByHostelId } from "../../utils/hms_api";
 import { useTheme } from "../../context/ThemeContext";
@@ -11,6 +11,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import DashboardCard from "../common/DashboardCard";
+import { 
+  SkeletonPageHeader, 
+  SkeletonStatsGrid, 
+  SkeletonCard 
+} from "../ui/skeleton";
 
 interface Hostel {
   id: number;
@@ -54,6 +60,7 @@ const HMSOverview = () => {
   });
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedHostel, setSelectedHostel] = useState<number | null>(null);
+  const [selectedFloor, setSelectedFloor] = useState<string>("all");
   const [hostels, setHostels] = useState<Hostel[]>([]);
 
   useEffect(() => {
@@ -64,6 +71,7 @@ const HMSOverview = () => {
   useEffect(() => {
     if (selectedHostel) {
       fetchHostelRooms(selectedHostel);
+      setSelectedFloor("all");
     } else {
       setRooms([]);
     }
@@ -129,9 +137,9 @@ const HMSOverview = () => {
 
   const getRoomColor = (occupied: number, capacity: number) => {
     const occupancyPercent = (occupied / capacity) * 100;
-    if (occupancyPercent === 100) return "bg-red-500"; // Full
-    if (occupancyPercent >= 50) return "bg-yellow-500"; // Half full
-    return "bg-green-500"; // Available
+    if (occupancyPercent === 100) return "bg-red-500/10 border-red-500/50 text-red-600 dark:text-red-400"; // Full
+    if (occupancyPercent >= 50) return "bg-yellow-500/10 border-yellow-500/50 text-yellow-600 dark:text-yellow-400"; // Half full
+    return "bg-green-500/10 border-green-500/50 text-green-600 dark:text-green-400"; // Available
   };
 
   const getRoomStatusLabel = (occupied: number, capacity: number) => {
@@ -153,7 +161,7 @@ const HMSOverview = () => {
 
   // Group rooms by floor for display and sort within floors
   const roomsByFloor = rooms.reduce((acc, room) => {
-    const floor = getFloorFromRoomNumber(room.room_number || room.name || '');
+    const floor = getFloorFromRoomNumber(room.room_number || '');
     if (!acc[floor]) acc[floor] = [];
     acc[floor].push(room);
     return acc;
@@ -161,7 +169,7 @@ const HMSOverview = () => {
 
   // Ensure rooms in each floor are sorted by room_number
   Object.keys(roomsByFloor).forEach((f) => {
-    roomsByFloor[Number(f)].sort((a, b) => (a.room_number || a.name).localeCompare(b.room_number || b.name, undefined, {numeric: true}));
+    roomsByFloor[Number(f)].sort((a, b) => (a.room_number).localeCompare(b.room_number, undefined, {numeric: true}));
   });
 
   const containerVariants = {
@@ -183,269 +191,182 @@ const HMSOverview = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className={`text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-          <div className="animate-spin mb-4">⚙️</div>
-          <p>Loading dashboard data...</p>
-        </div>
+      <div className="space-y-8">
+        <SkeletonPageHeader />
+        <SkeletonStatsGrid items={5} />
+        <SkeletonCard className="h-[400px]" />
       </div>
     );
   }
 
   return (
     <motion.div
-      className="space-y-6"
+      className="space-y-8"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
     >
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">HMS Dashboard</h1>
-        <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-          Real-time hostel management statistics
-        </p>
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+        <DashboardCard
+          title="Total Hostels"
+          value={stats.totalHostels}
+          description="Managed properties"
+          icon={<Building2 size={20} />}
+        />
+        <DashboardCard
+          title="Total Rooms"
+          value={stats.totalRooms}
+          description="Total capacity"
+          icon={<Grid3X3 size={20} />}
+        />
+        <DashboardCard
+          title="Total Students"
+          value={stats.totalStudents}
+          description="Active residents"
+          icon={<Users size={20} />}
+        />
+        <DashboardCard
+          title="Wardens"
+          value={stats.totalWardens}
+          description="Hostel supervisors"
+          icon={<Shield size={20} />}
+        />
+        <DashboardCard
+          title="Occupancy"
+          value={`${stats.occupancyRate}%`}
+          description="Current utilization"
+          icon={<AlertCircle size={20} />}
+        />
       </div>
 
-      {/* Statistics Cards - Matrix Style */}
-      <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4"
-        variants={containerVariants}
+      {/* Room Matrix Visualization */}
+      <div
+        className={`rounded-xl border bg-card text-card-foreground shadow-sm overflow-hidden`}
       >
-        {/* Total Hostels */}
-        <motion.div
-          variants={itemVariants}
-          className={`p-6 rounded-lg border-2 ${
-            theme === 'dark'
-              ? 'bg-gradient-to-br from-blue-900 to-blue-800 border-blue-700'
-              : 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-300'
-          } hover:shadow-lg transition-shadow`}
-        >
-          <div className="flex items-center justify-between">
+        <div className="p-6 border-b bg-muted/30">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <p className={`text-sm font-medium ${theme === 'dark' ? 'text-blue-300' : 'text-blue-600'}`}>
-                Hostels
-              </p>
-              <p className={`text-3xl font-bold mt-2 ${theme === 'dark' ? 'text-white' : 'text-blue-900'}`}>
-                {stats.totalHostels}
-              </p>
+              <h2 className="text-xl font-semibold">Room Occupancy Matrix</h2>
+              <p className="text-sm text-muted-foreground">Visual breakdown of room availability by floor.</p>
             </div>
-            <Building2 className={`w-12 h-12 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-500'}`} />
-          </div>
-        </motion.div>
 
-        {/* Total Rooms */}
-        <motion.div
-          variants={itemVariants}
-          className={`p-6 rounded-lg border-2 ${
-            theme === 'dark'
-              ? 'bg-gradient-to-br from-purple-900 to-purple-800 border-purple-700'
-              : 'bg-gradient-to-br from-purple-50 to-purple-100 border-purple-300'
-          } hover:shadow-lg transition-shadow`}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${theme === 'dark' ? 'text-purple-300' : 'text-purple-600'}`}>
-                Rooms
-              </p>
-              <p className={`text-3xl font-bold mt-2 ${theme === 'dark' ? 'text-white' : 'text-purple-900'}`}>
-                {stats.totalRooms}
-              </p>
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+              {/* Hostel Filter */}
+              <div className="w-full sm:w-48 md:w-64">
+                <Select
+                  value={selectedHostel?.toString() || ''}
+                  onValueChange={(v) => setSelectedHostel(Number(v))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Hostel" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hostels.map((hostel) => (
+                      <SelectItem key={hostel.id} value={hostel.id.toString()}>
+                        {hostel.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Floor Filter */}
+              <div className="w-full sm:w-40 md:w-48">
+                <Select
+                  value={selectedFloor}
+                  onValueChange={setSelectedFloor}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Floors" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Floors</SelectItem>
+                    {Object.keys(roomsByFloor)
+                      .map(Number)
+                      .sort((a, b) => a - b)
+                      .map((floor) => (
+                        <SelectItem key={floor} value={floor.toString()}>
+                          Floor {floor === 0 ? 'Ground' : floor}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <Grid3X3 className={`w-12 h-12 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-500'}`} />
-          </div>
-        </motion.div>
-
-        {/* Total Students */}
-        <motion.div
-          variants={itemVariants}
-          className={`p-6 rounded-lg border-2 ${
-            theme === 'dark'
-              ? 'bg-gradient-to-br from-green-900 to-green-800 border-green-700'
-              : 'bg-gradient-to-br from-green-50 to-green-100 border-green-300'
-          } hover:shadow-lg transition-shadow`}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${theme === 'dark' ? 'text-green-300' : 'text-green-600'}`}>
-                Students
-              </p>
-              <p className={`text-3xl font-bold mt-2 ${theme === 'dark' ? 'text-white' : 'text-green-900'}`}>
-                {stats.totalStudents}
-              </p>
-            </div>
-            <Users className={`w-12 h-12 ${theme === 'dark' ? 'text-green-400' : 'text-green-500'}`} />
-          </div>
-        </motion.div>
-
-        {/* Total Wardens */}
-        <motion.div
-          variants={itemVariants}
-          className={`p-6 rounded-lg border-2 ${
-            theme === 'dark'
-              ? 'bg-gradient-to-br from-orange-900 to-orange-800 border-orange-700'
-              : 'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-300'
-          } hover:shadow-lg transition-shadow`}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${theme === 'dark' ? 'text-orange-300' : 'text-orange-600'}`}>
-                Wardens
-              </p>
-              <p className={`text-3xl font-bold mt-2 ${theme === 'dark' ? 'text-white' : 'text-orange-900'}`}>
-                {stats.totalWardens}
-              </p>
-            </div>
-            <Shield className={`w-12 h-12 ${theme === 'dark' ? 'text-orange-400' : 'text-orange-500'}`} />
-          </div>
-        </motion.div>
-
-        {/* Occupancy Rate */}
-        <motion.div
-          variants={itemVariants}
-          className={`p-6 rounded-lg border-2 ${
-            theme === 'dark'
-              ? 'bg-gradient-to-br from-red-900 to-red-800 border-red-700'
-              : 'bg-gradient-to-br from-red-50 to-red-100 border-red-300'
-          } hover:shadow-lg transition-shadow`}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${theme === 'dark' ? 'text-red-300' : 'text-red-600'}`}>
-                Occupancy
-              </p>
-              <p className={`text-3xl font-bold mt-2 ${theme === 'dark' ? 'text-white' : 'text-red-900'}`}>
-                {stats.occupancyRate}%
-              </p>
-            </div>
-            <AlertCircle className={`w-12 h-12 ${theme === 'dark' ? 'text-red-400' : 'text-red-500'}`} />
-          </div>
-        </motion.div>
-      </motion.div>
-
-      {/* Room Matrix Visualization - BookMyShow Style */}
-      <motion.div
-        variants={itemVariants}
-        className={`p-6 rounded-lg border-2 ${
-          theme === 'dark'
-            ? 'bg-gray-800 border-gray-700'
-            : 'bg-white border-gray-200'
-        }`}
-      >
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-4">Room Booking Matrix</h2>
-
-          {/* Hostel Filter */}
-          <div className="mb-6">
-            <label className={`text-sm font-medium block mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-              Select Hostel
-            </label>
-            <Select
-              value={selectedHostel?.toString() || 'all'}
-              onValueChange={(v) => setSelectedHostel(v === 'all' ? null : Number(v))}
-            >
-              <SelectTrigger className={`w-full md:w-64 border-2 ${
-                theme === 'dark'
-                  ? 'bg-gray-700 border-gray-600 text-white'
-                  : 'bg-white border-gray-300 text-gray-900'
-              }`}>
-                <SelectValue placeholder="All Hostels" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Hostels</SelectItem>
-                {hostels.map((hostel) => (
-                  <SelectItem key={hostel.id} value={hostel.id.toString()}>
-                    {hostel.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Legend */}
-          <div className="flex flex-wrap gap-4 mb-6">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-green-500 rounded-md"></div>
-              <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>Available</span>
+          <div className="flex flex-wrap gap-4 mt-6">
+            <div className="flex items-center gap-2 text-xs font-medium">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <span>Available</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-yellow-500 rounded-md"></div>
-              <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>Half Full</span>
+            <div className="flex items-center gap-2 text-xs font-medium">
+              <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+              <span>Half Full</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-red-500 rounded-md"></div>
-              <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>Full</span>
+            <div className="flex items-center gap-2 text-xs font-medium">
+              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              <span>Full</span>
             </div>
           </div>
-
-          {/* Room Matrix */}
-          <motion.div
-            className="grid gap-4"
-            variants={containerVariants}
-          >
-            {loadingRooms ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader className="w-6 h-6 animate-spin mr-2" />
-                <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-                  Loading rooms...
-                </span>
-              </div>
-            ) : selectedHostel ? (
-              // Show selected hostel's rooms only
-              Object.keys(roomsByFloor).length > 0 ? (
-                <div>
-                  <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
-                    {hostels.find((h) => h.id === selectedHostel)?.name}
-                  </h3>
-                      <div className="space-y-6">
-                        {Object.keys(roomsByFloor)
-                          .map((k) => Number(k))
-                          .sort((a, b) => a - b)
-                          .map((floorNum) => (
-                            <div key={floorNum}>
-                              <h4 className={`text-md font-semibold mb-3 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                                Floor {floorNum === 0 ? 'Ground' : floorNum}
-                              </h4>
-                              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
-                                {roomsByFloor[floorNum].map((room) => (
-                                  <motion.div
-                                    key={room.id}
-                                    variants={itemVariants}
-                                    className={`p-3 rounded-lg border-2 text-center cursor-pointer hover:scale-105 transition-transform ${getRoomColor(
-                                      room.student_count,
-                                      room.capacity
-                                    )} ${
-                                      room.student_count === room.capacity ? 'border-red-700' : 'border-opacity-50'
-                                    } text-white font-semibold`}
-                                    title={`${room.room_number}: ${room.student_count}/${room.capacity}`}
-                                  >
-                                    <div className="text-xs mb-1">{room.room_number}</div>
-                                    <div className="text-sm">
-                                      {room.student_count}/{room.capacity}
-                                    </div>
-                                    <div className="text-xs mt-1 font-bold opacity-80">
-                                      {getRoomStatusLabel(room.student_count, room.capacity)}
-                                    </div>
-                                  </motion.div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                </div>
-              ) : (
-                <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-                  No rooms available for this hostel
-                </p>
-              )
-            ) : (
-              <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-                Select a hostel to view rooms
-              </p>
-            )}
-          </motion.div>
         </div>
-      </motion.div>
+
+        <div className="p-6">
+          {loadingRooms ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+              {Array.from({ length: 16 }).map((_, i) => (
+                <div key={i} className="h-20 rounded-lg border bg-muted animate-pulse" />
+              ))}
+            </div>
+          ) : selectedHostel ? (
+            Object.keys(roomsByFloor).length > 0 ? (
+              <div className="space-y-8">
+                {Object.keys(roomsByFloor)
+                  .map((k) => Number(k))
+                  .sort((a, b) => a - b)
+                  .filter((f) => selectedFloor === "all" || f.toString() === selectedFloor)
+                  .map((floorNum) => (
+                    <div key={floorNum}>
+                      <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+                        Floor {floorNum === 0 ? 'Ground' : floorNum}
+                      </h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+                        {roomsByFloor[floorNum].map((room) => (
+                          <motion.div
+                            key={room.id}
+                            variants={itemVariants}
+                            whileHover={{ scale: 1.05 }}
+                            className={`p-3 rounded-lg border text-center transition-all ${getRoomColor(
+                              room.student_count,
+                              room.capacity
+                            )} font-medium shadow-sm`}
+                            title={`${room.room_number}: ${room.student_count}/${room.capacity}`}
+                          >
+                            <div className="text-[10px] opacity-70 mb-1">ROOM</div>
+                            <div className="text-sm font-bold">{room.room_number}</div>
+                            <div className="text-[10px] mt-1 font-bold">
+                              {room.student_count}/{room.capacity}
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                No rooms available for this hostel.
+              </div>
+            )
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              Select a hostel to view room occupancy.
+            </div>
+          )}
+        </div>
+      </div>
     </motion.div>
   );
 };

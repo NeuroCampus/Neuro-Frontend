@@ -1,9 +1,15 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Users, UserCheck, Loader, ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Users, UserCheck, Search, Edit2, Trash2, Mail, Phone, Briefcase, Award, Plus, Save, X } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
 import { getStaffEnrollment, manageWardens, manageCaretakers } from "../../utils/hms_api";
-import { useTheme } from "../../context/ThemeContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { SkeletonTable, SkeletonStatsGrid, SkeletonPageHeader } from "../ui/skeleton";
+import DashboardCard from "../common/DashboardCard";
 
 interface Warden {
   id: number;
@@ -23,8 +29,7 @@ interface Caretaker {
   experience?: string;
 }
 
-const StaffManagementOverview = () => {
-  const { theme } = useTheme();
+const StaffManagementOverview: React.FC = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [wardens, setWardens] = useState<Warden[]>([]);
@@ -39,6 +44,10 @@ const StaffManagementOverview = () => {
   const [editingCaretakerForm, setEditingCaretakerForm] = useState<Partial<Caretaker>>({});
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Search state
+  const [wardenSearch, setWardenSearch] = useState('');
+  const [caretakerSearch, setCaretakerSearch] = useState('');
+
   // Pagination state
   const [wardensPage, setWardensPage] = useState(1);
   const [caretakersPage, setCaretakersPage] = useState(1);
@@ -52,70 +61,30 @@ const StaffManagementOverview = () => {
     setLoading(true);
     try {
       const response = await getStaffEnrollment(wardensPage, pageSize);
-
       if (response.success) {
-        // Handle the response data structure - check if it's double-wrapped
         const actualData = response.data?.data || response.data;
         const { wardens: wardensData, caretakers: caretakersData } = actualData;
-
         setWardens(wardensData?.items || []);
         setWardensTotal(wardensData?.total || 0);
-
         setCaretakers(caretakersData?.items || []);
         setCaretakersTotal(caretakersData?.total || 0);
-      } else {
-        throw new Error(response.message || "Failed to fetch staff data");
       }
     } catch (error) {
-      console.error("Error fetching staff data:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load staff enrollment data",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to load staff data", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
-  // Warden handlers
-  const startEditWarden = (warden: Warden) => {
-    setEditingWardenId(warden.id);
-    setEditingWardenForm({ ...warden });
-  };
-
-  const cancelEditWarden = () => {
-    setEditingWardenId(null);
-    setEditingWardenForm({});
-  };
-
   const saveWarden = async (id?: number) => {
     try {
       setActionLoading(true);
-      const payload = {
-        name: editingWardenForm.name,
-        email: editingWardenForm.email,
-        phone: editingWardenForm.phone,
-        designation: editingWardenForm.designation,
-        experience: editingWardenForm.experience,
-      };
-      const method = id ? "PUT" : "POST";
-      const response = await manageWardens(payload, id, method as any);
+      const payload = { ...editingWardenForm };
+      const response = await manageWardens(payload, id, id ? "PUT" : "POST");
       if (response.success) {
-        toast({ title: "Saved", description: "Warden saved successfully." });
-        const saved = response.data?.data || response.data || null;
+        toast({ title: "Success", description: "Warden details saved." });
         setEditingWardenId(null);
-        setEditingWardenForm({});
-        if (saved) {
-          if (id) {
-            setWardens((prev) => prev.map((w) => (w.id === id ? (saved as Warden) : w)));
-          } else {
-            setWardens((prev) => [saved as Warden, ...prev]);
-            setWardensTotal((t) => t + 1);
-          }
-        }
-      } else {
-        throw new Error(response.message || "Failed to save warden");
+        fetchStaffData();
       }
     } catch (err) {
       toast({ title: "Error", description: "Failed to save warden.", variant: "destructive" });
@@ -125,62 +94,27 @@ const StaffManagementOverview = () => {
   };
 
   const deleteWarden = async (id: number) => {
-    if (!confirm("Delete this warden?")) return;
+    if (!confirm("Are you sure you want to delete this warden?")) return;
     try {
-      setActionLoading(true);
       const response = await manageWardens(undefined, id, "DELETE");
       if (response.success) {
-        toast({ title: "Deleted", description: "Warden deleted." });
-        setWardens((prev) => prev.filter((w) => w.id !== id));
-        setWardensTotal((t) => Math.max(0, t - 1));
-      } else {
-        throw new Error(response.message || "Failed to delete warden");
+        toast({ title: "Success", description: "Warden deleted." });
+        fetchStaffData();
       }
     } catch (err) {
       toast({ title: "Error", description: "Failed to delete warden.", variant: "destructive" });
-    } finally {
-      setActionLoading(false);
     }
-  };
-
-  // Caretaker handlers
-  const startEditCaretaker = (c: Caretaker) => {
-    setEditingCaretakerId(c.id);
-    setEditingCaretakerForm({ ...c });
-  };
-
-  const cancelEditCaretaker = () => {
-    setEditingCaretakerId(null);
-    setEditingCaretakerForm({});
   };
 
   const saveCaretaker = async (id?: number) => {
     try {
       setActionLoading(true);
-      const payload = {
-        name: editingCaretakerForm.name,
-        email: editingCaretakerForm.email,
-        phone: editingCaretakerForm.phone,
-        address: editingCaretakerForm.address,
-        experience: editingCaretakerForm.experience,
-      };
-      const method = id ? "PUT" : "POST";
-      const response = await manageCaretakers(payload, id, method as any);
+      const payload = { ...editingCaretakerForm };
+      const response = await manageCaretakers(payload, id, id ? "PUT" : "POST");
       if (response.success) {
-        toast({ title: "Saved", description: "Caretaker saved successfully." });
-        const saved = response.data?.data || response.data || null;
+        toast({ title: "Success", description: "Caretaker details saved." });
         setEditingCaretakerId(null);
-        setEditingCaretakerForm({});
-        if (saved) {
-          if (id) {
-            setCaretakers((prev) => prev.map((c) => (c.id === id ? (saved as Caretaker) : c)));
-          } else {
-            setCaretakers((prev) => [saved as Caretaker, ...prev]);
-            setCaretakersTotal((t) => t + 1);
-          }
-        }
-      } else {
-        throw new Error(response.message || "Failed to save caretaker");
+        fetchStaffData();
       }
     } catch (err) {
       toast({ title: "Error", description: "Failed to save caretaker.", variant: "destructive" });
@@ -190,516 +124,204 @@ const StaffManagementOverview = () => {
   };
 
   const deleteCaretaker = async (id: number) => {
-    if (!confirm("Delete this caretaker?")) return;
+    if (!confirm("Are you sure you want to delete this caretaker?")) return;
     try {
-      setActionLoading(true);
       const response = await manageCaretakers(undefined, id, "DELETE");
       if (response.success) {
-        toast({ title: "Deleted", description: "Caretaker deleted." });
-        setCaretakers((prev) => prev.filter((c) => c.id !== id));
-        setCaretakersTotal((t) => Math.max(0, t - 1));
-      } else {
-        throw new Error(response.message || "Failed to delete caretaker");
+        toast({ title: "Success", description: "Caretaker deleted." });
+        fetchStaffData();
       }
     } catch (err) {
       toast({ title: "Error", description: "Failed to delete caretaker.", variant: "destructive" });
-    } finally {
-      setActionLoading(false);
     }
   };
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
-    },
-  };
+  const filteredWardens = wardens.filter(w => w.name.toLowerCase().includes(wardenSearch.toLowerCase()));
+  const filteredCaretakers = caretakers.filter(c => c.name.toLowerCase().includes(caretakerSearch.toLowerCase()));
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0 },
-  };
-
-  // Pagination calculations
-  const totalWardensPages = Math.ceil(wardensTotal / pageSize);
-  const totalCaretakersPages = Math.ceil(caretakersTotal / pageSize);
-
-  // Pagination handlers
-  const handleWardensPreviousPage = () => {
-    if (wardensPage > 1) {
-      setWardensPage(wardensPage - 1);
-    }
-  };
-
-  const handleWardensNextPage = () => {
-    if (wardensPage < totalWardensPages) {
-      setWardensPage(wardensPage + 1);
-    }
-  };
-
-  const handleCaretakersPreviousPage = () => {
-    if (caretakersPage > 1) {
-      setCaretakersPage(caretakersPage - 1);
-    }
-  };
-
-  const handleCaretakersNextPage = () => {
-    if (caretakersPage < totalCaretakersPages) {
-      setCaretakersPage(caretakersPage + 1);
-    }
-  };
-
-  // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className={`text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-          <Loader className="w-8 h-8 animate-spin mx-auto mb-4" />
-          <p>Loading staff data...</p>
+      <div className="space-y-6">
+        <SkeletonPageHeader />
+        <SkeletonStatsGrid count={2} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <SkeletonTable rows={5} columns={3} />
+          <SkeletonTable rows={5} columns={3} />
         </div>
       </div>
     );
   }
 
-  // Main render
   return (
-    <motion.div
-      className="space-y-6"
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-    >
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Staff Management</h1>
-        <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-          View all enrolled wardens and caretakers
-        </p>
+    <div className="space-y-8">
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <DashboardCard
+          title="Total Wardens"
+          value={wardensTotal.toString()}
+          icon={<UserCheck className="w-6 h-6 text-primary" />}
+        />
+        <DashboardCard
+          title="Total Caretakers"
+          value={caretakersTotal.toString()}
+          icon={<Users className="w-6 h-6 text-blue-500" />}
+        />
       </div>
 
-      {/* Statistics Cards */}
-      <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 gap-4"
-        variants={containerVariants}
-      >
-        {/* Total Wardens */}
-        <motion.div
-          variants={itemVariants}
-          className={`p-6 rounded-lg border-2 ${
-            theme === 'dark'
-              ? 'bg-gradient-to-br from-orange-900 to-orange-800 border-orange-700'
-              : 'bg-gradient-to-br from-orange-50 to-orange-100 border-orange-300'
-          } hover:shadow-lg transition-shadow`}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${theme === 'dark' ? 'text-orange-300' : 'text-orange-600'}`}>
-                Total Wardens
-              </p>
-              <p className={`text-3xl font-bold mt-2 ${theme === 'dark' ? 'text-white' : 'text-orange-900'}`}>
-                {wardensTotal}
-              </p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Wardens List */}
+        <Card className="shadow-sm">
+          <CardHeader className="pb-3 border-b">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xl font-bold flex items-center gap-2">
+                <UserCheck className="w-5 h-5 text-primary" />
+                Wardens
+              </CardTitle>
+              <div className="relative w-48">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search..."
+                  className="pl-9 h-8 text-xs"
+                  value={wardenSearch}
+                  onChange={(e) => setWardenSearch(e.target.value)}
+                />
+              </div>
             </div>
-            <UserCheck className={`w-12 h-12 ${theme === 'dark' ? 'text-orange-400' : 'text-orange-500'}`} />
-          </div>
-        </motion.div>
-
-        {/* Total Caretakers */}
-        <motion.div
-          variants={itemVariants}
-          className={`p-6 rounded-lg border-2 ${
-            theme === 'dark'
-              ? 'bg-gradient-to-br from-blue-900 to-blue-800 border-blue-700'
-              : 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-300'
-          } hover:shadow-lg transition-shadow`}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className={`text-sm font-medium ${theme === 'dark' ? 'text-blue-300' : 'text-blue-600'}`}>
-                Total Caretakers
-              </p>
-              <p className={`text-3xl font-bold mt-2 ${theme === 'dark' ? 'text-white' : 'text-blue-900'}`}>
-                {caretakersTotal}
-              </p>
-            </div>
-            <Users className={`w-12 h-12 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-500'}`} />
-          </div>
-        </motion.div>
-      </motion.div>
-
-      {/* Staff Lists */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Wardens */}
-        <motion.div
-          variants={itemVariants}
-          className={`p-6 rounded-lg border-2 ${
-            theme === 'dark'
-              ? 'bg-gray-800 border-gray-700'
-              : 'bg-white border-gray-200'
-          }`}
-        >
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-            <UserCheck className="w-6 h-6 text-orange-500" />
-            Wardens ({wardensTotal})
-          </h2>
-
-          <div className="space-y-3 max-h-96 overflow-y-auto mb-4">
-            {wardens.length > 0 ? (
-              wardens.map((warden, index) => (
-                <motion.div
-                  key={warden.id}
-                  variants={itemVariants}
-                  className={`p-4 rounded-lg border ${
-                    theme === 'dark'
-                      ? 'bg-gray-700 border-gray-600 hover:bg-gray-600'
-                      : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                  } transition-colors`}
-                >
-                  {editingWardenId === warden.id ? (
-                    <div>
-                      <div className="flex items-start justify-between mb-2">
-                        <input
-                          className="w-full px-2 py-1 rounded-md mr-2"
-                          value={editingWardenForm.name || ''}
-                          onChange={(e) => setEditingWardenForm({ ...editingWardenForm, name: e.target.value })}
-                          placeholder="Name"
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
-                        <input
-                          className="px-2 py-1 rounded-md"
-                          value={editingWardenForm.designation || ''}
-                          onChange={(e) => setEditingWardenForm({ ...editingWardenForm, designation: e.target.value })}
-                          placeholder="Designation"
-                        />
-                        <input
-                          className="px-2 py-1 rounded-md"
-                          value={editingWardenForm.phone || ''}
-                          onChange={(e) => setEditingWardenForm({ ...editingWardenForm, phone: e.target.value })}
-                          placeholder="Phone"
-                        />
-                        <input
-                          className="px-2 py-1 rounded-md"
-                          value={editingWardenForm.email || ''}
-                          onChange={(e) => setEditingWardenForm({ ...editingWardenForm, email: e.target.value })}
-                          placeholder="Email"
-                        />
-                        <input
-                          className="px-2 py-1 rounded-md"
-                          value={editingWardenForm.experience || ''}
-                          onChange={(e) => setEditingWardenForm({ ...editingWardenForm, experience: e.target.value })}
-                          placeholder="Experience (years)"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => saveWarden(warden.id)}
-                          disabled={actionLoading}
-                          className="bg-green-500 text-white px-3 py-1 rounded-md"
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={cancelEditWarden}
-                          disabled={actionLoading}
-                          className="bg-gray-300 text-gray-800 px-3 py-1 rounded-md"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => deleteWarden(warden.id)}
-                          disabled={actionLoading}
-                          className="bg-red-500 text-white px-3 py-1 rounded-md ml-auto"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="flex items-start justify-between mb-2">
-                        <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                          {(wardensPage - 1) * pageSize + index + 1}. {warden.name}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => startEditWarden(warden)}
-                            className="text-sm px-3 py-1 bg-yellow-400 rounded-md"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => deleteWarden(warden.id)}
-                            className="text-sm px-3 py-1 bg-red-500 text-white rounded-md"
-                          >
-                            Delete
-                          </button>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="max-h-[600px] overflow-y-auto custom-scrollbar">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30">
+                    <TableHead>Staff Details</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredWardens.map((warden) => (
+                    <TableRow key={warden.id} className="group">
+                      <TableCell>
+                        {editingWardenId === warden.id ? (
+                          <div className="space-y-3 p-2">
+                            <Input size={1} value={editingWardenForm.name} onChange={e => setEditingWardenForm({...editingWardenForm, name: e.target.value})} placeholder="Full Name" />
+                            <div className="grid grid-cols-2 gap-2">
+                              <Input size={1} value={editingWardenForm.designation} onChange={e => setEditingWardenForm({...editingWardenForm, designation: e.target.value})} placeholder="Designation" />
+                              <Input size={1} value={editingWardenForm.experience} onChange={e => setEditingWardenForm({...editingWardenForm, experience: e.target.value})} placeholder="Exp (Years)" />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" onClick={() => saveWarden(warden.id)} disabled={actionLoading}><Save className="w-3.5 h-3.5 mr-1" /> Save</Button>
+                              <Button size="sm" variant="ghost" onClick={() => setEditingWardenId(null)}><X className="w-3.5 h-3.5 mr-1" /> Cancel</Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-1 py-1">
+                            <div className="font-bold flex items-center gap-2">
+                              {warden.name}
+                              <Badge variant="outline" className="text-[10px] py-0">{warden.designation || 'Warden'}</Badge>
+                            </div>
+                            <div className="text-xs text-muted-foreground flex flex-col gap-0.5">
+                              <span className="flex items-center gap-1.5"><Mail size={12} /> {warden.email || 'N/A'}</span>
+                              <span className="flex items-center gap-1.5"><Phone size={12} /> {warden.phone || 'N/A'}</span>
+                              <span className="flex items-center gap-1.5 font-medium text-primary/70"><Award size={12} /> {warden.experience || '0'} Years Experience</span>
+                            </div>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right align-top pt-4">
+                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingWardenId(warden.id); setEditingWardenForm(warden); }}>
+                            <Edit2 size={14} className="text-blue-500" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteWarden(warden.id)}>
+                            <Trash2 size={14} className="text-red-500" />
+                          </Button>
                         </div>
-                      </div>
-                      {warden.designation && (
-                        <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                          🏢 {warden.designation}
-                        </p>
-                      )}
-                      {warden.email && (
-                        <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                          📧 {warden.email}
-                        </p>
-                      )}
-                      {warden.phone && (
-                        <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                          📱 {warden.phone}
-                        </p>
-                      )}
-                      {warden.experience && (
-                        <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                          ⭐ {warden.experience} years experience
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </motion.div>
-              ))
-            ) : (
-              <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-                No wardens enrolled yet
-              </p>
-            )}
-          </div>
-
-          {/* Wardens Pagination Controls */}
-          {totalWardensPages > 1 && (
-            <div className="flex items-center justify-between pt-4 border-t border-gray-600">
-              <button
-                onClick={handleWardensPreviousPage}
-                disabled={wardensPage === 1}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  wardensPage === 1
-                    ? theme === 'dark'
-                      ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    : theme === 'dark'
-                    ? 'bg-orange-600 hover:bg-orange-500 text-white'
-                    : 'bg-orange-500 hover:bg-orange-600 text-white'
-                }`}
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Previous
-              </button>
-
-              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                Page {wardensPage} of {totalWardensPages}
-              </span>
-
-              <button
-                onClick={handleWardensNextPage}
-                disabled={wardensPage === totalWardensPages}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  wardensPage === totalWardensPages
-                    ? theme === 'dark'
-                      ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    : theme === 'dark'
-                    ? 'bg-orange-600 hover:bg-orange-500 text-white'
-                    : 'bg-orange-500 hover:bg-orange-600 text-white'
-                }`}
-              >
-                Next
-                <ChevronRight className="w-4 h-4" />
-              </button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
-          )}
-        </motion.div>
+          </CardContent>
+        </Card>
 
-        {/* Caretakers */}
-        <motion.div
-          variants={itemVariants}
-          className={`p-6 rounded-lg border-2 ${
-            theme === 'dark'
-              ? 'bg-gray-800 border-gray-700'
-              : 'bg-white border-gray-200'
-          }`}
-        >
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-            <Users className="w-6 h-6 text-blue-500" />
-            Caretakers ({caretakersTotal})
-          </h2>
-
-          <div className="space-y-3 max-h-96 overflow-y-auto mb-4">
-            {caretakers.length > 0 ? (
-              caretakers.map((caretaker, index) => (
-                <motion.div
-                  key={caretaker.id}
-                  variants={itemVariants}
-                  className={`p-4 rounded-lg border ${
-                    theme === 'dark'
-                      ? 'bg-gray-700 border-gray-600 hover:bg-gray-600'
-                      : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                  } transition-colors`}
-                >
-                  {editingCaretakerId === caretaker.id ? (
-                    <div>
-                      <div className="flex items-start justify-between mb-2">
-                        <input
-                          className="w-full px-2 py-1 rounded-md mr-2"
-                          value={editingCaretakerForm.name || ''}
-                          onChange={(e) => setEditingCaretakerForm({ ...editingCaretakerForm, name: e.target.value })}
-                          placeholder="Name"
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
-                        <input
-                          className="px-2 py-1 rounded-md"
-                          value={editingCaretakerForm.phone || ''}
-                          onChange={(e) => setEditingCaretakerForm({ ...editingCaretakerForm, phone: e.target.value })}
-                          placeholder="Phone"
-                        />
-                        <input
-                          className="px-2 py-1 rounded-md"
-                          value={editingCaretakerForm.email || ''}
-                          onChange={(e) => setEditingCaretakerForm({ ...editingCaretakerForm, email: e.target.value })}
-                          placeholder="Email"
-                        />
-                        <input
-                          className="px-2 py-1 rounded-md"
-                          value={editingCaretakerForm.address || ''}
-                          onChange={(e) => setEditingCaretakerForm({ ...editingCaretakerForm, address: e.target.value })}
-                          placeholder="Address"
-                        />
-                        <input
-                          className="px-2 py-1 rounded-md"
-                          value={editingCaretakerForm.experience || ''}
-                          onChange={(e) => setEditingCaretakerForm({ ...editingCaretakerForm, experience: e.target.value })}
-                          placeholder="Experience (years)"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => saveCaretaker(caretaker.id)}
-                          disabled={actionLoading}
-                          className="bg-green-500 text-white px-3 py-1 rounded-md"
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={cancelEditCaretaker}
-                          disabled={actionLoading}
-                          className="bg-gray-300 text-gray-800 px-3 py-1 rounded-md"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={() => deleteCaretaker(caretaker.id)}
-                          disabled={actionLoading}
-                          className="bg-red-500 text-white px-3 py-1 rounded-md ml-auto"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="flex items-start justify-between mb-2">
-                        <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                          {(caretakersPage - 1) * pageSize + index + 1}. {caretaker.name}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => startEditCaretaker(caretaker)}
-                            className="text-sm px-3 py-1 bg-yellow-400 rounded-md"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => deleteCaretaker(caretaker.id)}
-                            className="text-sm px-3 py-1 bg-red-500 text-white rounded-md"
-                          >
-                            Delete
-                          </button>
+        {/* Caretakers List */}
+        <Card className="shadow-sm">
+          <CardHeader className="pb-3 border-b">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-xl font-bold flex items-center gap-2">
+                <Users className="w-5 h-5 text-blue-500" />
+                Caretakers
+              </CardTitle>
+              <div className="relative w-48">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search..."
+                  className="pl-9 h-8 text-xs"
+                  value={caretakerSearch}
+                  onChange={(e) => setCaretakerSearch(e.target.value)}
+                />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="max-h-[600px] overflow-y-auto custom-scrollbar">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30">
+                    <TableHead>Staff Details</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredCaretakers.map((caretaker) => (
+                    <TableRow key={caretaker.id} className="group">
+                      <TableCell>
+                        {editingCaretakerId === caretaker.id ? (
+                          <div className="space-y-3 p-2">
+                            <Input size={1} value={editingCaretakerForm.name} onChange={e => setEditingCaretakerForm({...editingCaretakerForm, name: e.target.value})} placeholder="Full Name" />
+                            <div className="grid grid-cols-2 gap-2">
+                              <Input size={1} value={editingCaretakerForm.email} onChange={e => setEditingCaretakerForm({...editingCaretakerForm, email: e.target.value})} placeholder="Email" />
+                              <Input size={1} value={editingCaretakerForm.experience} onChange={e => setEditingCaretakerForm({...editingCaretakerForm, experience: e.target.value})} placeholder="Exp (Years)" />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" onClick={() => saveCaretaker(caretaker.id)} disabled={actionLoading}><Save className="w-3.5 h-3.5 mr-1" /> Save</Button>
+                              <Button size="sm" variant="ghost" onClick={() => setEditingCaretakerId(null)}><X className="w-3.5 h-3.5 mr-1" /> Cancel</Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-1 py-1">
+                            <div className="font-bold flex items-center gap-2">
+                              {caretaker.name}
+                            </div>
+                            <div className="text-xs text-muted-foreground flex flex-col gap-0.5">
+                              <span className="flex items-center gap-1.5"><Mail size={12} /> {caretaker.email || 'N/A'}</span>
+                              <span className="flex items-center gap-1.5"><Phone size={12} /> {caretaker.phone || 'N/A'}</span>
+                              <span className="flex items-center gap-1.5 font-medium text-blue-500/70"><Briefcase size={12} /> {caretaker.experience || '0'} Years Experience</span>
+                            </div>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right align-top pt-4">
+                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingCaretakerId(caretaker.id); setEditingCaretakerForm(caretaker); }}>
+                            <Edit2 size={14} className="text-blue-500" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteCaretaker(caretaker.id)}>
+                            <Trash2 size={14} className="text-red-500" />
+                          </Button>
                         </div>
-                      </div>
-                      {caretaker.phone && (
-                        <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                          📱 {caretaker.phone}
-                        </p>
-                      )}
-                      {caretaker.email && (
-                        <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                          📧 {caretaker.email}
-                        </p>
-                      )}
-                      {caretaker.address && (
-                        <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                          🏠 {caretaker.address}
-                        </p>
-                      )}
-                      {caretaker.experience && (
-                        <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                          ⭐ {caretaker.experience} years experience
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </motion.div>
-              ))
-            ) : (
-              <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-                No caretakers enrolled yet
-              </p>
-            )}
-          </div>
-
-          {/* Caretakers Pagination Controls */}
-          {totalCaretakersPages > 1 && (
-            <div className="flex items-center justify-between pt-4 border-t border-gray-600">
-              <button
-                onClick={handleCaretakersPreviousPage}
-                disabled={caretakersPage === 1}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  caretakersPage === 1
-                    ? theme === 'dark'
-                      ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    : theme === 'dark'
-                    ? 'bg-blue-600 hover:bg-blue-500 text-white'
-                    : 'bg-blue-500 hover:bg-blue-600 text-white'
-                }`}
-              >
-                <ChevronLeft className="w-4 h-4" />
-                Previous
-              </button>
-
-              <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                Page {caretakersPage} of {totalCaretakersPages}
-              </span>
-
-              <button
-                onClick={handleCaretakersNextPage}
-                disabled={caretakersPage === totalCaretakersPages}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  caretakersPage === totalCaretakersPages
-                    ? theme === 'dark'
-                      ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    : theme === 'dark'
-                    ? 'bg-blue-600 hover:bg-blue-500 text-white'
-                    : 'bg-blue-500 hover:bg-blue-600 text-white'
-                }`}
-              >
-                Next
-                <ChevronRight className="w-4 h-4" />
-              </button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
-          )}
-        </motion.div>
+          </CardContent>
+        </Card>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

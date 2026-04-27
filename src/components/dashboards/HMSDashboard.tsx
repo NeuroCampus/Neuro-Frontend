@@ -2,7 +2,20 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import DashboardLayout from "../common/DashboardLayout";
-import { HMSOverview, HostelManagement, RoomManagement, StudentManagement, WardenManagement, Enrollment, StaffManagementOverview, MenuManagement, IssueTracking } from "../hms";
+import { 
+  HMSOverview, 
+  HostelManagement, 
+  RoomManagement, 
+  StudentManagement, 
+  WardenManagement, 
+  Enrollment, 
+  StaffManagementOverview, 
+  MenuManagement, 
+  IssueTracking,
+  MessBillingView,
+  CourseManagement,
+  StudentMealManagement
+} from "../hms";
 import { useToast } from "../../hooks/use-toast";
 import { logoutUser } from "../../utils/authService";
 import { useTheme } from "../../context/ThemeContext";
@@ -69,35 +82,14 @@ const HMSDashboard = ({ user, setPage }: HMSDashboardProps) => {
       pageTitle="HMS Dashboard"
     >
       <motion.div
-        className="space-y-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
         {/* Header - Only show for non-dashboard pages */}
         {(activePage !== '' && activePage !== 'dashboard') && (
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-3xl font-bold">Hostel Management System</h1>
-              <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
-                Admin Dashboard
-              </p>
-            </div>
-            
-            {activePage === 'issues' && hostels.length > 1 && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Hostel:</span>
-                <select 
-                  value={selectedHostelId || ''} 
-                  onChange={(e) => setSelectedHostelId(Number(e.target.value))}
-                  className={`p-2 rounded border ${theme === 'dark' ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                >
-                  {hostels.map(h => (
-                    <option key={h.id} value={h.id}>{h.name}</option>
-                  ))}
-                </select>
-              </div>
-            )}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Page specific header content can go here if needed in future */}
           </div>
         )}
 
@@ -115,6 +107,9 @@ const HMSDashboard = ({ user, setPage }: HMSDashboardProps) => {
           {activePage === 'enrollment' && <Enrollment />}
           {activePage === 'staff' && <StaffManagementOverview />}
           {activePage === 'menu-management' && <MenuManagement />}
+          {activePage === 'mess-billing' && <MessBillingView />}
+          {activePage === 'courses' && <CourseManagement />}
+          {activePage === 'student-meals' && <StudentMealManagement />}
           {activePage === 'issues' && selectedHostelId && <IssueTracking hostelId={selectedHostelId} />}
           {activePage === 'issues' && !selectedHostelId && !loading && (
             <div className="text-center py-12">
