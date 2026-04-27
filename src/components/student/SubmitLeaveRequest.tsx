@@ -36,7 +36,7 @@ interface LeaveRequest {
 
 const getStatusStyles = (theme: string, status: string) => {
   const normalizedStatus = status.toUpperCase() as LeaveStatusType;
-  
+
   const styles = {
     PENDING: {
       icon: <Clock3 className={`w-3.5 h-3.5 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-500'}`} />,
@@ -54,7 +54,7 @@ const getStatusStyles = (theme: string, status: string) => {
       bg: theme === 'dark' ? "bg-red-900/30" : "bg-red-100",
     },
   };
-  
+
   return styles[normalizedStatus] || styles.PENDING;
 };
 
@@ -134,7 +134,7 @@ const SubmitLeaveRequest = () => {
 
     try {
       await leaveRequestMutation.mutateAsync(requestData);
-      
+
       // Optimistically update the local state with the new leave request
       const newLeaveRequest: LeaveRequest = {
         id: Date.now(), // Temporary ID until refetch
@@ -145,9 +145,9 @@ const SubmitLeaveRequest = () => {
         status: 'PENDING',
         submitted_at: new Date().toISOString(),
       };
-      
+
       setLeaves(prevLeaves => [newLeaveRequest, ...prevLeaves]);
-      
+
       // Show success toast and a subtle modal for confirmation
       toast({ title: 'Leave Request Submitted', description: 'Your request was submitted successfully.' });
 
@@ -161,7 +161,7 @@ const SubmitLeaveRequest = () => {
         background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
         color: currentTheme === 'dark' ? '#ffffff' : '#000000',
       });
-      
+
       // Reset form
       setDateRange(undefined);
       setTitle("");
@@ -209,7 +209,7 @@ const SubmitLeaveRequest = () => {
                   {error}
                 </div>
               )}
-              
+
               <div className="space-y-2">
                 <Label htmlFor="title" className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Title</Label>
                 <input
@@ -222,7 +222,7 @@ const SubmitLeaveRequest = () => {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Date Range</Label>
                 <Popover>
@@ -259,7 +259,7 @@ const SubmitLeaveRequest = () => {
                   </PopoverContent>
                 </Popover>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="reason" className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Reason</Label>
                 <Textarea
@@ -272,9 +272,9 @@ const SubmitLeaveRequest = () => {
                 />
               </div>
 
-              <Button 
-                type="submit" 
-                className={theme === 'dark' ? 'w-full text-white bg-primary hover:bg-[#9147e0] border-border' : 'w-full text-white bg-primary hover:bg-[#9147e0] border-primary'} 
+              <Button
+                type="submit"
+                className={theme === 'dark' ? 'w-full text-white bg-primary hover:bg-[#9147e0] border-border' : 'w-full text-white bg-primary hover:bg-[#9147e0] border-primary'}
                 disabled={leaveRequestMutation.isPending}
               >
                 {leaveRequestMutation.isPending ? "Submitting..." : "Submit Request"}
@@ -325,8 +325,8 @@ const SubmitLeaveRequest = () => {
             {leavesError && (
               <div className={`p-3 rounded-lg mb-4 shadow ${theme === 'dark' ? 'bg-destructive/20 text-destructive-foreground border border-destructive' : 'bg-red-100 text-red-700 border border-red-200'}`}>
                 An error occurred while fetching leave requests.
-                <Button 
-                  variant="link" 
+                <Button
+                  variant="link"
                   className="p-0 ml-2"
                   onClick={() => refetchLeaves()}>
                   Try again
@@ -407,8 +407,8 @@ const SubmitLeaveRequest = () => {
           <DialogFooter>
             <Button
               variant="outline"
-              className={theme === 'dark' 
-                ? 'text-foreground bg-card border border-border hover:bg-accent' 
+              className={theme === 'dark'
+                ? 'text-foreground bg-card border border-border hover:bg-accent'
                 : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
               onClick={() => setViewReason(null)}
             >

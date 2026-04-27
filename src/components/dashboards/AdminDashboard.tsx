@@ -94,170 +94,95 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
     switch (activePage) {
       case "dashboard":
         return (
-          <motion.div 
-            className="space-y-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-          >
+          <div className="space-y-6">
             <AdminStats setError={setError} onNavigate={handlePageChange} />
-          </motion.div>
+          </div>
         );
       case "enroll-user":
         return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div>
             <EnrollUser setError={setError} toast={toast} />
-          </motion.div>
+          </div>
         );
       case "bulk-upload":
         return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div>
             <BulkUpload setError={setError} toast={toast} />
-          </motion.div>
+          </div>
         );
       case "branches":
         return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div>
             <BranchesManagement setError={setError} toast={toast} />
-          </motion.div>
+          </div>
         );
       case "teacher-assignments":
         return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div>
             <TeacherBranchAssignment setError={setError} toast={toast} />
-          </motion.div>
+          </div>
         );
       case "batches":
         return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div>
             <BatchManagement setError={setError} toast={toast} />
-          </motion.div>
+          </div>
         );
       case "notifications":
         return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div>
             <NotificationsManagement setError={setError} toast={toast} />
-          </motion.div>
+          </div>
         );
       case "hod-leaves":
         return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div>
             <HODLeavesManagement setError={setError} toast={toast} />
-          </motion.div>
+          </div>
         );
       case "hod-attendance":
         return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div>
             <AdminHODAttendance setError={setError} />
-          </motion.div>
+          </div>
         );
       case "my-attendance":
         return(
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div>
             <AdminAttendance />
-          </motion.div> 
+          </div> 
         )
       case "apply-leave":
         return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div>
             <ApplyLeaveAdmin />
-          </motion.div>
+          </div>
         );
       case "users":
         return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div>
             <UsersManagement setError={setError} toast={toast} />
-          </motion.div>
+          </div>
         );
       case "qp-approvals":
         return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div>
             <AdminQPApprovals />
-          </motion.div>
+          </div>
         );
       
       case "announcement-management":
         return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div>
             <AnnouncementManagement />
-          </motion.div>
+          </div>
         );
       
       case "profile":
         return (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div>
             <AdminProfile user={user} setError={setError} />
-          </motion.div>
+          </div>
         );
       default:
         return <AdminStats setError={setError} />;
@@ -273,15 +198,9 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
       onNotificationClick={handleNotificationClick}
       pageTitle="Admin Dashboard"
     >
-      <motion.div
-        key={activePage}
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -20 }}
-        transition={{ duration: 0.3 }}
-      >
+      <div key={activePage}>
         {renderContent()}
-      </motion.div>
+      </div>
     </DashboardLayout>
   );
 };

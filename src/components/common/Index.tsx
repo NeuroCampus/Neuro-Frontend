@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import useIsMobile from "../hooks/useIsMobile";
+import useIsMobile from "../../hooks/useIsMobile";
 import { useNavigate } from "react-router-dom";
-import LoginWrapper from "../components/auth/LoginWrapper";
-import OTPPage from "../components/auth/OTPPage";
-import ForgotPasswordFlow from "../components/auth/ForgotPasswordFlow";
-import ForgotPasswordMobile from "../components/auth/ForgotPasswordMobile";
-import ResetPassword from "../components/auth/ResetPassword";
-import { startTokenRefresh, stopTokenRefresh } from "../utils/authService";
-import { ThemeProvider } from "../context/ThemeContext";
+import LoginWrapper from "../auth/LoginWrapper";
+import OTPPage from "../auth/OTPPage";
+import ForgotPasswordFlow from "../auth/ForgotPasswordFlow";
+import ForgotPasswordMobile from "../auth/ForgotPasswordMobile";
+import ResetPassword from "../auth/ResetPassword";
+import { startTokenRefresh, stopTokenRefresh } from "../../utils/authService";
+import { ThemeProvider } from "../../context/ThemeContext";
 
 const Index = () => {
   const navigate = useNavigate();

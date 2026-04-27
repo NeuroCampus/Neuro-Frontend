@@ -16,6 +16,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
 import { format } from "date-fns";
+import { SkeletonTable } from "../ui/skeleton";
 
 interface LeaveRequest {
   id: number;
@@ -253,16 +254,20 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
   };
 
   if (loading && leaveRequests.length === 0) {
-    return <div className={`text-center py-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading...</div>;
+    return (
+      <div className="space-y-6">
+        <SkeletonTable rows={8} cols={5} />
+      </div>
+    );
   }
 
   return (
-    <div className={` sm:min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <CardTitle className={`text-lg ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Requests</CardTitle>
+              <CardTitle className={`mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Requests</CardTitle>
               <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Review and approve leave requests from Heads of Departments</p>
             </div>
             <div className="flex items-center gap-2">

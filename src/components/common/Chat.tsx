@@ -61,7 +61,7 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
 
   if (role && (role !== 'student' || orgPlan !== 'advance')) {
     const isPlanRestriction = role === 'student' && orgPlan !== 'advance';
-    
+
     return (
       <div className={`min-h-screen flex flex-col items-center justify-center p-4 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
         <div className={`max-w-md w-full rounded-2xl shadow-xl p-8 ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
@@ -70,13 +70,13 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
               {isPlanRestriction ? 'Upgrade Required' : 'Access Denied'}
             </h2>
             <p className={`mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-              {isPlanRestriction 
-                ? 'AI Study Mode is an Enterprise feature exclusive to our Advance plan.' 
+              {isPlanRestriction
+                ? 'AI Study Mode is an Enterprise feature exclusive to our Advance plan.'
                 : 'This feature is only available for students.'}
             </p>
             <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-              {isPlanRestriction 
-                ? 'Please contact your institution administrator to upgrade your plan and unlock AI-powered learning tools.' 
+              {isPlanRestriction
+                ? 'Please contact your institution administrator to upgrade your plan and unlock AI-powered learning tools.'
                 : 'Please log in with a student account to access Study Mode.'}
             </p>
             {isPlanRestriction && (
@@ -132,7 +132,7 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
           title: 'Success',
           description: 'PDF uploaded and ready for revision!',
         });
-        
+
         // Scroll to input field after a brief delay to ensure UI is rendered
         setTimeout(() => {
           if (inputRef.current) {
@@ -197,11 +197,11 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
             <h3 style="margin-top: 0; color: hsl(var(--primary));">📘 Quick Revision Note:</h3>
             <div style="color: ${theme === 'dark' ? 'hsl(var(--card-foreground))' : '#000'}">
               ${data.answer
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\n/g, '<br>')
-                .split('. ')
-                .filter(sentence => sentence)
-                .join('.<br>')}.
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n/g, '<br>')
+            .split('. ')
+            .filter(sentence => sentence)
+            .join('.<br>')}.
             </div>
           </div>
         `;
@@ -255,11 +255,11 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
       const originalHeight = input.style.height;
       const originalMaxHeight = input.style.maxHeight;
       const originalOverflow = input.style.overflow;
-      
+
       input.style.height = 'auto';
       input.style.maxHeight = 'none';
       input.style.overflow = 'visible';
-      
+
       html2canvas(input, {
         scale: 3, // Increase scale for better quality
         useCORS: true,
@@ -270,52 +270,52 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
         input.style.height = originalHeight;
         input.style.maxHeight = originalMaxHeight;
         input.style.overflow = originalOverflow;
-        
+
         const imgData = canvas.toDataURL('image/jpeg', 1.0); // Use JPEG with max quality
         const pdf = new jsPDF('p', 'mm', 'a4');
-        
+
         const imgWidth = 210; // A4 width in mm
         const pageHeight = 295; // A4 height in mm
         const margin = 10; // 10mm margins
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        
+
         // Calculate how many pages we need
         const totalPages = Math.ceil(imgHeight / (pageHeight - 2 * margin));
-        
+
         // Process each page
         for (let pageNum = 0; pageNum < totalPages; pageNum++) {
           if (pageNum > 0) {
             pdf.addPage();
           }
-          
+
           // Calculate the source position in the canvas
           const usablePageHeight = pageHeight - (2 * margin); // Usable height on PDF page
           const srcY = pageNum * usablePageHeight * (canvas.width / imgWidth);
           // Reduce the height slightly to avoid cutting content at the edges
           const srcHeight = Math.min(usablePageHeight * (canvas.width / imgWidth) * 0.95, canvas.height - srcY);
-          
+
           // Create a temporary canvas to extract the portion we need
           const tempCanvas = document.createElement('canvas');
           const tempCtx = tempCanvas.getContext('2d');
-          
+
           if (tempCtx) {
             tempCanvas.width = canvas.width;
             tempCanvas.height = srcHeight;
-            
+
             // Draw the portion of the original canvas onto the temporary canvas
             tempCtx.drawImage(
               canvas,
               0, srcY, canvas.width, srcHeight,
               0, 0, canvas.width, srcHeight
             );
-            
+
             // Convert the temp canvas to data URL
             const pageImgData = tempCanvas.toDataURL('image/jpeg', 1.0);
-            
+
             // Calculate the destination position and dimensions in the PDF
             const destY = margin;
             const pageImgHeight = (srcHeight * imgWidth) / canvas.width;
-            
+
             pdf.addImage(pageImgData, 'JPEG', 0, destY, imgWidth, pageImgHeight);
           }
         }
@@ -326,7 +326,7 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
         input.style.height = originalHeight;
         input.style.maxHeight = originalMaxHeight;
         input.style.overflow = originalOverflow;
-        
+
         console.error('Error generating PDF:', error);
         toast({
           variant: 'destructive',
@@ -353,15 +353,14 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
             }}
             onDragLeave={() => setDragActive(false)}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
-              dragActive 
-                ? theme === 'dark' 
-                  ? 'border-primary bg-primary/10' 
-                  : 'border-blue-400 bg-blue-50' 
-                : theme === 'dark' 
-                  ? 'border-border bg-card' 
+            className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${dragActive
+                ? theme === 'dark'
+                  ? 'border-primary bg-primary/10'
+                  : 'border-blue-400 bg-blue-50'
+                : theme === 'dark'
+                  ? 'border-border bg-card'
                   : 'border-gray-300 bg-white'
-            }`}
+              }`}
           >
             <CloudUpload className={`mx-auto w-8 h-8 mb-2 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`} />
             <p className={`text-xs font-medium mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Drag & drop your PDF here</p>
@@ -375,30 +374,26 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
             />
             <label
               htmlFor="file-upload"
-              className={`cursor-pointer inline-block px-4 py-2 rounded-lg text-sm font-medium transition ${
-                theme === 'dark' 
-                  ? 'bg-primary/10 text-primary hover:bg-primary/20' 
+              className={`cursor-pointer inline-block px-4 py-2 rounded-lg text-sm font-medium transition ${theme === 'dark'
+                  ? 'bg-primary/10 text-primary hover:bg-primary/20'
                   : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-              }`}
+                }`}
             >
               Choose File
             </label>
             {file && (
-              <div className={`mt-2 flex items-center justify-between rounded-md p-2 ${
-                theme === 'dark' ? 'bg-muted' : 'bg-gray-100'
-              }`}>
-                <span className={`truncate max-w-[70%] text-xs ${
-                  theme === 'dark' ? 'text-foreground' : 'text-gray-700'
+              <div className={`mt-2 flex items-center justify-between rounded-md p-2 ${theme === 'dark' ? 'bg-muted' : 'bg-gray-100'
                 }`}>
+                <span className={`truncate max-w-[70%] text-xs ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'
+                  }`}>
                   {file.name}
                 </span>
                 <button
                   onClick={handleClearFile}
-                  className={`flex items-center gap-1 text-xs ${
-                    theme === 'dark' 
-                      ? 'text-destructive hover:text-destructive/80' 
+                  className={`flex items-center gap-1 text-xs ${theme === 'dark'
+                      ? 'text-destructive hover:text-destructive/80'
                       : 'text-red-600 hover:text-red-800'
-                  }`}
+                    }`}
                 >
                   <Trash2 className="w-3 h-3" /> Remove
                 </button>
@@ -447,12 +442,12 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
         </div>
       </header>
 
-      <div 
+      <div
         className={`flex-1 flex flex-col p-2 rounded-md ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}
       >
         <div className="max-w-5xl mx-auto w-full h-[calc(100vh-12rem)] flex flex-col">
-          <div 
-            ref={chatContainerRef} 
+          <div
+            ref={chatContainerRef}
             className="flex-1 overflow-y-auto space-y-1 custom-scrollbar pt-4"
           >
             <div className="space-y-1">
@@ -460,7 +455,7 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
                 <div className={`text-center mt-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                   <p className={`text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Start your revision!</p>
                   <p className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Ask about key concepts, definitions, or specific topics from the uploaded PDF.</p>
-                  
+
                   <div className={`flex justify-center items-center mt-1 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-700'}`}>
                     <AlertTriangle className="w-3 h-3 mr-1" />
                     <p className={`text-xs ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-700'}`}>
@@ -504,7 +499,7 @@ const ChatWithPDF: React.FC<ChatProps> = ({ role }) => {
               <div ref={messagesEndRef} />
             </div>
           </div>
-          
+
           {/* Input Area - At the end of the container */}
           <div className={`p-2 rounded-md ${theme === 'dark' ? 'bg-card text-card-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}`}>
             <div className="w-full flex gap-2">

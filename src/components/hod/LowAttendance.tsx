@@ -17,6 +17,7 @@ import { SkeletonCard, SkeletonTable } from "../ui/skeleton";
 import { manageSections, sendNotification, getLowAttendanceStudents, getHODDashboardBootstrap } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { useHODBootstrap } from "../../context/HODBootstrapContext";
 
 // Interfaces
 interface LowAttendanceProps {
@@ -133,7 +134,6 @@ const VirtualizedSectionTable = React.memo(({
     <div
       ref={parentRef}
       className="h-96 overflow-auto overflow-x-auto custom-scrollbar"
-      style={{ contain: 'strict' }}
     >
       {/* Fixed Header */}
       <div className={`sticky top-0 z-10 border-b ${theme === 'dark' ? 'border-gray-600 bg-card' : 'border-gray-300 bg-white'}`}>
@@ -235,14 +235,15 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
   };
   const { toast } = useToast();
   const { theme } = useTheme();
+  const bootstrap = useHODBootstrap();
   const [state, setState] = useState({
     selectedSemester: "",
     selectedSection: "",
     students: [] as Student[],
-    semesters: [] as Semester[],
+    semesters: (bootstrap?.semesters as Semester[]) || [] as Semester[],
     sections: [] as Section[],
-    loading: false,
-    branchId: "",
+    loading: !bootstrap?.branch_id, // Only load if we don't have bootstrap data
+    branchId: bootstrap?.branch_id || "",
     notifyingStudents: {} as Record<string, boolean>,
     notifiedStudents: {} as Record<string, boolean>,
     // Pagination state
@@ -252,6 +253,17 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
     next: null as string | null,
     previous: null as string | null,
   });
+
+  // Sync with bootstrap context if data arrives after mount
+  useEffect(() => {
+    if (bootstrap?.branch_id && !state.branchId) {
+      updateState({
+        branchId: bootstrap.branch_id,
+        semesters: (bootstrap.semesters as Semester[]) || [],
+        loading: false
+      });
+    }
+  }, [bootstrap]);
 
   // Helper to update state
   const updateState = (newState: Partial<typeof state>) => {
@@ -302,6 +314,11 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
   // Load metadata on component mount
   useEffect(() => {
     const loadMetadata = async () => {
+      // If we already have bootstrap data, don't show loading and don't re-fetch
+      if (bootstrap?.branch_id && bootstrap?.semesters) {
+        return;
+      }
+      
       updateState({ loading: true });
       try {
         // Get branch ID and semesters from bootstrap endpoint
@@ -340,7 +357,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
 
       updateState({ loading: true });
       try {
-        const studentsResponse = await getLowAttendanceStudents("", {
+        const studentsResponse = await getLowAttendanceStudents(state.branchId, {
           semester_id: state.selectedSemester,
           section_id: state.selectedSection,
           page: state.currentPage,
@@ -378,10 +395,10 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
     };
 
     loadStudents();
-  }, [state.selectedSemester, state.selectedSection, state.currentPage, state.pageSize, toast, setError]);
+  }, [state.selectedSemester, state.selectedSection, state.currentPage, state.pageSize, state.branchId, toast, setError]);
   useEffect(() => {
     const loadSections = async () => {
-      if (!state.selectedSemester) {
+      if (!state.selectedSemester || !state.branchId) {
         updateState({ sections: [], selectedSection: "" });
         return;
       }
@@ -404,7 +421,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
     };
 
     loadSections();
-  }, [state.selectedSemester, toast, setError]);
+  }, [state.selectedSemester, state.branchId, toast, setError]);
 
   const filteredStudents = state.students; // Server-side filtering now
 
@@ -541,7 +558,7 @@ const LowAttendance = ({ setError }: LowAttendanceProps) => {
 
   return (
     <ErrorBoundary>
-      <div className={`min-h-screen text-base w-full max-w-none mx-auto sm:px-0 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+      <div className={`text-base w-full max-w-none mx-auto sm:px-0 ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
           {state.loading && state.students.length === 0 ? (

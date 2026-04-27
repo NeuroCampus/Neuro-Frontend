@@ -11,6 +11,7 @@ import { manageCampusLocation } from '@/utils/admin_api';
 import { toast } from 'sonner';
 import { useTheme } from '../../context/ThemeContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Skeleton, SkeletonList } from '@/components/ui/skeleton';
 
 interface CampusLocation {
   id: number;
@@ -517,7 +518,7 @@ const CampusLocationManager: React.FC = () => {
   }, []);
 
   return (
-    <div className={`flex flex-col h-[100dvh] overflow-hidden p-4 sm:p-6 text-sm sm:text-base w-full max-w-[412px] sm:max-w-none sm:min-h-screen mx-auto ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200 rounded-lg'}`}>
+    <div className={`flex flex-col h-[100dvh] overflow-hidden p-4 sm:p-6 text-sm sm:text-base w-full max-w-[412px] sm:max-w-none mx-auto ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200 rounded-lg'}`}>
       {/* Header area (fixed) */}
       <div className="shrink-0 space-y-6">
         <div className="flex items-start justify-between w-full">
@@ -635,9 +636,11 @@ const CampusLocationManager: React.FC = () => {
                     <>
                       <div ref={mapRef} className="absolute inset-0 w-full h-full" />
                       {!mapLoaded && !mapError && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-                          <Loader2 className="w-8 h-8 animate-spin" />
-                          <span className="ml-2">Loading Google Maps...</span>
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-zinc-900">
+                          <Skeleton className="w-full h-full rounded-none" />
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <span className="text-sm font-medium text-muted-foreground">Loading Google Maps...</span>
+                          </div>
                         </div>
                       )}
                     </>
@@ -668,10 +671,7 @@ const CampusLocationManager: React.FC = () => {
             <div className="flex flex-col h-full w-full min-h-0">
               <div className="flex-1 overflow-auto w-full min-w-0 min-h-0 overflow-y-auto overscroll-contain thin-scrollbar">
                 {loading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-8 h-8 animate-spin" />
-                    <span className="ml-2">Loading locations...</span>
-                  </div>
+                  <SkeletonList items={3} />
                 ) : locations.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">No campus locations configured yet.</div>
                 ) : (

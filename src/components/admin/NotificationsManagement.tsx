@@ -13,6 +13,7 @@ import {
 import { manageNotifications } from "../../utils/admin_api";
 import { useToast } from "../../hooks/use-toast";
 import { useTheme } from "../../context/ThemeContext";
+import { SkeletonTable } from "../ui/skeleton";
 
 interface Notification {
   id: number;
@@ -167,7 +168,7 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
   };
 
   return (
-    <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 sm:p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 sm:p-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Notification History */}
       <Card className={theme === 'dark' ? 'lg:col-span-2 bg-card border border-border' : 'lg:col-span-2 bg-white border border-gray-200'}>
         <CardHeader>
@@ -176,7 +177,7 @@ const NotificationsManagement = ({ setError, toast }: NotificationsManagementPro
         </CardHeader>
         <CardContent className="overflow-auto max-h-[400px] md:max-h-[500px] thin-scrollbar">
           {loading && notifications.length === 0 ? (
-            <div className={`text-center py-6 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Loading...</div>
+            <SkeletonTable rows={5} cols={2} />
           ) : (
             <table className="w-full text-left text-sm border-collapse">
               <thead className={`border-b ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-200 bg-gray-50'}`}>

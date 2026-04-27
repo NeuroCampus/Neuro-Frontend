@@ -34,6 +34,7 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useTheme } from "@/context/ThemeContext";
+import { SkeletonTable } from "@/components/ui/skeleton";
 import {
   fetchAnnouncements,
   createAnnouncement,
@@ -44,7 +45,7 @@ import {
   Announcement,
   CreateAnnouncementRequest,
 } from "@/utils/announcements_api";
-import AnnouncementSections from "@/components/announcements/AnnouncementSections";
+import AnnouncementSections from "@/components/common/AnnouncementSections";
 
 const AdminAnnouncementManagement = () => {
   const [myAnnouncements, setMyAnnouncements] = useState<Announcement[]>([]);
@@ -70,7 +71,8 @@ const AdminAnnouncementManagement = () => {
   const loadAnnouncements = async () => {
     setLoading(true);
     setError(null);
-    const response = await fetchAnnouncements(1, 50);
+    // Fetch all for management view (include inactive and expired)
+    const response = await fetchAnnouncements(1, 100, true, true);
 
     if (response.success && response.data) {
       setMyAnnouncements(response.data.my_announcements.results || []);
@@ -221,7 +223,7 @@ const AdminAnnouncementManagement = () => {
         }
       `}</style>
 
-      <div className={`announcements-container sm: min-h-screen text-sm sm:text-base max-w-[390px] sm:max-w-none mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+      <div className={`announcements-container text-sm sm:text-base max-w-[390px] sm:max-w-none mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
         <Card className={`announcements-card ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
           <CardHeader className="announcements-card-header grid grid-cols-[1fr_auto] items-center gap-4">
             <div className="min-w-0">
@@ -301,45 +303,45 @@ const AdminAnnouncementManagement = () => {
 
                       <div className="space-y-2">
                         <Label htmlFor="expires_at">Expires At</Label>
-                          <Popover open={expiresOpen} onOpenChange={setExpiresOpen}>
-                            <PopoverTrigger asChild>
-                              <Button
-                                variant="outline"
-                                className={theme === 'dark' ? 'w-full justify-start text-left font-normal bg-card text-foreground border-border' : 'w-full justify-start text-left font-normal bg-white text-gray-900 border-gray-300'}
-                              >
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {formData.expires_at ? (
-                                  (() => {
-                                    try {
-                                      return format(new Date(formData.expires_at), 'PPP');
-                                    } catch (e) {
-                                      return formData.expires_at;
-                                    }
-                                  })()
-                                ) : (
-                                  <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Select date</span>
-                                )}
-                              </Button>
-                            </PopoverTrigger>
+                        <Popover open={expiresOpen} onOpenChange={setExpiresOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={theme === 'dark' ? 'w-full justify-start text-left font-normal bg-card text-foreground border-border' : 'w-full justify-start text-left font-normal bg-white text-gray-900 border-gray-300'}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {formData.expires_at ? (
+                                (() => {
+                                  try {
+                                    return format(new Date(formData.expires_at), 'PPP');
+                                  } catch (e) {
+                                    return formData.expires_at;
+                                  }
+                                })()
+                              ) : (
+                                <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>Select date</span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
 
-                            <PopoverContent className={theme === 'dark' ? 'w-auto p-0 bg-background text-foreground border-border shadow-lg' : 'w-auto p-0 bg-white text-gray-900 border-gray-200 shadow-lg'}>
-                              <div className="p-2">
-                                <Calendar
-                                  mode="single"
-                                  selected={formData.expires_at ? new Date(formData.expires_at) : undefined}
-                                  onSelect={(date: Date | undefined) => {
-                                    if (date) {
-                                      setFormData({ ...formData, expires_at: format(date, 'yyyy-MM-dd') });
-                                    } else {
-                                      setFormData({ ...formData, expires_at: '' });
-                                    }
-                                    setExpiresOpen(false);
-                                  }}
-                                  className={theme === 'dark' ? 'rounded-md bg-background text-foreground' : 'rounded-md bg-white text-gray-900'}
-                                />
-                              </div>
-                            </PopoverContent>
-                          </Popover>
+                          <PopoverContent className={theme === 'dark' ? 'w-auto p-0 bg-background text-foreground border-border shadow-lg' : 'w-auto p-0 bg-white text-gray-900 border-gray-200 shadow-lg'}>
+                            <div className="p-2">
+                              <Calendar
+                                mode="single"
+                                selected={formData.expires_at ? new Date(formData.expires_at) : undefined}
+                                onSelect={(date: Date | undefined) => {
+                                  if (date) {
+                                    setFormData({ ...formData, expires_at: format(date, 'yyyy-MM-dd') });
+                                  } else {
+                                    setFormData({ ...formData, expires_at: '' });
+                                  }
+                                  setExpiresOpen(false);
+                                }}
+                                className={theme === 'dark' ? 'rounded-md bg-background text-foreground' : 'rounded-md bg-white text-gray-900'}
+                              />
+                            </div>
+                          </PopoverContent>
+                        </Popover>
                       </div>
                     </div>
 
@@ -421,9 +423,7 @@ const AdminAnnouncementManagement = () => {
           <CardContent className="announcements-card-content">
             <div className="space-y-6">
               {loading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                </div>
+                <SkeletonTable rows={5} cols={6} />
               ) : error ? (
                 <div className="p-4 rounded-lg bg-destructive/10 text-destructive">
                   <p className="font-medium">{error}</p>
@@ -445,7 +445,7 @@ const AdminAnnouncementManagement = () => {
         </Card>
       </div>
 
-      
+
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>

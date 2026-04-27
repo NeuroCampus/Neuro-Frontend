@@ -40,7 +40,7 @@ import {
   Announcement,
   CreateAnnouncementRequest,
 } from "@/utils/announcements_api";
-import AnnouncementSections from "@/components/announcements/AnnouncementSections";
+import AnnouncementSections from "@/components/common/AnnouncementSections";
 import { SkeletonList } from "@/components/ui/skeleton";
 
 const FacultyAnnouncementManagement = () => {
@@ -200,7 +200,7 @@ const FacultyAnnouncementManagement = () => {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto">
+    <div className="w-full max-w-none mx-auto">
       <Card className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
         <CardHeader className="p-4 border-b">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

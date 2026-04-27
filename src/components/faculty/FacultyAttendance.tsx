@@ -575,4 +575,4 @@ const FacultyAttendance = () => {
   );
 };
 
-export default FacultyAttendance;
+export default FacultyAttendance;

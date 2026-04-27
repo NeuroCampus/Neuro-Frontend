@@ -57,10 +57,22 @@ export interface AnnouncementStats {
 }
 
 // Fetch announcements visible to user (split into my/received)
-export const fetchAnnouncements = async (page = 1, pageSize = 20) => {
+export const fetchAnnouncements = async (
+  page = 1, 
+  pageSize = 20, 
+  includeInactive = false, 
+  includeExpired = false
+) => {
   try {
+    const params = new URLSearchParams({
+      page: String(page),
+      page_size: String(pageSize),
+      include_inactive: String(includeInactive),
+      include_expired: String(includeExpired),
+    });
+
     const response = await fetchWithTokenRefresh(
-      `${API_ENDPOINT}/announcements/?page=${page}&page_size=${pageSize}`,
+      `${API_ENDPOINT}/announcements/?${params.toString()}`,
       {
         method: "GET",
       }

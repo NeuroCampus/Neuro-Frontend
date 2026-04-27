@@ -13,6 +13,7 @@ import { useTheme } from "@/context/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchWithTokenRefresh } from '@/utils/authService';
 import { API_ENDPOINT } from '@/utils/config';
+import { SkeletonPageHeader, SkeletonStatsGrid, SkeletonTable } from "@/components/ui/skeleton";
 
 interface InvoiceComponent {
   component_name: string;
@@ -199,15 +200,11 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
 
   if (isLoading) {
     return (
-      <motion.div
-        className="flex items-center justify-center min-h-[400px]"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Loading fee information...</span>
-      </motion.div>
+      <div className="space-y-6">
+        <SkeletonPageHeader />
+        <SkeletonStatsGrid items={3} />
+        <SkeletonTable rows={4} cols={5} />
+      </div>
     );
   }
 

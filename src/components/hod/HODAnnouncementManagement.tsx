@@ -42,7 +42,7 @@ import {
   Announcement,
   CreateAnnouncementRequest,
 } from "@/utils/announcements_api";
-import AnnouncementSections from "@/components/announcements/AnnouncementSections";
+import AnnouncementSections from "@/components/common/AnnouncementSections";
 
 const HODAnnouncementManagement = () => {
   const [myAnnouncements, setMyAnnouncements] = useState<Announcement[]>([]);
@@ -204,7 +204,7 @@ const HODAnnouncementManagement = () => {
   const roles = ["student", "faculty"];
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6">
+    <div className="w-full max-w-none mx-auto space-y-6">
       <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 gap-4">
           <div className="space-y-1">
@@ -215,144 +215,144 @@ const HODAnnouncementManagement = () => {
           </div>
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
-              <Button 
-                onClick={() => resetForm()} 
+              <Button
+                onClick={() => resetForm()}
                 className="w-full sm:w-auto gap-2 bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 transition-all duration-200 shadow-md"
               >
                 <Plus className="w-4 h-4" />
                 New Announcement
               </Button>
             </DialogTrigger>
-          <DialogContent className="w-[92%] sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl">
-            <DialogHeader>
-              <DialogTitle>
-                {editingId ? "Edit Announcement" : "Create Announcement"}
-              </DialogTitle>
-              <DialogDescription>
-                {editingId
-                  ? "Update the announcement details below"
-                  : "Create a new announcement for your branch"}
-              </DialogDescription>
-            </DialogHeader>
+            <DialogContent className="w-[92%] sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingId ? "Edit Announcement" : "Create Announcement"}
+                </DialogTitle>
+                <DialogDescription>
+                  {editingId
+                    ? "Update the announcement details below"
+                    : "Create a new announcement for your branch"}
+                </DialogDescription>
+              </DialogHeader>
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  placeholder="Announcement title"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="message">Message *</Label>
-                <Textarea
-                  id="message"
-                  placeholder="Announcement message"
-                  value={formData.message}
-                  onChange={(e) =>
-                    setFormData({ ...formData, message: e.target.value })
-                  }
-                  className={`h-40 resize-none overflow-y-auto ${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}`}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="priority">Priority</Label>
-                  <Select
-                    value={formData.priority}
-                    onValueChange={(value: any) =>
-                      setFormData({ ...formData, priority: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="normal">Normal</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="urgent">Urgent</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="expires_at">Expires At</Label>
+                  <Label htmlFor="title">Title *</Label>
                   <Input
-                    id="expires_at"
-                    type="date"
-                    value={formData.expires_at}
+                    id="title"
+                    placeholder="Announcement title"
+                    value={formData.title}
                     onChange={(e) =>
-                      setFormData({ ...formData, expires_at: e.target.value })
+                      setFormData({ ...formData, title: e.target.value })
                     }
                   />
                 </div>
-              </div>
 
-              <div className="p-3 rounded-lg bg-muted">
-                <p className="text-sm text-muted-foreground">
-                  ℹ️ This announcement will be visible to your branch only
-                </p>
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="message">Message *</Label>
+                  <Textarea
+                    id="message"
+                    placeholder="Announcement message"
+                    value={formData.message}
+                    onChange={(e) =>
+                      setFormData({ ...formData, message: e.target.value })
+                    }
+                    className={`h-40 resize-none overflow-y-auto ${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}`}
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label>Target Roles *</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  {roles.map((role) => (
-                    <div key={role} className="flex items-center gap-2">
-                      <Checkbox
-                        id={role}
-                        checked={formData.target_roles.includes(role)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setFormData({
-                              ...formData,
-                              target_roles: [
-                                ...formData.target_roles,
-                                role,
-                              ],
-                            });
-                          } else {
-                            setFormData({
-                              ...formData,
-                              target_roles: formData.target_roles.filter(
-                                (r) => r !== role
-                              ),
-                            });
-                          }
-                        }}
-                      />
-                      <Label htmlFor={role} className="font-normal capitalize">
-                        {role}
-                      </Label>
-                    </div>
-                  ))}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="priority">Priority</Label>
+                    <Select
+                      value={formData.priority}
+                      onValueChange={(value: any) =>
+                        setFormData({ ...formData, priority: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="normal">Normal</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="urgent">Urgent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="expires_at">Expires At</Label>
+                    <Input
+                      id="expires_at"
+                      type="date"
+                      value={formData.expires_at}
+                      onChange={(e) =>
+                        setFormData({ ...formData, expires_at: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg bg-muted">
+                  <p className="text-sm text-muted-foreground">
+                    ℹ️ This announcement will be visible to your branch only
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Target Roles *</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {roles.map((role) => (
+                      <div key={role} className="flex items-center gap-2">
+                        <Checkbox
+                          id={role}
+                          checked={formData.target_roles.includes(role)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setFormData({
+                                ...formData,
+                                target_roles: [
+                                  ...formData.target_roles,
+                                  role,
+                                ],
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                target_roles: formData.target_roles.filter(
+                                  (r) => r !== role
+                                ),
+                              });
+                            }
+                          }}
+                        />
+                        <Label htmlFor={role} className="font-normal capitalize">
+                          {role}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex gap-3 justify-end pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCreateDialog(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleCreateOrUpdate}
+                    className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 transition-all duration-200"
+                  >
+                    {editingId ? "Update" : "Create"} Announcement
+                  </Button>
                 </div>
               </div>
-
-              <div className="flex gap-3 justify-end pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowCreateDialog(false)}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleCreateOrUpdate}
-                  className="bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 transition-all duration-200"
-                >
-                  {editingId ? "Update" : "Create"} Announcement
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
         </CardHeader>
       </Card>
 

@@ -399,7 +399,7 @@ const filteredUsers = Array.isArray(users) ? users : [];
           .delete-modal-btn { width: 100% !important; padding: 10px 12px !important; font-size: 13px !important; }
         }
       `}</style>
-      <div className={`users-container min-h-screen text-sm sm:text-base max-w-none mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+      <div className={`users-container text-sm sm:text-base max-w-none mx-auto ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
         <Card className={`users-card ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
           <CardHeader className="users-card-header">
             <CardTitle className={`users-card-title ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>User Management</CardTitle>

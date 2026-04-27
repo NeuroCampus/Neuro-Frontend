@@ -30,6 +30,7 @@ import HODAnnouncementManagement from "../hod/HODAnnouncementManagement";
 import { HODBootstrapProvider } from "../../context/HODBootstrapContext";
 import { useTheme } from "../../context/ThemeContext";
 import { isPageAllowed } from "../../utils/planGating";
+import { getHODDashboardBootstrap } from "../../utils/hod_api";
 import UpgradeRequired from "../common/UpgradeRequired";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock } from "lucide-react";
@@ -152,8 +153,21 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
 
   // Fetch combined profile + semesters + sections once
   useEffect(() => {
-    // Bootstrap data will now come from HODStats component via onBootstrapData callback
-    // No separate API call needed here anymore
+    const fetchBootstrap = async () => {
+      try {
+        const res = await getHODDashboardBootstrap(['profile', 'semesters', 'sections']);
+        if (res.success && res.data) {
+          setBootstrap({
+            branch_id: res.data.profile?.branch_id,
+            semesters: res.data.semesters || [],
+            sections: res.data.sections || [],
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch bootstrap data:", err);
+      }
+    };
+    fetchBootstrap();
   }, []);
 
   const handleBootstrapData = (data: BootstrapData) => {
@@ -237,7 +251,7 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
 
     switch (activePage) {
       case "dashboard":
-        return <HODStats setError={setError} setPage={handlePageChange} onBootstrapData={handleBootstrapData} />;
+        return <HODStats setError={setError} setPage={handlePageChange} />;
       case "promotion-management":
         return <PromotionManagement />;
       case "low-attendance":
@@ -288,7 +302,7 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
   };
 
   return (
-    <HODBootstrapProvider>
+    <HODBootstrapProvider value={bootstrap}>
       <DashboardLayout
         role="hod"
         user={user}

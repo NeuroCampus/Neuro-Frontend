@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, XCircle, Loader2, Download, ArrowLeft } from 'lucide-react';
+import { CheckCircle, XCircle, Download, ArrowLeft } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -155,9 +155,9 @@ const PaymentSuccess: React.FC<PaymentSuccessProps> = ({ setPage }) => {
       <div className={`flex items-center justify-center ${setPage ? 'min-h-[400px]' : 'min-h-screen'} ${theme === 'dark' ? 'bg-[#1c1c1e]' : 'bg-gray-50'}`}>
         <Card className={theme === 'dark' ? 'w-full max-w-md bg-[#1c1c1e] text-gray-200 border-gray-700' : 'w-full max-w-md bg-white text-gray-900 border-gray-200'}>
           <CardContent className="p-6 text-center">
-            <Loader2 className={`h-12 w-12 animate-spin mx-auto mb-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
-            <h2 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Verifying Payment</h2>
-            <p className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>Please wait while we confirm your payment...</p>
+            <div className={`h-12 w-12 rounded-full animate-pulse mx-auto mb-4 ${theme === 'dark' ? 'bg-blue-400/40' : 'bg-blue-600/40'}`} />
+            <h2 className={`text-xl font-semibold mb-2 animate-pulse ${theme === 'dark' ? 'text-gray-200' : 'text-gray-900'}`}>Verifying Payment</h2>
+            <p className={`animate-pulse ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Please wait while we confirm your payment...</p>
           </CardContent>
         </Card>
       </div>

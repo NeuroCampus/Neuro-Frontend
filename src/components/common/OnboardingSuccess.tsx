@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { CheckCircle2, ArrowRight, Loader2, PartyPopper } from "lucide-react";
+import { CheckCircle2, ArrowRight, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { API_ENDPOINT } from "@/utils/config";
 
@@ -42,9 +42,9 @@ const OnboardingSuccess = () => {
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
-        <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-        <h1 className="text-xl font-semibold text-gray-900">Verifying Payment...</h1>
-        <p className="text-gray-500">Please do not close this window.</p>
+        <div className="w-12 h-12 rounded-full bg-primary/40 animate-pulse mb-4" />
+        <h1 className="text-xl font-semibold text-gray-900 animate-pulse">Verifying Payment...</h1>
+        <p className="text-gray-500 animate-pulse">Please do not close this window.</p>
       </div>
     );
   }
