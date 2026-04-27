@@ -196,7 +196,7 @@ const AdminDashboard = ({ user, setPage }: AdminDashboardProps) => {
       activePage={activePage}
       onPageChange={handlePageChange}
       onNotificationClick={handleNotificationClick}
-      pageTitle="Admin Dashboard"
+      pageTitle="Principal Dashboard"
     >
       <div key={activePage}>
         {renderContent()}
