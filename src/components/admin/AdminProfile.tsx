@@ -9,13 +9,15 @@ import { Textarea } from "../ui/textarea";
 import { useTheme } from "../../context/ThemeContext";
 import { showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
-import { Eye, EyeOff, CreditCard, Calendar, Activity, CheckCircle2, Clock, ShieldCheck, Loader2 } from "lucide-react";
+import { Eye, EyeOff, CreditCard, Calendar, Activity, CheckCircle2, Clock, ShieldCheck, Loader2, Download } from "lucide-react";
 import { fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Badge } from "../ui/badge";
 import { format } from "date-fns";
 import UpgradePlanDialog from "../common/UpgradePlanDialog";
+import { ScrollArea } from "../ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Skeleton, SkeletonForm } from "../ui/skeleton";
 
 interface AdminProfileProps {
@@ -59,10 +61,11 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
   const [subLoading, setSubLoading] = useState(false);
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
-  
+
   const [tickets, setTickets] = useState<any[]>([]);
   const [loadingTickets, setLoadingTickets] = useState(false);
   const [showTicketModal, setShowTicketModal] = useState(false);
+  const [viewTicket, setViewTicket] = useState<any>(null);
   const [ticketForm, setTicketForm] = useState({ subject: '', description: '', priority: 'Medium' });
 
   useEffect(() => {
@@ -145,6 +148,32 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
       console.error('Network error fetching subscription details', err);
     } finally {
       setSubLoading(false);
+    }
+  };
+
+  const handleDownloadReceipt = async (paymentId: number) => {
+    try {
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/subscription-receipt/${paymentId}/`);
+      if (response.ok) {
+        const contentType = response.headers.get('content-type');
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        // If the backend returned HTML (fallback), download as .html
+        const extension = contentType?.includes('pdf') ? 'pdf' : 'html';
+        a.download = `subscription_receipt_${paymentId}.${extension}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        const result = await response.json();
+        showErrorAlert('Error', result.message || 'Failed to download receipt');
+      }
+    } catch (err) {
+      console.error('Download receipt error', err);
+      showErrorAlert('Error', 'Network error while downloading receipt');
     }
   };
 
@@ -439,7 +468,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
               <h3 className="font-bold text-base">Payment History</h3>
             </div>
 
-            <div className="rounded-xl border overflow-hidden">
+            <div className="rounded-xl border overflow-hidden custom-scrollbar">
               <Table>
                 <TableHeader className={theme === 'dark' ? 'bg-zinc-900/50' : 'bg-gray-50'}>
                   <TableRow>
@@ -447,7 +476,8 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                     <TableHead>Plan</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Transaction ID</TableHead>
-                    <TableHead className="text-right">Status</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -466,16 +496,27 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                         <TableCell className="text-xs font-mono text-muted-foreground">
                           {p.transaction_id}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell>
                           <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800">
                             {p.status}
                           </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => handleDownloadReceipt(p.id)}
+                            title="Download Receipt"
+                          >
+                            <Download size={14} className="text-primary" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                         No payment records found.
                       </TableCell>
                     </TableRow>
@@ -507,24 +548,35 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 <div className="space-y-4 pt-4">
                   <div>
                     <Label>Subject</Label>
-                    <Input value={ticketForm.subject} onChange={e => setTicketForm({...ticketForm, subject: e.target.value})} placeholder="Brief summary of the issue" />
+                    <Input value={ticketForm.subject} onChange={e => setTicketForm({ ...ticketForm, subject: e.target.value })} placeholder="Brief summary of the issue" />
                   </div>
                   <div>
                     <Label>Priority</Label>
-                    <select 
-                      className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                      value={ticketForm.priority} 
-                      onChange={e => setTicketForm({...ticketForm, priority: e.target.value})}
+                    <Select
+                      value={ticketForm.priority}
+                      onValueChange={value => setTicketForm({ ...ticketForm, priority: value })}
                     >
-                      <option value="Low">Low</option>
-                      <option value="Medium">Medium</option>
-                      <option value="High">High</option>
-                      <option value="Critical">Critical</option>
-                    </select>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Low">Low</SelectItem>
+                        <SelectItem value="Medium">Medium</SelectItem>
+                        <SelectItem value="High">High</SelectItem>
+                        <SelectItem value="Critical">Critical</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label>Description</Label>
-                    <Textarea value={ticketForm.description} onChange={e => setTicketForm({...ticketForm, description: e.target.value})} placeholder="Detailed description..." rows={4} />
+                    <div className="h-20 rounded-md border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                      <Textarea
+                        value={ticketForm.description}
+                        onChange={e => setTicketForm({ ...ticketForm, description: e.target.value })}
+                        placeholder="Detailed description..."
+                        className="h-full w-full resize-none border-none focus-visible:ring-0 shadow-none custom-scrollbar"
+                      />
+                    </div>
                   </div>
                   <Button className="w-full" onClick={handleRaiseTicket} disabled={loadingTickets}>
                     {loadingTickets ? 'Submitting...' : 'Submit Ticket'}
@@ -532,49 +584,111 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                 </div>
               </DialogContent>
             </Dialog>
+
+            <Dialog open={!!viewTicket} onOpenChange={(open) => !open && setViewTicket(null)}>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>Ticket Details</DialogTitle>
+                </DialogHeader>
+                {viewTicket && (
+                  <div className="space-y-4 pt-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-[10px] uppercase text-muted-foreground">Status</Label>
+                        <div className="mt-1">
+                          <Badge className={
+                            viewTicket.status === 'Resolved' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' :
+                              viewTicket.status === 'Closed' ? 'bg-gray-100 text-gray-600 border-gray-300' :
+                                viewTicket.status === 'Pending' ? 'bg-amber-100 text-amber-800 border-amber-200' :
+                                  'bg-blue-100 text-blue-800 border-blue-200'
+                          } variant="outline">{viewTicket.status}</Badge>
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-[10px] uppercase text-muted-foreground">Priority</Label>
+                        <div className="mt-1">
+                          <Badge variant="outline" className={
+                            viewTicket.priority === 'Critical' ? 'border-red-500 text-red-600 bg-red-50' :
+                              viewTicket.priority === 'High' ? 'border-orange-500 text-orange-600 bg-orange-50' :
+                                'border-blue-500 text-blue-600 bg-blue-50'
+                          }>{viewTicket.priority}</Badge>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-[10px] uppercase text-muted-foreground">Subject</Label>
+                      <p className="mt-1 font-semibold">{viewTicket.subject}</p>
+                    </div>
+                    <div>
+                      <Label className="text-[10px] uppercase text-muted-foreground">Description</Label>
+                      <ScrollArea className="h-32 mt-1 rounded-md border p-3 bg-muted/20">
+                        <p className="text-sm whitespace-pre-wrap">{viewTicket.description}</p>
+                      </ScrollArea>
+                    </div>
+                    {viewTicket.response && (
+                      <div>
+                        <Label className="text-[10px] uppercase text-muted-foreground">HQ Response</Label>
+                        <div className="mt-1 p-3 rounded-md bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/20">
+                          <p className="text-sm italic">{viewTicket.response}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
-          
+
           <div className="rounded-md border bg-card shadow-sm overflow-hidden">
             <Table>
               <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead>Ticket ID</TableHead>
                   <TableHead>Subject</TableHead>
+                  <TableHead>Description</TableHead>
                   <TableHead>Priority</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loadingTickets ? <TableRow><TableCell colSpan={5} className="text-center h-24">Loading tickets...</TableCell></TableRow> : 
-                 tickets.length === 0 ? <TableRow><TableCell colSpan={5} className="text-center h-24 text-muted-foreground">No support tickets found.</TableCell></TableRow> :
-                 tickets.map(t => (
-                  <TableRow key={t.id}>
-                    <TableCell className="font-medium">{t.id}</TableCell>
-                    <TableCell>
-                      {t.subject}
-                      {t.response && <p className="text-xs text-muted-foreground mt-1"><span className="font-semibold">HQ Response:</span> {t.response}</p>}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={
-                        t.priority === 'Critical' ? 'border-red-500 text-red-600 bg-red-50 dark:bg-red-900/10' :
-                        t.priority === 'High' ? 'border-orange-500 text-orange-600 bg-orange-50 dark:bg-orange-900/10' :
-                        'border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/10'
-                      }>{t.priority}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={
-                        t.status === 'Resolved' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border-emerald-200' :
-                        t.status === 'Closed'   ? 'bg-gray-100 text-gray-600 hover:bg-gray-200 border-gray-300' :
-                        t.status === 'Pending'  ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-200' :
-                        'bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-200'
-                      } variant="outline">
-                        {t.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{t.date}</TableCell>
-                  </TableRow>
-                ))}
+                {loadingTickets ? <TableRow><TableCell colSpan={6} className="text-center h-24">Loading tickets...</TableCell></TableRow> :
+                  tickets.length === 0 ? <TableRow><TableCell colSpan={6} className="text-center h-24 text-muted-foreground">No support tickets found.</TableCell></TableRow> :
+                    tickets.map(t => (
+                      <TableRow key={t.id}>
+                        <TableCell className="font-medium">{t.id}</TableCell>
+                        <TableCell className="font-medium">{t.subject}</TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 px-2 flex items-center gap-1.5 text-primary hover:text-primary hover:bg-primary/10 transition-colors"
+                            onClick={() => setViewTicket(t)}
+                          >
+                            <Eye size={14} />
+                            View
+                          </Button>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={
+                            t.priority === 'Critical' ? 'border-red-500 text-red-600 bg-red-50 dark:bg-red-900/10' :
+                              t.priority === 'High' ? 'border-orange-500 text-orange-600 bg-orange-50 dark:bg-orange-900/10' :
+                                'border-blue-500 text-blue-600 bg-blue-50 dark:bg-blue-900/10'
+                          }>{t.priority}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={
+                            t.status === 'Resolved' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border-emerald-200' :
+                              t.status === 'Closed' ? 'bg-gray-100 text-gray-600 hover:bg-gray-200 border-gray-300' :
+                                t.status === 'Pending' ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 border-amber-200' :
+                                  'bg-blue-100 text-blue-800 hover:bg-blue-200 border-blue-200'
+                          } variant="outline">
+                            {t.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{t.date}</TableCell>
+                      </TableRow>
+                    ))}
               </TableBody>
             </Table>
           </div>

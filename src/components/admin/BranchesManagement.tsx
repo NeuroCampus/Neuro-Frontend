@@ -112,7 +112,6 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
             : [];
           setUsers(hodData);
 
-          toast({ title: "Success", description: "Data loaded successfully" });
         } else {
           setError(dataSource?.message || "Failed to fetch branches and HODs");
           toast({ variant: "destructive", title: "Error", description: dataSource?.message || "Failed to fetch branches and HODs" });
