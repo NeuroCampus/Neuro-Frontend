@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { useTheme } from "../../context/ThemeContext";
-import { CheckCircle, XCircle, Filter as FilterIcon } from 'lucide-react';
+import { CheckCircle, XCircle, Filter as FilterIcon, Loader2 } from 'lucide-react';
 import { manageAllLeaves } from "../../utils/dean_api";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
@@ -13,6 +13,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "../ui/dialog";
+import { SkeletonTable, SkeletonList, SkeletonPageHeader } from "../ui/skeleton";
+import { Alert, AlertDescription } from "../ui/alert";
 
 const MySwal = withReactContent(Swal);
 
@@ -125,16 +127,17 @@ const ManageAdminLeavesDean = () => {
 
       {/* Error Message */}
       {error && (
-        <div className={`p-3 rounded-lg mb-4 ${theme === 'dark' ? 'bg-destructive/20 text-destructive-foreground border border-destructive' : 'bg-red-100 text-red-700 border border-red-200'}`}>
-          {error}
-        </div>
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
       {/* Success Message */}
       {successMessage && (
-        <div className={`p-3 rounded-lg mb-4 ${theme === 'dark' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-green-100 text-green-700 border border-green-200'}`}>
-          {successMessage}
-        </div>
+        <Alert className={`mb-4 border-green-500 bg-green-500/10 text-green-600`}>
+          <CheckCircle className="w-4 h-4" />
+          <AlertDescription>{successMessage}</AlertDescription>
+        </Alert>
       )}
 
       <div>
@@ -150,7 +153,9 @@ const ManageAdminLeavesDean = () => {
                 {/* Mobile: stacked cards */}
                 <div className="md:hidden space-y-3">
                   {loading ? (
-                    <div className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading leave requests...</div>
+                    <div className="space-y-3">
+                      <SkeletonList items={3} />
+                    </div>
                   ) : allPendingLeaves.length === 0 ? (
                     <div className={`text-center py-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No pending leave requests.</div>
                   ) : (
@@ -167,12 +172,13 @@ const ManageAdminLeavesDean = () => {
                           </div>
                         </div>
                         <div className="mt-3 flex items-center justify-between">
-                          <button
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => { setSelectedLeave(leave); setShowReasonDialog(true); }}
-                            className={`text-sm font-medium px-2 py-1 rounded-md ${theme === 'dark' ? 'bg-muted/10 text-foreground border border-border' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
                           >
                             View
-                          </button>
+                          </Button>
                           <div>
                             <div className="flex gap-2">
                               <Button
@@ -222,7 +228,7 @@ const ManageAdminLeavesDean = () => {
                   </thead>
                   <tbody>
                     {loading ? (
-                      <tr><td colSpan={6} className={`text-center py-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Loading leave requests...</td></tr>
+                      <tr><td colSpan={6} className="py-4"><SkeletonTable rows={5} cols={6} /></td></tr>
                     ) : allPendingLeaves.length === 0 ? (
                       <tr><td colSpan={6} className={`text-center py-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No pending leave requests.</td></tr>
                     ) : (
@@ -232,12 +238,13 @@ const ManageAdminLeavesDean = () => {
                           <td className="py-3 px-2 md:px-4">{leave.department}</td>
                           <td className="py-3 px-2 md:px-4">{leave.start_date} <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>to</span> {leave.end_date}</td>
                           <td className="py-3 px-2 md:px-4">
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => { setSelectedLeave(leave); setShowReasonDialog(true); }}
-                              className={`text-sm font-medium px-2 py-1 rounded-md ${theme === 'dark' ? 'bg-muted/10 text-foreground border border-border' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
                             >
                               View
-                            </button>
+                            </Button>
                           </td>
                           <td className="py-3 px-2 md:px-4">
                             <span className={`px-3 py-1 rounded-full text-xs font-medium ${theme === 'dark' ? 'bg-yellow-900 text-yellow-200' : 'bg-yellow-100 text-yellow-700'}`}>Pending</span>
@@ -289,13 +296,14 @@ const ManageAdminLeavesDean = () => {
               Recent Leave History
             </CardTitle>
             <div className="relative" ref={filterRef}>
-              <button
-                className={theme === 'dark' ? 'text-foreground hover:text-muted-foreground p-2 rounded-md' : 'text-gray-900 hover:text-gray-500 p-2 rounded-md'}
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setShowFilter(v => !v)}
                 aria-label="Filter recent leaves"
               >
                 <FilterIcon className="w-5 h-5" />
-              </button>
+              </Button>
               {showFilter && (
                 <div className={`absolute right-0 mt-2 w-36 rounded shadow-lg z-10 border ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
                   {['All', 'Approved', 'Pending', 'Rejected'].map((status) => (

@@ -13,6 +13,7 @@ import { showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
 import { useTheme } from "../../context/ThemeContext";
 import { fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
+import { SkeletonCard, SkeletonPageHeader } from "../ui/skeleton";
 
 interface DeanProfileShape {
   id: number;
@@ -189,10 +190,11 @@ const DeanProfile = () => {
 
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-32 bg-gray-300 rounded mb-4"></div>
-          <div className="h-64 bg-gray-300 rounded"></div>
+      <div className={`space-y-6 p-6 min-h-screen ${theme === 'dark' ? 'bg-background' : 'bg-gray-50'}`}>
+        <SkeletonPageHeader />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <SkeletonCard className="h-64" />
+          <SkeletonCard className="md:col-span-3 h-96" />
         </div>
       </div>
     );
@@ -253,14 +255,16 @@ const DeanProfile = () => {
                       onChange={(e) => setPasswordData({ ...passwordData, current_password: e.target.value })}
                       className="pr-10"
                     />
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => setShowPasswords((prev) => ({ ...prev, current: !prev.current }))}
-                      className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                      className="absolute inset-y-0 right-0 h-full px-3 text-muted-foreground hover:text-foreground hover:bg-transparent"
                       aria-label={showPasswords.current ? "Hide current password" : "Show current password"}
                     >
                       {showPasswords.current ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                    </button>
+                    </Button>
                   </div>
                 </div>
                 <div>
@@ -273,14 +277,16 @@ const DeanProfile = () => {
                       onChange={(e) => setPasswordData({ ...passwordData, new_password: e.target.value })}
                       className="pr-10"
                     />
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => setShowPasswords((prev) => ({ ...prev, next: !prev.next }))}
-                      className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                      className="absolute inset-y-0 right-0 h-full px-3 text-muted-foreground hover:text-foreground hover:bg-transparent"
                       aria-label={showPasswords.next ? "Hide new password" : "Show new password"}
                     >
                       {showPasswords.next ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                    </button>
+                    </Button>
                   </div>
                 </div>
                 <div>
@@ -293,14 +299,16 @@ const DeanProfile = () => {
                       onChange={(e) => setPasswordData({ ...passwordData, confirm_password: e.target.value })}
                       className="pr-10"
                     />
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => setShowPasswords((prev) => ({ ...prev, confirm: !prev.confirm }))}
-                      className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                      className="absolute inset-y-0 right-0 h-full px-3 text-muted-foreground hover:text-foreground hover:bg-transparent"
                       aria-label={showPasswords.confirm ? "Hide confirm password" : "Show confirm password"}
                     >
                       {showPasswords.confirm ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                    </button>
+                    </Button>
                   </div>
                 </div>
                 <div className="flex justify-end space-x-2">
@@ -331,12 +339,12 @@ const DeanProfile = () => {
               <div className={`border rounded-lg p-2.5 sm:p-4 flex-1 ${theme === 'dark' ? 'bg-card border-input' : 'bg-gray-50 border-gray-200'}`}>
                 <div className="grid grid-cols-1 gap-2.5 sm:gap-3.5 h-full">
                   <div className="flex flex-col justify-start">
-                    <span className={`text-xs font-semibold mb-1 text-gray-900`}>Department</span>
-                    <span className={`text-xs sm:text-sm break-words px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-2xl line-clamp-2 bg-purple-100 text-purple-700`}>{profile.department || '—'}</span>
+                    <span className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Department</span>
+                    <Badge variant="secondary" className="w-fit text-xs px-2.5 py-1 rounded-2xl bg-primary/10 text-primary border-none shadow-none">{profile.department || '—'}</Badge>
                   </div>
                   <div className="flex flex-col justify-start">
-                    <span className={`text-xs font-semibold mb-1 text-gray-900`}>Designation</span>
-                    <span className={`text-xs sm:text-sm break-words px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-2xl line-clamp-2 bg-purple-100 text-purple-700`}>{profile.designation || '—'}</span>
+                    <span className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Designation</span>
+                    <Badge variant="secondary" className="w-fit text-xs px-2.5 py-1 rounded-2xl bg-primary/10 text-primary border-none shadow-none">{profile.designation || '—'}</Badge>
                   </div>
                 </div>
               </div>
@@ -344,7 +352,7 @@ const DeanProfile = () => {
           </div>
 
           <div className="col-span-1 sm:col-span-2 lg:col-span-3 w-full flex flex-col h-full">
-            <div className={`p-3 sm:p-4 md:p-5 lg:p-6 rounded-lg border flex-1 bg-gray-50 border-gray-200`}>
+            <div className={`p-3 sm:p-4 md:p-5 lg:p-6 rounded-lg border flex-1 ${theme === 'dark' ? 'bg-muted/30 border-border' : 'bg-gray-50 border-gray-200'}`}>
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Personal Information</h3>

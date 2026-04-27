@@ -1,7 +1,6 @@
 import { useState, useEffect, Component, ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import DashboardLayout from "../common/DashboardLayout";
-import DeanReports from "../dean/DeanReports";
 import DeanStats from "../dean/DeanStats";
 import DeanAttendance from "../dean/DeanAttendance";
 import DeanAttendanceFilters from "../dean/DeanAttendanceFilters";
@@ -32,7 +31,6 @@ const getActivePageFromPath = (pathname: string): string => {
   const lastPart = pathParts[pathParts.length - 1] || '';
   const pathMap: { [key: string]: string } = {
     'dashboard': 'dashboard',
-    'reports': 'reports',
     'profile': 'profile',
       'campus-locations': 'campus-locations',
     'attendance': 'attendance',
@@ -76,34 +74,32 @@ const DeanDashboard = ({ user, setPage }: { user: DeanUser; setPage: (p: string)
 
     switch (activePage) {
       case 'dashboard':
-        return <div className="p-4"><DeanStats /></div>;
+        return <div><DeanStats /></div>;
       case 'attendance':
-        return <div className="p-4"><DeanAttendance /></div>;
+        return <div><DeanAttendance /></div>;
       case 'attendance-filters':
-        return <div className="p-4"><DeanAttendanceFilters /></div>;
+        return <div><DeanAttendanceFilters /></div>;
       case 'campus-locations':
-        return <div className="p-4"><CampusLocationManager /></div>;
+        return <div><CampusLocationManager /></div>;
       case 'performance':
-        return <div className="p-4"><StudentInfoScanner /></div>;
+        return <div><StudentInfoScanner /></div>;
 
       case 'exams':
-        return <div className="p-4"><DeanExams /></div>;
+        return <div><DeanExams /></div>;
       case 'faculty':
-        return <div className="p-4"><DeanFacultyProfile /></div>;
+        return <div><DeanFacultyProfile /></div>;
       case 'finance':
-        return <div className="p-4"><DeanFinance /></div>;
+        return <div><DeanFinance /></div>;
       case 'alerts':
-        return <div className="p-4"><DeanAlerts /></div>;
+        return <div><DeanAlerts /></div>;
       case 'attendance-records':
-        return <div className="p-4"><DeanAttendanceRecords /></div>;
-      case 'reports':
-        return <DeanReports />;
+        return <div><DeanAttendanceRecords /></div>;
       case 'profile':
-        return <div className="p-4"><DeanProfile /></div>;
+        return <div><DeanProfile /></div>;
       case 'admin-leaves':
         return <ManageAdminLeavesDean />;
       default:
-        return <div className="p-4">Welcome, Dean.</div>;
+        return <div>Welcome, Dean.</div>;
     }
   };
 

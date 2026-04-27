@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, MapPin, Save, Plus, Edit, Trash2 } from 'lucide-react';
+import { SkeletonList, SkeletonPageHeader } from "../ui/skeleton";
 import { manageCampusLocation } from '@/utils/dean_api';
 import { toast } from 'sonner';
 import Swal from 'sweetalert2';
@@ -240,16 +241,11 @@ const CampusLocationManager: React.FC = () => {
           const searchBoxInstance = new window.google.maps.places.SearchBox(input);
           setSearchBox(searchBoxInstance);
 
-          // Style the search box
-          input.style.boxSizing = 'border-box';
-          input.style.border = '1px solid #ccc';
-          input.style.borderRadius = '4px';
-          input.style.fontSize = '14px';
-          input.style.outline = 'none';
-          input.style.padding = '8px 12px';
-          input.style.textOverflow = 'ellipses';
-          input.style.width = '100%';
-          input.style.position = 'relative';
+          // Style the search box via classes
+          input.className = cn(
+            "w-full px-3 py-2 text-sm border rounded-md outline-none transition-all",
+            theme === 'dark' ? "bg-background border-border text-foreground" : "bg-white border-gray-300 text-gray-900"
+          );
 
           // Bias the SearchBox results towards current map's viewport
           mapInstanceRef.current.addListener('bounds_changed', () => {
@@ -427,7 +423,7 @@ const CampusLocationManager: React.FC = () => {
         showCancelButton: true,
         confirmButtonText: 'Delete',
         cancelButtonText: 'Cancel',
-        confirmButtonColor: '#dc2626',
+        confirmButtonColor: theme === 'dark' ? '#ef4444' : '#dc2626',
         customClass: { popup: 'sweetalert-popup' }
       });
 
@@ -747,24 +743,23 @@ const CampusLocationManager: React.FC = () => {
             <div className="flex flex-col h-full w-full min-h-0">
               <div className="flex-1 overflow-auto w-full min-w-0 min-h-0 overflow-y-auto overscroll-contain thin-scrollbar">
                 {loading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-8 h-8 animate-spin" />
-                    <span className="ml-2">Loading locations...</span>
+                  <div className="space-y-4">
+                    <SkeletonList items={3} />
                   </div>
                 ) : locations.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">No campus locations configured yet.</div>
                 ) : (
                   <div className="space-y-4 w-full">
                     {locations.map((location) => (
-                      <div key={location.id} className="border rounded-lg p-4 w-full">
+                      <div key={location.id} className={`border rounded-lg p-4 w-full ${theme === 'dark' ? 'bg-muted/50 border-border' : 'bg-white border-gray-200'}`}>
                         <div className="flex justify-between items-start">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center space-x-2">
-                              <h3 className="font-semibold">{location.name}</h3>
-                              {location.is_active && <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Active</span>}
+                              <h3 className={`font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{location.name}</h3>
+                              {location.is_active && <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${theme === 'dark' ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800'}`}>Active</span>}
                             </div>
-                            {location.description && <p className="text-gray-600 mt-1">{location.description}</p>}
-                            <div className="mt-2 text-sm text-gray-500">
+                            {location.description && <p className={`mt-1 text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>{location.description}</p>}
+                            <div className={`mt-2 text-xs space-y-1 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                               <p>Center: {location.center_latitude.toFixed(6)}, {location.center_longitude.toFixed(6)}</p>
                               <p>Radius: {location.radius_meters} meters</p>
                               <p>Created: {new Date(location.created_at).toLocaleDateString()}</p>

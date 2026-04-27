@@ -4,7 +4,11 @@ import { fetchWithTokenRefresh } from "@/utils/authService";
 import { Pie, Bar } from "react-chartjs-2";
 import DashboardCard from "../common/DashboardCard";
 import { useTheme } from "../../context/ThemeContext";
+import { SkeletonStatsGrid, SkeletonChart, SkeletonTable, SkeletonPageHeader } from "../ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { FaUserGraduate, FaChalkboardTeacher, FaUserTie, FaUserCheck, FaBuilding } from "react-icons/fa";
+import { Alert, AlertDescription } from "../ui/alert";
+import { AlertCircle } from "lucide-react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -164,8 +168,6 @@ const DeanStats = () => {
     ],
   };
 
-  if (loading) return <div className="p-4">Loading today's attendance...</div>;
-  if (error) return <div className="p-4 text-red-600">{error}</div>;
 
   const barOptions = {
     responsive: true,
@@ -192,83 +194,105 @@ const DeanStats = () => {
   };
 
   return (
-    <div className={`space-y-8 min-h-screen p-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-        <DashboardCard
-          title="Branches"
-          value={totalBranches}
-          description="Active branches in college"
-          icon={<FaBuilding className={theme === 'dark' ? 'text-indigo-400 text-3xl' : 'text-indigo-500 text-3xl'} />}
-        />
-        <DashboardCard
-          title="Total Students"
-          value={totalStudents}
-          description="Enrolled across branches"
-          icon={<FaUserGraduate className={theme === 'dark' ? 'text-blue-400 text-3xl' : 'text-blue-500 text-3xl'} />}
-        />
-        <DashboardCard
-          title="Total Faculty"
-          value={totalFaculty}
-          description="Teaching staff"
-          icon={<FaChalkboardTeacher className={theme === 'dark' ? 'text-purple-400 text-3xl' : 'text-purple-500 text-3xl'} />}
-        />
-        <DashboardCard
-          title="HODs"
-          value={totalHods}
-          description="Department heads"
-          icon={<FaUserTie className={theme === 'dark' ? 'text-yellow-400 text-3xl' : 'text-yellow-500 text-3xl'} />}
-        />
-        <DashboardCard
-          title="COE"
-          value={totalCoe}
-          description="Controller of exams"
-          icon={<FaUserCheck className={theme === 'dark' ? 'text-green-400 text-3xl' : 'text-green-500 text-3xl'} />}
-        />
-      </div>
+    <div className={`${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <Card className={theme === 'dark' ? 'bg-card border border-border shadow-md' : 'bg-white border border-gray-200 shadow-md'}>
+        <CardContent className="space-y-8 p-2">
+          {loading ? (
+            <div className="space-y-8">
+              <SkeletonStatsGrid items={5} />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <SkeletonChart className="h-80" />
+                <SkeletonChart className="h-80" />
+              </div>
+              <SkeletonTable rows={5} cols={3} />
+            </div>
+          ) : error ? (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+                <DashboardCard
+                  title="Branches"
+                  value={totalBranches}
+                  description="Active branches"
+                  icon={<FaBuilding className={theme === 'dark' ? 'text-indigo-400 text-3xl' : 'text-indigo-500 text-3xl'} />}
+                />
+                <DashboardCard
+                  title="Total Students"
+                  value={totalStudents}
+                  description="Across branches"
+                  icon={<FaUserGraduate className={theme === 'dark' ? 'text-blue-400 text-3xl' : 'text-blue-500 text-3xl'} />}
+                />
+                <DashboardCard
+                  title="Total Faculty"
+                  value={totalFaculty}
+                  description="Teaching staff"
+                  icon={<FaChalkboardTeacher className={theme === 'dark' ? 'text-purple-400 text-3xl' : 'text-purple-500 text-3xl'} />}
+                />
+                <DashboardCard
+                  title="HODs"
+                  value={totalHods}
+                  description="Dept heads"
+                  icon={<FaUserTie className={theme === 'dark' ? 'text-yellow-400 text-3xl' : 'text-yellow-500 text-3xl'} />}
+                />
+                <DashboardCard
+                  title="COE"
+                  value={totalCoe}
+                  description="Exams controller"
+                  icon={<FaUserCheck className={theme === 'dark' ? 'text-green-400 text-3xl' : 'text-green-500 text-3xl'} />}
+                />
+              </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className={`rounded-lg shadow p-6 ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
-          <h3 className={`text-lg font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Branch Distribution</h3>
-          <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Students and faculty across branches</p>
-          <div className="h-80">
-            <Bar data={barData} options={{ ...barOptions, maintainAspectRatio: false }} />
-          </div>
-        </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className={`rounded-xl shadow-sm p-6 border ${theme === 'dark' ? 'bg-muted/30 border-border' : 'bg-gray-50 border-gray-200'}`}>
+                  <h3 className={`text-lg font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Branch Distribution</h3>
+                  <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Students and faculty across branches</p>
+                  <div className="h-80">
+                    <Bar data={barData} options={{ ...barOptions, maintainAspectRatio: false }} />
+                  </div>
+                </div>
 
-        <div className={`rounded-lg shadow p-6 ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
-          <h3 className={`text-lg font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Role Distribution</h3>
-          <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Current user role composition</p>
-          <div className="h-80">
-            <Pie data={pieData} options={{ ...pieOptions, maintainAspectRatio: false }} />
-          </div>
-        </div>
-      </div>
+                <div className={`rounded-xl shadow-sm p-6 border ${theme === 'dark' ? 'bg-muted/30 border-border' : 'bg-gray-50 border-gray-200'}`}>
+                  <h3 className={`text-lg font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Role Distribution</h3>
+                  <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Current user role composition</p>
+                  <div className="h-80">
+                    <Pie data={pieData} options={{ ...pieOptions, maintainAspectRatio: false }} />
+                  </div>
+                </div>
+              </div>
 
-      <div className={`rounded-lg shadow overflow-hidden ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
-        <div className="px-4 py-3 border-b">
-          <h3 className={`text-base font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Branch Summary</h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-border">
-            <thead className={theme === 'dark' ? 'bg-muted' : 'bg-gray-50'}>
-              <tr>
-                <th className={theme === 'dark' ? 'px-4 py-2 text-left text-sm font-semibold text-foreground' : 'px-4 py-2 text-left text-sm font-semibold text-gray-700'}>Branch</th>
-                <th className={theme === 'dark' ? 'px-4 py-2 text-left text-sm font-semibold text-foreground' : 'px-4 py-2 text-left text-sm font-semibold text-gray-700'}>Students</th>
-                <th className={theme === 'dark' ? 'px-4 py-2 text-left text-sm font-semibold text-foreground' : 'px-4 py-2 text-left text-sm font-semibold text-gray-700'}>Faculty</th>
-              </tr>
-            </thead>
-            <tbody className={theme === 'dark' ? 'bg-card divide-y divide-border' : 'bg-white divide-y divide-gray-200'}>
-              {rows.map((r) => (
-                <tr key={r.branch_id}>
-                  <td className={theme === 'dark' ? 'px-4 py-3 text-sm text-foreground' : 'px-4 py-3 text-sm text-gray-700'}>{r.branch}</td>
-                  <td className={theme === 'dark' ? 'px-4 py-3 text-sm text-foreground' : 'px-4 py-3 text-sm text-gray-700'}>{r.total_students}</td>
-                  <td className={theme === 'dark' ? 'px-4 py-3 text-sm text-foreground' : 'px-4 py-3 text-sm text-gray-700'}>{r.faculty ?? '-'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+              <div className={`rounded-xl shadow-sm overflow-hidden border ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}`}>
+                <div className="px-6 py-4 border-b bg-muted/20">
+                  <h3 className={`text-base font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Branch Summary</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-border">
+                    <thead className={theme === 'dark' ? 'bg-muted/50' : 'bg-gray-50'}>
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Branch</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Students</th>
+                        <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider">Faculty</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {rows.map((r) => (
+                        <tr key={r.branch_id} className="hover:bg-muted/50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">{r.branch}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{r.total_students}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">{r.faculty ?? '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

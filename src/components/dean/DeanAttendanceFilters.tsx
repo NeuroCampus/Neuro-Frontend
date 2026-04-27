@@ -24,8 +24,10 @@ import {
 } from "../ui/popover";
 import { Calendar as CalendarComponent } from "../ui/calendar";
 import { Button } from "../ui/button";
-import { Calendar } from "lucide-react";
+import { Calendar, Trash2, ChevronDown, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SkeletonStatsGrid, SkeletonPageHeader, SkeletonCard } from "../ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 
 const DeanAttendanceFilters = () => {
   const { theme } = useTheme();
@@ -141,265 +143,280 @@ const DeanAttendanceFilters = () => {
     loadPerson();
   }, [selectedPersonId, selectedRole, startDate, endDate, adminList, totalRangeDays, isMonthly]);
 
-  if (loading) {
+
+  if (error && !data) {
     return (
-      <div className={`text-center py-6 ${theme === "dark" ? "text-muted-foreground" : "text-gray-600"} animate-pulse`}>
-        Loading attendance filters...
+      <div className="p-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       </div>
     );
   }
 
-  if (error) {
-    return <div className={`text-center py-6 ${theme === "dark" ? "text-destructive" : "text-red-600"}`}>{error}</div>;
-  }
-
   return (
-    <div className={`space-y-4 px-4 pb-4 pt-1 md:px-5 md:pb-5 md:pt-2 ${theme === "dark" ? "bg-background text-foreground" : "bg-gray-50 text-gray-900"}`}>
-      {/* Filter Controls Card */}
-        <div className={`p-4 rounded-lg shadow ${theme === "dark" ? "bg-card border border-border" : "bg-white border border-gray-200"}`}>
+    <div className={`space-y-4  ${theme === "dark" ? "bg-background text-foreground" : "bg-gray-50 text-gray-900"}`}>
+      {loading ? (
+        <div className="space-y-6">
+          <SkeletonPageHeader />
+          <SkeletonCard className="h-32" />
+          <div className="space-y-4">
+            <SkeletonCard className="h-40" />
+            <SkeletonStatsGrid items={6} />
+          </div>
+        </div>
+      ) : error ? (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : (
+        <>
+          {/* Filter Controls Card */}
+          <div className={`p-4 rounded-lg shadow ${theme === "dark" ? "bg-card border border-border" : "bg-white border border-gray-200"}`}>
             <div className="flex flex-wrap md:flex-nowrap items-end justify-between gap-4">
-            {/* Left Side: Role & Select */}
-            <div className="flex gap-4 items-end flex-wrap">
-                <div>
-                <label htmlFor="dean-filter-role" className={`block text-sm font-medium mb-2 ${theme === "dark" ? "text-foreground" : "text-gray-700"}`}>
+              {/* Left Side: Role & Select */}
+              <div className="flex gap-4 items-end flex-wrap w-full">
+                <div className="w-full md:w-auto">
+                  <label htmlFor="dean-filter-role" className={`block text-sm font-medium mb-2 ${theme === "dark" ? "text-foreground" : "text-gray-700"}`}>
                     Role
-                </label>
-                <Select value={selectedRole} onValueChange={(value) => {
+                  </label>
+                  <Select value={selectedRole} onValueChange={(value) => {
                     setSelectedRole(value);
                     setSelectedPersonId(null);
-                }}>
+                  }}>
                     <SelectTrigger className={`w-full md:w-[120px] ${theme === "dark" ? "bg-background border-border" : "bg-white border-gray-300"}`}>
-                    <SelectValue />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                    <SelectItem value="hod">HOD</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="hod">HOD</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
-                </Select>
+                  </Select>
+                </div>
+
+                <div className="w-full md:w-auto">
+                  <label htmlFor="dean-filter-person" className={`block text-sm font-medium mb-2 ${theme === "dark" ? "text-foreground" : "text-gray-700"}`}>
+                    Select
+                  </label>
+                  <Select value={selectedPersonId || ""} onValueChange={(value) => setSelectedPersonId(value || null)}>
+                    <SelectTrigger className={`w-full md:w-[180px] ${theme === "dark" ? "bg-background border-border" : "bg-white border-gray-300"}`}>
+                      <SelectValue placeholder={selectedRole === "hod" ? "Select hod" : "Select admin"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectedRole === "hod" && hodList.map((h: any) => (
+                        <SelectItem key={h.id} value={h.id}>
+                          {h.name} {h.branch ? `• ${h.branch}` : ""}
+                        </SelectItem>
+                      ))}
+                      {selectedRole === "admin" && adminList.map((a: any) => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Right Side: Date Range & Clear */}
+              <div className="flex flex-col md:flex-row md:items-center gap-4 w-full md:w-auto">
+                <label className={`text-sm font-medium whitespace-nowrap ${theme === "dark" ? "text-foreground" : "text-gray-700"}`}>
+                  Date Range to filter
+                </label>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDateModalOpen(true)}
+                  disabled={!selectedPersonId}
+                  className={cn(
+                    "w-full md:w-auto justify-start text-left font-normal gap-2",
+                    !startDate && "text-muted-foreground",
+                    theme === "dark" ? "bg-background border-border" : "bg-white border-gray-300"
+                  )}
+                >
+                  <Calendar className="h-4 w-4" />
+                  {startDate && endDate
+                    ? `${startDate} to ${endDate}`
+                    : "Select dates"}
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setStartDate("");
+                    setEndDate("");
+                    fetchData();
+                  }}
+                  className="gap-2 w-full md:w-auto"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Clear
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {isMonthly && (
+            <div className={`mt-2 text-sm ${theme === "dark" ? "text-muted-foreground" : "text-gray-600"}`}>
+              Showing data from {data.summary.period.start_date} to {data.summary.period.end_date} ({data.summary.period.total_days} days)
+            </div>
+          )}
+
+          {/* Date Filter Modal */}
+          <Dialog open={isDateModalOpen} onOpenChange={setIsDateModalOpen}>
+            <DialogContent className={`${theme === "dark" ? "bg-card border-border" : "bg-white border-gray-200"}`}>
+              <DialogHeader>
+                <DialogTitle className={theme === "dark" ? "text-foreground" : "text-gray-900"}>
+                  Select Date Range
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4 py-4">
+                <div>
+                  <label htmlFor="modal-start-date" className={`block text-sm font-medium mb-2 ${theme === "dark" ? "text-foreground" : "text-gray-700"}`}>
+                    Start Date
+                  </label>
+                  <Popover open={startDatePopoverOpen} onOpenChange={setStartDatePopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !startDate && "text-muted-foreground",
+                          theme === "dark" ? "bg-background border-border" : "bg-white border-gray-300"
+                        )}
+                      >
+                        <Calendar className="mr-2 h-4 w-4" />
+                        {startDate ? format(new Date(startDate), "MMM dd, yyyy") : "Pick a date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className={`w-auto p-0 ${theme === "dark" ? "bg-card border-border" : "bg-white"}`}>
+                      <CalendarComponent
+                        mode="single"
+                        selected={startDate ? new Date(startDate) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            const dateStr = format(date, "yyyy-MM-dd");
+                            setStartDate(dateStr);
+                            setStartDatePopoverOpen(false);
+                          }
+                        }}
+                        disabled={(date) => date > new Date()}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <div>
-                <label htmlFor="dean-filter-person" className={`block text-sm font-medium mb-2 ${theme === "dark" ? "text-foreground" : "text-gray-700"}`}>
-                    Select
-                </label>
-                <Select value={selectedPersonId || ""} onValueChange={(value) => setSelectedPersonId(value || null)}>
-                    <SelectTrigger className={`w-full md:w-[180px] ${theme === "dark" ? "bg-background border-border" : "bg-white border-gray-300"}`}>
-                    <SelectValue placeholder={selectedRole === "hod" ? "Select hod" : "Select admin"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                    {selectedRole === "hod" && hodList.map((h: any) => (
-                        <SelectItem key={h.id} value={h.id}>
-                        {h.name} {h.branch ? `• ${h.branch}` : ""}
-                        </SelectItem>
-                    ))}
-                    {selectedRole === "admin" && adminList.map((a: any) => (
-                        <SelectItem key={a.id} value={a.id}>
-                        {a.name}
-                        </SelectItem>
-                    ))}
-                    </SelectContent>
-                </Select>
+                  <label htmlFor="modal-end-date" className={`block text-sm font-medium mb-2 ${theme === "dark" ? "text-foreground" : "text-gray-700"}`}>
+                    End Date
+                  </label>
+                  <Popover open={endDatePopoverOpen} onOpenChange={setEndDatePopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !endDate && "text-muted-foreground",
+                          theme === "dark" ? "bg-background border-border" : "bg-white border-gray-300"
+                        )}
+                      >
+                        <Calendar className="mr-2 h-4 w-4" />
+                        {endDate ? format(new Date(endDate), "MMM dd, yyyy") : "Pick a date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className={`w-auto p-0 ${theme === "dark" ? "bg-card border-border" : "bg-white"}`}>
+                      <CalendarComponent
+                        mode="single"
+                        selected={endDate ? new Date(endDate) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            const dateStr = format(date, "yyyy-MM-dd");
+                            setEndDate(dateStr);
+                            setEndDatePopoverOpen(false);
+                          }
+                        }}
+                        disabled={(date) => date > new Date()}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
-            </div>
-
-          {/* Right Side: Date Range & Clear */}
-          <div className="flex gap-4 items-end flex-wrap">
-            {/* Date Filter Button */}
-            <div>
-              <label className={`block text-sm font-medium ${theme === "dark" ? "text-foreground" : "text-gray-700"}`}>
-                Date Range to filter
-              </label>
-              <button
-                onClick={() => setIsDateModalOpen(true)}
-                disabled={!selectedPersonId}
-                className={`mt-1 px-4 py-2 rounded-md flex items-center gap-2 transition-all ${
-                  !selectedPersonId
-                    ? theme === "dark"
-                      ? "bg-muted border border-border text-muted-foreground cursor-not-allowed opacity-50"
-                      : "bg-gray-50 border border-gray-200 text-gray-400 cursor-not-allowed opacity-50"
-                    : theme === "dark"
-                    ? "bg-background border border-border text-foreground hover:bg-accent cursor-pointer"
-                    : "border border-gray-300 bg-white text-gray-900 hover:bg-gray-50 cursor-pointer"
-                }`}
-              >
-                <Calendar size={16} />
-                {startDate && endDate
-                  ? `${startDate} to ${endDate}`
-                  : "Select dates"}
-              </button>
-            </div>
-
-            <button
-              onClick={() => {
-                setStartDate("");
-                setEndDate("");
-                fetchData();
-              }}
-              className={`px-4 py-2 rounded-md focus:outline-none focus:ring-2 h-fit ${theme === "dark" ? "bg-muted text-foreground hover:bg-accent focus:ring-border" : "bg-gray-100 text-gray-800 hover:bg-gray-200 focus:ring-gray-300"}`}
-            >
-              Clear
-            </button>
-          </div>
-        </div>
-
-        {isMonthly && (
-          <div className={`mt-2 text-sm ${theme === "dark" ? "text-muted-foreground" : "text-gray-600"}`}>
-            Showing data from {data.summary.period.start_date} to {data.summary.period.end_date} ({data.summary.period.total_days} days)
-          </div>
-        )}
-      </div>
-
-      {/* Date Filter Modal */}
-      <Dialog open={isDateModalOpen} onOpenChange={setIsDateModalOpen}>
-        <DialogContent className={`${theme === "dark" ? "bg-card border-border" : "bg-white border-gray-200"}`}>
-          <DialogHeader>
-            <DialogTitle className={theme === "dark" ? "text-foreground" : "text-gray-900"}>
-              Select Date Range
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div>
-              <label htmlFor="modal-start-date" className={`block text-sm font-medium mb-2 ${theme === "dark" ? "text-foreground" : "text-gray-700"}`}>
-                Start Date
-              </label>
-              <Popover open={startDatePopoverOpen} onOpenChange={setStartDatePopoverOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !startDate && "text-muted-foreground",
-                      theme === "dark" ? "bg-background border-border" : "bg-white border-gray-300"
-                    )}
-                  >
-                    <Calendar className="mr-2 h-4 w-4" />
-                    {startDate ? format(new Date(startDate), "MMM dd, yyyy") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className={`w-auto p-0 ${theme === "dark" ? "bg-card border-border" : "bg-white"}`}>
-                  <CalendarComponent
-                    mode="single"
-                    selected={startDate ? new Date(startDate) : undefined}
-                    onSelect={(date) => {
-                      if (date) {
-                        const dateStr = format(date, "yyyy-MM-dd");
-                        setStartDate(dateStr);
-                        setStartDatePopoverOpen(false);
-                      }
-                    }}
-                    disabled={(date) => date > new Date()}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-
-            <div>
-              <label htmlFor="modal-end-date" className={`block text-sm font-medium mb-2 ${theme === "dark" ? "text-foreground" : "text-gray-700"}`}>
-                End Date
-              </label>
-              <Popover open={endDatePopoverOpen} onOpenChange={setEndDatePopoverOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !endDate && "text-muted-foreground",
-                      theme === "dark" ? "bg-background border-border" : "bg-white border-gray-300"
-                    )}
-                  >
-                    <Calendar className="mr-2 h-4 w-4" />
-                    {endDate ? format(new Date(endDate), "MMM dd, yyyy") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className={`w-auto p-0 ${theme === "dark" ? "bg-card border-border" : "bg-white"}`}>
-                  <CalendarComponent
-                    mode="single"
-                    selected={endDate ? new Date(endDate) : undefined}
-                    onSelect={(date) => {
-                      if (date) {
-                        const dateStr = format(date, "yyyy-MM-dd");
-                        setEndDate(dateStr);
-                        setEndDatePopoverOpen(false);
-                      }
-                    }}
-                    disabled={(date) => date > new Date()}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-
-          <DialogFooter className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setIsDateModalOpen(false)}
-              className={theme === "dark" ? "border-border text-foreground" : "border-gray-300 text-gray-700"}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                handleFilter();
-                setIsDateModalOpen(false);
-              }}
-              className="bg-primary hover:bg-primary/90 text-white"
-            >
-              Apply
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {selectedPersonId && selectedPersonSummary && (
-        <div className={`mt-4 p-4 rounded-lg shadow ${theme === "dark" ? "bg-card border border-border" : "bg-white border border-gray-200"}`}>
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <div className={`text-sm ${theme === "dark" ? "text-muted-foreground" : "text-gray-500"}`}>Selected</div>
-              <div className="text-lg font-semibold">
-                {(selectedRole === "hod"
-                  ? hodList.find((h: any) => h.id === selectedPersonId)?.name
-                  : adminList.find((a: any) => a.id === selectedPersonId)?.name) || "Selected Person"}
               </div>
-              <div className={`text-sm ${theme === "dark" ? "text-muted-foreground" : "text-gray-500"}`}>
-                {selectedRole === "hod"
-                  ? hodList.find((h: any) => h.id === selectedPersonId)?.branch
-                  : adminList.find((a: any) => a.id === selectedPersonId)?.email || adminList.find((a: any) => a.id === selectedPersonId)?.mobile}
+
+              <DialogFooter className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDateModalOpen(false)}
+                  className={theme === "dark" ? "border-border text-foreground" : "border-gray-300 text-gray-700"}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    handleFilter();
+                    setIsDateModalOpen(false);
+                  }}
+                  className="bg-primary hover:bg-primary/90 text-white"
+                >
+                  Apply
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {selectedPersonId && selectedPersonSummary && (
+            <div className={`mt-4 p-4 rounded-lg shadow ${theme === "dark" ? "bg-card border border-border" : "bg-white border border-gray-200"}`}>
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <div className={`text-sm ${theme === "dark" ? "text-muted-foreground" : "text-gray-500"}`}>Selected</div>
+                  <div className="text-lg font-semibold">
+                    {(selectedRole === "hod"
+                      ? hodList.find((h: any) => h.id === selectedPersonId)?.name
+                      : adminList.find((a: any) => a.id === selectedPersonId)?.name) || "Selected Person"}
+                  </div>
+                  <div className={`text-sm ${theme === "dark" ? "text-muted-foreground" : "text-gray-500"}`}>
+                    {selectedRole === "hod"
+                      ? hodList.find((h: any) => h.id === selectedPersonId)?.branch
+                      : adminList.find((a: any) => a.id === selectedPersonId)?.email || adminList.find((a: any) => a.id === selectedPersonId)?.mobile}
+                  </div>
+                </div>
+                <div className={`text-sm text-right ${theme === "dark" ? "text-muted-foreground" : "text-gray-500"}`}>
+                  <div>Range days</div>
+                  <div className="text-lg font-semibold">{selectedPersonSummary?.total_days ?? (isMonthly ? data.summary.period.total_days : "-")}</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                <div className={`p-4 rounded-lg border shadow-sm ${theme === 'dark' ? 'bg-blue-900/10 border-blue-900/20' : 'bg-blue-50 border-blue-100'}`}>
+                  <div className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>Weekly Hours</div>
+                  <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-blue-100' : 'text-blue-900'}`}>{selectedPersonSummary?.weekly_hours ?? 0}</div>
+                </div>
+                <div className={`p-4 rounded-lg border shadow-sm ${theme === 'dark' ? 'bg-green-900/10 border-green-900/20' : 'bg-green-50 border-green-100'}`}>
+                  <div className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>Present Days</div>
+                  <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-green-100' : 'text-green-900'}`}>{selectedPersonSummary?.present_days ?? 0}</div>
+                </div>
+                <div className={`p-4 rounded-lg border shadow-sm ${theme === 'dark' ? 'bg-red-900/10 border-red-900/20' : 'bg-red-50 border-red-100'}`}>
+                  <div className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>Absent Days</div>
+                  <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-red-100' : 'text-red-900'}`}>{selectedPersonSummary?.absent_days ?? 0}</div>
+                </div>
+                <div className={`p-4 rounded-lg border shadow-sm ${theme === 'dark' ? 'bg-purple-900/10 border-purple-900/20' : 'bg-purple-50 border-purple-100'}`}>
+                  <div className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`}>Attendance %</div>
+                  <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-purple-100' : 'text-purple-900'}`}>{selectedPersonSummary?.percent_present ?? "N/A"}</div>
+                </div>
+                <div className={`p-4 rounded-lg border shadow-sm ${theme === 'dark' ? 'bg-yellow-900/10 border-yellow-900/20' : 'bg-yellow-50 border-yellow-100'}`}>
+                  <div className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'}`}>Leave Days</div>
+                  <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-yellow-100' : 'text-yellow-900'}`}>{selectedPersonSummary?.leave_days ?? 0}</div>
+                </div>
+                <div className={`p-4 rounded-lg border shadow-sm ${theme === 'dark' ? 'bg-amber-900/10 border-amber-900/20' : 'bg-amber-50 border-amber-100'}`}>
+                  <div className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-amber-400' : 'text-amber-600'}`}>Unmarked Days</div>
+                  <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-amber-100' : 'text-amber-900'}`}>{selectedPersonSummary?.unmarked_days ?? 0}</div>
+                </div>
               </div>
             </div>
-            <div className={`text-sm text-right ${theme === "dark" ? "text-muted-foreground" : "text-gray-500"}`}>
-              <div>Range days</div>
-              <div className="text-lg font-semibold">{selectedPersonSummary?.total_days ?? (isMonthly ? data.summary.period.total_days : "-")}</div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
-            <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-100">
-              <div className="text-sm text-blue-600">Weekly Hours</div>
-              <div className="text-2xl font-bold text-blue-900">{selectedPersonSummary?.weekly_hours ?? 0}</div>
-            </div>
-            <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg border border-green-100">
-              <div className="text-sm text-green-600">Present Days</div>
-              <div className="text-2xl font-bold text-green-900">{selectedPersonSummary?.present_days ?? 0}</div>
-            </div>
-            <div className="p-4 bg-gradient-to-br from-red-50 to-red-100 rounded-lg border border-red-100">
-              <div className="text-sm text-red-600">Absent Days</div>
-              <div className="text-2xl font-bold text-red-900">{selectedPersonSummary?.absent_days ?? 0}</div>
-            </div>
-            <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg border border-purple-100">
-              <div className="text-sm text-purple-600">Attendance %</div>
-              <div className="text-2xl font-bold text-purple-900">{selectedPersonSummary?.percent_present ?? "N/A"}</div>
-            </div>
-            <div className="p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg border border-yellow-100">
-              <div className="text-sm text-yellow-600">Leave Days</div>
-              <div className="text-2xl font-bold text-yellow-900">{selectedPersonSummary?.leave_days ?? 0}</div>
-            </div>
-            <div className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg border border-amber-100">
-              <div className="text-sm text-amber-600">Unmarked Days</div>
-              <div className="text-2xl font-bold text-amber-900">{selectedPersonSummary?.unmarked_days ?? 0}</div>
-            </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
     </div>
   );
