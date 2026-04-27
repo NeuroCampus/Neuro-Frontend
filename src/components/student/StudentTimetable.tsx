@@ -12,7 +12,7 @@ import { useTheme } from "@/context/ThemeContext";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import styles from './StudentTimetable.module.css';
-im
+
 const StudentTimetable = () => {
   const [timetableData, setTimetableData] = useState<TimetableEntry[]>([]);
   const { theme } = useTheme();

@@ -10,8 +10,8 @@ import ApplyLeave from "../faculty/ApplyLeave";
 import AttendanceRecords from "../faculty/AttendanceRecords";
 import ProctorStudents from "../faculty/ProctorStudents";
 import ExamApplication from "../faculty/ExamApplication";
-import Revaluation from "../../pages/Revaluation";
-import MakeupExam from "../../pages/MakeupExam";
+import Revaluation from "../common/Revaluation";
+import MakeupExam from "../common/MakeupExam";
 import ManageStudentLeave from "../faculty/ManageStudentLeave";
 import Timetable from "../faculty/Timetable";
 import Chat from "../common/Chat";
@@ -60,7 +60,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       'apply-leave': 'apply-leave',
       'attendance-records': 'attendance-records',
       'faculty-attendance': 'faculty-attendance',
-      'announcements': 'announcements',
+      'announcements': 'faculty-announcement-management',
       'proctor-students': 'proctor-students',
       'exam-applications': 'exam-applications',
       'student-leave': 'student-leave',
@@ -76,7 +76,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
     pathMap['revaluation'] = 'revaluation';
     pathMap['makeupexam'] = 'makeupexam';
     pathMap['study-materials'] = 'study-materials';
-    pathMap['faculty-announcement-management'] = 'announcements';
+    pathMap['faculty-announcement-management'] = 'faculty-announcement-management';
 
     return pathMap[lastPart] || 'dashboard';
   };
@@ -145,7 +145,7 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
   };
 
   const handleNotificationClick = () => {
-    setActivePage("announcements");
+    setActivePage("faculty-announcement-management");
   };
 
   const handleLogout = async () => {
@@ -188,7 +188,6 @@ const FacultyDashboard = ({ user, setPage }: FacultyDashboardProps) => {
       case "faculty-attendance":
         return <FacultyAttendance />;
       case "announcements":
-        return <FacultyAnnouncementManagement />;
       case "faculty-announcement-management":
         return <FacultyAnnouncementManagement />;
       case "proctor-students":

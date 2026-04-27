@@ -846,7 +846,7 @@ const StudentManagement = () => {
       {/* Add Student Manually Form */}
       <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
         <CardHeader>
-          <CardTitle className={`text-lg md:text-base ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Add Student Manually</CardTitle>
+          <CardTitle className={`text-2xl font-semibold leading-none tracking-tight text-gray-900 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Add Student Manually</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-3">

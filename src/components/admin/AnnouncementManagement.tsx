@@ -45,7 +45,7 @@ import {
   Announcement,
   CreateAnnouncementRequest,
 } from "@/utils/announcements_api";
-import AnnouncementSections from "@/components/announcements/AnnouncementSections";
+import AnnouncementSections from "@/components/common/AnnouncementSections";
 
 const AdminAnnouncementManagement = () => {
   const [myAnnouncements, setMyAnnouncements] = useState<Announcement[]>([]);

@@ -42,7 +42,7 @@ import {
   Announcement,
   CreateAnnouncementRequest,
 } from "@/utils/announcements_api";
-import AnnouncementSections from "@/components/announcements/AnnouncementSections";
+import AnnouncementSections from "@/components/common/AnnouncementSections";
 
 const HODAnnouncementManagement = () => {
   const [myAnnouncements, setMyAnnouncements] = useState<Announcement[]>([]);
@@ -204,7 +204,7 @@ const HODAnnouncementManagement = () => {
   const roles = ["student", "faculty"];
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6">
+    <div className="w-full max-w-none mx-auto space-y-6">
       <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 gap-4">
           <div className="space-y-1">

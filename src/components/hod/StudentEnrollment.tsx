@@ -262,7 +262,7 @@ const StudentEnrollment = () => {
   };
 
   return (
-    <div className="w-full mx-auto lg:max-w-7xl">
+    <div className="w-full mx-auto max-w-none">
       <Card className="shadow-lg">
         <CardHeader className="pb-4 md:pb-2 lg:pb-4">
           <CardTitle className="text-2xl font-semibold leading-none tracking-tight text-gray-900">Student Enrollment (Elective / Open Elective)</CardTitle>

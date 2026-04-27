@@ -158,7 +158,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           }`}
           initial={isNoAnimation ? false : { opacity: 0, y: 20 }}
           animate={isNoAnimation ? false : { opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
+          transition={{ duration: 0.2 }}
         >
           {/* Page Header */}
           
@@ -184,7 +184,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           {isNoAnimation ? (
             <div className="h-full w-full">{children}</div>
           ) : (
-            <AnimatePresence mode="wait">{children}</AnimatePresence>
+            <AnimatePresence mode="popLayout">{children}</AnimatePresence>
           )}
         </motion.main>
       </div>

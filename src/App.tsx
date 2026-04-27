@@ -2,13 +2,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense, useState, useEffect } from "react";
-import Index from "./pages/Index";
+import Index from "./components/common/Index";
 
 // Lazy loaded components
-const NotFound = lazy(() => import("./pages/NotFound"));
-const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
-const PaymentCancel = lazy(() => import("./pages/PaymentCancel"));
-const ResultsView = lazy(() => import("./pages/ResultsView"));
+const NotFound = lazy(() => import("./components/common/NotFound"));
+const PaymentSuccess = lazy(() => import("./components/common/PaymentSuccess"));
+const PaymentCancel = lazy(() => import("./components/common/PaymentCancel"));
+const ResultsView = lazy(() => import("./components/common/ResultsView"));
 const StudentDashboard = lazy(() => import("./components/dashboards/StudentDashboard"));
 const AdminDashboard = lazy(() => import("./components/dashboards/AdminDashboard"));
 const HODDashboard = lazy(() => import("./components/dashboards/HODDashboard"));
@@ -17,12 +17,12 @@ const COEDashboard = lazy(() => import("./components/dashboards/COEDashboard"));
 const FeesManagerDashboard = lazy(() => import("./components/FeesManager/FeesManagerDashboard"));
 const DeanDashboard = lazy(() => import("./components/dashboards/DeanDashboard"));
 const HMSDashboard = lazy(() => import("./components/dashboards/HMSDashboard"));
-const Onboarding = lazy(() => import("./pages/Onboarding"));
-const Pricing = lazy(() => import("./pages/Pricing"));
+const Onboarding = lazy(() => import("./components/common/Onboarding"));
+const Pricing = lazy(() => import("./components/common/Pricing"));
 const FloatingAssistant = lazy(() => import("./components/common/FloatingAssistant"));
 const AIInterview = lazy(() => import("./components/common/AIInterview"));
-const TrialExpired = lazy(() => import("./pages/TrialExpired"));
-const OnboardingSuccess = lazy(() => import("./pages/OnboardingSuccess"));
+const TrialExpired = lazy(() => import("./components/common/TrialExpired"));
+const OnboardingSuccess = lazy(() => import("./components/common/OnboardingSuccess"));
 
 import { shouldShowFloatingAssistant } from "./utils/config";
 

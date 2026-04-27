@@ -246,7 +246,7 @@ const LeaveRequests = () => {
             
             {/* Title */}
             <div className="space-y-0.5 sm:space-y-1 lg:space-y-2">
-              <Label htmlFor="title" className={`text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Title <span className="text-red-500">*</span></Label>
+              <Label htmlFor="title" className={`text-lg sm:text-lg font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Title <span className="text-red-500">*</span></Label>
               <input
                 id="title"
                 type="text"
