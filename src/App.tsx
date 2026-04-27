@@ -23,6 +23,7 @@ const FloatingAssistant = lazy(() => import("./components/common/FloatingAssista
 const AIInterview = lazy(() => import("./components/common/AIInterview"));
 const TrialExpired = lazy(() => import("./pages/TrialExpired"));
 const OnboardingSuccess = lazy(() => import("./pages/OnboardingSuccess"));
+const SuperAdminIndex = lazy(() => import("./superadmin/index"));
 
 import { shouldShowFloatingAssistant } from "./utils/config";
 
@@ -134,6 +135,7 @@ const App = () => {
 
         {/* Onboarding routes */}
         <Route path="/neurocampus" element={<Pricing />} />
+        <Route path="/neurocampus/admin/*" element={<SuperAdminIndex />} />
         <Route path="/neurocampus/:plan" element={<Onboarding />} />
         <Route path="/onboarding/success" element={<OnboardingSuccess />} />
         <Route path="/trial-expired" element={<TrialExpired />} />
