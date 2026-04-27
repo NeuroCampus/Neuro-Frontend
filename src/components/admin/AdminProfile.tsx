@@ -479,7 +479,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
               <Table>
                 <TableHeader className={theme === 'dark' ? 'bg-zinc-900/50' : 'bg-gray-50'}>
                   <TableRow>
-                    <TableHead className="w-[150px]">Date</TableHead>
+                    <TableHead className="w-[180px]">Date</TableHead>
                     <TableHead>Plan</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Transaction ID</TableHead>
@@ -491,7 +491,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
                   {subscriptionData.payments && subscriptionData.payments.length > 0 ? (
                     subscriptionData.payments.map((p: any) => (
                       <TableRow key={p.id}>
-                        <TableCell className="font-medium text-xs sm:text-sm">
+                        <TableCell className="font-medium text-xs sm:text-sm whitespace-nowrap">
                           {format(new Date(p.date), 'dd MMM yyyy')}
                         </TableCell>
                         <TableCell className="uppercase text-xs font-semibold text-muted-foreground">
