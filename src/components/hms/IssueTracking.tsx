@@ -227,28 +227,24 @@ const IssueTracking = ({ hostelId }: { hostelId: number }) => {
           value={totalCount}
           description="Total raised this month"
           icon={<MessageSquare className="w-5 h-5" />}
-          color="blue"
         />
         <DashboardCard
           title="Pending"
           value={issues.filter(i => i.status === 'pending').length}
           description="Awaiting warden review"
           icon={<AlertTriangle className="w-5 h-5" />}
-          color="yellow"
         />
         <DashboardCard
           title="In Progress"
           value={issues.filter(i => i.status === 'in_progress').length}
           description="Being handled"
           icon={<Clock className="w-5 h-5" />}
-          color="purple"
         />
         <DashboardCard
           title="Resolved"
           value={issues.filter(i => i.status === 'completed').length}
           description="Marked as completed"
           icon={<CheckCircle className="w-5 h-5" />}
-          color="green"
         />
       </div>
 

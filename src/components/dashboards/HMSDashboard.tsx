@@ -12,8 +12,6 @@ import {
   StaffManagementOverview, 
   MenuManagement, 
   IssueTracking,
-  MessBillingView,
-  CourseManagement,
   StudentMealManagement
 } from "../hms";
 import { useToast } from "../../hooks/use-toast";
@@ -107,8 +105,6 @@ const HMSDashboard = ({ user, setPage }: HMSDashboardProps) => {
           {activePage === 'enrollment' && <Enrollment />}
           {activePage === 'staff' && <StaffManagementOverview />}
           {activePage === 'menu-management' && <MenuManagement />}
-          {activePage === 'mess-billing' && <MessBillingView />}
-          {activePage === 'courses' && <CourseManagement />}
           {activePage === 'student-meals' && <StudentMealManagement />}
           {activePage === 'issues' && selectedHostelId && <IssueTracking hostelId={selectedHostelId} />}
           {activePage === 'issues' && !selectedHostelId && !loading && (
