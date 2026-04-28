@@ -497,6 +497,7 @@ const HODAnnouncementManagement = () => {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </>
   );
 };
 

@@ -62,6 +62,7 @@ const TakeAttendance = () => {
   const [subjectType, setSubjectType] = useState<string | null>(null);
   const [processingAI, setProcessingAI] = useState(false);
   const [lastBootstrapParams, setLastBootstrapParams] = useState<any>(null);
+  const [attendanceDate, setAttendanceDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
   // Simple debounced value hook to avoid rapid-fire API calls when user changes selections
   const useDebounced = <T,>(value: T, delay = 300) => {
@@ -180,7 +181,7 @@ const TakeAttendance = () => {
 
     // CASE 0: Elective (Branch + Semester + Subject, section optional)
     if (debouncedSubjectId && debouncedBranchId && debouncedSemesterId && subjectType === 'elective') {
-      runLoader(getStudentsForElective, { subject_id: debouncedSubjectId, branch_id: debouncedBranchId, semester_id: debouncedSemesterId, section_id: debouncedSectionId, page: debouncedPage, page_size: debouncedPageSize });
+      runLoader(getStudentsForElective, { subject_id: debouncedSubjectId, branch_id: debouncedBranchId, semester_id: debouncedSemesterId, section_id: debouncedSectionId, page: debouncedPage, page_size: debouncedPageSize, date: attendanceDate });
       return;
     }
 
@@ -204,7 +205,7 @@ const TakeAttendance = () => {
 
       // Regular subject: call regular loader
       const loader = getStudentsForRegular;
-      runLoader(loader, { subject_id: debouncedSubjectId, branch_id: debouncedBranchId, page: debouncedPage, page_size: debouncedPageSize });
+      runLoader(loader, { subject_id: debouncedSubjectId, branch_id: debouncedBranchId, page: debouncedPage, page_size: debouncedPageSize, date: attendanceDate });
       return;
     }
 
@@ -221,17 +222,17 @@ const TakeAttendance = () => {
 
       // Regular subject: call regular loader
       const loader = getStudentsForRegular;
-      runLoader(loader, { subject_id: debouncedSubjectId, branch_id: debouncedBranchId, semester_id: debouncedSemesterId, page: debouncedPage, page_size: debouncedPageSize });
+      runLoader(loader, { subject_id: debouncedSubjectId, branch_id: debouncedBranchId, semester_id: debouncedSemesterId, page: debouncedPage, page_size: debouncedPageSize, date: attendanceDate });
       return;
     }
 
     // CASE 3: Section-specific class (Subject + Branch + Semester + Section)
     if (debouncedSubjectId && debouncedBranchId && debouncedSemesterId && debouncedSectionId) {
       const loader = subjectType === 'regular' || !subjectType ? getStudentsForRegular : (subjectType === 'elective' ? getStudentsForElective : getStudentsForOpenElective);
-      runLoader(loader, { subject_id: debouncedSubjectId, branch_id: debouncedBranchId, semester_id: debouncedSemesterId, section_id: debouncedSectionId, page: debouncedPage, page_size: debouncedPageSize }, subjectType === 'regular');
+      runLoader(loader, { subject_id: debouncedSubjectId, branch_id: debouncedBranchId, semester_id: debouncedSemesterId, section_id: debouncedSectionId, page: debouncedPage, page_size: debouncedPageSize, date: attendanceDate }, subjectType === 'regular');
       return;
     }
-  }, [debouncedSubjectId, debouncedBranchId, debouncedSemesterId, debouncedSectionId, debouncedPage, debouncedPageSize]);
+  }, [debouncedSubjectId, debouncedBranchId, debouncedSemesterId, debouncedSectionId, debouncedPage, debouncedPageSize, attendanceDate]);
 
   // When subject changes, reset branch/semester/section selections
   useEffect(() => {
@@ -478,6 +479,7 @@ const TakeAttendance = () => {
       if (branchId) data.branch_id = branchId.toString();
       if (semesterId) data.semester_id = semesterId.toString();
       if (sectionId) data.section_id = sectionId.toString();
+      if (attendanceDate) data.date = attendanceDate;
       const res = await takeAttendance(data);
       if (res.success) {
         toast({
@@ -518,6 +520,7 @@ const TakeAttendance = () => {
         section_id: sectionId.toString(),
         subject_id: subjectId.toString(),
         photo: aiPhoto,
+        date: attendanceDate,
       });
       if (res.success) {
         setAiResults(res.data);
@@ -581,7 +584,24 @@ const TakeAttendance = () => {
                   {sections.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
+              <input
+                type="date"
+                value={attendanceDate}
+                onChange={e => setAttendanceDate(e.target.value)}
+                className={`flex h-10 w-full rounded-md border px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${theme === 'dark' ? 'bg-background border-input text-foreground' : 'bg-white border-gray-300 text-gray-900'}`}
+              />
             </div>
+
+            {recentRecords.length > 0 && (
+              <div className={`p-3 rounded-md flex items-center justify-between ${theme === 'dark' ? 'bg-muted/50 border border-border' : 'bg-blue-50 border border-blue-100'}`}>
+                <div className="text-sm font-medium">
+                  Daily Sessions for {attendanceDate}: <span className="text-primary font-bold">{recentRecords.filter(r => r.date === attendanceDate).length} / 4</span>
+                </div>
+                {recentRecords.filter(r => r.date === attendanceDate).length >= 4 && (
+                  <div className="text-xs text-red-500 font-semibold animate-pulse">Daily limit reached!</div>
+                )}
+              </div>
+            )}
 
             <Tabs defaultValue="manual">
               <TabsList className={`inline-flex h-10 items-center justify-start gap-2 rounded-md p-1 overflow-auto ${theme === 'dark' ? 'bg-muted text-muted-foreground' : 'bg-gray-100 text-gray-500'}`}>
@@ -722,7 +742,7 @@ const TakeAttendance = () => {
                         </div>
                         <Button
                           onClick={handleSubmit}
-                          disabled={submitting}
+                          disabled={submitting || recentRecords.filter(r => r.date === attendanceDate).length >= 4}
                           className="w-full sm:w-auto flex items-center justify-center gap-2 text-sm sm:text-base font-medium px-4 py-2 rounded-md transition bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white shadow-md"
                         >
                           {submitting ? (
@@ -781,7 +801,7 @@ const TakeAttendance = () => {
                           </label>
                           <Button
                             onClick={handleAIProcess}
-                            disabled={processingAI || !aiPhoto}
+                            disabled={processingAI || !aiPhoto || recentRecords.filter(r => r.date === attendanceDate).length >= 4}
                             className="w-full sm:w-auto flex items-center justify-center gap-2 bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white"
                           >
                             {processingAI ? (

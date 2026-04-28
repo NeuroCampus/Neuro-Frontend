@@ -457,6 +457,7 @@ const FacultyAnnouncementManagement = () => {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </>
   );
 };
 

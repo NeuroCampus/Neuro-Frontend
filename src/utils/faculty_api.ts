@@ -136,6 +136,7 @@ export interface TakeAttendanceRequest {
   section_id: string;
   semester_id: string;
   method: "manual" | "ai";
+  date?: string; // YYYY-MM-DD
   class_images?: File[];
   attendance?: Array<{ student_id: string; status: boolean }>;
 }
@@ -528,6 +529,7 @@ export const takeAttendance = async (
     formData.append("section_id", data.section_id);
     formData.append("semester_id", data.semester_id);
     formData.append("method", data.method);
+    if (data.date) formData.append("date", data.date);
     if (data.method === "ai" && data.class_images) {
       data.class_images.forEach((file, index) => {
         formData.append(`class_images[${index}]`, file);
@@ -556,6 +558,7 @@ export interface AIAttendanceRequest {
   section_id: string;
   semester_id: string;
   photo: File;
+  date?: string; // YYYY-MM-DD
 }
 
 interface AIAttendanceResponse {
@@ -589,6 +592,7 @@ export const aiAttendance = async (
     formData.append("section_id", data.section_id);
     formData.append("semester_id", data.semester_id);
     formData.append("photo", data.photo);
+    if (data.date) formData.append("date", data.date);
 
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/ai-attendance/`, {
       method: "POST",
