@@ -64,11 +64,11 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
   const [totalCount, setTotalCount] = useState(0);
   const pageSize = 10;
 
-  const fetchData = async (page: number = 1) => {
+  const fetchData = async (page: number = 1, search: string = filter) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await getBranchesWithHODs({ page, page_size: pageSize });
+      const response = await getBranchesWithHODs({ page, page_size: pageSize, search });
       console.log("Combined Branch and HOD Response:", response);
 
       const hasResults = response && typeof response === 'object' && 'results' in response;
@@ -142,34 +142,13 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
   };
 
   useEffect(() => {
-    fetchData(1);
-  }, [setError, toast]);
+    const timer = setTimeout(() => {
+      fetchData(1, filter);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [filter, setError, toast]);
 
-  const filteredBranches = Array.isArray(branches)
-    ? branches
-      .filter((branch) =>
-        normalize(branch?.name || "").includes(normalize(filter))
-      )
-      .sort((a, b) => {
-        const aName = normalize(a.name || "");
-        const bName = normalize(b.name || "");
-        const s = normalize(filter);
-
-        if (aName === s && bName !== s) return -1;
-        if (bName === s && aName !== s) return 1;
-
-        const aStarts = aName.startsWith(s);
-        const bStarts = bName.startsWith(s);
-        if (aStarts && !bStarts) return -1;
-        if (bStarts && !aStarts) return 1;
-
-        const aIndex = aName.indexOf(s);
-        const bIndex = bName.indexOf(s);
-        if (aIndex !== bIndex) return aIndex - bIndex;
-
-        return aName.length - bName.length;
-      })
-    : [];
+  const filteredBranches = branches;
 
   const handleEdit = (branch: Branch) => {
     setEditingId(branch.id);
@@ -573,7 +552,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                 <div className="flex items-center justify-between px-2 py-3 border-t">
                   <div className="flex-1 flex justify-between sm:hidden">
                     <Button
-                      onClick={() => fetchData(currentPage - 1)}
+                      onClick={() => fetchData(currentPage - 1, filter)}
                       disabled={currentPage === 1 || loading}
                       variant="outline"
                       size="sm"
@@ -581,7 +560,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                       Previous
                     </Button>
                     <Button
-                      onClick={() => fetchData(currentPage + 1)}
+                      onClick={() => fetchData(currentPage + 1, filter)}
                       disabled={currentPage === totalPages || loading}
                       variant="outline"
                       size="sm"
@@ -601,7 +580,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                     </div>
                     <div className="flex gap-2">
                       <Button
-                        onClick={() => fetchData(currentPage - 1)}
+                        onClick={() => fetchData(currentPage - 1, filter)}
                         disabled={currentPage === 1 || loading}
                         variant="outline"
                         size="sm"
@@ -613,7 +592,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                         {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                           <Button
                             key={p}
-                            onClick={() => fetchData(p)}
+                            onClick={() => fetchData(p, filter)}
                             variant={currentPage === p ? "default" : "outline"}
                             size="sm"
                             className={`h-8 w-8 p-0 ${currentPage === p ? 'bg-primary text-white shadow-sm' : ''}`}
@@ -624,7 +603,7 @@ const BranchesManagement = ({ setError, toast }: { setError: (error: string | nu
                         ))}
                       </div>
                       <Button
-                        onClick={() => fetchData(currentPage + 1)}
+                        onClick={() => fetchData(currentPage + 1, filter)}
                         disabled={currentPage === totalPages || loading}
                         variant="outline"
                         size="sm"

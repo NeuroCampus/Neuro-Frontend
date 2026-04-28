@@ -458,7 +458,7 @@ const ProctorStudents = () => {
               updateState({ editMode: true });
             }}
             className="text-white bg-primary border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white shadow-sm transition-all duration-200 w-full sm:w-auto"
-            disabled={state.loading}
+            disabled={state.loading || state.filters.semester_id === "all" || state.filters.section_id === "all"}
           >
             Manage Assignments
           </Button>

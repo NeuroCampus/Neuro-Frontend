@@ -1513,6 +1513,7 @@ export const manageSubjects = async (
     if (method === "GET") {
       const params = new URLSearchParams({ branch_id });
       if ((data as any).semester_id) params.append("semester_id", (data as any).semester_id);
+      if ((data as any).subject_type) params.append("subject_type", (data as any).subject_type);
       if ((data as any).page) params.append("page", (data as any).page.toString());
       if ((data as any).page_size) params.append("page_size", (data as any).page_size.toString());
       url = `${API_ENDPOINT}/hod/subjects/?${params.toString()}`;
@@ -2188,13 +2189,15 @@ export const uploadStudyMaterial = async (data: UploadStudyMaterialRequest): Pro
 export const getStudyMaterials = async (
   branch_id?: string,
   semester_id?: string,
-  section_id?: string
+  section_id?: string,
+  search?: string
 ): Promise<GetStudyMaterialsResponse> => {
   try {
     const params = new URLSearchParams();
     if (branch_id) params.append('branch_id', branch_id);
     if (semester_id) params.append('semester_id', semester_id);
     if (section_id) params.append('section_id', section_id);
+    if (search) params.append('search', search);
     const qs = params.toString() ? `?${params.toString()}` : '';
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/study-materials/${qs}`, {
       method: 'GET',

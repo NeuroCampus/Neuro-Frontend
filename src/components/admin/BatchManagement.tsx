@@ -37,6 +37,7 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
   const [editForm, setEditForm] = useState({ start_year: "", end_year: "" });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [batchToDelete, setBatchToDelete] = useState<Batch | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const { theme } = useTheme();
 
   // Pagination states
@@ -45,11 +46,11 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
   const [totalCount, setTotalCount] = useState(0);
   const pageSize = 10;
 
-  const fetchBatches = async (page: number = 1) => {
+  const fetchBatches = async (page: number = 1, search: string = searchQuery) => {
     setLoading(true);
     if (setError) setError(null);
     try {
-      const res = await manageBatches({ page, page_size: pageSize });
+      const res = await manageBatches({ page, page_size: pageSize, search });
       
       // The backend returns a paginated response with a top-level 'results' key
       const hasResults = res && typeof res === 'object' && 'results' in res;
@@ -94,8 +95,11 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
   };
 
   useEffect(() => {
-    fetchBatches(1);
-  }, []);
+    const timer = setTimeout(() => {
+      fetchBatches(1, searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewBatch({ ...newBatch, [e.target.name]: e.target.value });
@@ -318,9 +322,17 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
               Existing Batches
             </CardTitle>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-1">
-              <p className={`block text-sm md:text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                Manage, edit, or delete created batches
-              </p>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <p className={`block text-sm md:text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                  Manage, edit, or delete created batches
+                </p>
+                <Input
+                  placeholder="Search batches..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`h-8 w-full sm:w-48 ${theme === 'dark' ? 'bg-card' : 'bg-gray-50'}`}
+                />
+              </div>
               {totalCount > 0 && (
                 <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${theme === 'dark' ? 'bg-primary/10 text-primary' : 'bg-blue-100 text-blue-800'}`}>
                   Total: {totalCount}
@@ -392,7 +404,7 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
                 <div className="flex items-center justify-between px-2 py-3 border-t">
                   <div className="flex-1 flex justify-between sm:hidden">
                     <Button
-                      onClick={() => fetchBatches(currentPage - 1)}
+                      onClick={() => fetchBatches(currentPage - 1, searchQuery)}
                       disabled={currentPage === 1 || loading}
                       variant="outline"
                       size="sm"
@@ -400,7 +412,7 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
                       Previous
                     </Button>
                     <Button
-                      onClick={() => fetchBatches(currentPage + 1)}
+                      onClick={() => fetchBatches(currentPage + 1, searchQuery)}
                       disabled={currentPage === totalPages || loading}
                       variant="outline"
                       size="sm"
@@ -420,7 +432,7 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
                     </div>
                     <div className="flex gap-2">
                       <Button
-                        onClick={() => fetchBatches(currentPage - 1)}
+                        onClick={() => fetchBatches(currentPage - 1, searchQuery)}
                         disabled={currentPage === 1 || loading}
                         variant="outline"
                         size="sm"
@@ -432,7 +444,7 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
                         {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                           <Button
                             key={p}
-                            onClick={() => fetchBatches(p)}
+                            onClick={() => fetchBatches(p, searchQuery)}
                             variant={currentPage === p ? "default" : "outline"}
                             size="sm"
                             className={`h-8 w-8 p-0 ${currentPage === p ? 'bg-primary text-white shadow-sm' : ''}`}
@@ -443,7 +455,7 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
                         ))}
                       </div>
                       <Button
-                        onClick={() => fetchBatches(currentPage + 1)}
+                        onClick={() => fetchBatches(currentPage + 1, searchQuery)}
                         disabled={currentPage === totalPages || loading}
                         variant="outline"
                         size="sm"
