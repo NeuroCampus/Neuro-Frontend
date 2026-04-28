@@ -135,19 +135,6 @@ const SubmitLeaveRequest = () => {
     try {
       await leaveRequestMutation.mutateAsync(requestData);
 
-      // Optimistically update the local state with the new leave request
-      const newLeaveRequest: LeaveRequest = {
-        id: Date.now(), // Temporary ID until refetch
-        start_date: requestData.start_date,
-        end_date: requestData.end_date,
-        title: requestData.title,
-        reason: requestData.reason,
-        status: 'PENDING',
-        submitted_at: new Date().toISOString(),
-      };
-
-      setLeaves(prevLeaves => [newLeaveRequest, ...prevLeaves]);
-
       // Show success toast and a subtle modal for confirmation
       toast({ title: 'Leave Request Submitted', description: 'Your request was submitted successfully.' });
 
@@ -166,9 +153,6 @@ const SubmitLeaveRequest = () => {
       setDateRange(undefined);
       setTitle("");
       setReason("");
-
-      // Refetch in the background to get the real data from server
-      refetchLeaves();
 
       // Scroll to the leave status list to show the newly created request
       const el = document.getElementById('leave-status-list');

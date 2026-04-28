@@ -360,6 +360,7 @@ export const useStudentProfileUpdateMutation = () => {
 
 // Optimistic Leave Request Submission
 export const useStudentLeaveRequestMutation = () => {
+  const queryClient = useQueryClient();
   return useOptimisticUpdate(
     async (data: SubmitLeaveRequestRequest) => {
       const response = await submitLeaveRequest(data);
@@ -375,13 +376,30 @@ export const useStudentLeaveRequestMutation = () => {
         id: `temp-${Date.now()}`,
         start_date: newData.start_date,
         end_date: newData.end_date,
+        title: newData.title || 'N/A',
         reason: newData.reason,
         status: 'PENDING',
         submitted_at: new Date().toISOString(),
       };
-      return oldData ? [...oldData, optimisticLeave] : [optimisticLeave];
+      return oldData ? [optimisticLeave, ...oldData] : [optimisticLeave];
     }
-    , { refetchOnSettled: false }
+    , { 
+        refetchOnSettled: false,
+        onSuccess: (response) => {
+          if (response.success && response.leave_request) {
+            queryClient.setQueryData(['studentLeaveRequests'], (oldData: any) => {
+              if (!oldData) return [response.leave_request];
+              // Replace the most recent temporary entry with the actual response
+              const newData = [...oldData];
+              const tempIndex = newData.findIndex(item => item.id.toString().startsWith('temp-'));
+              if (tempIndex !== -1) {
+                newData[tempIndex] = response.leave_request;
+              }
+              return newData;
+            });
+          }
+        }
+      }
   );
 };
 

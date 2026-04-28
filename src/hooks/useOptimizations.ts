@@ -164,7 +164,7 @@ export const useOptimisticUpdate = <T,>(
   mutationFn: (data: T) => Promise<any>,
   queryKey: string[],
   optimisticUpdate: (oldData: any, newData: T) => any,
-  options?: { refetchOnSettled?: boolean }
+  options?: { refetchOnSettled?: boolean; onSuccess?: (data: any, variables: T) => void }
 ) => {
   const queryClient = useQueryClient();
 
@@ -189,6 +189,11 @@ export const useOptimisticUpdate = <T,>(
       // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousData) {
         queryClient.setQueryData(queryKey, context.previousData);
+      }
+    },
+    onSuccess: (data, variables) => {
+      if (options?.onSuccess) {
+        options.onSuccess(data, variables);
       }
     },
     onSettled: () => {
