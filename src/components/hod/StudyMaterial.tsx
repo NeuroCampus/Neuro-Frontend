@@ -58,25 +58,22 @@ interface StudyMaterial {
   section_id?: string | null;
 }
 
-// Hook for managing study materials (loads by branch/semester/section)
-const useStudyMaterials = (branchId: string | null, semesterFilter: string, sectionFilter: string, sectionsLoaded: boolean) => {
+// Hook for managing study materials (loads by branch/semester/section/search)
+const useStudyMaterials = (branchId: string | null, semesterFilter: string, sectionFilter: string, searchQuery: string, sectionsLoaded: boolean) => {
   const [studyMaterials, setStudyMaterials] = useState<StudyMaterial[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchMaterials = async () => {
-      // Only fetch when branch, semester and section are explicitly selected
-      // and after page sections have finished loading (so section options are available)
-      if (!branchId || semesterFilter === 'All Semesters' || sectionFilter === 'All Sections' || !sectionsLoaded) {
-        setStudyMaterials([]);
-        setLoading(false);
+      // Allow fetching even if some filters are "All"
+      if (!sectionsLoaded) {
         return;
       }
       setLoading(true);
       try {
         const sem = semesterFilter === 'All Semesters' ? undefined : semesterFilter;
         const sec = sectionFilter === 'All Sections' ? undefined : sectionFilter;
-        const resp = await getStudyMaterials(branchId, sem, sec);
+        const resp = await getStudyMaterials(branchId || undefined, sem, sec, searchQuery);
         if (resp && resp.success && Array.isArray(resp.data)) {
           const mapped = resp.data.map((m: any) => ({
             id: m.id,
@@ -104,8 +101,12 @@ const useStudyMaterials = (branchId: string | null, semesterFilter: string, sect
         setLoading(false);
       }
     };
-    fetchMaterials();
-  }, [branchId, semesterFilter, sectionFilter, sectionsLoaded]);
+    // Debounce search
+    const timer = setTimeout(() => {
+      fetchMaterials();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [branchId, semesterFilter, sectionFilter, searchQuery, sectionsLoaded]);
 
   const addStudyMaterial = (material: StudyMaterial) => {
     setStudyMaterials((s) => [...s, material]);
@@ -245,7 +246,7 @@ const StudyMaterials = () => {
 
   // Pass null when 'All Branches' to hook; but hook expects branch id, so use null to represent none
   const branchIdForHook = selectedBranchFilter === "All Branches" ? null : selectedBranchFilter;
-  const { studyMaterials, addStudyMaterial, loading } = useStudyMaterials(branchIdForHook, semesterFilter, selectedSectionFilter, pageSectionsLoaded);
+  const { studyMaterials, addStudyMaterial, loading } = useStudyMaterials(branchIdForHook, semesterFilter, selectedSectionFilter, searchQuery, pageSectionsLoaded);
   const {
     showUploadModal,
     setShowUploadModal,
@@ -472,18 +473,9 @@ const StudyMaterials = () => {
     }
   };
 
-  // Filter materials
-  const filteredMaterials = studyMaterials.filter(
-    (material) =>
-        (material.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        material.subject_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        material.subject_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (material.semester_id || "").toString().includes(searchQuery.toLowerCase()) ||
-        material.uploaded_by.toLowerCase().includes(searchQuery.toLowerCase())) &&
-        (semesterFilter === "All Semesters" || material.semester_id === semesterFilter) &&
-        (selectedBranchFilter === "All Branches" || material.branch === selectedBranchFilter || material.branch_id === selectedBranchFilter) &&
-        (selectedSectionFilter === "All Sections" || (material as any).section_id === selectedSectionFilter)
-  );
+  // Since we are doing server-side search/filter, we just use studyMaterials directly
+  // unless we want to do additional client-side filtering
+  const filteredMaterials = studyMaterials;
 
   return (
     <div className="w-full mx-auto max-w-none">

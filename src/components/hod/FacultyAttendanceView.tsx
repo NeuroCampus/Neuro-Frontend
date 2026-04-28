@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Calendar, Users, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Calendar, Users, CheckCircle, XCircle, Clock, FileDown } from "lucide-react";
 import { getFacultyAttendanceToday, getFacultyAttendanceRecords } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
 import { SkeletonCard, SkeletonTable } from "../ui/skeleton";
 import Swal from "sweetalert2";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface FacultyAttendanceTodayRecord {
   id: string;
@@ -193,6 +195,68 @@ const FacultyAttendanceView: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleExportTodayPDF = () => {
+    const doc = new jsPDF();
+    const todayStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    
+    doc.setFontSize(18);
+    doc.text("Today's Faculty Attendance Report", 14, 20);
+    doc.setFontSize(12);
+    doc.text(`Date: ${todayStr}`, 14, 30);
+    doc.text(`Total Faculty: ${todaySummary.total_faculty} | Present: ${todaySummary.present} | Absent: ${todaySummary.absent}`, 14, 37);
+
+    const tableColumn = ["Faculty Name", "Status", "Marked At", "Notes"];
+    const tableRows = todayAttendance.map((record) => [
+      record.faculty_name,
+      record.status,
+      record.marked_at ? new Date(record.marked_at).toLocaleString() : 'Not marked',
+      record.notes || '-'
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 45,
+      theme: 'grid',
+      headStyles: { fillColor: [66, 133, 244] }
+    });
+
+    doc.save(`Faculty_Attendance_Today_${todayStr.replace(/ /g, '_')}.pdf`);
+  };
+
+  const handleExportRecordsPDF = () => {
+    if (facultySummary.length === 0) {
+      Swal.fire("Info", "No records to export", "info");
+      return;
+    }
+
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.text("Faculty Attendance Summary Report", 14, 20);
+    doc.setFontSize(12);
+    doc.text(`Period: ${formatDate(dateRange.start_date)} to ${formatDate(dateRange.end_date)}`, 14, 30);
+
+    const tableColumn = ["Faculty Name", "Total Days", "Present", "Absent", "Percentage"];
+    const tableRows = facultySummary.map((summary) => [
+      summary.name,
+      summary.total_days,
+      summary.present_days,
+      summary.absent_days,
+      `${summary.attendance_percentage.toFixed(1)}%`
+    ]);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 40,
+      theme: 'grid',
+      headStyles: { fillColor: [66, 133, 244] }
+    });
+
+    doc.save(`Faculty_Attendance_Summary_${dateRange.start_date}_to_${dateRange.end_date}.pdf`);
   };
 
   const fetchFacultyDetails = async (faculty: FacultySummary) => {
@@ -392,10 +456,17 @@ const FacultyAttendanceView: React.FC = () => {
 
           {/* Today's Attendance Table */}
           <div className={`rounded-lg shadow-sm ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'} overflow-hidden`}>
-            <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+            <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <h3 className={`text-sm sm:text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                 Today's Faculty Attendance ({new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })})
               </h3>
+              <button
+                onClick={handleExportTodayPDF}
+                className={`flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-all shadow-md text-xs sm:text-sm font-medium`}
+              >
+                <FileDown className="w-4 h-4" />
+                <span>Export PDF</span>
+              </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -561,6 +632,15 @@ const FacultyAttendanceView: React.FC = () => {
                       : 'bg-white border-gray-300 text-gray-900'
                   }`}
                 />
+              </div>
+              <div className="w-full sm:w-auto pt-4 sm:pt-0 ml-auto">
+                <button
+                  onClick={handleExportRecordsPDF}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-all shadow-md text-xs sm:text-sm font-medium"
+                >
+                  <FileDown className="w-4 h-4" />
+                  <span>Export Report</span>
+                </button>
               </div>
             </div>
           </div>

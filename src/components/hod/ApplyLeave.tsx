@@ -101,6 +101,7 @@ const ApplyLeave = () => {
   const [loading, setLoading] = useState(false);
   const [branchId, setBranchId] = useState("");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const today = new Date();
 
@@ -322,10 +323,11 @@ const ApplyLeave = () => {
           {/* Date Range */}
           <div className="space-y-2">
             <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Date Range *</Label>
-            <Popover>
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
+                  onClick={() => setIsCalendarOpen(true)}
                   className={theme === 'dark' ? 'w-full justify-start text-left font-normal bg-background text-foreground border-border hover:bg-accent hover:text-foreground' : 'w-full justify-start text-left font-normal bg-white text-gray-900 border-gray-300 hover:bg-gray-100 hover:text-gray-900'}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
@@ -348,7 +350,19 @@ const ApplyLeave = () => {
                 <Calendar
                   mode="range"
                   selected={dateRange}
-                  onSelect={setDateRange}
+                  onSelect={(range) => {
+                    if (!range && dateRange?.from) {
+                      // If user clicks the same date again, treat it as a single-day range and close
+                      setDateRange({ from: dateRange.from, to: dateRange.from });
+                      setIsCalendarOpen(false);
+                    } else {
+                      setDateRange(range);
+                      // If both from and to are selected, close the popover
+                      if (range?.from && range?.to) {
+                        setIsCalendarOpen(false);
+                      }
+                    }
+                  }}
                   disabled={(date) => date < today} // Disable dates before today
                   initialFocus
                   className={theme === 'dark' ? 'rounded-md bg-background text-foreground [&_.rdp-day:hover]:bg-accent [&_.rdp-day_selected]:bg-primary [&_.rdp-day_selected]:text-primary-foreground [&_.rdp-day_disabled]:opacity-50 [&_.rdp-day_disabled]:cursor-not-allowed' : 'rounded-md bg-white text-gray-900 [&_.rdp-day:hover]:bg-gray-100 [&_.rdp-day_selected]:bg-blue-600 [&_.rdp-day_selected]:text-white [&_.rdp-day_disabled]:opacity-50 [&_.rdp-day_disabled]:cursor-not-allowed'}

@@ -43,6 +43,10 @@ import {
   CreateAnnouncementRequest,
 } from "@/utils/announcements_api";
 import AnnouncementSections from "@/components/common/AnnouncementSections";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+
+const MySwal = withReactContent(Swal);
 
 const HODAnnouncementManagement = () => {
   const [myAnnouncements, setMyAnnouncements] = useState<Announcement[]>([]);
@@ -87,12 +91,24 @@ const HODAnnouncementManagement = () => {
 
   const handleCreateOrUpdate = async () => {
     if (!formData.title.trim() || !formData.message.trim()) {
-      alert("Please fill all required fields");
+      MySwal.fire({
+        title: "Validation Error",
+        text: "Please fill all required fields",
+        icon: "warning",
+        confirmButtonColor: "#9147e0",
+        target: document.body,
+      });
       return;
     }
 
     if (formData.target_roles.length === 0) {
-      alert("Please select at least one target role");
+      MySwal.fire({
+        title: "Validation Error",
+        text: "Please select at least one target role",
+        icon: "warning",
+        confirmButtonColor: "#9147e0",
+        target: document.body,
+      });
       return;
     }
 
@@ -109,24 +125,55 @@ const HODAnnouncementManagement = () => {
           setMyAnnouncements((prev) =>
             prev.map((a) => (a.id === editingId ? response.data : a))
           );
-          alert("Announcement updated successfully");
+          MySwal.fire({
+            title: "Updated",
+            text: "Announcement updated successfully",
+            icon: "success",
+            confirmButtonColor: "#9147e0",
+            target: document.body,
+          });
+          setShowCreateDialog(false);
+          resetForm();
         } else {
-          alert(response.message || "Failed to update announcement");
+          MySwal.fire({
+            title: "Error",
+            text: response.message || "Failed to update announcement",
+            icon: "error",
+            confirmButtonColor: "#9147e0",
+            target: document.body,
+          });
         }
       } else {
         const response = await createAnnouncement(payload);
         if (response.success) {
           setMyAnnouncements((prev) => [response.data, ...prev]);
-          alert("Announcement created successfully");
+          MySwal.fire({
+            title: "Success",
+            text: "Announcement created successfully",
+            icon: "success",
+            confirmButtonColor: "#9147e0",
+            target: document.body,
+          });
+          setShowCreateDialog(false);
+          resetForm();
         } else {
-          alert(response.message || "Failed to create announcement");
+          MySwal.fire({
+            title: "Error",
+            text: response.message || "Failed to create announcement",
+            icon: "error",
+            confirmButtonColor: "#9147e0",
+            target: document.body,
+          });
         }
       }
-
-      setShowCreateDialog(false);
-      resetForm();
     } catch (error: any) {
-      alert(error.message || "An error occurred");
+      MySwal.fire({
+        title: "Error",
+        text: error.message || "An error occurred",
+        icon: "error",
+        confirmButtonColor: "#9147e0",
+        target: document.body,
+      });
     }
   };
 
@@ -151,13 +198,28 @@ const HODAnnouncementManagement = () => {
       const response = await deleteAnnouncement(deletingId);
       if (response.success) {
         setMyAnnouncements((prev) => prev.filter((a) => a.id !== deletingId));
-        alert("Announcement deleted successfully");
+        MySwal.fire({
+          title: "Deleted",
+          text: "Announcement deleted successfully",
+          icon: "success",
+          confirmButtonColor: "#9147e0",
+        });
       } else {
-        alert(response.message || "Failed to delete announcement");
+        MySwal.fire({
+          title: "Error",
+          text: response.message || "Failed to delete announcement",
+          icon: "error",
+          confirmButtonColor: "#9147e0",
+        });
       }
       setDeletingId(null);
     } catch (error: any) {
-      alert(error.message || "An error occurred");
+      MySwal.fire({
+        title: "Error",
+        text: error.message || "An error occurred",
+        icon: "error",
+        confirmButtonColor: "#9147e0",
+      });
     }
   };
 
@@ -169,10 +231,20 @@ const HODAnnouncementManagement = () => {
           prev.map((a) => (a.id === announcementId ? response.data : a))
         );
       } else {
-        alert(response.message || "Failed to toggle announcement");
+        MySwal.fire({
+          title: "Error",
+          text: response.message || "Failed to toggle announcement",
+          icon: "error",
+          confirmButtonColor: "#9147e0",
+        });
       }
     } catch (error: any) {
-      alert(error.message || "An error occurred");
+      MySwal.fire({
+        title: "Error",
+        text: error.message || "An error occurred",
+        icon: "error",
+        confirmButtonColor: "#9147e0",
+      });
     }
   };
 
@@ -204,26 +276,42 @@ const HODAnnouncementManagement = () => {
   const roles = ["student", "faculty"];
 
   return (
-    <div className="w-full max-w-none mx-auto space-y-6">
-      <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 gap-4">
-          <div className="space-y-1">
-            <CardTitle className="text-xl font-semibold">Branch Announcements</CardTitle>
-            <CardDescription className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>
-              Create and manage announcements for your branch
-            </CardDescription>
-          </div>
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button
-                onClick={() => resetForm()}
-                className="w-full sm:w-auto gap-2 bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 transition-all duration-200 shadow-md"
+    <>
+      <style>{`
+        @media (max-width: 480px) {
+          .announcements-container { padding: 12px; }
+          .announcements-card { border-radius: 8px; }
+          .announcements-card-header { padding: 12px; }
+          .announcements-card-title { font-size: 18px; line-height: 1.3; }
+          .announcements-card-desc { font-size: 12px; margin-top: 4px; }
+          .mobile-modal { width: 90vw !important; max-width: 360px !important; padding: 12px !important; border-radius: 12px !important; }
+          .delete-modal { width: 90vw !important; max-width: 320px !important; padding: 16px !important; border-radius: 12px !important; }
+        }
+      `}</style>
+
+      <div className="announcements-container w-full max-w-none mx-auto space-y-6">
+        <Card className={`announcements-card ${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'}`}>
+          <CardHeader className="announcements-card-header flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 gap-4">
+            <div className="space-y-1">
+              <CardTitle className="announcements-card-title text-xl font-semibold">Branch Announcements</CardTitle>
+              <CardDescription className={`announcements-card-desc ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                Create and manage announcements for your branch
+              </CardDescription>
+            </div>
+            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+              <DialogTrigger asChild>
+                <Button
+                  onClick={() => resetForm()}
+                  className="w-full sm:w-auto gap-2 bg-primary text-white border-primary hover:bg-primary/90 hover:border-primary/90 transition-all duration-200 shadow-md"
+                >
+                  <Plus className="w-4 h-4" />
+                  New Announcement
+                </Button>
+              </DialogTrigger>
+              <DialogContent 
+                className="mobile-modal w-[92%] sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl"
+                onInteractOutside={(e) => e.preventDefault()}
               >
-                <Plus className="w-4 h-4" />
-                New Announcement
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="w-[92%] sm:max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl">
               <DialogHeader>
                 <DialogTitle>
                   {editingId ? "Edit Announcement" : "Create Announcement"}
@@ -389,7 +477,7 @@ const HODAnnouncementManagement = () => {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="delete-modal">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Announcement</AlertDialogTitle>
             <AlertDialogDescription>
@@ -409,6 +497,7 @@ const HODAnnouncementManagement = () => {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </>
   );
 };
 

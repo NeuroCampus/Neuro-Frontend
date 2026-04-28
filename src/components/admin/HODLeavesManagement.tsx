@@ -262,13 +262,20 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
   }
 
   return (
-    <div className={`${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-      <Card className={theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}>
-        <CardHeader>
+    <div className={`w-full min-h-full ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <Card className={theme === 'dark' ? 'bg-card border border-border flex flex-col w-full shadow-sm' : 'bg-white border border-gray-200 flex flex-col w-full shadow-sm'}>
+        <CardHeader className="pb-2">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <CardTitle className={`mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Requests</CardTitle>
-              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Review and approve leave requests from Heads of Departments</p>
+              <CardTitle className={`mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Requests</CardTitle>
+              <div className="flex items-center gap-3">
+                <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Review and approve leave requests from Heads of Departments</p>
+                {totalCount > 0 && (
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${theme === 'dark' ? 'bg-primary/20 text-primary' : 'bg-blue-100 text-blue-700'}`}>
+                    {totalCount} Total
+                  </span>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <label className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Month:</label>
@@ -354,10 +361,10 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <div className="overflow-x-auto max-w-full thin-scrollbar">
+        <CardContent className="flex-1 px-2 sm:px-6 pt-2">
+          <div className="border rounded-xl overflow-hidden shadow-sm">
             {/* Mobile: stacked cards */}
-            <div className="md:hidden space-y-3">
+            <div className="md:hidden space-y-3 p-2">
               {Array.isArray(leaveRequests) && leaveRequests.length > 0 ? (
                 leaveRequests.map((leave) => (
                   <div key={leave.id} className={`p-3 rounded-md border ${theme === 'dark' ? 'bg-card border-border text-foreground' : 'bg-white border-gray-200 text-gray-900'}`}>
@@ -396,30 +403,30 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
 
             {/* Desktop / Tablet: table */}
             <table className="hidden md:table w-full text-sm text-left border-collapse">
-              <thead className={`border-b ${theme === 'dark' ? 'border-border bg-card' : 'border-gray-200 bg-gray-50'}`}>
+              <thead className={`sticky top-0 z-10 border-b ${theme === 'dark' ? 'border-border bg-card shadow-sm' : 'border-gray-200 bg-gray-50 shadow-sm'}`}>
                 <tr>
-                  <th className={`py-2 px-2 md:px-4 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>HOD</th>
-                  <th className={`py-2 px-4 md:px-12 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Period</th>
-                  <th className={`py-2 px-2 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Reason</th>
-                  <th className={`py-2 px-2 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Status</th>
-                  <th className={`py-2 px-2 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Action</th>
+                  <th className={`py-3 px-2 md:px-4 text-left font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>HOD</th>
+                  <th className={`py-3 px-4 md:px-12 text-left font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Period</th>
+                  <th className={`py-3 px-2 text-left font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Reason</th>
+                  <th className={`py-3 px-2 text-left font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Status</th>
+                  <th className={`py-3 px-2 text-left font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Action</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-border">
                 {Array.isArray(leaveRequests) && leaveRequests.length > 0 ? (
                   leaveRequests.map((leave) => (
                     <tr
                       key={leave.id}
-                      className={`border-b transition-colors duration-200 ${theme === 'dark' ? 'border-border hover:bg-accent' : 'border-gray-200 hover:bg-gray-50'}`}
+                      className={`transition-colors duration-200 ${theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-50'}`}
                     >
-                      <td className="py-3 px-2 md:px-4">
+                      <td className="py-4 px-2 md:px-4">
                         <div className={`font-medium ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>{leave.name}</div>
                         <div className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{leave.department}</div>
                       </td>
-                      <td className={`py-3 px-2 md:px-4 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+                      <td className={`py-4 px-2 md:px-4 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
                         {leave.from} <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>to</span> {leave.to}
                       </td>
-                      <td className="py-3 px-2 md:px-4 text-sm">
+                      <td className="py-4 px-2 md:px-4 text-sm">
                         <button
                           onClick={() => setViewReason(leave.reason)}
                           className={`text-sm font-medium px-2 py-1 rounded-md ${theme === 'dark' ? 'bg-muted/10 text-foreground border border-border' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'}`}
@@ -427,8 +434,8 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
                           View
                         </button>
                       </td>
-                      <td className="py-3 px-2 md:px-4">{getStatusBadge(leave.status, theme)}</td>
-                      <td className="py-3 px-2 md:px-4">
+                      <td className="py-4 px-2 md:px-4">{getStatusBadge(leave.status, theme)}</td>
+                      <td className="py-4 px-2 md:px-4">
                         {leave.status === "Pending" ? (
                           <div className="flex flex-col md:flex-row gap-2">
                             <Button
@@ -467,7 +474,7 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className={`text-center py-4 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                    <td colSpan={5} className={`text-center py-10 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                       No leave requests available.
                     </td>
                   </tr>

@@ -62,6 +62,10 @@ const QPApprovals = () => {
   const MySwal = withReactContent(Swal);
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
   const toggleExpanded = (key: string) => {
     setExpanded((p) => ({ ...p, [key]: !p[key] }));
   };
@@ -87,19 +91,30 @@ const QPApprovals = () => {
   }, []);
 
   useEffect(() => {
-    fetchPendingQPs();
-  }, []);
+    fetchPendingQPs(currentPage);
+  }, [currentPage]);
 
-  const fetchPendingQPs = async () => {
+  const fetchPendingQPs = async (page: number = 1) => {
+    setLoading(true);
     try {
-      const response = await fetch(`${API_ENDPOINT}/admin/qps/hod-pending/`, {
+      const response = await fetch(`${API_ENDPOINT}/admin/qps/hod-pending/?page=${page}&page_size=10`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
       });
-      const data = await response.json();
-      if (data.success) {
-        setPendingQPs(data.data);
+      const responseData = await response.json();
+      
+      const hasResults = responseData && typeof responseData === 'object' && 'results' in responseData;
+      const dataSource = hasResults ? responseData.results : (Array.isArray(responseData.data) ? responseData.data : []);
+      
+      setPendingQPs(dataSource);
+      
+      if (hasResults && responseData.count) {
+        setTotalPages(Math.ceil(responseData.count / 10));
+        setTotalCount(responseData.count);
+      } else {
+        setTotalPages(1);
+        setTotalCount(dataSource.length);
       }
     } catch (error) {
       console.error("Error fetching pending QPs:", error);
@@ -267,7 +282,7 @@ const QPApprovals = () => {
         try { MySwal.close(); } catch (e) {}
         const t = toast({ title: 'Approved', description: data.message || 'QP approved and forwarded to Admin.' });
         setTimeout(() => t.dismiss(), 3000);
-        setPendingQPs(pendingQPs.filter(qp => qp.id !== qpId));
+        fetchPendingQPs(currentPage);
         setSelectedQP(null);
         setQpDetail(null);
         setComment("");
@@ -318,7 +333,7 @@ const QPApprovals = () => {
         try { MySwal.close(); } catch (e) {}
         const t = toast({ title: 'Rejected', description: data.message || 'QP rejected and sent back to Faculty for edits.' });
         setTimeout(() => t.dismiss(), 3000);
-        setPendingQPs(pendingQPs.filter(qp => qp.id !== qpId));
+        fetchPendingQPs(currentPage);
         setSelectedQP(null);
         setQpDetail(null);
         setComment("");
@@ -334,7 +349,7 @@ const QPApprovals = () => {
     }
   };
 
-  if (loading) {
+  if (loading && pendingQPs.length === 0) {
     return (
       <Card className="p-6">
         <SkeletonTable rows={5} cols={4} />
@@ -343,62 +358,139 @@ const QPApprovals = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Question Paper Approvals</CardTitle>
+    <div className={`w-full ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+      <Card className={theme === 'dark' ? 'bg-card border border-border flex flex-col h-[calc(100vh-280px)] min-h-[550px]' : 'bg-white border border-gray-200 flex flex-col h-[calc(100vh-280px)] min-h-[550px]'}>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className={`mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Question Paper Approvals</CardTitle>
+              <div className="flex items-center gap-3">
+                <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Review and approve question papers from your department faculty</p>
+                {totalCount > 0 && (
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${theme === 'dark' ? 'bg-primary/20 text-primary' : 'bg-blue-100 text-blue-700'}`}>
+                    {totalCount} Total
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
         </CardHeader>
-        <CardContent>
-          {pendingQPs.length === 0 ? (
-            <p className="text-center text-muted-foreground">No pending QPs for approval.</p>
-          ) : (
-            <div className="space-y-4">
-              {pendingQPs.map((qp) => (
-                <Card key={qp.id} className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{qp.subject} - {qp.test_type}</h3>
-                        {qp.status && (
-                          (() => {
-                            const s = qp.status;
-                            if (s === 'rejected') return <Badge className="bg-red-100 text-red-800">Rejected</Badge>;
-                            if (s === 'approved') return <Badge className="bg-green-100 text-green-800">Approved</Badge>;
-                            if (s.startsWith('pending')) return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
-                            return <Badge className="bg-gray-100 text-gray-800">{s}</Badge>;
-                          })()
+        <CardContent className="flex-1 overflow-hidden px-4 sm:px-6 pt-0">
+          <div className="h-full overflow-y-auto custom-scrollbar border rounded-md p-4">
+            {pendingQPs.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-muted-foreground py-20">
+                <p className="text-lg">No pending QPs for approval.</p>
+                <p className="text-sm">Check back later for new submissions.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {pendingQPs.map((qp) => (
+                  <Card key={qp.id} className={`p-4 border transition-all hover:shadow-md ${theme === 'dark' ? 'bg-card/50 border-border' : 'bg-gray-50/50 border-gray-100'}`}>
+                    <div className="flex flex-col h-full justify-between gap-3">
+                      <div>
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h3 className="font-semibold text-base line-clamp-2">{qp.subject}</h3>
+                          <Badge variant="outline" className={theme === 'dark' ? 'border-primary/50 text-primary' : 'border-blue-200 text-blue-700'}>
+                            {qp.test_type}
+                          </Badge>
+                        </div>
+                        
+                        <div className="space-y-1.5 mb-3">
+                          <p className="text-sm flex items-center gap-2">
+                            <span className="text-muted-foreground font-medium">Faculty:</span>
+                            <span>{qp.faculty}</span>
+                          </p>
+                          <p className="text-sm flex items-center gap-2">
+                            <span className="text-muted-foreground font-medium">Submitted:</span>
+                            <span>{new Date(qp.submitted_at).toLocaleDateString()}</span>
+                          </p>
+                          {qp.branch && (
+                            <p className="text-sm flex items-center gap-2">
+                              <span className="text-muted-foreground font-medium">Branch:</span>
+                              <span className="truncate">{qp.branch.name}</span>
+                            </p>
+                          )}
+                        </div>
+
+                        {qp.last_action && (
+                          <div className={`mt-3 p-2 rounded text-xs ${theme === 'dark' ? 'bg-muted/30' : 'bg-white border'}`}>
+                            <p className="font-medium mb-1">Last Action: {qp.last_action.action}</p>
+                            <p className="text-muted-foreground italic line-clamp-2">
+                              "{qp.last_action.comment || 'No comment provided'}"
+                            </p>
+                          </div>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground">Faculty: {qp.faculty}</p>
-                      <p className="text-sm text-muted-foreground">Submitted: {new Date(qp.submitted_at).toLocaleDateString()}</p>
-                      {qp.branch && (
-                        <p className="text-sm text-muted-foreground">Branch: {qp.branch.name}</p>
-                      )}
-                      {qp.last_action ? (
-                        <div>
-                          <p className="text-sm text-muted-foreground">Last: {qp.last_action.action} by {qp.last_action.actor} ({qp.last_action.role})</p>
-                          {qp.last_action.comment ? (
-                            <p className="text-sm text-muted-foreground">Comment: {qp.last_action.comment}</p>
-                          ) : null}
-                        </div>
-                      ) : null}
+
+                      <div className="flex gap-2 mt-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={`w-full gap-1.5 ${theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-white border-gray-300'}`}
+                          onClick={() => handleReview(qp)}
+                        >
+                          <Eye className="w-4 h-4" />
+                          Review & Action
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleReview(qp)}
-                      >
-                        <Eye className="w-4 h-4 mr-1" />
-                        Review
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </CardContent>
+
+        {/* Pagination Footer */}
+        {totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-6 py-4 border-t border-border">
+            <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
+              Showing {Math.min((currentPage - 1) * 10 + 1, totalCount)} to {Math.min(currentPage * 10, totalCount)} of {totalCount} requests
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1 || loading}
+                className={theme === 'dark' ? 'border-border' : 'border-gray-300'}
+              >
+                Previous
+              </Button>
+
+              <div className="flex gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum = currentPage <= 3 ? i + 1 : (currentPage >= totalPages - 2 ? totalPages - 4 + i : currentPage - 2 + i);
+                  if (pageNum < 1) pageNum = i + 1;
+                  if (pageNum > totalPages) return null;
+                  
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNum)}
+                      disabled={loading}
+                      className={`w-8 h-8 p-0 ${currentPage === pageNum ? 'bg-primary text-white' : ''}`}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages || loading}
+                className={theme === 'dark' ? 'border-border' : 'border-gray-300'}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={(open) => {

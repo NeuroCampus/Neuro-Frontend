@@ -15,6 +15,7 @@ const Onboarding = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
 
   const [formData, setFormData] = useState({
     org_name: "",
@@ -32,6 +33,20 @@ const Onboarding = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Phone validation
+    const trimmedPhone = formData.phone.trim();
+    if (trimmedPhone && !/^\d{10}$/.test(trimmedPhone)) {
+      setPhoneError("Phone number must be exactly 10 digits.");
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please enter a valid 10-digit contact number.",
+      });
+      return;
+    }
+    
+    setPhoneError("");
     setLoading(true);
 
     try {
@@ -188,8 +203,14 @@ const Onboarding = () => {
                   placeholder="Enter 10-digit number"
                   className="pl-10 bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:ring-[hsl(var(--primary))]/20 rounded-lg h-12 transition-all"
                   value={formData.phone}
-                  onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={e => {
+                    setFormData({ ...formData, phone: e.target.value });
+                    if (phoneError) setPhoneError("");
+                  }}
                 />
+                {phoneError && (
+                  <p className="mt-1 text-xs text-red-500 font-medium">{phoneError}</p>
+                )}
               </div>
             </div>
 

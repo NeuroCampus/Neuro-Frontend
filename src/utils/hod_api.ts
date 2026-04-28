@@ -1513,6 +1513,7 @@ export const manageSubjects = async (
     if (method === "GET") {
       const params = new URLSearchParams({ branch_id });
       if ((data as any).semester_id) params.append("semester_id", (data as any).semester_id);
+      if ((data as any).subject_type) params.append("subject_type", (data as any).subject_type);
       if ((data as any).page) params.append("page", (data as any).page.toString());
       if ((data as any).page_size) params.append("page_size", (data as any).page_size.toString());
       url = `${API_ENDPOINT}/hod/subjects/?${params.toString()}`;
@@ -1788,16 +1789,32 @@ export const getStudentPerformance = async (
 };
 
 export const manageFaculties = async (
-  data: { branch_id: string },
+  params: { branch_id?: string; search?: string; page?: number; page_size?: number },
   method: "GET" = "GET"
-): Promise<GetFacultiesResponse> => {
+): Promise<any> => {
   try {
-    if (!data.branch_id) throw new Error("Branch ID is required");
-    const url = `${API_ENDPOINT}/hod/faculties/?branch_id=${data.branch_id}`;
+    const queryParams = new URLSearchParams();
+    if (params.branch_id) queryParams.append("branch_id", params.branch_id);
+    if (params.search) queryParams.append("search", params.search);
+    if (params.page) queryParams.append("page", params.page.toString());
+    if (params.page_size) queryParams.append("page_size", params.page_size.toString());
+
+    const url = `${API_ENDPOINT}/hod/faculties/?${queryParams.toString()}`;
     const response = await fetchWithTokenRefresh(url, {
       method,
       headers: { "Content-Type": "application/json" },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
 
+export const listFacultyBranches = async (): Promise<GetBranchesResponse> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/faculty-branches/`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
     });
     return await response.json();
   } catch (error: unknown) {
@@ -2188,13 +2205,15 @@ export const uploadStudyMaterial = async (data: UploadStudyMaterialRequest): Pro
 export const getStudyMaterials = async (
   branch_id?: string,
   semester_id?: string,
-  section_id?: string
+  section_id?: string,
+  search?: string
 ): Promise<GetStudyMaterialsResponse> => {
   try {
     const params = new URLSearchParams();
     if (branch_id) params.append('branch_id', branch_id);
     if (semester_id) params.append('semester_id', semester_id);
     if (section_id) params.append('section_id', section_id);
+    if (search) params.append('search', search);
     const qs = params.toString() ? `?${params.toString()}` : '';
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/study-materials/${qs}`, {
       method: 'GET',

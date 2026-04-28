@@ -46,6 +46,10 @@ import {
   CreateAnnouncementRequest,
 } from "@/utils/announcements_api";
 import AnnouncementSections from "@/components/common/AnnouncementSections";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
+
+const MySwal = withReactContent(Swal);
 
 const AdminAnnouncementManagement = () => {
   const [myAnnouncements, setMyAnnouncements] = useState<Announcement[]>([]);
@@ -92,12 +96,24 @@ const AdminAnnouncementManagement = () => {
 
   const handleCreateOrUpdate = async () => {
     if (!formData.title.trim() || !formData.message.trim()) {
-      alert("Please fill all required fields");
+      MySwal.fire({
+        title: "Validation Error",
+        text: "Please fill all required fields",
+        icon: "warning",
+        confirmButtonColor: "#9147e0",
+        target: document.body,
+      });
       return;
     }
 
     if (formData.target_roles.length === 0) {
-      alert("Please select at least one target role");
+      MySwal.fire({
+        title: "Validation Error",
+        text: "Please select at least one target role",
+        icon: "warning",
+        confirmButtonColor: "#9147e0",
+        target: document.body,
+      });
       return;
     }
 
@@ -108,24 +124,55 @@ const AdminAnnouncementManagement = () => {
           setMyAnnouncements((prev) =>
             prev.map((a) => (a.id === editingId ? response.data : a))
           );
-          alert("Announcement updated successfully");
+          MySwal.fire({
+            title: "Updated",
+            text: "Announcement updated successfully",
+            icon: "success",
+            confirmButtonColor: "#9147e0",
+            target: document.body,
+          });
+          setShowCreateDialog(false);
+          resetForm();
         } else {
-          alert(response.message || "Failed to update announcement");
+          MySwal.fire({
+            title: "Error",
+            text: response.message || "Failed to update announcement",
+            icon: "error",
+            confirmButtonColor: "#9147e0",
+            target: document.body,
+          });
         }
       } else {
         const response = await createAnnouncement(formData);
         if (response.success) {
           setMyAnnouncements((prev) => [response.data, ...prev]);
-          alert("Announcement created successfully");
+          MySwal.fire({
+            title: "Success",
+            text: "Announcement created successfully",
+            icon: "success",
+            confirmButtonColor: "#9147e0",
+            target: document.body,
+          });
+          setShowCreateDialog(false);
+          resetForm();
         } else {
-          alert(response.message || "Failed to create announcement");
+          MySwal.fire({
+            title: "Error",
+            text: response.message || "Failed to create announcement",
+            icon: "error",
+            confirmButtonColor: "#9147e0",
+            target: document.body,
+          });
         }
       }
-
-      setShowCreateDialog(false);
-      resetForm();
     } catch (error: any) {
-      alert(error.message || "An error occurred");
+      MySwal.fire({
+        title: "Error",
+        text: error.message || "An error occurred",
+        icon: "error",
+        confirmButtonColor: "#9147e0",
+        target: document.body,
+      });
     }
   };
 
@@ -151,13 +198,28 @@ const AdminAnnouncementManagement = () => {
       if (response.success) {
         setMyAnnouncements((prev) => prev.filter((a) => a.id !== deletingId));
         setReceivedAnnouncements((prev) => prev.filter((a) => a.id !== deletingId));
-        alert("Announcement deleted successfully");
+        MySwal.fire({
+          title: "Deleted",
+          text: "Announcement deleted successfully",
+          icon: "success",
+          confirmButtonColor: "#9147e0",
+        });
       } else {
-        alert(response.message || "Failed to delete announcement");
+        MySwal.fire({
+          title: "Error",
+          text: response.message || "Failed to delete announcement",
+          icon: "error",
+          confirmButtonColor: "#9147e0",
+        });
       }
       setDeletingId(null);
     } catch (error: any) {
-      alert(error.message || "An error occurred");
+      MySwal.fire({
+        title: "Error",
+        text: error.message || "An error occurred",
+        icon: "error",
+        confirmButtonColor: "#9147e0",
+      });
     }
   };
 
@@ -172,10 +234,20 @@ const AdminAnnouncementManagement = () => {
           prev.map((a) => (a.id === announcementId ? response.data : a))
         );
       } else {
-        alert(response.message || "Failed to toggle announcement");
+        MySwal.fire({
+          title: "Error",
+          text: response.message || "Failed to toggle announcement",
+          icon: "error",
+          confirmButtonColor: "#9147e0",
+        });
       }
     } catch (error: any) {
-      alert(error.message || "An error occurred");
+      MySwal.fire({
+        title: "Error",
+        text: error.message || "An error occurred",
+        icon: "error",
+        confirmButtonColor: "#9147e0",
+      });
     }
   };
 
@@ -241,7 +313,10 @@ const AdminAnnouncementManagement = () => {
                     New Announcement
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="mobile-modal max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent 
+                className="mobile-modal max-w-2xl max-h-[90vh] overflow-y-auto"
+                onInteractOutside={(e) => e.preventDefault()}
+              >
                   <DialogHeader>
                     <DialogTitle>
                       {editingId ? "Edit Announcement" : "Create Announcement"}

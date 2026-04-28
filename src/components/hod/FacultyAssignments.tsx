@@ -4,9 +4,9 @@ import { Button } from "../ui/button";
 import { SkeletonTable } from "../ui/skeleton";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";
 import { useToast } from "../ui/use-toast";
-import { Pencil, Trash2, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Loader2, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "../ui/dialog";
-import { manageFacultyAssignments, manageSections, getFacultyAssignmentsBootstrap, getHODTimetableSemesterData } from "../../utils/hod_api";
+import { manageFacultyAssignments, manageSections, getFacultyAssignmentsBootstrap, getHODTimetableSemesterData, listFacultyBranches, manageFaculties } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
 
 // Interfaces
@@ -183,11 +183,17 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
     sections: [] as Section[],
     semesters: [] as Semester[],
     faculties: [] as Faculty[],
+    allBranches: [] as { id: string, name: string }[],
+    selectedBranchForFaculty: "",
     facultySearch: "",
+    facultyPage: 1,
+    facultyTotalPages: 1,
+    loadingFaculties: false,
     branchId: "",
     filterSemesterId: "",
     filterSectionId: "",
     filterSections: [] as Section[],
+    isFirstLoad: true,
   });
 
   // Helper to update state (stable reference for hooks)
@@ -338,10 +344,18 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
         }));
         const faculties = boot.data.faculties;
 
+        const branchesRes = await listFacultyBranches();
+        const allBranches = branchesRes.success ? branchesRes.data || [] : [];
+
         updateState({
           branchId: profile.branch_id,
           semesters,
-          faculties,
+          allBranches,
+          faculties: faculties.map((f: any) => ({
+            ...f,
+            name: `${f.first_name} ${f.last_name || ""}`.trim(),
+          })),
+          selectedBranchForFaculty: profile.branch_id, // Default to own branch
         });
       } catch (err) {
         if (isErrorWithMessage(err)) {
@@ -359,6 +373,57 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
     };
     fetchInitialData();
   }, [toast, setError, updateState]);
+
+  // Fetch faculties when branch, search, or page changes
+  useEffect(() => {
+    const fetchFacultiesData = async () => {
+      if (!state.selectedBranchForFaculty) {
+        updateState({ faculties: [], facultyTotalPages: 1 });
+        return;
+      }
+
+      // Skip fetching if it's the first load and we're on the home branch with no search/pagination
+      if (state.isFirstLoad && state.selectedBranchForFaculty === state.branchId && !state.facultySearch && state.facultyPage === 1) {
+        updateState({ isFirstLoad: false });
+        return;
+      }
+
+      // If we change anything after first load, ensure isFirstLoad is false
+      if (state.isFirstLoad) {
+        updateState({ isFirstLoad: false });
+      }
+
+      updateState({ loadingFaculties: true });
+      try {
+        const res = await manageFaculties({
+          branch_id: state.selectedBranchForFaculty,
+          search: state.facultySearch,
+          page: state.facultyPage,
+          page_size: 10,
+        });
+
+        if (res.success) {
+          updateState({
+            faculties: res.data.map((f: any) => ({
+              ...f,
+              name: `${f.first_name} ${f.last_name || ""}`.trim(),
+            })),
+            facultyTotalPages: res.pagination.total_pages,
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching faculties:", err);
+      } finally {
+        updateState({ loadingFaculties: false });
+      }
+    };
+
+    const timer = setTimeout(() => {
+      fetchFacultiesData();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [state.selectedBranchForFaculty, state.facultySearch, state.facultyPage, updateState]);
 
   // Fetch subjects and sections when semester changes
   useEffect(() => {
@@ -615,46 +680,96 @@ const FacultyAssignments = ({ setError }: FacultyAssignmentsProps) => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
+                <label className={`block mb-1 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Branch
+                <Select
+                  value={state.selectedBranchForFaculty}
+                  onValueChange={(value) => updateState({ selectedBranchForFaculty: value, facultyPage: 1, facultyId: "" })}
+                  disabled={state.loading || state.isAssigning || state.allBranches.length === 0}
+                >
+                  <SelectTrigger className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+                    <SelectValue placeholder="Select Branch" />
+                  </SelectTrigger>
+                  <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+                    {state.allBranches.map((branch) => (
+                      <SelectItem key={branch.id} value={branch.id} className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
+                        {branch.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                </label>
+              </div>
+              <div>
                 <label className={`block mb-1 text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Faculty
                 <Select
                   value={state.facultyId}
                   onValueChange={(value) => updateState({ facultyId: value })}
-                  onOpenChange={(open) => {
-                    if (!open) updateState({ facultySearch: "" });
-                  }}
-                  disabled={state.loading || state.isAssigning || state.faculties.length === 0}
+                  disabled={state.loading || state.isAssigning || !state.selectedBranchForFaculty}
                 >
                   <SelectTrigger className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
-                    <SelectValue placeholder={state.faculties.length === 0 ? "No faculties available" : "Select Faculty"} />
+                    <SelectValue placeholder={state.loadingFaculties ? "Loading..." : "Select Faculty"} />
                   </SelectTrigger>
                   <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
-                    <div className="px-3 py-2">
-                      <input
-                        type="text"
-                        autoFocus
-                        placeholder="Search faculty"
-                        value={state.facultySearch}
-                        onChange={(e) => updateState({ facultySearch: e.target.value })}
-                        onKeyDown={(e) => e.stopPropagation()}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onTouchStart={(e) => e.stopPropagation()}
-                        className={`w-full px-2 py-1 text-sm rounded border placeholder-gray-400 ${theme === 'dark' ? 'bg-card border-border text-foreground placeholder:text-muted-foreground' : 'bg-white border-gray-300 text-gray-900'}`}
-                      />
+                    <div className="px-3 py-2 border-b border-border sticky top-0 bg-inherit z-10">
+                      <div className="relative">
+                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <input
+                          type="text"
+                          autoFocus
+                          placeholder="Search faculty..."
+                          value={state.facultySearch}
+                          onChange={(e) => updateState({ facultySearch: e.target.value, facultyPage: 1 })}
+                          onKeyDown={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onTouchStart={(e) => e.stopPropagation()}
+                          className={`w-full pl-8 pr-2 py-1.5 text-sm rounded border ${theme === 'dark' ? 'bg-background border-border text-foreground' : 'bg-white border-gray-300 text-gray-900'}`}
+                        />
+                      </div>
                     </div>
                     <div className="max-h-60 overflow-y-auto">
-                      {state.faculties
-                        .filter((f) => {
-                          const q = state.facultySearch?.trim().toLowerCase();
-                          if (!q) return true;
-                          const name = `${f.first_name} ${f.last_name || ''}`.toLowerCase();
-                          return name.includes(q) || (f.username || '').toLowerCase().includes(q);
-                        })
-                        .map((faculty) => (
+                      {state.loadingFaculties ? (
+                        <div className="p-4 text-center text-sm text-muted-foreground">Loading...</div>
+                      ) : state.faculties.length === 0 ? (
+                        <div className="p-4 text-center text-sm text-muted-foreground">No faculty found</div>
+                      ) : (
+                        state.faculties.map((faculty) => (
                           <SelectItem key={faculty.id} value={faculty.id} className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>
-                            {faculty.first_name} {faculty.last_name || ""}
+                            {faculty.first_name} {faculty.last_name || ""} ({faculty.username})
                           </SelectItem>
-                        ))}
+                        ))
+                      )}
                     </div>
+                    {state.facultyTotalPages > 1 && (
+                      <div className="px-2 py-2 border-t border-border flex items-center justify-between sticky bottom-0 bg-inherit z-10">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (state.facultyPage > 1) updateState({ facultyPage: state.facultyPage - 1 });
+                          }}
+                          disabled={state.facultyPage === 1}
+                          className="h-8 w-8 p-0"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <span className="text-xs text-muted-foreground">
+                          Page {state.facultyPage} of {state.facultyTotalPages}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (state.facultyPage < state.facultyTotalPages) updateState({ facultyPage: state.facultyPage + 1 });
+                          }}
+                          disabled={state.facultyPage === state.facultyTotalPages}
+                          className="h-8 w-8 p-0"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
                   </SelectContent>
                 </Select>
                 </label>

@@ -23,6 +23,7 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
   const [uploadedCount, setUploadedCount] = useState(0);
   const [updatedCount, setUpdatedCount] = useState(0);
   const [successMessage, setSuccessMessage] = useState("");
+  const [localError, setLocalError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { theme } = useTheme();
 
@@ -112,6 +113,7 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
       setUploadedCount(0);
       setUpdatedCount(0);
       setSuccessMessage("");
+      setLocalError(null);
     }
   };
 
@@ -131,6 +133,7 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
 
     setLoading(true);
     setError(null);
+    setLocalError(null);
     setUploadedCount(0);
     setUpdatedCount(0);
     setSuccessMessage("");
@@ -168,8 +171,14 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
         });
       }
     } catch (err: any) {
-      // Validation or network error - don't show toast, just set error in UI
+      // Validation or network error
+      setLocalError(err || "Network error while uploading file");
       setError(err || "Network error while uploading file");
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: err || "Network error while uploading file",
+      });
     } finally {
       setLoading(false);
     }
@@ -261,6 +270,12 @@ const BulkUpload = ({ setError, toast }: BulkUploadProps) => {
           {(uploadedCount > 0 || updatedCount > 0) && successMessage && (
             <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
               {successMessage}
+            </p>
+          )}
+
+          {localError && (
+            <p className={`text-sm mt-2 font-medium ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
+              {localError}
             </p>
           )}
 

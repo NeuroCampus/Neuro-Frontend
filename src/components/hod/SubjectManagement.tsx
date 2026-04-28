@@ -65,6 +65,10 @@ interface SubjectManagementState {
   totalCount: number;
   totalPages: number;
   modalError: string | null;
+  filters: {
+    semester_id: string;
+    subject_type: string;
+  };
 }
 
 const SubjectManagement = () => {
@@ -85,6 +89,10 @@ const SubjectManagement = () => {
     totalCount: 0,
     totalPages: 0,
     modalError: null,
+    filters: {
+      semester_id: "all",
+      subject_type: "all",
+    },
   });
 
   const totalPages = state.totalPages;
@@ -139,13 +147,15 @@ const SubjectManagement = () => {
   };
 
   // Fetch subjects with pagination
-  const fetchSubjects = async (branchId: string, page: number = 1, pageSize: number = 10) => {
+  const fetchSubjects = async (branchId: string, page: number = 1, pageSize: number = 10, filters = state.filters) => {
     updateState({ loading: true });
     try {
       const subjectsRes = await manageSubjects({
         branch_id: branchId,
         page,
-        page_size: pageSize
+        page_size: pageSize,
+        semester_id: filters.semester_id === "all" ? undefined : filters.semester_id,
+        subject_type: filters.subject_type === "all" ? undefined : filters.subject_type,
       }, "GET");
 
       if (subjectsRes.success) {
@@ -183,12 +193,12 @@ const SubjectManagement = () => {
     initialize();
   }, []); // Only run once on mount
 
-  // Fetch subjects when pagination changes (but not on initial mount)
+  // Fetch subjects when pagination or filters change (but not on initial mount)
   useEffect(() => {
     if (state.branchId) {
-      fetchSubjects(state.branchId, state.currentPage, state.pageSize);
+      fetchSubjects(state.branchId, state.currentPage, state.pageSize, state.filters);
     }
-  }, [state.currentPage, state.pageSize]);
+  }, [state.currentPage, state.pageSize, state.filters]);
 
   // Handle adding or updating a subject
   const handleSubmit = async () => {
@@ -357,6 +367,43 @@ const SubjectManagement = () => {
           </div>
         </CardHeader>
         <CardContent>
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="w-full md:w-48">
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Filter by Semester</label>
+              <Select
+                value={state.filters.semester_id}
+                onValueChange={(val) => updateState({ filters: { ...state.filters, semester_id: val }, currentPage: 1 })}
+              >
+                <SelectTrigger className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
+                  <SelectValue placeholder="All Semesters" />
+                </SelectTrigger>
+                <SelectContent className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
+                  <SelectItem value="all">All Semesters</SelectItem>
+                  {state.semesters.map((sem) => (
+                    <SelectItem key={sem.id} value={sem.id}>Semester {sem.number}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-full md:w-48">
+              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Filter by Type</label>
+              <Select
+                value={state.filters.subject_type}
+                onValueChange={(val) => updateState({ filters: { ...state.filters, subject_type: val }, currentPage: 1 })}
+              >
+                <SelectTrigger className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
+                  <SelectValue placeholder="All Types" />
+                </SelectTrigger>
+                <SelectContent className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="regular">Regular</SelectItem>
+                  <SelectItem value="elective">Elective</SelectItem>
+                  <SelectItem value="open_elective">Open Elective</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           {state.loading ? (
             <div className="py-4">
               <SkeletonTable rows={10} cols={6} />

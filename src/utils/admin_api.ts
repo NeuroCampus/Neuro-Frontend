@@ -100,6 +100,7 @@ interface ManageBatchesRequest {
   end_year?: number;
   page?: number;
   page_size?: number;
+  search?: string;
 }
 
 interface Notification {
@@ -282,6 +283,7 @@ export const manageBranches = async (
       const params = new URLSearchParams();
       if (data.page) params.append('page', data.page.toString());
       if (data.page_size) params.append('page_size', data.page_size.toString());
+      if ((data as any).search) params.append('search', (data as any).search);
       if (params.toString()) url += `?${params.toString()}`;
     }
     
@@ -328,7 +330,7 @@ interface BranchesWithHODsResponse {
 }
 
 export const getBranchesWithHODs = async (
-  data?: { page?: number; page_size?: number }
+  data?: { page?: number; page_size?: number; search?: string }
 ): Promise<BranchesWithHODsResponse> => {
   try {
     let url = `${API_ENDPOINT}/admin/branches-with-hods/`;
@@ -339,6 +341,7 @@ export const getBranchesWithHODs = async (
     if (data) {
       if (data.page) params.append('page', data.page.toString());
       if (data.page_size) params.append('page_size', data.page_size.toString());
+      if (data.search) params.append('search', data.search);
     }
     const qs = params.toString();
     if (qs) url += `?${qs}`;
@@ -379,6 +382,7 @@ export const manageBatches = async (
       if (data.page_size) params.append('page_size', data.page_size.toString());
       if (data.start_year) params.append('start_year', data.start_year.toString());
       if (data.end_year) params.append('end_year', data.end_year.toString());
+      if (data.search) params.append('search', data.search);
       if (params.toString()) url += `?${params.toString()}`;
     }
     
