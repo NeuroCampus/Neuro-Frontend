@@ -47,7 +47,7 @@ const getRoleBadge = (role: string, theme: string) => {
   );
 };
 
-const roles = ["All", "Student", "Head of Department", "Teacher", "COE", "Principal"];
+const roles = ["All", "Student", "Head of Department", "Teacher", "COE", "Fees Manager", "Principal"];
 const statuses = ["All", "Active", "Inactive"];
 
 const roleMap: Record<string, string> = {
@@ -55,6 +55,7 @@ const roleMap: Record<string, string> = {
   "Head of Department": "hod",
   "Teacher": "teacher",
   "COE": "coe",
+  "Fees Manager": "fees_manager",
   "Principal": "principal",
 };
 

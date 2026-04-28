@@ -20,16 +20,16 @@ const DashboardCard = ({ title, description, value, icon, trend, onClick, classN
   
   return (
     <motion.div
-      className={`rounded-lg outline-none ${onClick ? `focus:ring-2 ${theme === 'dark' ? 'focus:ring-primary' : 'focus:ring-blue-500'}` : ""} ${className || ""}`}
-      whileHover={{ scale: 1.02, y: -2 }}
-      whileTap={onClick ? { scale: 0.98 } : {}}
-      transition={{ duration: 0.2, ease: "easeInOut" }}
+      className={`rounded-lg ${className || ""}`}
+      whileHover={onClick ? { scale: 1.01, y: -2 } : {}}
+      whileTap={onClick ? { scale: 0.99 } : {}}
+      transition={{ duration: 0.2, ease: "easeOut" }}
     >
       <Card
-        className={`h-full flex flex-col transition-all duration-300 ${onClick ? "cursor-pointer" : "cursor-default"} backdrop-blur-sm ${
+        className={`h-full flex flex-col transition-all duration-300 ${onClick ? "cursor-pointer" : "cursor-default"} backdrop-blur-sm shadow-sm hover:shadow-md ${
           theme === 'dark'
-            ? "bg-card/50 border-border hover:bg-card/70 hover:border-primary/30"
-            : "bg-white border-gray-200 hover:bg-gray-50 hover:border-blue-300"
+            ? "bg-card/40 border-border hover:bg-card/60 hover:border-primary/40"
+            : "bg-white border-gray-100 hover:bg-gray-50/80 hover:border-blue-200"
         }`}
         onClick={onClick}
       >

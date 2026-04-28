@@ -66,6 +66,7 @@ const AdminHODAttendance: React.FC = () => {
   // Today's snapshot
   const [todayRows, setTodayRows] = useState<TodayRow[]>([]);
   const [todaySummary, setTodaySummary] = useState({ total_hods: 0, present: 0, absent: 0, not_marked: 0 });
+  const [todayPagination, setTodayPagination] = useState({ page: 1, page_size: 10, total_pages: 1, total_items: 0, has_next: false, has_prev: false });
 
   // Records mode
   const [dateRange, setDateRange] = useState({
@@ -99,14 +100,28 @@ const AdminHODAttendance: React.FC = () => {
     }
   };
 
-  const fetchToday = async () => {
+  const fetchToday = async (page = 1, page_size = 10) => {
     setIsLoading(true);
     try {
-      const res = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/hod-attendance-today/`, { method: 'GET' });
+      const params = new URLSearchParams({ 
+        page: String(page), 
+        page_size: String(page_size) 
+      });
+      const res = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/hod-attendance-today/?${params.toString()}`, { method: 'GET' });
       const json = await res.json();
       if (json.success) {
         setTodayRows(json.data || []);
         setTodaySummary(json.summary || { total_hods: 0, present: 0, absent: 0, not_marked: 0 });
+        if (json.pagination) {
+          setTodayPagination({ 
+            page: json.pagination.current_page || 1, 
+            page_size: json.pagination.page_size || page_size, 
+            total_pages: json.pagination.total_pages || 1, 
+            total_items: json.pagination.total_items || 0, 
+            has_next: json.pagination.has_next || false, 
+            has_prev: json.pagination.has_prev || false 
+          });
+        }
       } else {
         console.error('Failed to fetch HOD attendance:', json.message);
         Swal.fire('Error', json.message || 'Failed to fetch HOD attendance', 'error');
@@ -178,7 +193,7 @@ const AdminHODAttendance: React.FC = () => {
   };
 
   useEffect(() => {
-    if (activeTab === 'today') fetchToday();
+    if (activeTab === 'today') fetchToday(todayPagination.page, todayPagination.page_size);
     else fetchRecords(recordsPagination.page, recordsPagination.page_size);
   }, [activeTab]);
 
@@ -200,6 +215,10 @@ const AdminHODAttendance: React.FC = () => {
   };
 
   const handleRecordsPageChange = (newPage: number) => setRecordsPagination(prev => ({ ...prev, page: newPage }));
+  const handleTodayPageChange = (newPage: number) => {
+    setTodayPagination(prev => ({ ...prev, page: newPage }));
+    fetchToday(newPage, todayPagination.page_size);
+  };
 
   return (
     <div className={`space-y-4 sm:space-y-6 text-sm sm:text-base ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
@@ -312,6 +331,47 @@ const AdminHODAttendance: React.FC = () => {
                 </div>
               ))}
             </div>
+
+            {/* Pagination for Today */}
+            {todayPagination.total_pages > 1 && (
+              <div className={`px-6 py-4 border-t flex items-center justify-between ${theme === 'dark' ? 'border-border' : 'border-gray-100'}`}>
+                <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                  Showing <span className="font-medium">{(todayPagination.page - 1) * todayPagination.page_size + 1}</span> to <span className="font-medium">{Math.min(todayPagination.page * todayPagination.page_size, todayPagination.total_items)}</span> of <span className="font-medium">{todayPagination.total_items}</span> HODs
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleTodayPageChange(todayPagination.page - 1)}
+                    disabled={!todayPagination.has_prev}
+                    className={`px-3 py-1 rounded border text-sm font-medium transition-colors ${!todayPagination.has_prev ? 'opacity-50 cursor-not-allowed' : theme === 'dark' ? 'hover:bg-accent border-border' : 'hover:bg-gray-50 border-gray-200'}`}
+                  >
+                    Previous
+                  </button>
+                  <div className="flex gap-1">
+                    {Array.from({ length: todayPagination.total_pages }, (_, i) => i + 1)
+                      .filter(p => p === 1 || p === todayPagination.total_pages || Math.abs(p - todayPagination.page) <= 1)
+                      .map((p, i, arr) => (
+                        <React.Fragment key={p}>
+                          {i > 0 && arr[i-1] !== p - 1 && <span className="px-1 opacity-50">...</span>}
+                          <button
+                            onClick={() => handleTodayPageChange(p)}
+                            className={`w-8 h-8 rounded text-sm font-medium transition-colors ${todayPagination.page === p ? 'bg-primary text-white' : theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-100'}`}
+                          >
+                            {p}
+                          </button>
+                        </React.Fragment>
+                      ))
+                    }
+                  </div>
+                  <button
+                    onClick={() => handleTodayPageChange(todayPagination.page + 1)}
+                    disabled={!todayPagination.has_next}
+                    className={`px-3 py-1 rounded border text-sm font-medium transition-colors ${!todayPagination.has_next ? 'opacity-50 cursor-not-allowed' : theme === 'dark' ? 'hover:bg-accent border-border' : 'hover:bg-gray-50 border-gray-200'}`}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}

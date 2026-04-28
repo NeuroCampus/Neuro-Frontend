@@ -39,20 +39,38 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
   const [batchToDelete, setBatchToDelete] = useState<Batch | null>(null);
   const { theme } = useTheme();
 
-  const fetchBatches = async () => {
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 10;
+
+  const fetchBatches = async (page: number = 1) => {
     setLoading(true);
     if (setError) setError(null);
     try {
-      const res = await manageBatches();
-      // Check if the response has the expected structure
+      const res = await manageBatches({ page, page_size: pageSize });
+      
+      // The backend returns a paginated response with a top-level 'results' key
       const hasResults = res && typeof res === 'object' && 'results' in res;
-      const dataSource = hasResults ? (res as any).results : (res as any);
+      const paginationData = res as any;
+      const dataSource = hasResults ? paginationData.results : paginationData;
       
       if (dataSource && dataSource.success) {
-        // Handle paginated response format
         const batchesArray = dataSource.batches || [];
         if (Array.isArray(batchesArray)) {
           setBatches(batchesArray);
+          
+          if (hasResults) {
+            setTotalCount(paginationData.count || 0);
+            setTotalPages(Math.ceil((paginationData.count || 0) / pageSize));
+            setCurrentPage(page);
+          } else {
+            // Not a paginated response, fallback
+            setTotalCount(batchesArray.length);
+            setTotalPages(1);
+            setCurrentPage(1);
+          }
         } else {
           if (setError) setError("Invalid response format");
         }
@@ -76,7 +94,7 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
   };
 
   useEffect(() => {
-    fetchBatches();
+    fetchBatches(1);
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,26 +117,12 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
         undefined,
         "POST"
       );
-      // Check if the response has the expected structure
       const hasResults = res && typeof res === 'object' && 'results' in res;
       const dataSource = hasResults ? (res as any).results : (res as any);
       
       if (dataSource && dataSource.success) {
-        // ✅ Use the returned batch data instead of making extra GET call
-        if (dataSource.batch) {
-          const newBatchData = {
-            id: dataSource.batch.id,
-            name: dataSource.batch.name,
-            start_year: dataSource.batch.start_year,
-            end_year: dataSource.batch.end_year,
-            student_count: 0, // New batch has no students yet
-            created_at: dataSource.batch.created_at
-          };
-          setBatches(prevBatches => [...prevBatches, newBatchData]);
-        } else {
-          // Fallback: fetch data if batch data not returned
-          fetchBatches();
-        }
+        // Refresh to maintain pagination integrity
+        fetchBatches(1);
         setNewBatch({ name: "", start_year: "", end_year: "" });
         if (toast) {
           toast({
@@ -167,12 +171,11 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
         editingBatch.id,
         "PUT"
       );
-      // Check if the response has the expected structure
       const hasResults = res && typeof res === 'object' && 'results' in res;
       const dataSource = hasResults ? (res as any).results : (res as any);
       
       if (dataSource && dataSource.success) {
-        // ✅ Use the returned batch data instead of making extra GET call
+        // Update local state for immediate feedback
         if (dataSource.batch) {
           setBatches(prevBatches =>
             prevBatches.map(batch =>
@@ -186,8 +189,7 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
             )
           );
         } else {
-          // Fallback: fetch data if batch data not returned
-          fetchBatches();
+          fetchBatches(currentPage);
         }
         setEditingBatch(null);
         setEditForm({ start_year: "", end_year: "" });
@@ -228,12 +230,16 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
     if (setError) setError(null);
     try {
       const res = await manageBatches(undefined, batchToDelete.id, "DELETE");
-      // Check if the response has the expected structure
       const hasResults = res && typeof res === 'object' && 'results' in res;
       const dataSource = hasResults ? (res as any).results : (res as any);
       
       if (dataSource && dataSource.success) {
-        fetchBatches();
+        // If it was the last item on the page, go to previous page
+        if (batches.length === 1 && currentPage > 1) {
+          fetchBatches(currentPage - 1);
+        } else {
+          fetchBatches(currentPage);
+        }
         setDeleteDialogOpen(false);
         setBatchToDelete(null);
         if (toast) {
@@ -305,77 +311,164 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
       </Card>
 
       {/* Existing Batches */}
-      <Card className={theme === 'dark' ? 'bg-card border border-border shadow-sm min-h-[450px]' : 'bg-white border border-gray-200 shadow-sm min-h-[450px]'}>
+      <Card className={theme === 'dark' ? 'bg-card border border-border shadow-sm flex flex-col h-[calc(100vh-320px)] min-h-[500px]' : 'bg-white border border-gray-200 shadow-sm flex flex-col h-[calc(100vh-320px)] min-h-[500px]'}>
         <CardHeader className="pb-2 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="w-full">
             <CardTitle className={`block text-lg md:text-xl ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
               Existing Batches
             </CardTitle>
-            <p className={`block text-sm md:text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-              Manage, edit, or delete created batches
-            </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-1">
+              <p className={`block text-sm md:text-base ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                Manage, edit, or delete created batches
+              </p>
+              {totalCount > 0 && (
+                <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full ${theme === 'dark' ? 'bg-primary/10 text-primary' : 'bg-blue-100 text-blue-800'}`}>
+                  Total: {totalCount}
+                </span>
+              )}
+            </div>
           </div>
         </CardHeader>
-        <CardContent className="overflow-x-auto md:overflow-x-visible pb-0">
+        <CardContent className="flex-1 overflow-hidden flex flex-col pt-0">
           {loading ? (
-            <SkeletonTable rows={5} cols={4} />
+            <SkeletonTable rows={pageSize} cols={4} />
           ) : (
-            <div className="max-h-[22rem] overflow-y-auto custom-scrollbar">
-              <div className="w-full max-w-[320px] mx-auto md:max-w-none md:mx-0">
+            <>
+              <div className="flex-1 overflow-y-auto custom-scrollbar border rounded-md mb-4">
                 <table className="w-full text-[11px] md:text-sm text-left border-collapse table-auto align-middle">
-                  <thead className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-card border-b border-border' : 'bg-gray-50 border-b border-gray-200'}`}>
+                  <thead className={`sticky top-0 z-10 ${theme === 'dark' ? 'bg-card border-b border-border shadow-sm' : 'bg-gray-50 border-b border-gray-200 shadow-sm'}`}>
                     <tr>
-                      <th className={`py-1 px-2 md:py-2 md:px-3 text-left ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Name</th>
-                      <th className={`py-1 px-2 md:py-2 md:px-3 hidden sm:table-cell ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} text-center`}>Start</th>
-                      <th className={`py-1 px-2 md:py-2 md:px-3 hidden sm:table-cell ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} text-center`}>End</th>
-                      <th className={`py-1 px-2 md:py-2 md:px-3 w-16 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} text-center`}>Students</th>
-                      <th className={`py-1 px-2 md:py-2 md:px-3 w-20 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} text-center`}>Created</th>
-                      <th className={`py-1 px-2 md:py-2 md:px-3 w-20 text-right ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Actions</th>
+                      <th className={`py-3 px-3 text-left font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Batch Name</th>
+                      <th className={`py-3 px-3 hidden sm:table-cell font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} text-center`}>Start Year</th>
+                      <th className={`py-3 px-3 hidden sm:table-cell font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} text-center`}>End Year</th>
+                      <th className={`py-3 px-3 w-20 font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} text-center`}>Students</th>
+                      <th className={`py-3 px-3 w-28 font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'} text-center`}>Created At</th>
+                      <th className={`py-3 px-3 w-28 text-right font-bold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {batches.map((batch) => (
-                      <tr
-                        key={batch.id}
-                        className={`border-b transition-colors duration-200 ${theme === 'dark' ? 'border-border hover:bg-accent text-foreground' : 'border-gray-200 hover:bg-gray-50 text-gray-900'}`} 
-                      >
-                        <td className="py-1 px-2 md:py-2 md:px-3 min-w-0 align-middle">
-                          <div className="truncate">{batch.name}</div>
-                        </td>
-                        <td className="py-1 px-2 md:py-2 md:px-3 hidden sm:table-cell text-center align-middle">{batch.start_year}</td>
-                        <td className="py-1 px-2 md:py-2 md:px-3 hidden sm:table-cell text-center align-middle">{batch.end_year}</td>
-                        <td className="py-1 px-2 md:py-2 md:px-3 w-16 text-center align-middle">{batch.student_count}</td>
-                        <td className="py-1 px-2 md:py-2 md:px-3 w-20 min-w-0 text-center align-middle">
-                          <div className="truncate">{new Date(batch.created_at).toLocaleDateString()}</div>
-                        </td>
-                        <td className="py-1 px-2 md:py-2 md:px-3 w-20 text-right space-x-2 whitespace-nowrap align-middle">
-                          <Button size="icon" variant="ghost" onClick={() => handleEditBatch(batch)} disabled={loading} className={theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-100'}>
-                            <Edit className={theme === 'dark' ? 'w-4 h-4 text-primary' : 'w-4 h-4 text-blue-600'} />
-                          </Button>
-                          <Button size="icon" variant="ghost" onClick={() => handleDeleteBatch(batch)} disabled={loading} className={theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-100'}>
-                            <Trash2 className={theme === 'dark' ? 'w-4 h-4 text-destructive' : 'w-4 h-4 text-red-600'} />
-                          </Button>
+                    {batches.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="py-10 text-center text-muted-foreground">
+                          No batches found.
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      batches.map((batch) => (
+                        <tr
+                          key={batch.id}
+                          className={`border-b transition-colors duration-200 ${theme === 'dark' ? 'border-border hover:bg-accent text-foreground' : 'border-gray-200 hover:bg-gray-50 text-gray-900'}`} 
+                        >
+                          <td className="py-3 px-3 align-middle font-medium">
+                            <div className="truncate">{batch.name}</div>
+                          </td>
+                          <td className="py-3 px-3 hidden sm:table-cell text-center align-middle">{batch.start_year}</td>
+                          <td className="py-3 px-3 hidden sm:table-cell text-center align-middle">{batch.end_year}</td>
+                          <td className="py-3 px-3 w-20 text-center align-middle">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium ${theme === 'dark' ? 'bg-zinc-800 text-zinc-300' : 'bg-gray-100 text-gray-600'}`}>
+                              {batch.student_count}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 w-28 text-center align-middle text-xs opacity-70">
+                            {new Date(batch.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="py-3 px-3 w-28 text-right space-x-1 whitespace-nowrap align-middle">
+                            <Button size="icon" variant="ghost" onClick={() => handleEditBatch(batch)} disabled={loading} className="h-8 w-8">
+                              <Edit className={theme === 'dark' ? 'w-4 h-4 text-primary' : 'w-4 h-4 text-blue-600'} />
+                            </Button>
+                            <Button size="icon" variant="ghost" onClick={() => handleDeleteBatch(batch)} disabled={loading} className="h-8 w-8">
+                              <Trash2 className={theme === 'dark' ? 'w-4 h-4 text-destructive' : 'w-4 h-4 text-red-600'} />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
-            </div>
 
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-2 py-3 border-t">
+                  <div className="flex-1 flex justify-between sm:hidden">
+                    <Button
+                      onClick={() => fetchBatches(currentPage - 1)}
+                      disabled={currentPage === 1 || loading}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      onClick={() => fetchBatches(currentPage + 1)}
+                      disabled={currentPage === totalPages || loading}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Next
+                    </Button>
+                  </div>
+                  <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to{" "}
+                        <span className="font-medium">
+                          {Math.min(currentPage * pageSize, totalCount)}
+                        </span>{" "}
+                        of <span className="font-medium">{totalCount}</span> results
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => fetchBatches(currentPage - 1)}
+                        disabled={currentPage === 1 || loading}
+                        variant="outline"
+                        size="sm"
+                        className="h-8"
+                      >
+                        Previous
+                      </Button>
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                          <Button
+                            key={p}
+                            onClick={() => fetchBatches(p)}
+                            variant={currentPage === p ? "default" : "outline"}
+                            size="sm"
+                            className={`h-8 w-8 p-0 ${currentPage === p ? 'bg-primary text-white shadow-sm' : ''}`}
+                            disabled={loading}
+                          >
+                            {p}
+                          </Button>
+                        ))}
+                      </div>
+                      <Button
+                        onClick={() => fetchBatches(currentPage + 1)}
+                        disabled={currentPage === totalPages || loading}
+                        variant="outline"
+                        size="sm"
+                        className="h-8"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
 
       {/* Edit Batch Dialog */}
       <Dialog open={!!editingBatch} onOpenChange={() => setEditingBatch(null)}>
-        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[320px] w-[calc(100%-32px)] mx-4 rounded-lg` }>
+        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[400px] w-full rounded-xl shadow-xl` }>
           <DialogHeader>
-            <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Edit Batch</DialogTitle>
+            <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Edit Batch Details</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
+          <div className="space-y-5 py-4">
+            <div className="space-y-2">
+              <label className={`block text-sm font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
                 Start Year
               </label>
               <Input
@@ -383,12 +476,12 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
                 type="number"
                 value={editForm.start_year}
                 onChange={handleEditInputChange}
-                placeholder="Start Year"
+                placeholder="e.g. 2024"
                 className={theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-300'}
               />
             </div>
-            <div>
-              <label className={`block text-sm font-medium mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
+            <div className="space-y-2">
+              <label className={`block text-sm font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
                 End Year
               </label>
               <Input
@@ -396,25 +489,25 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
                 type="number"
                 value={editForm.end_year}
                 onChange={handleEditInputChange}
-                placeholder="End Year"
+                placeholder="e.g. 2028"
                 className={theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-300'}
               />
             </div>
           </div>
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+          <DialogFooter className="flex gap-3 pt-2">
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={() => setEditingBatch(null)}
-              className={`${theme === 'dark' ? 'text-foreground bg-card border border-border hover:bg-accent' : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'} w-full sm:w-auto`}
+              className="flex-1"
             >
               Cancel
             </Button>
             <Button
               onClick={handleUpdateBatch}
               disabled={loading}
-              className={`text-white bg-primary border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white w-full sm:w-auto`}
+              className="flex-1 bg-primary text-white"
             >
-              {loading ? "Updating..." : "Update Batch"}
+              {loading ? "Updating..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -422,20 +515,23 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[320px] w-[calc(100%-32px)] mx-4 rounded-lg` }>
+        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[400px] w-full rounded-xl shadow-xl` }>
           <DialogHeader>
-            <DialogTitle className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>Delete Batch</DialogTitle>
+            <DialogTitle className="text-destructive">Delete Batch</DialogTitle>
           </DialogHeader>
-          <p className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>
-            Are you sure you want to delete the batch{" "}
-            <span className="font-semibold">"{batchToDelete?.name}"</span>? This
-            action cannot be undone.
-          </p>
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+          <div className="py-4">
+            <p className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}>
+              Are you sure you want to delete <span className="font-bold text-foreground">"{batchToDelete?.name}"</span>?
+            </p>
+            <p className="text-sm text-destructive font-medium mt-2">
+              This action cannot be undone and will remove all associations.
+            </p>
+          </div>
+          <DialogFooter className="flex gap-3">
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={() => setDeleteDialogOpen(false)}
-              className={`${theme === 'dark' ? 'border-border text-foreground bg-card hover:bg-accent' : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'} w-full sm:w-auto`}
+              className="flex-1"
             >
               Cancel
             </Button>
@@ -443,9 +539,9 @@ const BatchManagement: React.FC<BatchManagementProps> = ({ setError, toast }) =>
               variant="destructive"
               onClick={confirmDelete}
               disabled={loading}
-              className={`${theme === 'dark' ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 'bg-red-600 hover:bg-red-700 text-white'} w-full sm:w-auto`}
+              className="flex-1"
             >
-              {loading ? "Deleting..." : "Delete"}
+              {loading ? "Deleting..." : "Delete Batch"}
             </Button>
           </DialogFooter>
         </DialogContent>

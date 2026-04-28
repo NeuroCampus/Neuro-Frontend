@@ -48,6 +48,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
   const [localError, setLocalError] = useState<string | null>(null);
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
   const [fetchedUser, setFetchedUser] = useState<any>(null);
+  const [originalProfile, setOriginalProfile] = useState<ProfileData | null>(null);
   const { theme } = useTheme();
 
   // Change password states
@@ -100,14 +101,16 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
       try {
         const response = await manageAdminProfile({ user_id: currentUser.user_id }, 'GET');
         if (response.success && response.profile) {
-          setProfile({
+          const profileData = {
             first_name: response.profile.first_name || '',
             last_name: response.profile.last_name || '',
             email: response.profile.email || '',
             mobile_number: response.profile.mobile_number || '',
             address: response.profile.address || '',
             bio: response.profile.bio || '',
-          });
+          };
+          setProfile(profileData);
+          setOriginalProfile(profileData);
         } else {
           setLocalError(response.message || 'Failed to fetch profile');
           showErrorAlert('Error', response.message || 'Failed to fetch profile');
@@ -286,14 +289,16 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
       if (response.success) {
         showSuccessAlert('Success', 'Profile saved successfully');
         if (response.profile) {
-          setProfile({
+          const profileData = {
             first_name: response.profile.first_name || '',
             last_name: response.profile.last_name || '',
             email: response.profile.email || '',
             mobile_number: response.profile.mobile_number || '',
             address: response.profile.address || '',
             bio: response.profile.bio || '',
-          });
+          };
+          setProfile(profileData);
+          setOriginalProfile(profileData);
           localStorage.setItem('user', JSON.stringify({
             ...JSON.parse(localStorage.getItem('user') || '{}'),
             ...response.profile,
@@ -301,6 +306,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
           }));
         }
         setEditing(false);
+        setLocalErrors({});
       } else {
         const message = response.message || 'Failed to save profile';
         if (setError) setError(message);
@@ -745,7 +751,15 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
 
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap ml-auto">
             {editing && (
-              <Button size="sm" variant="ghost" onClick={() => { setEditing(false); /* revert could be implemented if desired */ }}>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                onClick={() => { 
+                  if (originalProfile) setProfile(originalProfile);
+                  setEditing(false); 
+                  setLocalErrors({});
+                }}
+              >
                 Cancel
               </Button>
             )}

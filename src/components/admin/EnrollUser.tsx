@@ -35,14 +35,19 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
   });
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { theme } = useTheme();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    let newValue = value;
+    if (name === "phone") {
+      newValue = value.replace(/\D/g, "").slice(0, 10);
+    }
 
     // Update form data
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: newValue }));
 
     // Clear previous timeout
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
@@ -60,6 +65,13 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
           setEmailError("Please enter a valid email address.");
         } else {
           setEmailError("");
+        }
+      } else if (name === "phone") {
+        const trimmedValue = value.trim();
+        if (trimmedValue && !/^\d{10}$/.test(trimmedValue)) {
+          setPhoneError("Phone number must be exactly 10 digits.");
+        } else {
+          setPhoneError("");
         }
       }
     }, 500); // 500ms delay
@@ -85,13 +97,24 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
       return;
     }
 
-    // Block submission if email is invalid
+    // Block submission if email or phone is invalid
     if (emailError || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z][a-zA-Z0-9-]*\.[a-zA-Z]{2,}$/.test(formData.email)) {
       setError("Please enter a valid email address.");
       toast({
         variant: "destructive",
         title: "Error",
         description: "Please enter a valid email address.",
+      });
+      return;
+    }
+
+    if (formData.phone && !/^\d{10}$/.test(formData.phone.trim())) {
+      setPhoneError("Phone number must be exactly 10 digits.");
+      setError("Please enter a valid 10-digit phone number.");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter a valid 10-digit phone number.",
       });
       return;
     }
@@ -166,6 +189,7 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
                     <SelectItem value="teacher">Faculty/Teacher</SelectItem>
                     <SelectItem value="dean">Dean</SelectItem>
                     <SelectItem value="coe">COE</SelectItem>
+                    <SelectItem value="fees_manager">Fees Manager</SelectItem>
                     <SelectItem value="hms_admin">HMS Admin</SelectItem>
                   </SelectContent>
                 </Select>
@@ -239,6 +263,9 @@ const EnrollUser = ({ setError, toast }: EnrollUserProps) => {
                   value={formData.phone}
                   onChange={handleInputChange}
                 />
+                {phoneError && (
+                  <p className="mt-1 text-xs text-red-500">{phoneError}</p>
+                )}
               </div>
               <Button
                 className="w-full text-white bg-primary border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white"
