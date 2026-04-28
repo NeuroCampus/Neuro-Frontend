@@ -6,12 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { manageHostels, manageWardens, manageCaretakers, getHostelManagementInit } from '../../utils/hms_api';
+import { manageHostels, manageWardens, manageCaretakers } from '../../utils/hms_api';
 import { useToast } from '../../hooks/use-toast';
 import { Plus, Edit2, Trash2, Building, Search, User, Shield } from 'lucide-react';
 import { SkeletonTable } from '../ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { useRef } from 'react';
+import { useHMSContext } from '../../context/HMSContext';
 
 interface Warden {
   id: number;
@@ -34,12 +34,9 @@ interface Hostel {
 }
 
 const HostelManagement: React.FC = () => {
-  const [hostels, setHostels] = useState<Hostel[]>([]);
-  const [wardens, setWardens] = useState<Warden[]>([]);
-  const [caretakers, setCaretakers] = useState<Caretaker[]>([]);
+  const { hostels, wardens, caretakers, loading, refreshData, setHostels } = useHMSContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingHostel, setEditingHostel] = useState<Hostel | null>(null);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     name: '',
@@ -48,82 +45,8 @@ const HostelManagement: React.FC = () => {
     caretaker: null as number | null
   });
   const { toast } = useToast();
-  const fetchRef = useRef(false);
 
-  useEffect(() => {
-    if (!fetchRef.current) {
-      fetchData();
-      fetchRef.current = true;
-    }
-  }, []);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const response = await getHostelManagementInit();
-      console.log('Hostel Management Init Response:', response);
-      if (response.success) {
-        const rawData = response.data || response;
-        setHostels(rawData.hostels || []);
-        setWardens(rawData.wardens || []);
-        setCaretakers(rawData.caretakers || []);
-      } else {
-        console.warn('Init response was not successful or missing data:', response);
-      }
-    } catch (error) {
-      console.error('Failed to fetch initial data:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load management data",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchHostels = async () => {
-    try {
-      const response = await manageHostels();
-      console.log('Fetch Hostels Response:', response);
-      if (response.success) {
-        if (Array.isArray(response.results)) {
-          setHostels(response.results);
-        } else if (response.data && Array.isArray(response.data)) {
-          setHostels(response.data);
-        } else if (response.data && Array.isArray(response.data.results)) {
-          setHostels(response.data.results);
-        } else {
-          console.warn('Could not find hostel list in response:', response);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to fetch hostels:', error);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const method = editingHostel ? 'PUT' : 'POST';
-    const response = await manageHostels(formData, editingHostel?.id, method);
-
-    if (response.success) {
-      fetchHostels();
-      setIsDialogOpen(false);
-      setEditingHostel(null);
-      setFormData({ name: '', gender: 'M', warden: null, caretaker: null });
-      toast({
-        title: "Success",
-        description: `Hostel ${editingHostel ? 'updated' : 'created'} successfully`,
-      });
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: response.message || "Failed to save hostel",
-      });
-    }
-  };
 
   const handleEdit = (hostel: Hostel) => {
     setEditingHostel(hostel);
@@ -138,18 +61,46 @@ const HostelManagement: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     if (confirm('Are you sure you want to delete this hostel?')) {
-      const response = await manageHostels(undefined, id, 'DELETE');
-      if (response.success) {
-        fetchHostels();
-        toast({
-          title: "Success",
-          description: "Hostel deleted successfully",
-        });
+      try {
+        const response = await manageHostels(undefined, id, 'DELETE');
+        if (response.success) {
+          toast({ title: 'Success', description: 'Hostel deleted successfully' });
+          refreshData(true);
+        }
+      } catch (error) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete hostel' });
       }
     }
   };
 
-  const filteredHostels = hostels.filter(h => 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const method = editingHostel ? 'PUT' : 'POST';
+      const response = await manageHostels(formData, editingHostel?.id, method);
+      
+      if (response.success) {
+        toast({ 
+          title: 'Success', 
+          description: `Hostel ${editingHostel ? 'updated' : 'created'} successfully` 
+        });
+        setIsDialogOpen(false);
+        setEditingHostel(null);
+        setFormData({ name: '', gender: 'M', warden: null, caretaker: null });
+        refreshData(true);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: response.message || "Failed to save hostel",
+        });
+      }
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to save hostel' });
+    }
+  };
+
+  const filteredHostels = hostels.filter(h =>
     h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (h.warden_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (h.caretaker_name || '').toLowerCase().includes(searchQuery.toLowerCase())
@@ -184,7 +135,7 @@ const HostelManagement: React.FC = () => {
                     <Plus className="w-4 h-4 mr-2" /> Add Hostel
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-[90vw] sm:max-w-[425px] rounded-xl">
                   <DialogHeader>
                     <DialogTitle>{editingHostel ? 'Edit Hostel' : 'Add Hostel'}</DialogTitle>
                   </DialogHeader>

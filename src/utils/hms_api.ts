@@ -255,6 +255,10 @@ export const manageHostelStudents = async (
   return hmsApiCall<HostelStudent>(endpoint, method, data);
 };
 
+export const getAcademicInit = async (): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>("students/get_academic_init/", "GET");
+};
+
 // Warden Management
 export const manageWardens = async (
   data?: any,

@@ -14,32 +14,28 @@ import StudentMealManagement from "../hms/StudentMealManagement";
 import { useToast } from "../../hooks/use-toast";
 import { logoutUser } from "../../utils/authService";
 import { useTheme } from "../../context/ThemeContext";
-import { manageHostels, getHostelManagementInit } from "../../utils/hms_api";
+import { HMSProvider, useHMSContext } from "../../context/HMSContext";
+import { AcademicProvider } from "../../context/AcademicContext";
 
 interface HMSDashboardProps {
   user: any;
   setPage: (page: string) => void;
 }
 
-const HMSDashboard = ({ user, setPage }: HMSDashboardProps) => {
+const HMSDashboardContent = ({ user, setPage }: HMSDashboardProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [loading, setLoading] = useState(false);
+  const { hostels, loading, refreshData } = useHMSContext();
   const { toast } = useToast();
   const { theme } = useTheme();
-  const fetchRef = useRef(false);
-  const [wardens, setWardens] = useState<any[]>([]);
-  const [caretakers, setCaretakers] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (!fetchRef.current) {
-      fetchDashboardData();
-      fetchRef.current = true;
-    }
-  }, []);
-
-  const [hostels, setHostels] = useState<any[]>([]);
   const [selectedHostelId, setSelectedHostelId] = useState<number | null>(null);
+
+  // Set initial selected hostel if not set
+  useEffect(() => {
+    if (hostels.length > 0 && !selectedHostelId) {
+      setSelectedHostelId(hostels[0].id);
+    }
+  }, [hostels, selectedHostelId]);
 
   // Get active page from URL path
   const getActivePageFromPath = (pathname: string) => {
@@ -48,28 +44,6 @@ const HMSDashboard = ({ user, setPage }: HMSDashboardProps) => {
   };
 
   const activePage = getActivePageFromPath(location.pathname);
-
-  const fetchDashboardData = async () => {
-    setLoading(true);
-    try {
-      const response = await getHostelManagementInit();
-      if (response.success) {
-        const rawData = response.data || response;
-        const hostelsList = rawData.hostels || [];
-        setHostels(hostelsList);
-        setWardens(rawData.wardens || []);
-        setCaretakers(rawData.caretakers || []);
-        
-        if (hostelsList.length > 0 && !selectedHostelId) {
-          setSelectedHostelId(hostelsList[0].id);
-        }
-      }
-    } catch (err) {
-      console.error("Failed to fetch dashboard data", err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handlePageChange = (page: string) => {
     const path = page === 'dashboard' ? '/hms' : `/hms/${page}`;
@@ -152,5 +126,13 @@ const HMSDashboard = ({ user, setPage }: HMSDashboardProps) => {
     </DashboardLayout>
   );
 };
+
+const HMSDashboard = (props: HMSDashboardProps) => (
+  <HMSProvider>
+    <AcademicProvider>
+      <HMSDashboardContent {...props} />
+    </AcademicProvider>
+  </HMSProvider>
+);
 
 export default HMSDashboard;

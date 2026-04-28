@@ -6,11 +6,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { manageHostelStudents, manageRooms, getRoomsByHostel, getFloorsByHostel } from '../../utils/hms_api';
+import { manageHostelStudents, manageRooms } from '../../utils/hms_api';
 import { useToast } from '../../hooks/use-toast';
 import { Search, Filter, Edit2, CheckCircle2, XCircle, ChevronLeft, ChevronRight, UserCircle2, Building2 } from 'lucide-react';
 import { SkeletonTable, SkeletonPageHeader } from '../ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { useHMSContext } from "../../context/HMSContext";
+import { useAcademicContext, Batch, Branch, Semester } from "../../context/AcademicContext";
 
 interface HostelStudent {
   id: number;
@@ -26,32 +28,20 @@ interface HostelStudent {
   no_dues: boolean;
 }
 
-interface Batch {
-  id: number;
-  name: string;
-}
 
-interface Branch {
-  id: number;
-  name: string;
-}
 
-interface Semester {
-  id: string;
-  number: number;
-}
+
 
 const StudentManagement: React.FC = () => {
+  const { hostels, getCachedFloors, getCachedRooms } = useHMSContext();
+  const { batches, branches, getSemestersForBranch, loading: academicLoading } = useAcademicContext();
   const [students, setStudents] = useState<HostelStudent[]>([]);
-  const [batches, setBatches] = useState<Batch[]>([]);
-  const [branches, setBranches] = useState<Branch[]>([]);
   const [semesters, setSemesters] = useState<Semester[]>([]);
-  const [hostels, setHostels] = useState<any[]>([]);
   const [floorsForHostel, setFloorsForHostel] = useState<number[]>([]);
   const [roomsForHostel, setRoomsForHostel] = useState<any[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<HostelStudent | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [isLoadingFloors, setIsLoadingFloors] = useState(false);
   const [isLoadingRooms, setIsLoadingRooms] = useState(false);
   const [selectedHostelInDialog, setSelectedHostelInDialog] = useState<number | null>(null);
@@ -94,80 +84,21 @@ const StudentManagement: React.FC = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchInitialData();
-  }, []);
-
-  useEffect(() => {
     const timer = setTimeout(() => {
       fetchStudents();
     }, 300);
     return () => clearTimeout(timer);
   }, [currentPage, filters.batch, filters.branch, filters.semester, filters.search]);
 
-  const fetchInitialData = async () => {
-    setLoading(true);
-    await Promise.all([fetchBatches(), fetchBranches(), fetchHostels()]);
-    setLoading(false);
-  };
 
-  const fetchBatches = async () => {
-    try {
-      const response = await fetch('/api/hms/students/get_batches/', {
-        headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setBatches(data.results.filter((batch: any) => batch.id && batch.name));
-      }
-    } catch (error) {
-      console.error('Failed to fetch batches:', error);
-    }
-  };
 
-  const fetchBranches = async () => {
-    try {
-      const response = await fetch('/api/hms/students/get_branches/', {
-        headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setBranches(data.results.filter((branch: any) => branch.id && branch.name));
-      }
-    } catch (error) {
-      console.error('Failed to fetch branches:', error);
-    }
-  };
 
-  const fetchHostels = async () => {
-    try {
-      const response = await fetch('/api/hms/hostels/', {
-        headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const hostelsData = data.results || data;
-        setHostels(Array.isArray(hostelsData) ? hostelsData : []);
-      }
-    } catch (error) {
-      console.error('Failed to fetch hostels:', error);
-    }
-  };
 
   const getFloorsForHostel = async (hostelId: number) => {
     setIsLoadingFloors(true);
-    try {
-      const response = await getFloorsByHostel(hostelId);
-      if (response.success && response.results) {
-        setFloorsForHostel(response.results);
-      } else {
-        setFloorsForHostel([]);
-      }
-    } catch (error) {
-      console.error('Failed to fetch floors:', error);
-      setFloorsForHostel([]);
-    } finally {
-      setIsLoadingFloors(false);
-    }
+    const results = await getCachedFloors(hostelId);
+    setFloorsForHostel(results);
+    setIsLoadingFloors(false);
   };
 
   const getRoomsForHostel = async (hostelId: number, floor?: number) => {
@@ -177,37 +108,20 @@ const StudentManagement: React.FC = () => {
     }
     
     setIsLoadingRooms(true);
-    try {
-      const response = await getRoomsByHostel(hostelId, floor);
-      if (response.success && response.results) {
-        setRoomsForHostel(response.results);
-      } else {
-        setRoomsForHostel([]);
-      }
-    } catch (error) {
-      console.error('Failed to fetch rooms for hostel:', error);
-      setRoomsForHostel([]);
-    } finally {
-      setIsLoadingRooms(false);
-    }
+    const results = await getCachedRooms(hostelId, floor.toString());
+    setRoomsForHostel(results);
+    setIsLoadingRooms(false);
   };
 
   const fetchSemesters = async (branchId?: string) => {
+    console.log('fetchSemesters called with branchId:', branchId);
     if (!branchId) {
       setSemesters([]);
       return;
     }
-    try {
-      const response = await fetch(`/api/student/semesters/?branch_id=${branchId}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (Array.isArray(data.data)) setSemesters(data.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch semesters:', error);
-    }
+    const results = await getSemestersForBranch(parseInt(branchId));
+    console.log('fetchSemesters results:', results);
+    setSemesters(results);
   };
 
   const fetchStudents = async () => {
@@ -338,7 +252,7 @@ const StudentManagement: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Semesters</SelectItem>
-                    {semesters.map(s => <SelectItem key={s.id} value={s.id}>Semester {s.number}</SelectItem>)}
+                    {Array.isArray(semesters) && semesters.map(s => <SelectItem key={s.id} value={s.id}>Semester {s.number}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -455,7 +369,7 @@ const StudentManagement: React.FC = () => {
 
       {/* Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-[90vw] sm:max-w-xl rounded-xl">
           <DialogHeader>
             <DialogTitle>Update Student HMS Details</DialogTitle>
           </DialogHeader>

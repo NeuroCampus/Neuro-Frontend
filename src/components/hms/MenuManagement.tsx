@@ -4,8 +4,8 @@ import {
   manageMenu,
   getMenuItems,
   manageMenuItem,
-  getHostels,
 } from '../../utils/hms_api';
+import { useHMSContext } from '../../context/HMSContext';
 
 import { useToast } from '../../hooks/use-toast';
 import {
@@ -101,11 +101,11 @@ const getMealTypeLabel = (code: string) => {
 
 const MenuManagement: React.FC = () => {
   const { toast } = useToast();
+  const { hostels } = useHMSContext();
 
   const [menus, setMenus] = useState<Menu[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
 
-  const [hostels, setHostels] = useState<Hostel[]>([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -132,14 +132,22 @@ const MenuManagement: React.FC = () => {
   });
 
   useEffect(() => {
-    fetchInitialData();
+    // Initial loading state only for UI consistency
+    setInitialLoading(false);
   }, []);
 
-  const fetchInitialData = async () => {
-    setInitialLoading(true);
-    await loadHostels();
-    setInitialLoading(false);
-  };
+  // No longer auto-selecting the first hostel to give user explicit control
+  useEffect(() => {
+    // If we have only one hostel, we could potentially auto-select it, 
+    // but the user requested "do not auto select".
+  }, [hostels]);
+
+  // Reactive menu loading
+  useEffect(() => {
+    if (selectedHostel) {
+      loadMenusForHostel(selectedHostel);
+    }
+  }, [selectedHostel]);
 
   const loadMenusForHostel = async (hostelId: string) => {
     if (!hostelId) {
@@ -160,17 +168,7 @@ const MenuManagement: React.FC = () => {
   };
 
   // Lazy loaders
-  const loadHostels = async () => {
-    if (hostels.length > 0) return;
-    try {
-      const res = await getHostels();
-      if (res.success && res.results) {
-        setHostels(res.results);
-      }
-    } catch (e) {
-      console.error('Failed to load hostels', e);
-    }
-  };
+
 
   // Load menu items only when form is opened
   const loadMenuItems = async () => {
@@ -335,7 +333,6 @@ const MenuManagement: React.FC = () => {
     });
     setShowForm(true);
     // Load required data for editing lazily
-    loadHostels();
     loadMenuItems();
   };
 
@@ -506,11 +503,7 @@ const MenuManagement: React.FC = () => {
             </div>
             <div className="flex flex-wrap items-center gap-3 lg:justify-end">
               <div className="flex items-center gap-2">
-                <Select value={selectedHostel} onValueChange={(val) => {
-                  setSelectedHostel(val);
-                  if (val) loadMenusForHostel(val);
-                  else setMenus([]);
-                }}>
+                <Select value={selectedHostel} onValueChange={setSelectedHostel}>
                   <SelectTrigger className="w-[180px] bg-background">
                     <SelectValue placeholder="Select Hostel" />
                   </SelectTrigger>
@@ -589,7 +582,7 @@ const MenuManagement: React.FC = () => {
                         <CardTitle className="text-lg font-semibold pt-1">{DAY_OPTIONS.find(d => d.value === menu.day_of_week)?.label}</CardTitle>
                         {menu.date && <CardDescription>{menu.date}</CardDescription>}
                       </div>
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-1">
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:bg-blue-50" onClick={() => handleEdit(menu)}>
                           <Edit size={14} />
                         </Button>

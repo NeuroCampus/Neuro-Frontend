@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Building2, Users, Grid3X3, Shield, AlertCircle } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
-import { getDashboardStats, getRoomsByHostelId, getFloorsByHostel } from "../../utils/hms_api";
 import { useTheme } from "../../context/ThemeContext";
+import { useHMSContext } from "../../context/HMSContext";
 import {
   Select,
   SelectContent,
@@ -49,25 +49,22 @@ interface Stats {
 const HMSOverview = () => {
   const { theme } = useTheme();
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
+  const { hostels, statistics, loading, getCachedFloors, getCachedRooms } = useHMSContext();
   const [loadingRooms, setLoadingRooms] = useState(false);
-  const [stats, setStats] = useState<Stats>({
-    totalHostels: 0,
-    totalRooms: 0,
-    totalStudents: 0,
-    totalWardens: 0,
-    totalCaretakers: 0,
-    occupancyRate: 0,
-  });
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedHostel, setSelectedHostel] = useState<number | null>(null);
   const [selectedFloor, setSelectedFloor] = useState<string>("");
   const [availableFloors, setAvailableFloors] = useState<number[]>([]);
-  const [hostels, setHostels] = useState<Hostel[]>([]);
 
-  useEffect(() => {
-    fetchDashboardStats();
-  }, []);
+  // Map backend stats to component stats
+  const stats = {
+    totalHostels: statistics.total_hostels,
+    totalRooms: statistics.total_rooms,
+    totalStudents: statistics.total_students,
+    totalWardens: statistics.total_wardens,
+    totalCaretakers: statistics.total_caretakers,
+    occupancyRate: statistics.occupancy_rate,
+  };
 
   // Fetch floors when hostel is selected
   useEffect(() => {
@@ -89,78 +86,16 @@ const HMSOverview = () => {
     }
   }, [selectedHostel, selectedFloor]);
 
-  const fetchDashboardStats = async () => {
-    setLoading(true);
-    try {
-      const response = await getDashboardStats();
-
-      if (response.success && response.data) {
-        const { statistics, data } = response.data;
-
-        setHostels(data.hostels);
-
-        setStats({
-          totalHostels: statistics.total_hostels,
-          totalRooms: statistics.total_rooms,
-          totalStudents: statistics.total_students,
-          totalWardens: statistics.total_wardens,
-          totalCaretakers: statistics.total_caretakers,
-          occupancyRate: statistics.occupancy_rate,
-        });
-
-        // Do not auto-select first hostel to allow "Choose Hostel" placeholder
-        /*
-        if (data.hostels && data.hostels.length > 0) {
-          setSelectedHostel(data.hostels[0].id);
-        }
-        */
-      } else {
-        throw new Error(response.message || "Failed to fetch dashboard stats");
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load dashboard data",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fetchHostelFloors = async (hostelId: number) => {
-    try {
-      const response = await getFloorsByHostel(hostelId);
-      if (response.success && response.results) {
-        setAvailableFloors(response.results);
-      }
-    } catch (error) {
-      console.error("Failed to fetch floors", error);
-    }
+    const results = await getCachedFloors(hostelId);
+    setAvailableFloors(results);
   };
 
   const fetchHostelRooms = async (hostelId: number, floor?: string) => {
     setLoadingRooms(true);
-    try {
-      const response = await getRoomsByHostelId(hostelId, floor);
-
-      if (response.success && response.data?.rooms) {
-        setRooms(response.data.rooms);
-      } else if (response.success && response.results) {
-        // Handle alternative response format if applicable
-        setRooms(response.results);
-      } else {
-        setRooms([]);
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load hostel rooms",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingRooms(false);
-    }
+    const results = await getCachedRooms(hostelId, floor);
+    setRooms(results);
+    setLoadingRooms(false);
   };
 
   const getRoomColor = (occupied: number, capacity: number) => {

@@ -225,7 +225,7 @@ const StaffManagementOverview: React.FC = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-right align-top pt-4">
-                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex justify-end gap-1">
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingWarden(warden); setIsWardenModalOpen(true); }}>
                             <Edit2 size={14} className="text-blue-500" />
                           </Button>
@@ -287,7 +287,7 @@ const StaffManagementOverview: React.FC = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-right align-top pt-4">
-                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex justify-end gap-1">
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingCaretaker(caretaker); setIsCaretakerModalOpen(true); }}>
                             <Edit2 size={14} className="text-blue-500" />
                           </Button>

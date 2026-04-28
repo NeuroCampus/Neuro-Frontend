@@ -16,12 +16,12 @@ import {
   CheckCircle,
   AlertTriangle
 } from 'lucide-react';
+import { useHMSContext } from '../../context/HMSContext';
 import { useToast } from '../../hooks/use-toast';
 import {
   getHostelIssues,
   updateIssueStatus,
-  getIssueDetail,
-  getHostels
+  getIssueDetail
 } from '../../utils/hms_api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -78,9 +78,9 @@ const STATUS_CONFIG = {
 
 const IssueTracking = ({ hostelId }: { hostelId: number }) => {
   const { toast } = useToast();
+  const { hostels } = useHMSContext();
   
   const [issues, setIssues] = useState<Issue[]>([]);
-  const [hostels, setHostels] = useState<any[]>([]);
   const [selectedHostelId, setSelectedHostelId] = useState<string>(hostelId?.toString() || '');
   const [loading, setLoading] = useState(true);
   const [selectedIssue, setSelectedIssue] = useState<DetailedIssue | null>(null);
@@ -90,9 +90,10 @@ const IssueTracking = ({ hostelId }: { hostelId: number }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
+  // No longer auto-selecting first hostel
   useEffect(() => {
-    loadHostels();
-  }, []);
+    // Keep empty until user selects
+  }, [hostels]);
 
   useEffect(() => {
     if (selectedHostelId) {
@@ -100,19 +101,7 @@ const IssueTracking = ({ hostelId }: { hostelId: number }) => {
     }
   }, [selectedHostelId, statusFilter, currentPage]);
 
-  const loadHostels = async () => {
-    try {
-      const response = await getHostels();
-      if (response.success && response.results) {
-        setHostels(response.results);
-        if (!selectedHostelId && response.results.length > 0) {
-          setSelectedHostelId(response.results[0].id.toString());
-        }
-      }
-    } catch (error) {
-      console.error('Error loading hostels:', error);
-    }
-  };
+
 
   const fetchIssues = async () => {
     if (!selectedHostelId) return;

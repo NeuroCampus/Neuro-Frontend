@@ -29,15 +29,17 @@ interface Room {
   floor?: number;
 }
 
+import { useHMSContext } from "../../context/HMSContext";
+
 const RoomManagement: React.FC = () => {
+  const { hostels, loading: isLoadingHostels, getCachedFloors, getCachedRooms } = useHMSContext();
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [hostels, setHostels] = useState<Hostel[]>([]);
   const [selectedHostel, setSelectedHostel] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   const [roomStudents, setRoomStudents] = useState<any[]>([]);
   const [roomStudentCounts, setRoomStudentCounts] = useState<{ [key: number]: number }>({});
-  const [isLoadingRooms, setIsLoadingRooms] = useState(true);
+  const [isLoadingRooms, setIsLoadingRooms] = useState(false);
   const [isLoadingStudents, setIsLoadingStudents] = useState(false);
   const [formData, setFormData] = useState({
     no: '',
@@ -52,10 +54,7 @@ const RoomManagement: React.FC = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const { toast } = useToast();
   const { theme } = useTheme();
-
-  useEffect(() => {
-    fetchHostels();
-  }, []);
+  const lastFetchRef = React.useRef<{hostel: number | null, floor: string}>({ hostel: null, floor: "" });
 
   useEffect(() => {
     if (selectedHostel) {
@@ -120,56 +119,24 @@ const RoomManagement: React.FC = () => {
   };
 
   const fetchHostelFloors = async (hostelId: number) => {
-    try {
-      const response = await getFloorsByHostel(hostelId);
-      if (response.success && response.results) {
-        setAvailableFloors(response.results);
-      }
-    } catch (error) {
-      console.error('Failed to fetch floors:', error);
-    }
+    const results = await getCachedFloors(hostelId);
+    setAvailableFloors(results);
   };
 
   const fetchRoomsByHostel = async (hostelId: number, floor?: string) => {
     setIsLoadingRooms(true);
-    try {
-      const params: any = { hostel: hostelId };
-      if (floor && floor !== "all") {
-        params.floor = floor;
-      }
-      const response = await manageRooms(undefined, undefined, 'GET', params);
-      if (response.success && response.results) {
-        setRooms(response.results);
-        const countsMap: { [key: number]: number } = {};
-        response.results.forEach(room => {
-          countsMap[room.id] = room.student_count || 0;
-        });
-        setRoomStudentCounts(countsMap);
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: response.message || "Failed to fetch rooms",
-        });
-      }
-    } finally {
-      setIsLoadingRooms(false);
-    }
+    const results = await getCachedRooms(hostelId, floor);
+    setRooms(results);
+    
+    const countsMap: { [key: number]: number } = {};
+    results.forEach((room: any) => {
+      countsMap[room.id] = room.student_count || 0;
+    });
+    setRoomStudentCounts(countsMap);
+    setIsLoadingRooms(false);
   };
 
-  const fetchHostels = async () => {
-    try {
-      const response = await manageHostels();
-      if (response.success && response.results) {
-        setHostels(response.results);
-        if (response.results.length > 0) {
-          setSelectedHostel(response.results[0].id);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to fetch hostels:', error);
-    }
-  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -351,7 +318,7 @@ const RoomManagement: React.FC = () => {
                     <Plus className="w-4 h-4 mr-2" /> Add Room
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-w-[90vw] sm:max-w-md rounded-xl">
                   <DialogHeader>
                     <DialogTitle>{editingRoom ? 'Edit Room' : 'Add Room'}</DialogTitle>
                   </DialogHeader>
