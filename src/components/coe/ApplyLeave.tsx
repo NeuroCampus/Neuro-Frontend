@@ -115,10 +115,24 @@ const COEApplyLeave = () => {
 
     setError(null);
 
+    const startDateStr = format(dateRange.from, "yyyy-MM-dd");
+    const endDateStr = format(dateRange.to, "yyyy-MM-dd");
+
+    // Check for overlaps in local state (excluding Rejected leaves)
+    const hasOverlap = leaveList.some(l => {
+      if (l.status === 'Rejected') return false;
+      return startDateStr <= l.end_date && endDateStr >= l.start_date;
+    });
+
+    if (hasOverlap) {
+      setError("You already have a leave request that overlaps with these dates.");
+      return;
+    }
+
     const requestData = {
       title: title.trim(),
-      start_date: format(dateRange.from, "yyyy-MM-dd"),
-      end_date: format(dateRange.to, "yyyy-MM-dd"),
+      start_date: startDateStr,
+      end_date: endDateStr,
       reason: reason.trim(),
     };
 

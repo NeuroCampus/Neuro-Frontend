@@ -203,6 +203,7 @@ export const useStudentLeaveRequestsQuery = (enabled: boolean = true) => {
     },
     enabled,
     staleTime: 1000 * 30, // 30s
+    refetchOnWindowFocus: false,
   });
 };
 

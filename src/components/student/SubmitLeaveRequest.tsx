@@ -68,8 +68,6 @@ const SubmitLeaveRequest = () => {
   const today = new Date();
   const { toast } = useToast();
 
-  // Leave status state
-  const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
   const { data: leavesData = [], isLoading: leavesLoading, isError: leavesError, refetch: refetchLeaves } = useStudentLeaveRequestsQuery();
   const [filter, setFilter] = useState<string>('ALL');
   const [query, setQuery] = useState<string>('');
@@ -80,18 +78,15 @@ const SubmitLeaveRequest = () => {
   const [showFilter, setShowFilter] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setLeaves(leavesData as LeaveRequest[]);
-  }, [leavesData]);
-
   const filteredLeaves = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return (leaves || []).filter(l => {
+    const currentLeaves = (leavesData || []) as LeaveRequest[];
+    return currentLeaves.filter(l => {
       if (statusFilter !== "All" && l.status.toUpperCase() !== statusFilter.toUpperCase()) return false;
       if (!q) return true;
       return l.reason.toLowerCase().includes(q) || l.start_date.includes(q) || l.end_date.includes(q);
     });
-  }, [leaves, statusFilter, query]);
+  }, [leavesData, statusFilter, query]);
 
   // Close filter dropdown when clicking outside
   useEffect(() => {
@@ -119,13 +114,25 @@ const SubmitLeaveRequest = () => {
 
     setError(null);
 
-    // If only start date is selected, treat it as a single day leave
     const startDate = dateRange.from;
     const endDate = dateRange.to || dateRange.from;
+    const startDateStr = format(startDate, "yyyy-MM-dd");
+    const endDateStr = format(endDate, "yyyy-MM-dd");
+
+    // Check for overlaps in local state (excluding REJECTED leaves)
+    const hasOverlap = (leavesData as LeaveRequest[]).some(l => {
+      if (l.status === 'REJECTED') return false;
+      return startDateStr <= l.end_date && endDateStr >= l.start_date;
+    });
+
+    if (hasOverlap) {
+      setError("You already have a leave request that overlaps with these dates.");
+      return;
+    }
 
     const requestData = {
-      start_date: format(startDate, "yyyy-MM-dd"),
-      end_date: format(endDate, "yyyy-MM-dd"),
+      start_date: startDateStr,
+      end_date: endDateStr,
       title: title.trim() || '',
       reason: reason.trim(),
     };

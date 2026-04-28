@@ -73,6 +73,24 @@ const ApplyLeaveAdmin = () => {
       return;
     }
 
+    setError("");
+
+    const startDateStr = format(dateRange.from, "yyyy-MM-dd");
+    const endDateStr = dateRange.to ? format(dateRange.to, "yyyy-MM-dd") : startDateStr;
+
+    // Check for overlaps in local state (excluding REJECTED leaves)
+    const hasOverlap = leaves.some(l => {
+      if (l.status === 'REJECTED') return false;
+      const lStart = l.date.split(' to ')[0];
+      const lEnd = l.date.split(' to ')[1] || lStart;
+      return startDateStr <= lEnd && endDateStr >= lStart;
+    });
+
+    if (hasOverlap) {
+      setError("You already have a leave request that overlaps with these dates.");
+      return;
+    }
+
     setLoading(true);
     try {
       const request = {

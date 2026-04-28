@@ -113,11 +113,29 @@ const LeaveRequests = () => {
 
     setError(null);
 
+    const startDateStr = format(dateRange.from, "yyyy-MM-dd");
+    const endDateStr = format(dateRange.to, "yyyy-MM-dd");
+
+    // Check for overlaps in local state (excluding Rejected leaves)
+    const hasOverlap = leaveList.some(l => {
+      if (l.status === 'Rejected') return false;
+      // Handle both formats (from/to and date string)
+      const lStart = l.from || (l.date?.split(' to ')[0]);
+      const lEnd = l.to || (l.date?.split(' to ')[1] || l.date);
+      if (!lStart || !lEnd) return false;
+      return startDateStr <= lEnd && endDateStr >= lStart;
+    });
+
+    if (hasOverlap) {
+      setError("You already have a leave request that overlaps with these dates.");
+      return;
+    }
+
     const requestData = {
       title: title.trim(),
       branch_ids: [parseInt(selectedBranch)],
-      start_date: format(dateRange.from, "yyyy-MM-dd"),
-      end_date: format(dateRange.to, "yyyy-MM-dd"),
+      start_date: startDateStr,
+      end_date: endDateStr,
       reason: reason.trim(),
     };
 

@@ -79,6 +79,22 @@ const FeesManagerLeave = () => {
       return;
     }
 
+    setError("");
+
+    const startDateStr = format(dateRange.from, "yyyy-MM-dd");
+    const endDateStr = dateRange.to ? format(dateRange.to, "yyyy-MM-dd") : startDateStr;
+
+    // Check for overlaps in local state (excluding Rejected leaves)
+    const hasOverlap = leaveList.some(l => {
+      if (l.status === 'Rejected') return false;
+      return startDateStr <= l.end_date && endDateStr >= l.start_date;
+    });
+
+    if (hasOverlap) {
+      setError("You already have a leave request that overlaps with these dates.");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const token = localStorage.getItem('access_token');

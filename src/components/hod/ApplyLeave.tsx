@@ -210,12 +210,27 @@ const ApplyLeave = () => {
     }
 
     setLoading(true);
+    const startDateStr = format(dateRange.from, "yyyy-MM-dd");
+    const endDateStr = dateRange.to ? format(dateRange.to, "yyyy-MM-dd") : startDateStr;
+
+    // Check for overlaps in local state (excluding REJECTED leaves)
+    const hasOverlap = leaves.some(l => {
+      if (l.status === 'REJECTED') return false;
+      return startDateStr <= l.end_date && endDateStr >= l.start_date;
+    });
+
+    if (hasOverlap) {
+      setError("You already have a leave request that overlaps with these dates.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const request: ManageHODLeavesRequest = {
         branch_id: branchId,
         title: leaveTitle,
-        start_date: format(dateRange.from, "yyyy-MM-dd"),
-        end_date: dateRange.to ? format(dateRange.to, "yyyy-MM-dd") : format(dateRange.from, "yyyy-MM-dd"),
+        start_date: startDateStr,
+        end_date: endDateStr,
         reason: reason.trim(),
       };
       const response = await manageHODLeaves(request, "POST");

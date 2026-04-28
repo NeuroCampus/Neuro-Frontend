@@ -95,7 +95,7 @@ const StudentProfile: React.FC = () => {
           const newForm = { ...form } as StudentForm;
           Object.keys(pd).forEach((k) => {
             if (k === 'profile_picture' && pd[k]) {
-              newForm[k] = pd[k].startsWith('http') ? pd[k] : `${API_ENDPOINT.replace('/api','')}${pd[k]}`;
+              newForm[k] = pd[k].startsWith('http') ? pd[k] : `${API_ENDPOINT.replace('/api', '')}${pd[k]}`;
               return;
             }
 
@@ -155,7 +155,7 @@ const StudentProfile: React.FC = () => {
       const result = await uploadProfilePicture(file, `${API_ENDPOINT}/profile/upload-picture`, {});
       if (result?.success && (result.profile_picture_url || result.url)) {
         const url = (result.profile_picture_url || result.url) as string;
-        const fullUrl = url.startsWith('http') ? url : `${API_ENDPOINT.replace('/api','')}${url}`;
+        const fullUrl = url.startsWith('http') ? url : `${API_ENDPOINT.replace('/api', '')}${url}`;
         setForm((p) => ({ ...p, profile_picture: fullUrl }));
         const currentUserData = JSON.parse(localStorage.getItem('user') || '{}');
         currentUserData.profile_picture = fullUrl;
@@ -197,14 +197,14 @@ const StudentProfile: React.FC = () => {
     const files = e.target.files;
     if (!files) return;
     const arr = Array.from(files);
-    if (faceImages.length + arr.length > 5) { showErrorAlert('Error','Maximum 5 images allowed'); return; }
+    if (faceImages.length + arr.length > 5) { showErrorAlert('Error', 'Maximum 5 images allowed'); return; }
     setFaceImages((p) => [...p, ...arr]);
   };
 
   const removeFaceImage = (index: number) => setFaceImages((p) => p.filter((_, i) => i !== index));
 
   const trainFace = async () => {
-    if (faceImages.length < 3) { showErrorAlert('Error','Please upload at least 3 face images'); return; }
+    if (faceImages.length < 3) { showErrorAlert('Error', 'Please upload at least 3 face images'); return; }
     setFaceTrainingStatus('training'); setFaceTrainingProgress(0); setFaceTrainingMessage('Preparing images...');
     try {
       const fd = new FormData();
@@ -213,22 +213,22 @@ const StudentProfile: React.FC = () => {
       const resp = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/student/train-face/`, { method: 'POST', headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }, body: fd });
       const j = await resp.json();
       setFaceTrainingProgress(75); setFaceTrainingMessage('Training face recognition...');
-      if (j.success) { setFaceTrainingProgress(100); setFaceTrainingStatus('success'); setHasFaceTrained(true); setFaceImages([]); showSuccessAlert('Success','Face updated successfully!'); }
+      if (j.success) { setFaceTrainingProgress(100); setFaceTrainingStatus('success'); setHasFaceTrained(true); setFaceImages([]); showSuccessAlert('Success', 'Face updated successfully!'); }
       else { setFaceTrainingStatus('error'); setFaceTrainingMessage(j.message || 'Face training failed'); showErrorAlert('Error', j.message || 'Face training failed'); }
     } catch (err) {
-      console.error(err); setFaceTrainingStatus('error'); setFaceTrainingMessage('Network error occurred'); showErrorAlert('Error','Network error occurred');
+      console.error(err); setFaceTrainingStatus('error'); setFaceTrainingMessage('Network error occurred'); showErrorAlert('Error', 'Network error occurred');
     }
   };
 
   const handleChangePassword = async () => {
-    if (!passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password) { showErrorAlert('Missing fields','Please fill all password fields'); return; }
-    if (passwordData.new_password !== passwordData.confirm_password) { showErrorAlert('Password mismatch','New passwords do not match'); return; }
+    if (!passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password) { showErrorAlert('Missing fields', 'Please fill all password fields'); return; }
+    if (passwordData.new_password !== passwordData.confirm_password) { showErrorAlert('Password mismatch', 'New passwords do not match'); return; }
     try {
       const resp = await fetchWithTokenRefresh(`${API_ENDPOINT}/profile/change-password/`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(passwordData) });
       const j = await resp.json();
-      if (j.success) { setShowPasswordDialog(false); setPasswordData({ current_password: '', new_password: '', confirm_password: '' }); showSuccessAlert('Password changed','Your password has been updated successfully.'); }
+      if (j.success) { setShowPasswordDialog(false); setPasswordData({ current_password: '', new_password: '', confirm_password: '' }); showSuccessAlert('Password changed', 'Your password has been updated successfully.'); }
       else showErrorAlert('Unable to change password', j.message || 'Failed to change password');
-    } catch (err) { console.error(err); showErrorAlert('Unable to change password','Network error'); }
+    } catch (err) { console.error(err); showErrorAlert('Unable to change password', 'Network error'); }
   };
 
   if (loading) {
@@ -444,10 +444,7 @@ const StudentProfile: React.FC = () => {
                       <Input value={form.batch || ''} readOnly className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`} />
                     </div>
 
-                    <div>
-                      <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Course</Label>
-                      <Input value={form.course || ''} readOnly className={`${theme === 'dark' ? 'bg-muted text-muted-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`} />
-                    </div>
+
 
                     <div>
                       <Label className={theme === 'dark' ? 'text-foreground' : 'text-gray-700'}>Date of Admission</Label>
@@ -489,7 +486,7 @@ const StudentProfile: React.FC = () => {
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                             {faceImages.map((image, idx) => (
                               <div key={idx} className="relative">
-                                <img src={URL.createObjectURL(image)} alt={`Face ${idx+1}`} className="w-full h-20 object-cover rounded-lg" />
+                                <img src={URL.createObjectURL(image)} alt={`Face ${idx + 1}`} className="w-full h-20 object-cover rounded-lg" />
                                 <button onClick={() => removeFaceImage(idx)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600">×</button>
                               </div>
                             ))}
