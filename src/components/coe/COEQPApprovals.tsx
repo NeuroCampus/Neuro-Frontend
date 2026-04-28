@@ -179,7 +179,15 @@ const COEQPApprovals = () => {
       });
       const data = await response.json();
       if (data.success) {
-        alert("QP finalized and approved for use.");
+        MySwal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Approved',
+          text: 'QP finalized and approved for use.',
+          showConfirmButton: false,
+          timer: 3000,
+        });
         // remove from pending list
         setPendingQPs(pendingQPs.filter(qp => qp.id !== qpId));
         // add to finalized list so UI updates immediately without refetch

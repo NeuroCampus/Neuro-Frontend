@@ -8,10 +8,12 @@ import { Users, CheckCircle, XCircle, Search, Download } from "lucide-react";
 import { getStudentApplicationStatus, getFilterOptions, getSemesters, FilterOptions } from "../../utils/coe_api";
 import { fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
+import { useToast } from "@/hooks/use-toast";
 import "./StudentStatus.css";
 
 
-const StudentStatus = () => {
+const StudentStatus = React.forwardRef<HTMLDivElement>((props, ref) => {
+  const { toast } = useToast();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState<number>(1);
@@ -114,11 +116,11 @@ const StudentStatus = () => {
     if (!filters.batch || !filters.exam_period || !filters.branch || !filters.semester) return;
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) {
-      // Provide immediate feedback and avoid sending unauthenticated requests
-      // Frontend uses fetchWithTokenRefresh which requires an access token
-      // so inform the user to login
-      // eslint-disable-next-line no-alert
-      alert('You must be logged in to export. Please login and try again.');
+      toast({
+        title: "Authentication Required",
+        description: "You must be logged in to export. Please login and try again.",
+        variant: "destructive",
+      });
       return;
     }
     setExporting(true);
@@ -130,9 +132,14 @@ const StudentStatus = () => {
         semester: filters.semester,
         format: 'pdf'
       });
-      const url = `${API_ENDPOINT}/coe/export-not-applied/?${params.toString()}`;
+      const url = `${API_ENDPOINT}/coe/export-student-status/?${params.toString()}`;
       const resp = await fetchWithTokenRefresh(url, { method: 'GET' });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      
+      if (!resp.ok) {
+        const errorData = await resp.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${resp.status}`);
+      }
+      
       const blob = await resp.blob();
       const disposition = resp.headers.get('content-disposition') || '';
       const match = disposition.match(/filename\*=UTF-8''(.+)|filename="?([^";]+)"?/i);
@@ -146,15 +153,25 @@ const StudentStatus = () => {
       a.click();
       a.remove();
       window.URL.revokeObjectURL(urlBlob);
+      
+      toast({
+        title: "Export Successful",
+        description: `Downloaded ${filename}`,
+      });
     } catch (err) {
       console.error('Export error', err);
+      toast({
+        title: "Export Failed",
+        description: err instanceof Error ? err.message : "An unknown error occurred during export",
+        variant: "destructive",
+      });
     } finally {
       setExporting(false);
     }
   };
 
   return (
-    <div className="student-status-main-container w-full max-w-full">
+    <div ref={ref} className="student-status-main-container w-full max-w-full">
       <div className="space-y-4 sm:space-y-6">
         <div className="flex justify-between items-center header-section px-0">
           <h1 className="text-2xl sm:text-3xl font-bold header-title">Student Status</h1>
@@ -352,9 +369,9 @@ const StudentStatus = () => {
                     <Button
                       key={pageNumber}
                       size="sm"
-                      variant="outline"
+                      variant={page === pageNumber ? "default" : "outline"}
                       onClick={() => setPage(pageNumber)}
-                      className="bg-white text-black border-gray-300 hover:bg-gray-100"
+                      className={page === pageNumber ? "bg-primary text-white" : "bg-white text-black border-gray-300 hover:bg-gray-100"}
                     >
                       {pageNumber}
                     </Button>
@@ -384,6 +401,8 @@ const StudentStatus = () => {
       </div>
     </div>
   );
-};
+});
+
+StudentStatus.displayName = "StudentStatus";
 
 export default StudentStatus;
