@@ -11,7 +11,6 @@ import {
   Mail, 
   Phone, 
   Briefcase, 
-  Building2, 
   MapPin, 
   GraduationCap,
   ArrowRight,
@@ -57,7 +56,7 @@ const Enrollment: React.FC = () => {
             phone: formData.phone,
             designation: formData.designation,
             experience: parseInt(formData.experience) || 0,
-            department: formData.department,
+            address: formData.address,
           }
         : {
             name: formData.name,
@@ -236,16 +235,16 @@ const Enrollment: React.FC = () => {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="department">Department</Label>
+                      <Label htmlFor="address">Permanent Address</Label>
                       <div className="relative">
-                        <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="department"
-                          name="department"
-                          value={formData.department}
+                        <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <textarea
+                          id="address"
+                          name="address"
+                          value={formData.address}
                           onChange={handleInputChange}
-                          placeholder="e.g. Student Affairs"
-                          className="pl-10 h-11"
+                          placeholder="Complete residential address..."
+                          className="w-full pl-10 pr-3 py-2 text-sm border rounded-md focus:ring-1 focus:ring-primary outline-none min-h-[60px] resize-none custom-scrollbar"
                         />
                       </div>
                     </div>
@@ -261,7 +260,7 @@ const Enrollment: React.FC = () => {
                         value={formData.address}
                         onChange={handleInputChange}
                         placeholder="Complete residential address..."
-                        className="w-full pl-10 pr-3 py-2 text-sm border rounded-md focus:ring-1 focus:ring-primary outline-none min-h-[108px] resize-none"
+                        className="w-full pl-10 pr-3 py-2 text-sm border rounded-md focus:ring-1 focus:ring-primary outline-none min-h-[108px] resize-none custom-scrollbar"
                       />
                     </div>
                   </div>

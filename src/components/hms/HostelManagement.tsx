@@ -6,11 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { manageHostels, manageWardens, manageCaretakers } from '../../utils/hms_api';
+import { manageHostels, manageWardens, manageCaretakers, getHostelManagementInit } from '../../utils/hms_api';
 import { useToast } from '../../hooks/use-toast';
 import { Plus, Edit2, Trash2, Building, Search, User, Shield } from 'lucide-react';
 import { SkeletonTable } from '../ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { useRef } from 'react';
 
 interface Warden {
   id: number;
@@ -47,35 +48,57 @@ const HostelManagement: React.FC = () => {
     caretaker: null as number | null
   });
   const { toast } = useToast();
+  const fetchRef = useRef(false);
 
   useEffect(() => {
-    fetchData();
+    if (!fetchRef.current) {
+      fetchData();
+      fetchRef.current = true;
+    }
   }, []);
 
   const fetchData = async () => {
     setLoading(true);
-    await Promise.all([fetchHostels(), fetchWardens(), fetchCaretakers()]);
-    setLoading(false);
+    try {
+      const response = await getHostelManagementInit();
+      console.log('Hostel Management Init Response:', response);
+      if (response.success) {
+        const rawData = response.data || response;
+        setHostels(rawData.hostels || []);
+        setWardens(rawData.wardens || []);
+        setCaretakers(rawData.caretakers || []);
+      } else {
+        console.warn('Init response was not successful or missing data:', response);
+      }
+    } catch (error) {
+      console.error('Failed to fetch initial data:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load management data",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchHostels = async () => {
-    const response = await manageHostels();
-    if (response.success && response.results) {
-      setHostels(response.results);
-    }
-  };
-
-  const fetchWardens = async () => {
-    const response = await manageWardens();
-    if (response.success && response.results) {
-      setWardens(response.results);
-    }
-  };
-
-  const fetchCaretakers = async () => {
-    const response = await manageCaretakers();
-    if (response.success && response.results) {
-      setCaretakers(response.results);
+    try {
+      const response = await manageHostels();
+      console.log('Fetch Hostels Response:', response);
+      if (response.success) {
+        if (Array.isArray(response.results)) {
+          setHostels(response.results);
+        } else if (response.data && Array.isArray(response.data)) {
+          setHostels(response.data);
+        } else if (response.data && Array.isArray(response.data.results)) {
+          setHostels(response.data.results);
+        } else {
+          console.warn('Could not find hostel list in response:', response);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch hostels:', error);
     }
   };
 

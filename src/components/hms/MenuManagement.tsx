@@ -51,8 +51,6 @@ interface MenuItem {
   name: string;
   description?: string;
   vegetarian: boolean;
-  cost?: number;
-  calories?: number;
   is_active?: boolean;
 }
 
@@ -122,8 +120,6 @@ const MenuManagement: React.FC = () => {
     name: '',
     description: '',
     vegetarian: true,
-    cost: '',
-    calories: '',
   });
 
   const [formData, setFormData] = useState({
@@ -379,10 +375,10 @@ const MenuManagement: React.FC = () => {
   // Food Item Handlers
   const handleFoodItemSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!foodFormData.name || !foodFormData.cost) {
+    if (!foodFormData.name) {
       toast({
         title: 'Validation Error',
-        description: 'Name and Cost are required',
+        description: 'Name is required',
         variant: 'destructive',
       });
       return;
@@ -393,8 +389,6 @@ const MenuManagement: React.FC = () => {
         name: foodFormData.name,
         description: foodFormData.description,
         vegetarian: foodFormData.vegetarian,
-        cost: parseInt(foodFormData.cost),
-        calories: foodFormData.calories ? parseInt(foodFormData.calories) : null,
       };
 
       let response;
@@ -415,8 +409,6 @@ const MenuManagement: React.FC = () => {
           name: '',
           description: '',
           vegetarian: true,
-          cost: '',
-          calories: '',
         });
         // Reload only menu items (no need to fetch all menus)
         await loadMenuItems();
@@ -438,8 +430,6 @@ const MenuManagement: React.FC = () => {
       name: item.name,
       description: item.description || '',
       vegetarian: item.vegetarian,
-      cost: item.cost.toString(),
-      calories: item.calories ? item.calories.toString() : '',
     });
     setShowFoodForm(true);
   };
@@ -550,7 +540,7 @@ const MenuManagement: React.FC = () => {
                   onClick={() => {
                     setShowFoodForm(true);
                     setEditingFoodItem(null);
-                    setFoodFormData({ name: '', description: '', vegetarian: true, cost: '', calories: '' });
+                    setFoodFormData({ name: '', description: '', vegetarian: true });
                     loadMenuItems();
                   }}
                   className="border-primary/20 hover:bg-primary/5 bg-background"
@@ -617,9 +607,6 @@ const MenuManagement: React.FC = () => {
                                 <div className={`w-2 h-2 rounded-full flex-shrink-0 ${item.vegetarian ? 'bg-green-500' : 'bg-red-500'}`} />
                                 <span className="truncate font-medium">{item.name}</span>
                               </div>
-                              <span className="text-[10px] text-muted-foreground bg-background px-1.5 py-0.5 rounded border border-muted-foreground/10">
-                                {item.calories || 0} cal
-                              </span>
                             </div>
                           ))}
                         </div>
@@ -783,7 +770,6 @@ const MenuManagement: React.FC = () => {
                       <div className={`w-3 h-3 rounded-full flex-shrink-0 ${item.vegetarian ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]'}`} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate">{item.name}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{item.cost} ₹ • {item.calories} cal</p>
                       </div>
                       {formData.items.includes(item.id!) && <Save className="w-3.5 h-3.5 text-primary" />}
                     </div>
@@ -814,16 +800,6 @@ const MenuManagement: React.FC = () => {
             <div className="space-y-2">
               <Label>Description</Label>
               <Input value={foodFormData.description} onChange={(e) => setFoodFormData({ ...foodFormData, description: e.target.value })} placeholder="Ingredients, taste, etc." />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Cost (₹)</Label>
-                <Input type="number" value={foodFormData.cost} onChange={(e) => setFoodFormData({ ...foodFormData, cost: e.target.value })} required />
-              </div>
-              <div className="space-y-2">
-                <Label>Calories</Label>
-                <Input type="number" value={foodFormData.calories} onChange={(e) => setFoodFormData({ ...foodFormData, calories: e.target.value })} />
-              </div>
             </div>
             <div className="flex items-center gap-2 pt-2">
               <input

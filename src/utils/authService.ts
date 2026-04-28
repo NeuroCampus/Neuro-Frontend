@@ -7,7 +7,7 @@ interface AuthResponse {
   user_id?: string;
   username?: string;
   email?: string;
-  role?: "admin" | "principal" | "hod" | "teacher" | "student" | "fees_manager" | "coe";
+  role?: "admin" | "principal" | "hod" | "teacher" | "faculty" | "student" | "fees_manager" | "coe" | "dean" | "hms";
   department?: string | null;
   profile_image?: string | null;
 }
@@ -133,41 +133,53 @@ export const fetchWithTokenRefresh = async (url: string, options: RequestInit = 
   }
 };
 
+let refreshPromise: Promise<RefreshTokenResponse> | null = null;
+
 // Refresh token function for /api/token/refresh/
 export const refreshToken = async (): Promise<RefreshTokenResponse> => {
-  try {
-    const refresh = localStorage.getItem("refresh_token");
-    if (!refresh) {
-      throw new Error("No refresh token available");
-    }
-
-    console.log("Sending token refresh request:", { refresh });
-    const response = await fetch(`${API_ENDPOINT}/token/refresh/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ refresh }),
-      signal: AbortSignal.timeout(TOKEN_REFRESH_TIMEOUT),
-    });
-
-    const result: RefreshTokenResponse = await response.json();
-    console.log("Token refresh response:", result);
-
-    if (!response.ok) {
-      throw new Error(result.message || "Token refresh failed");
-    }
-    return {
-      success: true,
-      access: result.access,
-      refresh: result.refresh,
-    };
-  } catch (error: any) {
-    console.error("Refresh Token Error:", error);
-    localStorage.clear();
-    stopTokenRefresh();
-    return { success: false, message: error.message || "Network error" };
+  if (refreshPromise) {
+    return refreshPromise;
   }
+
+  refreshPromise = (async () => {
+    try {
+      const refresh = localStorage.getItem("refresh_token");
+      if (!refresh) {
+        throw new Error("No refresh token available");
+      }
+
+      console.log("Sending token refresh request:", { refresh });
+      const response = await fetch(`${API_ENDPOINT}/token/refresh/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ refresh }),
+        signal: AbortSignal.timeout(TOKEN_REFRESH_TIMEOUT),
+      });
+
+      const result: RefreshTokenResponse = await response.json();
+      console.log("Token refresh response:", result);
+
+      if (!response.ok) {
+        throw new Error(result.message || "Token refresh failed");
+      }
+      return {
+        success: true,
+        access: result.access,
+        refresh: result.refresh,
+      };
+    } catch (error: any) {
+      console.error("Refresh Token Error:", error);
+      localStorage.clear();
+      stopTokenRefresh();
+      return { success: false, message: error.message || "Network error" };
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
 };
 
 // Proactive token refresh logic

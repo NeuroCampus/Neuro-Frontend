@@ -359,7 +359,6 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       { name: "Hostels", page: "hostels" },
       { name: "Rooms", page: "rooms" },
       { name: "Students", page: "students" },
-      { name: "Wardens", page: "wardens" },
       { name: "Enrollment", page: "enrollment" },
       { name: "Staff", page: "staff" },
       { name: "Menu Management", page: "menu-management" },

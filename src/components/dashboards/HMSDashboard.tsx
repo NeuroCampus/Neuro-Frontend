@@ -1,23 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import DashboardLayout from "../common/DashboardLayout";
-import { 
-  HMSOverview, 
-  HostelManagement, 
-  RoomManagement, 
-  StudentManagement, 
-  WardenManagement, 
-  Enrollment, 
-  StaffManagementOverview, 
-  MenuManagement, 
-  IssueTracking,
-  StudentMealManagement
-} from "../hms";
+import HMSOverview from "../hms/HMSOverview";
+import HostelManagement from "../hms/HostelManagement";
+import RoomManagement from "../hms/RoomManagement";
+import StudentManagement from "../hms/StudentManagement";
+import Enrollment from "../hms/Enrollment";
+import StaffManagementOverview from "../hms/StaffManagementOverview";
+import MenuManagement from "../hms/MenuManagement";
+import IssueTracking from "../hms/IssueTracking";
+import StudentMealManagement from "../hms/StudentMealManagement";
 import { useToast } from "../../hooks/use-toast";
 import { logoutUser } from "../../utils/authService";
 import { useTheme } from "../../context/ThemeContext";
-import { manageHostels } from "../../utils/hms_api";
+import { manageHostels, getHostelManagementInit } from "../../utils/hms_api";
 
 interface HMSDashboardProps {
   user: any;
@@ -30,6 +27,17 @@ const HMSDashboard = ({ user, setPage }: HMSDashboardProps) => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { theme } = useTheme();
+  const fetchRef = useRef(false);
+  const [wardens, setWardens] = useState<any[]>([]);
+  const [caretakers, setCaretakers] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!fetchRef.current) {
+      fetchDashboardData();
+      fetchRef.current = true;
+    }
+  }, []);
+
   const [hostels, setHostels] = useState<any[]>([]);
   const [selectedHostelId, setSelectedHostelId] = useState<number | null>(null);
 
@@ -41,20 +49,23 @@ const HMSDashboard = ({ user, setPage }: HMSDashboardProps) => {
 
   const activePage = getActivePageFromPath(location.pathname);
 
-  useEffect(() => {
-    fetchHostels();
-  }, []);
-
-  const fetchHostels = async () => {
+  const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const response = await manageHostels();
-      if (response.success && response.results && response.results.length > 0) {
-        setHostels(response.results);
-        setSelectedHostelId(response.results[0].id);
+      const response = await getHostelManagementInit();
+      if (response.success) {
+        const rawData = response.data || response;
+        const hostelsList = rawData.hostels || [];
+        setHostels(hostelsList);
+        setWardens(rawData.wardens || []);
+        setCaretakers(rawData.caretakers || []);
+        
+        if (hostelsList.length > 0 && !selectedHostelId) {
+          setSelectedHostelId(hostelsList[0].id);
+        }
       }
     } catch (err) {
-      console.error("Failed to fetch hostels for dashboard", err);
+      console.error("Failed to fetch dashboard data", err);
     } finally {
       setLoading(false);
     }
@@ -68,6 +79,42 @@ const HMSDashboard = ({ user, setPage }: HMSDashboardProps) => {
 
   const handleNotificationClick = () => {
     navigate('/hms/notifications');
+  };
+
+  const renderContent = () => {
+    switch (activePage) {
+      case "dashboard":
+      case "":
+        return <HMSOverview />;
+      case "hostels":
+        return <HostelManagement />;
+      case "rooms":
+        return <RoomManagement />;
+      case "students":
+        return <StudentManagement />;
+      case "enrollment":
+        return <Enrollment />;
+      case "staff":
+        return <StaffManagementOverview />;
+      case "menu-management":
+        return <MenuManagement />;
+      case "student-meals":
+        return <StudentMealManagement hostelId={selectedHostelId} />;
+      case "issues":
+        if (selectedHostelId) {
+          return <IssueTracking hostelId={selectedHostelId} />;
+        }
+        if (!loading) {
+          return (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No hostels found to track issues.</p>
+            </div>
+          );
+        }
+        return null;
+      default:
+        return <HMSOverview />;
+    }
   };
 
   return (
@@ -97,21 +144,9 @@ const HMSDashboard = ({ user, setPage }: HMSDashboardProps) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          {(activePage === '' || activePage === 'dashboard') && <HMSOverview />}
-          {activePage === 'hostels' && <HostelManagement />}
-          {activePage === 'rooms' && <RoomManagement />}
-          {activePage === 'students' && <StudentManagement />}
-          {activePage === 'wardens' && <WardenManagement />}
-          {activePage === 'enrollment' && <Enrollment />}
-          {activePage === 'staff' && <StaffManagementOverview />}
-          {activePage === 'menu-management' && <MenuManagement />}
-          {activePage === 'student-meals' && <StudentMealManagement />}
-          {activePage === 'issues' && selectedHostelId && <IssueTracking hostelId={selectedHostelId} />}
-          {activePage === 'issues' && !selectedHostelId && !loading && (
-            <div className="text-center py-12">
-              <p className="text-gray-500">No hostels found to track issues.</p>
-            </div>
-          )}
+          <div key={activePage}>
+            {renderContent()}
+          </div>
         </motion.div>
       </motion.div>
     </DashboardLayout>

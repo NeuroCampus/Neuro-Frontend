@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { manageHostelStudents, manageRooms, getRoomsByHostel } from '../../utils/hms_api';
+import { manageHostelStudents, manageRooms, getRoomsByHostel, getFloorsByHostel } from '../../utils/hms_api';
 import { useToast } from '../../hooks/use-toast';
 import { Search, Filter, Edit2, CheckCircle2, XCircle, ChevronLeft, ChevronRight, UserCircle2, Building2 } from 'lucide-react';
 import { SkeletonTable, SkeletonPageHeader } from '../ui/skeleton';
@@ -47,10 +47,12 @@ const StudentManagement: React.FC = () => {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [semesters, setSemesters] = useState<Semester[]>([]);
   const [hostels, setHostels] = useState<any[]>([]);
+  const [floorsForHostel, setFloorsForHostel] = useState<number[]>([]);
   const [roomsForHostel, setRoomsForHostel] = useState<any[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<HostelStudent | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLoadingFloors, setIsLoadingFloors] = useState(false);
   const [isLoadingRooms, setIsLoadingRooms] = useState(false);
   const [selectedHostelInDialog, setSelectedHostelInDialog] = useState<number | null>(null);
   const [formData, setFormData] = useState({
@@ -58,6 +60,21 @@ const StudentManagement: React.FC = () => {
     room_allotted: false,
     no_dues: true
   });
+  const [selectedFloorInDialog, setSelectedFloorInDialog] = useState<number | null>(null);
+
+  const getFloorFromRoomNumber = (roomNo: string): number => {
+    if (!roomNo) return 0;
+    // Extract the numeric part. We prioritize the last numeric sequence 
+    // because room numbers like "BH1-101" often have the floor info in the last part.
+    const matches = roomNo.match(/\d+/g);
+    if (matches && matches.length > 0) {
+      const lastMatch = matches[matches.length - 1];
+      const num = parseInt(lastMatch);
+      // Logic: Room 101 -> Floor 1, Room 1001 -> Floor 10, Room 21 -> Floor 0
+      return Math.floor(num / 100);
+    }
+    return 0;
+  };
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -136,10 +153,32 @@ const StudentManagement: React.FC = () => {
     }
   };
 
-  const getRoomsForHostel = async (hostelId: number) => {
+  const getFloorsForHostel = async (hostelId: number) => {
+    setIsLoadingFloors(true);
+    try {
+      const response = await getFloorsByHostel(hostelId);
+      if (response.success && response.results) {
+        setFloorsForHostel(response.results);
+      } else {
+        setFloorsForHostel([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch floors:', error);
+      setFloorsForHostel([]);
+    } finally {
+      setIsLoadingFloors(false);
+    }
+  };
+
+  const getRoomsForHostel = async (hostelId: number, floor?: number) => {
+    if (floor === undefined || floor === null) {
+      setRoomsForHostel([]);
+      return;
+    }
+    
     setIsLoadingRooms(true);
     try {
-      const response = await getRoomsByHostel(hostelId);
+      const response = await getRoomsByHostel(hostelId, floor);
       if (response.success && response.results) {
         setRoomsForHostel(response.results);
       } else {
@@ -198,6 +237,9 @@ const StudentManagement: React.FC = () => {
     setLoading(false);
   };
 
+  // Remove the automatic floor setting from room change
+  // We want it to be manual and cascaded
+
   const handleFilterChange = (key: string, value: string) => {
     setFilters(prev => ({ ...prev, [key]: value }));
     setCurrentPage(1);
@@ -233,8 +275,21 @@ const StudentManagement: React.FC = () => {
       const hostel = hostels.find(h => h.name === student.room_hostel_name);
       if (hostel) {
         setSelectedHostelInDialog(hostel.id);
-        getRoomsForHostel(hostel.id);
+        getFloorsForHostel(hostel.id);
+        
+        // If we have floor info, fetch rooms for that floor
+        // Since we don't have explicit floor in student object yet, we extract it from room name
+        if (student.room_name) {
+          const floor = getFloorFromRoomNumber(student.room_name);
+          setSelectedFloorInDialog(floor);
+          getRoomsForHostel(hostel.id, floor);
+        }
       }
+    } else {
+      setSelectedHostelInDialog(null);
+      setSelectedFloorInDialog(null);
+      setFloorsForHostel([]);
+      setRoomsForHostel([]);
     }
     setIsDialogOpen(true);
   };
@@ -417,13 +472,15 @@ const StudentManagement: React.FC = () => {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>Assign Hostel</Label>
                     <Select value={selectedHostelInDialog?.toString() || ''} onValueChange={(v) => {
                       const id = parseInt(v);
                       setSelectedHostelInDialog(id);
-                      getRoomsForHostel(id);
+                      setSelectedFloorInDialog(null);
+                      setRoomsForHostel([]);
+                      getFloorsForHostel(id);
                       setFormData(prev => ({ ...prev, room: null }));
                     }}>
                       <SelectTrigger><SelectValue placeholder="Select hostel" /></SelectTrigger>
@@ -432,21 +489,55 @@ const StudentManagement: React.FC = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Assign Room</Label>
-                    <Select value={formData.room?.toString() || 'none'} onValueChange={(v) => setFormData(prev => ({ ...prev, room: v === 'none' ? null : parseInt(v) }))} disabled={!selectedHostelInDialog}>
-                      <SelectTrigger>
-                        {isLoadingRooms ? <span className="animate-pulse">Loading...</span> : <SelectValue placeholder="Select room" />}
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[250px]">
-                        <SelectItem value="none">Unassigned</SelectItem>
-                        {roomsForHostel.map(r => (
-                          <SelectItem key={r.id} value={r.id.toString()} disabled={r.student_count >= r.capacity && editingStudent.room !== r.id}>
-                            {r.name} ({r.student_count}/{r.capacity})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label>Select Floor</Label>
+                      <Select
+                        value={selectedFloorInDialog?.toString() || ''}
+                        onValueChange={(v) => {
+                          const floor = parseInt(v);
+                          setSelectedFloorInDialog(floor);
+                          if (selectedHostelInDialog) {
+                            getRoomsForHostel(selectedHostelInDialog, floor);
+                          }
+                          setFormData(prev => ({ ...prev, room: null }));
+                        }}
+                        disabled={!selectedHostelInDialog || isLoadingFloors}
+                      >
+                        <SelectTrigger>
+                          {isLoadingFloors ? <span className="animate-pulse">Loading Floors...</span> : <SelectValue placeholder="Select Floor" />}
+                        </SelectTrigger>
+                        <SelectContent>
+                          {floorsForHostel.length > 0 ? (
+                            floorsForHostel.map(floor => (
+                              <SelectItem key={floor} value={floor.toString()}>
+                                {floor === 0 ? 'Ground Floor' : `${floor}${floor === 1 ? 'st' : floor === 2 ? 'nd' : floor === 3 ? 'rd' : 'th'} Floor`}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="none" disabled>No floors found</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Assign Room</Label>
+                      <Select value={formData.room?.toString() || 'none'} onValueChange={(v) => setFormData(prev => ({ ...prev, room: v === 'none' ? null : parseInt(v) }))} disabled={!selectedHostelInDialog || selectedFloorInDialog === null || isLoadingRooms}>
+                        <SelectTrigger>
+                          {isLoadingRooms ? <span className="animate-pulse">Loading Rooms...</span> : <SelectValue placeholder="Select room" />}
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[250px]">
+                          <SelectItem value="none">Unassigned</SelectItem>
+                          {roomsForHostel.map(r => (
+                            <SelectItem key={r.id} value={r.id.toString()} disabled={r.student_count >= r.capacity && editingStudent.room !== r.id}>
+                              {r.name} ({r.student_count}/{r.capacity})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
 

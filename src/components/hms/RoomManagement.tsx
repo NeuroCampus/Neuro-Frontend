@@ -5,9 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { manageRooms, manageHostels, manageHostelStudents } from '../../utils/hms_api';
+import { manageRooms, manageHostels, manageHostelStudents, getFloorsByHostel } from '../../utils/hms_api';
 import { useToast } from '../../hooks/use-toast';
-import { Edit2, Trash2, Plus, LayoutGrid, Users as UsersIcon } from 'lucide-react';
+import { Edit2, Trash2, Plus, LayoutGrid, Users as UsersIcon, Info } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { SkeletonCard, SkeletonPageHeader } from '../ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -26,6 +26,7 @@ interface Room {
   hostel: number;
   hostel_name?: string;
   student_count?: number;
+  floor?: number;
 }
 
 const RoomManagement: React.FC = () => {
@@ -46,7 +47,8 @@ const RoomManagement: React.FC = () => {
     hostel: 0
   });
   const [selectedFloor, setSelectedFloor] = useState<number | null>(null);
-  const [selectedFloorFilter, setSelectedFloorFilter] = useState<string>("all");
+  const [selectedFloorFilter, setSelectedFloorFilter] = useState<string>("");
+  const [availableFloors, setAvailableFloors] = useState<number[]>([]);
   const [isEditMode, setIsEditMode] = useState(false);
   const { toast } = useToast();
   const { theme } = useTheme();
@@ -57,9 +59,49 @@ const RoomManagement: React.FC = () => {
 
   useEffect(() => {
     if (selectedHostel) {
-      fetchRoomsByHostel(selectedHostel);
+      fetchHostelFloors(selectedHostel);
     }
   }, [selectedHostel]);
+
+  useEffect(() => {
+    if (selectedHostel && selectedFloorFilter) {
+      fetchRoomsByHostel(selectedHostel, selectedFloorFilter);
+    } else {
+      setRooms([]);
+    }
+  }, [selectedHostel, selectedFloorFilter]);
+
+  // Auto-populate room number and name based on floor and hostel
+  useEffect(() => {
+    if (!editingRoom && selectedFloor !== null && formData.hostel) {
+      // Find maximum room number on the same floor for auto-population
+      // We can only do this accurately if we have all rooms for that floor
+      // Since we now might be loading only one floor, it's safer.
+      const floorRooms = rooms.filter(r => 
+        r.hostel === formData.hostel && 
+        (r.floor === selectedFloor || getFloorFromRoomNo(r.no) === selectedFloor)
+      );
+      
+      let nextNo = (selectedFloor * 100) + 1;
+      if (floorRooms.length > 0) {
+        const roomNos = floorRooms.map(r => parseInt(r.no)).filter(n => !isNaN(n));
+        if (roomNos.length > 0) {
+          nextNo = Math.max(...roomNos) + 1;
+        }
+      } else if (selectedFloor === 0) {
+        nextNo = 1;
+      }
+      
+      const selectedHostelData = hostels.find(h => h.id === formData.hostel);
+      const hostelName = selectedHostelData ? selectedHostelData.name : 'Room';
+      
+      setFormData(prev => ({
+        ...prev,
+        no: nextNo.toString(),
+        name: `${hostelName}-${nextNo}`
+      }));
+    }
+  }, [selectedFloor, formData.hostel, editingRoom, rooms, hostels]);
 
   const fetchStudents = async (roomId: number) => {
     setIsLoadingStudents(true);
@@ -77,10 +119,25 @@ const RoomManagement: React.FC = () => {
     }
   };
 
-  const fetchRoomsByHostel = async (hostelId: number) => {
+  const fetchHostelFloors = async (hostelId: number) => {
+    try {
+      const response = await getFloorsByHostel(hostelId);
+      if (response.success && response.results) {
+        setAvailableFloors(response.results);
+      }
+    } catch (error) {
+      console.error('Failed to fetch floors:', error);
+    }
+  };
+
+  const fetchRoomsByHostel = async (hostelId: number, floor?: string) => {
     setIsLoadingRooms(true);
     try {
-      const response = await manageRooms(undefined, undefined, 'GET', { hostel: hostelId });
+      const params: any = { hostel: hostelId };
+      if (floor && floor !== "all") {
+        params.floor = floor;
+      }
+      const response = await manageRooms(undefined, undefined, 'GET', params);
       if (response.success && response.results) {
         setRooms(response.results);
         const countsMap: { [key: number]: number } = {};
@@ -116,6 +173,23 @@ const RoomManagement: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check for duplicate room entry in the same hostel
+    const duplicate = rooms.find(r => 
+      r.hostel === formData.hostel && 
+      r.no === formData.no && 
+      (!editingRoom || r.id !== editingRoom.id)
+    );
+
+    if (duplicate) {
+      toast({
+        variant: "destructive",
+        title: "Duplicate Room",
+        description: `Room number ${formData.no} already exists in this hostel.`,
+      });
+      return;
+    }
+
     const method = editingRoom ? 'PUT' : 'POST';
     const response = await manageRooms(formData, editingRoom?.id, method);
 
@@ -197,7 +271,7 @@ const RoomManagement: React.FC = () => {
 
   const getFloorFromRoomNo = (roomNo: string): number => Math.floor(parseInt(roomNo) / 100) || 0;
   const hostelRooms = selectedHostel ? rooms.filter(r => r.hostel === selectedHostel) : [];
-  const floors = [...new Set(hostelRooms.map(r => getFloorFromRoomNo(r.no)))].sort((a, b) => a - b);
+  const floors = [...new Set(hostelRooms.map(r => r.floor !== undefined ? r.floor : getFloorFromRoomNo(r.no)))].sort((a, b) => a - b);
 
   if (!selectedHostel && isLoadingRooms) {
     return (
@@ -218,7 +292,10 @@ const RoomManagement: React.FC = () => {
               <div className="flex items-center gap-3 w-full md:w-auto">
                 <div className="flex flex-col w-full">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground leading-none mb-1">Current Hostel</span>
-                  <Select value={selectedHostel?.toString() || ''} onValueChange={(v) => setSelectedHostel(parseInt(v))}>
+                  <Select value={selectedHostel?.toString() || ''} onValueChange={(v) => {
+                    setSelectedHostel(parseInt(v));
+                    setSelectedFloorFilter("");
+                  }}>
                     <SelectTrigger className="w-full md:w-[200px] h-9 border bg-transparent p-2 focus:ring-1 font-normal text-md">
                       <SelectValue placeholder="Select Hostel" />
                     </SelectTrigger>
@@ -239,11 +316,11 @@ const RoomManagement: React.FC = () => {
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground leading-none mb-1">Current Floor</span>
                   <Select value={selectedFloorFilter} onValueChange={setSelectedFloorFilter}>
                     <SelectTrigger className="w-full md:w-[160px] h-9 border bg-transparent p-2 focus:ring-1 font-normal text-md">
-                      <SelectValue placeholder="Select Floor" />
+                      <SelectValue placeholder="Choose Floor" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Floors</SelectItem>
-                      {floors.map(f => (
+                      {availableFloors.sort((a, b) => a - b).map(f => (
                         <SelectItem key={f} value={f.toString()}>
                           {f === 0 ? 'Ground Floor' : `Floor ${f}`}
                         </SelectItem>
@@ -268,6 +345,7 @@ const RoomManagement: React.FC = () => {
                 <DialogTrigger asChild>
                   <Button onClick={() => {
                     setEditingRoom(null);
+                    setSelectedFloor(null);
                     setFormData({ no: '', name: '', room_type: 'S', vacant: true, hostel: selectedHostel || 0 });
                   }} className="bg-primary hover:bg-primary/90 h-9 px-4 font-semibold shadow-sm whitespace-nowrap w-full sm:w-auto">
                     <Plus className="w-4 h-4 mr-2" /> Add Room
@@ -278,6 +356,15 @@ const RoomManagement: React.FC = () => {
                     <DialogTitle>{editingRoom ? 'Edit Room' : 'Add Room'}</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Hostel</Label>
+                      <Select value={formData.hostel.toString()} onValueChange={(v) => setFormData({ ...formData, hostel: parseInt(v) })}>
+                        <SelectTrigger className="h-10"><SelectValue placeholder="Select hostel" /></SelectTrigger>
+                        <SelectContent>
+                          {hostels.map(h => <SelectItem key={h.id} value={h.id.toString()}>{h.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div className="space-y-2">
                       <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Floor</Label>
                       <Select value={selectedFloor?.toString() || ''} onValueChange={(v) => setSelectedFloor(parseInt(v))}>
@@ -308,15 +395,6 @@ const RoomManagement: React.FC = () => {
                           <SelectItem value="D">Double Occupancy</SelectItem>
                           <SelectItem value="P">Research Scholar</SelectItem>
                           <SelectItem value="B">Both (S/D)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Hostel</Label>
-                      <Select value={formData.hostel.toString()} onValueChange={(v) => setFormData({ ...formData, hostel: parseInt(v) })}>
-                        <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {hostels.map(h => <SelectItem key={h.id} value={h.id.toString()}>{h.name}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
@@ -392,7 +470,17 @@ const RoomManagement: React.FC = () => {
 
           {/* Room Matrix View */}
           <AnimatePresence mode="wait">
-            {isLoadingRooms ? (
+            {!selectedFloorFilter ? (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-center justify-center py-20 bg-muted/20 rounded-2xl border-2 border-dashed border-muted/50"
+              >
+                <LayoutGrid className="w-12 h-12 text-muted-foreground/30 mb-4" />
+                <p className="text-muted-foreground font-medium text-lg text-center px-4">Select a floor to view and manage rooms</p>
+                <p className="text-muted-foreground/70 text-sm text-center px-4 mt-1">Choose a floor from the dropdown above to continue</p>
+              </motion.div>
+            ) : isLoadingRooms ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <SkeletonCard className="h-48" />
                 <SkeletonCard className="h-48" />
@@ -409,7 +497,7 @@ const RoomManagement: React.FC = () => {
                 {floors
                   .filter(f => selectedFloorFilter === "all" || f.toString() === selectedFloorFilter)
                   .map((floor) => {
-                    const floorRooms = hostelRooms.filter(r => getFloorFromRoomNo(r.no) === floor).sort((a, b) => parseInt(a.no) - parseInt(b.no));
+                    const floorRooms = hostelRooms.filter(r => (r.floor !== undefined ? r.floor : getFloorFromRoomNo(r.no)) === floor).sort((a, b) => parseInt(a.no) - parseInt(b.no));
                     return (
                       <div key={floor} className="space-y-4">
                         <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-2">

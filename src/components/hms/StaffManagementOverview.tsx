@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Users, UserCheck, Search, Edit2, Trash2, Mail, Phone, Briefcase, Award, Plus, Save, X } from "lucide-react";
+import { Users, UserCheck, Search, Edit2, Trash2, Mail, Phone, Briefcase, Award, Plus, Save, X, MapPin } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
 import { getStaffEnrollment, manageWardens, manageCaretakers } from "../../utils/hms_api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,14 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SkeletonTable, SkeletonStatsGrid, SkeletonPageHeader } from "../ui/skeleton";
 import DashboardCard from "../common/DashboardCard";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Warden {
   id: number;
@@ -18,6 +26,7 @@ interface Warden {
   phone?: string;
   designation?: string;
   experience?: string;
+  address?: string;
 }
 
 interface Caretaker {
@@ -37,11 +46,11 @@ const StaffManagementOverview: React.FC = () => {
   const [wardensTotal, setWardensTotal] = useState(0);
   const [caretakersTotal, setCaretakersTotal] = useState(0);
 
-  // Inline edit state
-  const [editingWardenId, setEditingWardenId] = useState<number | null>(null);
-  const [editingCaretakerId, setEditingCaretakerId] = useState<number | null>(null);
-  const [editingWardenForm, setEditingWardenForm] = useState<Partial<Warden>>({});
-  const [editingCaretakerForm, setEditingCaretakerForm] = useState<Partial<Caretaker>>({});
+  // Modal state
+  const [isWardenModalOpen, setIsWardenModalOpen] = useState(false);
+  const [isCaretakerModalOpen, setIsCaretakerModalOpen] = useState(false);
+  const [editingWarden, setEditingWarden] = useState<Warden | null>(null);
+  const [editingCaretaker, setEditingCaretaker] = useState<Caretaker | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
   // Search state
@@ -76,14 +85,14 @@ const StaffManagementOverview: React.FC = () => {
     }
   };
 
-  const saveWarden = async (id?: number) => {
+  const saveWarden = async () => {
+    if (!editingWarden) return;
     try {
       setActionLoading(true);
-      const payload = { ...editingWardenForm };
-      const response = await manageWardens(payload, id, id ? "PUT" : "POST");
+      const response = await manageWardens(editingWarden, editingWarden.id, "PUT");
       if (response.success) {
-        toast({ title: "Success", description: "Warden details saved." });
-        setEditingWardenId(null);
+        toast({ title: "Success", description: "Warden details updated." });
+        setIsWardenModalOpen(false);
         fetchStaffData();
       }
     } catch (err) {
@@ -106,14 +115,14 @@ const StaffManagementOverview: React.FC = () => {
     }
   };
 
-  const saveCaretaker = async (id?: number) => {
+  const saveCaretaker = async () => {
+    if (!editingCaretaker) return;
     try {
       setActionLoading(true);
-      const payload = { ...editingCaretakerForm };
-      const response = await manageCaretakers(payload, id, id ? "PUT" : "POST");
+      const response = await manageCaretakers(editingCaretaker, editingCaretaker.id, "PUT");
       if (response.success) {
-        toast({ title: "Success", description: "Caretaker details saved." });
-        setEditingCaretakerId(null);
+        toast({ title: "Success", description: "Caretaker details updated." });
+        setIsCaretakerModalOpen(false);
         fetchStaffData();
       }
     } catch (err) {
@@ -174,7 +183,7 @@ const StaffManagementOverview: React.FC = () => {
         <Card className="shadow-sm">
           <CardHeader className="pb-3 border-b">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-xl font-bold flex items-center gap-2">
+              <CardTitle className="text-xl font-semibold flex items-center gap-2">
                 <UserCheck className="w-5 h-5 text-primary" />
                 Wardens
               </CardTitle>
@@ -202,35 +211,22 @@ const StaffManagementOverview: React.FC = () => {
                   {filteredWardens.map((warden) => (
                     <TableRow key={warden.id} className="group">
                       <TableCell>
-                        {editingWardenId === warden.id ? (
-                          <div className="space-y-3 p-2">
-                            <Input size={1} value={editingWardenForm.name} onChange={e => setEditingWardenForm({...editingWardenForm, name: e.target.value})} placeholder="Full Name" />
-                            <div className="grid grid-cols-2 gap-2">
-                              <Input size={1} value={editingWardenForm.designation} onChange={e => setEditingWardenForm({...editingWardenForm, designation: e.target.value})} placeholder="Designation" />
-                              <Input size={1} value={editingWardenForm.experience} onChange={e => setEditingWardenForm({...editingWardenForm, experience: e.target.value})} placeholder="Exp (Years)" />
-                            </div>
-                            <div className="flex gap-2">
-                              <Button size="sm" onClick={() => saveWarden(warden.id)} disabled={actionLoading}><Save className="w-3.5 h-3.5 mr-1" /> Save</Button>
-                              <Button size="sm" variant="ghost" onClick={() => setEditingWardenId(null)}><X className="w-3.5 h-3.5 mr-1" /> Cancel</Button>
-                            </div>
+                        <div className="space-y-1 py-1">
+                          <div className="font-semibold flex items-center gap-2">
+                            {warden.name}
+                            <Badge variant="outline" className="text-[10px] py-0">{warden.designation || 'Warden'}</Badge>
                           </div>
-                        ) : (
-                          <div className="space-y-1 py-1">
-                            <div className="font-bold flex items-center gap-2">
-                              {warden.name}
-                              <Badge variant="outline" className="text-[10px] py-0">{warden.designation || 'Warden'}</Badge>
-                            </div>
-                            <div className="text-xs text-muted-foreground flex flex-col gap-0.5">
-                              <span className="flex items-center gap-1.5"><Mail size={12} /> {warden.email || 'N/A'}</span>
-                              <span className="flex items-center gap-1.5"><Phone size={12} /> {warden.phone || 'N/A'}</span>
-                              <span className="flex items-center gap-1.5 font-medium text-primary/70"><Award size={12} /> {warden.experience || '0'} Years Experience</span>
-                            </div>
+                          <div className="text-xs text-muted-foreground flex flex-col gap-0.5">
+                            <span className="flex items-center gap-1.5"><Mail size={12} /> {warden.email || 'N/A'}</span>
+                            <span className="flex items-center gap-1.5"><Phone size={12} /> {warden.phone || 'N/A'}</span>
+                            <span className="flex items-center gap-1.5"><MapPin size={12} /> {warden.address || 'N/A'}</span>
+                            <span className="flex items-center gap-1.5 font-medium text-primary/70"><Award size={12} /> {warden.experience || '0'} Years Experience</span>
                           </div>
-                        )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right align-top pt-4">
                         <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingWardenId(warden.id); setEditingWardenForm(warden); }}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingWarden(warden); setIsWardenModalOpen(true); }}>
                             <Edit2 size={14} className="text-blue-500" />
                           </Button>
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteWarden(warden.id)}>
@@ -250,7 +246,7 @@ const StaffManagementOverview: React.FC = () => {
         <Card className="shadow-sm">
           <CardHeader className="pb-3 border-b">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-xl font-bold flex items-center gap-2">
+              <CardTitle className="text-xl font-semibold flex items-center gap-2">
                 <Users className="w-5 h-5 text-blue-500" />
                 Caretakers
               </CardTitle>
@@ -278,34 +274,21 @@ const StaffManagementOverview: React.FC = () => {
                   {filteredCaretakers.map((caretaker) => (
                     <TableRow key={caretaker.id} className="group">
                       <TableCell>
-                        {editingCaretakerId === caretaker.id ? (
-                          <div className="space-y-3 p-2">
-                            <Input size={1} value={editingCaretakerForm.name} onChange={e => setEditingCaretakerForm({...editingCaretakerForm, name: e.target.value})} placeholder="Full Name" />
-                            <div className="grid grid-cols-2 gap-2">
-                              <Input size={1} value={editingCaretakerForm.email} onChange={e => setEditingCaretakerForm({...editingCaretakerForm, email: e.target.value})} placeholder="Email" />
-                              <Input size={1} value={editingCaretakerForm.experience} onChange={e => setEditingCaretakerForm({...editingCaretakerForm, experience: e.target.value})} placeholder="Exp (Years)" />
-                            </div>
-                            <div className="flex gap-2">
-                              <Button size="sm" onClick={() => saveCaretaker(caretaker.id)} disabled={actionLoading}><Save className="w-3.5 h-3.5 mr-1" /> Save</Button>
-                              <Button size="sm" variant="ghost" onClick={() => setEditingCaretakerId(null)}><X className="w-3.5 h-3.5 mr-1" /> Cancel</Button>
-                            </div>
+                        <div className="space-y-1 py-1">
+                          <div className="font-semibold flex items-center gap-2">
+                            {caretaker.name}
                           </div>
-                        ) : (
-                          <div className="space-y-1 py-1">
-                            <div className="font-bold flex items-center gap-2">
-                              {caretaker.name}
-                            </div>
-                            <div className="text-xs text-muted-foreground flex flex-col gap-0.5">
-                              <span className="flex items-center gap-1.5"><Mail size={12} /> {caretaker.email || 'N/A'}</span>
-                              <span className="flex items-center gap-1.5"><Phone size={12} /> {caretaker.phone || 'N/A'}</span>
-                              <span className="flex items-center gap-1.5 font-medium text-blue-500/70"><Briefcase size={12} /> {caretaker.experience || '0'} Years Experience</span>
-                            </div>
+                          <div className="text-xs text-muted-foreground flex flex-col gap-0.5">
+                            <span className="flex items-center gap-1.5"><Mail size={12} /> {caretaker.email || 'N/A'}</span>
+                            <span className="flex items-center gap-1.5"><Phone size={12} /> {caretaker.phone || 'N/A'}</span>
+                            <span className="flex items-center gap-1.5"><MapPin size={12} /> {caretaker.address || 'N/A'}</span>
+                            <span className="flex items-center gap-1.5 font-medium text-blue-500/70"><Briefcase size={12} /> {caretaker.experience || '0'} Years Experience</span>
                           </div>
-                        )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right align-top pt-4">
                         <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingCaretakerId(caretaker.id); setEditingCaretakerForm(caretaker); }}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingCaretaker(caretaker); setIsCaretakerModalOpen(true); }}>
                             <Edit2 size={14} className="text-blue-500" />
                           </Button>
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteCaretaker(caretaker.id)}>
@@ -321,6 +304,94 @@ const StaffManagementOverview: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Warden Edit Modal */}
+      <Dialog open={isWardenModalOpen} onOpenChange={setIsWardenModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserCheck className="w-5 h-5 text-primary" />
+              Edit Warden Details
+            </DialogTitle>
+          </DialogHeader>
+          {editingWarden && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">Name</Label>
+                <Input id="name" value={editingWarden.name} onChange={e => setEditingWarden({...editingWarden, name: e.target.value})} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="email" className="text-right">Email</Label>
+                <Input id="email" value={editingWarden.email} onChange={e => setEditingWarden({...editingWarden, email: e.target.value})} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="phone" className="text-right">Phone</Label>
+                <Input id="phone" value={editingWarden.phone} onChange={e => setEditingWarden({...editingWarden, phone: e.target.value})} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="designation" className="text-right">Designation</Label>
+                <Input id="designation" value={editingWarden.designation} onChange={e => setEditingWarden({...editingWarden, designation: e.target.value})} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="experience" className="text-right">Experience</Label>
+                <Input id="experience" type="number" value={editingWarden.experience} onChange={e => setEditingWarden({...editingWarden, experience: e.target.value})} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="address" className="text-right mt-2">Address</Label>
+                <Textarea id="address" value={editingWarden.address} onChange={e => setEditingWarden({...editingWarden, address: e.target.value})} className="col-span-3 min-h-[100px]" />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsWardenModalOpen(false)}>Cancel</Button>
+            <Button onClick={saveWarden} disabled={actionLoading}>
+              {actionLoading ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Caretaker Edit Modal */}
+      <Dialog open={isCaretakerModalOpen} onOpenChange={setIsCaretakerModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-blue-500" />
+              Edit Caretaker Details
+            </DialogTitle>
+          </DialogHeader>
+          {editingCaretaker && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="c_name" className="text-right">Name</Label>
+                <Input id="c_name" value={editingCaretaker.name} onChange={e => setEditingCaretaker({...editingCaretaker, name: e.target.value})} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="c_email" className="text-right">Email</Label>
+                <Input id="c_email" value={editingCaretaker.email} onChange={e => setEditingCaretaker({...editingCaretaker, email: e.target.value})} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="c_phone" className="text-right">Phone</Label>
+                <Input id="c_phone" value={editingCaretaker.phone} onChange={e => setEditingCaretaker({...editingCaretaker, phone: e.target.value})} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="c_experience" className="text-right">Experience</Label>
+                <Input id="c_experience" type="number" value={editingCaretaker.experience} onChange={e => setEditingCaretaker({...editingCaretaker, experience: e.target.value})} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="c_address" className="text-right mt-2">Address</Label>
+                <Textarea id="c_address" value={editingCaretaker.address} onChange={e => setEditingCaretaker({...editingCaretaker, address: e.target.value})} className="col-span-3 min-h-[100px]" />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCaretakerModalOpen(false)}>Cancel</Button>
+            <Button onClick={saveCaretaker} disabled={actionLoading}>
+              {actionLoading ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

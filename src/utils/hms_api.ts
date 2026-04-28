@@ -184,6 +184,10 @@ export const getHostels = async (): Promise<HMSResponse<any>> => {
   return hmsApiCall<any>("hostels/", "GET");
 };
 
+export const getHostelManagementInit = async (): Promise<HMSResponse<any>> => {
+  return hmsApiCall<any>("hostel-init/", "GET");
+};
+
 // Room Management
 export const manageRooms = async (
   data?: Partial<HostelRoom>,
@@ -211,9 +215,18 @@ export const manageRooms = async (
 };
 
 // Fetch rooms by hostel (new dedicated endpoint)
-export const getRoomsByHostel = async (hostelId: number): Promise<HMSResponse<HostelRoom>> => {
-  const endpoint = `rooms/by_hostel/?hostel_id=${hostelId}`;
+export const getRoomsByHostel = async (hostelId: number, floor?: number): Promise<HMSResponse<HostelRoom>> => {
+  let endpoint = `rooms/by_hostel/?hostel_id=${hostelId}`;
+  if (floor !== undefined && floor !== null) {
+    endpoint += `&floor=${floor}`;
+  }
   return hmsApiCall<HostelRoom>(endpoint, 'GET');
+};
+
+// Fetch floors by hostel
+export const getFloorsByHostel = async (hostelId: number): Promise<HMSResponse<number>> => {
+  const endpoint = `rooms/floors/?hostel_id=${hostelId}`;
+  return hmsApiCall<number>(endpoint, 'GET');
 };
 
 // Student Management
@@ -244,12 +257,12 @@ export const manageHostelStudents = async (
 
 // Warden Management
 export const manageWardens = async (
-  data?: Partial<HostelWarden>,
+  data?: any,
   wardenId?: number,
   method: "GET" | "POST" | "PUT" | "DELETE" = "GET"
-): Promise<HMSResponse<HostelWarden>> => {
+): Promise<HMSResponse<any>> => {
   const endpoint = wardenId ? `wardens/${wardenId}/` : "wardens/";
-  return hmsApiCall<HostelWarden>(endpoint, method, data);
+  return hmsApiCall<any>(endpoint, method, data);
 };
 
 // Caretaker Management
@@ -268,8 +281,12 @@ export const getDashboardStats = async (): Promise<HMSResponse<any>> => {
 };
 
 // Get rooms for a specific hostel
-export const getRoomsByHostelId = async (hostelId: number): Promise<HMSResponse<any>> => {
-  return hmsApiCall<any>(`hostels/${hostelId}/rooms/`, "GET");
+export const getRoomsByHostelId = async (hostelId: number, floor?: string): Promise<HMSResponse<any>> => {
+  let endpoint = `hostels/${hostelId}/rooms/`;
+  if (floor && floor !== 'all') {
+    endpoint += `?floor=${floor}`;
+  }
+  return hmsApiCall<any>(endpoint, "GET");
 };
 
 // Get current student's hostel details
@@ -364,13 +381,17 @@ export const getWeeklyMenu = async (): Promise<HMSResponse<any>> => {
   return hmsApiCall<any>(`menus/weekly_menu/`, "GET");
 };
 
-export const getTodayMenu = async (): Promise<HMSResponse<any>> => {
-  return hmsApiCall<any>(`menus/today_menu/`, "GET");
+export const getTodayMenu = async (hostelId?: number): Promise<HMSResponse<any>> => {
+  let endpoint = `menus/today_menu/`;
+  if (hostelId) endpoint += `?hostel=${hostelId}`;
+  return hmsApiCall<any>(endpoint, "GET");
 };
 
 // Compact student-facing today's menu summary
-export const getTodayMenuSummary = async (): Promise<HMSResponse<any>> => {
-  return hmsApiCall<any>(`menus/today_summary/`, "GET");
+export const getTodayMenuSummary = async (hostelId?: number): Promise<HMSResponse<any>> => {
+  let endpoint = `menus/today_summary/`;
+  if (hostelId) endpoint += `?hostel=${hostelId}`;
+  return hmsApiCall<any>(endpoint, "GET");
 };
 
 // Student Meal Skips

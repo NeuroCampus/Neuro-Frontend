@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Building2, Users, Grid3X3, Shield, AlertCircle } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
-import { getDashboardStats, getRoomsByHostelId } from "../../utils/hms_api";
+import { getDashboardStats, getRoomsByHostelId, getFloorsByHostel } from "../../utils/hms_api";
 import { useTheme } from "../../context/ThemeContext";
 import {
   Select,
@@ -34,6 +34,7 @@ interface Room {
   room_type: 'S' | 'D' | 'P' | 'B';
   capacity: number;
   student_count: number;
+  floor?: number;
 }
 
 interface Stats {
@@ -60,22 +61,33 @@ const HMSOverview = () => {
   });
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedHostel, setSelectedHostel] = useState<number | null>(null);
-  const [selectedFloor, setSelectedFloor] = useState<string>("all");
+  const [selectedFloor, setSelectedFloor] = useState<string>("");
+  const [availableFloors, setAvailableFloors] = useState<number[]>([]);
   const [hostels, setHostels] = useState<Hostel[]>([]);
 
   useEffect(() => {
     fetchDashboardStats();
   }, []);
 
-  // Fetch rooms when hostel is selected
+  // Fetch floors when hostel is selected
   useEffect(() => {
     if (selectedHostel) {
-      fetchHostelRooms(selectedHostel);
-      setSelectedFloor("all");
+      fetchHostelFloors(selectedHostel);
+      setRooms([]); // Clear rooms when hostel changes
     } else {
+      setAvailableFloors([]);
       setRooms([]);
     }
   }, [selectedHostel]);
+
+  // Fetch rooms when both hostel and floor are selected
+  useEffect(() => {
+    if (selectedHostel && selectedFloor) {
+      fetchHostelRooms(selectedHostel, selectedFloor);
+    } else {
+      setRooms([]);
+    }
+  }, [selectedHostel, selectedFloor]);
 
   const fetchDashboardStats = async () => {
     setLoading(true);
@@ -96,10 +108,12 @@ const HMSOverview = () => {
           occupancyRate: statistics.occupancy_rate,
         });
 
-        // Set first hostel as selected
+        // Do not auto-select first hostel to allow "Choose Hostel" placeholder
+        /*
         if (data.hostels && data.hostels.length > 0) {
           setSelectedHostel(data.hostels[0].id);
         }
+        */
       } else {
         throw new Error(response.message || "Failed to fetch dashboard stats");
       }
@@ -114,13 +128,27 @@ const HMSOverview = () => {
     }
   };
 
-  const fetchHostelRooms = async (hostelId: number) => {
+  const fetchHostelFloors = async (hostelId: number) => {
+    try {
+      const response = await getFloorsByHostel(hostelId);
+      if (response.success && response.results) {
+        setAvailableFloors(response.results);
+      }
+    } catch (error) {
+      console.error("Failed to fetch floors", error);
+    }
+  };
+
+  const fetchHostelRooms = async (hostelId: number, floor?: string) => {
     setLoadingRooms(true);
     try {
-      const response = await getRoomsByHostelId(hostelId);
+      const response = await getRoomsByHostelId(hostelId, floor);
 
       if (response.success && response.data?.rooms) {
         setRooms(response.data.rooms);
+      } else if (response.success && response.results) {
+        // Handle alternative response format if applicable
+        setRooms(response.results);
       } else {
         setRooms([]);
       }
@@ -161,7 +189,7 @@ const HMSOverview = () => {
 
   // Group rooms by floor for display and sort within floors
   const roomsByFloor = rooms.reduce((acc, room) => {
-    const floor = getFloorFromRoomNumber(room.room_number || '');
+    const floor = room.floor !== undefined ? room.floor : getFloorFromRoomNumber(room.room_number || '');
     if (!acc[floor]) acc[floor] = [];
     acc[floor].push(room);
     return acc;
@@ -256,10 +284,13 @@ const HMSOverview = () => {
               <div className="w-full sm:w-48 md:w-64">
                 <Select
                   value={selectedHostel?.toString() || ''}
-                  onValueChange={(v) => setSelectedHostel(Number(v))}
+                  onValueChange={(v) => {
+                    setSelectedHostel(Number(v));
+                    setSelectedFloor("");
+                  }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select Hostel" />
+                    <SelectValue placeholder="Choose Hostel" />
                   </SelectTrigger>
                   <SelectContent>
                     {hostels.map((hostel) => (
@@ -278,12 +309,11 @@ const HMSOverview = () => {
                   onValueChange={setSelectedFloor}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="All Floors" />
+                    <SelectValue placeholder="Choose Floor" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Floors</SelectItem>
-                    {Object.keys(roomsByFloor)
-                      .map(Number)
+                    {availableFloors
                       .sort((a, b) => a - b)
                       .map((floor) => (
                         <SelectItem key={floor} value={floor.toString()}>
@@ -321,7 +351,11 @@ const HMSOverview = () => {
               ))}
             </div>
           ) : selectedHostel ? (
-            Object.keys(roomsByFloor).length > 0 ? (
+            !selectedFloor ? (
+              <div className="text-center py-12 text-muted-foreground">
+                Select a floor to view room occupancy.
+              </div>
+            ) : Object.keys(roomsByFloor).length > 0 ? (
               <div className="space-y-8">
                 {Object.keys(roomsByFloor)
                   .map((k) => Number(k))

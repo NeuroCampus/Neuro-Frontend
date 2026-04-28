@@ -20,8 +20,6 @@ interface MenuItem {
   id: number;
   name: string;
   vegetarian: boolean;
-  cost: number;
-  calories?: number;
 }
 
 interface Meal {
@@ -36,7 +34,11 @@ interface Meal {
   day_name?: string;
 }
 
-const StudentMealManagement: React.FC = () => {
+interface StudentMealManagementProps {
+  hostelId?: number | null;
+}
+
+const StudentMealManagement: React.FC<StudentMealManagementProps> = ({ hostelId }) => {
   const { toast } = useToast();
 
   const [todayMenu, setTodayMenu] = useState<Meal[]>([]);
@@ -44,14 +46,16 @@ const StudentMealManagement: React.FC = () => {
 
   useEffect(() => {
     loadTodayMenu();
-  }, []);
+  }, [hostelId]);
 
   const loadTodayMenu = async () => {
     setLoading(true);
     try {
-      const todayRes = await getTodayMenu();
+      const todayRes = await getTodayMenu(hostelId || undefined);
       if (todayRes.success && todayRes.results) {
         setTodayMenu(todayRes.results);
+      } else {
+        setTodayMenu([]);
       }
     } catch (error) {
       toast({
@@ -74,10 +78,10 @@ const StudentMealManagement: React.FC = () => {
 
   const getMealGradient = (name: string) => {
     const lower = name.toLowerCase();
-    if (lower.includes('breakfast')) return "from-orange-500/20 to-yellow-500/10 border-orange-200/50";
-    if (lower.includes('lunch')) return "from-blue-500/20 to-cyan-500/10 border-blue-200/50";
-    if (lower.includes('dinner')) return "from-indigo-500/20 to-purple-500/10 border-indigo-200/50";
-    return "from-slate-500/20 to-slate-500/10 border-slate-200/50";
+    if (lower.includes('breakfast')) return "bg-orange-50 border-orange-200 dark:bg-orange-950/20";
+    if (lower.includes('lunch')) return "bg-blue-50 border-blue-200 dark:bg-blue-950/20";
+    if (lower.includes('dinner')) return "bg-indigo-50 border-indigo-200 dark:bg-indigo-950/20";
+    return "bg-slate-50 border-slate-200 dark:bg-slate-900/20";
   };
 
   const getMealAccentColor = (name: string) => {
@@ -119,7 +123,7 @@ const StudentMealManagement: React.FC = () => {
             <div className="bg-muted p-4 rounded-full mb-4">
               <Info className="w-8 h-8 text-muted-foreground" />
             </div>
-            <p className="font-bold text-muted-foreground">No menu scheduled</p>
+            <p className="font-semibold text-muted-foreground">No menu scheduled</p>
             <p className="text-sm text-muted-foreground">The mess menu for today hasn't been uploaded yet.</p>
           </div>
         ) : (
@@ -129,16 +133,16 @@ const StudentMealManagement: React.FC = () => {
                 key={meal.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`group relative rounded-2xl border p-5 bg-gradient-to-br ${getMealGradient(meal.meal_type_detail.name)} transition-all hover:shadow-md`}
+                className={`group relative rounded-2xl border p-5 ${getMealGradient(meal.meal_type_detail.name)} transition-all hover:shadow-md`}
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className={`p-2 rounded-xl bg-background/80 shadow-sm ${getMealAccentColor(meal.meal_type_detail.name)}`}>
                       {getMealIcon(meal.meal_type_detail.name)}
                     </div>
-                    <h3 className="font-bold text-lg">{meal.meal_type_detail.name}</h3>
+                    <h3 className="font-semibold text-lg">{meal.meal_type_detail.name}</h3>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider bg-background/50 px-2 py-1 rounded-md border">
+                  <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider bg-background/50 px-2 py-1 rounded-md border">
                     <Clock className="w-3 h-3" />
                     {meal.meal_type_detail.time_from} - {meal.meal_type_detail.time_to}
                   </div>
@@ -157,12 +161,6 @@ const StudentMealManagement: React.FC = () => {
                     >
                       {item.vegetarian && <Leaf className="w-3 h-3" />}
                       <span className="font-medium text-[11px]">{item.name}</span>
-                      {item.calories && (
-                        <>
-                          <Separator orientation="vertical" className="h-3" />
-                          <span className="text-[9px] opacity-60 font-mono">{item.calories} kcal</span>
-                        </>
-                      )}
                     </Badge>
                   ))}
                 </div>
