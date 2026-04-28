@@ -1789,16 +1789,32 @@ export const getStudentPerformance = async (
 };
 
 export const manageFaculties = async (
-  data: { branch_id: string },
+  params: { branch_id?: string; search?: string; page?: number; page_size?: number },
   method: "GET" = "GET"
-): Promise<GetFacultiesResponse> => {
+): Promise<any> => {
   try {
-    if (!data.branch_id) throw new Error("Branch ID is required");
-    const url = `${API_ENDPOINT}/hod/faculties/?branch_id=${data.branch_id}`;
+    const queryParams = new URLSearchParams();
+    if (params.branch_id) queryParams.append("branch_id", params.branch_id);
+    if (params.search) queryParams.append("search", params.search);
+    if (params.page) queryParams.append("page", params.page.toString());
+    if (params.page_size) queryParams.append("page_size", params.page_size.toString());
+
+    const url = `${API_ENDPOINT}/hod/faculties/?${queryParams.toString()}`;
     const response = await fetchWithTokenRefresh(url, {
       method,
       headers: { "Content-Type": "application/json" },
+    });
+    return await response.json();
+  } catch (error: unknown) {
+    return handleApiError(error, (error as any).response);
+  }
+};
 
+export const listFacultyBranches = async (): Promise<GetBranchesResponse> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/faculty-branches/`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
     });
     return await response.json();
   } catch (error: unknown) {
