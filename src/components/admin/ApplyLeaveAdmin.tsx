@@ -13,8 +13,7 @@ import { useTheme } from "../../context/ThemeContext";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { SkeletonList } from "../ui/skeleton";
-import Swal from 'sweetalert2';
-import withReactContent from 'sweetalert2-react-content';
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +22,6 @@ import {
   DialogDescription,
 } from "../ui/dialog";
 
-const MySwal = withReactContent(Swal);
 
 interface AdminLeave {
   id: number;
@@ -106,14 +104,8 @@ const ApplyLeaveAdmin = () => {
         // Show success alert
         const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
 
-        await MySwal.fire({
-          title: 'Leave Request Submitted!',
-          text: 'Your leave request has been successfully submitted.',
-          icon: 'success',
-          confirmButtonText: 'OK',
-          confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
-          background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
-          color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+        toast.success('Leave Request Submitted!', {
+          description: 'Your leave request has been successfully submitted.',
         });
 
         setError("");
@@ -126,14 +118,8 @@ const ApplyLeaveAdmin = () => {
         // Show error alert
         const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
 
-        await MySwal.fire({
-          title: 'Error!',
-          text: response.message || 'Failed to submit leave',
-          icon: 'error',
-          confirmButtonText: 'OK',
-          confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
-          background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
-          color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+        toast.error('Error!', {
+          description: response.message || 'Failed to submit leave',
         });
       }
     } catch (err) {
@@ -143,14 +129,8 @@ const ApplyLeaveAdmin = () => {
       // Show error alert
       const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
 
-      await MySwal.fire({
-        title: 'Error!',
-        text: 'Network error occurred',
-        icon: 'error',
-        confirmButtonText: 'OK',
-        confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
-        background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
-        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+      toast.error('Error!', {
+        description: 'Network error occurred',
       });
     } finally {
       setLoading(false);

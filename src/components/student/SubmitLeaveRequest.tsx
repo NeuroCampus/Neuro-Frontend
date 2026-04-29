@@ -10,8 +10,7 @@ import { format, parseISO } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { useStudentLeaveRequestMutation, useStudentLeaveRequestsQuery } from "@/hooks/useApiQueries";
 import { useTheme } from "@/context/ThemeContext";
-import Swal from 'sweetalert2';
-import withReactContent from 'sweetalert2-react-content';
+import { toast } from "sonner";
 import { useToast } from '@/components/ui/use-toast';
 import { Badge } from "../ui/badge";
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -19,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 
-const MySwal = withReactContent(Swal);
+// Sonner toast used for feedback
 
 type LeaveStatusType = "PENDING" | "APPROVED" | "REJECTED";
 
@@ -145,16 +144,8 @@ const SubmitLeaveRequest = () => {
       // Show success toast and a subtle modal for confirmation
       toast({ title: 'Leave Request Submitted', description: 'Your request was submitted successfully.' });
 
-      const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-      await MySwal.fire({
-        title: 'Leave Request Submitted!',
-        text: 'Your leave request has been successfully submitted.',
-        icon: 'success',
-        confirmButtonText: 'OK',
-        confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
-        background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
-        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-      });
+      // Show success feedback
+      toast.success('Your leave request has been successfully submitted.');
 
       // Reset form
       setDateRange(undefined);
@@ -170,16 +161,7 @@ const SubmitLeaveRequest = () => {
 
       toast({ variant: 'destructive', title: 'Failed to submit', description: error instanceof Error ? error.message : 'Please try again.' });
 
-      const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-      await MySwal.fire({
-        title: 'Error!',
-        text: error instanceof Error ? error.message : 'Something went wrong. Please try again.',
-        icon: 'error',
-        confirmButtonText: 'OK',
-        confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
-        background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
-        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-      });
+      toast.error(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
     }
   };
 

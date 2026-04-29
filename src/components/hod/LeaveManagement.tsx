@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CheckCircle, XCircle } from "lucide-react";
 import { SkeletonTable, SkeletonCard } from "../ui/skeleton";
-import Swal from 'sweetalert2';
+import { toast } from "sonner";
+import { showConfirmAlert } from "../../utils/showConfirmAlert";
 import { manageLeaves, manageProfile, getFacultyLeavesBootstrap } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
 import {
@@ -200,15 +201,15 @@ const LeaveManagement = () => {
       if (res.success) {
         // Update local list without re-fetching
         setLeaveRequests(prev => prev.map((item, idx) => item.id === leave.id ? { ...item, status: 'Approved' } : item));
-        Swal.fire('Approved!', 'The leave request has been approved.', 'success');
+        toast.success('The leave request has been approved.');
       } else {
         setErrors([res.message || "Failed to approve leave"]);
-        Swal.fire('Error!', res.message || 'Failed to approve the leave request.', 'error');
+        toast.error(res.message || 'Failed to approve the leave request.');
       }
     } catch (err) {
       console.error("Error approving leave:", err);
       setErrors(["Failed to approve leave"]);
-      Swal.fire('Error!', 'Failed to approve the leave request.', 'error');
+      toast.error('Failed to approve the leave request.');
     }
   };
 
@@ -222,36 +223,30 @@ const LeaveManagement = () => {
       status: "REJECTED" as const,
     };
     console.log("Reject payload:", payload); // Debug log
-    Swal.fire({
-      title: 'Are you sure?',
-      text: 'You are about to reject this leave request. Are you sure you want to proceed?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Yes, reject it!',
-      cancelButtonText: 'No, keep it',
-      customClass: {
-        confirmButton: 'bg-red-600 text-white',
-        cancelButton: 'bg-gray-300 text-black'
-      },
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          const res = await manageLeaves(payload, "PATCH");
-          if (res.success) {
-            // Update local list without re-fetching
-            setLeaveRequests(prev => prev.map((item, idx) => item.id === leave.id ? { ...item, status: 'Rejected' } : item));
-            Swal.fire('Rejected!', 'The leave request has been rejected.', 'success');
-          } else {
-            setErrors([res.message || "Failed to reject leave"]);
-            Swal.fire('Error!', res.message || 'Failed to reject the leave request.', 'error');
-          }
-        } catch (err) {
-          console.error("Error rejecting leave:", err);
-          setErrors(["Failed to reject leave"]);
-          Swal.fire('Error!', 'Failed to reject the leave request.', 'error');
+    const result = await showConfirmAlert(
+      'Are you sure?',
+      'You are about to reject this leave request. Are you sure you want to proceed?',
+      'Yes, reject it!',
+      'No, keep it'
+    );
+    
+    if (result.isConfirmed) {
+      try {
+        const res = await manageLeaves(payload, "PATCH");
+        if (res.success) {
+          // Update local list without re-fetching
+          setLeaveRequests(prev => prev.map((item, idx) => item.id === leave.id ? { ...item, status: 'Rejected' } : item));
+          toast.success('The leave request has been rejected.');
+        } else {
+          setErrors([res.message || "Failed to reject leave"]);
+          toast.error(res.message || 'Failed to reject the leave request.');
         }
+      } catch (err) {
+        console.error("Error rejecting leave:", err);
+        setErrors(["Failed to reject leave"]);
+        toast.error('Failed to reject the leave request.');
       }
-    });
+    }
   };
 
   // Fetch all data using combined endpoint

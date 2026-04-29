@@ -13,11 +13,10 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { applyLeave, getApplyLeaveBootstrap } from '../../utils/faculty_api';
 import { useTheme } from '@/context/ThemeContext';
 import { SkeletonList } from '@/components/ui/skeleton';
-import Swal from 'sweetalert2';
-import withReactContent from 'sweetalert2-react-content';
+import { toast } from "sonner";
 import { Circle, CalendarCheck2, CalendarX2, Filter } from 'lucide-react';
 
-const MySwal = withReactContent(Swal);
+// Sonner toast used for feedback
 
 type LeaveStatus = 'Pending' | 'Approved' | 'Rejected';
 
@@ -146,18 +145,7 @@ const LeaveRequests = () => {
       const res = await applyLeave(requestData);
       
       if (res.success) {
-        // Show success alert with theme-aware styling
-        const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-        
-        await MySwal.fire({
-          title: 'Leave Request Submitted!',
-          text: 'Your leave request has been successfully submitted.',
-          icon: 'success',
-          confirmButtonText: 'OK',
-          confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
-          background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
-          color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-        });
+        toast.success('Your leave request has been successfully submitted.');
         
         // Reset form
         setTitle("");
@@ -183,18 +171,7 @@ const LeaveRequests = () => {
       console.error("Failed to submit leave request:", error);
       setError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
       
-      // Show error alert with theme-aware styling
-      const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-      
-      await MySwal.fire({
-        title: 'Error!',
-        text: error instanceof Error ? error.message : 'Something went wrong. Please try again.',
-        icon: 'error',
-        confirmButtonText: 'OK',
-        confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
-        background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
-        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-      });
+      toast.error(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
     } finally {
       setSubmitting(false);
     }

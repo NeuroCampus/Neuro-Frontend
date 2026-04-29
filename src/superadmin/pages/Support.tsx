@@ -6,7 +6,7 @@ import { Label } from "../../components/ui/label";
 import { Textarea } from "../../components/ui/textarea";
 import { useTheme } from "../../context/ThemeContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
-import { showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
+import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -74,14 +74,14 @@ const Support = () => {
       });
       const result = await res.json();
       if (result.success) {
-        showSuccessAlert('Success', 'Ticket updated successfully');
+        toast.success('Ticket updated successfully');
         setSelectedTicket(null);
         fetchData();
       } else {
-        showErrorAlert('Error', result.error);
+        toast.error(result.error || 'Failed to update ticket');
       }
     } catch (e) {
-      showErrorAlert('Error', 'Network error');
+      toast.error('Network error');
     }
   };
 

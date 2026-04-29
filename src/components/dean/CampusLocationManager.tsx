@@ -10,7 +10,7 @@ import { Loader2, MapPin, Save, Plus, Edit, Trash2 } from 'lucide-react';
 import { SkeletonList, SkeletonPageHeader } from "../ui/skeleton";
 import { manageCampusLocation } from '@/utils/dean_api';
 import { toast } from 'sonner';
-import Swal from 'sweetalert2';
+import { showConfirmAlert } from "../../utils/showConfirmAlert";
 import { useTheme } from '../../context/ThemeContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
@@ -416,16 +416,12 @@ const CampusLocationManager: React.FC = () => {
 
   const handleDelete = async (location: CampusLocation) => {
     try {
-      const result = await Swal.fire({
-        title: `Delete \"${location.name}\"?`,
-        text: 'This action cannot be undone.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Delete',
-        cancelButtonText: 'Cancel',
-        confirmButtonColor: theme === 'dark' ? '#ef4444' : '#dc2626',
-        customClass: { popup: 'sweetalert-popup' }
-      });
+      const result = await showConfirmAlert(
+        `Delete \"${location.name}\"?`,
+        'This action cannot be undone.',
+        'Delete',
+        'Cancel'
+      );
 
       if (!result.isConfirmed) return;
 

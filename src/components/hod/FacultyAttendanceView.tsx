@@ -3,7 +3,7 @@ import { Calendar, Users, CheckCircle, XCircle, Clock, FileDown } from "lucide-r
 import { getFacultyAttendanceToday, getFacultyAttendanceRecords } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
 import { SkeletonCard, SkeletonTable } from "../ui/skeleton";
-import Swal from "sweetalert2";
+import { toast } from "sonner";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -124,7 +124,7 @@ const FacultyAttendanceView: React.FC = () => {
       }
     } catch (error) {
       console.error("Error fetching today's faculty attendance:", error);
-      Swal.fire("Error", "Failed to load today's attendance data", "error");
+      toast.error("Failed to load today's attendance data");
       // Reset state on error
       setTodayAttendance([]);
       setTodayPagination({
@@ -178,7 +178,7 @@ const FacultyAttendanceView: React.FC = () => {
       }
     } catch (error) {
       console.error("Error fetching faculty attendance records:", error);
-      Swal.fire("Error", "Failed to load attendance records", "error");
+      toast.error("Failed to load attendance records");
       // Reset state on error
       setAttendanceRecords([]);
       setFacultySummary([]);
@@ -228,7 +228,7 @@ const FacultyAttendanceView: React.FC = () => {
 
   const handleExportRecordsPDF = () => {
     if (facultySummary.length === 0) {
-      Swal.fire("Info", "No records to export", "info");
+      toast.info("No records to export");
       return;
     }
 
@@ -272,11 +272,11 @@ const FacultyAttendanceView: React.FC = () => {
       if (response.success) {
         setFacultyAttendanceDetails(response.data || []);
       } else {
-        Swal.fire("Error", "Failed to load faculty details", "error");
+        toast.error("Failed to load faculty details");
       }
     } catch (error) {
       console.error("Error fetching faculty details:", error);
-      Swal.fire("Error", "Network error while loading faculty details", "error");
+      toast.error("Network error while loading faculty details");
     } finally {
       setIsDetailLoading(false);
     }

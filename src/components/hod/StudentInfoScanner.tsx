@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { useTheme } from "@/context/ThemeContext";
 import { Search, User, Calendar, BookOpen, TrendingUp, CreditCard, Users, Clock, MapPin, Phone, Mail, Heart, QrCode, X, Camera, AlertCircle } from "lucide-react";
 import { SkeletonCard } from "@/components/ui/skeleton";
-import { showErrorAlert, showSuccessAlert } from "../../utils/sweetalert";
+import { toast } from "sonner";
 import { BrowserMultiFormatReader, NotFoundException, ChecksumException, FormatException } from '@zxing/library';
 import { API_ENDPOINT } from "@/utils/config";
 import { fetchWithTokenRefresh } from "@/utils/authService";
@@ -102,7 +102,7 @@ const StudentInfoScanner = () => {
   const fetchStudentData = async (usnToFetch?: string) => {
     const usnValue = usnToFetch || usn.trim();
     if (!usnValue) {
-      showErrorAlert("Error", "Please enter a USN");
+      toast.error("Please enter a USN");
       return;
     }
 
@@ -121,15 +121,15 @@ const StudentInfoScanner = () => {
 
       if (data.success) {
         setStudentData(data);
-        showSuccessAlert("Success", "Student data retrieved successfully");
+        toast.success("Student data retrieved successfully");
       } else {
         setError(data.message || "Student not found");
-        showErrorAlert("Error", data.message || "Student not found");
+        toast.error(data.message || "Student not found");
       }
     } catch (err: any) {
       console.error('Error fetching student data:', err);
       setError(err.message || "Network error occurred");
-      showErrorAlert("Error", err.message || "Network error occurred");
+      toast.error(err.message || "Network error occurred");
     } finally {
       setLoading(false);
     }
@@ -148,7 +148,7 @@ const StudentInfoScanner = () => {
         const scannedUsn = scannedText.toUpperCase();
         setUsn(scannedUsn);
         setShowScanner(false);
-        showSuccessAlert("Barcode Scanned", `USN: ${scannedUsn}`);
+        toast.success(`USN: ${scannedUsn}`, { description: "Barcode Scanned" });
         // Automatically fetch data after scanning with the scanned USN
         await fetchStudentData(scannedUsn);
       }
@@ -248,7 +248,7 @@ const StudentInfoScanner = () => {
           setUsn(data.usn);
           setShowFaceScanner(false);
           stopFaceScanning();
-          showSuccessAlert("Face Recognized", `USN: ${data.usn}`);
+          toast.success(`USN: ${data.usn}`, { description: "Face Recognized" });
           // Automatically fetch data after recognition
           await fetchStudentData(data.usn);
         } else {

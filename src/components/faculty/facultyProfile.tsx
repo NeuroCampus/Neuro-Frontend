@@ -8,7 +8,7 @@ import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { getFacultyProfile, manageProfile } from "../../utils/faculty_api";
 import { useTheme } from "@/context/ThemeContext";
-import { showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Eye, EyeOff } from "lucide-react";
 import { fetchWithTokenRefresh } from "../../utils/authService";
@@ -37,7 +37,6 @@ const FacultyProfile = () => {
     gender: "",
   });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<"personal" | "academic" | "contact" | "about">("personal");
   const { theme } = useTheme();
@@ -73,10 +72,10 @@ const FacultyProfile = () => {
             gender: payload.gender || "",
           });
         } else {
-          setError(res.message || "Failed to load profile");
+          toast.error(res.message || "Failed to load profile");
         }
       })
-      .catch(() => setError("Failed to load profile"))
+      .catch(() => toast.error("Failed to load profile"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -141,7 +140,7 @@ const FacultyProfile = () => {
     // Prevent save if validation errors exist
     const hasErrors = Object.values(localErrors).some((msg) => msg);
     if (hasErrors) {
-      setError("Please fix the errors before saving.");
+      toast.error("Please fix the errors before saving.");
       return;
     }
 
@@ -169,7 +168,7 @@ const FacultyProfile = () => {
       // Backend may return updated profile under `profile` or `data`
       const payload = res.profile || res.data || null;
       if (res.success) {
-        showSuccessAlert("Success", "Profile updated successfully!");
+        toast.success("Profile updated successfully!");
         // Update local formData from returned payload when available
         if (payload) {
           setFormData((prev) => ({
@@ -194,25 +193,24 @@ const FacultyProfile = () => {
         }
         setIsEditing(false);
       } else {
-        setError(res.message || "Failed to update profile");
-        showErrorAlert("Error", res.message || "Failed to update profile");
+        toast.error(res.message || "Failed to update profile");
       }
     } catch (err) {
-      setError("Network error");
+      toast.error("Network error");
     }
   };
 
   const handleChangePassword = async () => {
     if (!passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password) {
-      showErrorAlert("Missing fields", "Please fill in current, new and confirm password fields.");
+      toast.error("Please fill in current, new and confirm password fields.");
       return;
     }
     if (passwordData.new_password !== passwordData.confirm_password) {
-      showErrorAlert("Password mismatch", "New passwords don't match");
+      toast.error("New passwords don't match");
       return;
     }
     if (passwordData.current_password === passwordData.new_password) {
-      showErrorAlert("Invalid new password", "Current password and new password cannot be the same.");
+      toast.error("Current password and new password cannot be the same.");
       return;
     }
 
@@ -230,13 +228,13 @@ const FacultyProfile = () => {
       if (result.success) {
         setShowPasswordDialog(false);
         setPasswordData({ current_password: '', new_password: '', confirm_password: '' });
-        showSuccessAlert('Password changed', 'Your password has been updated successfully.');
+        toast.success('Your password has been updated successfully.');
       } else {
-        showErrorAlert('Unable to change password', result.message || 'Failed to change password');
+        toast.error(result.message || 'Failed to change password');
       }
     } catch (err) {
       console.error('Error changing password:', err);
-      showErrorAlert('Unable to change password', 'Failed to change password');
+      toast.error('Failed to change password');
     }
   };
 
@@ -447,7 +445,6 @@ const FacultyProfile = () => {
       </CardHeader>
 
       <CardContent className="px-2 sm:px-3 md:px-4 lg:px-6 py-3 sm:py-4 md:py-6">
-        {error && <div className={`mb-3 sm:mb-4 text-sm ${theme === 'dark' ? 'text-destructive' : 'text-red-600'}`}>{error}</div>}
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-8 items-stretch">
           {/* Left column: avatar and basic */}
           <div className="col-span-1 flex flex-col items-center h-full">

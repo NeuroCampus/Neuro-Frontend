@@ -12,7 +12,7 @@ import { Plus, Edit2, Trash2, Building, Search, User, Shield } from 'lucide-reac
 import { SkeletonTable } from '../ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { useHMSContext } from '../../context/HMSContext';
-import Swal from 'sweetalert2';
+import { showConfirmAlert } from "../../utils/showConfirmAlert";
 
 interface Warden {
   id: number;
@@ -61,15 +61,11 @@ const HostelManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!'
-    });
+    const result = await showConfirmAlert(
+      'Are you sure?',
+      "You won't be able to revert this!",
+      'Yes, delete it!'
+    );
 
     if (result.isConfirmed) {
       try {
@@ -146,7 +142,7 @@ const HostelManagement: React.FC = () => {
                     <Plus className="w-4 h-4 mr-2" /> Add Hostel
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-[90vw] sm:max-w-[425px] rounded-xl">
+                <DialogContent className="max-w-[88vw] sm:max-w-[425px] rounded-xl">
                   <DialogHeader>
                     <DialogTitle>{editingHostel ? 'Edit Hostel' : 'Add Hostel'}</DialogTitle>
                   </DialogHeader>

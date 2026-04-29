@@ -5,7 +5,7 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { useTheme } from "../../context/ThemeContext";
-import { showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Eye, EyeOff } from "lucide-react";
 import { SkeletonCard } from "../ui/skeleton";
@@ -83,11 +83,11 @@ const HMSProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
             designation: payload.designation || "HMS Manager",
           });
         } else {
-          showErrorAlert("Error", result.message || "Failed to fetch profile");
+          toast.error(result.message || "Failed to fetch profile");
         }
       } catch (err) {
         console.error("Fetch Profile Error:", err);
-        showErrorAlert("Error", "Network error");
+        toast.error("Network error");
       } finally {
         setLoading(false);
       }
@@ -115,15 +115,15 @@ const HMSProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
       const result = await response.json();
 
       if (result.success) {
-        showSuccessAlert("Success", "Profile saved successfully");
+        toast.success("Profile saved successfully");
         setEditing(false);
         const userData = JSON.parse(localStorage.getItem("user") || "{}");
         localStorage.setItem("user", JSON.stringify({ ...userData, ...result.data }));
       } else {
-        showErrorAlert("Error", result.message || "Failed to save profile");
+        toast.error(result.message || "Failed to save profile");
       }
     } catch (err: any) {
-      showErrorAlert("Error", err.message || "Network error");
+      toast.error(err.message || "Network error");
     } finally {
       setLoading(false);
     }
@@ -131,11 +131,11 @@ const HMSProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
 
   const handleChangePassword = async () => {
     if (!passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password) {
-      showErrorAlert("Missing fields", "Please fill in current, new and confirm password fields.");
+      toast.error("Please fill in current, new and confirm password fields.");
       return;
     }
     if (passwordData.new_password !== passwordData.confirm_password) {
-      showErrorAlert("Password mismatch", "New passwords don't match");
+      toast.error("New passwords don't match");
       return;
     }
 
@@ -149,12 +149,12 @@ const HMSProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
       if (result.success) {
         setShowPasswordDialog(false);
         setPasswordData({ current_password: '', new_password: '', confirm_password: '' });
-        showSuccessAlert('Password changed', 'Updated successfully.');
+        toast.success('Updated successfully.');
       } else {
-        showErrorAlert('Error', result.message || 'Failed to change password');
+        toast.error(result.message || 'Failed to change password');
       }
     } catch (err) {
-      showErrorAlert('Error', 'Failed to change password');
+      toast.error('Failed to change password');
     }
   };
 

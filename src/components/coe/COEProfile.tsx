@@ -9,7 +9,7 @@ import { Calendar, Eye, EyeOff } from "lucide-react";
 import { fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
 import { useTheme } from "@/context/ThemeContext";
-import Swal from "sweetalert2";
+import { toast } from "sonner";
 
 interface COEProfile {
   user_id: number;
@@ -118,21 +118,15 @@ const COEProfile = () => {
 
   const handleChangePassword = async () => {
     if (passwordData.new_password !== passwordData.confirm_password) {
-      Swal.fire({
-        icon: "error",
-        title: "Password mismatch",
-        text: "New passwords don't match",
-        target: passwordDialogContentRef.current ?? document.body,
+      toast.error("Password mismatch", {
+        description: "New passwords don't match",
       });
       return;
     }
 
     if (passwordData.current_password === passwordData.new_password) {
-      Swal.fire({
-        icon: "error",
-        title: "Invalid new password",
-        text: "Current password and new password cannot be the same.",
-        target: passwordDialogContentRef.current ?? document.body,
+      toast.error("Invalid new password", {
+        description: "Current password and new password cannot be the same.",
       });
       return;
     }
@@ -158,27 +152,18 @@ const COEProfile = () => {
           new_password: "",
           confirm_password: "",
         });
-        Swal.fire({
-          icon: "success",
-          title: "Password changed",
-          text: "Your password has been updated successfully.",
-          target: passwordDialogContentRef.current ?? document.body,
+        toast.success("Password changed", {
+          description: "Your password has been updated successfully.",
         });
       } else {
-        Swal.fire({
-          icon: "error",
-          title: "Unable to change password",
-          text: result.message || "Failed to change password",
-          target: passwordDialogContentRef.current ?? document.body,
+        toast.error("Unable to change password", {
+          description: result.message || "Failed to change password",
         });
       }
     } catch (error) {
       console.error('Error changing password:', error);
-      Swal.fire({
-        icon: "error",
-        title: "Unable to change password",
-        text: "Failed to change password",
-        target: passwordDialogContentRef.current ?? document.body,
+      toast.error("Unable to change password", {
+        description: "Failed to change password",
       });
     }
   };

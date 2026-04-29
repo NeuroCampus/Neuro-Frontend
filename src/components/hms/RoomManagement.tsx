@@ -11,7 +11,8 @@ import { Edit2, Trash2, Plus, LayoutGrid, Users as UsersIcon, Info } from 'lucid
 import { useTheme } from '../../context/ThemeContext';
 import { SkeletonCard, SkeletonPageHeader } from '../ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
-import Swal from 'sweetalert2';
+import { toast as sonnerToast } from "sonner";
+import { showConfirmAlert } from "../../utils/showConfirmAlert";
 
 interface Hostel {
   id: number;
@@ -199,15 +200,11 @@ const RoomManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    const result = await Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes, delete it!'
-    });
+    const result = await showConfirmAlert(
+      'Are you sure?',
+      "You won't be able to revert this!",
+      'Yes, delete it!'
+    );
 
     if (result.isConfirmed) {
       const response = await manageRooms(undefined, id, 'DELETE');
@@ -329,7 +326,7 @@ const RoomManagement: React.FC = () => {
                     <Plus className="w-4 h-4 mr-2" /> Add Room
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-[90vw] sm:max-w-md rounded-xl">
+                <DialogContent className="max-w-[88vw] sm:max-w-md rounded-xl">
                   <DialogHeader>
                     <DialogTitle>{editingRoom ? 'Edit Room' : 'Add Room'}</DialogTitle>
                   </DialogHeader>

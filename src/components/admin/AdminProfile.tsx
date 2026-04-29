@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { manageAdminProfile } from "../../utils/admin_api";
 import { Textarea } from "../ui/textarea";
 import { useTheme } from "../../context/ThemeContext";
-import { showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Eye, EyeOff, CreditCard, Calendar, Activity, CheckCircle2, Clock, ShieldCheck, Loader2, Download } from "lucide-react";
 import { fetchWithTokenRefresh } from "../../utils/authService";
@@ -113,7 +113,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
           setOriginalProfile(profileData);
         } else {
           setLocalError(response.message || 'Failed to fetch profile');
-          showErrorAlert('Error', response.message || 'Failed to fetch profile');
+          toast.error(response.message || 'Failed to fetch profile');
           if (response.message === 'Admin profile not found. Please create a profile.') {
             setEditing(true);
             setProfile({
@@ -129,7 +129,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
       } catch (err) {
         console.error('Fetch Profile Error:', err);
         setLocalError('Network error');
-        showErrorAlert('Error', 'Network error');
+        toast.error('Network error');
       } finally {
         setLoading(false);
       }
@@ -174,14 +174,14 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        showSuccessAlert('Success', 'Receipt downloaded successfully');
+        toast.success('Receipt downloaded successfully');
       } else {
         const result = await response.json();
-        showErrorAlert('Error', result.message || 'Failed to download receipt');
+        toast.error(result.message || 'Failed to download receipt');
       }
     } catch (err) {
       console.error('Download receipt error', err);
-      showErrorAlert('Error', 'Network error while downloading receipt');
+      toast.error('Network error while downloading receipt');
     } finally {
       setDownloadingId(null);
     }
@@ -210,7 +210,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
   };
 
   const handleRaiseTicket = async () => {
-    if (!ticketForm.subject || !ticketForm.description) return showErrorAlert('Error', 'Subject and description are required');
+    if (!ticketForm.subject || !ticketForm.description) return toast.error('Subject and description are required');
     try {
       const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/support-tickets/`, {
         method: 'POST',
@@ -219,7 +219,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
       });
       const res = await response.json();
       if (res.success) {
-        showSuccessAlert('Ticket raised', res.message);
+        toast.success(res.message || 'Ticket raised');
         setShowTicketModal(false);
         setTicketForm({ subject: '', description: '', priority: 'Medium' });
         // Add the new ticket to the start of the list without triggering a GET request
@@ -227,10 +227,10 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
           setTickets(prev => [res.ticket, ...prev]);
         }
       } else {
-        showErrorAlert('Error', res.error || 'Failed to raise ticket');
+        toast.error(res.error || 'Failed to raise ticket');
       }
     } catch (e) {
-      showErrorAlert('Error', 'Network error');
+      toast.error('Network error');
     }
   };
 
@@ -277,7 +277,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
       const currentUser = fetchedUser || propUser;
       if (!currentUser || !currentUser.user_id) {
         setLocalError('User data unavailable for update');
-        showErrorAlert('Error', 'User data unavailable for update');
+        toast.error('User data unavailable for update');
         setLoading(false);
         return;
       }
@@ -287,7 +287,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
       const response = await manageAdminProfile(data, 'POST');
 
       if (response.success) {
-        showSuccessAlert('Success', 'Profile saved successfully');
+        toast.success('Profile saved successfully');
         if (response.profile) {
           const profileData = {
             first_name: response.profile.first_name || '',
@@ -311,14 +311,14 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
         const message = response.message || 'Failed to save profile';
         if (setError) setError(message);
         setLocalError(message);
-        showErrorAlert('Error', message);
+        toast.error(message);
       }
     } catch (err: any) {
       console.error('Save Profile Error:', err);
       const message = err?.message || 'Network error';
       if (setError) setError(message);
       setLocalError(message);
-      showErrorAlert('Error', message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -326,15 +326,15 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
 
   const handleChangePassword = async () => {
     if (!passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password) {
-      showErrorAlert('Missing fields', 'Please fill in current, new and confirm password fields.');
+      toast.error('Please fill in current, new and confirm password fields.');
       return;
     }
     if (passwordData.new_password !== passwordData.confirm_password) {
-      showErrorAlert('Password mismatch', "New passwords don't match");
+      toast.error("New passwords don't match");
       return;
     }
     if (passwordData.current_password === passwordData.new_password) {
-      showErrorAlert('Invalid new password', 'Current password and new password cannot be the same.');
+      toast.error('Current password and new password cannot be the same.');
       return;
     }
 
@@ -352,13 +352,13 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
       if (result.success) {
         setShowPasswordDialog(false);
         setPasswordData({ current_password: '', new_password: '', confirm_password: '' });
-        showSuccessAlert('Password changed', 'Your password has been updated successfully.');
+        toast.success('Your password has been updated successfully.');
       } else {
-        showErrorAlert('Unable to change password', result.message || 'Failed to change password');
+        toast.error(result.message || 'Failed to change password');
       }
     } catch (err) {
       console.error('Error changing password:', err);
-      showErrorAlert('Unable to change password', 'Failed to change password');
+      toast.error('Failed to change password');
     }
   };
 
@@ -854,7 +854,7 @@ const AdminProfile = ({ user: propUser, setError }: AdminProfileProps) => {
         </CardHeader>
 
         <CardContent className="px-6 pb-6 pt-2 space-y-8">
-          {localError && <div className="text-red-500 text-center">{localError}</div>}
+
 
           <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-8 items-start">
             <div className="col-span-1 flex flex-col items-center">

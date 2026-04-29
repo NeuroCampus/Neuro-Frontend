@@ -6,7 +6,8 @@ import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { manageProfile } from "../../utils/hod_api";
 import { useTheme } from "../../context/ThemeContext";
-import { showSuccessAlert, showErrorAlert, showInfoAlert } from "../../utils/sweetalert";
+import { showConfirmAlert } from "../../utils/showConfirmAlert";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Eye, EyeOff } from "lucide-react";
 import { SkeletonCard } from "../ui/skeleton";
@@ -45,7 +46,6 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
     address: "",
     bio: "",
   });
-  const [error, setLocalError] = useState<string | null>(null);
   const { theme } = useTheme();
   const [fetchedUser, setFetchedUser] = useState<User | null>(null);
   // ref used to skip one fetch immediately after a successful PATCH
@@ -70,7 +70,7 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
 
       if (!currentUser || !currentUser.user_id) {
         setLoading(true);
-        setLocalError(null);
+        setLoading(true);
         if (setError) setError(null);
         try {
           const userData = localStorage.getItem("user");
@@ -94,8 +94,7 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
           console.error("User Fetch Error:", err);
           const message = "Authentication failed. Please log in again.";
           if (setError) setError(message);
-          setLocalError(message);
-          showErrorAlert("Error", message);
+          toast.error(message);
           setTimeout(() => (window.location.href = "/login"), 2000);
           setLoading(false);
           return;
@@ -103,7 +102,7 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
       }
 
       setLoading(true);
-      setLocalError(null);
+      setLoading(true);
       if (setError) setError(null);
       try {
         const response = await manageProfile({}, "GET");
@@ -129,8 +128,7 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
           setProfile(fetchedProfile);
         } else {
           const message = (response && (response as any).message) || "Failed to fetch profile";
-          setLocalError(message);
-          showErrorAlert("Error", message);
+          toast.error(message);
           if (message === "Profile not found") {
             setEditing(true);
             setProfile({
@@ -147,8 +145,7 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
         console.error("Fetch Profile Error:", err);
         const message = "Network error";
         if (setError) setError(message);
-        setLocalError(message);
-        showErrorAlert("Error", message);
+        toast.error(message);
       } finally {
         setLoading(false);
       }
@@ -164,34 +161,30 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
 
   const handleSaveProfile = async () => {
     setLoading(true);
-    setLocalError(null);
+    setLoading(true);
     if (setError) setError(null);
     try {
       const currentUser = fetchedUser || propUser;
       if (!currentUser || !currentUser.user_id) {
-        setLocalError("User data unavailable for update");
-        showErrorAlert("Error", "User data unavailable for update");
+        toast.error("User data unavailable for update");
         setLoading(false);
         return;
       }
 
       if (!profile.first_name.trim()) {
-        setLocalError("First name is required");
-        showErrorAlert("Error", "First name is required");
+        toast.error("First name is required");
         setLoading(false);
         return;
       }
       if (!profile.email.trim()) {
-        setLocalError("Email is required");
-        showErrorAlert("Error", "Email is required");
+        toast.error("Email is required");
         setLoading(false);
         return;
       }
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(profile.email)) {
-        setLocalError("Invalid email format");
-        showErrorAlert("Error", "Invalid email format");
+        toast.error("Invalid email format");
         setLoading(false);
         return;
       }
@@ -212,7 +205,7 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
       if (profile.bio !== (currentUser.bio || "")) updates.bio = profile.bio;
 
       if (Object.keys(updates).length === 0) {
-        showInfoAlert("Info", "No changes to save");
+        toast.info("No changes to save");
         setEditing(false);
         setLoading(false);
         return;
@@ -231,7 +224,7 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
           bio: response.data.bio || "",
         };
         setProfile(updatedProfile);
-        showSuccessAlert("Success", "Profile saved successfully");
+        toast.success("Profile saved successfully");
         localStorage.setItem("user", JSON.stringify({
           ...JSON.parse(localStorage.getItem("user") || "{}"),
           ...response.data,
@@ -241,15 +234,13 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
       } else {
         const message = response.message || "Failed to save profile";
         if (setError) setError(message);
-        setLocalError(message);
-        showErrorAlert("Error", message);
+        toast.error(message);
       }
     } catch (err) {
       console.error("Save Profile Error:", err);
       const message = err instanceof Error ? err.message : "Network error";
       if (setError) setError(message);
-      setLocalError(message);
-      showErrorAlert("Error", message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -257,15 +248,15 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
 
   const handleChangePassword = async () => {
     if (!passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password) {
-      showErrorAlert("Missing fields", "Please fill in current, new and confirm password fields.");
+      toast.error("Please fill in current, new and confirm password fields.");
       return;
     }
     if (passwordData.new_password !== passwordData.confirm_password) {
-      showErrorAlert("Password mismatch", "New passwords don't match");
+      toast.error("New passwords don't match");
       return;
     }
     if (passwordData.current_password === passwordData.new_password) {
-      showErrorAlert("Invalid new password", "Current password and new password cannot be the same.");
+      toast.error("Current password and new password cannot be the same.");
       return;
     }
 
@@ -283,13 +274,13 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
       if (result.success) {
         setShowPasswordDialog(false);
         setPasswordData({ current_password: '', new_password: '', confirm_password: '' });
-        showSuccessAlert('Password changed', 'Your password has been updated successfully.');
+        toast.success('Your password has been updated successfully.');
       } else {
-        showErrorAlert('Unable to change password', result.message || 'Failed to change password');
+        toast.error(result.message || 'Failed to change password');
       }
     } catch (err) {
       console.error('Error changing password:', err);
-      showErrorAlert('Unable to change password', 'Failed to change password');
+      toast.error('Failed to change password');
     }
   };
 
@@ -454,8 +445,6 @@ const HodProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
         </CardHeader>
 
         <CardContent className="px-6 pb-6 pt-2 space-y-8">
-          {error && <div className={`text-red-500 text-center`}>{error}</div>}
-
           <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 lg:gap-8 items-start">
             <div className="col-span-1 flex flex-col items-center">
               <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary text-white flex items-center justify-center text-lg sm:text-2xl font-semibold mb-3 sm:mb-4 mt-4 flex-shrink-0`}>
