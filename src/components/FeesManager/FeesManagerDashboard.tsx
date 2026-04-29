@@ -180,7 +180,7 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
   // Do not block rendering of child pages — only show dashboard loading/error within dashboard view
 
   return (
-    <div className={`flex min-h-screen ${theme === 'dark' ? 'dark bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div className={`flex h-screen overflow-hidden ${theme === 'dark' ? 'dark bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Sidebar (fixed left) - let Sidebar component control fixed positioning */}
       <Sidebar
         role="fees_manager"
