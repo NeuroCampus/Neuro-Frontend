@@ -103,6 +103,7 @@ const FacultyAnnouncementManagement = () => {
 
       if (editingId) {
         const response = await updateAnnouncement(editingId, payload);
+        if (response.success) {
           setMyAnnouncements((prev) =>
             prev.map((a) => (a.id === editingId ? response.data : a))
           );

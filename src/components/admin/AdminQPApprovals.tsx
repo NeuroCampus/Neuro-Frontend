@@ -224,6 +224,7 @@ const AdminQPApprovals = () => {
         body: JSON.stringify({ comment }),
       });
       const data = await response.json();
+      if (response.success) {
         sonnerToast.success('Approved', {
           description: data.message || 'QP approved and forwarded to COE.',
         });
