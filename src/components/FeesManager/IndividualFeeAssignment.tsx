@@ -220,7 +220,13 @@ const IndividualFeeAssignment: React.FC = () => {
         throw new Error(data.message || 'Failed to delete assignment');
       }
 
-      fetchAssignments(pagination.page);
+      // Update local state instead of re-fetching
+      setAssignments(prev => prev.filter(a => a.id !== id));
+      setPagination(prev => ({ 
+        ...prev, 
+        totalCount: Math.max(0, prev.totalCount - 1) 
+      }));
+      
       alert('Assignment deleted successfully');
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Deletion failed');

@@ -48,7 +48,7 @@ interface Payment {
   payment_date: string;
   payment_method: string;
   transaction_id?: string;
-  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  status: 'pending' | 'completed' | 'success' | 'failed' | 'refunded';
   stripe_payment_intent_id?: string;
   created_at: string;
   updated_at: string;
@@ -60,11 +60,10 @@ interface PaymentStats {
   successful_payments: number;
   failed_payments: number;
   pending_payments: number;
-  refunded_amount: number;
-  today_payments: number;
-  today_amount: number;
   monthly_payments: number;
   monthly_amount: number;
+  outstanding_amount: number;
+  pending_invoice_count: number;
 }
 
 const PaymentMonitoring: React.FC = () => {
@@ -81,6 +80,8 @@ const PaymentMonitoring: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [methodFilter, setMethodFilter] = useState('all');
   const [dateRange, setDateRange] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [meta, setMeta] = useState<any>(null);
 
   // Helper to normalize amounts (cents or direct amounts) to rupees
   const toRupees = (centsOrAmount: any) => {
@@ -92,19 +93,39 @@ const PaymentMonitoring: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [currentPage, statusFilter, methodFilter, dateRange]);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (currentPage === 1) {
+        fetchData();
+      } else {
+        setCurrentPage(1); // This will trigger the above useEffect
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('access_token');
 
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        ...(searchTerm && { search: searchTerm }),
+        ...(statusFilter !== 'all' && { status: statusFilter }),
+        ...(methodFilter !== 'all' && { mode: methodFilter }),
+        ...(dateRange !== 'all' && { date_range: dateRange }),
+      });
+
       // Fetch payments and stats in parallel
       const [paymentsRes, statsRes] = await Promise.all([
-        fetch('http://127.0.0.1:8000/api/fees-manager/payments/', {
+        fetch(`http://127.0.0.1:8000/api/fees-manager/payments/?${params}`, {
           headers: { 'Authorization': `Bearer ${token}` },
         }),
-        fetch('http://127.0.0.1:8000/api/fees-manager/payment-stats/', {
+        fetch(`http://127.0.0.1:8000/api/fees-manager/payment-stats/?${params}`, {
           headers: { 'Authorization': `Bearer ${token}` },
         }),
       ]);
@@ -129,6 +150,7 @@ const PaymentMonitoring: React.FC = () => {
       });
 
       const normalizedPayments = (paymentsData.data || []).map((p: any) => normalize(p));
+      setMeta(paymentsData.meta || null);
 
       const s = statsData.data || {};
       const normalizedStats = {
@@ -137,6 +159,7 @@ const PaymentMonitoring: React.FC = () => {
         today_amount: toRupees(s.today_amount_cents ?? s.today_amount),
         monthly_amount: toRupees(s.monthly_amount_cents ?? s.monthly_amount),
         refunded_amount: toRupees(s.refunded_amount_cents ?? s.refunded_amount),
+        outstanding_amount: toRupees(s.outstanding_amount_cents ?? s.outstanding_amount),
       };
 
       setPayments(normalizedPayments || []);
@@ -262,36 +285,8 @@ const PaymentMonitoring: React.FC = () => {
     }
   };
 
-  const filteredPayments = payments.filter(payment => {
-    const matchesSearch = payment.invoice.student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         payment.invoice.student.usn.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         payment.invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (payment.transaction_id && payment.transaction_id.toLowerCase().includes(searchTerm.toLowerCase()));
-
-    const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
-    const matchesMethod = methodFilter === 'all' || payment.payment_method === methodFilter;
-
-    let matchesDate = true;
-    if (dateRange !== 'all') {
-      const paymentDate = new Date(payment.payment_date);
-      const now = new Date();
-      const daysDiff = Math.floor((now.getTime() - paymentDate.getTime()) / (1000 * 3600 * 24));
-
-      switch (dateRange) {
-        case 'today':
-          matchesDate = daysDiff === 0;
-          break;
-        case 'week':
-          matchesDate = daysDiff <= 7;
-          break;
-        case 'month':
-          matchesDate = daysDiff <= 30;
-          break;
-      }
-    }
-
-    return matchesSearch && matchesStatus && matchesMethod && matchesDate;
-  });
+  // Server-side filtering is now used, so we just return the payments
+  const displayPayments = payments;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -303,6 +298,7 @@ const PaymentMonitoring: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       completed: { variant: 'default' as const, label: 'Completed', color: 'text-green-600' },
+      success: { variant: 'default' as const, label: 'Completed', color: 'text-green-600' },
       pending: { variant: 'secondary' as const, label: 'Pending', color: 'text-yellow-600' },
       failed: { variant: 'destructive' as const, label: 'Failed', color: 'text-red-600' },
       refunded: { variant: 'outline' as const, label: 'Refunded', color: 'text-gray-600' },
@@ -318,6 +314,9 @@ const PaymentMonitoring: React.FC = () => {
       cash: { label: 'Cash', color: 'bg-green-100 text-green-800' },
       bank_transfer: { label: 'Bank Transfer', color: 'bg-blue-100 text-blue-800' },
       cheque: { label: 'Cheque', color: 'bg-orange-100 text-orange-800' },
+      upi: { label: 'UPI', color: 'bg-cyan-100 text-cyan-800' },
+      dd: { label: 'DD', color: 'bg-indigo-100 text-indigo-800' },
+      neft: { label: 'NEFT', color: 'bg-teal-100 text-teal-800' },
     };
 
     const config = methodConfig[method as keyof typeof methodConfig] || { label: method, color: 'bg-gray-100 text-gray-800' };
@@ -412,12 +411,25 @@ const PaymentMonitoring: React.FC = () => {
 
       {/* Additional Stats */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card className="bg-yellow-50/50 dark:bg-yellow-900/10 border-yellow-200 dark:border-yellow-900/30">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-400">Outstanding Amount</p>
+                  <p className="text-2xl font-bold text-yellow-600">{formatCurrency(stats.outstanding_amount)}</p>
+                  <p className="text-xs text-yellow-700 dark:text-yellow-500 mt-1">{stats.pending_invoice_count} unpaid invoices</p>
+                </div>
+                <AlertTriangle className="h-8 w-8 text-yellow-500 opacity-20" />
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Pending Payments</p>
+                  <p className="text-sm font-medium text-muted-foreground">Pending Transactions</p>
                   <p className="text-2xl font-bold text-yellow-600">{stats.pending_payments}</p>
                 </div>
                 <Clock className="h-8 w-8 text-yellow-600" />
@@ -508,11 +520,11 @@ const PaymentMonitoring: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
-            Payment Transactions ({filteredPayments.length})
+            Payment Transactions ({meta?.total_count || 0})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {filteredPayments.length === 0 ? (
+          {displayPayments.length === 0 ? (
             <div className="text-center py-12">
               <CreditCard className="h-16 w-16 mx-auto mb-4 opacity-50" />
               <h3 className="text-lg font-semibold mb-2 text-foreground">No Payments Found</h3>
@@ -540,7 +552,7 @@ const PaymentMonitoring: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredPayments.map((payment) => (
+                  {displayPayments.map((payment) => (
                     <TableRow key={payment.id}>
                       <TableCell className="font-medium">
                         {payment.invoice.invoice_number}
@@ -567,7 +579,7 @@ const PaymentMonitoring: React.FC = () => {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {payment.status === 'completed' && (
+                          {(payment.status === 'completed' || payment.status === 'success') && (
                             <Button
                               variant="outline"
                               size="sm"
@@ -592,6 +604,35 @@ const PaymentMonitoring: React.FC = () => {
                   ))}
                 </TableBody>
               </Table>
+            </div>
+          )}
+
+          {meta && meta.total_pages > 1 && (
+            <div className="flex items-center justify-between mt-6 pt-6 border-t">
+              <div className="text-sm text-muted-foreground">
+                Showing <span className="font-medium">{(currentPage - 1) * 25 + 1}</span> to <span className="font-medium">{Math.min(currentPage * 25, meta.total_count)}</span> of <span className="font-medium">{meta.total_count}</span> transactions
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <div className="flex items-center px-4 text-sm font-medium">
+                  Page {currentPage} of {meta.total_pages}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(meta.total_pages, p + 1))}
+                  disabled={currentPage === meta.total_pages}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
@@ -672,7 +713,7 @@ const PaymentMonitoring: React.FC = () => {
                 <Button variant="outline" onClick={() => setIsDetailsDialogOpen(false)}>
                   Close
                 </Button>
-                {selectedPayment.status === 'completed' && (
+                {(selectedPayment.status === 'completed' || selectedPayment.status === 'success') && (
                   <Button onClick={() => downloadReceipt(selectedPayment.id)}>
                     <Download className="h-4 w-4 mr-2" />
                     Download Receipt

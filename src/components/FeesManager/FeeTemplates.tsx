@@ -39,6 +39,7 @@ interface FeeTemplate {
   total_amount: number;
   fee_type: string;
   semester?: number;
+  due_date?: string;
   is_active: boolean;
   components: Array<{
     component: FeeComponent;
@@ -66,6 +67,7 @@ const FeeTemplates: React.FC = () => {
   const [templateDescription, setTemplateDescription] = useState('');
   const [feeType, setFeeType] = useState('semester');
   const [semester, setSemester] = useState<number | undefined>();
+  const [dueDate, setDueDate] = useState('');
   const [components, setComponents] = useState<FeeComponent[]>([]);
 
   // Component form
@@ -166,6 +168,7 @@ const FeeTemplates: React.FC = () => {
     setTemplateDescription('');
     setFeeType('semester');
     setSemester(undefined);
+    setDueDate('');
     setSelectedComponents([]);
     setComponentOverrides({});
     setComponentName('');
@@ -201,6 +204,7 @@ const FeeTemplates: React.FC = () => {
         description: templateDescription.trim() || null,
         fee_type: feeType,
         semester: semester,
+        due_date: dueDate || null,
         component_ids: selectedComponents,
         component_overrides: componentOverrides,
       };
@@ -270,6 +274,7 @@ const FeeTemplates: React.FC = () => {
     setTemplateDescription(template.description || '');
     setFeeType(template.fee_type || 'semester');
     setSemester(template.semester);
+    setDueDate(template.due_date || '');
     setSelectedComponents(selectedIds);
     setComponentOverrides(overrides);
     setIsCreateDialogOpen(true);
@@ -285,6 +290,7 @@ const FeeTemplates: React.FC = () => {
         description: templateDescription.trim() || null,
         fee_type: feeType,
         semester: semester,
+        due_date: dueDate || null,
         component_ids: selectedComponents,
         component_overrides: componentOverrides,
       };
@@ -508,6 +514,18 @@ const FeeTemplates: React.FC = () => {
               )}
 
               <div>
+                <Label htmlFor="dueDate">Default Due Date (Optional)</Label>
+                <Input
+                  id="dueDate"
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  className={`${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'} mt-1`}
+                />
+                <p className="text-[10px] text-muted-foreground mt-1 italic">When assigned, invoices will inherit this as their due date.</p>
+              </div>
+
+              <div>
                 <Label className="mb-2 block">Fee Components</Label>
                 <div className="border rounded-lg overflow-hidden">
                   <div className="overflow-x-auto">
@@ -612,6 +630,7 @@ const FeeTemplates: React.FC = () => {
                 <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Name</TableHead>
                 <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Type</TableHead>
                 <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Semester</TableHead>
+                <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Due Date</TableHead>
                 <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Total Amount</TableHead>
                 <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Status</TableHead>
                 <TableHead className={`text-right ${theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}`}>Actions</TableHead>
@@ -630,6 +649,7 @@ const FeeTemplates: React.FC = () => {
                     </Badge>
                   </TableCell>
                   <TableCell>{template.semester || '-'}</TableCell>
+                  <TableCell>{template.due_date ? new Date(template.due_date).toLocaleDateString('en-IN') : '-'}</TableCell>
                   <TableCell>{formatCurrency((template.total_amount != null ? Number(template.total_amount) : (template.total_amount_cents != null ? Number(template.total_amount_cents) / 100 : 0)))}</TableCell>
                   <TableCell>
                     <Badge variant={template.is_active ? "default" : "secondary"}>

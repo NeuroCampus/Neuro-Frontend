@@ -77,6 +77,13 @@ const InvoiceManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({
+    amount: '',
+    mode: 'cash',
+    transactionId: ''
+  });
 
   // Cascading Filter states
   const [selectedFilters, setSelectedFilters] = useState({
@@ -110,7 +117,6 @@ const InvoiceManagement: React.FC = () => {
       }
     };
     fetchInitialData();
-    fetchStats();
   }, []);
 
   // Fetch semesters when branch changes
@@ -171,7 +177,23 @@ const InvoiceManagement: React.FC = () => {
 
   // Fetch stats when filters change
   useEffect(() => {
-    fetchStats();
+    const allFiltersSelected = 
+      selectedFilters.batchId && 
+      selectedFilters.branchId && 
+      selectedFilters.semesterId && 
+      selectedFilters.sectionId && 
+      selectedFilters.admissionMode;
+
+    const noFiltersSelected = 
+      !selectedFilters.batchId && 
+      !selectedFilters.branchId && 
+      !selectedFilters.semesterId && 
+      !selectedFilters.sectionId && 
+      !selectedFilters.admissionMode;
+
+    if (allFiltersSelected || noFiltersSelected) {
+      fetchStats();
+    }
   }, [selectedFilters]);
 
   const fetchStats = async () => {
@@ -270,6 +292,53 @@ const InvoiceManagement: React.FC = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch invoice details');
     }
+  };
+
+  const handleRecordPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedInvoice) return;
+
+    try {
+      setIsSubmittingPayment(true);
+      const token = localStorage.getItem('access_token');
+      const res = await fetch('http://127.0.0.1:8000/api/fees-manager/payments/record/', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          invoice_id: selectedInvoice.id,
+          amount: paymentForm.amount,
+          mode: paymentForm.mode,
+          transaction_id: paymentForm.transactionId
+        })
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || 'Failed to record payment');
+      }
+
+      setIsPaymentDialogOpen(false);
+      setPaymentForm({ amount: '', mode: 'cash', transactionId: '' });
+      fetchInvoices(invoicesMeta?.page || 1);
+      fetchStats();
+      alert('Payment recorded successfully!');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setIsSubmittingPayment(false);
+    }
+  };
+  const openPaymentDialog = (inv: any) => {
+    setSelectedInvoice(inv);
+    setPaymentForm({
+      amount: (inv.pending_amount_cents / 100).toString(),
+      mode: 'cash',
+      transactionId: ''
+    });
+    setIsPaymentDialogOpen(true);
   };
 
   const downloadInvoice = async (invoiceId: number) => {
@@ -491,6 +560,7 @@ const InvoiceManagement: React.FC = () => {
                   <TableHead>Fee Type</TableHead>
                   <TableHead className="text-right">Total Amount</TableHead>
                   <TableHead className="text-right">Balance</TableHead>
+                  <TableHead>Mode</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -542,9 +612,23 @@ const InvoiceManagement: React.FC = () => {
                       </TableCell>
                       <TableCell className="text-right font-bold">{formatCurrency(inv.total_amount)}</TableCell>
                       <TableCell className="text-right font-bold text-red-600">{formatCurrency(inv.pending_amount)}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-[10px] uppercase opacity-70">
+                          {(inv as any).payment_mode || 'N/A'}
+                        </Badge>
+                      </TableCell>
                       <TableCell>{getStatusBadge(inv.status)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-green-600 hover:bg-green-50" 
+                            onClick={() => openPaymentDialog(inv)}
+                            title="Record Payment"
+                          >
+                            <IndianRupee className="h-4 w-4" />
+                          </Button>
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600" onClick={() => fetchInvoiceDetails(inv.id)}>
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -671,6 +755,71 @@ const InvoiceManagement: React.FC = () => {
               <Button variant="outline" className="h-12 px-8" onClick={() => setIsDetailsDialogOpen(false)}>Close</Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Record Payment Dialog */}
+      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <IndianRupee className="h-5 w-5 text-green-600" />
+              Record Manual Payment
+            </DialogTitle>
+          </DialogHeader>
+
+          <form onSubmit={handleRecordPayment} className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label>Student</Label>
+              <Input value={selectedInvoice?.student.name} disabled className="bg-muted/30" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Amount (₹)</Label>
+                <Input 
+                  type="number" 
+                  step="0.01"
+                  required
+                  value={paymentForm.amount}
+                  onChange={(e) => setPaymentForm(p => ({ ...p, amount: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Payment Mode</Label>
+                <Select value={paymentForm.mode} onValueChange={(val) => setPaymentForm(p => ({ ...p, mode: val }))}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="cheque">Cheque</SelectItem>
+                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                    <SelectItem value="upi">UPI</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Reference / Transaction ID (Optional)</Label>
+              <Input 
+                placeholder="e.g. Cheque # or Bank Ref"
+                value={paymentForm.transactionId}
+                onChange={(e) => setPaymentForm(p => ({ ...p, transactionId: e.target.value }))}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white" disabled={isSubmittingPayment}>
+                {isSubmittingPayment ? "Recording..." : "Record Payment"}
+              </Button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
