@@ -242,3 +242,36 @@ export const sendFeeReminder = async (studentId: number) => {
     return { success: false, message: "Network error" };
   }
 };
+export const getStaffAttendanceAudit = async (role: string = 'all', startDate?: string, endDate?: string, page: number = 1, format?: string) => {
+  try {
+    const params = new URLSearchParams({
+      role,
+      page: page.toString(),
+    });
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    if (format) params.append('format', format);
+
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/staff-attendance-audit/?${params}`, {
+      method: "GET",
+    });
+    
+    if (format) return response; // Return raw response for downloads
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching staff attendance audit:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const STAFF_ROLES = [
+  { value: 'all', label: 'All Staff' },
+  { value: 'principal', label: 'Principal' },
+  { value: 'hod', label: 'HOD' },
+  { value: 'dean', label: 'Dean' },
+  { value: 'teacher', label: 'Faculty' },
+  { value: 'coe', label: 'COE' },
+  { value: 'fees_manager', label: 'Fees Manager' },
+  { value: 'warden', label: 'Warden' },
+  { value: 'caretaker', label: 'Caretaker' },
+];

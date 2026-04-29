@@ -4,187 +4,111 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  BarChart3,
-  PieChart,
-  TrendingUp,
   Download,
   Calendar,
-  FileText,
   Users,
-  IndianRupee,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Filter
+  Filter,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+  AlertCircle
 } from 'lucide-react';
+import { getStaffAttendanceAudit, STAFF_ROLES } from '../../utils/fees_manager_api';
 
-interface ReportData {
-  summary: {
-    total_students: number;
-    total_invoices: number;
-    total_payments: number;
-    total_revenue: number;
-    pending_amount: number;
-    overdue_amount: number;
-  };
-  department_wise: Array<{
-    department: string;
-    students: number;
-    revenue: number;
-    pending: number;
-  }>;
-  fee_type_wise: Array<{
-    fee_type: string;
-    count: number;
-    revenue: number;
-  }>;
-  monthly_trends: Array<{
-    month: string;
-    revenue: number;
-    payments: number;
-  }>;
-  overdue_invoices: Array<{
-    invoice_number: string;
-    student_name: string;
-    usn: string;
-    amount: number;
-    due_date: string;
-    days_overdue: number;
-  }>;
+interface AttendanceSummary {
+  id: number;
+  name: string;
+  role: string;
+  branch_dept: string;
+  total_days: number;
+  present: number;
+  absent: number;
+  attendance_percentage: number;
 }
 
 const Reports: React.FC = () => {
-  const [reportData, setReportData] = useState<ReportData | null>(null);
+  const [attendanceData, setAttendanceData] = useState<AttendanceSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [reportType, setReportType] = useState('summary');
-  const [dateRange, setDateRange] = useState('month');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [selectedRole, setSelectedRole] = useState('all');
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(1); // First day of current month
+    return d.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(() => {
+    return new Date().toISOString().split('T')[0];
+  });
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
   useEffect(() => {
-    fetchReportData();
-  }, [reportType, dateRange, startDate, endDate]);
+    fetchAttendanceAudit();
+  }, [selectedRole, currentPage]);
 
-  const fetchReportData = async () => {
+  const fetchAttendanceAudit = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('access_token');
-
-      const params = new URLSearchParams({
-        report_type: reportType,
-        date_range: dateRange,
-        ...(startDate && { start_date: startDate }),
-        ...(endDate && { end_date: endDate }),
-      });
-
-      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/reports/?${params}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch report data');
+      setError(null);
+      const response = await getStaffAttendanceAudit(selectedRole, startDate, endDate, currentPage);
+      
+      if (response.success) {
+        setAttendanceData(response.results.attendance_summary || []);
+        setTotalItems(response.count || 0);
+        setTotalPages(Math.ceil((response.count || 0) / 10));
+      } else {
+        setError(response.message || 'Failed to fetch attendance data');
       }
-
-      const data = await response.json();
-      // Ensure all required arrays exist with defaults
-      const reportData = data.data || {};
-      setReportData({
-        summary: reportData.summary || {
-          total_students: 0,
-          total_invoices: 0,
-          total_payments: 0,
-          total_revenue: 0,
-          pending_amount: 0,
-          overdue_amount: 0,
-        },
-        department_wise: reportData.department_wise || [],
-        fee_type_wise: reportData.fee_type_wise || [],
-        monthly_trends: reportData.monthly_trends || [],
-        overdue_invoices: reportData.overdue_invoices || [],
-      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError('An error occurred while fetching data');
     } finally {
       setLoading(false);
     }
   };
 
-  const downloadReport = async (format: 'pdf' | 'excel' | 'csv') => {
+  const handleApplyFilter = () => {
+    setCurrentPage(1);
+    fetchAttendanceAudit();
+  };
+
+  const downloadReport = async (format: 'pdf' | 'excel') => {
     try {
-      const token = localStorage.getItem('access_token');
-
-      const params = new URLSearchParams({
-        report_type: reportType,
-        date_range: dateRange,
-        format: format,
-        ...(startDate && { start_date: startDate }),
-        ...(endDate && { end_date: endDate }),
-      });
-
-      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/reports/download/?${params}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to download report');
+      setLoading(true);
+      const response = await getStaffAttendanceAudit(selectedRole, startDate, endDate, 1, format);
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Staff_Attendance_${startDate}_to_${endDate}.${format === 'excel' ? 'xlsx' : 'csv'}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        setError(`Failed to download ${format.toUpperCase()} report`);
       }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `fee_report_${reportType}_${new Date().toISOString().split('T')[0]}.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to download report');
+      setError(`Error downloading ${format.toUpperCase()} report`);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-    }).format(amount);
-  };
-
-  const getDateRangeOptions = () => {
-    const now = new Date();
-    const options = [
-      { value: 'today', label: 'Today' },
-      { value: 'week', label: 'This Week' },
-      { value: 'month', label: 'This Month' },
-      { value: 'quarter', label: 'This Quarter' },
-      { value: 'year', label: 'This Year' },
-      { value: 'custom', label: 'Custom Range' },
-    ];
-    return options;
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2">Generating reports...</span>
-      </div>
-    );
-  }
-
   return (
-    <div className="container mx-auto p-0">
-      <div className="flex justify-between items-center mb-8">
+    <div className="container mx-auto space-y-6">
+      <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Fee Reports & Analytics</h1>
-          <p className="text-muted-foreground mt-2">Comprehensive insights into fee collection and payment trends</p>
+          <h1 className="text-3xl font-bold text-foreground">Staff Attendance Audit</h1>
+          <p className="text-muted-foreground mt-1">Monitor attendance across all institutional roles</p>
         </div>
         <div className="flex gap-2">
           <Button 
@@ -207,357 +131,180 @@ const Reports: React.FC = () => {
       </div>
 
       {error && (
-        <Alert className="mb-6">
-          <AlertTriangle className="h-4 w-4" />
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      {/* Filters */}
-      <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <Label>Report Type</Label>
-              <Select value={reportType} onValueChange={setReportType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select report type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="summary">Summary Report</SelectItem>
-                  <SelectItem value="department">Department-wise</SelectItem>
-                  <SelectItem value="fee_type">Fee Type Analysis</SelectItem>
-                  <SelectItem value="trends">Monthly Trends</SelectItem>
-                  <SelectItem value="overdue">Overdue Invoices</SelectItem>
-                </SelectContent>
-              </Select>
+      {/* Filters Card */}
+      <Card className="border-none shadow-sm bg-white dark:bg-slate-900">
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Start Date</Label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
 
-            <div>
-              <Label>Date Range</Label>
-              <Select value={dateRange} onValueChange={setDateRange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select date range" />
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">End Date</Label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Role</Label>
+              <Select value={selectedRole} onValueChange={setSelectedRole}>
+                <SelectTrigger className="bg-white dark:bg-slate-900">
+                  <SelectValue placeholder="Select Role" />
                 </SelectTrigger>
                 <SelectContent>
-                  {getDateRangeOptions().map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                  {STAFF_ROLES.map((role) => (
+                    <SelectItem key={role.value} value={role.value}>
+                      {role.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {dateRange === 'custom' && (
-              <>
-                <div>
-                  <Label>Start Date</Label>
-                  <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>End Date</Label>
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                  />
-                </div>
-              </>
-            )}
+            <Button 
+              onClick={handleApplyFilter}
+              className="bg-primary hover:bg-primary/90 w-full"
+            >
+              <Filter className="h-4 w-4 mr-2" />
+              Apply Filter
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Report Content */}
-      {reportData && (
-        <Tabs value={reportType} onValueChange={setReportType} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="summary">Summary</TabsTrigger>
-            <TabsTrigger value="department">Departments</TabsTrigger>
-            <TabsTrigger value="fee_type">Fee Types</TabsTrigger>
-            <TabsTrigger value="trends">Trends</TabsTrigger>
-            <TabsTrigger value="overdue">Overdue</TabsTrigger>
-          </TabsList>
+      {/* Attendance Summary Table */}
+      <Card className="border-none shadow-sm overflow-hidden bg-white dark:bg-slate-900">
+        <CardHeader className="border-b bg-slate-50/50 dark:bg-slate-800/50">
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            <Users className="h-5 w-5 text-primary" />
+            Staff Attendance Summary
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader className="bg-slate-50/50 dark:bg-slate-800/50">
+              <TableRow>
+                <TableHead className="font-bold">Staff Name</TableHead>
+                <TableHead className="font-bold">Role</TableHead>
+                <TableHead className="font-bold">Dept/Branch</TableHead>
+                <TableHead className="font-bold text-center">Total Days</TableHead>
+                <TableHead className="font-bold text-center">Present</TableHead>
+                <TableHead className="font-bold text-center">Absent</TableHead>
+                <TableHead className="font-bold text-center">Attendance %</TableHead>
+                <TableHead className="font-bold text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell colSpan={8}>
+                      <div className="h-8 w-full bg-slate-100 dark:bg-slate-800 animate-pulse rounded" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : attendanceData.length > 0 ? (
+                attendanceData.map((item) => (
+                  <TableRow key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                    <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="font-normal capitalize">
+                        {item.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{item.branch_dept}</TableCell>
+                    <TableCell className="text-center font-semibold">{item.total_days}</TableCell>
+                    <TableCell className="text-center">
+                      <span className="text-green-600 dark:text-green-400 font-bold">{item.present}</span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className="text-red-600 dark:text-red-400 font-bold">{item.absent}</span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge 
+                        className={`font-bold ${
+                          item.attendance_percentage >= 75 
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                            : item.attendance_percentage >= 50
+                            ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                        }`}
+                        variant="secondary"
+                      >
+                        {item.attendance_percentage}%
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" className="hover:bg-primary/10 hover:text-primary">
+                        <Eye className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+                    No attendance records found for the selected criteria.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
 
-          {/* Summary Report */}
-          <TabsContent value="summary" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-                      <p className="text-3xl font-bold text-green-600">
-                        {formatCurrency(reportData.summary?.total_revenue || 0)}
-                      </p>
-                    </div>
-                    <IndianRupee className="h-12 w-12 text-green-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Pending Amount</p>
-                      <p className="text-3xl font-bold text-yellow-600">
-                        {formatCurrency(reportData.summary?.pending_amount || 0)}
-                      </p>
-                    </div>
-                    <Clock className="h-12 w-12 text-yellow-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Overdue Amount</p>
-                      <p className="text-3xl font-bold text-red-600">
-                        {formatCurrency(reportData.summary?.overdue_amount || 0)}
-                      </p>
-                    </div>
-                    <AlertTriangle className="h-12 w-12 text-red-600" />
-                  </div>
-                </CardContent>
-              </Card>
+          {/* Pagination */}
+          <div className="flex items-center justify-between px-6 py-4 border-t bg-slate-50/50 dark:bg-slate-800/50">
+            <p className="text-sm text-muted-foreground">
+              Showing <span className="font-medium text-foreground">{(currentPage - 1) * 10 + 1}</span> to <span className="font-medium text-foreground">{Math.min(currentPage * 10, totalItems)}</span> of <span className="font-medium text-foreground">{totalItems}</span> results
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === 1 || loading}
+                onClick={() => setCurrentPage(prev => prev - 1)}
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" />
+                Previous
+              </Button>
+              <div className="flex items-center justify-center min-w-[32px] text-sm font-medium">
+                {currentPage}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === totalPages || loading}
+                onClick={() => setCurrentPage(prev => prev + 1)}
+              >
+                Next
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Students</p>
-                      <p className="text-3xl font-bold text-foreground">{reportData.summary?.total_students || 0}</p>
-                    </div>
-                    <Users className="h-12 w-12 text-blue-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Invoices</p>
-                      <p className="text-3xl font-bold text-foreground">{reportData.summary?.total_invoices || 0}</p>
-                    </div>
-                    <FileText className="h-12 w-12 text-purple-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Payments</p>
-                      <p className="text-3xl font-bold text-foreground">{reportData.summary?.total_payments || 0}</p>
-                    </div>
-                    <CheckCircle className="h-12 w-12 text-green-600" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Department-wise Report */}
-          <TabsContent value="department" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Department-wise Fee Collection</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Department</TableHead>
-                      <TableHead>Students</TableHead>
-                      <TableHead>Total Revenue</TableHead>
-                      <TableHead>Pending Amount</TableHead>
-                      <TableHead>Collection Rate</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {reportData.department_wise && reportData.department_wise.length > 0 ? (
-                      reportData.department_wise.map((dept, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">{dept.department}</TableCell>
-                          <TableCell>{dept.students}</TableCell>
-                          <TableCell className="font-semibold text-green-600">
-                            {formatCurrency(dept.revenue)}
-                          </TableCell>
-                          <TableCell className="font-semibold text-yellow-600">
-                            {formatCurrency(dept.pending)}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={dept.pending === 0 ? 'default' : 'secondary'}>
-                              {dept.revenue > 0 ? Math.round(((dept.revenue - dept.pending) / dept.revenue) * 100) : 0}%
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                          No department data available
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Fee Type Analysis */}
-          <TabsContent value="fee_type" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Fee Type Analysis</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Fee Type</TableHead>
-                      <TableHead>Count</TableHead>
-                      <TableHead>Total Revenue</TableHead>
-                      <TableHead>Average Amount</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {reportData.fee_type_wise && reportData.fee_type_wise.length > 0 ? (
-                      reportData.fee_type_wise.map((feeType, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">{feeType.fee_type}</TableCell>
-                          <TableCell>{feeType.count}</TableCell>
-                          <TableCell className="font-semibold text-green-600">
-                            {formatCurrency(feeType.revenue)}
-                          </TableCell>
-                          <TableCell className="font-semibold">
-                            {formatCurrency(feeType.revenue / feeType.count)}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                          No fee type data available
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Monthly Trends */}
-          <TabsContent value="trends" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Monthly Revenue Trends</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Month</TableHead>
-                      <TableHead>Payments Count</TableHead>
-                      <TableHead>Total Revenue</TableHead>
-                      <TableHead>Average per Payment</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {reportData.monthly_trends && reportData.monthly_trends.length > 0 ? (
-                      reportData.monthly_trends.map((trend, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">{trend.month}</TableCell>
-                          <TableCell>{trend.payments}</TableCell>
-                          <TableCell className="font-semibold text-green-600">
-                            {formatCurrency(trend.revenue)}
-                          </TableCell>
-                          <TableCell className="font-semibold">
-                            {formatCurrency(trend.payments > 0 ? trend.revenue / trend.payments : 0)}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center py-8 text-gray-500">
-                          No monthly trend data available
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Overdue Invoices */}
-          <TabsContent value="overdue" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Overdue Invoices</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {reportData.overdue_invoices && reportData.overdue_invoices.length === 0 ? (
-                  <div className="text-center py-12">
-                    <CheckCircle className="h-16 w-16 mx-auto mb-4 text-green-600" />
-                    <h3 className="text-lg font-semibold mb-2 text-foreground">No Overdue Invoices</h3>
-                    <p className="text-muted-foreground">All invoices are up to date!</p>
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Invoice #</TableHead>
-                        <TableHead>Student</TableHead>
-                        <TableHead>USN</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Due Date</TableHead>
-                        <TableHead>Days Overdue</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {reportData.overdue_invoices && reportData.overdue_invoices.map((invoice, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
-                          <TableCell>{invoice.student_name}</TableCell>
-                          <TableCell>{invoice.usn}</TableCell>
-                          <TableCell className="font-semibold text-red-600">
-                            {formatCurrency(invoice.amount)}
-                          </TableCell>
-                          <TableCell>{new Date(invoice.due_date).toLocaleDateString()}</TableCell>
-                          <TableCell>
-                            <Badge variant="destructive">
-                              {invoice.days_overdue} days
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="destructive">Overdue</Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
