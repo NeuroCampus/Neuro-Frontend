@@ -143,7 +143,7 @@ const WardenDashboard = () => {
 
   return (
     <motion.div
-      className="space-y-8"
+      className="space-y-6"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -155,20 +155,48 @@ const WardenDashboard = () => {
         </div>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <DashboardCard
-          title="Active Residents"
-          value={stats?.total_students || 0}
-          description="Across all rooms"
-          icon={<Users size={20} className="text-blue-500" />}
-        />
+      {/* Overview & Hostels Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Hostel Selection Cards */}
+        {hostels.map((hostel) => (
+          <motion.div
+            key={hostel.id}
+            whileHover={{ y: -5 }}
+            onClick={() => setSelectedHostel(hostel.id)}
+            className={`p-4 rounded-2xl border bg-card/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-all cursor-pointer ${
+              selectedHostel === hostel.id ? "border-primary ring-1 ring-primary/20" : "border-border/40"
+            }`}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 rounded-xl bg-purple-500/10 text-purple-500">
+                <Building2 size={20} />
+              </div>
+              <div>
+                <h3 className="font-semibold text-base leading-tight">{hostel.name}</h3>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
+                  {hostel.gender === 'M' ? 'Boys Hostel' : 'Girls Hostel'}
+                </p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              <div className="text-center p-2 rounded-lg bg-muted/20">
+                <div className="text-xl font-bold text-primary">{hostel.room_count}</div>
+                <div className="text-[10px] text-muted-foreground uppercase font-semibold">Rooms</div>
+              </div>
+              <div className="text-center p-2 rounded-lg bg-muted/20">
+                <div className="text-xl font-bold text-primary">{hostel.student_count}</div>
+                <div className="text-[10px] text-muted-foreground uppercase font-semibold">Students</div>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+        {/* Global Stats Cards */}
         <DashboardCard
           title="Pending Issues"
           value={stats?.pending_issues || 0}
           description="Awaiting resolution"
           icon={<AlertCircle size={20} className="text-amber-500" />}
-          trend={{ value: stats?.total_issues || 0, label: "total", isPositive: false }}
         />
         <DashboardCard
           title="Occupancy Rate"
@@ -176,43 +204,6 @@ const WardenDashboard = () => {
           description="Room utilization"
           icon={<ClipboardList size={20} className="text-green-500" />}
         />
-      </div>
-
-      {/* Hostels List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {hostels.map((hostel) => (
-          <motion.div
-            key={hostel.id}
-            whileHover={{ y: -5 }}
-            onClick={() => setSelectedHostel(hostel.id)}
-            className={`p-6 rounded-2xl border bg-card/50 backdrop-blur-sm shadow-sm hover:shadow-md transition-all cursor-pointer ${
-              selectedHostel === hostel.id ? "border-primary ring-1 ring-primary/20" : "border-border/40"
-            }`}
-          >
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 rounded-xl bg-purple-500/10 text-purple-500">
-                <Building2 size={24} />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg">{hostel.name}</h3>
-                <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">
-                  {hostel.gender === 'M' ? 'Boys Hostel' : 'Girls Hostel'}
-                </p>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4 mt-6">
-              <div className="text-center p-3 rounded-lg bg-muted/30">
-                <div className="text-2xl font-bold text-primary">{hostel.room_count}</div>
-                <div className="text-[10px] text-muted-foreground uppercase font-semibold">Rooms</div>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-muted/30">
-                <div className="text-2xl font-bold text-primary">{hostel.student_count}</div>
-                <div className="text-[10px] text-muted-foreground uppercase font-semibold">Students</div>
-              </div>
-            </div>
-          </motion.div>
-        ))}
       </div>
 
       {/* Room Matrix Visualization (Mirroring HMS Admin) */}
