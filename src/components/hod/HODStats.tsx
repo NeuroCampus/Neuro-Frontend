@@ -18,6 +18,7 @@ import {
   Pie,
   Legend,
 } from "recharts";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { showConfirmAlert } from "../../utils/showConfirmAlert";
 import { useNavigate } from "react-router-dom";
@@ -209,6 +210,7 @@ const handleApprove = async (index: number) => {
         updateLeaveStatus(index, res.updated_leave.status === 'APPROVED' ? 'Approved' : res.updated_leave.status === 'REJECTED' ? 'Rejected' : 'Pending');
       }
     }
+  } catch (err) {
     updateLeaveStatus(index, leave.status); // rollback
     setErrors(["Failed to approve leave"]);
     toast.error("Failed to approve the leave request.");

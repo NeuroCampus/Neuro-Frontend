@@ -200,11 +200,8 @@ const AdminAnnouncementManagement = () => {
         });
       }
     } catch (error: any) {
-      MySwal.fire({
-        title: "Error",
-        text: error.message || "An error occurred",
-        icon: "error",
-        confirmButtonColor: "#9147e0",
+      toast.error("Error", {
+        description: error.message || "An error occurred",
       });
     }
   };
