@@ -61,6 +61,7 @@ interface Student {
   semester: string;
   cycle?: string;
   phone?: string;
+  mode_of_admission?: string;
 }
 
 const StudentManagement = () => {
@@ -74,13 +75,13 @@ const StudentManagement = () => {
     confirmDelete: false,
     editDialog: false,
     addStudentModal: false,
-    editForm: { name: "", email: "", section: "", semester: "", cycle: "", phone: "" },
+    editForm: { name: "", email: "", section: "", semester: "", cycle: "", phone: "", mode_of_admission: "KCET" },
     uploadErrors: [] as string[],
     uploadedCount: 0,
     updatedCount: 0,
     droppedFileName: null as string | null,
     selectedFile: null as File | null,
-    manualForm: { usn: "", name: "", email: "", section: "", semester: "", batch: "", cycle: "", phone: "" },
+    manualForm: { usn: "", name: "", email: "", section: "", semester: "", batch: "", cycle: "", phone: "", mode_of_admission: "KCET" },
     currentPage: 1,
     totalPages: 1,
     selectedSemester: "",
@@ -162,6 +163,7 @@ const StudentManagement = () => {
         section: s.section || 'Unknown',
         semester: s.semester || 'Unknown',
         cycle: s.cycle,
+        mode_of_admission: s.mode_of_admission,
       }));
       const totalPages = Math.ceil(count / pageSize);
       updateState({ students, totalStudents: count, currentPage: page, totalPages });
@@ -447,6 +449,7 @@ const StudentManagement = () => {
             const emergency_contact = String(entry.emergency_contact || entry.EmergencyContact || "").trim() || "";
             const phone = String(entry.phone || entry.Phone || entry.contact || entry.Contact || entry.contact_number || entry.ContactNumber || "").trim() || "";
             const blood_group = String(entry.blood_group || entry.BloodGroup || "").trim() || "";
+            const mode_of_admission = String(entry.mode_of_admission || entry.ModeOfAdmission || state.manualForm.mode_of_admission || "KCET").trim();
             const date_of_admission = entry.date_of_admission || entry.DateOfAdmission || new Date().toISOString().split("T")[0];
             const row = index + 2;
 
@@ -488,6 +491,7 @@ const StudentManagement = () => {
               parent_contact,
               emergency_contact,
               blood_group,
+              mode_of_admission,
               date_of_admission,
               semester_id: selectedSemesterId,
               section_id: selectedSectionId,
@@ -556,7 +560,7 @@ const StudentManagement = () => {
 
   // Handle manual student entry
   const handleManualEntry = async () => {
-    const { usn, name, email, section, semester, batch, phone } = state.manualForm;
+    const { usn, name, email, section, semester, batch, phone, mode_of_admission } = state.manualForm;
 
     const newErrors: any = {};
 
@@ -613,6 +617,7 @@ const StudentManagement = () => {
           section_id: getSectionId(section, state.manualSections),
           batch_id: getBatchId(batch),
           cycle: state.manualForm.cycle || undefined,
+          mode_of_admission: mode_of_admission || "KCET",
         },
         "POST"
       );
@@ -627,6 +632,7 @@ const StudentManagement = () => {
           semester: semester,
           cycle: state.manualForm.cycle,
           phone: phone,
+          mode_of_admission: mode_of_admission,
         };
         updateState({
           students: [newStudent, ...state.students],
@@ -641,6 +647,7 @@ const StudentManagement = () => {
             batch: "",
             cycle: "",
             phone: "",
+            mode_of_admission: "KCET",
           },
           manualErrors: {},
           uploadErrors: [],
@@ -683,13 +690,14 @@ const StudentManagement = () => {
         semester_id: getSemesterId(state.editForm.semester),
         section_id: getSectionId(state.editForm.section, state.editSections),
         cycle: state.editForm.cycle || undefined,
+        mode_of_admission: state.editForm.mode_of_admission || "KCET",
       }, "POST");
 
       if (res.success) {
         // Optimistically update local list so changes appear immediately
         const updated = state.students.map((s) =>
           s.usn === state.selectedStudent!.usn
-            ? { ...s, name: state.editForm.name, email: state.editForm.email, phone: state.editForm.phone, section: state.editForm.section, semester: state.editForm.semester, cycle: state.editForm.cycle }
+            ? { ...s, name: state.editForm.name, email: state.editForm.email, phone: state.editForm.phone, section: state.editForm.section, semester: state.editForm.semester, cycle: state.editForm.cycle, mode_of_admission: state.editForm.mode_of_admission }
             : s
         );
         updateState({ students: updated, editDialog: false, uploadErrors: [], editSections: [], currentPage: 1 });
@@ -821,6 +829,7 @@ const StudentManagement = () => {
         semester: student.semester,
         cycle: student.cycle || "",
         phone: student.phone || "",
+        mode_of_admission: student.mode_of_admission || "KCET",
       },
       editDialog: true,
       editSections: [],
@@ -984,6 +993,28 @@ const StudentManagement = () => {
                   }`}
               />
               <span className="text-red-500 text-xs mt-1">{state.manualErrors?.phone}</span>
+            </div>
+
+            {/* Mode of Admission */}
+            <div className="flex flex-col">
+              <Select
+                value={state.manualForm.mode_of_admission}
+                onValueChange={(value) => updateState({ manualForm: { ...state.manualForm, mode_of_admission: value } })}
+              >
+                <SelectTrigger className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'} focus:ring-0`}>
+                  <SelectValue placeholder="Mode of Admission" />
+                </SelectTrigger>
+                <SelectContent className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
+                  <SelectItem value="KCET">KCET</SelectItem>
+                  <SelectItem value="COMEDK">COMEDK</SelectItem>
+                  <SelectItem value="JEE Main">JEE Main</SelectItem>
+                  <SelectItem value="NEET">NEET</SelectItem>
+                  <SelectItem value="Merit">Merit</SelectItem>
+                  <SelectItem value="Management">Management</SelectItem>
+                  <SelectItem value="NRI">NRI</SelectItem>
+                  <SelectItem value="Lateral Entry">Lateral Entry</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <Select
@@ -1218,6 +1249,7 @@ const StudentManagement = () => {
                     <th className="py-3 px-3 md:px-4 text-sm md:text-base font-medium">Email</th>
                     <th className="hidden sm:table-cell py-3 px-3 md:px-4 text-sm md:text-base font-medium">Phone</th>
                     <th className="hidden md:table-cell py-3 px-3 md:px-4 text-sm md:text-base font-medium">Section</th>
+                    <th className="hidden lg:table-cell py-3 px-3 md:px-4 text-sm md:text-base font-medium">Mode</th>
                     <th className="py-3 px-3 md:px-4 text-sm md:text-base font-medium">Semester</th>
                     <th className="py-3 px-3 md:px-4 text-sm md:text-base font-medium">Actions</th>
                   </tr>
@@ -1230,6 +1262,7 @@ const StudentManagement = () => {
                       <td className="py-3 px-3 md:px-4 text-sm md:text-base">{student.email}</td>
                       <td className="hidden sm:table-cell py-3 px-3 md:px-4 text-sm md:text-base">{student.phone && student.phone.trim() ? student.phone : '-'}</td>
                       <td className="hidden md:table-cell py-3 px-3 md:px-4 text-sm md:text-base">Section {student.section}</td>
+                      <td className="hidden lg:table-cell py-3 px-3 md:px-4 text-sm md:text-base">{student.mode_of_admission || 'KCET'}</td>
                       <td className="py-3 px-3 md:px-4 text-sm md:text-base">{formatSemesterDisplay(student)}</td>
                       <td className="py-3 px-3 md:px-4 text-sm md:text-base flex gap-2 md:gap-3 items-center">
                         <button
@@ -1421,6 +1454,27 @@ const StudentManagement = () => {
                 </SelectContent>
               </Select>
 
+              {/* Mode of Admission Dropdown */}
+              <Select
+                value={state.manualForm.mode_of_admission}
+                onValueChange={(value) => updateState({ manualForm: { ...state.manualForm, mode_of_admission: value } })}
+                disabled={state.isLoading}
+              >
+                <SelectTrigger className={`w-full ${theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}`}>
+                  <SelectValue placeholder="Mode of Admission" />
+                </SelectTrigger>
+                <SelectContent className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+                  <SelectItem value="KCET">KCET</SelectItem>
+                  <SelectItem value="COMEDK">COMEDK</SelectItem>
+                  <SelectItem value="JEE Main">JEE Main</SelectItem>
+                  <SelectItem value="NEET">NEET</SelectItem>
+                  <SelectItem value="Merit">Merit</SelectItem>
+                  <SelectItem value="Management">Management</SelectItem>
+                  <SelectItem value="NRI">NRI</SelectItem>
+                  <SelectItem value="Lateral Entry">Lateral Entry</SelectItem>
+                </SelectContent>
+              </Select>
+
               {/* Cycle Dropdown - only for semesters 1 and 2 */}
               {state.manualForm.semester && getSemesterNumber(state.manualForm.semester) <= 2 && (
                 <Select
@@ -1504,7 +1558,7 @@ const StudentManagement = () => {
               <li>
                 Optional columns: <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>email</strong> and <strong className={theme === 'dark' ? 'text-foreground' : 'text-gray-900'}>phone</strong>
               </li>
-              <li>Semester, Section, and Cycle (for semesters 1-2) are selected above, not in the file</li>
+              <li>Semester, Section, Mode of Admission, and Cycle (for semesters 1-2) are selected above, not in the file</li>
               <li>Maximum 500 records per file</li>
               <li>
                 <a
@@ -1589,6 +1643,24 @@ const StudentManagement = () => {
                 updateState({ editForm: { ...state.editForm, phone: value } });
               }}
             />
+            <Select
+              value={state.editForm.mode_of_admission}
+              onValueChange={(value) => updateState({ editForm: { ...state.editForm, mode_of_admission: value } })}
+            >
+              <SelectTrigger className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-300'}>
+                <SelectValue placeholder="Mode of Admission" />
+              </SelectTrigger>
+              <SelectContent className={theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'}>
+                <SelectItem value="KCET">KCET</SelectItem>
+                <SelectItem value="COMEDK">COMEDK</SelectItem>
+                <SelectItem value="JEE Main">JEE Main</SelectItem>
+                <SelectItem value="NEET">NEET</SelectItem>
+                <SelectItem value="Merit">Merit</SelectItem>
+                <SelectItem value="Management">Management</SelectItem>
+                <SelectItem value="NRI">NRI</SelectItem>
+                <SelectItem value="Lateral Entry">Lateral Entry</SelectItem>
+              </SelectContent>
+            </Select>
             <Select
               value={state.editForm.semester}
               onValueChange={(value) =>
