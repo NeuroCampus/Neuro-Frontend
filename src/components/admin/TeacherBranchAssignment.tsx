@@ -225,7 +225,11 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
             </div>
             <div>
               <Button
-                onClick={() => setShowBranchDialog(true)}
+                onClick={() => {
+                  setSelectedTeacher(null);
+                  setSelectedBranch("");
+                  setShowBranchDialog(true);
+                }}
                 className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white"
               >
                 <Building className="h-4 w-4" />
@@ -274,7 +278,19 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
           <div className="max-h-[calc(100vh-28rem)] sm:max-h-[calc(100vh-26rem)] md:max-h-[calc(100vh-24rem)] lg:max-h-[calc(100vh-22rem)] overflow-y-auto custom-scrollbar pr-2">
             <div className="grid grid-cols-1 gap-2 sm:gap-4">
               {teachers.map((teacher) => (
-                <Card key={teacher.id} className="p-2 sm:p-4">
+                <Card 
+                  key={teacher.id} 
+                  className="p-2 sm:p-4 cursor-pointer hover:border-primary/50 transition-colors"
+                  onClick={() => {
+                    setSelectedTeacher(teacher);
+                    if (teacher.primary_branch) {
+                      setSelectedBranch(teacher.primary_branch.id.toString());
+                    } else {
+                      setSelectedBranch("");
+                    }
+                    setShowBranchDialog(true);
+                  }}
+                >
                   <div className="flex flex-col sm:flex-row sm:justify-between items-start gap-2">
                     <div>
                       <h3 className="text-sm sm:text-lg font-semibold">
@@ -349,6 +365,11 @@ const TeacherBranchAssignment = ({ setError, toast }: TeacherBranchAssignmentPro
               <Select value={selectedTeacher?.id.toString() || ""} onValueChange={(value) => {
                 const teacher = teachers.find(t => t.id.toString() === value);
                 setSelectedTeacher(teacher || null);
+                if (teacher?.primary_branch) {
+                  setSelectedBranch(teacher.primary_branch.id.toString());
+                } else {
+                  setSelectedBranch("");
+                }
               }}>
                 <SelectTrigger className="w-full mt-1">
                   <SelectValue placeholder="Choose a faculty" />
