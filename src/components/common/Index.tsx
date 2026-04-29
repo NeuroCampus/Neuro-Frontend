@@ -34,6 +34,8 @@ const Index = () => {
                                currentPath.startsWith('/hod') || 
                                currentPath.startsWith('/faculty') || 
                                currentPath.startsWith('/fees-manager') ||
+                               currentPath.startsWith('/hms') ||
+                               currentPath.startsWith('/warden') ||
                                currentPath.startsWith('/dashboard') ||
                                currentPath.startsWith('/timetable') ||
                                currentPath.startsWith('/attendance') ||
@@ -64,6 +66,9 @@ const Index = () => {
                 break;
               case "hms_admin":
                 navigate("/hms", { replace: true });
+                break;
+              case "warden":
+                navigate("/warden", { replace: true });
                 break;
               case "teacher":
                 navigate("/faculty", { replace: true });
