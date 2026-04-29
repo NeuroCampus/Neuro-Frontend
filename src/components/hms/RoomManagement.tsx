@@ -16,6 +16,7 @@ import Swal from 'sweetalert2';
 interface Hostel {
   id: number;
   name: string;
+  floor_count?: number;
 }
 
 interface Room {
@@ -33,7 +34,7 @@ interface Room {
 import { useHMSContext } from "../../context/HMSContext";
 
 const RoomManagement: React.FC = () => {
-  const { hostels, loading: isLoadingHostels, getCachedFloors, getCachedRooms } = useHMSContext();
+  const { hostels, loading: isLoadingHostels, getCachedFloors, getCachedRooms, refreshData } = useHMSContext();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedHostel, setSelectedHostel] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -119,9 +120,10 @@ const RoomManagement: React.FC = () => {
     }
   };
 
-  const fetchHostelFloors = async (hostelId: number) => {
-    const results = await getCachedFloors(hostelId);
-    setAvailableFloors(results);
+  const fetchHostelFloors = (hostelId: number) => {
+    const hostel = hostels.find(h => h.id === hostelId);
+    const floors = hostel ? Array.from({ length: hostel.floor_count || 1 }, (_, i) => i) : [];
+    setAvailableFloors(floors);
   };
 
   const fetchRoomsByHostel = async (hostelId: number, floor?: string) => {
@@ -158,8 +160,9 @@ const RoomManagement: React.FC = () => {
       return;
     }
 
+    const payload = { ...formData, floor: selectedFloor !== null ? selectedFloor : 0 };
     const method = editingRoom ? 'PUT' : 'POST';
-    const response = await manageRooms(formData, editingRoom?.id, method);
+    const response = await manageRooms(payload, editingRoom?.id, method);
 
     if (response.success) {
       const updatedRoom = response.data as Room | undefined;
@@ -172,6 +175,7 @@ const RoomManagement: React.FC = () => {
       }
       setIsDialogOpen(false);
       setEditingRoom(null);
+      refreshData(true);
       toast({
         title: "Success",
         description: `Room ${editingRoom ? 'updated' : 'created'} successfully`,
@@ -194,6 +198,7 @@ const RoomManagement: React.FC = () => {
       vacant: room.vacant,
       hostel: room.hostel
     });
+    setSelectedFloor(room.floor !== undefined ? room.floor : getFloorFromRoomNo(room.no));
     fetchStudents(room.id);
     setIsDialogOpen(true);
   };
@@ -213,6 +218,7 @@ const RoomManagement: React.FC = () => {
       const response = await manageRooms(undefined, id, 'DELETE');
       if (response.success) {
         setRooms(prev => prev.filter(r => r.id !== id));
+        refreshData(true);
         toast({
           title: "Success",
           description: "Room deleted successfully",
@@ -348,7 +354,7 @@ const RoomManagement: React.FC = () => {
                       <Select value={selectedFloor?.toString() || ''} onValueChange={(v) => setSelectedFloor(parseInt(v))}>
                         <SelectTrigger className="h-10"><SelectValue placeholder="Select floor" /></SelectTrigger>
                         <SelectContent>
-                          {[0, 1, 2, 3, 4, 5].map(f => (
+                          {Array.from({ length: hostels.find(h => h.id === formData.hostel)?.floor_count || 6 }, (_, i) => i).map(f => (
                             <SelectItem key={f} value={f.toString()}>{f === 0 ? 'Ground Floor' : `${f}${f === 1 ? 'st' : f === 2 ? 'nd' : f === 3 ? 'rd' : 'th'} Floor`}</SelectItem>
                           ))}
                         </SelectContent>

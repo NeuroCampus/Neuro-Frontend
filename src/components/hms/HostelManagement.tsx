@@ -32,6 +32,7 @@ interface Hostel {
   caretaker: number | null;
   warden_name?: string;
   caretaker_name?: string;
+  floor_count?: number;
 }
 
 const HostelManagement: React.FC = () => {
@@ -42,6 +43,7 @@ const HostelManagement: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     gender: 'M' as 'M' | 'F',
+    floor_count: 1,
     warden: null as number | null,
     caretaker: null as number | null
   });
@@ -54,6 +56,7 @@ const HostelManagement: React.FC = () => {
     setFormData({
       name: hostel.name,
       gender: hostel.gender,
+      floor_count: hostel.floor_count || 1,
       warden: hostel.warden,
       caretaker: hostel.caretaker
     });
@@ -97,7 +100,7 @@ const HostelManagement: React.FC = () => {
         });
         setIsDialogOpen(false);
         setEditingHostel(null);
-        setFormData({ name: '', gender: 'M', warden: null, caretaker: null });
+        setFormData({ name: '', gender: 'M', floor_count: 1, warden: null, caretaker: null });
         refreshData(true);
       } else {
         toast({
@@ -141,7 +144,7 @@ const HostelManagement: React.FC = () => {
                 <DialogTrigger asChild>
                   <Button onClick={() => {
                     setEditingHostel(null);
-                    setFormData({ name: '', gender: 'M', warden: null, caretaker: null });
+                    setFormData({ name: '', gender: 'M', floor_count: 1, warden: null, caretaker: null });
                   }} className="bg-primary hover:bg-primary/90 h-10 whitespace-nowrap w-full sm:w-auto">
                     <Plus className="w-4 h-4 mr-2" /> Add Hostel
                   </Button>
@@ -173,6 +176,19 @@ const HostelManagement: React.FC = () => {
                           <SelectItem value="F">Girls Hostel</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="floor_count" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Floor Count</Label>
+                      <Input
+                        id="floor_count"
+                        type="number"
+                        min="1"
+                        max="20"
+                        value={formData.floor_count}
+                        onChange={(e) => setFormData({ ...formData, floor_count: parseInt(e.target.value) || 1 })}
+                        required
+                        className="h-10"
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">

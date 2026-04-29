@@ -10,6 +10,7 @@ interface Hostel {
   caretaker: number | null;
   warden_name?: string;
   caretaker_name?: string;
+  floor_count?: number;
 }
 
 interface Warden {

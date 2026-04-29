@@ -32,6 +32,7 @@ interface Hostel {
   capacity: number;
   warden?: number;
   caretaker?: number;
+  floor_count?: number;
 }
 
 interface Room {
@@ -103,9 +104,10 @@ const HMSOverview = () => {
     }
   }, [selectedHostel, selectedFloor]);
 
-  const fetchHostelFloors = async (hostelId: number) => {
-    const results = await getCachedFloors(hostelId);
-    setAvailableFloors(results);
+  const fetchHostelFloors = (hostelId: number) => {
+    const hostel = hostels.find(h => h.id === hostelId);
+    const floors = hostel ? Array.from({ length: hostel.floor_count || 1 }, (_, i) => i) : [];
+    setAvailableFloors(floors);
   };
 
   const fetchHostelRooms = async (hostelId: number, floor?: string) => {

@@ -96,8 +96,9 @@ const StudentManagement: React.FC = () => {
 
   const getFloorsForHostel = async (hostelId: number) => {
     setIsLoadingFloors(true);
-    const results = await getCachedFloors(hostelId);
-    setFloorsForHostel(results);
+    const hostel = hostels.find(h => h.id === hostelId);
+    const floors = hostel ? Array.from({ length: hostel.floor_count || 1 }, (_, i) => i) : [];
+    setFloorsForHostel(floors);
     setIsLoadingFloors(false);
   };
 
