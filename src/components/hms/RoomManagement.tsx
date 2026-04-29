@@ -11,6 +11,7 @@ import { Edit2, Trash2, Plus, LayoutGrid, Users as UsersIcon, Info } from 'lucid
 import { useTheme } from '../../context/ThemeContext';
 import { SkeletonCard, SkeletonPageHeader } from '../ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
+import Swal from 'sweetalert2';
 
 interface Hostel {
   id: number;
@@ -198,7 +199,17 @@ const RoomManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm('Are you sure you want to delete this room?')) {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+    });
+
+    if (result.isConfirmed) {
       const response = await manageRooms(undefined, id, 'DELETE');
       if (response.success) {
         setRooms(prev => prev.filter(r => r.id !== id));

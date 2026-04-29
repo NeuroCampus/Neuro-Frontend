@@ -38,6 +38,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar as CalendarPicker } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import Swal from 'sweetalert2';
 
 interface MealType {
   id: number;
@@ -337,7 +338,17 @@ const MenuManagement: React.FC = () => {
   };
 
   const handleDelete = async (menuId: number) => {
-    if (!confirm('Are you sure you want to delete this menu?')) return;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       const response = await manageMenu(undefined, menuId, 'DELETE');
@@ -432,7 +443,17 @@ const MenuManagement: React.FC = () => {
   };
 
   const handleDeleteFoodItem = async (itemId: number) => {
-    if (!confirm('Are you sure you want to delete this food item?')) return;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this food item?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       const response = await manageMenuItem(undefined, itemId, 'DELETE');
