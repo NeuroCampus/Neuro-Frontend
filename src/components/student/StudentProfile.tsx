@@ -13,7 +13,7 @@ import { useStudentProfileUpdateMutation } from "@/hooks/useApiQueries";
 import { useFileUpload } from "../../hooks/useOptimizations";
 import { Progress } from "../ui/progress";
 import { SkeletonForm } from "../ui/skeleton";
-import { toast } from "sonner";
+import { showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
 import { API_ENDPOINT } from "../../utils/config";
 import { fetchWithTokenRefresh } from "../../utils/authService";
 
@@ -160,11 +160,11 @@ const StudentProfile: React.FC = () => {
         const currentUserData = JSON.parse(localStorage.getItem('user') || '{}');
         currentUserData.profile_picture = fullUrl;
         localStorage.setItem('user', JSON.stringify(currentUserData));
-        toast.success('Profile picture uploaded successfully!');
+        showSuccessAlert('Success', 'Profile picture uploaded successfully!');
       }
     } catch (err) {
       console.error('Upload failed', err);
-      toast.error('Failed to upload profile picture');
+      showErrorAlert('Error', 'Failed to upload profile picture');
     } finally {
       resetUpload();
     }
@@ -185,11 +185,11 @@ const StudentProfile: React.FC = () => {
         address: form.address,
         bio: form.about,
       });
-      toast.success('Your profile has been successfully updated.');
+      showSuccessAlert('Profile Updated', 'Your profile has been successfully updated.');
       setEditing(false);
     } catch (err) {
       console.error(err);
-      toast.error('Failed to update profile');
+      showErrorAlert('Error', 'Failed to update profile');
     }
   };
 
@@ -197,14 +197,14 @@ const StudentProfile: React.FC = () => {
     const files = e.target.files;
     if (!files) return;
     const arr = Array.from(files);
-    if (faceImages.length + arr.length > 5) { toast.error('Maximum 5 images allowed'); return; }
+    if (faceImages.length + arr.length > 5) { showErrorAlert('Error', 'Maximum 5 images allowed'); return; }
     setFaceImages((p) => [...p, ...arr]);
   };
 
   const removeFaceImage = (index: number) => setFaceImages((p) => p.filter((_, i) => i !== index));
 
   const trainFace = async () => {
-    if (faceImages.length < 3) { toast.error('Please upload at least 3 face images'); return; }
+    if (faceImages.length < 3) { showErrorAlert('Error', 'Please upload at least 3 face images'); return; }
     setFaceTrainingStatus('training'); setFaceTrainingProgress(0); setFaceTrainingMessage('Preparing images...');
     try {
       const fd = new FormData();
@@ -213,22 +213,22 @@ const StudentProfile: React.FC = () => {
       const resp = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/student/train-face/`, { method: 'POST', headers: { 'Authorization': `Bearer ${localStorage.getItem('access_token')}` }, body: fd });
       const j = await resp.json();
       setFaceTrainingProgress(75); setFaceTrainingMessage('Training face recognition...');
-      if (j.success) { setFaceTrainingProgress(100); setFaceTrainingStatus('success'); setHasFaceTrained(true); setFaceImages([]); toast.success('Face updated successfully!'); }
-      else { setFaceTrainingStatus('error'); setFaceTrainingMessage(j.message || 'Face training failed'); toast.error(j.message || 'Face training failed'); }
+      if (j.success) { setFaceTrainingProgress(100); setFaceTrainingStatus('success'); setHasFaceTrained(true); setFaceImages([]); showSuccessAlert('Success', 'Face updated successfully!'); }
+      else { setFaceTrainingStatus('error'); setFaceTrainingMessage(j.message || 'Face training failed'); showErrorAlert('Error', j.message || 'Face training failed'); }
     } catch (err) {
-      console.error(err); setFaceTrainingStatus('error'); setFaceTrainingMessage('Network error occurred'); toast.error('Network error occurred');
+      console.error(err); setFaceTrainingStatus('error'); setFaceTrainingMessage('Network error occurred'); showErrorAlert('Error', 'Network error occurred');
     }
   };
 
   const handleChangePassword = async () => {
-    if (!passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password) { toast.error('Please fill all password fields'); return; }
-    if (passwordData.new_password !== passwordData.confirm_password) { toast.error('New passwords do not match'); return; }
+    if (!passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password) { showErrorAlert('Missing fields', 'Please fill all password fields'); return; }
+    if (passwordData.new_password !== passwordData.confirm_password) { showErrorAlert('Password mismatch', 'New passwords do not match'); return; }
     try {
       const resp = await fetchWithTokenRefresh(`${API_ENDPOINT}/profile/change-password/`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(passwordData) });
       const j = await resp.json();
-      if (j.success) { setShowPasswordDialog(false); setPasswordData({ current_password: '', new_password: '', confirm_password: '' }); toast.success('Your password has been updated successfully.'); }
-      else toast.error(j.message || 'Failed to change password');
-    } catch (err) { console.error(err); toast.error('Network error'); }
+      if (j.success) { setShowPasswordDialog(false); setPasswordData({ current_password: '', new_password: '', confirm_password: '' }); showSuccessAlert('Password changed', 'Your password has been updated successfully.'); }
+      else showErrorAlert('Unable to change password', j.message || 'Failed to change password');
+    } catch (err) { console.error(err); showErrorAlert('Unable to change password', 'Network error'); }
   };
 
   if (loading) {

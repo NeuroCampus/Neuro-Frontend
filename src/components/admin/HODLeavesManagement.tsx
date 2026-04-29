@@ -11,7 +11,7 @@ import {
 } from "../ui/dialog";
 import { manageHODLeaves } from "../../utils/admin_api";
 import { useToast } from "../../hooks/use-toast";
-import { toast as sonnerToast } from "sonner";
+import Swal from 'sweetalert2';
 import { useTheme } from "../../context/ThemeContext";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
@@ -160,7 +160,14 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
             )
           );
         }
-        sonnerToast.success('Leave Approved!');
+        Swal.fire({
+          icon: 'success',
+          title: 'Leave Approved!',
+          text: 'Hope the time off is refreshing!',
+          background: theme === 'dark' ? '#1c1c1e' : '#ffffff',
+          color: theme === 'dark' ? '#E4E4E7' : '#000000',
+          confirmButtonColor: '#22c55e',
+        });
       } else {
         setError(response.message || "Failed to approve leave");
         toast({
@@ -205,7 +212,13 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
           }
           setShowModal(false);
           setSelectedId(null);
-          sonnerToast.error('Leave Rejected');
+          Swal.fire({
+            icon: 'error',
+            title: 'Leave Rejected',
+            text: 'We hope for a better time next time!',
+            background: theme === 'dark' ? '#1c1c1e' : '#ffffff',
+            color: theme === 'dark' ? '#E4E4E7' : '#000000',
+          });
         } else {
           setError(response.message || "Failed to reject leave");
           toast({
@@ -228,9 +241,16 @@ const HODLeavesManagement = ({ setError, toast }: HODLeavesManagementProps) => {
     }
   };
 
-  // Show reason in modal (using Radix Dialog now)
+  // Show reason in modal (use SweetAlert2 to match HODStats)
   const openReasonModal = (reason: string) => {
-    setViewReason(reason);
+    Swal.fire({
+      title: "Leave Reason",
+      html: `<div style="white-space:pre-wrap;text-align:left">${reason || 'No reason provided'}</div>`,
+      background: theme === 'dark' ? '#1c1c1e' : '#fff',
+      color: theme === 'dark' ? '#e5e7eb' : '#000',
+      confirmButtonText: 'Close',
+      width: '600px',
+    });
   };
 
   if (loading && leaveRequests.length === 0) {

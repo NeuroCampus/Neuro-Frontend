@@ -18,20 +18,12 @@ import {
   Pie,
   Legend,
 } from "recharts";
-import { toast } from "sonner";
-import { showConfirmAlert } from "../../utils/showConfirmAlert";
+import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { getHODStats, manageLeaves, manageProfile, getHODDashboard, getHODDashboardBootstrap } from "../../utils/hod_api";
 import { motion } from "framer-motion";
 import { useTheme } from "../../context/ThemeContext";
 import { SkeletonCard, SkeletonChart, SkeletonList, SkeletonStatsGrid, SkeletonTable, Skeleton } from "../ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 
 interface LeaveRequest {
   id: string;
@@ -197,9 +189,9 @@ const handleApprove = async (index: number) => {
     if (!res.success) {
       updateLeaveStatus(index, leave.status); // rollback
       setErrors([res.message || "Failed to approve leave"]);
-      toast.error("Failed to approve the leave request.");
+      Swal.fire("Error!", "Failed to approve the leave request.", "error");
     } else {
-      toast.success("The leave request has been approved.");
+      Swal.fire("Approved!", "The leave request has been approved.", "success");
       // Update local dashboard state using PATCH response to avoid full GET
       if (res.pending_leaves_count !== undefined) {
         setStats(prev => prev ? { ...prev, pending_leaves: res.pending_leaves_count } : prev);
@@ -209,9 +201,10 @@ const handleApprove = async (index: number) => {
         updateLeaveStatus(index, res.updated_leave.status === 'APPROVED' ? 'Approved' : res.updated_leave.status === 'REJECTED' ? 'Rejected' : 'Pending');
       }
     }
+  } catch (err) {
     updateLeaveStatus(index, leave.status); // rollback
     setErrors(["Failed to approve leave"]);
-    toast.error("Failed to approve the leave request.");
+    Swal.fire("Error!", "Failed to approve the leave request.", "error");
   }
 };
 
@@ -219,12 +212,16 @@ const handleApprove = async (index: number) => {
   const handleReject = async (index: number) => {
     const leave = leaveRequests[index];
 
-    const result = await showConfirmAlert(
-      "Are you sure?",
-      "You are about to reject this leave request.",
-      "Yes, reject it!",
-      "No, keep it"
-    );
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You are about to reject this leave request.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, reject it!",
+      cancelButtonText: "No, keep it",
+      background: theme === 'dark' ? '#23232a' : '#fff',
+      color: theme === 'dark' ? '#e5e7eb' : '#000',
+    });
 
     if (!result.isConfirmed) return;
 
@@ -239,9 +236,9 @@ const handleApprove = async (index: number) => {
       if (!res.success) {
         updateLeaveStatus(index, leave.status);
         setErrors([res.message || "Failed to reject leave"]);
-        toast.error("Failed to reject the leave request.");
+        Swal.fire("Error!", "Failed to reject the leave request.", "error");
       } else {
-      toast.success("The leave request has been rejected.");
+      Swal.fire("Rejected!", "The leave request has been rejected.", "success");
       // Update local dashboard state using PATCH response to avoid full GET
       if (res.pending_leaves_count !== undefined) {
         setStats(prev => prev ? { ...prev, pending_leaves: res.pending_leaves_count } : prev);
@@ -253,14 +250,20 @@ const handleApprove = async (index: number) => {
     } catch (err) {
       updateLeaveStatus(index, leave.status);
       setErrors(["Failed to reject leave"]);
-      toast.error("Failed to reject the leave request.");
+      Swal.fire("Error!", "Failed to reject the leave request.", "error");
     }
   };
 
-  // Show reason in modal
-  const [viewingReason, setViewingReason] = useState<string | null>(null);
+  // Show reason in modal (reuses SweetAlert2 for a simple modal)
   const openReasonModal = (reason: string) => {
-    setViewingReason(reason);
+    Swal.fire({
+      title: "Leave Reason",
+      html: `<div style="white-space:pre-wrap;text-align:left">${reason || 'No reason provided'}</div>`,
+      background: theme === 'dark' ? '#1c1c1e' : '#fff',
+      color: theme === 'dark' ? '#e5e7eb' : '#000',
+      confirmButtonText: 'Close',
+      width: '600px',
+    });
   };
 
   // Initial data fetch
@@ -640,33 +643,6 @@ const handleApprove = async (index: number) => {
           </div>
         </div>
       </div>
-      {/* View Reason Dialog */}
-      <Dialog open={!!viewingReason} onOpenChange={() => setViewingReason(null)}>
-        <DialogContent className={`${theme === 'dark' ? 'bg-card text-foreground border border-border' : 'bg-white text-gray-900 border border-gray-200'} max-w-[80%] sm:max-w-md mx-auto rounded-2xl p-4 sm:p-6`}>
-          <DialogHeader>
-            <DialogTitle className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Leave Reason</DialogTitle>
-          </DialogHeader>
-
-          <div
-            className={`p-3 text-base leading-relaxed whitespace-pre-wrap break-words 
-                      max-h-64 overflow-y-auto rounded-md ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}
-          >
-            {viewingReason}
-          </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              className={theme === 'dark' 
-                ? 'text-foreground bg-card border border-border hover:bg-accent' 
-                : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'}
-              onClick={() => setViewingReason(null)}
-            >
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

@@ -14,7 +14,10 @@ import { Calendar } from "../ui/calendar";
 import { useTheme } from "../../context/ThemeContext";
 import { format } from "date-fns";
 import { DateRange } from "react-day-picker";
-import { toast } from "sonner";
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
 
 // Define error type for catch blocks
 interface ErrorWithMessage {
@@ -241,8 +244,18 @@ const ApplyLeave = () => {
           status: "PENDING"
         } as Leave, ...leaves]);
         
+        // Show success alert with theme-aware styling
+        const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
         
-        toast.success('Your leave request has been successfully submitted.');
+        await MySwal.fire({
+          title: 'Leave Request Submitted!',
+          text: 'Your leave request has been successfully submitted.',
+          icon: 'success',
+          confirmButtonText: 'OK',
+          confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
+          background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+          color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+        });
         
         setError("");
         setLeaveTitle("");
@@ -250,11 +263,36 @@ const ApplyLeave = () => {
         setReason("");
       } else {
         setError(response.message || "Failed to submit leave");
-        toast.error(response.message || 'Failed to submit leave');
+        
+        // Show error alert
+        const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+        
+        await MySwal.fire({
+          title: 'Error!',
+          text: response.message || 'Failed to submit leave',
+          icon: 'error',
+          confirmButtonText: 'OK',
+          confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
+          background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+          color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+        });
       }
     } catch (err) {
-      setError("Network error occurred");
-      toast.error('Network error occurred');
+      const errorMessage = "Network error occurred";
+      setError(errorMessage);
+      
+      // Show error alert
+      const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+      
+      await MySwal.fire({
+        title: 'Error!',
+        text: 'Network error occurred',
+        icon: 'error',
+        confirmButtonText: 'OK',
+        confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
+        background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+      });
     } finally {
       setLoading(false);
     }

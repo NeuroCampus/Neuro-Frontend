@@ -368,7 +368,7 @@ const StudentManagement: React.FC = () => {
 
       {/* Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-[88vw] sm:max-w-xl rounded-xl">
+        <DialogContent className="max-w-[90vw] sm:max-w-xl rounded-xl">
           <DialogHeader>
             <DialogTitle>Update Student HMS Details</DialogTitle>
           </DialogHeader>

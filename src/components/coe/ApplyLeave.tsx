@@ -10,11 +10,13 @@ import { format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { useTheme } from '@/context/ThemeContext';
-import { toast } from "sonner";
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import { Circle, CalendarCheck2, CalendarX2, Filter } from 'lucide-react';
 import { API_ENDPOINT } from '@/utils/config';
 import { fetchWithTokenRefresh } from '@/utils/authService';
 
+const MySwal = withReactContent(Swal);
 
 type LeaveStatus = 'Pending' | 'Approved' | 'Rejected';
 
@@ -152,8 +154,14 @@ const COEApplyLeave = () => {
         // Show success alert with theme-aware styling
         const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
 
-        toast.success('Leave Request Submitted!', {
-          description: 'Your leave request has been successfully submitted to the dean.',
+        await MySwal.fire({
+          title: 'Leave Request Submitted!',
+          text: 'Your leave request has been successfully submitted to the dean.',
+          icon: 'success',
+          confirmButtonText: 'OK',
+          confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
+          background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+          color: currentTheme === 'dark' ? '#ffffff' : '#000000',
         });
 
         // Reset form
@@ -183,8 +191,14 @@ const COEApplyLeave = () => {
       // Show error alert with theme-aware styling
       const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
 
-      toast.error('Error!', {
-        description: error instanceof Error ? error.message : 'Something went wrong. Please try again.',
+      await MySwal.fire({
+        title: 'Error!',
+        text: error instanceof Error ? error.message : 'Something went wrong. Please try again.',
+        icon: 'error',
+        confirmButtonText: 'OK',
+        confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
+        background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
       });
     } finally {
       setSubmitting(false);

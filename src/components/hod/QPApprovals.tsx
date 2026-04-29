@@ -8,8 +8,8 @@ import { SkeletonTable } from "../ui/skeleton";
 import { useTheme } from "../../context/ThemeContext";
 import { useToast } from "../../hooks/use-toast";
 import { API_ENDPOINT } from "../../utils/config";
-import { toast } from "sonner";
-import { showConfirmAlert } from "../../utils/showConfirmAlert";
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 
 interface QPPending {
   id: number;
@@ -59,7 +59,7 @@ const QPApprovals = () => {
   const { theme } = useTheme();
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
-  // Feedback handled by Sonner toast
+  const MySwal = withReactContent(Swal);
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [currentPage, setCurrentPage] = useState(1);
@@ -70,7 +70,25 @@ const QPApprovals = () => {
     setExpanded((p) => ({ ...p, [key]: !p[key] }));
   };
 
-  // Feedback handled by Sonner toast
+  // Ensure SweetAlert appears above the dialog and is interactive
+  useEffect(() => {
+    try {
+      const styleId = 'swal2-global-fix';
+      if (!document.getElementById(styleId)) {
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.innerHTML = `
+          .swal2-container, .swal2-popup {
+            z-index: 99999 !important;
+            pointer-events: auto !important;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    } catch (e) {
+      // ignore when DOM not available
+    }
+  }, []);
 
   useEffect(() => {
     fetchPendingQPs(currentPage);
@@ -230,14 +248,22 @@ const QPApprovals = () => {
   };
 
   const handleApprove = async (qpId: number) => {
-    const result = await showConfirmAlert(
-      'Confirm approval',
-      'Are you sure you want to approve and forward this question paper to Admin?',
-      'Yes, approve',
-      'Cancel'
-    );
+    const result = await MySwal.fire({
+      title: 'Confirm approval',
+      text: 'Are you sure you want to approve and forward this question paper to Admin?',
+      icon: 'question',
+      showCancelButton: true,
+      showCloseButton: true,
+      confirmButtonText: 'Yes, approve',
+      cancelButtonText: 'Cancel',
+      allowOutsideClick: true,
+      allowEscapeKey: true,
+      reverseButtons: true,
+      target: document.body,
+    });
 
-    if (!result.isConfirmed) {
+    if (!result || result.isDismissed || !result.isConfirmed) {
+      try { MySwal.close(); } catch (e) {}
       return;
     }
 
@@ -253,32 +279,42 @@ const QPApprovals = () => {
       });
       const data = await response.json();
       if (data.success) {
-        toast.success(data.message || 'QP approved and forwarded to Admin.');
+        try { MySwal.close(); } catch (e) {}
+        const t = toast({ title: 'Approved', description: data.message || 'QP approved and forwarded to Admin.' });
+        setTimeout(() => t.dismiss(), 3000);
         fetchPendingQPs(currentPage);
         setSelectedQP(null);
         setQpDetail(null);
         setComment("");
         setDialogOpen(false);
       } else {
-        toast.error(data.message || 'Failed to approve QP.');
+        MySwal.fire('Error', data.message || 'Failed to approve QP.', 'error');
       }
     } catch (error) {
       console.error("Error approving QP:", error);
-      toast.error('Network error while approving QP.');
+      toast({ title: 'Network error', description: 'Network error while approving QP.' });
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleReject = async (qpId: number) => {
-    const result = await showConfirmAlert(
-      'Confirm rejection',
-      'Are you sure you want to reject this question paper and send it back to Faculty?',
-      'Yes, reject',
-      'Cancel'
-    );
+    const result = await MySwal.fire({
+      title: 'Confirm rejection',
+      text: 'Are you sure you want to reject this question paper and send it back to Faculty?',
+      icon: 'warning',
+      showCancelButton: true,
+      showCloseButton: true,
+      allowOutsideClick: true,
+      allowEscapeKey: true,
+      reverseButtons: true,
+      confirmButtonText: 'Yes, reject',
+      cancelButtonText: 'Cancel',
+      target: document.body,
+    });
 
-    if (!result.isConfirmed) {
+    if (!result || result.isDismissed || !result.isConfirmed) {
+      try { MySwal.close(); } catch (e) {}
       return;
     }
 
@@ -294,18 +330,20 @@ const QPApprovals = () => {
       });
       const data = await response.json();
       if (data.success) {
-        toast.success(data.message || 'QP rejected and sent back to Faculty for edits.');
+        try { MySwal.close(); } catch (e) {}
+        const t = toast({ title: 'Rejected', description: data.message || 'QP rejected and sent back to Faculty for edits.' });
+        setTimeout(() => t.dismiss(), 3000);
         fetchPendingQPs(currentPage);
         setSelectedQP(null);
         setQpDetail(null);
         setComment("");
         setDialogOpen(false);
       } else {
-        toast.error(data.message || 'Failed to reject QP.');
+        MySwal.fire('Error', data.message || 'Failed to reject QP.', 'error');
       }
     } catch (error) {
       console.error("Error rejecting QP:", error);
-      toast.error('Network error while rejecting QP.');
+      toast({ title: 'Network error', description: 'Network error while rejecting QP.' });
     } finally {
       setActionLoading(false);
     }

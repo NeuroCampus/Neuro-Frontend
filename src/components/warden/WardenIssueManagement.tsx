@@ -19,7 +19,7 @@ import {
 import { getWardenIssues, updateWardenIssue } from '../../utils/warden_api';
 import { fetchWithTokenRefresh } from '../../utils/authService';
 import { API_ENDPOINT } from '../../utils/config';
-import { toast } from 'sonner';
+import { useToast } from '../../hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -76,6 +76,7 @@ const STATUS_CONFIG = {
 };
 
 const WardenIssueManagement = () => {
+  const { toast } = useToast();
   const [issues, setIssues] = useState<Issue[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedIssue, setSelectedIssue] = useState<DetailedIssue | null>(null);
@@ -100,7 +101,11 @@ const WardenIssueManagement = () => {
         setTotalCount(response.count);
       }
     } catch (error) {
-      toast.error('Failed to load issues');
+      toast({
+        title: 'Error',
+        description: 'Failed to load issues',
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
     }
@@ -120,7 +125,11 @@ const WardenIssueManagement = () => {
     setUpdatingIssueId(issueId);
     try {
       const data = await updateWardenIssue(issueId, { status: newStatus });
-      toast.success('Issue status updated');
+
+      toast({
+        title: 'Success',
+        description: 'Issue status updated',
+      });
 
       // Update local issues state silently
       setIssues(prev => prev.map(issue =>
@@ -131,7 +140,7 @@ const WardenIssueManagement = () => {
         setSelectedIssue(data);
       }
     } catch (error) {
-      toast.error('Failed to update issue');
+      toast({ title: 'Error', description: 'Failed to update issue', variant: 'destructive' });
     } finally {
       setUpdatingIssueId(null);
     }

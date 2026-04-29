@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Users, UserCheck, Search, Edit2, Trash2, Mail, Phone, Briefcase, Award, Plus, Save, X, MapPin } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
 import { getStaffEnrollment, manageWardens, manageCaretakers } from "../../utils/hms_api";
-import { showConfirmAlert } from "../../utils/showConfirmAlert";
+import Swal from 'sweetalert2';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,11 +104,15 @@ const StaffManagementOverview: React.FC = () => {
   };
 
   const deleteWarden = async (id: number) => {
-    const result = await showConfirmAlert(
-      'Are you sure?',
-      "You won't be able to revert this!",
-      'Yes, delete it!'
-    );
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+    });
 
     if (!result.isConfirmed) return;
 
@@ -141,11 +145,15 @@ const StaffManagementOverview: React.FC = () => {
   };
 
   const deleteCaretaker = async (id: number) => {
-    const result = await showConfirmAlert(
-      'Are you sure?',
-      "You won't be able to revert this!",
-      'Yes, delete it!'
-    );
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+    });
 
     if (!result.isConfirmed) return;
 

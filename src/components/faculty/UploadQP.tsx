@@ -8,8 +8,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from 'jspdf';
-import { toast } from "sonner";
-import { showConfirmAlert } from "../../utils/showConfirmAlert";
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import { useFacultyAssignmentsQuery } from "../../hooks/useApiQueries";
 import { createQuestionPaper, updateQuestionPaper, getQuestionPapers, submitQPForApproval, getQuestionPaperDetail } from "../../utils/faculty_api";
 import { useTheme } from "@/context/ThemeContext";
@@ -221,22 +221,25 @@ const UploadQP = () => {
   };
 
   const removeQuestion = (id: string) => {
+    const MySwal = withReactContent(Swal);
     const handleRemoveConfirmed = () => {
       removeQuestionById(id);
-      toast.success('Question has been deleted.');
+      MySwal.fire('Deleted!', 'Question has been deleted.', 'success');
     };
-    
-    (async () => {
-      const result = await showConfirmAlert(
-        'Delete Question?',
-        'Are you sure you want to delete this question?',
-        'Yes, Delete',
-        'Cancel'
-      );
+    MySwal.fire({
+      title: 'Delete Question?',
+      text: 'Are you sure you want to delete this question?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: 'hsl(var(--primary))',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Yes, Delete',
+      cancelButtonText: 'Cancel',
+    }).then((result) => {
       if (result.isConfirmed) {
         handleRemoveConfirmed();
       }
-    })();
+    });
   };
 
   const updateQuestion = (id: string, field: keyof QuestionRow, value: string) => {
@@ -247,7 +250,8 @@ const UploadQP = () => {
 
   const validateSelection = () => {
     if (!selected.branch_id || !selected.subject_id || !selected.testType) {
-      toast.error('Please select branch, subject and test type');
+      const MySwal = withReactContent(Swal);
+      MySwal.fire('Validation Error', 'Please select branch, subject and test type', 'error');
       return false;
     }
     return true;
@@ -308,14 +312,19 @@ const UploadQP = () => {
   const saveFormat = async () => {
     if (!validateSelection()) return;
     
-    const result = await showConfirmAlert(
-      'Save Question Format?',
-      'This will save the question paper format. Do you want to continue?',
-      'Yes, Save',
-      'Cancel'
-    );
+    const MySwal = withReactContent(Swal);
+    const confirmResult = await MySwal.fire({
+      title: 'Save Question Format?',
+      text: 'This will save the question paper format. Do you want to continue?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: 'hsl(var(--primary))',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Yes, Save',
+      cancelButtonText: 'Cancel',
+    });
 
-    if (!result.isConfirmed) return;
+    if (!confirmResult.isConfirmed) return;
     
     const assignForSubject = assignments.find(a => a.subject_id === selected.subject_id);
     const ids = getDerivedIds(assignForSubject);
@@ -333,13 +342,13 @@ const UploadQP = () => {
       
       if (res?.success) {
         setTabValue('questionPaper');
-        toast.success('Question format saved successfully!');
+        MySwal.fire('Success!', 'Question format saved successfully!', 'success');
       } else {
-        toast.error('Failed to save the format. Please try again.');
+        MySwal.fire('Error', 'Failed to save the format. Please try again.', 'error');
       }
     } catch (err) {
       console.error(err);
-      toast.error('Network error while saving. Please check your connection.');
+      MySwal.fire('Network Error', 'Network error while saving. Please check your connection.', 'error');
     }
   };
 
@@ -417,11 +426,11 @@ const UploadQP = () => {
           console.error('Error refreshing QP after submit:', err);
         }
       } else {
-        toast.error(result.message || 'Failed to submit QP for approval');
+        Swal.fire('Error', result.message || 'Failed to submit QP for approval', 'error');
       }
     } catch (error) {
       console.error("Error submitting QP:", error);
-      toast.error('Network error while submitting QP');
+      Swal.fire('Network error', 'Network error while submitting QP', 'error');
     } finally {
       setSubmitting(false);
     }

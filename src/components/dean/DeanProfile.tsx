@@ -8,9 +8,8 @@ import { Textarea } from "../ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { User, Mail, Phone, MapPin, Calendar, Edit, Save, X, Eye, EyeOff, BookOpen } from "lucide-react";
-// import Swal from "sweetalert2"; // Removed legacy Swal dependency
-import { showConfirmAlert } from "../../utils/showConfirmAlert";
-import { toast } from "sonner";
+import Swal from "sweetalert2";
+import { showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
 import { useTheme } from "../../context/ThemeContext";
 import { fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
@@ -106,32 +105,32 @@ const DeanProfile = () => {
 
       const result = await response.json();
       if (result.success) {
-        toast.success("Profile updated successfully!");
+        showSuccessAlert("Success", "Profile updated successfully!");
         setEditing(false);
         await fetchProfile();
       } else {
-        toast.error(result.message || "Failed to update profile");
+        showErrorAlert("Error", result.message || "Failed to update profile");
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error("Network error");
+      showErrorAlert("Error", "Network error");
     }
   };
 
   const handleChangePassword = async () => {
     // Require all fields before running other validations
     if (!passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password) {
-      toast.error("Please fill in current, new and confirm password fields.");
+      showErrorAlert("Missing fields", "Please fill in current, new and confirm password fields.");
       return;
     }
 
     if (passwordData.new_password !== passwordData.confirm_password) {
-      toast.error("New passwords don't match");
+      showErrorAlert("Password mismatch", "New passwords don't match");
       return;
     }
 
     if (passwordData.current_password === passwordData.new_password) {
-      toast.error("Current password and new password cannot be the same.");
+      showErrorAlert("Invalid new password", "Current password and new password cannot be the same.");
       return;
     }
 
@@ -156,35 +155,38 @@ const DeanProfile = () => {
           new_password: "",
           confirm_password: "",
         });
-        toast.success("Your password has been updated successfully.");
+        showSuccessAlert("Password changed", "Your password has been updated successfully.");
       } else {
-        toast.error(result.message || "Failed to change password");
+        showErrorAlert("Unable to change password", result.message || "Failed to change password");
       }
     } catch (error) {
       console.error('Error changing password:', error);
-      toast.error("Failed to change password");
+      showErrorAlert("Unable to change password", "Failed to change password");
     }
   };
 
-  const handleCancelEdit = async () => {
+  const handleCancelEdit = () => {
     if (!profile) return;
-    const result = await showConfirmAlert(
-      'Discard changes?',
-      'Any unsaved changes will be lost.',
-      'Discard',
-      'Keep editing'
-    );
-
-    if (result.isConfirmed) {
-      setEditing(false);
-      setFormData({
-        first_name: profile.first_name || "",
-        last_name: profile.last_name || "",
-        email: profile.email || "",
-        phone_number: profile.phone_number || "",
-        address: profile.address || "",
-      });
-    }
+    Swal.fire({
+      title: 'Discard changes?',
+      text: 'Any unsaved changes will be lost.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Discard',
+      cancelButtonText: 'Keep editing',
+      reverseButtons: true,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setEditing(false);
+        setFormData({
+          first_name: profile.first_name || "",
+          last_name: profile.last_name || "",
+          email: profile.email || "",
+          phone_number: profile.phone_number || "",
+          address: profile.address || "",
+        });
+      }
+    });
   };
 
   if (loading) {

@@ -43,9 +43,10 @@ import {
   CreateAnnouncementRequest,
 } from "@/utils/announcements_api";
 import AnnouncementSections from "@/components/common/AnnouncementSections";
-import { toast } from "sonner";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
 
-// Standardized feedback using Sonner toast
+const MySwal = withReactContent(Swal);
 
 const HODAnnouncementManagement = () => {
   const [myAnnouncements, setMyAnnouncements] = useState<Announcement[]>([]);
@@ -90,12 +91,24 @@ const HODAnnouncementManagement = () => {
 
   const handleCreateOrUpdate = async () => {
     if (!formData.title.trim() || !formData.message.trim()) {
-      toast.error("Please fill all required fields");
+      MySwal.fire({
+        title: "Validation Error",
+        text: "Please fill all required fields",
+        icon: "warning",
+        confirmButtonColor: "#9147e0",
+        target: document.body,
+      });
       return;
     }
 
     if (formData.target_roles.length === 0) {
-      toast.error("Please select at least one target role");
+      MySwal.fire({
+        title: "Validation Error",
+        text: "Please select at least one target role",
+        icon: "warning",
+        confirmButtonColor: "#9147e0",
+        target: document.body,
+      });
       return;
     }
 
@@ -112,25 +125,55 @@ const HODAnnouncementManagement = () => {
           setMyAnnouncements((prev) =>
             prev.map((a) => (a.id === editingId ? response.data : a))
           );
-          toast.success("Announcement updated successfully");
+          MySwal.fire({
+            title: "Updated",
+            text: "Announcement updated successfully",
+            icon: "success",
+            confirmButtonColor: "#9147e0",
+            target: document.body,
+          });
           setShowCreateDialog(false);
           resetForm();
         } else {
-          toast.error(response.message || "Failed to update announcement");
+          MySwal.fire({
+            title: "Error",
+            text: response.message || "Failed to update announcement",
+            icon: "error",
+            confirmButtonColor: "#9147e0",
+            target: document.body,
+          });
         }
       } else {
         const response = await createAnnouncement(payload);
         if (response.success) {
           setMyAnnouncements((prev) => [response.data, ...prev]);
-          toast.success("Announcement created successfully");
+          MySwal.fire({
+            title: "Success",
+            text: "Announcement created successfully",
+            icon: "success",
+            confirmButtonColor: "#9147e0",
+            target: document.body,
+          });
           setShowCreateDialog(false);
           resetForm();
         } else {
-          toast.error(response.message || "Failed to create announcement");
+          MySwal.fire({
+            title: "Error",
+            text: response.message || "Failed to create announcement",
+            icon: "error",
+            confirmButtonColor: "#9147e0",
+            target: document.body,
+          });
         }
       }
     } catch (error: any) {
-      toast.error(error.message || "An error occurred");
+      MySwal.fire({
+        title: "Error",
+        text: error.message || "An error occurred",
+        icon: "error",
+        confirmButtonColor: "#9147e0",
+        target: document.body,
+      });
     }
   };
 
@@ -155,13 +198,28 @@ const HODAnnouncementManagement = () => {
       const response = await deleteAnnouncement(deletingId);
       if (response.success) {
         setMyAnnouncements((prev) => prev.filter((a) => a.id !== deletingId));
-        toast.success("Announcement deleted successfully");
+        MySwal.fire({
+          title: "Deleted",
+          text: "Announcement deleted successfully",
+          icon: "success",
+          confirmButtonColor: "#9147e0",
+        });
       } else {
-        toast.error(response.message || "Failed to delete announcement");
+        MySwal.fire({
+          title: "Error",
+          text: response.message || "Failed to delete announcement",
+          icon: "error",
+          confirmButtonColor: "#9147e0",
+        });
       }
       setDeletingId(null);
     } catch (error: any) {
-      toast.error(error.message || "An error occurred");
+      MySwal.fire({
+        title: "Error",
+        text: error.message || "An error occurred",
+        icon: "error",
+        confirmButtonColor: "#9147e0",
+      });
     }
   };
 
@@ -173,10 +231,20 @@ const HODAnnouncementManagement = () => {
           prev.map((a) => (a.id === announcementId ? response.data : a))
         );
       } else {
-        toast.error(response.message || "Failed to toggle announcement");
+        MySwal.fire({
+          title: "Error",
+          text: response.message || "Failed to toggle announcement",
+          icon: "error",
+          confirmButtonColor: "#9147e0",
+        });
       }
     } catch (error: any) {
-      toast.error(error.message || "An error occurred");
+      MySwal.fire({
+        title: "Error",
+        text: error.message || "An error occurred",
+        icon: "error",
+        confirmButtonColor: "#9147e0",
+      });
     }
   };
 

@@ -3,7 +3,7 @@ import { Calendar, Users, CheckCircle, XCircle, Clock } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import { fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
-import { toast } from "sonner";
+import Swal from "sweetalert2";
 import {
   Dialog,
   DialogContent,
@@ -124,11 +124,11 @@ const AdminHODAttendance: React.FC = () => {
         }
       } else {
         console.error('Failed to fetch HOD attendance:', json.message);
-        toast.error(json.message || 'Failed to fetch HOD attendance');
+        Swal.fire('Error', json.message || 'Failed to fetch HOD attendance', 'error');
       }
     } catch (err) {
       console.error('Error fetching HOD attendance:', err);
-      toast.error('Failed to load HOD attendance');
+      Swal.fire('Error', 'Failed to load HOD attendance', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -159,10 +159,10 @@ const AdminHODAttendance: React.FC = () => {
           });
         }
       } else {
-        toast.error(json.message || 'Failed to fetch records');
+        Swal.fire('Error', json.message || 'Failed to fetch records', 'error');
       }
     } catch (err) {
-      toast.error('Failed to load attendance records');
+      Swal.fire('Error', 'Failed to load attendance records', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -183,10 +183,10 @@ const AdminHODAttendance: React.FC = () => {
       if (json.success) {
         setHODAttendanceDetails(json.data || []);
       } else {
-        toast.error("Failed to load details");
+        Swal.fire("Error", "Failed to load details", "error");
       }
     } catch (err) {
-      toast.error("Network error");
+      Swal.fire("Error", "Network error", "error");
     } finally {
       setIsDetailLoading(false);
     }

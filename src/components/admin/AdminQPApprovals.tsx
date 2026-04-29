@@ -11,8 +11,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, Eye, Download } from "lucide-react";
-import { showConfirmAlert } from "../../utils/showConfirmAlert";
-import { toast as sonnerToast } from "sonner";
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import { useTheme } from "../../context/ThemeContext";
 import { useToast } from "../../hooks/use-toast";
 import { API_ENDPOINT } from "../../utils/config";
@@ -54,6 +54,25 @@ const AdminQPApprovals = () => {
     fetchPendingQPs(currentPage);
   }, [currentPage]);
 
+  // Ensure SweetAlert appears above the dialog and is interactive
+  useEffect(() => {
+    try {
+      const styleId = 'swal2-global-fix';
+      if (!document.getElementById(styleId)) {
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.innerHTML = `
+          .swal2-container, .swal2-popup {
+            z-index: 99999 !important;
+            pointer-events: auto !important;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    } catch (e) {
+      // ignore when DOM not available
+    }
+  }, []);
 
   const fetchQPDetail = async (qpId: number) => {
     setDetailLoading(true);
@@ -202,14 +221,22 @@ const AdminQPApprovals = () => {
   };
 
   const handleApprove = async (qpId: number) => {
-    const result = await showConfirmAlert(
-      'Confirm approval',
-      'Are you sure you want to approve and forward this question paper to COE?',
-      'Yes, approve',
-      'Cancel'
-    );
+    const result = await MySwal.fire({
+      title: 'Confirm approval',
+      text: 'Are you sure you want to approve and forward this question paper to COE?',
+      icon: 'question',
+      showCancelButton: true,
+      showCloseButton: true,
+      confirmButtonText: 'Yes, approve',
+      cancelButtonText: 'Cancel',
+      allowOutsideClick: true,
+      allowEscapeKey: true,
+      reverseButtons: true,
+      target: document.body,
+    });
 
-    if (!result.isConfirmed) {
+    if (!result || result.isDismissed || !result.isConfirmed) {
+      try { MySwal.close(); } catch (e) {}
       return;
     }
 
@@ -224,39 +251,52 @@ const AdminQPApprovals = () => {
         body: JSON.stringify({ comment }),
       });
       const data = await response.json();
-        sonnerToast.success('Approved', {
+      if (data.success) {
+        try { MySwal.close(); } catch (e) {}
+        const t = toast({
+          title: 'Approved',
           description: data.message || 'QP approved and forwarded to COE.',
+          variant: 'default',
         });
+        // auto-dismiss after 3s
+        setTimeout(() => t.dismiss(), 3000);
         fetchPendingQPs(currentPage);
         try { setDialogOpen(false); } catch (e) {}
         setQpDetail(null);
         setSelectedQP(null);
         setComment("");
       } else {
-        sonnerToast.error('Error', {
-          description: data.message || 'Failed to approve QP.',
-        });
+        MySwal.fire('Error', data.message || 'Failed to approve QP.', 'error');
       }
     } catch (error) {
       console.error("Error approving QP:", error);
-      sonnerToast.error('Network error', {
-        description: 'Network error while approving QP.',
-      });
+      MySwal.fire('Network error', 'Network error while approving QP.', 'error');
     } finally {
       setActionLoading(false);
     }
   };
 
+  const MySwal = withReactContent(Swal);
 
   const handleReject = async (qpId: number) => {
-    const result = await showConfirmAlert(
-      'Confirm rejection',
-      'Are you sure you want to reject this question paper and send it back to HOD?',
-      'Yes, reject it',
-      'Cancel'
-    );
+    const result = await MySwal.fire({
+      title: 'Confirm rejection',
+      text: 'Are you sure you want to reject this question paper and send it back to HOD?',
+      icon: 'warning',
+      showCancelButton: true,
+      showCloseButton: true,
+      allowOutsideClick: true,
+      allowEscapeKey: true,
+      reverseButtons: true,
+      confirmButtonText: 'Yes, reject',
+      cancelButtonText: 'Cancel',
+      // ensure swal renders at document.body so it isn't nested under other portals
+      target: document.body,
+    });
 
-    if (!result.isConfirmed) {
+    // if dismissed or cancelled, just close the alert and do nothing
+    if (!result || result.isDismissed || !result.isConfirmed) {
+      try { MySwal.close(); } catch (e) {}
       return;
     }
 
@@ -272,24 +312,25 @@ const AdminQPApprovals = () => {
       });
       const data = await response.json();
       if (data.success) {
-        sonnerToast.success('Rejected', {
+        try { MySwal.close(); } catch (e) {}
+        const t = toast({
+          title: 'Rejected',
           description: data.message || 'QP rejected and sent back to HOD for review.',
+          variant: 'default',
         });
+        // auto-dismiss after 3s
+        setTimeout(() => t.dismiss(), 3000);
         fetchPendingQPs(currentPage);
         try { setDialogOpen(false); } catch (e) {}
         setQpDetail(null);
         setSelectedQP(null);
         setComment("");
       } else {
-        sonnerToast.error('Error', {
-          description: data.message || 'Failed to reject QP.',
-        });
+        MySwal.fire('Error', data.message || 'Failed to reject QP.', 'error');
       }
     } catch (error) {
       console.error("Error rejecting QP:", error);
-      sonnerToast.error('Network error', {
-        description: 'Network error while rejecting QP.',
-      });
+      MySwal.fire('Network error', 'Network error while rejecting QP.', 'error');
     } finally {
       setActionLoading(false);
     }

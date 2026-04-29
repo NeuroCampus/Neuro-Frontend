@@ -20,8 +20,8 @@ import {
   DollarSign
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext'; // Added theme context import
-import { toast } from "sonner";
-import { showConfirmAlert } from "../../utils/showConfirmAlert";
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 
 interface FeeComponent {
   id: number;
@@ -33,7 +33,7 @@ interface FeeComponent {
   updated_at: string;
 }
 
-// const MySwal = withReactContent(Swal); // Removed legacy Swal dependency
+const MySwal = withReactContent(Swal);
 
 const FeeComponents: React.FC = () => {
   const { theme } = useTheme(); // Using theme context
@@ -188,12 +188,18 @@ const FeeComponents: React.FC = () => {
 
   const handleDeleteComponent = async (componentId: number) => {
     const currentTheme = theme === 'dark' ? 'dark' : 'light';
-    const result = await showConfirmAlert(
-      'Delete Fee Component?',
-      'This may affect existing fee templates.',
-      'Delete',
-      'Cancel'
-    );
+    const result = await MySwal.fire({
+      title: 'Delete Fee Component?',
+      text: 'This may affect existing fee templates.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
+      background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+      color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+    });
 
     if (!result.isConfirmed) return;
 
@@ -213,10 +219,26 @@ const FeeComponents: React.FC = () => {
       // Remove locally without refetch
       setComponents(prev => prev.filter(c => c.id !== componentId));
       setComponentsTotalCount(c => Math.max(0, c - 1));
-      toast.success('Fee component deleted successfully.');
+      await MySwal.fire({
+        title: 'Deleted!',
+        text: 'Fee component deleted successfully.',
+        icon: 'success',
+        confirmButtonText: 'OK',
+        confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
+        background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+      });
       try { window.dispatchEvent(new CustomEvent('feeComponents:changed', { detail: { action: 'delete', id: componentId } })); } catch (e) {}
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to delete component');
+      await MySwal.fire({
+        title: 'Error!',
+        text: err instanceof Error ? err.message : 'Failed to delete component',
+        icon: 'error',
+        confirmButtonText: 'OK',
+        confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
+        background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+      });
       setError(err instanceof Error ? err.message : 'Failed to delete component');
     }
   };

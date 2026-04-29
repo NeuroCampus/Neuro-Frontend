@@ -12,8 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, Eye, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import jsPDF from 'jspdf';
-import { showConfirmAlert } from "../../utils/showConfirmAlert";
-import { toast } from "sonner";
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import { useTheme } from "../../context/ThemeContext";
 import { API_ENDPOINT } from "../../utils/config";
 import { fetchWithTokenRefresh } from "../../utils/authService";
@@ -148,14 +148,22 @@ const COEQPApprovals = () => {
   };
 
   const handleFinalize = async (qpId: number) => {
-    const result = await showConfirmAlert(
-      'Are you sure?',
-      'Are you sure you want to finalize and approve this question paper?',
-      'Yes, finalize it',
-      'Cancel'
-    );
+    const result = await MySwal.fire({
+      title: 'Confirm approval',
+      text: 'Are you sure you want to finalize and approve this question paper?',
+      icon: 'question',
+      showCancelButton: true,
+      showCloseButton: true,
+      allowOutsideClick: true,
+      allowEscapeKey: true,
+      reverseButtons: true,
+      confirmButtonText: 'Yes, approve',
+      cancelButtonText: 'Cancel',
+      target: dialogContentRef.current ?? document.body,
+    });
 
-    if (!result.isConfirmed) {
+    if (!result || result.isDismissed || !result.isConfirmed) {
+      MySwal.close();
       return;
     }
 
@@ -171,7 +179,15 @@ const COEQPApprovals = () => {
       });
       const data = await response.json();
       if (data.success) {
-        toast.success('QP finalized and approved for use.');
+        MySwal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Approved',
+          text: 'QP finalized and approved for use.',
+          showConfirmButton: false,
+          timer: 3000,
+        });
         // remove from pending list
         setPendingQPs(pendingQPs.filter(qp => qp.id !== qpId));
         // add to finalized list so UI updates immediately without refetch
@@ -186,11 +202,11 @@ const COEQPApprovals = () => {
         // Refresh pending QPs to get updated pagination
         fetchPendingQPs();
       } else {
-        toast.error(data.message || 'Failed to finalize QP.');
+        MySwal.fire('Error', data.message || 'Failed to finalize QP.', 'error');
       }
     } catch (error) {
       console.error("Error finalizing QP:", error);
-      toast.error('Network error while finalizing QP.');
+      MySwal.fire('Network error', 'Network error while finalizing QP.', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -210,7 +226,7 @@ const COEQPApprovals = () => {
             const hodData = await hodResp.json();
             if (hodData.success && hodData.data && hodData.data.length > 0) {
               setQpDetail(hodData.data[0]);
-              toast.info('Loaded QP via HOD detail endpoint.');
+              MySwal.fire('Notice', 'Loaded QP via HOD detail endpoint.', 'info');
               return;
             }
           }
@@ -225,7 +241,7 @@ const COEQPApprovals = () => {
             const publicData = await publicResp.json();
             if (publicData.success && publicData.data && publicData.data.length > 0) {
               setQpDetail(publicData.data[0]);
-              toast.info('Loaded QP via public endpoint.');
+              MySwal.fire('Notice', 'Loaded QP via public endpoint.', 'info');
               return;
             }
           }
@@ -233,7 +249,7 @@ const COEQPApprovals = () => {
           console.error('Public fallback failed', e);
         }
 
-        toast.error('You do not have permission to view this QP detail (401/403).');
+        MySwal.fire('Forbidden', 'You do not have permission to view this QP detail (401/403).', 'error');
         return;
       }
 
@@ -241,11 +257,11 @@ const COEQPApprovals = () => {
       if (data.success && data.data && data.data.length > 0) {
         setQpDetail(data.data[0]);
       } else if (data.success === false && data.message) {
-        toast.error(data.message);
+        MySwal.fire('Error', data.message, 'error');
       }
     } catch (err) {
       console.error('Error fetching QP detail:', err);
-      toast.error('Failed to load QP detail');
+      MySwal.fire('Error', 'Failed to load QP detail', 'error');
     } finally {
       setDetailLoading(false);
     }
@@ -288,15 +304,26 @@ const COEQPApprovals = () => {
     }, 300);
   };
 
-  const handleReject = async (qpId: number) => {
-    const result = await showConfirmAlert(
-      'Are you sure?',
-      'Are you sure you want to reject this question paper and send it back to Admin?',
-      'Yes, reject it',
-      'Cancel'
-    );
+  const MySwal = withReactContent(Swal);
 
-    if (!result.isConfirmed) {
+  const handleReject = async (qpId: number) => {
+    const result = await MySwal.fire({
+      title: 'Confirm rejection',
+      text: 'Are you sure you want to reject this question paper and send it back to Admin?',
+      icon: 'warning',
+      showCancelButton: true,
+      showCloseButton: true,
+      allowOutsideClick: true,
+      allowEscapeKey: true,
+      reverseButtons: true,
+      confirmButtonText: 'Yes, reject',
+      cancelButtonText: 'Cancel',
+      // Render at document.body so it's not trapped under portal layers.
+      target: dialogContentRef.current ?? document.body,
+    });
+
+    if (!result || result.isDismissed || !result.isConfirmed) {
+      MySwal.close();
       return;
     }
 
@@ -312,7 +339,15 @@ const COEQPApprovals = () => {
       });
       const data = await response.json();
       if (data.success) {
-        toast.success(data.message || 'QP rejected and sent back to Admin for review.');
+        MySwal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Rejected',
+          text: data.message || 'QP rejected and sent back to Admin for review.',
+          showConfirmButton: false,
+          timer: 3000,
+        });
         setPendingQPs(pendingQPs.filter(qp => qp.id !== qpId));
         setDialogOpen(false);
         setSelectedQP(null);
@@ -321,11 +356,11 @@ const COEQPApprovals = () => {
         // Refresh pending QPs to get updated pagination
         fetchPendingQPs();
       } else {
-        toast.error(data.message || 'Failed to reject QP.');
+        MySwal.fire('Error', data.message || 'Failed to reject QP.', 'error');
       }
     } catch (error) {
       console.error("Error rejecting QP:", error);
-      toast.error('Network error while rejecting QP.');
+      MySwal.fire('Network error', 'Network error while rejecting QP.', 'error');
     } finally {
       setActionLoading(false);
     }

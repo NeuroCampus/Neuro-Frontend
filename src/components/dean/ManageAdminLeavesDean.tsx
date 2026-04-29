@@ -4,7 +4,8 @@ import { Button } from "../ui/button";
 import { useTheme } from "../../context/ThemeContext";
 import { CheckCircle, XCircle, Filter as FilterIcon, Loader2 } from 'lucide-react';
 import { manageAllLeaves } from "../../utils/dean_api";
-import { toast } from "sonner";
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import {
   Dialog,
   DialogContent,
@@ -15,7 +16,7 @@ import {
 import { SkeletonTable, SkeletonList, SkeletonPageHeader } from "../ui/skeleton";
 import { Alert, AlertDescription } from "../ui/alert";
 
-// Sonner toast used for feedback
+const MySwal = withReactContent(Swal);
 
 interface UnifiedLeave {
   id: number;
@@ -81,7 +82,8 @@ const ManageAdminLeavesDean = () => {
               : leave
           )
         );
-        toast.success(`Leave ${action.toLowerCase()} successfully`);
+        setSuccessMessage(`Leave ${action.toLowerCase()} successfully`);
+        setTimeout(() => setSuccessMessage(""), 3000);
       } else {
         setError(response.message || "Failed to update leave");
       }
@@ -128,7 +130,13 @@ const ManageAdminLeavesDean = () => {
         </Alert>
       )}
 
-      {/* Success Message removed - using toast */}
+      {/* Success Message */}
+      {successMessage && (
+        <Alert className={`mb-4 border-green-500 bg-green-500/10 text-green-600`}>
+          <CheckCircle className="w-4 h-4" />
+          <AlertDescription>{successMessage}</AlertDescription>
+        </Alert>
+      )}
 
       <div>
         <div className="mb-6">

@@ -1,7 +1,7 @@
 import { useState, useEffect, Fragment } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { toast } from "sonner";
-import { showConfirmAlert } from "../../utils/showConfirmAlert";
+import Swal from "sweetalert2";
+import withReactContent from "sweetalert2-react-content";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -40,7 +40,7 @@ import { useFacultyAssignmentsQuery } from "../../hooks/useApiQueries";
 import { useTheme } from "@/context/ThemeContext";
 import { SkeletonTable } from "@/components/ui/skeleton";
 
-// Sonner toast and showConfirmAlert used for feedback
+const MySwal = withReactContent(Swal);
 
 // Constants for validation
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -467,17 +467,20 @@ const UploadMarks = () => {
   };
 
   const removeQuestion = (id: string) => {
-    (async () => {
-      const result = await showConfirmAlert(
-        "Are you sure?",
-        "This question will be removed from the format.",
-        "Yes, remove it!",
-        "Cancel"
-      );
+    MySwal.fire({
+      title: "Are you sure?",
+      text: "This question will be removed from the format.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, remove it!",
+      cancelButtonText: "Cancel",
+    }).then((result) => {
       if (result.isConfirmed) {
         setQuestions(questions.filter((q) => q.id !== id));
       }
-    })();
+    });
   };
 
   const updateQuestion = (id: string, field: "number" | "content" | "maxMarks" | "co" | "bloomsLevel", value: string) => {
@@ -711,8 +714,14 @@ const UploadMarks = () => {
       if (response.success) {
         setQuestionFormatSaved(true);
         await loadExistingQP(); // Reload QP data to reflect changes immediately
-        toast.success(existingQp ? "Question Format Updated!" : "Question Format Saved!");
-        setTabValue("questionPaper");
+        MySwal.fire({
+          title: existingQp ? "Question Format Updated!" : "Question Format Saved!",
+          text: existingQp ? "The question paper format has been successfully updated." : "The question paper format has been successfully saved.",
+          icon: "success",
+          confirmButtonText: "OK",
+        }).then(() => {
+          setTabValue("questionPaper");
+        });
       } else {
         setErrorMessage("Failed to save question format");
       }
@@ -726,17 +735,17 @@ const UploadMarks = () => {
     const { branch_id, subject_id, section_id, semester_id, testType } = selected;
     // Validate required fields depending on effective subject type
     if (!subject_id || !testType) {
-      toast.error("Select subject and test type!");
+      MySwal.fire({ title: "Select subject and test type!", icon: "warning", confirmButtonText: "OK" });
       return;
     }
     if (effectiveType === 'regular') {
       if (!branch_id || !semester_id || !section_id) {
-        toast.error("Select branch, semester and section for regular subjects!");
+        MySwal.fire({ title: "Select branch, semester and section for regular subjects!", icon: "warning", confirmButtonText: "OK" });
         return;
       }
     } else if (effectiveType === 'elective') {
       if (!branch_id || !semester_id) {
-        toast.error("Select branch and semester for elective subjects!");
+        MySwal.fire({ title: "Select branch and semester for elective subjects!", icon: "warning", confirmButtonText: "OK" });
         return;
       }
     }
@@ -751,7 +760,11 @@ const UploadMarks = () => {
       detail: false,
     });
     if (!qpResponse.success || !qpResponse.data) {
-      toast.error("Question Paper not found");
+      MySwal.fire({
+        title: "Question Paper not found",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
       return;
     }
     const qp = qpResponse.data.find((q: any) => {
@@ -765,7 +778,11 @@ const UploadMarks = () => {
     });
     // Ensure the matched QP is COE-approved/finalized before proceeding
     if (!qp || qp.status !== 'approved') {
-      toast.error("Question Paper not found");
+      MySwal.fire({
+        title: "Question Paper not found",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
       return;
     }
 
@@ -799,12 +816,25 @@ const UploadMarks = () => {
       console.log('Upload IAMarks payload:', JSON.stringify(marksData, null, 2));
       const res = await uploadIAMarks(marksData);
       if (res.success) {
-        toast.success(res.message || "Marks uploaded successfully!");
+        MySwal.fire({
+          title: "Marks uploaded!",
+          icon: "success",
+          confirmButtonText: "OK",
+        });
       } else {
-        toast.error(res.message || "Failed to upload marks");
+        MySwal.fire({
+          title: "Upload failed",
+          text: res.message || "Unknown error",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
       }
-    } catch (error) {
-      toast.error("Network error while saving marks");
+    } catch (err) {
+      MySwal.fire({
+        title: "Network error",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
     } finally {
       setSavingMarks(false);
     }
@@ -1068,8 +1098,11 @@ const UploadMarks = () => {
       console.log('Switching to manual tab with marks:', updatedStudentMarks);
       setTabValue("manual");
 
-      toast.success("Bulk Upload Successful!", {
-        description: "Marks have been imported successfully. Please review and save.",
+      MySwal.fire({
+        title: "Bulk Upload Successful!",
+        text: "Marks have been imported successfully. Please review and save.",
+        icon: "success",
+        confirmButtonText: "OK",
       });
     } catch (error) {
       console.error("Error processing bulk upload:", error);

@@ -7,7 +7,7 @@ import { Label } from "../ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Eye, EyeOff } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
-import { toast } from "sonner";
+import { showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
 import { fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
 
@@ -45,11 +45,11 @@ const FeesManagerProfile: React.FC = () => {
           bio: p.bio || "",
         });
       } else {
-        toast.error(result.message || "Failed to load profile");
+        showErrorAlert("Error", result.message || "Failed to load profile");
       }
     } catch (err) {
       console.error("FeesManager fetch error", err);
-      toast.error("Network error");
+      showErrorAlert("Error", "Network error");
     } finally {
       setLoading(false);
     }
@@ -65,15 +65,15 @@ const FeesManagerProfile: React.FC = () => {
       });
       const result = await res.json();
       if (result.success) {
-        toast.success("Profile updated");
+        showSuccessAlert("Success", "Profile updated");
         setEditing(false);
         await fetchProfile();
       } else {
-        toast.error(result.message || "Failed to save profile");
+        showErrorAlert("Error", result.message || "Failed to save profile");
       }
     } catch (err) {
       console.error("Save error", err);
-      toast.error("Network error");
+      showErrorAlert("Error", "Network error");
     } finally {
       setLoading(false);
     }
@@ -81,15 +81,15 @@ const FeesManagerProfile: React.FC = () => {
 
   const handleChangePassword = async () => {
     if (!passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password) {
-      toast.error("Please fill all password fields");
+      showErrorAlert("Missing fields", "Please fill all password fields");
       return;
     }
     if (passwordData.new_password !== passwordData.confirm_password) {
-      toast.error("New passwords don't match");
+      showErrorAlert("Password mismatch", "New passwords don't match");
       return;
     }
     if (passwordData.current_password === passwordData.new_password) {
-      toast.error("New password must differ from current");
+      showErrorAlert("Invalid new password", "New password must differ from current");
       return;
     }
 
@@ -103,13 +103,13 @@ const FeesManagerProfile: React.FC = () => {
       if (result.success) {
         setShowPasswordDialog(false);
         setPasswordData({ current_password: "", new_password: "", confirm_password: "" });
-        toast.success("Your password has been updated successfully.");
+        showSuccessAlert("Password changed", "Your password has been updated successfully.");
       } else {
-        toast.error(result.message || "Failed to change password");
+        showErrorAlert("Error", result.message || "Failed to change password");
       }
     } catch (err) {
       console.error("Change password error", err);
-      toast.error("Network error");
+      showErrorAlert("Error", "Network error");
     }
   };
 

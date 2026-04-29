@@ -9,8 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
-import { showConfirmAlert } from "../../utils/showConfirmAlert";
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
 import {
   FileText,
   Plus,
@@ -48,7 +48,7 @@ interface FeeTemplate {
   created_at: string;
 }
 
-// const MySwal = withReactContent(Swal); // Removed legacy Swal dependency
+const MySwal = withReactContent(Swal);
 
 const FeeTemplates: React.FC = () => {
   const { theme } = useTheme(); // Using theme context
@@ -333,12 +333,18 @@ const FeeTemplates: React.FC = () => {
 
   const handleDeleteTemplate = async (templateId: number) => {
     const currentTheme = theme === 'dark' ? 'dark' : 'light';
-    const result = await showConfirmAlert(
-      'Delete Fee Template?',
-      'Are you sure you want to delete this template?',
-      'Delete',
-      'Cancel'
-    );
+    const result = await MySwal.fire({
+      title: 'Delete Fee Template?',
+      text: 'Are you sure you want to delete this template?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
+      background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+      color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+    });
 
     if (!result.isConfirmed) return;
 
@@ -357,10 +363,26 @@ const FeeTemplates: React.FC = () => {
       // Remove locally to avoid an extra GET
       setTemplates(prev => prev.filter(t => t.id !== templateId));
       setTemplatesTotalCount(c => Math.max(0, c - 1));
-      toast.success('Fee template deleted successfully.');
+      await MySwal.fire({
+        title: 'Deleted!',
+        text: 'Fee template deleted successfully.',
+        icon: 'success',
+        confirmButtonText: 'OK',
+        confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
+        background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+      });
       try { window.dispatchEvent(new CustomEvent('feeTemplates:changed', { detail: { action: 'delete', id: templateId } })); } catch (e) {}
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to delete template');
+      await MySwal.fire({
+        title: 'Error!',
+        text: err instanceof Error ? err.message : 'Failed to delete template',
+        icon: 'error',
+        confirmButtonText: 'OK',
+        confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
+        background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+        color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+      });
       setError(err instanceof Error ? err.message : 'Failed to delete template');
     }
   };

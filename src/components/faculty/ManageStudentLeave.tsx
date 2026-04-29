@@ -5,7 +5,7 @@ import { CheckCircle, XCircle, Eye, Filter } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { toast } from "sonner";
+import Swal from 'sweetalert2';
 import { useTheme } from "@/context/ThemeContext";
 import { SkeletonTable, SkeletonList } from "@/components/ui/skeleton";
 
@@ -76,12 +76,34 @@ const ManageStudentLeave: React.FC<ManageStudentLeaveProps> = ({ proctorStudents
           )
         );
 
-        toast.success('Leave request approved successfully.');
+        Swal.fire({
+          title: 'Approved!',
+          text: 'Leave request approved successfully.',
+          icon: 'success',
+          confirmButtonText: 'OK',
+          background: theme === 'dark' ? '#1c1c1e' : '#ffffff',
+          color: theme === 'dark' ? '#E4E4E7' : '#000000',
+          confirmButtonColor: '#22c55e',
+        });
       } else {
-        toast.error(res.message || "Action failed");
+        Swal.fire({
+          title: 'Error!',
+          text: res.message || "Action failed",
+          icon: 'error',
+          confirmButtonText: 'OK',
+          background: theme === 'dark' ? '#1c1c1e' : '#ffffff',
+          color: theme === 'dark' ? '#E4E4E7' : '#000000',
+        });
       }
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Action failed");
+      Swal.fire({
+        title: 'Error!',
+        text: e instanceof Error ? e.message : "Action failed",
+        icon: 'error',
+        confirmButtonText: 'OK',
+        background: theme === 'dark' ? '#1c1c1e' : '#ffffff',
+        color: theme === 'dark' ? '#E4E4E7' : '#000000',
+      });
     } finally {
       setActionLoading(null);
     }
@@ -101,12 +123,33 @@ const ManageStudentLeave: React.FC<ManageStudentLeaveProps> = ({ proctorStudents
         );
         setShowRejectModal(null);
 
-        toast.error('Leave request rejected.');
+        Swal.fire({
+          title: 'Rejected',
+          text: 'Leave request rejected.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+          background: theme === 'dark' ? '#1c1c1e' : '#ffffff',
+          color: theme === 'dark' ? '#E4E4E7' : '#000000',
+        });
       } else {
-        toast.error(res.message || "Action failed");
+        Swal.fire({
+          title: 'Error!',
+          text: res.message || "Action failed",
+          icon: 'error',
+          confirmButtonText: 'OK',
+          background: theme === 'dark' ? '#1c1c1e' : '#ffffff',
+          color: theme === 'dark' ? '#E4E4E7' : '#000000',
+        });
       }
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Action failed");
+      Swal.fire({
+        title: 'Error!',
+        text: e instanceof Error ? e.message : "Action failed",
+        icon: 'error',
+        confirmButtonText: 'OK',
+        background: theme === 'dark' ? '#1c1c1e' : '#ffffff',
+        color: theme === 'dark' ? '#E4E4E7' : '#000000',
+      });
     } finally {
       setActionLoading(null);
     }

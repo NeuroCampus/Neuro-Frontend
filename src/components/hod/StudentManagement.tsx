@@ -1,5 +1,4 @@
 import { useRef, useState, useEffect } from "react";
-import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -503,14 +502,12 @@ const StudentManagement = () => {
           .filter(Boolean);
 
         if (bulkData.length === 0) {
-          toast.error("No valid students found in the file.");
-          updateState({ isLoading: false });
+          updateState({ uploadErrors: ["No valid students found in the file. Please ensure USN and Name columns are filled for at least one row."], uploadedCount: 0, updatedCount: 0, isLoading: false });
           return;
         }
 
         if (errors.length > 0) {
-          errors.forEach(err => toast.error(err));
-          updateState({ isLoading: false });
+          updateState({ uploadErrors: errors, uploadedCount: 0, updatedCount: 0, isLoading: false });
           return;
         }
 
@@ -536,21 +533,21 @@ const StudentManagement = () => {
             uploadErrors: [],
             droppedFileName: null,
             selectedFile: null,
-            currentPage: 1, 
+            currentPage: 1, // Reset to first page to show the new students
             isLoading: false,
           });
           if (createdCount > 0) {
-            toast.success(`${createdCount} student${createdCount !== 1 ? 's' : ''} added successfully.`);
+            updateState({ successMessage: `${createdCount} student${createdCount !== 1 ? 's' : ''} added successfully.` });
+            setTimeout(() => updateState({ successMessage: "" }), 4000);
           }
           if (fileInputRef.current) fileInputRef.current.value = "";
+          // Note: Removed automatic refresh after bulk upload to avoid GET after POST
         } else {
-          toast.error(res.message || "Bulk upload failed");
-          updateState({ isLoading: false });
+          updateState({ uploadErrors: [res.message || "Bulk upload failed"], uploadedCount: 0, updatedCount: 0, isLoading: false });
         }
       } catch (err) {
         console.error("File upload error:", err);
-        toast.error("Error processing file");
-        updateState({ isLoading: false });
+        updateState({ uploadErrors: ["Error processing file"], uploadedCount: 0, updatedCount: 0, isLoading: false });
       }
     };
 
@@ -602,8 +599,7 @@ const StudentManagement = () => {
 
     // If any validation errors, update state and stop
     if (Object.keys(newErrors).length > 0) {
-      updateState({ manualErrors: newErrors });
-      toast.error("Fix errors before submitting");
+      updateState({ manualErrors: newErrors, uploadErrors: ["Fix errors before submitting"] });
       return;
     }
 
@@ -655,19 +651,21 @@ const StudentManagement = () => {
           },
           manualErrors: {},
           uploadErrors: [],
-          uploadedCount: 1, 
-          currentPage: 1, 
+          uploadedCount: 1, // Show success message
+          currentPage: 1, // Reset to first page to show the new student
         });
-        toast.success("Student added successfully.");
+        updateState({ successMessage: "Student added successfully." });
+        setTimeout(() => updateState({ successMessage: "" }), 3000);
+        // Clear success message after 3 seconds
         setTimeout(() => {
           updateState({ uploadedCount: 0, updatedCount: 0 });
         }, 3000);
       } else {
-        toast.error(res.message || "Error adding student");
+        updateState({ uploadErrors: [res.message || "Error adding student"] });
       }
     } catch (err) {
       console.error("Manual entry error:", err);
-      toast.error("Failed to add student");
+      updateState({ uploadErrors: ["Failed to add student"] });
     }
   };
 
@@ -677,7 +675,7 @@ const StudentManagement = () => {
     // Validate cycle for semesters 1 and 2
     const semesterNumber = getSemesterNumber(state.editForm.semester);
     if (semesterNumber <= 2 && !state.editForm.cycle) {
-      toast.error("Cycle is required for semesters 1 and 2");
+      updateState({ uploadErrors: ["Cycle is required for semesters 1 and 2"] });
       return;
     }
 
@@ -703,13 +701,14 @@ const StudentManagement = () => {
             : s
         );
         updateState({ students: updated, editDialog: false, uploadErrors: [], editSections: [], currentPage: 1 });
-        toast.success("Student updated successfully.");
+        updateState({ successMessage: "Student updated successfully." });
+        setTimeout(() => updateState({ successMessage: "" }), 3000);
       } else {
-        toast.error(res.message || "Error updating student");
+        updateState({ uploadErrors: [res.message || "Error updating student"] });
       }
     } catch (err) {
       console.error("Edit save error:", err);
-      toast.error("Failed to update student");
+      updateState({ uploadErrors: ["Failed to update student"] });
     }
   };
 
@@ -726,13 +725,14 @@ const StudentManagement = () => {
         // Optimistically remove student from local state
         const filtered = state.students.filter((s) => s.usn !== state.selectedStudent!.usn);
         updateState({ students: filtered, confirmDelete: false, uploadErrors: [], currentPage: 1 });
-        toast.success("Student deleted successfully.");
+        updateState({ successMessage: "Student deleted successfully." });
+        setTimeout(() => updateState({ successMessage: "" }), 3000);
       } else {
-        toast.error(res.message || "Error deleting student");
+        updateState({ uploadErrors: [res.message || "Error deleting student"] });
       }
     } catch (err) {
       console.error("Delete error:", err);
-      toast.error("Failed to delete student");
+      updateState({ uploadErrors: ["Failed to delete student"] });
     }
   };
 
@@ -841,7 +841,16 @@ const StudentManagement = () => {
 
   return (
     <div className={` sm: md: lg: space-y-6 md:space-y-5 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
-
+      {state.successMessage && (
+        <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>{state.successMessage}</p>
+      )}
+      {state.uploadErrors.length > 0 && (
+        <ul className={`text-sm ${theme === 'dark' ? 'text-destructive' : 'text-red-500'} mb-4 list-disc list-inside`}>
+          {state.uploadErrors.map((err, idx) => (
+            <li key={idx}>{err}</li>
+          ))}
+        </ul>
+      )}
 
       {/* Add Student Manually Form */}
       <Card className={theme === 'dark' ? 'bg-card text-foreground border-border' : 'bg-white text-gray-900 border-gray-200'}>
@@ -1109,6 +1118,18 @@ const StudentManagement = () => {
               + Add Student
             </Button>
           </div>
+          {state.uploadedCount === 1 && (
+            <p className={`text-sm mt-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+              Student added successfully.
+            </p>
+          )}
+          {state.uploadErrors.length > 0 && (
+            <ul className="text-sm text-red-400 mt-2 list-disc list-inside">
+              {state.uploadErrors.map((err, idx) => (
+                <li key={idx}>{err}</li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
 
