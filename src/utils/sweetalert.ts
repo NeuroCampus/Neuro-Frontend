@@ -49,3 +49,35 @@ export const showWarningAlert = (title: string, text: string) => {
 export const showInfoAlert = (title: string, text: string) => {
   return showSweetAlert(title, text, 'info');
 };
+
+export const showConfirmAlert = (title: string, text: string, confirmButtonText: string = 'Yes, do it!', icon: 'warning' | 'question' = 'warning') => {
+  const isDarkMode = document.documentElement.classList.contains('dark');
+  
+  return MySwal.fire({
+    title,
+    text,
+    icon,
+    showCancelButton: true,
+    confirmButtonText,
+    cancelButtonText: 'Cancel',
+    background: isDarkMode ? '#1f1f1f' : '#ffffff',
+    color: isDarkMode ? '#ffffff' : '#000000',
+    confirmButtonColor: 'hsl(var(--primary))',
+    cancelButtonColor: 'hsl(var(--destructive))',
+    customClass: {
+      popup: 'sweetalert-popup',
+      title: 'sweetalert-title',
+      htmlContainer: 'sweetalert-content',
+      confirmButton: 'sweetalert-confirm-button',
+      cancelButton: 'sweetalert-cancel-button'
+    },
+    scrollbarPadding: false,
+    willOpen: () => {
+      document.body.style.overflow = 'hidden';
+    },
+    willClose: () => {
+      document.body.style.overflow = '';
+    },
+    backdrop: 'rgba(0, 0, 0, 0.4)'
+  });
+};
