@@ -263,9 +263,29 @@ const FeeAssignments: React.FC = () => {
 
       const result = await response.json();
       setIsAssignDialogOpen(false);
+      
+      // Optimistic Update: Add the template to the students' assigned_templates list locally
+      const assignedTemplate = templates.find(t => t.id.toString() === selectedTemplateId);
+      if (assignedTemplate) {
+        setStudents(prev => prev.map(student => {
+          if (selectedStudentIds.has(student.id)) {
+            const currentTemplates = (student as any).assigned_templates || [];
+            if (!currentTemplates.some((t: any) => t.id === assignedTemplate.id)) {
+              return {
+                ...student,
+                assigned_templates: [...currentTemplates, { 
+                  id: assignedTemplate.id, 
+                  template_name: assignedTemplate.name 
+                }]
+              };
+            }
+          }
+          return student;
+        }));
+      }
+
       setSelectedStudentIds(new Set());
       setSelectedTemplateId('');
-      fetchStudents(pagination.page);
       alert(result.message || 'Fee templates assigned successfully!');
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Assignment failed');

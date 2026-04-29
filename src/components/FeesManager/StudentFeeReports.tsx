@@ -32,6 +32,7 @@ import {
 import {
   getStudentFeeReport,
   getStudentsFeeReports,
+  getFeesManagerFilters,
   getFeesManagerBranches,
   getFeesManagerSemesters,
   getFeesManagerSections,
@@ -55,10 +56,15 @@ const StudentFeeReports: React.FC = () => {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [semesters, setSemesters] = useState<Semester[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
+  const [batches, setBatches] = useState<{id: number, name: string}[]>([]);
+  const [admissionModes, setAdmissionModes] = useState<string[]>([]);
+  const [selectedBatch, setSelectedBatch] = useState<string>('all');
   const [selectedBranch, setSelectedBranch] = useState<string>('all');
   const [selectedSemester, setSelectedSemester] = useState<string>('all');
   const [selectedSection, setSelectedSection] = useState<string>('all');
+  const [selectedAdmissionMode, setSelectedAdmissionMode] = useState<string>('all');
   const [bulkReports, setBulkReports] = useState<StudentFeeSummary[]>([]);
+  const [cohortStats, setCohortStats] = useState<any>(null);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [totalStudents, setTotalStudents] = useState(0);
 
@@ -67,7 +73,7 @@ const StudentFeeReports: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [hasNext, setHasNext] = useState(false);
   const [hasPrevious, setHasPrevious] = useState(false);
-  const [pageSize] = useState(50); // Default page size
+  const [pageSize] = useState(10); // Default page size
 
   // UI state
   const [activeTab, setActiveTab] = useState('individual');
@@ -75,12 +81,21 @@ const StudentFeeReports: React.FC = () => {
   const [sendingReminder, setSendingReminder] = useState(false);
   const [reminderMessage, setReminderMessage] = useState('');
 
-  // Load branches when bulk tab is selected
+  // Load filters when bulk tab is selected
   useEffect(() => {
-    if (activeTab === 'bulk' && branches.length === 0) {
-      loadBranches();
+    if (activeTab === 'bulk' && batches.length === 0) {
+      loadInitialFilters();
     }
-  }, [activeTab, branches.length]);
+  }, [activeTab, batches.length]);
+
+  const loadInitialFilters = async () => {
+    const response = await getFeesManagerFilters();
+    if (response.success) {
+      setBatches(response.data.batches || []);
+      setBranches(response.data.branches || []);
+      setAdmissionModes(response.data.admission_modes || []);
+    }
+  };
 
   // Load semesters when branch changes
   useEffect(() => {
@@ -110,12 +125,6 @@ const StudentFeeReports: React.FC = () => {
     }
   }, [selectedSemester]);
 
-  const loadBranches = async () => {
-    const response = await getFeesManagerBranches();
-    if (response.success) {
-      setBranches(response.data);
-    }
-  };
 
   const loadSemesters = async (branchId: string) => {
     const response = await getFeesManagerSemesters(branchId);
@@ -176,16 +185,19 @@ const StudentFeeReports: React.FC = () => {
     setBulkLoading(true);
     setBulkReports([]);
 
+    const batchId = selectedBatch === 'all' ? undefined : selectedBatch;
     const branchId = selectedBranch === 'all' ? undefined : selectedBranch;
     const semesterId = selectedSemester === 'all' ? undefined : selectedSemester;
     const sectionId = selectedSection === 'all' ? undefined : selectedSection;
+    const admissionMode = selectedAdmissionMode === 'all' ? undefined : selectedAdmissionMode;
 
-    const response = await getStudentsFeeReports(branchId, semesterId, sectionId, page);
+    const response = await getStudentsFeeReports(batchId, branchId, semesterId, sectionId, admissionMode, page);
 
     setBulkLoading(false);
 
     if (response.success) {
       setBulkReports(response.data.results.students || []);
+      setCohortStats(response.data.results.cohort_stats || null);
       setTotalStudents(response.data.results.total_students || 0);
       setTotalPages(Math.ceil((response.data.results.total_students || 0) / pageSize));
       setHasNext(response.data.next !== null);
@@ -565,7 +577,24 @@ const StudentFeeReports: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div className="space-y-2">
+                  <Label>Batch</Label>
+                  <Select value={selectedBatch} onValueChange={setSelectedBatch}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Batches" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Batches</SelectItem>
+                      {batches.map((batch) => (
+                        <SelectItem key={batch.id} value={batch.id.toString()}>
+                          {batch.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="space-y-2">
                   <Label>Branch</Label>
                   <Select value={selectedBranch} onValueChange={setSelectedBranch}>
@@ -588,7 +617,7 @@ const StudentFeeReports: React.FC = () => {
                   <Select
                     value={selectedSemester}
                     onValueChange={setSelectedSemester}
-                    disabled={!selectedBranch}
+                    disabled={selectedBranch === 'all'}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="All Semesters" />
@@ -609,7 +638,7 @@ const StudentFeeReports: React.FC = () => {
                   <Select
                     value={selectedSection}
                     onValueChange={setSelectedSection}
-                    disabled={!selectedBranch || !selectedSemester}
+                    disabled={selectedSemester === 'all'}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="All Sections" />
@@ -625,18 +654,73 @@ const StudentFeeReports: React.FC = () => {
                   </Select>
                 </div>
 
+                <div className="space-y-2">
+                  <Label>Admission Mode</Label>
+                  <Select
+                    value={selectedAdmissionMode}
+                    onValueChange={setSelectedAdmissionMode}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Modes" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Modes</SelectItem>
+                      {admissionModes.map((mode) => (
+                        <SelectItem key={mode} value={mode}>
+                          {mode}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="flex items-end">
                   <Button
                     onClick={handleFilterChange}
                     disabled={bulkLoading}
-                    className="w-full"
+                    className="w-full bg-primary hover:bg-primary/90"
                   >
-                    {bulkLoading ? 'Loading...' : 'View Reports'}
+                    {bulkLoading ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    ) : (
+                      <Filter className="h-4 w-4 mr-2" />
+                    )}
+                    View Reports
                   </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* Cohort Stats */}
+          {cohortStats && bulkReports.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/20 shadow-none">
+                <CardContent className="p-4">
+                  <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Total Students</p>
+                  <p className="text-2xl font-bold">{cohortStats.total_students}</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-green-50/50 dark:bg-green-900/10 border-green-100 dark:border-green-900/20 shadow-none">
+                <CardContent className="p-4">
+                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Total Fee</p>
+                  <p className="text-2xl font-bold">{formatCurrency(cohortStats.total_fee)}</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/20 shadow-none">
+                <CardContent className="p-4">
+                  <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Total Paid</p>
+                  <p className="text-2xl font-bold">{formatCurrency(cohortStats.total_paid)}</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-900/20 shadow-none">
+                <CardContent className="p-4">
+                  <p className="text-sm font-medium text-red-600 dark:text-red-400">Outstanding</p>
+                  <p className="text-2xl font-bold text-red-600">{formatCurrency(cohortStats.total_pending)}</p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           {/* Bulk Reports Table */}
           {bulkReports.length > 0 && (

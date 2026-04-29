@@ -132,17 +132,22 @@ export const getStudentFeeReport = async (searchTerm: string) => {
 };
 
 export const getStudentsFeeReports = async (
+  batchId?: string,
   branchId?: string,
   semesterId?: string,
   sectionId?: string,
+  admissionMode?: string,
   page: number = 1
 ) => {
   try {
     const params = new URLSearchParams();
+    if (batchId) params.append('batch_id', batchId);
     if (branchId) params.append('branch_id', branchId);
     if (semesterId) params.append('semester_id', semesterId);
     if (sectionId) params.append('section_id', sectionId);
+    if (admissionMode) params.append('admission_mode', admissionMode);
     params.append('page', page.toString());
+    params.append('page_size', '10');
 
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/students-fee-reports/?${params}`, {
       method: "GET",
@@ -154,6 +159,22 @@ export const getStudentsFeeReports = async (
     return await response.json();
   } catch (error) {
     console.error("Get Students Fee Reports Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const getFeesManagerFilters = async () => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/filters/`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Filters Error:", error);
     return { success: false, message: "Network error" };
   }
 };
