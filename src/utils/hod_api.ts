@@ -192,6 +192,7 @@ interface ManageStudentsRequest {
   parent_contact?: string;
   emergency_contact?: string;
   blood_group?: string;
+  mode_of_admission?: string;
   date_of_admission?: string;
   subject_ids?: string[];
   subject_id?: string;
@@ -208,6 +209,7 @@ interface ManageStudentsRequest {
     parent_contact?: string;
     emergency_contact?: string;
     blood_group?: string;
+    mode_of_admission?: string;
     date_of_admission?: string;
   }>;
   page?: number;
@@ -228,6 +230,8 @@ interface ManageStudentsResponse {
     semester: string;
     section: string | null;
     batch: string | null;
+    mode_of_admission?: string;
+    cycle?: string;
     course: string | null;
     proctor: string | null;
     date_of_admission: string | null;
