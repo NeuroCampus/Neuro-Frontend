@@ -329,7 +329,7 @@ const WardenDashboard = () => {
 
       {/* Room Details Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[92vw] max-w-[400px] sm:max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <div className={`w-3 h-3 rounded-full ${selectedRoom ? getRoomColor(selectedRoom.student_count, selectedRoom.capacity).split(' ')[0].replace('/10', '') : ''}`} />
