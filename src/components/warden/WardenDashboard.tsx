@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Building2, Users, Grid3X3, AlertCircle, ClipboardList, Eye } from "lucide-react";
-import { getWardenDashboard, WardenStats } from "../../utils/warden_api";
+import { useWardenContext } from "../../context/WardenContext";
 import { useToast } from "../../hooks/use-toast";
 import DashboardCard from "../common/DashboardCard";
 import { 
@@ -25,6 +25,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { getWardenRooms } from "../../utils/warden_api";
+import { getRoomDetail } from "../../utils/hms_api";
 
 interface Hostel {
   id: number;
@@ -55,71 +56,73 @@ interface Room {
 
 const WardenDashboard = () => {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<WardenStats | null>(null);
-  const [hostels, setHostels] = useState<Hostel[]>([]);
-  const [wardenName, setWardenName] = useState("");
+  const { 
+    managedHostels: hostels, 
+    wardenFloorsMap, 
+    wardenName, 
+    stats, 
+    loading: contextLoading 
+  } = useWardenContext();
   const [selectedHostel, setSelectedHostel] = useState<number | null>(null);
-  const [selectedFloor, setSelectedFloor] = useState<string>("all");
+  const [selectedFloor, setSelectedFloor] = useState<string>("");
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [availableFloors, setAvailableFloors] = useState<number[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [loadingRoomDetails, setLoadingRoomDetails] = useState(false);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
-    setLoading(true);
-    try {
-      const result = await getWardenDashboard();
-      if (result.success) {
-        setStats(result.statistics);
-        setHostels(result.data.hostels);
-        setWardenName(result.warden_name);
-        
-        // Auto-select first hostel if available
-        if (result.data.hostels.length > 0) {
-          setSelectedHostel(result.data.hostels[0].id);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching warden dashboard:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch dashboard data.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+    if (hostels.length > 0 && selectedHostel === null) {
+      setSelectedHostel(hostels[0].id);
     }
-  };
+  }, [hostels, selectedHostel]);
 
   useEffect(() => {
     if (selectedHostel) {
-      fetchRooms();
+      setRooms([]);
+      setSelectedFloor(""); // Reset floor when hostel changes
+      const floors = wardenFloorsMap[selectedHostel] || [];
+      setAvailableFloors(floors);
     }
-  }, [selectedHostel]);
+  }, [selectedHostel, wardenFloorsMap]);
 
-  const fetchRooms = async () => {
+  useEffect(() => {
+    if (selectedHostel && selectedFloor) {
+      fetchRooms(selectedHostel, selectedFloor);
+    } else {
+      setRooms([]);
+    }
+  }, [selectedHostel, selectedFloor]);
+
+  const fetchRooms = async (hostelId: number, floor: string) => {
     setLoadingRooms(true);
     try {
-      const result = await getWardenRooms();
+      const result = await getWardenRooms(hostelId, floor);
       if (result.success) {
-        // Filter rooms by selected hostel
-        const hostelRooms = result.rooms.filter((r: any) => r.hostel === selectedHostel);
-        setRooms(hostelRooms);
-        
-        // Extract unique floors
-        const floors = Array.from(new Set(hostelRooms.map((r: any) => r.floor))) as number[];
-        setAvailableFloors(floors.sort((a, b) => a - b));
+        setRooms(result.rooms);
       }
     } catch (error) {
       console.error("Error fetching rooms:", error);
     } finally {
       setLoadingRooms(false);
+    }
+  };
+
+  const handleRoomClick = async (room: Room) => {
+    setSelectedRoom(room);
+    setIsDialogOpen(true);
+    setLoadingRoomDetails(true);
+    try {
+      const result = await getRoomDetail(room.id);
+      if (result.success) {
+        // Use the detailed data which includes residents
+        setSelectedRoom(result.data);
+      }
+    } catch (error) {
+      console.error("Error fetching room details:", error);
+    } finally {
+      setLoadingRoomDetails(false);
     }
   };
 
@@ -148,7 +151,7 @@ const WardenDashboard = () => {
     },
   };
 
-  if (loading) {
+  if (contextLoading) {
     return (
       <div className="space-y-8">
         <SkeletonPageHeader />
@@ -237,11 +240,13 @@ const WardenDashboard = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Floors</SelectItem>
-                    {availableFloors.map((floor) => (
-                      <SelectItem key={floor} value={floor.toString()}>
-                        Floor {floor === 0 ? 'Ground' : floor}
-                      </SelectItem>
-                    ))}
+                    {availableFloors
+                      .sort((a, b) => a - b)
+                      .map((floor) => (
+                        <SelectItem key={floor} value={floor.toString()}>
+                          Floor {floor === 0 ? 'Ground' : floor}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -273,7 +278,12 @@ const WardenDashboard = () => {
               ))}
             </div>
           ) : selectedHostel ? (
-            Object.keys(roomsByFloor).length > 0 ? (
+            !selectedFloor ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Grid3X3 size={48} className="mx-auto mb-4 opacity-10" />
+                <p>Select a floor to view the room occupancy matrix.</p>
+              </div>
+            ) : Object.keys(roomsByFloor).length > 0 ? (
               <div className="space-y-8">
                 {Object.keys(roomsByFloor)
                   .map((k) => Number(k))
@@ -289,10 +299,7 @@ const WardenDashboard = () => {
                           <motion.div
                             key={room.id}
                             whileHover={{ scale: 1.05 }}
-                            onClick={() => {
-                              setSelectedRoom(room);
-                              setIsDialogOpen(true);
-                            }}
+                            onClick={() => handleRoomClick(room)}
                             className={`p-3 rounded-lg border text-center transition-all cursor-pointer ${getRoomColor(
                               room.student_count,
                               room.capacity
@@ -341,7 +348,12 @@ const WardenDashboard = () => {
           </DialogHeader>
 
           <div className="space-y-4 mt-2">
-            {selectedRoom?.residents && selectedRoom.residents.length > 0 ? (
+            {loadingRoomDetails ? (
+              <div className="space-y-3">
+                <div className="h-16 w-full rounded-xl bg-muted animate-pulse" />
+                <div className="h-16 w-full rounded-xl bg-muted animate-pulse" />
+              </div>
+            ) : selectedRoom?.residents && selectedRoom.residents.length > 0 ? (
               <div className="grid gap-3">
                 {selectedRoom.residents.map((resident) => (
                   <div 

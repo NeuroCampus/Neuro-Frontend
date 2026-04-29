@@ -27,16 +27,34 @@ export const getWardenDashboard = async (): Promise<WardenDashboardData> => {
   return response.json();
 };
 
-export const getWardenStudents = async () => {
-  const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/warden/students/`);
+export const getWardenStudents = async (hostelId?: number, floor?: string) => {
+  let url = `${API_ENDPOINT}/warden/students/`;
+  const params = new URLSearchParams();
+  if (hostelId) params.append('hostel_id', hostelId.toString());
+  if (floor && floor !== 'all') params.append('floor', floor);
+  
+  if (params.toString()) {
+    url += `?${params.toString()}`;
+  }
+  
+  const response = await fetchWithTokenRefresh(url);
   if (!response.ok) {
     throw new Error("Failed to fetch warden students");
   }
   return response.json();
 };
 
-export const getWardenRooms = async () => {
-  const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/warden/rooms/`);
+export const getWardenRooms = async (hostelId?: number, floor?: string) => {
+  let url = `${API_ENDPOINT}/warden/rooms/`;
+  const params = new URLSearchParams();
+  if (hostelId) params.append('hostel_id', hostelId.toString());
+  if (floor && floor !== 'all') params.append('floor', floor);
+  
+  if (params.toString()) {
+    url += `?${params.toString()}`;
+  }
+  
+  const response = await fetchWithTokenRefresh(url);
   if (!response.ok) {
     throw new Error("Failed to fetch warden rooms");
   }

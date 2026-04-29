@@ -18,6 +18,7 @@ import {
   DialogTitle, 
   DialogDescription,
 } from "@/components/ui/dialog";
+import { getRoomDetail } from "../../utils/hms_api";
 import DashboardCard from "../common/DashboardCard";
 import { 
   SkeletonPageHeader, 
@@ -70,6 +71,7 @@ const HMSOverview = () => {
   const [availableFloors, setAvailableFloors] = useState<number[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [loadingRoomDetails, setLoadingRoomDetails] = useState(false);
 
   // Map backend stats to component stats
   const stats = {
@@ -111,6 +113,22 @@ const HMSOverview = () => {
     const results = await getCachedRooms(hostelId, floor);
     setRooms(results);
     setLoadingRooms(false);
+  };
+  
+  const handleRoomClick = async (room: Room) => {
+    setSelectedRoom(room);
+    setIsDialogOpen(true);
+    setLoadingRoomDetails(true);
+    try {
+      const result = await getRoomDetail(room.id);
+      if (result.success) {
+        setSelectedRoom(result.data);
+      }
+    } catch (error) {
+      console.error("Error fetching room details:", error);
+    } finally {
+      setLoadingRoomDetails(false);
+    }
   };
 
   const getRoomColor = (occupied: number, capacity: number) => {
@@ -322,10 +340,7 @@ const HMSOverview = () => {
                             key={room.id}
                             variants={itemVariants}
                             whileHover={{ scale: 1.05 }}
-                            onClick={() => {
-                              setSelectedRoom(room);
-                              setIsDialogOpen(true);
-                            }}
+                            onClick={() => handleRoomClick(room)}
                             className={`p-3 rounded-lg border text-center transition-all cursor-pointer ${getRoomColor(
                               room.student_count,
                               room.capacity
@@ -374,7 +389,12 @@ const HMSOverview = () => {
           </DialogHeader>
 
           <div className="space-y-4 mt-2">
-            {selectedRoom?.residents && selectedRoom.residents.length > 0 ? (
+            {loadingRoomDetails ? (
+              <div className="space-y-3">
+                <div className="h-16 w-full rounded-xl bg-muted animate-pulse" />
+                <div className="h-16 w-full rounded-xl bg-muted animate-pulse" />
+              </div>
+            ) : selectedRoom?.residents && selectedRoom.residents.length > 0 ? (
               <div className="grid gap-3">
                 {selectedRoom.residents.map((resident) => (
                   <div 

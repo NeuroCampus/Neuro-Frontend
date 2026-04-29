@@ -26,6 +26,7 @@ const TrialExpired = lazy(() => import("./components/common/TrialExpired"));
 const OnboardingSuccess = lazy(() => import("./components/common/OnboardingSuccess"));
 const SuperAdminIndex = lazy(() => import("./superadmin/index"));
 
+import { WardenProvider } from "./context/WardenContext";
 import { shouldShowFloatingAssistant } from "./utils/config";
 
 // Protected Route Component
@@ -106,14 +107,15 @@ const App = () => {
     // ✅ NO ThemeProvider here - it's in main.tsx
     // ✅ NO TooltipProvider here - it's in main.tsx
     <BrowserRouter>
-      <Suspense fallback={
-        <div className="flex items-center justify-center min-h-screen bg-background">
-          <div className="flex flex-col items-center gap-4">
-            <img src="/logo.jpeg" alt="NeuroCampus Logo" className="w-16 h-16 rounded-full object-cover animate-pulse shadow-lg" />
-            <p className="text-sm font-medium text-muted-foreground animate-pulse">Loading NeuroCampus...</p>
+      <WardenProvider>
+        <Suspense fallback={
+          <div className="flex items-center justify-center min-h-screen bg-background">
+            <div className="flex flex-col items-center gap-4">
+              <img src="/logo.jpeg" alt="NeuroCampus Logo" className="w-16 h-16 rounded-full object-cover animate-pulse shadow-lg" />
+              <p className="text-sm font-medium text-muted-foreground animate-pulse">Loading NeuroCampus...</p>
+            </div>
           </div>
-        </div>
-      }>
+        }>
         <Routes>
           {/* Public routes */}
           <Route path="/" element={
@@ -388,7 +390,6 @@ const App = () => {
             </ProtectedRoute>
           } />
 
-          {/* Warden routes */}
           <Route path="/warden/*" element={
             <ProtectedRoute allowedRoles={["warden"]}>
               <>
@@ -427,6 +428,7 @@ const App = () => {
           } />
         </Routes>
       </Suspense>
+      </WardenProvider>
 
       {/* ✅ Toast components rendered OUTSIDE routes but INSIDE BrowserRouter */}
       <Toaster />

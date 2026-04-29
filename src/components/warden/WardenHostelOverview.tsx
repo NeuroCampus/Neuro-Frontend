@@ -15,6 +15,7 @@ import {
   GraduationCap
 } from "lucide-react";
 import { getWardenStudents } from "../../utils/warden_api";
+import { useWardenContext } from "../../context/WardenContext";
 import { useToast } from "../../hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { SkeletonCard } from "../ui/skeleton";
@@ -43,15 +44,28 @@ const WardenHostelOverview = () => {
   const [selectedFloor, setSelectedFloor] = useState<string>("");
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { wardenFloorsMap, loading: contextLoading } = useWardenContext();
+  const [hostelFloors, setHostelFloors] = useState<number[]>([]);
 
   useEffect(() => {
-    fetchStudents();
-  }, []);
+    // Consolidate floors from all managed hostels in the map
+    const allFloors = Object.values(wardenFloorsMap).flat() as number[];
+    const uniqueFloors = Array.from(new Set(allFloors)).sort((a, b) => a - b);
+    setHostelFloors(uniqueFloors);
+  }, [wardenFloorsMap]);
 
-  const fetchStudents = async () => {
+  useEffect(() => {
+    if (selectedFloor) {
+      fetchStudents(selectedFloor);
+    } else {
+      setStudents([]);
+    }
+  }, [selectedFloor]);
+
+  const fetchStudents = async (floor: string) => {
     setLoading(true);
     try {
-      const result = await getWardenStudents();
+      const result = await getWardenStudents(undefined, floor);
       if (result.success) {
         setStudents(result.students);
       }
@@ -66,7 +80,6 @@ const WardenHostelOverview = () => {
     }
   };
 
-  const availableFloors = Array.from(new Set(students.map(s => s.room_floor))).filter(f => f !== null).sort((a, b) => a - b);
 
   const filteredStudents = students.filter(s => {
     // If no floor is selected, don't show any students
@@ -81,7 +94,7 @@ const WardenHostelOverview = () => {
     return matchesSearch && matchesFloor;
   });
 
-  if (loading) {
+  if (contextLoading && !selectedFloor) {
     return <div className="p-8"><SkeletonCard className="h-[500px]" /></div>;
   }
 
@@ -104,7 +117,7 @@ const WardenHostelOverview = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Floors</SelectItem>
-            {availableFloors.map(floor => (
+            {hostelFloors.map(floor => (
               <SelectItem key={floor} value={floor.toString()}>
                 Floor {floor}
               </SelectItem>

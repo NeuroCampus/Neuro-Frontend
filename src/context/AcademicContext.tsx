@@ -108,7 +108,10 @@ export const AcademicProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   useEffect(() => {
-    if (!fetchRef.current) {
+    const role = localStorage.getItem('role');
+    const isWardenPath = window.location.pathname.includes('/warden');
+    
+    if (!fetchRef.current && role !== 'warden' && !isWardenPath) {
       refreshAcademicData();
       fetchRef.current = true;
     }
