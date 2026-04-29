@@ -149,6 +149,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       "hod-announcement-management": <Bell size={20} />,
       "faculty-announcement-management": <Bell size={20} />,
       "student-hostel-details": <Home size={20} />,
+      "residents": <Users size={20} />,
     };
     return iconMap[page] || <LayoutDashboard size={20} />;
   };
@@ -367,8 +368,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
     ],
     warden: [
       { name: "Dashboard", page: "dashboard" },
-      { name: "Rooms", page: "rooms" },
-      { name: "Students", page: "students" },
+      { name: "Resident Management", page: "residents" },
       { name: "Issue Tracking", page: "issues" },
       { name: "Profile", page: "profile" },
     ],

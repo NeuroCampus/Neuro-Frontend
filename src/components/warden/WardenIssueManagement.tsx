@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  AlertCircle, 
-  Clock, 
-  CheckCircle2, 
-  Loader2, 
-  ChevronRight, 
-  Filter, 
-  MessageSquare, 
-  User, 
-  Home, 
+import {
+  AlertCircle,
+  Clock,
+  CheckCircle2,
+  Loader2,
+  ChevronRight,
+  Filter,
+  MessageSquare,
+  User,
+  Home,
   Calendar,
   MoreVertical,
   History,
@@ -51,21 +51,25 @@ interface DetailedIssue extends Issue {
 const STATUS_CONFIG = {
   pending: {
     label: 'Pending',
+    order: 0,
     color: 'bg-yellow-500/10 text-yellow-600 border-yellow-200/50',
     icon: AlertTriangle
   },
   in_progress: {
     label: 'In Progress',
+    order: 1,
     color: 'bg-blue-500/10 text-blue-600 border-blue-200/50',
     icon: Clock
   },
   waiting_for_workers: {
     label: 'Waiting for Workers',
+    order: 2,
     color: 'bg-orange-500/10 text-orange-600 border-orange-200/50',
     icon: Loader2
   },
   completed: {
     label: 'Completed',
+    order: 3,
     color: 'bg-green-500/10 text-green-600 border-green-200/50',
     icon: CheckCircle2
   }
@@ -126,8 +130,12 @@ const WardenIssueManagement = () => {
         title: 'Success',
         description: 'Issue status updated',
       });
-      
-      fetchIssues(); // Refresh list
+
+      // Update local issues state silently
+      setIssues(prev => prev.map(issue =>
+        issue.id === issueId ? { ...issue, status: data.status, status_display: data.status_display } : issue
+      ));
+
       if (selectedIssue?.id === issueId) {
         setSelectedIssue(data);
       }
@@ -139,23 +147,18 @@ const WardenIssueManagement = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: true
     });
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Issue Management</h1>
-          <p className="text-muted-foreground mt-1">Track and resolve student maintenance requests.</p>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <DashboardCard
           title="Total Issues"
@@ -186,10 +189,10 @@ const WardenIssueManagement = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-6">
         {/* Issues List */}
         <div className="lg:col-span-5 space-y-4">
-          <Card className="border-border/40 bg-card/50 backdrop-blur-sm shadow-sm overflow-hidden">
-            <CardHeader className="pb-4 border-b bg-muted/30">
+          <Card className="border-border bg-card/50 backdrop-blur-sm shadow-sm overflow-hidden">
+            <CardHeader className="pb-4 border bg-muted/30">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Recent Issues</CardTitle>
+                <CardTitle className="text-xl">Recent Issues</CardTitle>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-[140px] h-8 text-xs border-primary/10">
                     <SelectValue placeholder="All Status" />
@@ -220,15 +223,17 @@ const WardenIssueManagement = () => {
                       const config = STATUS_CONFIG[issue.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
                       const isSelected = selectedIssue?.id === issue.id;
                       return (
-                        <div 
+                        <div
                           key={issue.id}
                           onClick={() => handleIssueClick(issue)}
-                          className={`p-4 transition-all cursor-pointer hover:bg-muted/30 relative ${
-                            isSelected ? "bg-primary/5" : ""
-                          }`}
+                          className={`p-4 transition-all cursor-pointer hover:bg-muted/70 relative ${isSelected ? "bg-primary/10" : ""
+                            }`}
                         >
                           <div className="flex items-start justify-between mb-2">
-                            <h4 className="font-semibold text-sm truncate max-w-[200px]">{issue.title}</h4>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">#{issue.id}</span>
+                              <h4 className="font-semibold text-sm truncate max-w-[150px]">{issue.title}</h4>
+                            </div>
                             <Badge variant="outline" className={`text-[10px] h-5 ${config.color}`}>
                               {issue.status_display}
                             </Badge>
@@ -259,36 +264,36 @@ const WardenIssueManagement = () => {
               >
                 <Card className="border-border/40 shadow-md">
                   <CardHeader className="pb-4 border-b bg-muted/10">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Badge className={STATUS_CONFIG[selectedIssue.status as keyof typeof STATUS_CONFIG]?.color}>
-                            {selectedIssue.status_display}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">ID: #{selectedIssue.id}</span>
-                        </div>
-                        <CardTitle className="text-2xl mt-2">{selectedIssue.title}</CardTitle>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <CardTitle className="text-xl font-semibold">{selectedIssue.title}</CardTitle>
+                        <Badge className={`${STATUS_CONFIG[selectedIssue.status as keyof typeof STATUS_CONFIG]?.color} px-3 py-1`}>
+                          {selectedIssue.status_display}
+                        </Badge>
+                        <span className="text-xs font-mono text-muted-foreground bg-muted/50 px-2 py-1 rounded border border-border/40">
+                          ID: #{selectedIssue.id}
+                        </span>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-6 space-y-6">
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4 rounded-xl bg-muted/20">
                       <div>
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1 tracking-wider">Student</p>
+                        <p className="text-[10px] uppercase font-semibold text-muted-foreground mb-1 tracking-wider">Student</p>
                         <p className="text-sm font-semibold">{selectedIssue.student_name}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1 tracking-wider">Room</p>
+                        <p className="text-[10px] uppercase font-semibold text-muted-foreground mb-1 tracking-wider">Room</p>
                         <p className="text-sm font-semibold">{selectedIssue.room_name}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1 tracking-wider">Hostel</p>
+                        <p className="text-[10px] uppercase font-semibold text-muted-foreground mb-1 tracking-wider">Hostel</p>
                         <p className="text-sm font-semibold">{selectedIssue.hostel_name}</p>
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <h4 className="text-sm font-bold flex items-center gap-2 uppercase tracking-wide text-muted-foreground/80">
+                      <h4 className="text-sm font-semibold flex items-center gap-2 uppercase tracking-wide text-muted-foreground/80">
                         Description
                       </h4>
                       <p className="text-sm leading-relaxed bg-background p-4 rounded-lg border border-dashed border-border/60">
@@ -299,21 +304,32 @@ const WardenIssueManagement = () => {
                     <Separator className="bg-border/40" />
 
                     <div className="space-y-4">
-                      <h4 className="text-sm font-bold uppercase tracking-wide text-muted-foreground/80">Update Status</h4>
+                      <h4 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground/80">Update Status</h4>
                       <div className="flex flex-wrap gap-2">
-                        {Object.keys(STATUS_CONFIG).map((status) => (
-                          <Button
-                            key={status}
-                            size="sm"
-                            variant={selectedIssue.status === status ? "default" : "outline"}
-                            onClick={() => handleStatusChange(selectedIssue.id, status)}
-                            disabled={updatingIssueId === selectedIssue.id || selectedIssue.status === status}
-                            className={`h-8 text-xs font-semibold ${selectedIssue.status === status ? "bg-primary shadow-sm" : "hover:border-primary/40"}`}
-                          >
-                            {updatingIssueId === selectedIssue.id && selectedIssue.status !== status ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : null}
-                            {STATUS_CONFIG[status as keyof typeof STATUS_CONFIG]?.label}
-                          </Button>
-                        ))}
+                        {Object.keys(STATUS_CONFIG).map((status) => {
+                          const currentOrder = STATUS_CONFIG[selectedIssue.status as keyof typeof STATUS_CONFIG]?.order ?? 0;
+                          const targetOrder = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG]?.order ?? 0;
+                          const isCurrent = selectedIssue.status === status;
+                          const isPast = targetOrder < currentOrder;
+
+                          return (
+                            <Button
+                              key={status}
+                              size="sm"
+                              variant={isCurrent ? "default" : "outline"}
+                              onClick={() => handleStatusChange(selectedIssue.id, status)}
+                              disabled={updatingIssueId === selectedIssue.id || isPast || isCurrent}
+                              className={`h-8 text-xs font-semibold transition-all ${isCurrent
+                                  ? "bg-primary text-primary-foreground shadow-md ring-2 ring-primary/20 scale-105"
+                                  : isPast
+                                    ? "opacity-50 grayscale-[0.5] cursor-not-allowed bg-muted/20"
+                                    : "hover:border-primary/60 opacity-100"
+                                }`}
+                            >
+                              {STATUS_CONFIG[status as keyof typeof STATUS_CONFIG]?.label}
+                            </Button>
+                          );
+                        })}
                       </div>
                     </div>
                   </CardContent>
