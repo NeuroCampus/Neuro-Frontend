@@ -1,27 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import React, { useState, useEffect, useCallback } from 'react';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   FileText,
   Download,
   Eye,
   Search,
-  Calendar,
   IndianRupee,
   CheckCircle,
   Clock,
   AlertTriangle,
   Mail,
-  Printer
+  Filter,
+  Users,
+  ChevronRight,
+  TrendingUp,
+  CreditCard
 } from 'lucide-react';
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Invoice {
   id: number;
@@ -47,7 +50,6 @@ interface Invoice {
   due_date: string;
   status: 'unpaid' | 'partially_paid' | 'paid' | 'overdue';
   created_at: string;
-  updated_at: string;
   academic_year?: string;
 }
 
@@ -60,6 +62,12 @@ interface Payment {
   status: string;
 }
 
+interface FilterData {
+  batches: { id: number; name: string }[];
+  branches: { id: number; name: string; code: string }[];
+  admission_modes: string[];
+}
+
 const InvoiceManagement: React.FC = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [invoicesMeta, setInvoicesMeta] = useState<any | null>(null);
@@ -70,96 +78,157 @@ const InvoiceManagement: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
 
-  // Filter states
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [dateRange, setDateRange] = useState('all');
+  // Cascading Filter states
+  const [selectedFilters, setSelectedFilters] = useState({
+    batchId: '',
+    branchId: '',
+    semesterId: '',
+    sectionId: '',
+    admissionMode: '',
+    status: 'all',
+    search: ''
+  });
 
+  const [filterData, setFilterData] = useState<FilterData>({ batches: [], branches: [], admission_modes: [] });
+  const [semesters, setSemesters] = useState<{ id: number; number: number; name: string }[]>([]);
+  const [sections, setSections] = useState<{ id: number; name: string }[]>([]);
+
+  // Initial data fetch
   useEffect(() => {
-    fetchInvoices(1);
+    const fetchInitialData = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        const filterRes = await fetch('http://127.0.0.1:8000/api/fees-manager/filters/', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (filterRes.ok) {
+          const data = await filterRes.json();
+          setFilterData(data.data);
+        }
+      } catch (err) {
+        console.error("Error fetching filters:", err);
+      }
+    };
+    fetchInitialData();
     fetchStats();
   }, []);
+
+  // Fetch semesters when branch changes
+  useEffect(() => {
+    if (!selectedFilters.branchId || selectedFilters.branchId === 'all_branches') {
+      setSemesters([]);
+      return;
+    }
+    const fetchSem = async () => {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`http://127.0.0.1:8000/api/fees-manager/semesters/?branch_id=${selectedFilters.branchId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSemesters(data.data || []);
+      }
+    };
+    fetchSem();
+  }, [selectedFilters.branchId]);
+
+  // Fetch sections when semester changes
+  useEffect(() => {
+    if (!selectedFilters.semesterId || !selectedFilters.branchId) {
+      setSections([]);
+      return;
+    }
+    const fetchSec = async () => {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`http://127.0.0.1:8000/api/fees-manager/sections/?branch_id=${selectedFilters.branchId}&semester_id=${selectedFilters.semesterId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSections(data.data || []);
+      }
+    };
+    fetchSec();
+  }, [selectedFilters.semesterId, selectedFilters.branchId]);
+
+  // Fetch invoices based on filters
+  useEffect(() => {
+    const allFiltersSelected = 
+      selectedFilters.batchId && 
+      selectedFilters.branchId && 
+      selectedFilters.semesterId && 
+      selectedFilters.sectionId && 
+      selectedFilters.admissionMode;
+
+    if (allFiltersSelected || selectedFilters.search.length > 2) {
+      fetchInvoices(1);
+    } else {
+      setInvoices([]);
+      setInvoicesMeta(null);
+      setLoading(false);
+    }
+  }, [selectedFilters]);
+
+  // Fetch stats when filters change
+  useEffect(() => {
+    fetchStats();
+  }, [selectedFilters]);
 
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const res = await fetch('http://127.0.0.1:8000/api/fees-manager/stats/', {
+      const params = new URLSearchParams({
+        ...(selectedFilters.batchId && { batch_id: selectedFilters.batchId }),
+        ...(selectedFilters.branchId && { branch_id: selectedFilters.branchId }),
+        ...(selectedFilters.semesterId && { semester_id: selectedFilters.semesterId }),
+        ...(selectedFilters.sectionId && { section_id: selectedFilters.sectionId }),
+        ...(selectedFilters.admissionMode && { admission_mode: selectedFilters.admissionMode }),
+      });
+
+      const res = await fetch(`http://127.0.0.1:8000/api/fees-manager/stats/?${params}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
-      if (!res.ok) return;
-      const d = await res.json();
-      // backend returns totals and counts; prefer *_cents keys for amounts
-      let sd = d.data || d || null;
-
-      // If server stats don't include pending/overdue monetary sums, fetch fees_reports summary
-      const needsPending = !(sd && (sd.pending_amount !== undefined || sd.pending_amount_cents !== undefined));
-      const needsOverdue = !(sd && (sd.overdue_amount !== undefined || sd.overdue_amount_cents !== undefined));
-
-      if ((needsPending || needsOverdue)) {
-        try {
-          const rr = await fetch('http://127.0.0.1:8000/api/fees-manager/fees-reports/?date_range=all', {
-            headers: { 'Authorization': `Bearer ${token}` },
-          });
-          if (rr.ok) {
-            const rd = await rr.json();
-            const summary = rd?.summary || rd?.data?.summary || rd?.report_data?.summary || rd?.report_data || rd;
-            if (summary) {
-              sd = sd || {};
-              if (summary.pending_amount !== undefined) sd.pending_amount = summary.pending_amount;
-              if (summary.overdue_amount !== undefined) sd.overdue_amount = summary.overdue_amount;
-            }
-          }
-        } catch (e) {
-          // ignore
-        }
+      if (res.ok) {
+        const d = await res.json();
+        setStatsData(d.data);
       }
-
-      // normalize to cents where useful
-      if (sd) {
-        if (sd.pending_amount !== undefined && sd.pending_amount_cents === undefined) sd.pending_amount_cents = Math.round(Number(sd.pending_amount) * 100);
-        if (sd.overdue_amount !== undefined && sd.overdue_amount_cents === undefined) sd.overdue_amount_cents = Math.round(Number(sd.overdue_amount) * 100);
-        if (sd.total_revenue !== undefined && sd.total_revenue_cents === undefined) sd.total_revenue_cents = Math.round(Number(sd.total_revenue) * 100);
-      }
-
-      setStatsData(sd);
     } catch (e) {
-      // ignore
+      console.error("Error fetching stats:", e);
     }
   };
 
-  const fetchInvoices = async (page: number = 1, page_size: number = 50) => {
+  const fetchInvoices = async (page: number = 1) => {
     try {
       setLoading(true);
       const token = localStorage.getItem('access_token');
+      const params = new URLSearchParams({
+        page: page.toString(),
+        page_size: '50',
+        ...(selectedFilters.batchId && { batch_id: selectedFilters.batchId }),
+        ...(selectedFilters.branchId && { branch_id: selectedFilters.branchId }),
+        ...(selectedFilters.semesterId && { semester_id: selectedFilters.semesterId }),
+        ...(selectedFilters.sectionId && { section_id: selectedFilters.sectionId }),
+        ...(selectedFilters.admissionMode && { admission_mode: selectedFilters.admissionMode }),
+        ...(selectedFilters.status !== 'all' && { status: selectedFilters.status }),
+        ...(selectedFilters.search && { search: selectedFilters.search })
+      });
 
-      const url = `http://127.0.0.1:8000/api/fees-manager/invoices/?page=${page}&page_size=${page_size}`;
-      const response = await fetch(url, {
+      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/invoices/?${params}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch invoices');
-      }
+      if (!response.ok) throw new Error('Failed to fetch invoices');
 
-      const data = await response.json();
-      // Normalize monetary fields: prefer *_cents when present
-      const toRupees = (centsOrAmount: any) => {
-        if (centsOrAmount === null || centsOrAmount === undefined) return 0;
-        if (Number.isInteger(centsOrAmount)) return centsOrAmount / 100;
-        const n = Number(centsOrAmount);
-        return isNaN(n) ? 0 : n;
-      };
-      // Support different response shapes:
-      // - { data: [...], meta: {...} }
-      // - { invoices: [...], meta: {...} } (safe view)
-      const list = data.data ?? data.invoices ?? [];
-      const meta = data.meta ?? null;
+      const json = await response.json();
+      const list = json.data || [];
+      const meta = json.meta || null;
 
-      const normalized = (list || []).map((inv: any) => ({
+      // Normalization
+      const normalized = list.map((inv: any) => ({
         ...inv,
-        total_amount: toRupees(inv.total_amount_cents ?? inv.total_amount),
-        paid_amount: toRupees(inv.paid_amount_cents ?? inv.paid_amount),
-        pending_amount: toRupees(inv.pending_amount_cents ?? inv.pending_amount),
+        total_amount: (inv.total_amount_cents ?? 0) / 100,
+        paid_amount: (inv.paid_amount_cents ?? 0) / 100,
+        pending_amount: (inv.pending_amount_cents ?? 0) / 100,
       }));
 
       setInvoices(normalized);
@@ -171,48 +240,32 @@ const InvoiceManagement: React.FC = () => {
     }
   };
 
-  const handleInvoicesPageChange = (newPage: number) => {
-    const page = Math.max(1, newPage);
-    fetchInvoices(page);
-  };
-
   const fetchInvoiceDetails = async (invoiceId: number) => {
     try {
       const token = localStorage.getItem('access_token');
-
       const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/invoices/${invoiceId}/`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch invoice details');
-      }
+      if (!response.ok) throw new Error('Failed to fetch invoice details');
 
-      const data = await response.json();
-      // Normalize invoice and payments amounts
-      const toRupees = (centsOrAmount: any) => {
-        if (centsOrAmount === null || centsOrAmount === undefined) return 0;
-        if (Number.isInteger(centsOrAmount)) return centsOrAmount / 100;
-        const n = Number(centsOrAmount);
-        return isNaN(n) ? 0 : n;
-      };
-      // invoice detail may be returned as { data: {...} } or { ... }
-      const inv = data.data ?? data ?? {};
+      const json = await response.json();
+      const inv = json.data || {};
+      
       const normalizedInvoice = {
         ...inv,
-        total_amount: toRupees(inv.total_amount_cents ?? inv.total_amount),
-        paid_amount: toRupees(inv.paid_amount_cents ?? inv.paid_amount),
-        pending_amount: toRupees(inv.pending_amount_cents ?? inv.pending_amount),
+        total_amount: (inv.total_amount_cents ?? 0) / 100,
+        paid_amount: (inv.paid_amount_cents ?? 0) / 100,
+        pending_amount: (inv.pending_amount_cents ?? 0) / 100,
       };
 
       const normalizedPayments = (inv.payments || []).map((p: any) => ({
         ...p,
-        amount: toRupees(p.amount_cents ?? p.amount),
-        payment_date: p.payment_date,
+        amount: (p.amount_cents ?? 0) / 100,
       }));
 
       setSelectedInvoice(normalizedInvoice);
-      setPayments(normalizedPayments || []);
+      setPayments(normalizedPayments);
       setIsDetailsDialogOpen(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch invoice details');
@@ -222,80 +275,19 @@ const InvoiceManagement: React.FC = () => {
   const downloadInvoice = async (invoiceId: number) => {
     try {
       const token = localStorage.getItem('access_token');
-
       const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/invoices/${invoiceId}/download/`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to download invoice');
+      if (!response.ok) throw new Error('Failed to download invoice');
+      
+      const json = await response.json();
+      if (json.data?.download_url) {
+        window.open(`http://127.0.0.1:8000${json.data.download_url}`, '_blank');
       }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `invoice_${invoiceId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to download invoice');
+      setError('Failed to initiate download');
     }
   };
-
-  const sendInvoiceReminder = async (invoiceId: number) => {
-    try {
-      const token = localStorage.getItem('access_token');
-
-      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/invoices/${invoiceId}/remind/`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send reminder');
-      }
-
-      // Show success message
-      alert('Reminder sent successfully!');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send reminder');
-    }
-  };
-
-  const filteredInvoices = invoices.filter(invoice => {
-    const matchesSearch = invoice.student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         invoice.student.usn.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
-
-    let matchesDate = true;
-    if (dateRange !== 'all') {
-      const invoiceDate = new Date(invoice.created_at);
-      const now = new Date();
-      const daysDiff = Math.floor((now.getTime() - invoiceDate.getTime()) / (1000 * 3600 * 24));
-
-      switch (dateRange) {
-        case 'today':
-          matchesDate = daysDiff === 0;
-          break;
-        case 'week':
-          matchesDate = daysDiff <= 7;
-          break;
-        case 'month':
-          matchesDate = daysDiff <= 30;
-          break;
-        case 'overdue':
-          matchesDate = invoice.status === 'overdue';
-          break;
-      }
-    }
-
-    return matchesSearch && matchesStatus && matchesDate;
-  });
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -305,431 +297,380 @@ const InvoiceManagement: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      unpaid: { variant: 'destructive' as const, label: 'Unpaid' },
-      partially_paid: { variant: 'secondary' as const, label: 'Partially Paid' },
-      paid: { variant: 'default' as const, label: 'Paid' },
-      overdue: { variant: 'destructive' as const, label: 'Overdue' },
-    };
-
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.unpaid;
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    switch (status) {
+      case 'paid':
+        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">Paid</Badge>;
+      case 'partially_paid':
+        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-blue-200">Partial</Badge>;
+      case 'overdue':
+        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-red-200">Overdue</Badge>;
+      default:
+        return <Badge variant="secondary">Unpaid</Badge>;
+    }
   };
-
-  const getStatusStats = () => {
-    const stats = {
-      total: invoices.length,
-      paid: invoices.filter(i => i.status === 'paid').length,
-      unpaid: invoices.filter(i => i.status === 'unpaid').length,
-      partially_paid: invoices.filter(i => i.status === 'partially_paid').length,
-      overdue: invoices.filter(i => i.status === 'overdue').length,
-    };
-    return stats;
-  };
-
-  const stats = statsData
-    ? {
-        // prefer server-provided invoice count, otherwise use paginator count or client list length
-        total: statsData.total_invoices ?? invoicesMeta?.count ?? invoices.length,
-        paid: statsData.completed_payments ?? invoices.filter(i => i.status === 'paid').length,
-        unpaid: invoices.filter(i => i.status === 'unpaid').length,
-        partially_paid: invoices.filter(i => i.status === 'partially_paid').length,
-        overdue: invoices.filter(i => i.status === 'overdue').length,
-      }
-    : getStatusStats();
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2">Loading invoices...</span>
-      </div>
-    );
-  }
 
   return (
-    <div className="container mx-auto p-0">
-      <div className="flex justify-between items-center mb-8">
+    <div className="space-y-6 max-w-[1600px] mx-auto p-4 md:p-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Invoice Management</h1>
-          <p className="text-muted-foreground mt-2">Manage student fee invoices and payment tracking</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Invoice Management</h1>
+          <p className="text-muted-foreground mt-1">Track and manage student fee payments and collections</p>
         </div>
       </div>
 
-      {error && (
-        <Alert className="mb-6">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Invoices</p>
-                <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-              </div>
-              <FileText className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-          
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Paid</p>
-                <p className="text-2xl font-bold text-green-600">{stats.paid}</p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Unpaid</p>
-                {statsData && (statsData.outstanding_amount_cents ?? statsData.outstanding_amount) ? (
-                  <p className="text-2xl font-bold text-red-600">{formatCurrency(((statsData.outstanding_amount_cents ?? statsData.outstanding_amount) || 0) / 100)}</p>
-                ) : (
-                  <p className="text-2xl font-bold text-red-600">{stats.unpaid}</p>
-                )}
-              </div>
-              <Clock className="h-8 w-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Partial</p>
-                {/* show pending monetary total when available, otherwise show count */}
-                {statsData && (statsData.pending_amount_cents ?? statsData.pending_amount) ? (
-                  <p className="text-2xl font-bold text-yellow-600">{formatCurrency(((statsData.pending_amount_cents ?? statsData.pending_amount) || 0) / 100)}</p>
-                ) : (
-                  <p className="text-2xl font-bold text-yellow-600">{stats.partially_paid}</p>
-                )}
-              </div>
-              <AlertTriangle className="h-8 w-8 text-yellow-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Overdue</p>
-                {statsData && (statsData.overdue_amount_cents ?? statsData.overdue_amount) ? (
-                  <p className="text-2xl font-bold text-red-600">{formatCurrency(((statsData.overdue_amount_cents ?? statsData.overdue_amount) || 0) / 100)}</p>
-                ) : (
-                  <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
-                )}
-              </div>
-              <AlertTriangle className="h-8 w-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search by student name, USN, or invoice number..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <div className="w-full md:w-48">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by status" />
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Left Sidebar - Cascading Filters */}
+        <Card className="lg:col-span-1 border-border/50 shadow-sm h-fit sticky top-6">
+          <CardHeader className="bg-muted/30 pb-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Filter className="h-4 w-4" />
+              Cohort Filters
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-6">
+            <div className="space-y-2">
+              <Label>Batch</Label>
+              <Select value={selectedFilters.batchId} onValueChange={(val) => setSelectedFilters(p => ({ ...p, batchId: val }))}>
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Select Batch" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="unpaid">Unpaid</SelectItem>
-                  <SelectItem value="partially_paid">Partially Paid</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
+                  <SelectItem value="all_batches">All Batches</SelectItem>
+                  {filterData.batches.map(b => <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <div className="w-full md:w-48">
-              <Select value={dateRange} onValueChange={setDateRange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by date" />
+
+            <div className="space-y-2">
+              <Label>Branch</Label>
+              <Select value={selectedFilters.branchId} onValueChange={(val) => setSelectedFilters(p => ({ ...p, branchId: val }))}>
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Select Branch" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Time</SelectItem>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="week">This Week</SelectItem>
-                  <SelectItem value="month">This Month</SelectItem>
-                  <SelectItem value="overdue">Overdue Only</SelectItem>
+                  <SelectItem value="all_branches">All Branches</SelectItem>
+                  {filterData.branches.map(b => <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
+
+            <AnimatePresence>
+              {selectedFilters.branchId && selectedFilters.branchId !== 'all_branches' && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="space-y-4 overflow-hidden">
+                  <div className="space-y-2">
+                    <Label>Semester</Label>
+                    <Select value={selectedFilters.semesterId} onValueChange={(val) => setSelectedFilters(p => ({ ...p, semesterId: val }))}>
+                      <SelectTrigger className="bg-background">
+                        <SelectValue placeholder="Select Semester" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {semesters.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {selectedFilters.semesterId && (
+                    <div className="space-y-2">
+                      <Label>Section</Label>
+                      <Select value={selectedFilters.sectionId} onValueChange={(val) => setSelectedFilters(p => ({ ...p, sectionId: val }))}>
+                        <SelectTrigger className="bg-background">
+                          <SelectValue placeholder="Select Section" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {sections.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="space-y-2">
+              <Label>Admission Mode</Label>
+              <Select value={selectedFilters.admissionMode} onValueChange={(val) => setSelectedFilters(p => ({ ...p, admissionMode: val }))}>
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Select Mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all_modes">All Modes</SelectItem>
+                  {filterData.admission_modes.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button 
+              variant="outline" 
+              className="w-full text-xs" 
+              onClick={() => setSelectedFilters({
+                batchId: '', branchId: '', semesterId: '', sectionId: '', admissionMode: '', status: 'all', search: ''
+              })}
+            >
+              Reset All
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Right Content */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* Stats Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card className="border-l-4 border-l-blue-500 shadow-sm">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Invoices</p>
+                  <p className="text-2xl font-bold">{statsData?.total_invoices || 0}</p>
+                </div>
+                <div className="bg-blue-100 p-2 rounded-lg"><FileText className="h-5 w-5 text-blue-600" /></div>
+              </CardContent>
+            </Card>
+            <Card className="border-l-4 border-l-green-500 shadow-sm">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Collection</p>
+                  <p className="text-2xl font-bold">{formatCurrency((statsData?.total_revenue_cents || 0) / 100)}</p>
+                </div>
+                <div className="bg-green-100 p-2 rounded-lg"><TrendingUp className="h-5 w-5 text-green-600" /></div>
+              </CardContent>
+            </Card>
+            <Card className="border-l-4 border-l-red-500 shadow-sm">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Outstanding</p>
+                  <p className="text-2xl font-bold">{formatCurrency((statsData?.outstanding_amount_cents || 0) / 100)}</p>
+                </div>
+                <div className="bg-red-100 p-2 rounded-lg"><Clock className="h-5 w-5 text-red-600" /></div>
+              </CardContent>
+            </Card>
+            <Card className="border-l-4 border-l-amber-500 shadow-sm">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Templates</p>
+                  <p className="text-2xl font-bold">{statsData?.active_templates || 0}</p>
+                </div>
+                <div className="bg-amber-100 p-2 rounded-lg"><Users className="h-5 w-5 text-amber-600" /></div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Invoices Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Invoices ({filteredInvoices.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {filteredInvoices.length === 0 ? (
-            <div className="text-center py-12">
-              <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-semibold mb-2 text-foreground">No Invoices Found</h3>
-              <p className="text-muted-foreground">
-                {invoices.length === 0
-                  ? "No invoices have been generated yet"
-                  : "No invoices match your search criteria"
-                }
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
+          {/* Table Controls */}
+          <Card className="border-border/50 shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex flex-col md:flex-row gap-4 items-center">
+                <div className="relative flex-1 w-full">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Search USN, Name or Invoice #..." 
+                    className="pl-9 h-11"
+                    value={selectedFilters.search}
+                    onChange={(e) => setSelectedFilters(p => ({ ...p, search: e.target.value }))}
+                  />
+                </div>
+                <Select value={selectedFilters.status} onValueChange={(val) => setSelectedFilters(p => ({ ...p, status: val }))}>
+                  <SelectTrigger className="w-full md:w-[180px] h-11">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="unpaid">Unpaid</SelectItem>
+                    <SelectItem value="partially_paid">Partial</SelectItem>
+                    <SelectItem value="overdue">Overdue</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Table Area */}
+          <Card className="border-border/50 shadow-sm overflow-hidden">
+            <Table>
+              <TableHeader className="bg-muted/30">
+                <TableRow>
+                  <TableHead className="w-[120px]">Invoice #</TableHead>
+                  <TableHead>Student Details</TableHead>
+                  <TableHead>Fee Type</TableHead>
+                  <TableHead className="text-right">Total Amount</TableHead>
+                  <TableHead className="text-right">Balance</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      {Array.from({ length: 7 }).map((_, j) => (
+                        <TableCell key={j}><div className="h-4 bg-muted animate-pulse rounded"></div></TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : invoices.length === 0 ? (
                   <TableRow>
-                    <TableHead>Invoice #</TableHead>
-                    <TableHead>Student</TableHead>
-                    <TableHead>USN</TableHead>
-                    <TableHead>Fee Type</TableHead>
-                    <TableHead>Total Amount</TableHead>
-                    <TableHead>Paid Amount</TableHead>
-                    <TableHead>Pending Amount</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredInvoices.map((invoice) => (
-                    <TableRow key={invoice.id}>
-                      <TableCell className="font-medium">
-                        {invoice.invoice_number}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">{invoice.student.name}</TableCell>
-                      <TableCell className="text-muted-foreground">{invoice.student.usn}</TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium text-foreground">
-                            {invoice.fee_assignment?.template?.name || '-'}
+                    <TableCell colSpan={7} className="h-48 text-center">
+                      <div className="flex flex-col items-center justify-center space-y-3 py-8">
+                        <Filter className="h-12 w-12 text-muted-foreground opacity-20" />
+                        <div className="space-y-1">
+                          <p className="text-lg font-semibold text-foreground">
+                            {!(selectedFilters.batchId && selectedFilters.branchId && selectedFilters.semesterId && selectedFilters.sectionId && selectedFilters.admissionMode) && selectedFilters.search.length < 3
+                              ? "Select Filters to View Invoices"
+                              : "No Invoices Found"}
                           </p>
-                          {invoice.fee_assignment?.template?.fee_type ? (
-                            <p className="text-sm text-muted-foreground">
-                              {invoice.fee_assignment.template.fee_type}
-                            </p>
-                          ) : null}
+                          <p className="text-sm text-muted-foreground italic">
+                            {!(selectedFilters.batchId && selectedFilters.branchId && selectedFilters.semesterId && selectedFilters.sectionId && selectedFilters.admissionMode) && selectedFilters.search.length < 3
+                              ? "Please select all cascading filters or search by USN to load data"
+                              : "Try adjusting your search or status filters"}
+                          </p>
+                        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  invoices.map((inv) => (
+                    <TableRow key={inv.id} className="hover:bg-muted/5 transition-colors">
+                      <TableCell className="font-mono font-bold text-primary">{inv.invoice_number}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-foreground">{inv.student.name}</span>
+                          <span className="text-xs text-muted-foreground">{inv.student.usn} • Sem {inv.student.semester}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="font-semibold">
-                        {formatCurrency(invoice.total_amount)}
-                      </TableCell>
-                      <TableCell className="text-green-600 font-semibold">
-                        {formatCurrency(invoice.paid_amount)}
-                      </TableCell>
-                      <TableCell className="text-red-600 font-semibold">
-                        {formatCurrency(invoice.pending_amount)}
-                      </TableCell>
                       <TableCell>
-                        {invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : '-'}
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium">{inv.fee_assignment?.template?.name || 'Manual'}</span>
+                          <span className="text-[10px] uppercase text-muted-foreground">{inv.academic_year}</span>
+                        </div>
                       </TableCell>
-                      <TableCell>{getStatusBadge(invoice.status)}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => fetchInvoiceDetails(invoice.id)}
-                          >
+                      <TableCell className="text-right font-bold">{formatCurrency(inv.total_amount)}</TableCell>
+                      <TableCell className="text-right font-bold text-red-600">{formatCurrency(inv.pending_amount)}</TableCell>
+                      <TableCell>{getStatusBadge(inv.status)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600" onClick={() => fetchInvoiceDetails(inv.id)}>
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => downloadInvoice(invoice.id)}
-                          >
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-600" onClick={() => downloadInvoice(inv.id)}>
                             <Download className="h-4 w-4" />
                           </Button>
-                          {invoice.status !== 'paid' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => sendInvoiceReminder(invoice.id)}
-                            >
-                              <Mail className="h-4 w-4" />
-                            </Button>
-                          )}
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Pagination controls for invoices (placed under the table) */}
-      {invoicesMeta && (
-        <div className="flex items-center justify-end gap-2 p-4 mt-4 container mx-auto">
-          <div className="text-sm text-muted-foreground mr-auto">Total: {invoicesMeta.count}</div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleInvoicesPageChange((invoicesMeta.page || 1) - 1)}
-            disabled={!invoicesMeta.has_previous}
-          >
-            Prev
-          </Button>
-          <div className="px-3 text-sm">Page {invoicesMeta.page} of {invoicesMeta.total_pages}</div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => handleInvoicesPageChange((invoicesMeta.page || 1) + 1)}
-            disabled={!invoicesMeta.has_next}
-          >
-            Next
-          </Button>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+            
+            {/* Pagination */}
+            {invoicesMeta && invoicesMeta.total_pages > 1 && (
+              <div className="p-4 border-t flex items-center justify-between bg-muted/10">
+                <p className="text-xs text-muted-foreground">Showing {(invoicesMeta.page - 1) * 50 + 1} to {Math.min(invoicesMeta.page * 50, invoicesMeta.count)} of {invoicesMeta.count}</p>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" disabled={!invoicesMeta.has_previous} onClick={() => fetchInvoices(invoicesMeta.page - 1)}>Prev</Button>
+                  <Button variant="outline" size="sm" disabled={!invoicesMeta.has_next} onClick={() => fetchInvoices(invoicesMeta.page + 1)}>Next</Button>
+                </div>
+              </div>
+            )}
+          </Card>
         </div>
-      )}
+      </div>
 
       {/* Invoice Details Dialog */}
       <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Invoice Details - {selectedInvoice?.invoice_number}
-            </DialogTitle>
-          </DialogHeader>
-
-          {selectedInvoice && (
-            <div className="space-y-6">
-              {/* Invoice Header */}
-              <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <div>
-                  <h3 className="font-semibold mb-2 text-foreground">Student Information</h3>
-                  <p className="text-foreground"><strong>Name:</strong> {selectedInvoice.student.name}</p>
-                  <p className="text-foreground"><strong>USN:</strong> {selectedInvoice.student.usn}</p>
-                  <p className="text-foreground"><strong>Department:</strong> {selectedInvoice.student.department}</p>
-                  <p className="text-foreground"><strong>Semester:</strong> {selectedInvoice.student.semester}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2 text-foreground">Invoice Information</h3>
-                  <p className="text-foreground"><strong>Invoice #:</strong> {selectedInvoice.invoice_number}</p>
-                  <p className="text-foreground"><strong>Fee Type:</strong> {selectedInvoice.fee_assignment?.template?.name || 'N/A'}</p>
-                  <p className="text-foreground"><strong>Academic Year:</strong> {selectedInvoice.fee_assignment?.academic_year || selectedInvoice.academic_year || 'N/A'}</p>
-                  <p className="text-foreground"><strong>Created:</strong> {new Date(selectedInvoice.created_at).toLocaleDateString()}</p>
-                </div>
-              </div>
-
-              {/* Payment Summary */}
-              <div className="grid grid-cols-4 gap-4">
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <p className="text-sm font-medium text-muted-foreground">Total Amount</p>
-                    <p className="text-xl font-bold text-foreground">{formatCurrency(selectedInvoice.total_amount)}</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <p className="text-sm font-medium text-muted-foreground">Paid Amount</p>
-                    <p className="text-xl font-bold text-green-600">{formatCurrency(selectedInvoice.paid_amount)}</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <p className="text-sm font-medium text-muted-foreground">Pending Amount</p>
-                    <p className="text-xl font-bold text-red-600">{formatCurrency(selectedInvoice.pending_amount)}</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4 text-center">
-                    <p className="text-sm font-medium text-muted-foreground">Status</p>
-                    <div className="mt-1">{getStatusBadge(selectedInvoice.status)}</div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Payment History */}
+        <DialogContent className="max-w-3xl border-none shadow-2xl p-0 overflow-hidden bg-card">
+          <div className="bg-primary p-6 text-primary-foreground">
+            <div className="flex justify-between items-start">
               <div>
-                <h3 className="font-semibold mb-4 text-foreground">Payment History</h3>
-                {payments.length === 0 ? (
-                  <p className="text-muted-foreground">No payments recorded yet.</p>
-                ) : (
+                <p className="text-xs uppercase opacity-70 font-bold tracking-widest mb-1">Invoice Statement</p>
+                <h2 className="text-3xl font-black">{selectedInvoice?.invoice_number}</h2>
+              </div>
+              <div className="text-right">
+                <Badge variant="outline" className="bg-white/10 text-white border-white/20 px-3 py-1 text-sm">{selectedInvoice?.status.toUpperCase()}</Badge>
+                <p className="text-xs mt-2 opacity-70">Generated on {selectedInvoice && new Date(selectedInvoice.created_at).toLocaleDateString()}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-8 space-y-8">
+            <div className="grid grid-cols-2 gap-12">
+              <div className="space-y-4">
+                <h4 className="text-sm font-black uppercase text-muted-foreground flex items-center gap-2">
+                  <Users className="h-4 w-4" /> Bill To
+                </h4>
+                <div className="space-y-1">
+                  <p className="text-xl font-bold">{selectedInvoice?.student.name}</p>
+                  <p className="text-sm text-muted-foreground">USN: {selectedInvoice?.student.usn}</p>
+                  <p className="text-sm text-muted-foreground">{selectedInvoice?.student.department}</p>
+                  <p className="text-sm text-muted-foreground">Semester {selectedInvoice?.student.semester}</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <h4 className="text-sm font-black uppercase text-muted-foreground flex items-center gap-2">
+                  <FileText className="h-4 w-4" /> Fee Details
+                </h4>
+                <div className="space-y-1">
+                  <p className="text-xl font-bold">{selectedInvoice?.fee_assignment?.template?.name || 'Custom Assignment'}</p>
+                  <p className="text-sm text-muted-foreground">Type: {selectedInvoice?.fee_assignment?.template?.fee_type || 'Annual'}</p>
+                  <p className="text-sm text-muted-foreground">Academic Year: {selectedInvoice?.academic_year}</p>
+                  <p className="text-sm font-bold text-red-500">Due Date: {selectedInvoice?.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-muted/30 rounded-2xl p-6 grid grid-cols-3 gap-6">
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground uppercase font-bold">Total Amount</p>
+                <p className="text-2xl font-black">{formatCurrency(selectedInvoice?.total_amount || 0)}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground uppercase font-bold">Total Paid</p>
+                <p className="text-2xl font-black text-green-600">{formatCurrency(selectedInvoice?.paid_amount || 0)}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground uppercase font-bold">Outstanding</p>
+                <p className="text-2xl font-black text-red-600">{formatCurrency(selectedInvoice?.pending_amount || 0)}</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-sm font-black uppercase text-muted-foreground flex items-center gap-2">
+                <CreditCard className="h-4 w-4" /> Transaction History
+              </h4>
+              {payments.length === 0 ? (
+                <div className="bg-muted/10 rounded-xl p-8 text-center border border-dashed">
+                  <p className="text-sm text-muted-foreground">No payments recorded for this invoice</p>
+                </div>
+              ) : (
+                <div className="border rounded-xl overflow-hidden">
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-muted/50">
                       <TableRow>
                         <TableHead>Date</TableHead>
-                        <TableHead>Amount</TableHead>
                         <TableHead>Method</TableHead>
                         <TableHead>Transaction ID</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {payments.map((payment) => (
-                        <TableRow key={payment.id}>
-                          <TableCell>{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
-                          <TableCell className="font-semibold text-green-600">
-                            {formatCurrency(payment.amount)}
-                          </TableCell>
-                          <TableCell>{payment.payment_method}</TableCell>
-                          <TableCell>{payment.transaction_id || 'N/A'}</TableCell>
-                          <TableCell>
-                            <Badge variant={payment.status === 'completed' ? 'default' : 'secondary'}>
-                              {payment.status}
-                            </Badge>
-                          </TableCell>
+                      {payments.map(p => (
+                        <TableRow key={p.id}>
+                          <TableCell className="text-xs">{new Date(p.payment_date).toLocaleDateString()}</TableCell>
+                          <TableCell className="text-xs uppercase font-bold">{p.payment_method}</TableCell>
+                          <TableCell className="text-xs font-mono">{p.transaction_id || '-'}</TableCell>
+                          <TableCell className="text-right font-bold text-green-600">{formatCurrency(p.amount)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button variant="outline" onClick={() => setIsDetailsDialogOpen(false)}>
-                  Close
-                </Button>
-                <Button onClick={() => downloadInvoice(selectedInvoice.id)}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download PDF
-                </Button>
-                {selectedInvoice.status !== 'paid' && (
-                  <Button onClick={() => sendInvoiceReminder(selectedInvoice.id)}>
-                    <Mail className="h-4 w-4 mr-2" />
-                    Send Reminder
-                  </Button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
-          )}
+
+            <div className="flex gap-4 pt-4">
+              <Button className="flex-1 h-12 text-lg font-bold" onClick={() => downloadInvoice(selectedInvoice?.id || 0)}>
+                <Download className="h-5 w-5 mr-2" /> Download Statement
+              </Button>
+              <Button variant="outline" className="h-12 px-8" onClick={() => setIsDetailsDialogOpen(false)}>Close</Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
