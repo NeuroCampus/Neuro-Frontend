@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Building2, Users, Grid3X3, Shield, AlertCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Building2, Users, Grid3X3, Shield, AlertCircle, Eye } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
 import { useTheme } from "../../context/ThemeContext";
 import { useHMSContext } from "../../context/HMSContext";
@@ -11,6 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+} from "@/components/ui/dialog";
 import DashboardCard from "../common/DashboardCard";
 import { 
   SkeletonPageHeader, 
@@ -35,6 +42,12 @@ interface Room {
   capacity: number;
   student_count: number;
   floor?: number;
+  residents?: {
+    id: number;
+    name: string;
+    usn: string;
+    branch_name: string;
+  }[];
 }
 
 interface Stats {
@@ -55,6 +68,8 @@ const HMSOverview = () => {
   const [selectedHostel, setSelectedHostel] = useState<number | null>(null);
   const [selectedFloor, setSelectedFloor] = useState<string>("");
   const [availableFloors, setAvailableFloors] = useState<number[]>([]);
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Map backend stats to component stats
   const stats = {
@@ -307,16 +322,24 @@ const HMSOverview = () => {
                             key={room.id}
                             variants={itemVariants}
                             whileHover={{ scale: 1.05 }}
-                            className={`p-3 rounded-lg border text-center transition-all ${getRoomColor(
+                            onClick={() => {
+                              setSelectedRoom(room);
+                              setIsDialogOpen(true);
+                            }}
+                            className={`p-3 rounded-lg border text-center transition-all cursor-pointer ${getRoomColor(
                               room.student_count,
                               room.capacity
-                            )} font-medium shadow-sm`}
-                            title={`${room.room_number}: ${room.student_count}/${room.capacity}`}
+                            )} font-medium shadow-sm hover:shadow-md`}
+                            title={`${room.room_number}: ${room.student_count}/${room.capacity} students. Click to view.`}
                           >
                             <div className="text-[10px] opacity-70 mb-1">ROOM</div>
                             <div className="text-sm font-bold">{room.room_number}</div>
                             <div className="text-[10px] mt-1 font-bold">
                               {room.student_count}/{room.capacity}
+                            </div>
+                            <div className="mt-2 pt-2 border-t border-current/10 flex items-center justify-center gap-1 text-[12px] uppercase tracking-wider font-bold opacity-60 group-hover:opacity-100 transition-all">
+                              <Eye size={15} />
+                              <span>View</span>
                             </div>
                           </motion.div>
                         ))}
@@ -336,6 +359,54 @@ const HMSOverview = () => {
           )}
         </div>
       </div>
+
+      {/* Room Details Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="w-[92vw] max-w-[400px] sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${selectedRoom ? getRoomColor(selectedRoom.student_count, selectedRoom.capacity).split(' ')[0].replace('/10', '') : ''}`} />
+              Room {selectedRoom?.room_number} Residents
+            </DialogTitle>
+            <DialogDescription>
+              {selectedRoom?.student_count} of {selectedRoom?.capacity} beds occupied.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-2">
+            {selectedRoom?.residents && selectedRoom.residents.length > 0 ? (
+              <div className="grid gap-3">
+                {selectedRoom.residents.map((resident) => (
+                  <div 
+                    key={resident.id} 
+                    className="flex items-center justify-between p-3 rounded-xl border bg-muted/30"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                        {resident.name.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold">{resident.name}</div>
+                        <div className="text-[10px] text-muted-foreground uppercase tracking-tight">
+                          {resident.branch_name}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-[10px] font-mono bg-muted px-2 py-1 rounded border">
+                      {resident.usn}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Users size={32} className="mx-auto mb-2 opacity-20" />
+                <p>No residents assigned to this room.</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 };

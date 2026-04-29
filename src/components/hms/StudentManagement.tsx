@@ -306,7 +306,6 @@ const StudentManagement: React.FC = () => {
                           <TableCell>
                             {student.room_name ? (
                               <div className="flex items-center gap-2">
-                                <Building2 size={14} className="text-primary" />
                                 <span className="text-sm">{student.room_hostel_name} - {student.room_name}</span>
                               </div>
                             ) : (

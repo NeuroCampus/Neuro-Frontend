@@ -128,7 +128,7 @@ const Navbar = ({ role, user, onNotificationClick, setPage, showHamburger = fals
             {currentTime.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
           </div>
           <div className="text-[10px] opacity-70">
-            {currentTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            {currentTime.toLocaleTimeString('en-US', { hour: "2-digit", minute: "2-digit", hour12: true })}
           </div>
         </div>
 

@@ -12,6 +12,7 @@ import { Plus, Edit2, Trash2, Building, Search, User, Shield } from 'lucide-reac
 import { SkeletonTable } from '../ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { useHMSContext } from '../../context/HMSContext';
+import Swal from 'sweetalert2';
 
 interface Warden {
   id: number;
@@ -60,7 +61,17 @@ const HostelManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm('Are you sure you want to delete this hostel?')) {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+    });
+
+    if (result.isConfirmed) {
       try {
         const response = await manageHostels(undefined, id, 'DELETE');
         if (response.success) {

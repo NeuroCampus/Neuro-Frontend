@@ -38,6 +38,7 @@ const WardenDashboardContent = ({ user }: WardenDashboardProps) => {
         return <WardenIssueManagement />;
       case "students":
       case "rooms":
+      case "residents":
         return <WardenHostelOverview />;
       default:
         return <WardenDashboardOverview />;
