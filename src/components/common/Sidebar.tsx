@@ -365,6 +365,7 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
       { name: "Menu Management", page: "menu-management" },
       { name: "Today's Menu", page: "student-meals" },
       { name: "Issue Tracking", page: "issues" },
+      { name: "Profile", page: "profile" },
     ],
     warden: [
       { name: "Dashboard", page: "dashboard" },

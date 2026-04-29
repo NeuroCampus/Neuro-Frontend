@@ -4,6 +4,7 @@ import DashboardLayout from "../common/DashboardLayout";
 import WardenDashboardOverview from "../warden/WardenDashboard";
 import WardenIssueManagement from "../warden/WardenIssueManagement";
 import WardenHostelOverview from "../warden/WardenHostelOverview";
+import WardenProfile from "../warden/WardenProfile";
 import { HMSProvider } from "../../context/HMSContext";
 import { AcademicProvider } from "../../context/AcademicContext";
 
@@ -40,6 +41,8 @@ const WardenDashboardContent = ({ user }: WardenDashboardProps) => {
       case "rooms":
       case "residents":
         return <WardenHostelOverview />;
+      case "profile":
+        return <WardenProfile user={user} />;
       default:
         return <WardenDashboardOverview />;
     }

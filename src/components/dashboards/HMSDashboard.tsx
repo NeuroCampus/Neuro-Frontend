@@ -10,6 +10,7 @@ import Enrollment from "../hms/Enrollment";
 import StaffManagementOverview from "../hms/StaffManagementOverview";
 import MenuManagement from "../hms/MenuManagement";
 import IssueTracking from "../hms/IssueTracking";
+import HMSProfile from "../hms/HMSProfile";
 import StudentMealManagement from "../hms/StudentMealManagement";
 import { useToast } from "../../hooks/use-toast";
 import { logoutUser } from "../../utils/authService";
@@ -86,6 +87,8 @@ const HMSDashboardContent = ({ user, setPage }: HMSDashboardProps) => {
           );
         }
         return null;
+      case "profile":
+        return <HMSProfile user={user} />;
       default:
         return <HMSOverview />;
     }
