@@ -7,9 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
-  Users, 
-  Filter, 
-  Play, 
   CheckCircle2, 
   AlertTriangle, 
   BarChart3, 
@@ -17,9 +14,16 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
-  Zap
+  Zap,
+  CheckCircle,
+  MousePointer2,
+  LayoutGrid,
+  Filter,
+  Users,
+  Play
 } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "@/context/ThemeContext";
 
 interface FilterData {
   batches: { id: number; name: string }[];
@@ -35,6 +39,7 @@ interface FeeTemplate {
 }
 
 const BulkAssignment: React.FC = () => {
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [fetchingStats, setFetchingStats] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -251,29 +256,39 @@ const BulkAssignment: React.FC = () => {
     selectedFilters.admissionMode;
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto p-4 md:p-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Bulk Fee Assignment</h1>
-          <p className="text-muted-foreground mt-1">Mass assign fee templates to specific student cohorts</p>
-        </div>
-      </div>
+    <div>
+      <Card>
+        <CardHeader className="border-b bg-muted/20 pb-6 px-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="text-2xl font-semibold flex items-center gap-2">
+                Bulk Fee Assignment
+              </CardTitle>
+              <p className="text-muted-foreground mt-1 text-sm">Mass assign fee templates to specific student cohorts</p>
+            </div>
+          </div>
+        </CardHeader>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left Sidebar - Filters */}
-        <Card className="lg:col-span-1 border-border/50 shadow-sm h-fit sticky top-6">
-          <CardHeader className="bg-muted/30 pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              Cascading Filters
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 pt-6">
+        <CardContent className="p-6">
+          {/* Operational Safety Note */}
+          <div className="mb-8 p-4 bg-primary/5 rounded-xl border border-primary/10">
+            <h4 className="text-sm font-semibold text-primary flex items-center gap-2 mb-1">
+              Note: Operational Safety
+            </h4>
+            <p className="text-[13px] text-muted-foreground leading-relaxed">
+              The bulk assignment engine validates each student against the target template and academic year. 
+              If an assignment already exists for a student, the system will automatically skip it to prevent 
+              duplicate invoices, ensuring your financial records remain consistent and error-free.
+            </p>
+          </div>
+
+          {/* Filters Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
             <div className="space-y-2">
-              <Label>Batch</Label>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Batch</Label>
               <Select value={selectedFilters.batchId} onValueChange={(val) => setSelectedFilters(p => ({ ...p, batchId: val }))}>
                 <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Select Batch" />
+                  <SelectValue placeholder="All Batches" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all_batches">All Batches</SelectItem>
@@ -283,10 +298,14 @@ const BulkAssignment: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Branch</Label>
-              <Select value={selectedFilters.branchId} onValueChange={(val) => setSelectedFilters(p => ({ ...p, branchId: val }))}>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Branch</Label>
+              <Select 
+                value={selectedFilters.branchId} 
+                onValueChange={(val) => setSelectedFilters(p => ({ ...p, branchId: val }))}
+                disabled={!selectedFilters.batchId}
+              >
                 <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Select Branch" />
+                  <SelectValue placeholder="All Branches" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all_branches">All Branches</SelectItem>
@@ -295,52 +314,47 @@ const BulkAssignment: React.FC = () => {
               </Select>
             </div>
 
-            <AnimatePresence>
-              {selectedFilters.branchId && selectedFilters.branchId !== 'all_branches' && (
-                <motion.div 
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="space-y-4 overflow-hidden"
-                >
-                  <div className="space-y-2">
-                    <Label>Semester</Label>
-                    <Select value={selectedFilters.semesterId} onValueChange={(val) => setSelectedFilters(p => ({ ...p, semesterId: val }))}>
-                      <SelectTrigger className="bg-background">
-                        <SelectValue placeholder="Select Semester" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {semesters.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  {selectedFilters.semesterId && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      className="space-y-2"
-                    >
-                      <Label>Section</Label>
-                      <Select value={selectedFilters.sectionId} onValueChange={(val) => setSelectedFilters(p => ({ ...p, sectionId: val }))}>
-                        <SelectTrigger className="bg-background">
-                          <SelectValue placeholder="Select Section" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sections.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </motion.div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Semester</Label>
+              <Select 
+                value={selectedFilters.semesterId} 
+                onValueChange={(val) => setSelectedFilters(p => ({ ...p, semesterId: val }))}
+                disabled={!selectedFilters.branchId}
+              >
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Semester" />
+                </SelectTrigger>
+                <SelectContent>
+                  {semesters.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
 
             <div className="space-y-2">
-              <Label>Admission Mode</Label>
-              <Select value={selectedFilters.admissionMode} onValueChange={(val) => setSelectedFilters(p => ({ ...p, admissionMode: val }))}>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Section</Label>
+              <Select 
+                value={selectedFilters.sectionId} 
+                onValueChange={(val) => setSelectedFilters(p => ({ ...p, sectionId: val }))}
+                disabled={!selectedFilters.semesterId}
+              >
                 <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Select Mode" />
+                  <SelectValue placeholder="Section" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sections.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Admission Mode</Label>
+              <Select 
+                value={selectedFilters.admissionMode} 
+                onValueChange={(val) => setSelectedFilters(p => ({ ...p, admissionMode: val }))}
+                disabled={!selectedFilters.sectionId}
+              >
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Admission" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all_modes">All Modes</SelectItem>
@@ -348,162 +362,169 @@ const BulkAssignment: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
+          </div>
 
-            <Button 
-              variant="ghost" 
-              className="w-full text-xs" 
-              onClick={() => setSelectedFilters({
-                batchId: '', branchId: '', semesterId: '', sectionId: '', admissionMode: ''
-              })}
-            >
-              Clear All Filters
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Right Content - Execution Area */}
-        <div className="lg:col-span-3 space-y-6">
-          <Card className="border-border/50 shadow-sm overflow-hidden">
-            <CardHeader className="bg-muted/10">
-              <CardTitle className="text-xl flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-primary" />
-                Assignment Scope
-              </CardTitle>
-              <CardDescription>
-                Define the criteria and template for bulk fee generation
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-8">
-              {!allFiltersSelected ? (
-                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground italic bg-muted/5 rounded-xl border-2 border-dashed border-border/50">
-                  <Users className="h-16 w-16 mb-4 opacity-20" />
-                  <p className="text-lg">Select all cascading filters to calculate target students</p>
+          {!allFiltersSelected ? (
+            <div className="h-[400px] flex flex-col items-center justify-center bg-muted/5 px-6 text-center rounded-xl border border-dashed">
+              <div className="relative mb-6">
+                <div className="absolute -top-4 -right-4 bg-primary/10 p-3 rounded-full animate-bounce">
+                  <MousePointer2 className="h-3 w-3 text-primary" />
                 </div>
-              ) : (
-                <div className="space-y-8 max-w-2xl mx-auto">
-                  {/* Student Count Display */}
-                  <div className="flex flex-col items-center p-8 bg-primary/5 rounded-2xl border border-primary/10 text-center">
-                    {fetchingStats ? (
-                      <div className="animate-pulse space-y-2">
-                        <div className="h-10 w-24 bg-primary/20 rounded-lg mx-auto"></div>
-                        <div className="h-4 w-48 bg-muted rounded"></div>
+                <div className="bg-muted/20 p-8 rounded-2xl border-2 border-dashed border-muted">
+                  <Filter className="h-7 w-7 text-muted-foreground/30" />
+                </div>
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">Selection Required</h3>
+              <p className="text-muted-foreground max-w-sm mb-8">
+                Please complete the cascading filter selection above to calculate the target student scope.
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 w-full max-w-2xl">
+                {[
+                  { label: 'Batch', active: !!selectedFilters.batchId },
+                  { label: 'Branch', active: !!selectedFilters.branchId },
+                  { label: 'Semester', active: !!selectedFilters.semesterId },
+                  { label: 'Section', active: !!selectedFilters.sectionId },
+                  { label: 'Admission', active: !!selectedFilters.admissionMode },
+                ].map((step, i) => (
+                  <div key={step.label} className="flex flex-col items-center gap-2">
+                    <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-semibold border-2 transition-all ${step.active ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-background border-muted text-muted-foreground'
+                      }`}>
+                      {step.active ? <CheckCircle className="h-4 w-4" /> : i + 1}
+                    </div>
+                    <span className={`text-[10px] font-semibold uppercase tracking-wider ${step.active ? 'text-primary' : 'text-muted-foreground'}`}>
+                      {step.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              {/* Assignment Scope */}
+              <div className="max-w-4xl mx-auto space-y-8">
+                <div className="flex flex-col items-center p-10 bg-primary/5 rounded-2xl border border-primary/10 text-center shadow-inner">
+                  {fetchingStats ? (
+                    <div className="animate-pulse space-y-4">
+                      <div className="h-16 w-32 bg-primary/20 rounded-xl mx-auto"></div>
+                      <div className="h-4 w-64 bg-muted rounded mx-auto"></div>
+                    </div>
+                  ) : (
+                    <motion.div 
+                      initial={{ scale: 0.95, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="space-y-3"
+                    >
+                      <div className="text-6xl font-black text-primary tracking-tighter">{studentCount}</div>
+                      <div className="text-xl font-semibold text-foreground">Target Students Identified</div>
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground bg-background/50 px-4 py-2 rounded-full border">
+                        <Users className="h-4 w-4" />
+                        <span>
+                          {filterData.branches.find(b => b.id.toString() === selectedFilters.branchId)?.name} • 
+                          Sem {semesters.find(s => s.id.toString() === selectedFilters.semesterId)?.number}
+                        </span>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Assignment Form */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 border rounded-2xl bg-muted/10 shadow-sm">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold flex items-center gap-2">
+                      <LayoutGrid className="h-4 w-4 text-primary" />
+                      Select Fee Template
+                    </Label>
+                    <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                      <SelectTrigger className="h-12 bg-background border-border/50 text-md">
+                        <SelectValue placeholder="Choose a template" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {templates.map(t => (
+                          <SelectItem key={t.id} value={t.id.toString()} className="py-3">
+                            <div className="flex flex-col">
+                              <span className="font-semibold">{t.name}</span>
+                              <span className="text-xs text-muted-foreground font-semibold">{formatCurrency(t.total_amount)}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[13px] text-muted-foreground px-1">Select the fee structure to be applied to all students above.</p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4 text-primary" />
+                      Academic Year
+                    </Label>
+                    <Input 
+                      value={academicYear} 
+                      onChange={(e) => setAcademicYear(e.target.value)}
+                      className="h-12 bg-background border-border/50 text-lg font-semibold"
+                      placeholder="e.g., 2024-25"
+                    />
+                    <p className="text-[13px] text-muted-foreground px-1">Specify the billing period for these assignments.</p>
+                  </div>
+                </div>
+
+                {/* Action Section */}
+                <div className="space-y-4">
+                  <Button 
+                    className="w-full h-14 text-md font-semibold shadow-lg hover:shadow-primary/20 transition-all group relative overflow-hidden"
+                    disabled={!selectedTemplate || loading || studentCount === 0}
+                    onClick={handleBulkAssign}
+                  >
+                    {loading ? (
+                      <div className="flex items-center gap-3">
+                        <Zap className="h-6 w-6 animate-pulse text-yellow-400" />
+                        <span>Executing Mass Assignment...</span>
                       </div>
                     ) : (
-                      <motion.div 
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="space-y-2"
-                      >
-                        <div className="text-5xl font-extrabold text-primary">{studentCount}</div>
-                        <div className="text-lg font-medium text-foreground">Students in current selection</div>
-                        <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                          Found in {filterData.branches.find(b => b.id.toString() === selectedFilters.branchId)?.name}, 
-                          Sem {semesters.find(s => s.id.toString() === selectedFilters.semesterId)?.number}
-                        </p>
-                      </motion.div>
+                      <div className="flex items-center gap-3">
+                        <Play className="h-6 w-6 group-hover:scale-110 transition-transform fill-current" />
+                        <span>Start Bulk Assignment</span>
+                      </div>
                     )}
+                  </Button>
+
+                  <div className="flex items-center justify-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-widest bg-muted/20 py-3 rounded-lg border border-dashed border-border/50">
+                    <ShieldCheck className="h-4 w-4 text-primary" />
+                    Atomic Transaction Secure • Zero-Collision Duplication Check
                   </div>
-
-                  {/* Assignment Form */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 border rounded-xl bg-card shadow-sm">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Select Fee Template</Label>
-                      <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                        <SelectTrigger className="h-11">
-                          <SelectValue placeholder="Choose a template" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {templates.map(t => (
-                            <SelectItem key={t.id} value={t.id.toString()}>
-                              {t.name} ({formatCurrency(t.total_amount)})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Academic Year</Label>
-                      <Input 
-                        value={academicYear} 
-                        onChange={(e) => setAcademicYear(e.target.value)}
-                        className="h-11"
-                        placeholder="e.g., 2024-25"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Action Button */}
-                  <div className="flex flex-col gap-4 pt-4">
-                    <Button 
-                      className="w-full h-14 text-lg font-bold shadow-lg hover:shadow-xl transition-all"
-                      disabled={!selectedTemplate || loading || studentCount === 0}
-                      onClick={handleBulkAssign}
-                    >
-                      {loading ? (
-                        <>
-                          <Zap className="h-5 w-5 mr-2 animate-bounce" />
-                          Processing Bulk Assignments...
-                        </>
-                      ) : (
-                        <>
-                          <Play className="h-5 w-5 mr-2 fill-current" />
-                          Assign {templates.find(t => t.id.toString() === selectedTemplate)?.name} to {studentCount} Students
-                        </>
-                      )}
-                    </Button>
-
-                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground italic">
-                      <ShieldCheck className="h-4 w-4" />
-                      Atomic transaction enabled: All or nothing assignment logic
-                    </div>
-                  </div>
-
-                  {/* Status Alerts */}
-                  <AnimatePresence>
-                    {error && (
-                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                        <Alert variant="destructive" className="border-2">
-                          <AlertTriangle className="h-4 w-4" />
-                          <AlertDescription>{error}</AlertDescription>
-                        </Alert>
-                      </motion.div>
-                    )}
-                    {success && (
-                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                        <Alert className="border-green-500 bg-green-500/5 text-green-700 dark:text-green-400 border-2">
-                          <CheckCircle2 className="h-5 w-5" />
-                          <AlertDescription className="flex items-center justify-between w-full font-medium">
-                            <span>Successfully created {success.created} fee assignments!</span>
-                            <span className="text-xs opacity-70">({success.skipped} skipped duplicates)</span>
-                          </AlertDescription>
-                        </Alert>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
                 </div>
-              )}
-            </CardContent>
-          </Card>
 
-          {/* Quick Info Card */}
-          <Card className="bg-primary/5 border-none">
-            <CardContent className="p-6 flex items-start gap-4">
-              <div className="bg-primary/10 p-3 rounded-full">
-                <Zap className="h-6 w-6 text-primary" />
+                {/* Status Alerts */}
+                <AnimatePresence>
+                  {error && (
+                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
+                      <Alert variant="destructive" className="border-2 shadow-lg">
+                        <AlertTriangle className="h-5 w-5" />
+                        <AlertDescription className="font-semibold">{error}</AlertDescription>
+                      </Alert>
+                    </motion.div>
+                  )}
+                  {success && (
+                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
+                      <Alert className="border-green-500/50 bg-green-500/5 text-green-700 dark:text-green-400 border-2 shadow-lg py-6">
+                        <CheckCircle2 className="h-8 w-8" />
+                        <div className="ml-4 flex flex-col gap-1 w-full">
+                          <AlertDescription className="text-lg font-black uppercase tracking-tight">
+                            Mass Assignment Successful!
+                          </AlertDescription>
+                          <div className="flex items-center justify-between text-sm font-semibold opacity-80">
+                            <span>{success.created} students assigned successfully</span>
+                            <Badge variant="outline" className="border-green-500/30">{success.skipped} duplicates skipped</Badge>
+                          </div>
+                        </div>
+                      </Alert>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-              <div>
-                <h4 className="font-bold text-foreground">How it works</h4>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Bulk assignment will iterate through all {studentCount || 'target'} students in the selected group and attach the 
-                  chosen fee template. It automatically skips students who already have this specific fee assigned for the 
-                  current academic year to prevent duplicates.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

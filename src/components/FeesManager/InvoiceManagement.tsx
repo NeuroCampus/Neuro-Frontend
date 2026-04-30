@@ -22,9 +22,14 @@ import {
   Users,
   ChevronRight,
   TrendingUp,
-  CreditCard
+  CreditCard,
+  LayoutGrid,
+  MousePointer2,
+  CheckCircle2 as CheckIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
+import { useTheme } from "@/context/ThemeContext";
+import DashboardCard from '@/components/common/DashboardCard';
 
 interface Invoice {
   id: number;
@@ -69,6 +74,7 @@ interface FilterData {
 }
 
 const InvoiceManagement: React.FC = () => {
+  const { theme } = useTheme();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [invoicesMeta, setInvoicesMeta] = useState<any | null>(null);
   const [statsData, setStatsData] = useState<any | null>(null);
@@ -290,7 +296,14 @@ const InvoiceManagement: React.FC = () => {
       setPayments(normalizedPayments);
       setIsDetailsDialogOpen(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch invoice details');
+      const msg = err instanceof Error ? err.message : 'Failed to fetch invoice details';
+      setError(msg);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: msg
+      });
+      console.error("fetchInvoiceDetails error:", err);
     }
   };
 
@@ -379,29 +392,55 @@ const InvoiceManagement: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto p-4 md:p-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Invoice Management</h1>
-          <p className="text-muted-foreground mt-1">Track and manage student fee payments and collections</p>
-        </div>
-      </div>
+    <div>
+      <Card>
+        <CardHeader className="border-b bg-muted/20 pb-6 px-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <CardTitle>
+                Invoice Management
+              </CardTitle>
+              <p className="text-muted-foreground mt-1 text-sm">Track and manage student fee payments and collections</p>
+            </div>
+          </div>
+        </CardHeader>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left Sidebar - Cascading Filters */}
-        <Card className="lg:col-span-1 border-border/50 shadow-sm h-fit sticky top-6">
-          <CardHeader className="bg-muted/30 pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              Cohort Filters
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 pt-6">
+        <CardContent className="p-6">
+          {/* Stats Overview */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <DashboardCard
+              title="Total Invoices"
+              value={statsData?.total_invoices || 0}
+              description="Generated for this session"
+              icon={<FileText className="h-5 w-5" />}
+            />
+            <DashboardCard
+              title="Collection"
+              value={formatCurrency((statsData?.total_revenue_cents || 0) / 100)}
+              description="Total revenue collected"
+              icon={<TrendingUp className="h-5 w-5" />}
+            />
+            <DashboardCard
+              title="Outstanding"
+              value={formatCurrency((statsData?.outstanding_amount_cents || 0) / 100)}
+              description="Pending fee balance"
+              icon={<Clock className="h-5 w-5" />}
+            />
+            <DashboardCard
+              title="Active Templates"
+              value={statsData?.active_templates || 0}
+              description="Templates currently assigned"
+              icon={<Users className="h-5 w-5" />}
+            />
+          </div>
+
+          {/* Cascading Filters Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
             <div className="space-y-2">
-              <Label>Batch</Label>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Batch</Label>
               <Select value={selectedFilters.batchId} onValueChange={(val) => setSelectedFilters(p => ({ ...p, batchId: val }))}>
                 <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Select Batch" />
+                  <SelectValue placeholder="All Batches" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all_batches">All Batches</SelectItem>
@@ -411,10 +450,14 @@ const InvoiceManagement: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Branch</Label>
-              <Select value={selectedFilters.branchId} onValueChange={(val) => setSelectedFilters(p => ({ ...p, branchId: val }))}>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Branch</Label>
+              <Select 
+                value={selectedFilters.branchId} 
+                onValueChange={(val) => setSelectedFilters(p => ({ ...p, branchId: val }))}
+                disabled={!selectedFilters.batchId}
+              >
                 <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Select Branch" />
+                  <SelectValue placeholder="All Branches" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all_branches">All Branches</SelectItem>
@@ -423,42 +466,47 @@ const InvoiceManagement: React.FC = () => {
               </Select>
             </div>
 
-            <AnimatePresence>
-              {selectedFilters.branchId && selectedFilters.branchId !== 'all_branches' && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="space-y-4 overflow-hidden">
-                  <div className="space-y-2">
-                    <Label>Semester</Label>
-                    <Select value={selectedFilters.semesterId} onValueChange={(val) => setSelectedFilters(p => ({ ...p, semesterId: val }))}>
-                      <SelectTrigger className="bg-background">
-                        <SelectValue placeholder="Select Semester" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {semesters.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {selectedFilters.semesterId && (
-                    <div className="space-y-2">
-                      <Label>Section</Label>
-                      <Select value={selectedFilters.sectionId} onValueChange={(val) => setSelectedFilters(p => ({ ...p, sectionId: val }))}>
-                        <SelectTrigger className="bg-background">
-                          <SelectValue placeholder="Select Section" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sections.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Semester</Label>
+              <Select 
+                value={selectedFilters.semesterId} 
+                onValueChange={(val) => setSelectedFilters(p => ({ ...p, semesterId: val }))}
+                disabled={!selectedFilters.branchId}
+              >
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Semester" />
+                </SelectTrigger>
+                <SelectContent>
+                  {semesters.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
 
             <div className="space-y-2">
-              <Label>Admission Mode</Label>
-              <Select value={selectedFilters.admissionMode} onValueChange={(val) => setSelectedFilters(p => ({ ...p, admissionMode: val }))}>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Section</Label>
+              <Select 
+                value={selectedFilters.sectionId} 
+                onValueChange={(val) => setSelectedFilters(p => ({ ...p, sectionId: val }))}
+                disabled={!selectedFilters.semesterId}
+              >
                 <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Select Mode" />
+                  <SelectValue placeholder="Section" />
+                </SelectTrigger>
+                <SelectContent className="h-60">
+                  {sections.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Admission Mode</Label>
+              <Select 
+                value={selectedFilters.admissionMode} 
+                onValueChange={(val) => setSelectedFilters(p => ({ ...p, admissionMode: val }))}
+                disabled={!selectedFilters.sectionId}
+              >
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Admission" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all_modes">All Modes</SelectItem>
@@ -466,103 +514,47 @@ const InvoiceManagement: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-
-            <Button 
-              variant="outline" 
-              className="w-full text-xs" 
-              onClick={() => setSelectedFilters({
-                batchId: '', branchId: '', semesterId: '', sectionId: '', admissionMode: '', status: 'all', search: ''
-              })}
-            >
-              Reset All
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Right Content */}
-        <div className="lg:col-span-3 space-y-6">
-          {/* Stats Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="border-l-4 border-l-blue-500 shadow-sm">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Invoices</p>
-                  <p className="text-2xl font-bold">{statsData?.total_invoices || 0}</p>
-                </div>
-                <div className="bg-blue-100 p-2 rounded-lg"><FileText className="h-5 w-5 text-blue-600" /></div>
-              </CardContent>
-            </Card>
-            <Card className="border-l-4 border-l-green-500 shadow-sm">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Collection</p>
-                  <p className="text-2xl font-bold">{formatCurrency((statsData?.total_revenue_cents || 0) / 100)}</p>
-                </div>
-                <div className="bg-green-100 p-2 rounded-lg"><TrendingUp className="h-5 w-5 text-green-600" /></div>
-              </CardContent>
-            </Card>
-            <Card className="border-l-4 border-l-red-500 shadow-sm">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Outstanding</p>
-                  <p className="text-2xl font-bold">{formatCurrency((statsData?.outstanding_amount_cents || 0) / 100)}</p>
-                </div>
-                <div className="bg-red-100 p-2 rounded-lg"><Clock className="h-5 w-5 text-red-600" /></div>
-              </CardContent>
-            </Card>
-            <Card className="border-l-4 border-l-amber-500 shadow-sm">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Templates</p>
-                  <p className="text-2xl font-bold">{statsData?.active_templates || 0}</p>
-                </div>
-                <div className="bg-amber-100 p-2 rounded-lg"><Users className="h-5 w-5 text-amber-600" /></div>
-              </CardContent>
-            </Card>
           </div>
 
-          {/* Table Controls */}
-          <Card className="border-border/50 shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex flex-col md:flex-row gap-4 items-center">
-                <div className="relative flex-1 w-full">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    placeholder="Search USN, Name or Invoice #..." 
-                    className="pl-9 h-11"
-                    value={selectedFilters.search}
-                    onChange={(e) => setSelectedFilters(p => ({ ...p, search: e.target.value }))}
-                  />
-                </div>
-                <Select value={selectedFilters.status} onValueChange={(val) => setSelectedFilters(p => ({ ...p, status: val }))}>
-                  <SelectTrigger className="w-full md:w-[180px] h-11">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="paid">Paid</SelectItem>
-                    <SelectItem value="unpaid">Unpaid</SelectItem>
-                    <SelectItem value="partially_paid">Partial</SelectItem>
-                    <SelectItem value="overdue">Overdue</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Search and Secondary Filter Row */}
+          <div className="flex flex-col md:flex-row gap-4 items-center mb-8 bg-muted/20 p-4 rounded-xl border border-border/50">
+            <div className="relative flex-1 w-full group">
+              <Search className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <Input 
+                placeholder="Search USN, Name or Invoice #..." 
+                className="pl-10 h-12 bg-background border-border/50 shadow-sm transition-all focus:ring-2 focus:ring-primary/20"
+                value={selectedFilters.search}
+                onChange={(e) => setSelectedFilters(p => ({ ...p, search: e.target.value }))}
+              />
+            </div>
+            <div className="w-full md:w-[220px]">
+              <Select value={selectedFilters.status} onValueChange={(val) => setSelectedFilters(p => ({ ...p, status: val }))}>
+                <SelectTrigger className="h-12 bg-background border-border/50 shadow-sm font-semibold">
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Invoices</SelectItem>
+                  <SelectItem value="paid">Fully Paid</SelectItem>
+                  <SelectItem value="unpaid">Unpaid Invoices</SelectItem>
+                  <SelectItem value="partially_paid">Partial Payments</SelectItem>
+                  <SelectItem value="overdue">Overdue</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
           {/* Table Area */}
-          <Card className="border-border/50 shadow-sm overflow-hidden">
+          <div className="rounded-xl border border-border/50 overflow-hidden bg-card/30">
             <Table>
               <TableHeader className="bg-muted/30">
-                <TableRow>
-                  <TableHead className="w-[120px]">Invoice #</TableHead>
-                  <TableHead>Student Details</TableHead>
-                  <TableHead>Fee Type</TableHead>
-                  <TableHead className="text-right">Total Amount</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
-                  <TableHead>Mode</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="font-semibold py-4 px-6 text-foreground h-12">Invoice Info</TableHead>
+                  <TableHead className="font-semibold text-foreground h-12">Student Details</TableHead>
+                  <TableHead className="font-semibold text-foreground h-12">Template Details</TableHead>
+                  <TableHead className="text-right font-semibold text-foreground h-12">Total</TableHead>
+                  <TableHead className="text-right font-semibold text-foreground h-12">Pending</TableHead>
+                  <TableHead className="text-center font-semibold text-foreground h-12">Status</TableHead>
+                  <TableHead className="text-right font-semibold pr-6 text-foreground h-12">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -570,70 +562,121 @@ const InvoiceManagement: React.FC = () => {
                   Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i}>
                       {Array.from({ length: 7 }).map((_, j) => (
-                        <TableCell key={j}><div className="h-4 bg-muted animate-pulse rounded"></div></TableCell>
+                        <TableCell key={j} className="py-5"><div className="h-4 bg-muted animate-pulse rounded mx-2"></div></TableCell>
                       ))}
                     </TableRow>
                   ))
                 ) : invoices.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-48 text-center">
-                      <div className="flex flex-col items-center justify-center space-y-3 py-8">
-                        <Filter className="h-12 w-12 text-muted-foreground opacity-20" />
-                        <div className="space-y-1">
-                          <p className="text-lg font-semibold text-foreground">
-                            {!(selectedFilters.batchId && selectedFilters.branchId && selectedFilters.semesterId && selectedFilters.sectionId && selectedFilters.admissionMode) && selectedFilters.search.length < 3
-                              ? "Select Filters to View Invoices"
-                              : "No Invoices Found"}
+                    <TableCell colSpan={7} className="h-80 text-center">
+                      {! (selectedFilters.batchId && selectedFilters.branchId && selectedFilters.semesterId && selectedFilters.sectionId && selectedFilters.admissionMode) && selectedFilters.search.length < 3 ? (
+                        <div className="flex flex-col items-center justify-center bg-muted/5 p-8 rounded-xl border border-dashed mx-6">
+                           <div className="relative mb-6">
+                            <div className="absolute -top-4 -right-4 bg-primary/10 p-3 rounded-full animate-bounce">
+                              <MousePointer2 className="h-3 w-3 text-primary" />
+                            </div>
+                            <div className="bg-muted/20 p-8 rounded-2xl border-2 border-dashed border-muted">
+                              <Filter className="h-7 w-7 text-muted-foreground/30" />
+                            </div>
+                          </div>
+                          <h3 className="text-lg font-semibold text-foreground mb-2">Selection Required</h3>
+                          <p className="text-muted-foreground max-w-sm mb-8 text-sm">
+                            Please complete the cascading filter selection or search by USN to load invoice data.
                           </p>
-                          <p className="text-sm text-muted-foreground italic">
-                            {!(selectedFilters.batchId && selectedFilters.branchId && selectedFilters.semesterId && selectedFilters.sectionId && selectedFilters.admissionMode) && selectedFilters.search.length < 3
-                              ? "Please select all cascading filters or search by USN to load data"
-                              : "Try adjusting your search or status filters"}
-                          </p>
+                          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 w-full max-w-2xl">
+                            {[
+                              { label: 'Batch', active: !!selectedFilters.batchId },
+                              { label: 'Branch', active: !!selectedFilters.branchId },
+                              { label: 'Semester', active: !!selectedFilters.semesterId },
+                              { label: 'Section', active: !!selectedFilters.sectionId },
+                              { label: 'Admission', active: !!selectedFilters.admissionMode },
+                            ].map((step, i) => (
+                              <div key={step.label} className="flex flex-col items-center gap-2">
+                                <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-semibold border-2 transition-all ${step.active ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-background border-muted text-muted-foreground'
+                                  }`}>
+                                  {step.active ? <CheckIcon className="h-4 w-4" /> : i + 1}
+                                </div>
+                                <span className={`text-[13px] font-semibold uppercase tracking-wider ${step.active ? 'text-primary' : 'text-muted-foreground'}`}>
+                                  {step.label}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center space-y-4 py-12">
+                          <Search className="h-12 w-12 text-muted-foreground opacity-20" />
+                          <div className="space-y-1">
+                            <p className="text-lg font-semibold text-foreground">No Invoices Found</p>
+                            <p className="text-sm text-muted-foreground italic">Try adjusting your filters or search keywords</p>
+                          </div>
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 ) : (
                   invoices.map((inv) => (
-                    <TableRow key={inv.id} className="hover:bg-muted/5 transition-colors">
-                      <TableCell className="font-mono font-bold text-primary">{inv.invoice_number}</TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-foreground">{inv.student.name}</span>
-                          <span className="text-xs text-muted-foreground">{inv.student.usn} • Sem {inv.student.semester}</span>
+                    <TableRow key={inv.id} className="hover:bg-primary/5 transition-all duration-200 border-b border-border/50">
+                      <TableCell className="py-5 px-6 align-middle">
+                        <div className="font-mono font-semibold text-primary tracking-tighter text-sm uppercase">{inv.invoice_number}</div>
+                        <div className="text-[13px] font-semibold text-muted-foreground uppercase tracking-widest mt-1">
+                          {new Date(inv.created_at).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium">{inv.fee_assignment?.template?.name || 'Manual'}</span>
-                          <span className="text-[10px] uppercase text-muted-foreground">{inv.academic_year}</span>
+                      <TableCell className="align-middle">
+                        <div className="font-semibold text-foreground leading-tight">{inv.student.name}</div>
+                        <div className="text-[13px] font-semibold text-muted-foreground font-mono uppercase tracking-tight mt-1">{inv.student.usn} • Sem {inv.student.semester}</div>
+                      </TableCell>
+                      <TableCell className="align-middle">
+                        <div className="font-medium text-sm leading-tight">{inv.fee_assignment?.template?.name || 'Manual Entry'}</div>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <Badge variant="outline" className="text-[11px] uppercase font-semibold tracking-widest h-4 px-1.5 border-border/50">
+                            {inv.fee_assignment?.template?.fee_type || 'Custom'}
+                          </Badge>
+                          <span className="text-[13px] font-semibold text-muted-foreground uppercase">{inv.academic_year}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-right font-bold">{formatCurrency(inv.total_amount)}</TableCell>
-                      <TableCell className="text-right font-bold text-red-600">{formatCurrency(inv.pending_amount)}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-[10px] uppercase opacity-70">
-                          {(inv as any).payment_mode || 'N/A'}
-                        </Badge>
+                      <TableCell className="text-right align-middle">
+                        <div className="font-semibold text-foreground">{formatCurrency(inv.total_amount)}</div>
                       </TableCell>
-                      <TableCell>{getStatusBadge(inv.status)}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right align-middle">
+                        <div className={`font-semibold ${inv.pending_amount > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          {formatCurrency(inv.pending_amount)}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center align-middle">
+                        {getStatusBadge(inv.status)}
+                      </TableCell>
+                      <TableCell className="text-right pr-6 align-middle">
                         <div className="flex justify-end gap-1">
+                          {inv.pending_amount > 0 && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              className="h-9 w-9 text-green-600 hover:bg-green-50 rounded-full transition-all active:scale-95" 
+                              onClick={() => openPaymentDialog(inv)}
+                              title="Record Payment"
+                            >
+                              <IndianRupee className="h-4.5 w-4.5" />
+                            </Button>
+                          )}
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 text-green-600 hover:bg-green-50" 
-                            onClick={() => openPaymentDialog(inv)}
-                            title="Record Payment"
+                            className="h-9 w-9 text-blue-600 hover:bg-blue-50 rounded-full transition-all active:scale-95" 
+                            onClick={() => fetchInvoiceDetails(inv.id)}
+                            title="View Details"
                           >
-                            <IndianRupee className="h-4 w-4" />
+                            <Eye className="h-4.5 w-4.5" />
                           </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-600" onClick={() => fetchInvoiceDetails(inv.id)}>
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-600" onClick={() => downloadInvoice(inv.id)}>
-                            <Download className="h-4 w-4" />
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-9 w-9 text-amber-600 hover:bg-amber-50 rounded-full transition-all active:scale-95" 
+                            onClick={() => downloadInvoice(inv.id)}
+                            title="Download PDF"
+                          >
+                            <Download className="h-4.5 w-4.5" />
                           </Button>
                         </div>
                       </TableCell>
@@ -645,114 +688,170 @@ const InvoiceManagement: React.FC = () => {
             
             {/* Pagination */}
             {invoicesMeta && invoicesMeta.total_pages > 1 && (
-              <div className="p-4 border-t flex items-center justify-between bg-muted/10">
-                <p className="text-xs text-muted-foreground">Showing {(invoicesMeta.page - 1) * 50 + 1} to {Math.min(invoicesMeta.page * 50, invoicesMeta.count)} of {invoicesMeta.count}</p>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" disabled={!invoicesMeta.has_previous} onClick={() => fetchInvoices(invoicesMeta.page - 1)}>Prev</Button>
-                  <Button variant="outline" size="sm" disabled={!invoicesMeta.has_next} onClick={() => fetchInvoices(invoicesMeta.page + 1)}>Next</Button>
+              <div className="p-5 border-t flex items-center justify-between bg-muted/10">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
+                  Showing <span className="text-foreground">{(invoicesMeta.page - 1) * 50 + 1}</span> to <span className="text-foreground">{Math.min(invoicesMeta.page * 50, invoicesMeta.count)}</span> of <span className="text-foreground">{invoicesMeta.count}</span>
+                </p>
+                <div className="flex items-center gap-4">
+                  <div className="text-[13px] font-semibold text-muted-foreground uppercase tracking-widest hidden sm:block">
+                    Page {invoicesMeta.page} of {invoicesMeta.total_pages}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-9 px-4 font-semibold uppercase text-[13px] tracking-widest rounded-full"
+                      disabled={!invoicesMeta.has_previous} 
+                      onClick={() => fetchInvoices(invoicesMeta.page - 1)}
+                    >
+                      Previous
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-9 px-4 font-semibold uppercase text-[13px] tracking-widest rounded-full"
+                      disabled={!invoicesMeta.has_next} 
+                      onClick={() => fetchInvoices(invoicesMeta.page + 1)}
+                    >
+                      Next
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
-          </Card>
-        </div>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Invoice Details Dialog */}
-      <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
-        <DialogContent className="max-w-3xl border-none shadow-2xl p-0 overflow-hidden bg-card">
-          <div className="bg-primary p-6 text-primary-foreground">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-xs uppercase opacity-70 font-bold tracking-widest mb-1">Invoice Statement</p>
-                <h2 className="text-3xl font-black">{selectedInvoice?.invoice_number}</h2>
+      {/* Invoice Details Dialog */}      <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
+        <DialogContent className="max-w-lg w-[90vw] border-none shadow-2xl p-0 overflow-hidden bg-card rounded-3xl">
+          {/* Refined Header */}
+          <div className="px-6 py-5 border-b border-border/50 bg-muted/20">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary opacity-80" />
+                  <span className="text-[13px] uppercase font-semibold tracking-[0.15em] text-muted-foreground/80">Invoice Statement</span>
+                </div>
+                <h2 className="text-xl font-semibold tracking-tight text-foreground">{selectedInvoice?.invoice_number}</h2>
               </div>
-              <div className="text-right">
-                <Badge variant="outline" className="bg-white/10 text-white border-white/20 px-3 py-1 text-sm">{selectedInvoice?.status.toUpperCase()}</Badge>
-                <p className="text-xs mt-2 opacity-70">Generated on {selectedInvoice && new Date(selectedInvoice.created_at).toLocaleDateString()}</p>
+              <div className="flex flex-col items-end gap-1.5">
+                <Badge variant="outline" className="border-primary/20 text-primary bg-primary/5 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider">
+                  {selectedInvoice?.status}
+                </Badge>
+                <span className="text-[13px] text-muted-foreground font-semibold">
+                  {selectedInvoice && new Date(selectedInvoice.created_at).toLocaleDateString()}
+                </span>
               </div>
             </div>
           </div>
 
-          <div className="p-8 space-y-8">
-            <div className="grid grid-cols-2 gap-12">
-              <div className="space-y-4">
-                <h4 className="text-sm font-black uppercase text-muted-foreground flex items-center gap-2">
-                  <Users className="h-4 w-4" /> Bill To
+          <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
+            {/* Info Grid - Responsive */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3 p-4 rounded-xl border border-border/50 bg-muted/5">
+                <h4 className="text-[13px] font-semibold uppercase text-muted-foreground flex items-center gap-2 tracking-widest">
+                  <Users className="h-3.5 w-3.5 text-primary" /> Bill To
                 </h4>
-                <div className="space-y-1">
-                  <p className="text-xl font-bold">{selectedInvoice?.student.name}</p>
-                  <p className="text-sm text-muted-foreground">USN: {selectedInvoice?.student.usn}</p>
-                  <p className="text-sm text-muted-foreground">{selectedInvoice?.student.department}</p>
-                  <p className="text-sm text-muted-foreground">Semester {selectedInvoice?.student.semester}</p>
+                <div className="space-y-0.5">
+                  <p className="text-base font-semibold text-foreground leading-tight">{selectedInvoice?.student?.name}</p>
+                  <p className="text-xs font-medium text-muted-foreground">{selectedInvoice?.student?.usn}</p>
+                  <p className="text-xs text-muted-foreground/70">{selectedInvoice?.student?.department}</p>
+                  <p className="text-xs font-semibold text-primary/80 mt-1">Semester {selectedInvoice?.student?.semester}</p>
                 </div>
               </div>
-              <div className="space-y-4">
-                <h4 className="text-sm font-black uppercase text-muted-foreground flex items-center gap-2">
-                  <FileText className="h-4 w-4" /> Fee Details
+
+              <div className="space-y-3 p-4 rounded-xl border border-border/50 bg-muted/5">
+                <h4 className="text-[13px] font-semibold uppercase text-muted-foreground flex items-center gap-2 tracking-widest">
+                  <LayoutGrid className="h-3.5 w-3.5 text-primary" /> Fee Details
                 </h4>
-                <div className="space-y-1">
-                  <p className="text-xl font-bold">{selectedInvoice?.fee_assignment?.template?.name || 'Custom Assignment'}</p>
-                  <p className="text-sm text-muted-foreground">Type: {selectedInvoice?.fee_assignment?.template?.fee_type || 'Annual'}</p>
-                  <p className="text-sm text-muted-foreground">Academic Year: {selectedInvoice?.academic_year}</p>
-                  <p className="text-sm font-bold text-red-500">Due Date: {selectedInvoice?.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : 'N/A'}</p>
+                <div className="space-y-0.5">
+                  <p className="text-base font-semibold text-foreground leading-tight">
+                    {selectedInvoice?.fee_assignment?.template?.name || 'Custom Assignment'}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant="secondary" className="text-[11px] h-4 px-1.5 font-semibold uppercase border-none">
+                      {selectedInvoice?.fee_assignment?.template?.fee_type || 'Annual'}
+                    </Badge>
+                    <span className="text-[13px] font-semibold text-muted-foreground">{selectedInvoice?.academic_year}</span>
+                  </div>
+                  <p className="text-[13px] font-semibold text-red-500 uppercase tracking-tight mt-2">
+                    Due: {selectedInvoice?.due_date ? new Date(selectedInvoice.due_date).toLocaleDateString() : 'N/A'}
+                  </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-muted/30 rounded-2xl p-6 grid grid-cols-3 gap-6">
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground uppercase font-bold">Total Amount</p>
-                <p className="text-2xl font-black">{formatCurrency(selectedInvoice?.total_amount || 0)}</p>
+            {/* Financial Summary */}
+            <div className="bg-primary/5 rounded-xl border border-primary/10 p-4 grid grid-cols-3 gap-4">
+              <div className="text-center">
+                <p className="text-[11px] text-muted-foreground uppercase font-semibold tracking-wider mb-1">Total</p>
+                <p className="text-sm font-semibold text-foreground">{formatCurrency(selectedInvoice?.total_amount || 0)}</p>
               </div>
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground uppercase font-bold">Total Paid</p>
-                <p className="text-2xl font-black text-green-600">{formatCurrency(selectedInvoice?.paid_amount || 0)}</p>
+              <div className="text-center border-x border-primary/10">
+                <p className="text-[11px] text-muted-foreground uppercase font-semibold tracking-wider mb-1">Paid</p>
+                <p className="text-sm font-semibold text-green-600">{formatCurrency(selectedInvoice?.paid_amount || 0)}</p>
               </div>
-              <div className="space-y-1">
-                <p className="text-xs text-muted-foreground uppercase font-bold">Outstanding</p>
-                <p className="text-2xl font-black text-red-600">{formatCurrency(selectedInvoice?.pending_amount || 0)}</p>
+              <div className="text-center">
+                <p className="text-[11px] text-muted-foreground uppercase font-semibold tracking-wider mb-1">Balance</p>
+                <p className="text-sm font-semibold text-red-600">{formatCurrency(selectedInvoice?.pending_amount || 0)}</p>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <h4 className="text-sm font-black uppercase text-muted-foreground flex items-center gap-2">
-                <CreditCard className="h-4 w-4" /> Transaction History
+            {/* Transactions Section */}
+            <div className="space-y-3">
+              <h4 className="text-[13px] font-semibold uppercase text-muted-foreground flex items-center gap-2 tracking-widest px-1">
+                <CreditCard className="h-3.5 w-3.5 text-primary" /> Payment History
               </h4>
-              {payments.length === 0 ? (
-                <div className="bg-muted/10 rounded-xl p-8 text-center border border-dashed">
-                  <p className="text-sm text-muted-foreground">No payments recorded for this invoice</p>
-                </div>
-              ) : (
-                <div className="border rounded-xl overflow-hidden">
+              <div className="border border-border/50 rounded-xl overflow-hidden bg-card">
+                {payments.length === 0 ? (
+                  <div className="p-8 text-center bg-muted/10">
+                    <p className="text-xs text-muted-foreground font-medium italic">No payments recorded for this invoice</p>
+                  </div>
+                ) : (
                   <Table>
-                    <TableHeader className="bg-muted/50">
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Method</TableHead>
-                        <TableHead>Transaction ID</TableHead>
-                        <TableHead className="text-right">Amount</TableHead>
+                    <TableHeader className="bg-muted/30">
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="h-9 text-[13px] font-semibold uppercase px-4">Date</TableHead>
+                        <TableHead className="h-9 text-[13px] font-semibold uppercase">Method</TableHead>
+                        <TableHead className="h-9 text-right text-[13px] font-semibold uppercase px-4">Amount</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {payments.map(p => (
-                        <TableRow key={p.id}>
-                          <TableCell className="text-xs">{new Date(p.payment_date).toLocaleDateString()}</TableCell>
-                          <TableCell className="text-xs uppercase font-bold">{p.payment_method}</TableCell>
-                          <TableCell className="text-xs font-mono">{p.transaction_id || '-'}</TableCell>
-                          <TableCell className="text-right font-bold text-green-600">{formatCurrency(p.amount)}</TableCell>
+                        <TableRow key={p.id} className="hover:bg-muted/10 transition-colors border-b border-border/30 last:border-0">
+                          <TableCell className="py-2.5 px-4 text-xs font-medium">
+                            {new Date(p.payment_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short' })}
+                          </TableCell>
+                          <TableCell className="py-2.5 text-[13px] font-semibold uppercase opacity-70">
+                            {p.payment_method}
+                          </TableCell>
+                          <TableCell className="py-2.5 px-4 text-right font-semibold text-green-600 text-xs">
+                            {formatCurrency(p.amount)}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
-            <div className="flex gap-4 pt-4">
-              <Button className="flex-1 h-12 text-lg font-bold" onClick={() => downloadInvoice(selectedInvoice?.id || 0)}>
-                <Download className="h-5 w-5 mr-2" /> Download Statement
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <Button 
+                className="flex-1 h-10 text-xs font-semibold uppercase tracking-widest shadow-lg shadow-primary/20" 
+                onClick={() => downloadInvoice(selectedInvoice?.id || 0)}
+              >
+                <Download className="h-3.5 w-3.5 mr-2" /> Download Statement
               </Button>
-              <Button variant="outline" className="h-12 px-8" onClick={() => setIsDetailsDialogOpen(false)}>Close</Button>
+              <Button 
+                variant="outline" 
+                className="h-10 px-6 text-xs font-semibold uppercase tracking-widest" 
+                onClick={() => setIsDetailsDialogOpen(false)}
+              >
+                Close
+              </Button>
             </div>
           </div>
         </DialogContent>
@@ -760,38 +859,45 @@ const InvoiceManagement: React.FC = () => {
 
       {/* Record Payment Dialog */}
       <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
-        <DialogContent className="sm:max-w-[450px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <IndianRupee className="h-5 w-5 text-green-600" />
-              Record Manual Payment
+        <DialogContent className="sm:max-w-md w-[90vw] border-none shadow-2xl p-6 bg-card rounded-3xl">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="text-xl font-semibold flex items-center gap-2 text-foreground">
+              <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg">
+                <IndianRupee className="h-5 w-5 text-green-600 dark:text-green-400" />
+              </div>
+              Record Payment
             </DialogTitle>
           </DialogHeader>
 
-          <form onSubmit={handleRecordPayment} className="space-y-4 pt-4">
+          <form onSubmit={handleRecordPayment} className="space-y-5 pt-4">
             <div className="space-y-2">
-              <Label>Student</Label>
-              <Input value={selectedInvoice?.student.name} disabled className="bg-muted/30" />
+              <Label className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground ml-1">Target Student</Label>
+              <Input 
+                value={selectedInvoice?.student.name} 
+                disabled 
+                className="bg-muted/30 border-none font-semibold text-foreground h-11" 
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Amount (₹)</Label>
+                <Label className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground ml-1">Amount (₹)</Label>
                 <Input 
                   type="number" 
                   step="0.01"
                   required
+                  className="h-11 border-border/50 focus:ring-green-500/20"
                   value={paymentForm.amount}
                   onChange={(e) => setPaymentForm(p => ({ ...p, amount: e.target.value }))}
                 />
               </div>
               <div className="space-y-2">
-                <Label>Payment Mode</Label>
+                <Label className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground ml-1">Mode</Label>
                 <Select value={paymentForm.mode} onValueChange={(val) => setPaymentForm(p => ({ ...p, mode: val }))}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-11 border-border/50">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-xl border-border/50">
                     <SelectItem value="cash">Cash</SelectItem>
                     <SelectItem value="cheque">Cheque</SelectItem>
                     <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
@@ -803,19 +909,29 @@ const InvoiceManagement: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Reference / Transaction ID (Optional)</Label>
+              <Label className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground ml-1">Reference / Transaction ID</Label>
               <Input 
                 placeholder="e.g. Cheque # or Bank Ref"
+                className="h-11 border-border/50"
                 value={paymentForm.transactionId}
                 onChange={(e) => setPaymentForm(p => ({ ...p, transactionId: e.target.value }))}
               />
             </div>
 
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
+            <div className="flex gap-3 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="flex-1 h-11 text-xs font-semibold uppercase tracking-widest rounded-xl"
+                onClick={() => setIsPaymentDialogOpen(false)}
+              >
                 Cancel
               </Button>
-              <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white" disabled={isSubmittingPayment}>
+              <Button 
+                type="submit" 
+                className="flex-[1.5] h-11 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold uppercase tracking-widest rounded-xl shadow-lg shadow-green-500/20" 
+                disabled={isSubmittingPayment}
+              >
                 {isSubmittingPayment ? "Recording..." : "Record Payment"}
               </Button>
             </div>
