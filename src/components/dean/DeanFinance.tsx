@@ -6,6 +6,16 @@ import { SkeletonStatsGrid, SkeletonPageHeader, SkeletonCard, SkeletonList } fro
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Alert, AlertDescription } from "../ui/alert";
 import { TrendingUp, AlertCircle, CreditCard, Wallet, FileText } from "lucide-react";
+import {
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  AreaChart,
+  Area
+} from "recharts";
+import { Badge } from "@/components/ui/badge";
 
 const DeanFinance = () => {
   const { theme } = useTheme();
@@ -140,23 +150,34 @@ const DeanFinance = () => {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className={`p-6 rounded-xl shadow-sm border ${theme === 'dark' ? 'bg-muted/30 border-border' : 'bg-gray-50 border-gray-200'}`}>
-                  <h3 className="text-lg font-semibold mb-4">Monthly Trends</h3>
-                  {monthlyTrends.length ? (
-                    <div className="space-y-3">
-                      {monthlyTrends.map((m,i) => (
-                        <div key={i} className={`flex items-center justify-between border-t pt-3 first:border-t-0 first:pt-0 ${theme === 'dark' ? 'border-border' : 'border-gray-100'}`}>
-                          <div>
-                            <div className="font-semibold">{m.month}</div>
-                            <div className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Payments: {m.payments}</div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-bold">₹{(m.revenue ?? 0).toLocaleString()}</div>
-                          </div>
-                        </div>
-                      ))}
+                <div className={`p-6 rounded-xl shadow-sm border ${theme === 'dark' ? 'bg-muted/30 border-border' : 'bg-gray-50 border-gray-200'} lg:col-span-2`}>
+                  <div className="flex flex-row items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold">Revenue Trends</h3>
+                      <p className="text-sm text-slate-500">Monthly collection performance</p>
                     </div>
-                  ) : <div className="text-center py-6 text-gray-500 italic">No monthly data</div>}
+                    <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 border-none font-bold">Last 6 Months</Badge>
+                  </div>
+                  <div className="h-[350px] w-full pt-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={monthlyTrends}>
+                        <defs>
+                          <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? '#1e293b' : '#f1f5f9'} />
+                        <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
+                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} tickFormatter={(val) => `₹${val/1000}k`} />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: theme === 'dark' ? '#0f172a' : '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                          itemStyle={{ color: '#3b82f6', fontWeight: 'bold' }}
+                        />
+                        <Area type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
 
                 <div className={`p-6 rounded-xl shadow-sm border ${theme === 'dark' ? 'bg-muted/30 border-border' : 'bg-gray-50 border-gray-200'}`}>
