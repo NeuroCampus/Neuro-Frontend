@@ -341,9 +341,9 @@ const DeanProfile = () => {
               <h4 className={`text-xs sm:text-sm font-bold mb-2.5 sm:mb-4 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Quick Info</h4>
               <div className={`border rounded-lg p-2.5 sm:p-4 flex-1 ${theme === 'dark' ? 'bg-card border-input' : 'bg-gray-50 border-gray-200'}`}>
                 <div className="grid grid-cols-1 gap-2.5 sm:gap-3.5 h-full">
-                  <div className="flex flex-col justify-start">
-                    <span className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Department</span>
-                    <Badge variant="secondary" className="w-fit text-xs px-2.5 py-1 rounded-2xl bg-primary/10 text-primary border-none shadow-none">{profile.department || '—'}</Badge>
+                  <div className="flex flex-col justify-start overflow-hidden">
+                    <span className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Email ID</span>
+                    <Badge variant="secondary" className="w-fit max-w-full text-xs px-2.5 py-1 rounded-2xl bg-primary/10 text-primary border-none shadow-none truncate">{profile.email || '—'}</Badge>
                   </div>
                   <div className="flex flex-col justify-start">
                     <span className={`text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Designation</span>
@@ -356,23 +356,21 @@ const DeanProfile = () => {
 
           <div className="col-span-1 sm:col-span-2 lg:col-span-3 w-full flex flex-col h-full">
             <div className="flex items-center gap-1 sm:gap-2 mb-4 sm:mb-6 border-b pb-2 sm:pb-3 overflow-x-auto">
-              <button 
-                onClick={() => setActiveTab('personal')} 
-                className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-md transition-all font-medium whitespace-nowrap ${
-                  activeTab === 'personal' 
-                    ? 'bg-primary text-white shadow-sm' 
-                    : theme === 'dark' ? 'text-muted-foreground hover:text-foreground hover:bg-muted/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
+              <button
+                onClick={() => setActiveTab('personal')}
+                className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-md transition-all font-medium whitespace-nowrap ${activeTab === 'personal'
+                  ? 'bg-primary text-white shadow-sm'
+                  : theme === 'dark' ? 'text-muted-foreground hover:text-foreground hover:bg-muted/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
               >
                 Personal
               </button>
-              <button 
-                onClick={() => setActiveTab('contact')} 
-                className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-md transition-all font-medium whitespace-nowrap ${
-                  activeTab === 'contact' 
-                    ? 'bg-primary text-white shadow-sm' 
-                    : theme === 'dark' ? 'text-muted-foreground hover:text-foreground hover:bg-muted/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
+              <button
+                onClick={() => setActiveTab('contact')}
+                className={`px-3 sm:px-4 py-2 text-sm sm:text-base rounded-md transition-all font-medium whitespace-nowrap ${activeTab === 'contact'
+                  ? 'bg-primary text-white shadow-sm'
+                  : theme === 'dark' ? 'text-muted-foreground hover:text-foreground hover:bg-muted/50' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
               >
                 Contact
               </button>
@@ -393,7 +391,7 @@ const DeanProfile = () => {
                           <Input
                             id="first_name"
                             value={formData.first_name}
-                            onChange={(e) => setFormData({...formData, first_name: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                             className="bg-background"
                           />
                         ) : (
@@ -407,7 +405,7 @@ const DeanProfile = () => {
                           <Input
                             id="last_name"
                             value={formData.last_name}
-                            onChange={(e) => setFormData({...formData, last_name: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                             className="bg-background"
                           />
                         ) : (
@@ -423,9 +421,9 @@ const DeanProfile = () => {
                       Academic Information
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label className="text-sm font-semibold">Department</Label>
-                        <p className={`text-sm p-2.5 rounded-lg border ${theme === 'dark' ? 'bg-background/50 border-border' : 'bg-white border-gray-200'}`}>{profile.department || '—'}</p>
+                      <div className="space-y-2 overflow-hidden">
+                        <Label className="text-sm font-semibold">Email ID</Label>
+                        <p className={`text-sm p-2.5 rounded-lg border truncate ${theme === 'dark' ? 'bg-background/50 border-border' : 'bg-white border-gray-200'}`}>{profile.email || '—'}</p>
                       </div>
                       <div className="space-y-2">
                         <Label className="text-sm font-semibold">Designation</Label>
@@ -448,7 +446,7 @@ const DeanProfile = () => {
                           <Input
                             id="email"
                             value={formData.email}
-                            onChange={(e) => setFormData({...formData, email: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             className="bg-background"
                           />
                         ) : (
@@ -462,7 +460,7 @@ const DeanProfile = () => {
                           <Input
                             id="phone_number"
                             value={formData.phone_number}
-                            onChange={(e) => setFormData({...formData, phone_number: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
                             className="bg-background"
                           />
                         ) : (
@@ -483,7 +481,7 @@ const DeanProfile = () => {
                         <Textarea
                           id="address"
                           value={formData.address}
-                          onChange={(e) => setFormData({...formData, address: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                           className="bg-background min-h-[100px]"
                         />
                       ) : (
@@ -494,24 +492,7 @@ const DeanProfile = () => {
                     </div>
                   </div>
 
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      <Calendar className="w-5 h-5 text-primary" />
-                      Account History
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label className="text-sm font-semibold">Joined On</Label>
-                        <p className={`text-sm p-2.5 rounded-lg border ${theme === 'dark' ? 'bg-background/50 border-border' : 'bg-white border-gray-200'}`}>{new Date(profile.date_joined).toLocaleDateString()}</p>
-                      </div>
-                      {profile.last_login && (
-                        <div className="space-y-2">
-                          <Label className="text-sm font-semibold">Last Login</Label>
-                          <p className={`text-sm p-2.5 rounded-lg border ${theme === 'dark' ? 'bg-background/50 border-border' : 'bg-white border-gray-200'}`}>{new Date(profile.last_login).toLocaleString()}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+
                 </div>
               )}
             </div>
