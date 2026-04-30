@@ -11,6 +11,7 @@ import PublishResultsRevalMakeup from "../coe/PublishResultsRevalMakeup";
 import ApplyLeave from "../coe/ApplyLeave";
 import MakeupRequests from "../coe/MakeupRequests";
 import RevaluationRequests from "../coe/RevaluationRequests";
+import ExamScheduling from "../coe/ExamScheduling";
 import { API_ENDPOINT } from "../../utils/config";
 import { useTheme } from "../../context/ThemeContext";
 import { isPageAllowed } from "../../utils/planGating";
@@ -47,6 +48,7 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
       'revaluation-requests': 'revaluation-requests',
       'publish-results': 'publish-results',
       'publish-results-reval-makeup': 'publish-results-reval-makeup',
+      'exam-scheduling': 'exam-scheduling',
       'qp-approvals': 'qp-approvals',
       'apply-leave': 'apply-leave',
       'profile': 'profile',
@@ -81,6 +83,7 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
       'revaluation-requests': '/coe/revaluation-requests',
       'publish-results': '/coe/publish-results',
       'publish-results-reval-makeup': '/coe/publish-results-reval-makeup',
+      'exam-scheduling': '/coe/exam-scheduling',
       'qp-approvals': '/coe/qp-approvals',
       'apply-leave': '/coe/apply-leave',
       'profile': '/coe/profile',
@@ -122,6 +125,8 @@ const COEDashboard = ({ user }: COEDashboardProps) => {
         return <PublishResults />;
       case 'publish-results-reval-makeup':
         return <PublishResultsRevalMakeup />;
+      case 'exam-scheduling':
+        return <ExamScheduling />;
       case 'qp-approvals':
         return <COEQPApprovals />;
       case 'apply-leave':

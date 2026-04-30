@@ -20,6 +20,11 @@ type ExamEntry = {
   id: string | number;
   title?: string;
   subject?: string;
+  branch?: string;
+  batch?: string;
+  semester?: number | string;
+  exam_type?: string;
+  exam_period?: string;
   faculty_assignment?: {
     faculty?: string;
     subject?: string;
@@ -75,13 +80,20 @@ const DeanExams: React.FC = () => {
   const [branches, setBranches] = useState<any[]>([]);
   const [branchId, setBranchId] = useState<string>('all');
   const [upcomingOnly, setUpcomingOnly] = useState<boolean>(false);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0
+  });
   const [firstLoad, setFirstLoad] = useState(true);
 
-  const load = async () => {
+  const load = async (page = 1) => {
     setLoading(true); setError(null);
     try {
       // build query params
       const qs: string[] = [];
+      qs.push(`page=${page}`);
+      qs.push(`page_size=10`);
       if (branchId && branchId !== 'all') qs.push(`branch_id=${encodeURIComponent(branchId)}`);
       if (upcomingOnly) qs.push(`upcoming=1`);
       const url = `${API_ENDPOINT}/dean/reports/exams/${qs.length ? `?${qs.join('&')}` : ''}`;
@@ -92,6 +104,13 @@ const DeanExams: React.FC = () => {
       if (json.success) {
         const list: ExamEntry[] = Array.isArray(json.data) ? json.data : (json.data || []);
         setExams(list.map((x) => ({ ...x, id: x.id })));
+        if (json.pagination) {
+          setPagination({
+            currentPage: json.pagination.current_page,
+            totalPages: json.pagination.total_pages,
+            totalItems: json.pagination.total_items
+          });
+        }
       } else {
         setExams([]);
         setError(json.message || 'Failed to load exams');
@@ -177,32 +196,29 @@ const DeanExams: React.FC = () => {
             </div>
           ) : (
             <div className={loading ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}>
-              
+
 
               {/* Stats Cards Row */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 {countCards.map(c => (
-                  <div key={c.key} className={`p-6 rounded-xl border shadow-sm transition-all hover:shadow-md flex items-center gap-6 ${
-                    theme === 'dark' ? 'bg-muted/30 border-border' : 'bg-gray-50 border-gray-300'
-                  }`}>
-                    <div className={`p-3 rounded-xl ${
-                      c.color === 'green' ? (theme === 'dark' ? 'bg-green-900/20 text-green-400' : 'bg-green-50 text-green-600') :
-                      c.color === 'blue' ? (theme === 'dark' ? 'bg-blue-900/20 text-blue-400' : 'bg-blue-50 text-blue-600') :
-                      (theme === 'dark' ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600')
+                  <div key={c.key} className={`p-6 rounded-xl border shadow-sm transition-all hover:shadow-md flex items-center gap-6 ${theme === 'dark' ? 'bg-muted/30 border-border' : 'bg-gray-50 border-gray-300'
                     }`}>
-                      {c.key === 'ongoing' ? <Clock className="w-6 h-6" /> : 
-                       c.key === 'upcoming' ? <Calendar className="w-6 h-6" /> : 
-                       <History className="w-6 h-6" />}
+                    <div className={`p-3 rounded-xl ${c.color === 'green' ? (theme === 'dark' ? 'bg-green-900/20 text-green-400' : 'bg-green-50 text-green-600') :
+                      c.color === 'blue' ? (theme === 'dark' ? 'bg-blue-900/20 text-blue-400' : 'bg-blue-50 text-blue-600') :
+                        (theme === 'dark' ? 'bg-gray-800 text-gray-400' : 'bg-gray-100 text-gray-600')
+                      }`}>
+                      {c.key === 'ongoing' ? <Clock className="w-6 h-6" /> :
+                        c.key === 'upcoming' ? <Calendar className="w-6 h-6" /> :
+                          <History className="w-6 h-6" />}
                     </div>
                     <div>
                       <div className={`text-xs font-bold uppercase tracking-widest ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
                         {c.title}
                       </div>
-                      <div className={`text-3xl font-bold mt-1 ${
-                        c.color === 'green' ? (theme === 'dark' ? 'text-green-400' : 'text-green-600') :
+                      <div className={`text-3xl font-bold mt-1 ${c.color === 'green' ? (theme === 'dark' ? 'text-green-400' : 'text-green-600') :
                         c.color === 'blue' ? (theme === 'dark' ? 'text-blue-400' : 'text-blue-600') :
-                        (theme === 'dark' ? 'text-foreground' : 'text-gray-900')
-                      }`}>
+                          (theme === 'dark' ? 'text-foreground' : 'text-gray-900')
+                        }`}>
                         {c.count}
                       </div>
                     </div>
@@ -212,34 +228,7 @@ const DeanExams: React.FC = () => {
 
               {/* Filters Row */}
               <div className="flex flex-col md:flex-row items-end gap-6 mt-4 mb-4">
-                <div className="w-full md:w-72">
-                  <label className={`text-sm font-medium block  ${theme === 'dark' ? 'text-foreground' : 'text-gray-700'}`}>
-                    Branch
-                  </label>
-                  <Select value={branchId} onValueChange={setBranchId}>
-                    <SelectTrigger className={`w-full ${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'}`}>
-                      <SelectValue placeholder="All branches" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All branches</SelectItem>
-                      {branches.map(b => (
-                        <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
 
-                <div className={`p-3 px-4 rounded-xl border h-[42px] flex items-center ${theme === 'dark' ? 'bg-muted/30 border-border' : 'bg-gray-50 border-gray-200'}`}>
-                  <label className="flex items-center gap-3 text-sm font-medium cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" 
-                      checked={upcomingOnly} 
-                      onChange={e => setUpcomingOnly(e.target.checked)} 
-                    /> 
-                    <span>Show upcoming only</span>
-                  </label>
-                </div>
               </div>
 
               {error && (
@@ -249,18 +238,17 @@ const DeanExams: React.FC = () => {
               )}
 
               <div className="space-y-10">
-                {['ongoing','upcoming','past','other'].map((sectionKey) => {
+                {['ongoing', 'upcoming', 'past', 'other'].map((sectionKey) => {
                   const list = (grouped as any)[sectionKey];
                   if (list.length === 0 && sectionKey !== 'upcoming' && sectionKey !== 'ongoing') return null;
-                  
+
                   return (
                     <div key={sectionKey} className="space-y-4">
                       <div className="flex items-center gap-2 px-1">
-                        <div className={`w-2 h-2 rounded-full ${
-                          sectionKey === 'ongoing' ? 'bg-green-500' :
+                        <div className={`w-2 h-2 rounded-full ${sectionKey === 'ongoing' ? 'bg-green-500' :
                           sectionKey === 'upcoming' ? 'bg-blue-500' :
-                          'bg-gray-400'
-                        }`} />
+                            'bg-gray-400'
+                          }`} />
                         <h3 className="font-semibold text-lg capitalize tracking-tight">
                           {sectionKey === 'other' ? 'Scheduled' : sectionKey} Exams
                         </h3>
@@ -269,19 +257,17 @@ const DeanExams: React.FC = () => {
                         </Badge>
                       </div>
 
-                      <div className={`rounded-xl border shadow-sm overflow-hidden ${
-                        theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'
-                      }`}>
+                      <div className={`rounded-xl border shadow-sm overflow-hidden ${theme === 'dark' ? 'bg-card border-border' : 'bg-white border-gray-200'
+                        }`}>
                         <div className="overflow-x-auto">
                           <table className="min-w-full divide-y divide-gray-200 dark:divide-border">
                             <thead className={theme === 'dark' ? 'bg-muted/50' : 'bg-gray-50'}>
-                              <tr className={`text-left text-xs font-semibold uppercase tracking-wider ${
-                                theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'
-                              }`}>
+                              <tr className={`text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'
+                                }`}>
                                 <th className="px-6 py-4">Exam Details</th>
+                                <th className="px-6 py-4 text-center">Batch / Sem</th>
                                 <th className="px-6 py-4 text-center">Date & Time</th>
                                 <th className="px-6 py-4">Venue</th>
-                                <th className="px-6 py-4">Assignment</th>
                                 <th className="px-6 py-4 text-center">Status</th>
                                 <th className="px-6 py-4 text-center">Published</th>
                                 <th className="px-6 py-4 text-right">Actions</th>
@@ -301,11 +287,19 @@ const DeanExams: React.FC = () => {
                                 <tr key={ex.id} className={`text-sm hover:${theme === 'dark' ? 'bg-muted/30' : 'bg-gray-50'} transition-colors`}>
                                   <td className="px-6 py-4">
                                     <div className="font-semibold text-foreground">
-                                      {ex.title || ex.faculty_assignment?.subject || ex.subject || 'Exam'}
+                                      {ex.title || ex.subject || 'Exam'}
                                     </div>
                                     <div className="text-xs text-muted-foreground mt-0.5">
-                                      ID: #{ex.id}
+                                      {ex.subject} • {ex.branch}
                                     </div>
+                                    <div className="mt-1 flex gap-1">
+                                      {ex.exam_type && <Badge variant="outline" className="text-[10px] py-0">{ex.exam_type.replace('_', ' ')}</Badge>}
+                                      {ex.exam_period && <Badge variant="outline" className="text-[10px] py-0">{ex.exam_period.replace('_', '/')}</Badge>}
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 text-center">
+                                    <div className="font-medium">{ex.batch || '-'}</div>
+                                    <div className="text-xs text-muted-foreground">Sem {ex.semester || '-'}</div>
                                   </td>
                                   <td className="px-6 py-4 text-center whitespace-nowrap">
                                     <div className="font-medium">{formatDate(ex.date)}</div>
@@ -319,22 +313,12 @@ const DeanExams: React.FC = () => {
                                       {ex.room || 'TBD'}
                                     </Badge>
                                   </td>
-                                  <td className="px-6 py-4">
-                                    {ex.faculty_assignment ? (
-                                      <div className="flex flex-col gap-1">
-                                        <div className="text-xs font-medium">Sem {ex.faculty_assignment.semester} • {ex.faculty_assignment.section}</div>
-                                        <div className="text-[10px] text-muted-foreground truncate max-w-[120px]">
-                                          {ex.faculty_assignment.faculty}
-                                        </div>
-                                      </div>
-                                    ) : '-'}
-                                  </td>
+
                                   <td className="px-6 py-4 text-center">
-                                    <Badge className={`capitalize ${
-                                      computeStatus(ex) === 'ongoing' ? 'bg-green-500/10 text-green-600 border-green-500/20' :
+                                    <Badge className={`capitalize ${computeStatus(ex) === 'ongoing' ? 'bg-green-500/10 text-green-600 border-green-500/20' :
                                       computeStatus(ex) === 'upcoming' ? 'bg-blue-500/10 text-blue-600 border-blue-500/20' :
-                                      'bg-gray-500/10 text-gray-600 border-gray-500/20'
-                                    }`} variant="outline">
+                                        'bg-gray-500/10 text-gray-600 border-gray-500/20'
+                                      }`} variant="outline">
                                       {computeStatus(ex)}
                                     </Badge>
                                   </td>
@@ -347,7 +331,7 @@ const DeanExams: React.FC = () => {
                                   </td>
                                   <td className="px-6 py-4 text-right">
                                     {!ex.is_published && (
-                                      <Button 
+                                      <Button
                                         variant="default"
                                         size="sm"
                                         onClick={() => publishExam(ex.id)}
@@ -366,6 +350,35 @@ const DeanExams: React.FC = () => {
                     </div>
                   );
                 })}
+
+                {pagination.totalPages > 1 && (
+                  <div className="flex items-center justify-between px-6 py-4 border-t border-border mt-6">
+                    <div className="text-xs text-muted-foreground">
+                      Showing {exams.length} of {pagination.totalItems} exams
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={pagination.currentPage === 1 || loading}
+                        onClick={() => load(pagination.currentPage - 1)}
+                      >
+                        Previous
+                      </Button>
+                      <div className="flex items-center px-4 text-sm font-medium">
+                        Page {pagination.currentPage} of {pagination.totalPages}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={pagination.currentPage === pagination.totalPages || loading}
+                        onClick={() => load(pagination.currentPage + 1)}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
