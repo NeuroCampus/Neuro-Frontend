@@ -56,8 +56,10 @@ const DeanAttendance = () => {
     hodAbsentCount = totalHods - hodPresentCount;
   }
 
-  const adminPresentCount = data?.summary?.admin_present_count ?? 0;
-  const adminList = data?.summary?.admin_present_list || [];
+  const allAdmins = data?.summary?.admins || [];
+  const adminPresentList = data?.summary?.admin_present_list || [];
+  const adminPresentCount = data?.summary?.admin_present_count ?? adminPresentList.length;
+  const adminAbsentCount = allAdmins.length - adminPresentCount;
 
   const statCardClass = theme === 'dark'
     ? 'rounded-lg border border-border bg-card p-4 shadow'
@@ -102,9 +104,9 @@ const DeanAttendance = () => {
             />
             <DashboardCard
               title="Admins Absent"
-              value="—"
-              description="(not tracked)"
-              icon={<FaUserCheck className={theme === 'dark' ? 'text-gray-400 text-3xl' : 'text-gray-500 text-3xl'} />}
+              value={isMonthly ? '—' : adminAbsentCount}
+              description={isMonthly ? '(not tracked)' : 'Absent today'}
+              icon={<FaUserSlash className={theme === 'dark' ? 'text-gray-400 text-3xl' : 'text-gray-500 text-3xl'} />}
             />
           </div>
 
@@ -155,17 +157,35 @@ const DeanAttendance = () => {
             <div className={`rounded-lg shadow p-6 ${theme === 'dark' ? 'bg-card border border-border' : 'bg-white border border-gray-200'}`}>
               <div className="text-lg font-semibold mb-3">Admins — {isMonthly ? 'In Period' : 'Today'}</div>
               <div className="grid grid-cols-1 gap-3">
-                {adminList.length > 0 ? adminList.map((a: any) => (
+                {allAdmins.length > 0 ? allAdmins.map((a: any) => {
+                  const isPresent = adminPresentList.some((p: any) => p.id === a.id);
+                  return (
                   <div key={a.id} className={`flex items-center justify-between p-3 rounded ${theme === 'dark' ? 'bg-muted' : 'bg-gray-50'}`}>
                     <div>
                       <div className="font-medium">{a.name}</div>
                       <div className={`text-xs ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>{a.email || a.mobile || ''}</div>
                     </div>
                     <div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${theme === 'dark' ? 'bg-indigo-900/30 text-indigo-400' : 'bg-indigo-100 text-indigo-800'}`}>Present</span>
+                      {isMonthly ? (
+                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          isPresent 
+                            ? (theme === 'dark' ? 'bg-indigo-900/30 text-indigo-400' : 'bg-indigo-100 text-indigo-800') 
+                            : (theme === 'dark' ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-800')
+                        }`}>
+                          {isPresent ? 'Active in Period' : 'Inactive'}
+                        </span>
+                      ) : (
+                         <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          isPresent 
+                            ? (theme === 'dark' ? 'bg-indigo-900/30 text-indigo-400' : 'bg-indigo-100 text-indigo-800') 
+                            : (theme === 'dark' ? 'bg-red-900/30 text-red-400' : 'bg-red-100 text-red-800')
+                        }`}>
+                          {isPresent ? 'Present' : 'Absent'}
+                        </span>
+                      )}
                     </div>
                   </div>
-                )) : <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No admin users {isMonthly ? 'present in the selected period' : 'present today'}.</div>}
+                )}) : <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>No admin users found.</div>}
               </div>
             </div>
           </div>
