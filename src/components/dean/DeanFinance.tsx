@@ -180,7 +180,7 @@ const DeanFinance = () => {
                   </div>
                 </div>
 
-                <div className={`p-6 rounded-xl shadow-sm border ${theme === 'dark' ? 'bg-muted/30 border-border' : 'bg-gray-50 border-gray-200'}`}>
+                <div className={`p-6 rounded-xl shadow-sm border ${theme === 'dark' ? 'bg-muted/30 border-border' : 'bg-gray-50 border-gray-200'} lg:col-span-2`}>
                   <h3 className="text-lg font-semibold mb-4">Overdue Invoices</h3>
                   {overdueInvoices.length ? (
                     <div className="space-y-3 overflow-y-auto max-h-[400px] pr-2">
