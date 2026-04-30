@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTheme } from '@/context/ThemeContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Copy, ExternalLink } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { getFilterOptions, getSemesters, createResultUploadBatch, getStudentsForUpload, saveMarksForUpload, publishUploadBatch, unpublishUploadBatch, toggleWithholdResult } from '../../utils/coe_api';
 
@@ -379,7 +379,33 @@ export default function PublishResults() {
       {upload && (
         <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'} mb-4`}>
           <CardContent className="pt-5">
-          <div className="text-sm sm:text-base">Upload ID: <span className="font-semibold">{upload.id}</span> | Token: <span className="font-mono">{upload.token}</span></div>
+          <div className="text-sm sm:text-base flex items-center gap-2 flex-wrap">
+            <span>Upload ID: <span className="font-semibold">{upload.id}</span></span>
+            <span className="hidden sm:inline">|</span>
+            <span>Token: <span className="font-mono">{upload.token}</span></span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-xs ml-2"
+              onClick={() => {
+                const url = `${window.location.origin}/results/view/${upload.token}`;
+                navigator.clipboard.writeText(url);
+                toast({ title: 'Copied', description: 'Result link copied to clipboard' });
+              }}
+            >
+              <Copy className="h-3 w-3 mr-1" /> Copy Link
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => {
+                window.open(`/results/view/${upload.token}`, '_blank');
+              }}
+            >
+              <ExternalLink className="h-3 w-3 mr-1" /> Open Link
+            </Button>
+          </div>
           <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
             <div>Published: <span className={`font-medium ${upload.is_published ? 'text-green-600' : 'text-red-600'}`}>{upload.is_published ? 'Yes' : 'No'}</span></div>
             {upload.is_published ? (

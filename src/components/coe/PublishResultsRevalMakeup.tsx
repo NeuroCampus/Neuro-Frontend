@@ -5,9 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTheme } from '@/context/ThemeContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Copy, ExternalLink } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
-import { getFilterOptions, getSemesters, createResultUploadBatch, getStudentsForRevalMakeupUpload, saveMarksForUpload, publishUploadBatch, toggleWithholdResult } from '../../utils/coe_api';
+import { getFilterOptions, getSemesters, createResultUploadBatch, getStudentsForRevalMakeupUpload, saveMarksForUpload, publishUploadBatch, unpublishUploadBatch, toggleWithholdResult } from '../../utils/coe_api';
 
 export default function PublishResultsRevalMakeup() {
   const { theme } = useTheme();
@@ -373,7 +373,33 @@ export default function PublishResultsRevalMakeup() {
       {upload && (
         <Card className={`${theme === 'dark' ? 'bg-card text-foreground border-border shadow-sm' : 'bg-white text-gray-900 border-gray-200 shadow-sm'} mb-4`}>
           <CardContent className="pt-6">
-          <div className="text-sm text-muted-foreground">Upload ID: {upload.id} | Token: {upload.token}</div>
+          <div className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
+            <span>Upload ID: {upload.id}</span>
+            <span className="hidden sm:inline">|</span>
+            <span>Token: {upload.token}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-xs ml-2"
+              onClick={() => {
+                const url = `${window.location.origin}/results/view/${upload.token}`;
+                navigator.clipboard.writeText(url);
+                toast({ title: 'Copied', description: 'Result link copied to clipboard' });
+              }}
+            >
+              <Copy className="h-3 w-3 mr-1" /> Copy Link
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => {
+                window.open(`/results/view/${upload.token}`, '_blank');
+              }}
+            >
+              <ExternalLink className="h-3 w-3 mr-1" /> Open Link
+            </Button>
+          </div>
           <div className="mt-2 flex flex-wrap items-center gap-4">
             <div className="text-sm">Published: <span className={`font-medium ${upload.is_published ? 'text-green-600' : 'text-red-600'}`}>{upload.is_published ? 'Yes' : 'No'}</span></div>
             {upload.is_published ? (
@@ -726,7 +752,17 @@ export default function PublishResultsRevalMakeup() {
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setUnpublishModalOpen(false)}>Cancel</Button>
-            <Button onClick={() => { setUnpublishModalOpen(false); setUpload({ ...upload, is_published: false }); }}>Unpublish</Button>
+            <Button onClick={async () => { 
+              setUnpublishModalOpen(false); 
+              if (!upload) return;
+              const res = await unpublishUploadBatch(upload.id);
+              if (res.success) {
+                setUpload({ ...upload, is_published: false }); 
+                toast({ title: 'Unpublished', description: 'Public link is now inactive.' });
+              } else {
+                toast({ variant: 'destructive', title: 'Unpublish failed', description: res.message || 'Failed to unpublish' });
+              }
+            }}>Unpublish</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

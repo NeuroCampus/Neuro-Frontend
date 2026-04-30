@@ -108,6 +108,7 @@ export interface CourseApplicationStatsResponse {
     summary: CourseStatsSummary;
     filters: {
       batch: string;
+      exam_period: string;
       branch: string;
       semester: string;
     };
@@ -220,6 +221,7 @@ export const getStudentApplicationStatus = async (filters: {
  */
 export const getCourseApplicationStats = async (filters: {
   batch: string;
+  exam_period: string;
   branch: string;
   semester: string;
   page?: string | number;
