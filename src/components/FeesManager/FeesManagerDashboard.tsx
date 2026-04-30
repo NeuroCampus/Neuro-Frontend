@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import DashboardLayout from '../common/DashboardLayout';
 import { useTheme } from '@/context/ThemeContext';
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import DashboardCard from '../common/DashboardCard';
@@ -13,17 +12,11 @@ import {
   IndianRupee,
   BarChart3,
   Settings,
-  Receipt,
-  DollarSign,
   Plus,
   TrendingUp,
-  ArrowUpRight,
-  ArrowDownRight,
-  Clock,
   ArrowRight,
   ClipboardList,
   UserCheck,
-  Bell
 } from 'lucide-react';
 import {
   XAxis,
@@ -34,7 +27,6 @@ import {
   AreaChart,
   Area
 } from "recharts";
-import { motion, AnimatePresence } from "framer-motion";
 import { API_ENDPOINT } from '../../utils/config';
 
 // Sub-components
