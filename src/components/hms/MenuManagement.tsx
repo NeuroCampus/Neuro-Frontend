@@ -102,7 +102,7 @@ const getMealTypeLabel = (code: string) => {
 
 const MenuManagement: React.FC = () => {
   const { toast } = useToast();
-  const { hostels } = useHMSContext();
+  const { hostels, skeletonMode } = useHMSContext();
 
   const [menus, setMenus] = useState<Menu[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -491,18 +491,7 @@ const MenuManagement: React.FC = () => {
 
   const displayedMenus = applyDayFilter(filteredMenus);
 
-  if (initialLoading) {
-    return (
-      <div className="space-y-6">
-        <SkeletonPageHeader />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <SkeletonCard />
-          <SkeletonCard />
-          <SkeletonCard />
-        </div>
-      </div>
-    );
-  }
+  // Handle loading within the main return for better context visibility
 
   return (
     <div className="space-y-8 pb-10">
@@ -516,58 +505,75 @@ const MenuManagement: React.FC = () => {
             </div>
             <div className="flex flex-wrap items-center gap-3 lg:justify-end">
               <div className="flex items-center gap-2">
-                <Select value={selectedHostel} onValueChange={setSelectedHostel}>
-                  <SelectTrigger className="w-[180px] bg-background">
-                    <SelectValue placeholder="Select Hostel" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {hostels.map((h) => (
-                      <SelectItem key={h.id} value={h.id.toString()}>{h.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {initialLoading || skeletonMode ? (
+                  <div className="w-[180px] h-9 rounded-md bg-muted animate-pulse border" />
+                ) : (
+                  <Select value={selectedHostel} onValueChange={setSelectedHostel}>
+                    <SelectTrigger className="w-[180px] bg-background">
+                      <SelectValue placeholder="Select Hostel" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {hostels.map((h) => (
+                        <SelectItem key={h.id} value={h.id.toString()}>{h.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
 
-                <Select value={dayFilter} onValueChange={setDayFilter}>
-                  <SelectTrigger className="w-[150px] bg-background">
-                    <SelectValue placeholder="All Days" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Days</SelectItem>
-                    {DAY_OPTIONS.map((d) => (
-                      <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {initialLoading || skeletonMode ? (
+                  <div className="w-[150px] h-9 rounded-md bg-muted animate-pulse border" />
+                ) : (
+                  <Select value={dayFilter} onValueChange={setDayFilter}>
+                    <SelectTrigger className="w-[150px] bg-background">
+                      <SelectValue placeholder="All Days" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Days</SelectItem>
+                      {DAY_OPTIONS.map((d) => (
+                        <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
               <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setShowFoodForm(true);
-                    setEditingFoodItem(null);
-                    setFoodFormData({ name: '', description: '', vegetarian: true });
-                    loadMenuItems();
-                  }}
-                  className="border-primary/20 hover:bg-primary/5 bg-background"
-                >
-                  <UtensilsCrossed className="w-4 h-4 mr-2" /> Food Items
-                </Button>
-                <Button onClick={() => {
-                  setShowForm(true);
-                  setEditingMenu(null);
-                  setFormData({ hostel: selectedHostel, day_of_week: '0', meal_type: '', date: '', items: [], is_recurring: true });
-                  loadMenuItems();
-                }} className="bg-primary hover:bg-primary/90">
-                  <Plus className="w-4 h-4 mr-2" /> Add Menu
-                </Button>
+                {initialLoading || skeletonMode ? (
+                  <>
+                    <div className="w-[130px] h-9 rounded-md bg-muted animate-pulse border" />
+                    <div className="w-[130px] h-9 rounded-md bg-muted animate-pulse border" />
+                  </>
+                ) : (
+                  <>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setShowFoodForm(true);
+                        setEditingFoodItem(null);
+                        setFoodFormData({ name: '', description: '', vegetarian: true });
+                        loadMenuItems();
+                      }}
+                      className="border-primary/20 hover:bg-primary/5 bg-background"
+                    >
+                      <UtensilsCrossed className="w-4 h-4 mr-2" /> Food Items
+                    </Button>
+                    <Button onClick={() => {
+                      setShowForm(true);
+                      setEditingMenu(null);
+                      setFormData({ hostel: selectedHostel, day_of_week: '0', meal_type: '', date: '', items: [], is_recurring: true });
+                      loadMenuItems();
+                    }} className="bg-primary hover:bg-primary/90">
+                      <Plus className="w-4 h-4 mr-2" /> Add Menu
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
         </CardHeader>
         <CardContent className="pt-6">
           {/* Menu Grid */}
-          {loading ? (
+          {(loading || skeletonMode || initialLoading) ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
             </div>

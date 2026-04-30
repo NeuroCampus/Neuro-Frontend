@@ -12,23 +12,20 @@ function Skeleton({
   )
 }
 
-// 1. Page Header Skeleton
-export const SkeletonPageHeader = () => (
-  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-    <div className="space-y-2">
-      <Skeleton className="h-8 w-48 md:w-64" />
-      <Skeleton className="h-4 w-32 md:w-40" />
-    </div>
-    <div className="flex gap-2">
-      <Skeleton className="h-10 w-24 rounded-md" />
-      <Skeleton className="h-10 w-24 rounded-md" />
-    </div>
-  </div>
-);
+
 
 // 2. Stats Grid Skeleton
-export const SkeletonStatsGrid = ({ items = 3 }: { items?: number }) => (
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+export const SkeletonStatsGrid = ({ items = 3, columns = 3 }: { items?: number; columns?: number }) => {
+  const gridCols = {
+    1: 'md:grid-cols-1',
+    2: 'md:grid-cols-2',
+    3: 'md:grid-cols-3',
+    4: 'md:grid-cols-4',
+    5: 'lg:grid-cols-5 md:grid-cols-2',
+  }[columns as 1|2|3|4|5] || 'md:grid-cols-3';
+
+  return (
+    <div className={cn("grid grid-cols-1 gap-6 mb-6", gridCols)}>
     {Array.from({ length: items }).map((_, i) => (
       <div key={i} className="rounded-lg border p-6 flex items-center gap-4 bg-card shadow-sm">
         <Skeleton className="h-12 w-12 rounded-full flex-shrink-0" />
@@ -39,8 +36,9 @@ export const SkeletonStatsGrid = ({ items = 3 }: { items?: number }) => (
         </div>
       </div>
     ))}
-  </div>
-);
+    </div>
+  );
+};
 
 // 3. Table Skeleton
 export const SkeletonTable = ({ rows = 5, cols = 4 }: { rows?: number; cols?: number }) => (
@@ -129,6 +127,20 @@ export const SkeletonText = ({ lines = 3 }: { lines?: number }) => (
     {Array.from({ length: lines }).map((_, i) => (
       <Skeleton key={i} className={`h-4 ${i === lines - 1 ? 'w-3/4' : 'w-full'}`} />
     ))}
+  </div>
+);
+ 
+// 8. Page Header Skeleton
+export const SkeletonPageHeader = () => (
+  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+    <div className="space-y-2">
+      <Skeleton className="h-8 w-64" />
+      <Skeleton className="h-4 w-96" />
+    </div>
+    <div className="flex gap-2">
+      <Skeleton className="h-10 w-32 rounded-md" />
+      <Skeleton className="h-10 w-32 rounded-md" />
+    </div>
   </div>
 );
 

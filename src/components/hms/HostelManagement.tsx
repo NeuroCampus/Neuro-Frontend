@@ -36,7 +36,7 @@ interface Hostel {
 }
 
 const HostelManagement: React.FC = () => {
-  const { hostels, wardens, caretakers, loading, refreshData, setHostels } = useHMSContext();
+  const { hostels, wardens, caretakers, loading, refreshData, setHostels, skeletonMode } = useHMSContext();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingHostel, setEditingHostel] = useState<Hostel | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -132,23 +132,30 @@ const HostelManagement: React.FC = () => {
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
               <div className="relative w-full md:w-72">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search hostels..."
-                  className="pl-10 h-10 bg-background"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+                {loading || skeletonMode ? (
+                  <div className="h-10 w-full rounded-md bg-muted animate-pulse border" />
+                ) : (
+                  <Input
+                    placeholder="Search hostels..."
+                    className="pl-10 h-10 bg-background"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                )}
               </div>
 
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button onClick={() => {
-                    setEditingHostel(null);
-                    setFormData({ name: '', gender: 'M', floor_count: 1, warden: null, caretaker: null });
-                  }} className="bg-primary hover:bg-primary/90 h-10 whitespace-nowrap w-full sm:w-auto">
-                    <Plus className="w-4 h-4 mr-2" /> Add Hostel
-                  </Button>
-                </DialogTrigger>
+              {loading || skeletonMode ? (
+                <div className="h-10 w-full sm:w-[130px] rounded-md bg-muted animate-pulse border" />
+              ) : (
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button onClick={() => {
+                      setEditingHostel(null);
+                      setFormData({ name: '', gender: 'M', floor_count: 1, warden: null, caretaker: null });
+                    }} className="bg-primary hover:bg-primary/90 h-10 whitespace-nowrap w-full sm:w-auto">
+                      <Plus className="w-4 h-4 mr-2" /> Add Hostel
+                    </Button>
+                  </DialogTrigger>
                 <DialogContent className="max-w-[90vw] sm:max-w-[425px] rounded-xl">
                   <DialogHeader>
                     <DialogTitle>{editingHostel ? 'Edit Hostel' : 'Add Hostel'}</DialogTitle>
@@ -228,11 +235,12 @@ const HostelManagement: React.FC = () => {
                   </form>
                 </DialogContent>
               </Dialog>
+            )}
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {loading || skeletonMode ? (
             <SkeletonTable rows={5} columns={5} />
           ) : (
             <div className="rounded-md border">

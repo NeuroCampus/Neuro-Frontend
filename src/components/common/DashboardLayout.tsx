@@ -108,7 +108,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       .join(" ");
   };
 
-  const isNoAnimation = role === 'admin' || role === 'principal';
+  const isNoAnimation = role === 'admin' || role === 'principal' || role === 'hms' || role === 'warden';
 
   return (
     <motion.div

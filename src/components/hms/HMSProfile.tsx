@@ -11,6 +11,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { SkeletonCard } from "../ui/skeleton";
 import { fetchWithTokenRefresh } from "../../utils/authService";
 import { API_ENDPOINT } from "../../utils/config";
+import { useHMSContext } from "../../context/HMSContext";
 
 interface User {
   user_id?: string;
@@ -48,6 +49,7 @@ const HMSProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
     designation: "",
   });
   const { theme } = useTheme();
+  const { skeletonMode } = useHMSContext();
   const [fetchedUser, setFetchedUser] = useState<User | null>(null);
   const skipFetch = useRef(false);
 
@@ -158,13 +160,7 @@ const HMSProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
     }
   };
 
-  if (loading && !profile.first_name) {
-    return (
-      <div className="flex justify-center items-start p-6">
-        <SkeletonCard className="w-full max-w-4xl h-[500px]" />
-      </div>
-    );
-  }
+  const isSkeleton = (loading && !profile.first_name) || skeletonMode;
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -174,28 +170,48 @@ const HMSProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
               <div className="w-full">
                 <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>First Name</label>
-                <Input name="first_name" value={profile.first_name} onChange={handleChange} disabled={!editing} placeholder="First name" className="text-sm h-9 sm:h-10 w-full" />
+                {isSkeleton ? (
+                  <div className="h-9 sm:h-10 w-full rounded-md bg-muted animate-pulse border" />
+                ) : (
+                  <Input name="first_name" value={profile.first_name} onChange={handleChange} disabled={!editing} placeholder="First name" className="text-sm h-9 sm:h-10 w-full" />
+                )}
               </div>
               <div className="w-full">
                 <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Last Name</label>
-                <Input name="last_name" value={profile.last_name} onChange={handleChange} disabled={!editing} placeholder="Last name" className="text-sm h-9 sm:h-10 w-full" />
+                {isSkeleton ? (
+                  <div className="h-9 sm:h-10 w-full rounded-md bg-muted animate-pulse border" />
+                ) : (
+                  <Input name="last_name" value={profile.last_name} onChange={handleChange} disabled={!editing} placeholder="Last name" className="text-sm h-9 sm:h-10 w-full" />
+                )}
               </div>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Email</label>
-                <Input name="email" value={profile.email} onChange={handleChange} disabled={!editing} placeholder="Email address" className="text-sm h-9 sm:h-10 w-full" />
+                {isSkeleton ? (
+                  <div className="h-9 sm:h-10 w-full rounded-md bg-muted animate-pulse border" />
+                ) : (
+                  <Input name="email" value={profile.email} onChange={handleChange} disabled={!editing} placeholder="Email address" className="text-sm h-9 sm:h-10 w-full" />
+                )}
               </div>
               <div>
                 <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Mobile</label>
-                <Input name="mobile_number" value={profile.mobile_number} onChange={handleChange} disabled={!editing} maxLength={10} placeholder="10-digit mobile" className="text-sm h-9 sm:h-10 w-full" />
+                {isSkeleton ? (
+                  <div className="h-9 sm:h-10 w-full rounded-md bg-muted animate-pulse border" />
+                ) : (
+                  <Input name="mobile_number" value={profile.mobile_number} onChange={handleChange} disabled={!editing} maxLength={10} placeholder="10-digit mobile" className="text-sm h-9 sm:h-10 w-full" />
+                )}
               </div>
             </div>
 
             <div className="w-full">
                 <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Designation</label>
-                <Input name="designation" value={profile.designation} onChange={handleChange} disabled={!editing} placeholder="Designation" className="text-sm h-9 sm:h-10 w-full" />
+                {isSkeleton ? (
+                  <div className="h-9 sm:h-10 w-full rounded-md bg-muted animate-pulse border" />
+                ) : (
+                  <Input name="designation" value={profile.designation} onChange={handleChange} disabled={!editing} placeholder="Designation" className="text-sm h-9 sm:h-10 w-full" />
+                )}
             </div>
           </div>
         );
@@ -204,11 +220,19 @@ const HMSProfile = ({ user: propUser, setError }: { user?: User; setError?: (err
           <div className="space-y-4 sm:space-y-5">
             <div>
               <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Address</label>
-              <Textarea name="address" value={profile.address} onChange={handleChange} disabled={!editing} rows={3} className="text-sm w-full" />
+              {isSkeleton ? (
+                <div className="h-20 w-full rounded-md bg-muted animate-pulse border" />
+              ) : (
+                <Textarea name="address" value={profile.address} onChange={handleChange} disabled={!editing} rows={3} className="text-sm w-full" />
+              )}
             </div>
             <div>
               <label className={`block text-sm mb-1.5 sm:mb-2 font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Bio</label>
-              <Textarea name="bio" value={profile.bio} onChange={handleChange} disabled={!editing} rows={4} className="text-sm w-full" />
+              {isSkeleton ? (
+                <div className="h-24 w-full rounded-md bg-muted animate-pulse border" />
+              ) : (
+                <Textarea name="bio" value={profile.bio} onChange={handleChange} disabled={!editing} rows={4} className="text-sm w-full" />
+              )}
             </div>
           </div>
         );

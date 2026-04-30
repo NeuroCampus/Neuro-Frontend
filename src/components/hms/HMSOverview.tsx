@@ -21,7 +21,6 @@ import {
 import { getRoomDetail } from "../../utils/hms_api";
 import DashboardCard from "../common/DashboardCard";
 import { 
-  SkeletonPageHeader, 
   SkeletonStatsGrid, 
   SkeletonCard 
 } from "../ui/skeleton";
@@ -64,7 +63,7 @@ interface Stats {
 const HMSOverview = () => {
   const { theme } = useTheme();
   const { toast } = useToast();
-  const { hostels, statistics, loading, getCachedFloors, getCachedRooms } = useHMSContext();
+  const { hostels, statistics, loading, getCachedFloors, getCachedRooms, skeletonMode } = useHMSContext();
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedHostel, setSelectedHostel] = useState<number | null>(null);
@@ -170,69 +169,47 @@ const HMSOverview = () => {
     roomsByFloor[Number(f)].sort((a, b) => (a.room_number).localeCompare(b.room_number, undefined, {numeric: true}));
   });
 
-  const containerVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
-    },
-  };
+  // No variants needed anymore
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: { opacity: 1, y: 0 },
-  };
-
-  if (loading) {
-    return (
-      <div className="space-y-8">
-        <SkeletonPageHeader />
-        <SkeletonStatsGrid items={5} />
-        <SkeletonCard className="h-[400px]" />
-      </div>
-    );
-  }
+  // No early return for loading to keep titles visible
+  const isSkeleton = loading || skeletonMode;
 
   return (
-    <motion.div
-      className="space-y-8"
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-    >
+    <div className="space-y-8">
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         <DashboardCard
           title="Total Hostels"
-          value={stats.totalHostels}
+          value={isSkeleton ? <div className="h-8 w-12 bg-muted animate-pulse rounded" /> : stats.totalHostels}
           description="Managed properties"
           icon={<Building2 size={20} />}
         />
         <DashboardCard
           title="Total Rooms"
-          value={stats.totalRooms}
+          value={isSkeleton ? <div className="h-8 w-16 bg-muted animate-pulse rounded" /> : stats.totalRooms}
           description="Total capacity"
           icon={<Grid3X3 size={20} />}
         />
         <DashboardCard
           title="Total Students"
-          value={stats.totalStudents}
+          value={isSkeleton ? <div className="h-8 w-14 bg-muted animate-pulse rounded" /> : stats.totalStudents}
           description="Active residents"
           icon={<Users size={20} />}
         />
         <DashboardCard
           title="Wardens"
-          value={stats.totalWardens}
+          value={isSkeleton ? <div className="h-8 w-10 bg-muted animate-pulse rounded" /> : stats.totalWardens}
           description="Hostel supervisors"
           icon={<Shield size={20} />}
         />
         <DashboardCard
           title="Occupancy"
-          value={`${stats.occupancyRate}%`}
+          value={isSkeleton ? (
+            <div className="flex items-baseline gap-1">
+              <div className="h-8 w-16 bg-muted animate-pulse rounded" />
+              <span className="text-xl font-bold text-muted-foreground">%</span>
+            </div>
+          ) : `${stats.occupancyRate}%`}
           description="Current utilization"
           icon={<AlertCircle size={20} />}
         />
@@ -252,46 +229,54 @@ const HMSOverview = () => {
             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
               {/* Hostel Filter */}
               <div className="w-full sm:w-48 md:w-64">
-                <Select
-                  value={selectedHostel?.toString() || ''}
-                  onValueChange={(v) => {
-                    setSelectedHostel(Number(v));
-                    setSelectedFloor("");
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose Hostel" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {hostels.map((hostel) => (
-                      <SelectItem key={hostel.id} value={hostel.id.toString()}>
-                        {hostel.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {isSkeleton ? (
+                  <div className="h-10 w-full rounded-md bg-muted animate-pulse border" />
+                ) : (
+                  <Select
+                    value={selectedHostel?.toString() || ''}
+                    onValueChange={(v) => {
+                      setSelectedHostel(Number(v));
+                      setSelectedFloor("");
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose Hostel" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {hostels.map((hostel) => (
+                        <SelectItem key={hostel.id} value={hostel.id.toString()}>
+                          {hostel.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
               {/* Floor Filter */}
               <div className="w-full sm:w-40 md:w-48">
-                <Select
-                  value={selectedFloor}
-                  onValueChange={setSelectedFloor}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose Floor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Floors</SelectItem>
-                    {availableFloors
-                      .sort((a, b) => a - b)
-                      .map((floor) => (
-                        <SelectItem key={floor} value={floor.toString()}>
-                          Floor {floor === 0 ? 'Ground' : floor}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+                {isSkeleton ? (
+                  <div className="h-10 w-full rounded-md bg-muted animate-pulse border" />
+                ) : (
+                  <Select
+                    value={selectedFloor}
+                    onValueChange={setSelectedFloor}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose Floor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Floors</SelectItem>
+                      {availableFloors
+                        .sort((a, b) => a - b)
+                        .map((floor) => (
+                          <SelectItem key={floor} value={floor.toString()}>
+                            Floor {floor === 0 ? 'Ground' : floor}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </div>
           </div>
@@ -314,7 +299,7 @@ const HMSOverview = () => {
         </div>
 
         <div className="p-6">
-          {loadingRooms ? (
+          {loadingRooms || skeletonMode ? (
             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
               {Array.from({ length: 16 }).map((_, i) => (
                 <div key={i} className="h-20 rounded-lg border bg-muted animate-pulse" />
@@ -429,7 +414,7 @@ const HMSOverview = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </motion.div>
+    </div>
   );
 };
 

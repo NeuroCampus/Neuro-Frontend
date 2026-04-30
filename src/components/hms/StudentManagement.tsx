@@ -33,7 +33,7 @@ interface HostelStudent {
 
 
 const StudentManagement: React.FC = () => {
-  const { hostels, getCachedFloors, getCachedRooms } = useHMSContext();
+  const { hostels, getCachedFloors, getCachedRooms, skeletonMode } = useHMSContext();
   const { batches, branches, getSemestersForBranch, loading: academicLoading } = useAcademicContext();
   const [students, setStudents] = useState<HostelStudent[]>([]);
   const [semesters, setSemesters] = useState<Semester[]>([]);
@@ -223,39 +223,51 @@ const StudentManagement: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground leading-none">Batch</Label>
-                <Select value={filters.batch || "all"} onValueChange={(v) => handleFilterChange('batch', v === "all" ? '' : v)}>
-                  <SelectTrigger className="h-9 bg-background border-muted-foreground/20">
-                    <SelectValue placeholder="All Batches" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Batches</SelectItem>
-                    {batches.map(b => <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                {loading || skeletonMode ? (
+                  <div className="w-full h-9 rounded-md bg-muted animate-pulse border" />
+                ) : (
+                  <Select value={filters.batch || "all"} onValueChange={(v) => handleFilterChange('batch', v === "all" ? '' : v)}>
+                    <SelectTrigger className="h-9 bg-background border-muted-foreground/20">
+                      <SelectValue placeholder="All Batches" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Batches</SelectItem>
+                      {batches.map(b => <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               <div className="space-y-2">
                 <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground leading-none">Branch</Label>
-                <Select value={filters.branch || "all"} onValueChange={(v) => handleFilterChange('branch', v === "all" ? '' : v)}>
-                  <SelectTrigger className="h-9 bg-background border-muted-foreground/20">
-                    <SelectValue placeholder="All Branches" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Branches</SelectItem>
-                    {branches.map(b => <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                {loading || skeletonMode ? (
+                  <div className="w-full h-9 rounded-md bg-muted animate-pulse border" />
+                ) : (
+                  <Select value={filters.branch || "all"} onValueChange={(v) => handleFilterChange('branch', v === "all" ? '' : v)}>
+                    <SelectTrigger className="h-9 bg-background border-muted-foreground/20">
+                      <SelectValue placeholder="All Branches" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Branches</SelectItem>
+                      {branches.map(b => <SelectItem key={b.id} value={b.id.toString()}>{b.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               <div className="space-y-2">
                 <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground leading-none">Semester</Label>
-                <Select value={filters.semester || "all"} onValueChange={(v) => handleFilterChange('semester', v === "all" ? '' : v)} disabled={!filters.branch}>
-                  <SelectTrigger className="h-9 bg-background border-muted-foreground/20">
-                    <SelectValue placeholder="All Semesters" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Semesters</SelectItem>
-                    {Array.isArray(semesters) && semesters.map(s => <SelectItem key={s.id} value={s.id}>Semester {s.number}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                {loading || skeletonMode ? (
+                  <div className="w-full h-9 rounded-md bg-muted animate-pulse border" />
+                ) : (
+                  <Select value={filters.semester || "all"} onValueChange={(v) => handleFilterChange('semester', v === "all" ? '' : v)} disabled={!filters.branch}>
+                    <SelectTrigger className="h-9 bg-background border-muted-foreground/20">
+                      <SelectValue placeholder="All Semesters" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Semesters</SelectItem>
+                      {Array.isArray(semesters) && semesters.map(s => <SelectItem key={s.id} value={s.id}>Semester {s.number}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
             </div>
 
@@ -265,19 +277,23 @@ const StudentManagement: React.FC = () => {
                 <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground leading-none">Search Students</Label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    placeholder="USN, Name, Email..."
-                    className="h-9 pl-10 bg-background border-muted-foreground/20 focus:border-primary/50 transition-colors"
-                    value={filters.search}
-                    onChange={(e) => handleFilterChange('search', e.target.value)}
-                  />
+                  {loading || skeletonMode ? (
+                    <div className="h-9 w-full rounded-md bg-muted animate-pulse border" />
+                  ) : (
+                    <Input
+                      placeholder="USN, Name, Email..."
+                      className="h-9 pl-10 bg-background border-muted-foreground/20 focus:border-primary/50 transition-colors"
+                      value={filters.search}
+                      onChange={(e) => handleFilterChange('search', e.target.value)}
+                    />
+                  )}
                 </div>
               </div>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          {loading ? (
+          {loading || skeletonMode ? (
             <div className="p-6"><SkeletonTable rows={10} columns={7} /></div>
           ) : (
             <>

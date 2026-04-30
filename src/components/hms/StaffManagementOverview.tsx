@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { SkeletonTable, SkeletonStatsGrid, SkeletonPageHeader } from "../ui/skeleton";
+import { SkeletonTable, SkeletonStatsGrid } from "../ui/skeleton";
 import DashboardCard from "../common/DashboardCard";
 import {
   Dialog,
@@ -19,6 +19,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { useHMSContext } from "../../context/HMSContext";
 
 interface Warden {
   id: number;
@@ -41,6 +42,7 @@ interface Caretaker {
 
 const StaffManagementOverview: React.FC = () => {
   const { toast } = useToast();
+  const { skeletonMode } = useHMSContext();
   const [loading, setLoading] = useState(true);
   const [wardens, setWardens] = useState<Warden[]>([]);
   const [caretakers, setCaretakers] = useState<Caretaker[]>([]);
@@ -171,18 +173,7 @@ const StaffManagementOverview: React.FC = () => {
   const filteredWardens = wardens.filter(w => w.name.toLowerCase().includes(wardenSearch.toLowerCase()));
   const filteredCaretakers = caretakers.filter(c => c.name.toLowerCase().includes(caretakerSearch.toLowerCase()));
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <SkeletonPageHeader />
-        <SkeletonStatsGrid count={2} />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <SkeletonTable rows={5} columns={3} />
-          <SkeletonTable rows={5} columns={3} />
-        </div>
-      </div>
-    );
-  }
+  const isSkeleton = loading || skeletonMode;
 
   return (
     <div className="space-y-8">
@@ -191,12 +182,12 @@ const StaffManagementOverview: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <DashboardCard
           title="Total Wardens"
-          value={wardensTotal.toString()}
+          value={isSkeleton ? <div className="h-8 w-12 bg-muted animate-pulse rounded" /> : wardensTotal.toString()}
           icon={<UserCheck className="w-6 h-6 text-primary" />}
         />
         <DashboardCard
           title="Total Caretakers"
-          value={caretakersTotal.toString()}
+          value={isSkeleton ? <div className="h-8 w-12 bg-muted animate-pulse rounded" /> : caretakersTotal.toString()}
           icon={<Users className="w-6 h-6 text-blue-500" />}
         />
       </div>
@@ -212,12 +203,16 @@ const StaffManagementOverview: React.FC = () => {
               </CardTitle>
               <div className="relative w-48">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search..."
-                  className="pl-9 h-8 text-xs"
-                  value={wardenSearch}
-                  onChange={(e) => setWardenSearch(e.target.value)}
-                />
+                {isSkeleton ? (
+                  <div className="h-8 w-full rounded bg-muted animate-pulse border" />
+                ) : (
+                  <Input
+                    placeholder="Search..."
+                    className="pl-9 h-8 text-xs"
+                    value={wardenSearch}
+                    onChange={(e) => setWardenSearch(e.target.value)}
+                  />
+                )}
               </div>
             </div>
           </CardHeader>
@@ -231,34 +226,57 @@ const StaffManagementOverview: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredWardens.map((warden) => (
-                    <TableRow key={warden.id} className="group">
-                      <TableCell>
-                        <div className="space-y-1 py-1">
-                          <div className="font-semibold flex items-center gap-2">
-                            {warden.name}
-                            <Badge variant="outline" className="text-[10px] py-0">{warden.designation || 'Warden'}</Badge>
+                  {isSkeleton ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell>
+                          <div className="space-y-2 py-2">
+                            <div className="h-4 w-32 bg-muted animate-pulse rounded" />
+                            <div className="space-y-1">
+                              <div className="h-3 w-48 bg-muted animate-pulse rounded" />
+                              <div className="h-3 w-40 bg-muted animate-pulse rounded" />
+                              <div className="h-3 w-56 bg-muted animate-pulse rounded" />
+                              <div className="h-3 w-36 bg-muted animate-pulse rounded" />
+                            </div>
                           </div>
-                          <div className="text-xs text-muted-foreground flex flex-col gap-0.5">
-                            <span className="flex items-center gap-1.5"><Mail size={12} /> {warden.email || 'N/A'}</span>
-                            <span className="flex items-center gap-1.5"><Phone size={12} /> {warden.phone || 'N/A'}</span>
-                            <span className="flex items-center gap-1.5"><MapPin size={12} /> {warden.address || 'N/A'}</span>
-                            <span className="flex items-center gap-1.5 font-medium text-primary/70"><Award size={12} /> {warden.experience || '0'} Years Experience</span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right align-top pt-4">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingWarden(warden); setIsWardenModalOpen(true); }}>
-                            <Edit2 size={14} className="text-blue-500" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteWarden(warden.id)}>
-                            <Trash2 size={14} className="text-red-500" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                        </TableCell>
+                        <TableCell className="text-right"><div className="h-8 w-16 bg-muted animate-pulse rounded ml-auto" /></TableCell>
+                      </TableRow>
+                    ))
+                  ) : filteredWardens.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={2} className="h-24 text-center text-muted-foreground">No wardens found</TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    filteredWardens.map((warden) => (
+                      <TableRow key={warden.id} className="group">
+                        <TableCell>
+                          <div className="space-y-1 py-1">
+                            <div className="font-semibold flex items-center gap-2">
+                              {warden.name}
+                              <Badge variant="outline" className="text-[10px] py-0">{warden.designation || 'Warden'}</Badge>
+                            </div>
+                            <div className="text-xs text-muted-foreground flex flex-col gap-0.5">
+                              <span className="flex items-center gap-1.5"><Mail size={12} /> {warden.email || 'N/A'}</span>
+                              <span className="flex items-center gap-1.5"><Phone size={12} /> {warden.phone || 'N/A'}</span>
+                              <span className="flex items-center gap-1.5"><MapPin size={12} /> {warden.address || 'N/A'}</span>
+                              <span className="flex items-center gap-1.5 font-medium text-primary/70"><Award size={12} /> {warden.experience || '0'} Years Experience</span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right align-top pt-4">
+                          <div className="flex justify-end gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingWarden(warden); setIsWardenModalOpen(true); }}>
+                              <Edit2 size={14} className="text-blue-500" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteWarden(warden.id)}>
+                              <Trash2 size={14} className="text-red-500" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -275,12 +293,16 @@ const StaffManagementOverview: React.FC = () => {
               </CardTitle>
               <div className="relative w-48">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search..."
-                  className="pl-9 h-8 text-xs"
-                  value={caretakerSearch}
-                  onChange={(e) => setCaretakerSearch(e.target.value)}
-                />
+                {isSkeleton ? (
+                  <div className="h-8 w-full rounded bg-muted animate-pulse border" />
+                ) : (
+                  <Input
+                    placeholder="Search..."
+                    className="pl-9 h-8 text-xs"
+                    value={caretakerSearch}
+                    onChange={(e) => setCaretakerSearch(e.target.value)}
+                  />
+                )}
               </div>
             </div>
           </CardHeader>
@@ -294,33 +316,56 @@ const StaffManagementOverview: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCaretakers.map((caretaker) => (
-                    <TableRow key={caretaker.id} className="group">
-                      <TableCell>
-                        <div className="space-y-1 py-1">
-                          <div className="font-semibold flex items-center gap-2">
-                            {caretaker.name}
+                  {isSkeleton ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell>
+                          <div className="space-y-2 py-2">
+                            <div className="h-4 w-32 bg-muted animate-pulse rounded" />
+                            <div className="space-y-1">
+                              <div className="h-3 w-48 bg-muted animate-pulse rounded" />
+                              <div className="h-3 w-40 bg-muted animate-pulse rounded" />
+                              <div className="h-3 w-56 bg-muted animate-pulse rounded" />
+                              <div className="h-3 w-36 bg-muted animate-pulse rounded" />
+                            </div>
                           </div>
-                          <div className="text-xs text-muted-foreground flex flex-col gap-0.5">
-                            <span className="flex items-center gap-1.5"><Mail size={12} /> {caretaker.email || 'N/A'}</span>
-                            <span className="flex items-center gap-1.5"><Phone size={12} /> {caretaker.phone || 'N/A'}</span>
-                            <span className="flex items-center gap-1.5"><MapPin size={12} /> {caretaker.address || 'N/A'}</span>
-                            <span className="flex items-center gap-1.5 font-medium text-blue-500/70"><Briefcase size={12} /> {caretaker.experience || '0'} Years Experience</span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right align-top pt-4">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingCaretaker(caretaker); setIsCaretakerModalOpen(true); }}>
-                            <Edit2 size={14} className="text-blue-500" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteCaretaker(caretaker.id)}>
-                            <Trash2 size={14} className="text-red-500" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                        </TableCell>
+                        <TableCell className="text-right"><div className="h-8 w-16 bg-muted animate-pulse rounded ml-auto" /></TableCell>
+                      </TableRow>
+                    ))
+                  ) : filteredCaretakers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={2} className="h-24 text-center text-muted-foreground">No caretakers found</TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    filteredCaretakers.map((caretaker) => (
+                      <TableRow key={caretaker.id} className="group">
+                        <TableCell>
+                          <div className="space-y-1 py-1">
+                            <div className="font-semibold flex items-center gap-2">
+                              {caretaker.name}
+                            </div>
+                            <div className="text-xs text-muted-foreground flex flex-col gap-0.5">
+                              <span className="flex items-center gap-1.5"><Mail size={12} /> {caretaker.email || 'N/A'}</span>
+                              <span className="flex items-center gap-1.5"><Phone size={12} /> {caretaker.phone || 'N/A'}</span>
+                              <span className="flex items-center gap-1.5"><MapPin size={12} /> {caretaker.address || 'N/A'}</span>
+                              <span className="flex items-center gap-1.5 font-medium text-blue-500/70"><Briefcase size={12} /> {caretaker.experience || '0'} Years Experience</span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right align-top pt-4">
+                          <div className="flex justify-end gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingCaretaker(caretaker); setIsCaretakerModalOpen(true); }}>
+                              <Edit2 size={14} className="text-blue-500" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteCaretaker(caretaker.id)}>
+                              <Trash2 size={14} className="text-red-500" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>

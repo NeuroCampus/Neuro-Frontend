@@ -9,7 +9,7 @@ import { manageRooms, manageHostels, manageHostelStudents, getFloorsByHostel } f
 import { useToast } from '../../hooks/use-toast';
 import { Edit2, Trash2, Plus, LayoutGrid, Users as UsersIcon, Info } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
-import { SkeletonCard, SkeletonPageHeader } from '../ui/skeleton';
+import { SkeletonCard } from '../ui/skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 import Swal from 'sweetalert2';
 
@@ -34,7 +34,7 @@ interface Room {
 import { useHMSContext } from "../../context/HMSContext";
 
 const RoomManagement: React.FC = () => {
-  const { hostels, loading: isLoadingHostels, getCachedFloors, getCachedRooms, refreshData } = useHMSContext();
+  const { hostels, loading: isLoadingHostels, getCachedFloors, getCachedRooms, refreshData, skeletonMode } = useHMSContext();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedHostel, setSelectedHostel] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -257,15 +257,7 @@ const RoomManagement: React.FC = () => {
   const hostelRooms = selectedHostel ? rooms.filter(r => r.hostel === selectedHostel) : [];
   const floors = [...new Set(hostelRooms.map(r => r.floor !== undefined ? r.floor : getFloorFromRoomNo(r.no)))].sort((a, b) => a - b);
 
-  if (!selectedHostel && isLoadingRooms) {
-    return (
-      <div className="space-y-6">
-        <SkeletonPageHeader />
-        <SkeletonCard className="h-[200px]" />
-        <SkeletonCard className="h-[400px]" />
-      </div>
-    );
-  }
+  // No early return, handle loading in CardContent for better UX
 
   return (
     <div className="space-y-4">
@@ -276,21 +268,25 @@ const RoomManagement: React.FC = () => {
               <div className="flex items-center gap-3 w-full md:w-auto">
                 <div className="flex flex-col w-full">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground leading-none mb-1">Current Hostel</span>
-                  <Select value={selectedHostel?.toString() || ''} onValueChange={(v) => {
-                    setSelectedHostel(parseInt(v));
-                    setSelectedFloorFilter("");
-                  }}>
-                    <SelectTrigger className="w-full md:w-[200px] h-9 border bg-transparent p-2 focus:ring-1 font-normal text-md">
-                      <SelectValue placeholder="Select Hostel" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {hostels.map((hostel) => (
-                        <SelectItem key={hostel.id} value={hostel.id.toString()} className="font-normal">
-                          {hostel.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {isLoadingHostels || skeletonMode ? (
+                    <div className="w-full md:w-[200px] h-9 rounded-md bg-muted animate-pulse border" />
+                  ) : (
+                    <Select value={selectedHostel?.toString() || ''} onValueChange={(v) => {
+                      setSelectedHostel(parseInt(v));
+                      setSelectedFloorFilter("");
+                    }}>
+                      <SelectTrigger className="w-full md:w-[200px] h-9 border bg-transparent p-2 focus:ring-1 font-normal text-md">
+                        <SelectValue placeholder="Select Hostel" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {hostels.map((hostel) => (
+                          <SelectItem key={hostel.id} value={hostel.id.toString()} className="font-normal">
+                            {hostel.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               </div>
 
@@ -298,126 +294,138 @@ const RoomManagement: React.FC = () => {
               <div className="flex items-center gap-3 w-full md:w-auto">
                 <div className="flex flex-col w-full">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground leading-none mb-1">Current Floor</span>
-                  <Select value={selectedFloorFilter} onValueChange={setSelectedFloorFilter}>
-                    <SelectTrigger className="w-full md:w-[160px] h-9 border bg-transparent p-2 focus:ring-1 font-normal text-md">
-                      <SelectValue placeholder="Choose Floor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Floors</SelectItem>
-                      {availableFloors.sort((a, b) => a - b).map(f => (
-                        <SelectItem key={f} value={f.toString()}>
-                          {f === 0 ? 'Ground Floor' : `Floor ${f}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {isLoadingHostels || skeletonMode ? (
+                    <div className="w-full md:w-[160px] h-9 rounded-md bg-muted animate-pulse border" />
+                  ) : (
+                    <Select value={selectedFloorFilter} onValueChange={setSelectedFloorFilter}>
+                      <SelectTrigger className="w-full md:w-[160px] h-9 border bg-transparent p-2 focus:ring-1 font-normal text-md">
+                        <SelectValue placeholder="Choose Floor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Floors</SelectItem>
+                        {availableFloors.sort((a, b) => a - b).map(f => (
+                          <SelectItem key={f} value={f.toString()}>
+                            {f === 0 ? 'Ground Floor' : `Floor ${f}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               </div>
             </div>
 
             <div className="flex flex-row items-center gap-3 w-full md:w-auto">
-              <Button
-                variant={isEditMode ? "secondary" : "outline"}
-                onClick={() => setIsEditMode(!isEditMode)}
-                className={`h-9 px-4 font-semibold transition-all ${isEditMode ? 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/20' : ''} w-full sm:w-auto`}
-              >
-                <Edit2 className={`w-4 h-4 mr-2 ${isEditMode ? 'animate-pulse' : ''}`} />
-                {isEditMode ? "Done Editing" : "Edit Rooms"}
-              </Button>
+              {isLoadingHostels || skeletonMode ? (
+                <div className="h-9 w-full sm:w-[120px] rounded-md bg-muted animate-pulse border" />
+              ) : (
+                <Button
+                  variant={isEditMode ? "secondary" : "outline"}
+                  onClick={() => setIsEditMode(!isEditMode)}
+                  className={`h-9 px-4 font-semibold transition-all ${isEditMode ? 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/20' : ''} w-full sm:w-auto`}
+                >
+                  <Edit2 className={`w-4 h-4 mr-2 ${isEditMode ? 'animate-pulse' : ''}`} />
+                  {isEditMode ? "Done Editing" : "Edit Rooms"}
+                </Button>
+              )}
 
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button onClick={() => {
-                    setEditingRoom(null);
-                    setSelectedFloor(null);
-                    setFormData({ no: '', name: '', room_type: 'S', vacant: true, hostel: selectedHostel || 0 });
-                  }} className="bg-primary hover:bg-primary/90 h-9 px-4 font-semibold shadow-sm whitespace-nowrap w-full sm:w-auto">
-                    <Plus className="w-4 h-4 mr-2" /> Add Room
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-[90vw] sm:max-w-md rounded-xl">
-                  <DialogHeader>
-                    <DialogTitle>{editingRoom ? 'Edit Room' : 'Add Room'}</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Hostel</Label>
-                      <Select value={formData.hostel.toString()} onValueChange={(v) => setFormData({ ...formData, hostel: parseInt(v) })}>
-                        <SelectTrigger className="h-10"><SelectValue placeholder="Select hostel" /></SelectTrigger>
-                        <SelectContent>
-                          {hostels.map(h => <SelectItem key={h.id} value={h.id.toString()}>{h.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Floor</Label>
-                      <Select value={selectedFloor?.toString() || ''} onValueChange={(v) => setSelectedFloor(parseInt(v))}>
-                        <SelectTrigger className="h-10"><SelectValue placeholder="Select floor" /></SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: hostels.find(h => h.id === formData.hostel)?.floor_count || 6 }, (_, i) => i).map(f => (
-                            <SelectItem key={f} value={f.toString()}>{f === 0 ? 'Ground Floor' : `${f}${f === 1 ? 'st' : f === 2 ? 'nd' : f === 3 ? 'rd' : 'th'} Floor`}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
+              {isLoadingHostels || skeletonMode ? (
+                <div className="h-9 w-full sm:w-[120px] rounded-md bg-muted animate-pulse border" />
+              ) : (
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button onClick={() => {
+                      setEditingRoom(null);
+                      setSelectedFloor(null);
+                      setFormData({ no: '', name: '', room_type: 'S', vacant: true, hostel: selectedHostel || 0 });
+                    }} className="bg-primary hover:bg-primary/90 h-9 px-4 font-semibold shadow-sm whitespace-nowrap w-full sm:w-auto">
+                      <Plus className="w-4 h-4 mr-2" /> Add Room
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-[90vw] sm:max-w-md rounded-xl">
+                    <DialogHeader>
+                      <DialogTitle>{editingRoom ? 'Edit Room' : 'Add Room'}</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmit} className="space-y-4 pt-4">
                       <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Room Number</Label>
-                        <Input value={formData.no} onChange={(e) => setFormData({ ...formData, no: e.target.value })} required className="h-10" />
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Hostel</Label>
+                        <Select value={formData.hostel.toString()} onValueChange={(v) => setFormData({ ...formData, hostel: parseInt(v) })}>
+                          <SelectTrigger className="h-10"><SelectValue placeholder="Select hostel" /></SelectTrigger>
+                          <SelectContent>
+                            {hostels.map(h => <SelectItem key={h.id} value={h.id.toString()}>{h.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Room Name</Label>
-                        <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required className="h-10" />
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Floor</Label>
+                        <Select value={selectedFloor?.toString() || ''} onValueChange={(v) => setSelectedFloor(parseInt(v))}>
+                          <SelectTrigger className="h-10"><SelectValue placeholder="Select floor" /></SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: hostels.find(h => h.id === formData.hostel)?.floor_count || 6 }, (_, i) => i).map(f => (
+                              <SelectItem key={f} value={f.toString()}>{f === 0 ? 'Ground Floor' : `${f}${f === 1 ? 'st' : f === 2 ? 'nd' : f === 3 ? 'rd' : 'th'} Floor`}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Room Type</Label>
-                      <Select value={formData.room_type} onValueChange={(v: any) => setFormData({ ...formData, room_type: v })}>
-                        <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="S">Single Occupancy</SelectItem>
-                          <SelectItem value="D">Double Occupancy</SelectItem>
-                          <SelectItem value="P">Research Scholar</SelectItem>
-                          <SelectItem value="B">Both (S/D)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {editingRoom && (
-                      <div className="p-4 rounded-lg bg-muted/50 border space-y-2">
-                        <h4 className="text-sm font-semibold flex items-center gap-2 text-primary">
-                          <Info size={14} /> Capacity Info
-                        </h4>
-                        <div className="flex justify-between text-xs">
-                          <span>Assigned Students:</span>
-                          <span className="font-bold">{roomStudents.length} / {getRoomCapacity(formData.room_type)}</span>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Room Number</Label>
+                          <Input value={formData.no} onChange={(e) => setFormData({ ...formData, no: e.target.value })} required className="h-10" />
                         </div>
-                        <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                          <div
-                            className="bg-primary h-full"
-                            style={{ width: `${(roomStudents.length / getRoomCapacity(formData.room_type)) * 100}%` }}
-                          />
+                        <div className="space-y-2">
+                          <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Room Name</Label>
+                          <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Optional" className="h-10" />
                         </div>
                       </div>
-                    )}
-                    <div className="flex gap-2 mt-2">
+                      <div className="space-y-2">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Room Type</Label>
+                        <Select value={formData.room_type} onValueChange={(v) => setFormData({ ...formData, room_type: v as any })}>
+                          <SelectTrigger className="h-10"><SelectValue placeholder="Select type" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="S">Single</SelectItem>
+                            <SelectItem value="D">Double</SelectItem>
+                            <SelectItem value="P">Triple</SelectItem>
+                            <SelectItem value="B">Four Bed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       {editingRoom && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="h-10 px-4 text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200"
-                          onClick={() => {
-                            handleDelete(editingRoom.id);
-                            setIsDialogOpen(false);
-                          }}
-                        >
-                          <Trash2 size={16} />
-                        </Button>
+                        <div className="p-4 bg-muted/50 rounded-lg border border-dashed space-y-3">
+                          <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                            <Info size={14} /> Capacity Info
+                          </h4>
+                          <div className="flex justify-between text-xs">
+                            <span>Assigned Students:</span>
+                            <span className="font-bold">{roomStudents.length} / {getRoomCapacity(formData.room_type)}</span>
+                          </div>
+                          <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className="bg-primary h-full"
+                              style={{ width: `${(roomStudents.length / getRoomCapacity(formData.room_type)) * 100}%` }}
+                            />
+                          </div>
+                        </div>
                       )}
-                      <Button type="submit" className="flex-1 h-10 font-bold">{editingRoom ? 'Update Room' : 'Create Room'}</Button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
+                      <div className="flex gap-2 mt-2">
+                        {editingRoom && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="h-10 px-4 text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200"
+                            onClick={() => {
+                              handleDelete(editingRoom.id);
+                              setIsDialogOpen(false);
+                            }}
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        )}
+                        <Button type="submit" className="flex-1 h-10 font-bold">{editingRoom ? 'Update Room' : 'Create Room'}</Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -454,7 +462,16 @@ const RoomManagement: React.FC = () => {
 
           {/* Room Matrix View */}
           <AnimatePresence mode="wait">
-            {!selectedFloorFilter ? (
+            {(isLoadingRooms || skeletonMode) ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <SkeletonCard className="h-48" />
+                <SkeletonCard className="h-48" />
+                <SkeletonCard className="h-48" />
+                <SkeletonCard className="h-48" />
+                <SkeletonCard className="h-48" />
+                <SkeletonCard className="h-48" />
+              </div>
+            ) : !selectedFloorFilter ? (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -464,12 +481,6 @@ const RoomManagement: React.FC = () => {
                 <p className="text-muted-foreground font-medium text-lg text-center px-4">Select a floor to view and manage rooms</p>
                 <p className="text-muted-foreground/70 text-sm text-center px-4 mt-1">Choose a floor from the dropdown above to continue</p>
               </motion.div>
-            ) : isLoadingRooms ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <SkeletonCard className="h-48" />
-                <SkeletonCard className="h-48" />
-                <SkeletonCard className="h-48" />
-              </div>
             ) : (
               <motion.div
                 key={selectedHostel}
