@@ -17,6 +17,8 @@ import { logoutUser } from "../../utils/authService";
 import { useTheme } from "../../context/ThemeContext";
 import { HMSProvider, useHMSContext } from "../../context/HMSContext";
 import { AcademicProvider } from "../../context/AcademicContext";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface HMSDashboardProps {
   user: any;
@@ -26,7 +28,7 @@ interface HMSDashboardProps {
 const HMSDashboardContent = ({ user, setPage }: HMSDashboardProps) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { hostels, loading, refreshData } = useHMSContext();
+  const { hostels, loading, skeletonMode, setSkeletonMode, refreshData } = useHMSContext();
   const { toast } = useToast();
   const { theme } = useTheme();
   const [selectedHostelId, setSelectedHostelId] = useState<number | null>(null);
@@ -103,11 +105,9 @@ const HMSDashboardContent = ({ user, setPage }: HMSDashboardProps) => {
       onNotificationClick={handleNotificationClick}
       pageTitle="HMS Dashboard"
     >
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
+      <div className="space-y-4">
+        {/* Page content rendered below */}
+
         {/* Header - Only show for non-dashboard pages */}
         {(activePage !== '' && activePage !== 'dashboard') && (
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -116,16 +116,12 @@ const HMSDashboardContent = ({ user, setPage }: HMSDashboardProps) => {
         )}
 
         {/* Tabs Navigation */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
+        <div className="mt-4">
           <div key={activePage}>
             {renderContent()}
           </div>
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </DashboardLayout>
   );
 };

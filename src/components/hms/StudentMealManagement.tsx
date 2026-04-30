@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { motion } from 'framer-motion';
+import { useHMSContext } from '../../context/HMSContext';
 
 interface MenuItem {
   id: number;
@@ -40,6 +41,7 @@ interface StudentMealManagementProps {
 
 const StudentMealManagement: React.FC<StudentMealManagementProps> = ({ hostelId }) => {
   const { toast } = useToast();
+  const { skeletonMode } = useHMSContext();
 
   const [todayMenu, setTodayMenu] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(false);
@@ -112,10 +114,25 @@ const StudentMealManagement: React.FC<StudentMealManagementProps> = ({ hostelId 
       </CardHeader>
       
       <CardContent>
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
-            {[1, 2].map((i) => (
-              <div key={i} className="h-32 w-full bg-muted/50 animate-pulse rounded-xl" />
+        {loading || skeletonMode ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-5 rounded-2xl border-2 border-dashed bg-muted/5 animate-pulse space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-muted" />
+                    <div className="h-5 w-24 bg-muted rounded" />
+                  </div>
+                  <div className="h-4 w-16 bg-muted rounded-full" />
+                </div>
+                <div className="space-y-2">
+                  <div className="h-4 w-full bg-muted rounded" />
+                  <div className="h-4 w-[80%] bg-muted rounded" />
+                </div>
+                <div className="pt-2 border-t border-muted">
+                  <div className="h-3 w-32 bg-muted rounded" />
+                </div>
+              </div>
             ))}
           </div>
         ) : todayMenu.length === 0 ? (

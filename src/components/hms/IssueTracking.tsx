@@ -83,7 +83,7 @@ const STATUS_CONFIG = {
 
 const IssueTracking = ({ hostelId }: { hostelId: number }) => {
   const { toast } = useToast();
-  const { hostels } = useHMSContext();
+  const { hostels, skeletonMode } = useHMSContext();
 
   const [issues, setIssues] = useState<Issue[]>([]);
   const [selectedHostelId, setSelectedHostelId] = useState<string>(hostelId?.toString() || '');
@@ -220,25 +220,25 @@ const IssueTracking = ({ hostelId }: { hostelId: number }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <DashboardCard
           title="Total Issues"
-          value={totalCount}
+          value={loading || skeletonMode ? <div className="h-8 w-12 bg-muted animate-pulse rounded" /> : totalCount}
           description="Total raised this month"
           icon={<MessageSquare className="w-5 h-5" />}
         />
         <DashboardCard
           title="Pending"
-          value={issues.filter(i => i.status === 'pending').length}
+          value={loading || skeletonMode ? <div className="h-8 w-12 bg-muted animate-pulse rounded" /> : issues.filter(i => i.status === 'pending').length}
           description="Awaiting warden review"
           icon={<AlertTriangle className="w-5 h-5" />}
         />
         <DashboardCard
           title="In Progress"
-          value={issues.filter(i => i.status === 'in_progress').length}
+          value={loading || skeletonMode ? <div className="h-8 w-12 bg-muted animate-pulse rounded" /> : issues.filter(i => i.status === 'in_progress').length}
           description="Being handled"
           icon={<Clock className="w-5 h-5" />}
         />
         <DashboardCard
           title="Resolved"
-          value={issues.filter(i => i.status === 'completed').length}
+          value={loading || skeletonMode ? <div className="h-8 w-12 bg-muted animate-pulse rounded" /> : issues.filter(i => i.status === 'completed').length}
           description="Marked as completed"
           icon={<CheckCircle className="w-5 h-5" />}
         />
@@ -257,46 +257,74 @@ const IssueTracking = ({ hostelId }: { hostelId: number }) => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                   <div className="space-y-1">
                     <p className="text-[10px] uppercase font-semibold text-muted-foreground px-1">Hostel</p>
-                    <Select value={selectedHostelId} onValueChange={setSelectedHostelId}>
-                      <SelectTrigger className="bg-background border-primary/10 hover:border-primary/30 transition-colors h-10">
-                        <div className="flex items-center gap-2">
-                          <Home className="w-3.5 h-3.5 text-primary/70" />
-                          <SelectValue placeholder="Select Hostel" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {hostels.map((h) => (
-                          <SelectItem key={h.id} value={h.id.toString()}>{h.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    {loading || skeletonMode ? (
+                      <div className="h-10 w-full rounded-md bg-muted animate-pulse border" />
+                    ) : (
+                      <Select value={selectedHostelId} onValueChange={setSelectedHostelId}>
+                        <SelectTrigger className="bg-background border-primary/10 hover:border-primary/30 transition-colors h-10">
+                          <div className="flex items-center gap-2">
+                            <Home className="w-3.5 h-3.5 text-primary/70" />
+                            <SelectValue placeholder="Select Hostel" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {hostels.map((h) => (
+                            <SelectItem key={h.id} value={h.id.toString()}>{h.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
 
                   <div className="space-y-1">
                     <p className="text-[10px] uppercase font-semibold text-muted-foreground px-1">Filter Status</p>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="bg-background border-primary/10 hover:border-primary/30 transition-colors h-10">
-                        <div className="flex items-center gap-2">
-                          <Filter className="w-3.5 h-3.5 text-primary/70" />
-                          <SelectValue placeholder="All Status" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Status</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="in_progress">In Progress</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    {loading || skeletonMode ? (
+                      <div className="h-10 w-full rounded-md bg-muted animate-pulse border" />
+                    ) : (
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="bg-background border-primary/10 hover:border-primary/30 transition-colors h-10">
+                          <div className="flex items-center gap-2">
+                            <Filter className="w-3.5 h-3.5 text-primary/70" />
+                            <SelectValue placeholder="All Status" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Status</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="p-0">
               <ScrollArea className="h-[calc(100vh-23.5rem)] min-h-[50px] custom-scrollbar">
-                {loading && issues.length === 0 ? (
-                  <div className="p-4 space-y-4">
-                    {[1, 2, 3, 4].map(i => <div key={i} className="h-24 bg-muted animate-pulse rounded-lg" />)}
+                {(loading || skeletonMode) && issues.length === 0 ? (
+                  <div className="divide-y">
+                    {[1, 2, 3, 4].map(i => (
+                      <div key={i} className="p-4 space-y-4 animate-pulse">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="h-4 w-8 bg-muted rounded" />
+                            <div className="h-5 w-40 bg-muted rounded" />
+                          </div>
+                          <div className="h-6 w-20 bg-muted rounded-full" />
+                        </div>
+                        <div className="flex justify-between items-end">
+                          <div className="space-y-3">
+                            <div className="h-3 w-4 bg-muted rounded" />
+                            <div className="h-3 w-32 bg-muted rounded" />
+                          </div>
+                          <div className="space-y-3 text-right">
+                            <div className="h-3 w-24 bg-muted rounded ml-auto" />
+                            <div className="h-3 w-16 bg-muted rounded ml-auto" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : issues.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-20 text-center px-4">

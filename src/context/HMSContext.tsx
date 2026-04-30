@@ -38,6 +38,8 @@ interface HMSContextType {
   caretakers: Caretaker[];
   statistics: Stats;
   loading: boolean;
+  skeletonMode: boolean;
+  setSkeletonMode: (val: boolean) => void;
   refreshData: (force?: boolean) => Promise<void>;
   setHostels: React.Dispatch<React.SetStateAction<Hostel[]>>;
   getCachedFloors: (hostelId: number) => Promise<number[]>;
@@ -61,6 +63,7 @@ export const HMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     occupancy_rate: 0
   });
   const [loading, setLoading] = useState(!cachedInitData);
+  const [skeletonMode, setSkeletonMode] = useState(false);
   const floorCache = useRef<Record<number, number[]>>({});
   const roomCache = useRef<Record<string, any[]>>({});
   const { toast } = useToast();
@@ -137,7 +140,7 @@ export const HMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   return (
-    <HMSContext.Provider value={{ hostels, wardens, caretakers, statistics, loading, refreshData, setHostels, getCachedFloors, getCachedRooms }}>
+    <HMSContext.Provider value={{ hostels, wardens, caretakers, statistics, loading, skeletonMode, setSkeletonMode, refreshData, setHostels, getCachedFloors, getCachedRooms }}>
       {children}
     </HMSContext.Provider>
   );
