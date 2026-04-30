@@ -304,25 +304,47 @@ const FeeAssignments: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto p-4 md:p-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Fee Assignments</h1>
-          <p className="text-muted-foreground mt-1">Structured student selection and bulk fee template assignment</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Filters Panel */}
-        <Card className="lg:col-span-1 border-border/50 shadow-sm overflow-hidden h-fit sticky top-6">
-          <CardHeader className="bg-muted/30 pb-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              Cascading Filters
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 pt-6">
+      <Card className="border-border/50 shadow-sm overflow-hidden">
+        <CardHeader className="border-b bg-muted/10">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="text-3xl font-bold tracking-tight text-foreground">Fee Assignments</CardTitle>
+              <p className="text-muted-foreground mt-1">Structured student selection and bulk fee template assignment</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="px-3 py-1 font-medium h-9">
+                {pagination.totalCount} Students Found
+              </Badge>
+              <Button 
+                disabled={selectedStudentIds.size === 0}
+                onClick={() => setIsAssignDialogOpen(true)}
+                className="bg-primary text-white hover:bg-primary/90 shadow-md transition-all active:scale-95 h-9"
+              >
+                <UserCheck className="h-4 w-4 mr-2" />
+                Assign ({selectedStudentIds.size})
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        
+        <CardContent className="p-6">
+          {/* Filters Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
             <div className="space-y-2">
-              <Label>Batch</Label>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Search</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="USN or Name..." 
+                  className="pl-9 bg-muted/20 border-border"
+                  value={selectedFilters.search}
+                  onChange={(e) => setSelectedFilters(p => ({ ...p, search: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Batch</Label>
               <Select value={selectedFilters.batchId} onValueChange={(val) => setSelectedFilters(p => ({ ...p, batchId: val }))}>
                 <SelectTrigger className="bg-background">
                   <SelectValue placeholder="All Batches" />
@@ -335,7 +357,7 @@ const FeeAssignments: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label>Branch</Label>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Branch</Label>
               <Select value={selectedFilters.branchId} onValueChange={(val) => setSelectedFilters(p => ({ ...p, branchId: val }))}>
                 <SelectTrigger className="bg-background">
                   <SelectValue placeholder="All Branches" />
@@ -347,52 +369,43 @@ const FeeAssignments: React.FC = () => {
               </Select>
             </div>
 
-            <AnimatePresence>
-              {selectedFilters.branchId && (
-                <motion.div 
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="space-y-4 overflow-hidden"
-                >
-                  <div className="space-y-2">
-                    <Label>Semester</Label>
-                    <Select value={selectedFilters.semesterId} onValueChange={(val) => setSelectedFilters(p => ({ ...p, semesterId: val }))}>
-                      <SelectTrigger className="bg-background">
-                        <SelectValue placeholder="Select Semester" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {semesters.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  {selectedFilters.semesterId && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      className="space-y-2"
-                    >
-                      <Label>Section</Label>
-                      <Select value={selectedFilters.sectionId} onValueChange={(val) => setSelectedFilters(p => ({ ...p, sectionId: val }))}>
-                        <SelectTrigger className="bg-background">
-                          <SelectValue placeholder="Select Section" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sections.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </motion.div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Semester</Label>
+              <Select 
+                value={selectedFilters.semesterId} 
+                onValueChange={(val) => setSelectedFilters(p => ({ ...p, semesterId: val }))}
+                disabled={!selectedFilters.branchId}
+              >
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Semester" />
+                </SelectTrigger>
+                <SelectContent>
+                  {semesters.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
 
             <div className="space-y-2">
-              <Label>Admission Mode</Label>
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Section</Label>
+              <Select 
+                value={selectedFilters.sectionId} 
+                onValueChange={(val) => setSelectedFilters(p => ({ ...p, sectionId: val }))}
+                disabled={!selectedFilters.semesterId}
+              >
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Section" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sections.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Admission Mode</Label>
               <Select value={selectedFilters.admissionMode} onValueChange={(val) => setSelectedFilters(p => ({ ...p, admissionMode: val }))}>
                 <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="All Modes" />
+                  <SelectValue placeholder="Admission" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all_modes">All Modes</SelectItem>
@@ -400,156 +413,119 @@ const FeeAssignments: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            
-            <Button 
-              variant="ghost" 
-              className="w-full text-xs" 
-              onClick={() => setSelectedFilters({
-                batchId: '', branchId: '', semesterId: '', sectionId: '', admissionMode: '', search: ''
-              })}
-            >
-              Clear All Filters
-            </Button>
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Student Selection Area */}
-        <div className="lg:col-span-3 space-y-4">
-          <Card className="border-border/50 shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <div className="flex items-center gap-4 flex-1">
-                <div className="relative flex-1 max-w-sm">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    placeholder="Search by name or USN..." 
-                    className="pl-9 bg-muted/20 border-none focus-visible:ring-1"
-                    value={selectedFilters.search}
-                    onChange={(e) => setSelectedFilters(p => ({ ...p, search: e.target.value }))}
-                  />
-                </div>
-                <Badge variant="secondary" className="px-3 py-1 font-medium">
-                  {pagination.totalCount} Students Found
-                </Badge>
+          <div className="border rounded-xl overflow-hidden shadow-sm">
+            {loading ? (
+              <div className="h-[400px] flex items-center justify-center bg-muted/5">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button 
-                  disabled={selectedStudentIds.size === 0}
-                  onClick={() => setIsAssignDialogOpen(true)}
-                  className="bg-primary text-white hover:bg-primary/90 shadow-md transition-all active:scale-95"
-                >
-                  <UserCheck className="h-4 w-4 mr-2" />
-                  Assign ({selectedStudentIds.size})
-                </Button>
+            ) : students.length === 0 ? (
+              <div className="h-[400px] flex flex-col items-center justify-center text-muted-foreground italic px-6 text-center bg-muted/5">
+                <Users className="h-12 w-12 mb-4 opacity-20" />
+                {!(selectedFilters.batchId && selectedFilters.branchId && selectedFilters.semesterId && selectedFilters.sectionId && selectedFilters.admissionMode) 
+                  ? "Please select all cascading filters (Batch, Branch, Semester, Section, Admission Mode) to load students"
+                  : "No students found matching current filters"
+                }
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {loading ? (
-                <div className="h-[400px] flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              ) : students.length === 0 ? (
-                <div className="h-[400px] flex flex-col items-center justify-center text-muted-foreground italic px-6 text-center">
-                  <Users className="h-12 w-12 mb-4 opacity-20" />
-                  {!(selectedFilters.batchId && selectedFilters.branchId && selectedFilters.semesterId && selectedFilters.sectionId && selectedFilters.admissionMode) 
-                    ? "Please select all cascading filters (Batch, Branch, Semester, Section, Admission Mode) to load students"
-                    : "No students found matching current filters"
-                  }
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader className="bg-muted/30">
-                      <TableRow>
-                        <TableHead className="w-[50px] text-center">
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-muted/30">
+                    <TableRow>
+                      <TableHead className="w-[50px] text-center">
+                        <Checkbox 
+                          checked={selectedStudentIds.size === students.length && students.length > 0} 
+                          onCheckedChange={toggleSelectAll}
+                        />
+                      </TableHead>
+                      <TableHead className="font-semibold">Student Details</TableHead>
+                      <TableHead className="font-semibold">USN</TableHead>
+                      <TableHead className="font-semibold">Placement</TableHead>
+                      <TableHead className="font-semibold">Assigned Fee</TableHead>
+                      <TableHead className="font-semibold">Adm. Mode</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {students.map((student) => (
+                      <TableRow 
+                        key={student.id} 
+                        className={`cursor-pointer transition-colors border-b border-border/50 ${selectedStudentIds.has(student.id) ? 'bg-primary/5' : 'hover:bg-muted/30'}`}
+                        onClick={() => toggleStudentSelection(student.id)}
+                      >
+                        <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                           <Checkbox 
-                            checked={selectedStudentIds.size === students.length && students.length > 0} 
-                            onCheckedChange={toggleSelectAll}
+                            checked={selectedStudentIds.has(student.id)} 
+                            onCheckedChange={() => toggleStudentSelection(student.id)}
                           />
-                        </TableHead>
-                        <TableHead>Student Details</TableHead>
-                        <TableHead>USN</TableHead>
-                        <TableHead>Current Placement</TableHead>
-                        <TableHead>Assigned Fee</TableHead>
-                        <TableHead>Adm. Mode</TableHead>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium text-foreground">{student.name}</div>
+                          <div className="text-xs text-muted-foreground">{student.batch}</div>
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">{student.usn}</TableCell>
+                        <TableCell>
+                          <div className="text-sm">{student.department}</div>
+                          <div className="text-xs text-muted-foreground font-medium">Sem {student.semester} • Sec {student.section}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {(student as any).assigned_templates?.length > 0 ? (
+                              (student as any).assigned_templates.map((at: any) => (
+                                <Badge key={at.id} variant="secondary" className="text-[10px] bg-green-100/50 text-green-700 hover:bg-green-100 border-green-200">
+                                  {at.template_name}
+                                </Badge>
+                              ))
+                            ) : (
+                              <span className="text-xs text-muted-foreground">None</span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-wider px-2 border-border/50">
+                            {student.admission_mode}
+                          </Badge>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {students.map((student) => (
-                        <TableRow 
-                          key={student.id} 
-                          className={`cursor-pointer transition-colors ${selectedStudentIds.has(student.id) ? 'bg-primary/5' : 'hover:bg-muted/50'}`}
-                          onClick={() => toggleStudentSelection(student.id)}
-                        >
-                          <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                            <Checkbox 
-                              checked={selectedStudentIds.has(student.id)} 
-                              onCheckedChange={() => toggleStudentSelection(student.id)}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <div className="font-medium text-foreground">{student.name}</div>
-                            <div className="text-xs text-muted-foreground">{student.batch}</div>
-                          </TableCell>
-                          <TableCell className="font-mono text-sm">{student.usn}</TableCell>
-                          <TableCell>
-                            <div className="text-sm">{student.department}</div>
-                            <div className="text-xs text-muted-foreground">Sem {student.semester} • Sec {student.section}</div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-wrap gap-1">
-                              {(student as any).assigned_templates?.length > 0 ? (
-                                (student as any).assigned_templates.map((at: any) => (
-                                  <Badge key={at.id} variant="secondary" className="text-[10px] bg-green-100 text-green-700 hover:bg-green-100 border-green-200">
-                                    {at.template_name}
-                                  </Badge>
-                                ))
-                              ) : (
-                                <span className="text-xs text-muted-foreground">None</span>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="text-[10px] uppercase font-bold tracking-wider px-2">
-                              {student.admission_mode}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-            <CardFooter className="py-4 bg-muted/10 flex items-center justify-between border-t">
-              <div className="text-xs text-muted-foreground font-medium">
-                Showing {students.length} students • Page {pagination.page} of {pagination.totalPages}
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  disabled={pagination.page <= 1}
-                  onClick={() => fetchStudents(pagination.page - 1)}
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Previous
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  disabled={pagination.page >= pagination.totalPages}
-                  onClick={() => fetchStudents(pagination.page + 1)}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-            </CardFooter>
-          </Card>
-        </div>
-      </div>
+            )}
+          </div>
+        </CardContent>
+        
+        <CardFooter className="py-4 bg-muted/5 flex items-center justify-between border-t px-6">
+          <div className="text-xs text-muted-foreground font-medium flex items-center gap-2">
+            <span className="flex h-2 w-2 rounded-full bg-primary/40 animate-pulse"></span>
+            Showing {students.length} students • Page {pagination.page} of {pagination.totalPages}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              disabled={pagination.page <= 1}
+              onClick={() => fetchStudents(pagination.page - 1)}
+              className="bg-background border-border"
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Previous
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              disabled={pagination.page >= pagination.totalPages}
+              onClick={() => fetchStudents(pagination.page + 1)}
+              className="bg-background border-border"
+            >
+              Next
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </CardFooter>
+      </Card>
 
-      {/* Assignment Dialog */}
+      {/* Assignment Dialog remains the same */}
       <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>

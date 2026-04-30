@@ -260,86 +260,7 @@ const FeeComponents: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto p-0 max-[480px]:w-full max-[480px]:max-w-[360px] max-[480px]:px-3">
-      <div className="mb-8 flex items-center justify-between max-[480px]:mb-5 max-[480px]:flex-col max-[480px]:items-start max-[480px]:gap-4">
-        <div>
-          <h1 className={`text-3xl font-bold max-[480px]:text-[30px] max-[480px]:leading-[1.2] ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Fee Components</h1>
-          <p className={`mt-2 max-[480px]:mt-1 max-[480px]:text-[14px] max-[480px]:leading-[1.5] ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Manage basic fee building blocks used in templates</p>
-        </div>
-
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button 
-              onClick={() => {
-                resetForm();
-                setIsCreateDialogOpen(true);
-              }}
-              className="bg-primary hover:bg-primary/90 text-white max-[480px]:w-full max-[480px]:min-h-11"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create Component
-            </Button>
-          </DialogTrigger>
-          <DialogContent className={`${theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'} p-6 max-w-md max-[480px]:w-[90vw] max-[480px]:max-w-[340px] max-[480px]:rounded-xl max-[480px]:p-4`}>
-            <DialogHeader className="mb-4">
-              <DialogTitle className="max-[480px]:text-[20px]">
-                {editingComponent ? 'Edit Fee Component' : 'Create New Fee Component'}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="componentName">Component Name</Label>
-                <Input
-                  id="componentName"
-                  value={componentName}
-                  onChange={(e) => setComponentName(e.target.value)}
-                  placeholder="e.g., Tuition Fee, Library Fee"
-                  className={`${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'} mt-1`}
-                />
-              </div>
-              <div>
-                <Label htmlFor="componentAmount">Amount (₹)</Label>
-                <Input
-                  id="componentAmount"
-                  type="number"
-                  value={componentAmount}
-                  onChange={(e) => setComponentAmount(e.target.value)}
-                  placeholder="0.00"
-                  className={`${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'} mt-1`}
-                />
-              </div>
-              <div>
-                <Label htmlFor="componentDescription">Description (Optional)</Label>
-                <Textarea
-                  id="componentDescription"
-                  value={componentDescription}
-                  onChange={(e) => setComponentDescription(e.target.value)}
-                  placeholder="Brief description of this fee component"
-                  className={`${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'} mt-1`}
-                />
-              </div>
-              <div className="flex justify-end gap-3 pt-4 max-[480px]:flex-col">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsCreateDialogOpen(false)}
-                  className="border-gray-300 text-gray-700 hover:bg-gray-100 max-[480px]:min-h-10 max-[480px]:w-full"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={editingComponent ? handleUpdateComponent : handleCreateComponent}
-                  className="bg-primary hover:bg-primary/90 text-white max-[480px]:min-h-10 max-[480px]:w-full"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  {editingComponent ? 'Update' : 'Create'}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
+    <div className="mx-auto">
       {error && (
         <Alert variant="destructive" className="mb-6">
           <AlertTriangle className="h-4 w-4" />
@@ -348,67 +269,88 @@ const FeeComponents: React.FC = () => {
       )}
 
       <Card className={`${theme === 'dark' ? 'bg-card text-card-foreground' : 'bg-white text-gray-900'}`}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
-            Fee Components List ({componentsTotalCount})
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="max-[480px]:px-3 max-[480px]:py-4">
-          <div className="hidden max-[480px]:block space-y-3">
-            {components.map((component) => (
-              <div
-                key={component.id}
-                className={`rounded-lg border p-3 ${theme === 'dark' ? 'border-border bg-background' : 'border-gray-200 bg-white'}`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="text-[16px] font-semibold break-words">{component.name}</h3>
-                    <p className="mt-1 text-[15px] font-medium">{formatCurrency(component.amount)}</p>
-                  </div>
-                  <Badge variant={component.is_active ? "default" : "secondary"}>
-                    {component.is_active ? 'Active' : 'Inactive'}
-                  </Badge>
-                </div>
-                <p className={`mt-2 text-[14px] leading-[1.5] break-words ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
-                  {component.description || 'No description'}
-                </p>
-                <div className="mt-3 flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-11 flex-1"
-                    onClick={() => handleEditComponent(component)}
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-11 flex-1"
-                    onClick={() => handleDeleteComponent(component.id)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            ))}
-            {components.length === 0 && (
-              <div className="py-8 text-center">
-                <div className="flex flex-col items-center justify-center">
-                  <DollarSign className="mb-2 h-12 w-12 text-muted-foreground" />
-                  <h3 className="mb-1 text-lg font-medium">No fee components found</h3>
-                  <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                    Create your first fee component to get started
-                  </p>
-                </div>
-              </div>
-            )}
+        <CardHeader className="flex flex-row items-center justify-between max-[480px]:flex-col max-[480px]:items-start gap-4">
+          <div>
+            <CardTitle className={`${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
+              Fee Components List
+            </CardTitle>
+            <p className={`mt-1 text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Manage basic fee building blocks used in templates</p>
           </div>
 
-          <div className="max-[480px]:hidden">
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                onClick={() => {
+                  resetForm();
+                  setIsCreateDialogOpen(true);
+                }}
+                className="bg-primary hover:bg-primary/90 text-white max-[480px]:w-full max-[480px]:min-h-11 shadow-lg shadow-primary/20"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create Component
+              </Button>
+            </DialogTrigger>
+            <DialogContent className={`${theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-gray-900'} p-6 max-w-md max-[480px]:w-[90vw] max-[480px]:max-w-[340px] max-[480px]:rounded-xl max-[480px]:p-4 shadow-2xl`}>
+              <DialogHeader className="mb-4">
+                <DialogTitle className="max-[480px]:text-[20px]">
+                  {editingComponent ? 'Edit Fee Component' : 'Create New Fee Component'}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="componentName">Component Name</Label>
+                  <Input
+                    id="componentName"
+                    value={componentName}
+                    onChange={(e) => setComponentName(e.target.value)}
+                    placeholder="e.g., Tuition Fee, Library Fee"
+                    className={`${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'} mt-1`}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="componentAmount">Amount (₹)</Label>
+                  <Input
+                    id="componentAmount"
+                    type="number"
+                    value={componentAmount}
+                    onChange={(e) => setComponentAmount(e.target.value)}
+                    placeholder="0.00"
+                    className={`${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'} mt-1`}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="componentDescription">Description (Optional)</Label>
+                  <Textarea
+                    id="componentDescription"
+                    value={componentDescription}
+                    onChange={(e) => setComponentDescription(e.target.value)}
+                    placeholder="Brief description of this fee component"
+                    className={`${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'} mt-1 h-32 resize-none overflow-y-auto thin-scrollbar`}
+                  />
+                </div>
+                <div className="flex justify-end gap-3 pt-4 max-[480px]:flex-col">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsCreateDialogOpen(false)}
+                    className="border-gray-300 text-gray-700 hover:bg-gray-100 max-[480px]:min-h-10 max-[480px]:w-full"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={editingComponent ? handleUpdateComponent : handleCreateComponent}
+                    className="bg-primary hover:bg-primary/90 text-white max-[480px]:min-h-10 max-[480px]:w-full"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    {editingComponent ? 'Update' : 'Create'}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </CardHeader>
+        <CardContent className="max-[480px]:px-3 max-[480px]:py-4">
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className={theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}>

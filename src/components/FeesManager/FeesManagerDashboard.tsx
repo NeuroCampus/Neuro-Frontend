@@ -5,6 +5,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import DashboardCard from '../common/DashboardCard';
 import {
   FileText,
   AlertTriangle,
@@ -19,7 +20,10 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Clock,
-  ArrowRight
+  ArrowRight,
+  ClipboardList,
+  UserCheck,
+  Bell
 } from 'lucide-react';
 import {
   XAxis,
@@ -136,6 +140,7 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
     const path = page === 'dashboard' ? '/fees-manager' : `/fees-manager/${page}`;
     navigate(path);
     setError(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const formatCurrency = (amount: number) => {
@@ -147,102 +152,46 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
   };
 
   const renderDashboard = () => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-8 pb-10"
-    >
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-extrabold tracking-tight">Finance Overview</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg">Real-time fee collection insights and institutional liquidity</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button onClick={() => handlePageChange('reports')} className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Detailed Reports
-          </Button>
-        </div>
+    <div className="space-y-8 pb-10">
+      {/* Dashboard Cards - Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <DashboardCard
+          title="Total Collected"
+          value={formatCurrency(dashboardData?.stats?.total_collected || 0)}
+          description="Cumulative fee collection"
+          icon={<IndianRupee className={theme === 'dark' ? "text-emerald-400" : "text-emerald-500"} />}
+        />
+        <DashboardCard
+          title="Outstanding Amount"
+          value={formatCurrency(dashboardData?.stats?.outstanding_amount || 0)}
+          description="Pending fee balance"
+          icon={<AlertTriangle className={theme === 'dark' ? "text-amber-400" : "text-amber-500"} />}
+        />
+        <DashboardCard
+          title="Overdue Amount"
+          value={formatCurrency(dashboardData?.stats?.overdue_amount || 0)}
+          description="Requires immediate attention"
+        />
+        <DashboardCard
+          title="Collection Rate"
+          value={`${dashboardData?.stats?.collection_rate || 0}%`}
+          description="Efficiency Target: 95%"
+          icon={<TrendingUp className={theme === 'dark' ? "text-blue-400" : "text-blue-500"} />}
+        />
       </div>
 
-      {/* Main Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          {
-            label: "Total Collected",
-            value: formatCurrency(dashboardData?.stats?.total_collected || 0),
-            icon: <IndianRupee className="w-6 h-6" />,
-            color: "text-emerald-500",
-            bg: "bg-emerald-500/10",
-            trend: "+12.5%",
-            trendUp: true
-          },
-          {
-            label: "Outstanding",
-            value: formatCurrency(dashboardData?.stats?.outstanding_amount || 0),
-            icon: <AlertTriangle className="w-6 h-6" />,
-            color: "text-amber-500",
-            bg: "bg-amber-500/10",
-            trend: "-2.4%",
-            trendUp: false
-          },
-          {
-            label: "Overdue Amount",
-            value: formatCurrency(dashboardData?.stats?.overdue_amount || 0),
-            icon: <Clock className="w-6 h-6" />,
-            color: "text-rose-500",
-            bg: "bg-rose-500/10",
-            trend: "Requires Attention",
-            trendUp: false
-          },
-          {
-            label: "Collection Rate",
-            value: `${dashboardData?.stats?.collection_rate || 0}%`,
-            icon: <TrendingUp className="w-6 h-6" />,
-            color: "text-blue-500",
-            bg: "bg-blue-500/10",
-            trend: "Target: 95%",
-            trendUp: true
-          }
-        ].map((stat, i) => (
-          <Card key={i} className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 overflow-hidden group">
-            <CardContent className="p-6 relative">
-              <div className={`absolute top-0 right-0 w-24 h-24 ${stat.bg} rounded-bl-full -mr-8 -mt-8 transition-transform group-hover:scale-110`} />
-              <div className="relative z-10">
-                <div className={`p-3 rounded-xl ${stat.bg} ${stat.color} w-fit mb-4`}>
-                  {stat.icon}
-                </div>
-                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">{stat.label}</p>
-                <h3 className="text-3xl font-bold mt-1 tracking-tight">{stat.value}</h3>
-                <div className="flex items-center mt-4 gap-1.5">
-                  {stat.trendUp ? (
-                    <ArrowUpRight className="w-4 h-4 text-emerald-500" />
-                  ) : (
-                    <ArrowDownRight className="w-4 h-4 text-rose-500" />
-                  )}
-                  <span className={`text-sm font-bold ${stat.trendUp ? 'text-emerald-500' : 'text-rose-500'}`}>
-                    {stat.trend}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Charts and Tables */}
+      {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Revenue Trend Chart */}
-        <Card className="lg:col-span-2 border-none shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900">
-          <CardHeader className="flex flex-row items-center justify-between">
+        <div className={`lg:col-span-2 rounded-lg shadow p-6 ${theme === 'dark' ? 'border border-border bg-card' : 'border border-gray-200 bg-white'}`}>
+          <div className="flex flex-row items-center justify-between mb-6">
             <div>
-              <CardTitle className="text-xl font-bold">Revenue Trends</CardTitle>
-              <p className="text-sm text-slate-500">Monthly collection performance</p>
+              <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Revenue Trends</h3>
+              <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Monthly collection performance</p>
             </div>
             <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 border-none font-bold">Last 6 Months</Badge>
-          </CardHeader>
-          <CardContent className="h-[350px] pt-4">
+          </div>
+          <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={dashboardData?.trends || []}>
                 <defs>
@@ -261,106 +210,153 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
                 <Area type="monotone" dataKey="amount" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorAmount)" />
               </AreaChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Quick Actions Sidebar-style */}
+        {/* Info Card */}
         <div className="space-y-6">
-          <Card className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900">
-            <CardHeader>
-              <CardTitle className="text-xl font-bold">Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-3">
-              {[
-                { label: "Assign Fees", icon: <Plus className="w-4 h-4" />, page: "bulk-assignment", color: "bg-blue-500" },
-                { label: "New Invoices", icon: <FileText className="w-4 h-4" />, page: "invoices", color: "bg-indigo-500" },
-                { label: "Add Comp", icon: <Settings className="w-4 h-4" />, page: "components", color: "bg-emerald-500" },
-                { label: "Templates", icon: <FileText className="w-4 h-4" />, page: "templates", color: "bg-violet-500" },
-                { label: "Refunds", icon: <DollarSign className="w-4 h-4" />, page: "payments", color: "bg-rose-500" },
-                { label: "Audit Log", icon: <BarChart3 className="w-4 h-4" />, page: "reports", color: "bg-slate-500" }
-              ].map((action, i) => (
-                <Button
-                  key={i}
-                  variant="ghost"
-                  className="h-20 flex flex-col items-center justify-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-xl transition-all hover:scale-105"
-                  onClick={() => handlePageChange(action.page)}
-                >
-                  <div className={`p-2 rounded-lg ${action.color} text-white`}>
-                    {action.icon}
-                  </div>
-                  <span className="text-xs font-bold">{action.label}</span>
-                </Button>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none bg-gradient-to-br from-blue-600 to-indigo-700 text-white overflow-hidden relative">
-            <div className="absolute -right-4 -bottom-4 opacity-10">
+          <div className={`rounded-lg shadow p-6 overflow-hidden relative min-h-[200px] flex flex-col justify-center border transition-all ${
+            theme === 'dark' 
+              ? 'bg-blue-950/20 border-blue-800/30 text-blue-100' 
+              : 'bg-blue-50 border-blue-100 text-blue-900'
+          }`}>
+            <div className={`absolute -right-4 -bottom-4 opacity-10 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-200'}`}>
               <IndianRupee className="w-32 h-32" />
             </div>
-            <CardContent className="p-6 relative z-10">
+            <div className="relative z-10">
               <h4 className="text-lg font-bold mb-2">Need Financial Assistance?</h4>
-              <p className="text-blue-100 text-sm mb-4">Generate automated recovery notices for students with overdue balances exceeding ₹10,000.</p>
-              <Button variant="secondary" className="w-full bg-white text-blue-600 hover:bg-blue-50 font-bold" onClick={() => handlePageChange('invoices')}>
+              <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-blue-200/70' : 'text-blue-700/80'}`}>Generate automated recovery notices for students with overdue balances exceeding ₹10,000.</p>
+              <Button 
+                className="w-full font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
+                onClick={() => handlePageChange('invoices')}
+              >
                 Run Recovery Notice
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
+
+          <div className={`rounded-lg shadow p-6 ${theme === 'dark' ? 'border border-border bg-card' : 'border border-gray-200 bg-white'}`}>
+            <h3 className={`text-lg font-semibold mb-2 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Quick Stats</h3>
+            <div className="space-y-4 mt-4">
+              <div className="flex justify-between items-center">
+                <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Pending Invoices</span>
+                <span className="font-bold">{dashboardData?.stats?.pending_invoices || 0}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Overdue Count</span>
+                <span className="font-bold text-rose-500">{dashboardData?.stats?.overdue_count || 0}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Total Students</span>
+                <span className="font-bold">{dashboardData?.stats?.total_students || 0}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Recent Transactions Table */}
-      <Card className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900 overflow-hidden">
-        <CardHeader className="flex flex-row items-center justify-between border-b dark:border-slate-800">
+      <div className={`rounded-lg shadow mt-5 overflow-hidden ${theme === 'dark' ? 'border border-border bg-card' : 'border border-gray-200 bg-white'}`}>
+        <div className="flex flex-row items-center justify-between p-6 border-b dark:border-slate-800">
           <div>
-            <CardTitle className="text-xl font-bold">Recent Transactions</CardTitle>
-            <p className="text-sm text-slate-500">Last 5 successful fee collections</p>
+            <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Recent Transactions</h3>
+            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Last 5 successful fee collections</p>
           </div>
           <Button variant="ghost" size="sm" className="font-bold text-blue-500 hover:text-blue-600" onClick={() => handlePageChange('payments')}>
             View All <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-slate-50/50 dark:bg-slate-800/50 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                <tr>
-                  <th className="px-6 py-4">Student</th>
-                  <th className="px-6 py-4">Transaction ID</th>
-                  <th className="px-6 py-4">Method</th>
-                  <th className="px-6 py-4">Date</th>
-                  <th className="px-6 py-4 text-right">Amount</th>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead>
+              <tr className={`border-b ${theme === 'dark' ? 'border-border text-foreground bg-slate-800/50' : 'border-gray-200 text-gray-900 bg-slate-50/50'}`}>
+                <th className="px-6 py-4 font-bold uppercase tracking-wider text-xs">Student</th>
+                <th className="px-6 py-4 font-bold uppercase tracking-wider text-xs">Transaction ID</th>
+                <th className="px-6 py-4 font-bold uppercase tracking-wider text-xs">Method</th>
+                <th className="px-6 py-4 font-bold uppercase tracking-wider text-xs">Date</th>
+                <th className="px-6 py-4 font-bold uppercase tracking-wider text-xs text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y dark:divide-slate-800">
+              {dashboardData?.recent_transactions.map((txn, i) => (
+                <tr key={i} className={`transition-colors ${theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-50'}`}>
+                  <td className="px-6 py-4">
+                    <div className="font-bold">{txn.student_name}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <code className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">{txn.transaction_id}</code>
+                  </td>
+                  <td className="px-6 py-4">
+                    <Badge variant="outline" className="font-bold capitalize">{txn.method}</Badge>
+                  </td>
+                  <td className="px-6 py-4 text-slate-500">{txn.date}</td>
+                  <td className="px-6 py-4 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                    {formatCurrency(txn.amount)}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y dark:divide-slate-800">
-                {dashboardData?.recent_transactions.map((txn, i) => (
-                  <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="font-bold">{txn.student_name}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <code className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">{txn.transaction_id}</code>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge variant="outline" className="font-bold capitalize">{txn.method}</Badge>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{txn.date}</td>
-                    <td className="px-6 py-4 text-right font-black text-emerald-600 dark:text-emerald-400">
-                      {formatCurrency(txn.amount)}
-                    </td>
-                  </tr>
-                ))}
-                {!dashboardData?.recent_transactions?.length && (
-                  <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400 italic">No recent transactions recorded.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+              ))}
+              {!dashboardData?.recent_transactions?.length && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-slate-400 italic">No recent transactions recorded.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Action Cards Grid - Replaces Quick Actions Sidebar */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+        <DashboardCard
+          title="Bulk Assignment"
+          description="Assign fees to batches"
+          icon={<Plus size={20} />}
+          onClick={() => handlePageChange("bulk-assignment")}
+        />
+        <DashboardCard
+          title="Invoice Management"
+          description="View or issue invoices"
+          icon={<FileText size={20} />}
+          onClick={() => handlePageChange("invoices")}
+        />
+        <DashboardCard
+          title="Fee Components"
+          description="Manage fee categories"
+          icon={<Settings size={20} />}
+          onClick={() => handlePageChange("components")}
+        />
+        <DashboardCard
+          title="Fee Templates"
+          description="Manage reusable templates"
+          icon={<ClipboardList size={20} />}
+          onClick={() => handlePageChange("templates")}
+        />
+        <DashboardCard
+          title="Payment Monitoring"
+          description="Track payments & refunds"
+          icon={<IndianRupee size={20} />}
+          onClick={() => handlePageChange("payments")}
+        />
+        <DashboardCard
+          title="Financial Reports"
+          description="Download collection reports"
+          icon={<BarChart3 size={20} />}
+          onClick={() => handlePageChange("reports")}
+        />
+        <DashboardCard
+          title="Student Fee Reports"
+          description="Individual student ledgers"
+          icon={<UserCheck size={20} />}
+          onClick={() => handlePageChange("student-reports")}
+        />
+        <DashboardCard
+          title="Leave Requests"
+          description="Manage your leave"
+          icon={<Calendar size={20} />}
+          onClick={() => handlePageChange("leave")}
+        />
+      </div>
+    </div>
   );
 
   const renderContent = () => {
