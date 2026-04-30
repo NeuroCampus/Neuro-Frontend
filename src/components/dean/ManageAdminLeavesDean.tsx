@@ -162,7 +162,7 @@ const ManageAdminLeavesDean = () => {
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <div className="font-medium">{leave.faculty_name}</div>
-                            <div className="text-xs text-muted-foreground">{leave.department}</div>
+                            <div className="text-xs text-muted-foreground">{leave.faculty_type === 'principal' ? 'Administration' : leave.department}</div>
                             <div className="text-sm mt-1">{leave.start_date} <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>to</span> {leave.end_date}</div>
                           </div>
                           <div className="shrink-0">
@@ -233,7 +233,7 @@ const ManageAdminLeavesDean = () => {
                       allPendingLeaves.map((leave) => (
                         <tr key={leave.id} className={`border-b transition-colors duration-200 ${theme === 'dark' ? 'border-border hover:bg-accent' : 'border-gray-200 hover:bg-gray-50'}`}>
                           <td className="py-3 px-2 md:px-4 font-medium">{leave.faculty_name}</td>
-                          <td className="py-3 px-2 md:px-4">{leave.department}</td>
+                          <td className="py-3 px-2 md:px-4">{leave.faculty_type === 'principal' ? 'Administration' : leave.department}</td>
                           <td className="py-3 px-2 md:px-4">{leave.start_date} <span className={theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}>to</span> {leave.end_date}</td>
                           <td className="py-3 px-2 md:px-4">
                             <Button
@@ -347,7 +347,7 @@ const ManageAdminLeavesDean = () => {
                       </div>
 
                       <p className={`mt-2 text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-700'}`}>
-                        {leave.faculty_name} - {leave.department}
+                        {leave.faculty_name} - {leave.faculty_type === 'principal' ? 'Administration' : leave.department}
                       </p>
 
                       <p className={`mt-1 text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
