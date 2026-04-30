@@ -79,6 +79,9 @@ interface DashboardData {
   stats: DashboardStats;
   trends: TrendData[];
   recent_transactions: Transaction[];
+  department_wise: any[];
+  fee_type_wise: any[];
+  overdue_invoices: any[];
 }
 
 interface FeesManagerDashboardProps {
@@ -90,7 +93,7 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
   const navigate = useNavigate();
   const location = useLocation();
   const { theme } = useTheme();
-  
+
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -196,18 +199,18 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
               <AreaChart data={dashboardData?.trends || []}>
                 <defs>
                   <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? '#1e293b' : '#f1f5f9'} />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} tickFormatter={(val) => `₹${val/1000}k`} />
-                <Tooltip 
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} tickFormatter={(val) => `₹${val / 1000}k`} />
+                <Tooltip
                   contentStyle={{ backgroundColor: theme === 'dark' ? '#0f172a' : '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                   itemStyle={{ color: '#3b82f6', fontWeight: 'bold' }}
                 />
-                <Area type="monotone" dataKey="amount" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorAmount)" />
+                <Area type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorAmount)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -255,108 +258,115 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
         </div>
       </div>
 
-      {/* Recent Transactions Table */}
+      {/* Breakdowns */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <Card className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold">Department-wise Breakdown</CardTitle>
+            <p className="text-sm text-slate-500">Revenue and pending by department</p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {dashboardData?.department_wise.map((dept, i) => (
+                <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                  <div>
+                    <h4 className="font-bold text-slate-900 dark:text-white">{dept.department}</h4>
+                    <p className="text-xs text-slate-500 font-medium">Students: {dept.students}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-black text-slate-900 dark:text-white">{formatCurrency(dept.revenue)}</p>
+                    <p className="text-xs text-rose-500 font-bold">Pending: {formatCurrency(dept.pending)}</p>
+                  </div>
+                </div>
+              ))}
+              {!dashboardData?.department_wise?.length && (
+                <p className="text-center py-6 text-slate-400 italic">No department data available.</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-none shadow-xl shadow-slate-200/50 dark:shadow-none bg-white dark:bg-slate-900">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold">Fee Type-wise Breakdown</CardTitle>
+            <p className="text-sm text-slate-500">Distribution by invoice type</p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {dashboardData?.fee_type_wise.map((fee, i) => (
+                <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                  <div>
+                    <h4 className="font-bold text-slate-900 dark:text-white capitalize">{fee.fee_type.replace('_', ' ')}</h4>
+                    <p className="text-xs text-slate-500 font-medium">Invoices: {fee.count}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-black text-slate-900 dark:text-white">{formatCurrency(fee.revenue)}</p>
+                  </div>
+                </div>
+              ))}
+              {!dashboardData?.fee_type_wise?.length && (
+                <p className="text-center py-6 text-slate-400 italic">No fee type data available.</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Overdue Invoices Table */}
       <div className={`rounded-lg shadow mt-5 overflow-hidden ${theme === 'dark' ? 'border border-border bg-card' : 'border border-gray-200 bg-white'}`}>
         <div className="flex flex-row items-center justify-between p-6 border-b dark:border-slate-800">
           <div>
-            <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Recent Transactions</h3>
-            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Last 5 successful fee collections</p>
+            <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Overdue Invoices</h3>
+            <p className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>Pending collections requiring immediate attention</p>
           </div>
-          <Button variant="ghost" size="sm" className="font-bold text-blue-500 hover:text-blue-600" onClick={() => handlePageChange('payments')}>
-            View All <ArrowRight className="w-4 h-4 ml-1" />
+          <Button variant="ghost" size="sm" className="font-bold text-rose-500 hover:text-rose-600" onClick={() => handlePageChange('invoices')}>
+            Manage All <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead>
-              <tr className={`border-b ${theme === 'dark' ? 'border-border text-foreground bg-slate-800/50' : 'border-gray-200 text-gray-900 bg-slate-50/50'}`}>
-                <th className="px-6 py-4 font-bold uppercase tracking-wider text-xs">Student</th>
-                <th className="px-6 py-4 font-bold uppercase tracking-wider text-xs">Transaction ID</th>
-                <th className="px-6 py-4 font-bold uppercase tracking-wider text-xs">Method</th>
-                <th className="px-6 py-4 font-bold uppercase tracking-wider text-xs">Date</th>
-                <th className="px-6 py-4 font-bold uppercase tracking-wider text-xs text-right">Amount</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y dark:divide-slate-800">
-              {dashboardData?.recent_transactions.map((txn, i) => (
-                <tr key={i} className={`transition-colors ${theme === 'dark' ? 'hover:bg-accent' : 'hover:bg-gray-50'}`}>
-                  <td className="px-6 py-4">
-                    <div className="font-bold">{txn.student_name}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <code className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">{txn.transaction_id}</code>
-                  </td>
-                  <td className="px-6 py-4">
-                    <Badge variant="outline" className="font-bold capitalize">{txn.method}</Badge>
-                  </td>
-                  <td className="px-6 py-4 text-slate-500">{txn.date}</td>
-                  <td className="px-6 py-4 text-right font-bold text-emerald-600 dark:text-emerald-400">
-                    {formatCurrency(txn.amount)}
-                  </td>
-                </tr>
-              ))}
-              {!dashboardData?.recent_transactions?.length && (
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50/50 dark:bg-slate-800/50 text-xs font-bold text-slate-500 uppercase tracking-widest">
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-400 italic">No recent transactions recorded.</td>
+                  <th className="px-6 py-4">Invoice</th>
+                  <th className="px-6 py-4">Student</th>
+                  <th className="px-6 py-4">Due Date</th>
+                  <th className="px-6 py-4">Overdue</th>
+                  <th className="px-6 py-4 text-right">Amount</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Action Cards Grid - Replaces Quick Actions Sidebar */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-        <DashboardCard
-          title="Bulk Assignment"
-          description="Assign fees to batches"
-          icon={<Plus size={20} />}
-          onClick={() => handlePageChange("bulk-assignment")}
-        />
-        <DashboardCard
-          title="Invoice Management"
-          description="View or issue invoices"
-          icon={<FileText size={20} />}
-          onClick={() => handlePageChange("invoices")}
-        />
-        <DashboardCard
-          title="Fee Components"
-          description="Manage fee categories"
-          icon={<Settings size={20} />}
-          onClick={() => handlePageChange("components")}
-        />
-        <DashboardCard
-          title="Fee Templates"
-          description="Manage reusable templates"
-          icon={<ClipboardList size={20} />}
-          onClick={() => handlePageChange("templates")}
-        />
-        <DashboardCard
-          title="Payment Monitoring"
-          description="Track payments & refunds"
-          icon={<IndianRupee size={20} />}
-          onClick={() => handlePageChange("payments")}
-        />
-        <DashboardCard
-          title="Financial Reports"
-          description="Download collection reports"
-          icon={<BarChart3 size={20} />}
-          onClick={() => handlePageChange("reports")}
-        />
-        <DashboardCard
-          title="Student Fee Reports"
-          description="Individual student ledgers"
-          icon={<UserCheck size={20} />}
-          onClick={() => handlePageChange("student-reports")}
-        />
-        <DashboardCard
-          title="Leave Requests"
-          description="Manage your leave"
-          icon={<Calendar size={20} />}
-          onClick={() => handlePageChange("leave")}
-        />
-      </div>
-    </div>
+              </thead>
+              <tbody className="divide-y dark:divide-slate-800">
+                {dashboardData?.overdue_invoices.map((inv, i) => (
+                  <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <code className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded font-bold">{inv.invoice_number}</code>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="font-bold text-slate-900 dark:text-white">{inv.student_name}</div>
+                      <div className="text-xs text-slate-500">{inv.usn}</div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-500 font-medium">{inv.due_date}</td>
+                    <td className="px-6 py-4">
+                      <Badge variant="secondary" className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 border-none font-bold">
+                        {inv.days_overdue} days
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 text-right font-black text-rose-600 dark:text-rose-400">
+                      {formatCurrency(inv.amount)}
+                    </td>
+                  </tr>
+                ))}
+                {!dashboardData?.overdue_invoices?.length && (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400 italic">No overdue invoices found.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 
   const renderContent = () => {

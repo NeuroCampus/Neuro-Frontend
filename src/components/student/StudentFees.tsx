@@ -16,6 +16,7 @@ import { API_ENDPOINT } from '@/utils/config';
 import { SkeletonPageHeader, SkeletonStatsGrid, SkeletonTable } from "@/components/ui/skeleton";
 
 interface InvoiceComponent {
+  id: number;
   component_name: string;
   component_amount: number;
   paid_amount: number;
@@ -285,7 +286,9 @@ const StudentFees: React.FC<StudentFeesProps> = ({ user }) => {
         },
         body: JSON.stringify({
           payment_type: paymentType,
-          selected_components: paymentType === 'component' ? Array.from(selectedComponents) : null,
+          selected_components: paymentType === 'component' && currentInvoice?.components
+            ? Array.from(selectedComponents).map((idx: any) => currentInvoice.components[idx as number]?.id)
+            : null,
         }),
       });
 
