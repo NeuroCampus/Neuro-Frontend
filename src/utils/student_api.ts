@@ -67,6 +67,7 @@ interface DashboardOverviewData {
     correlation: number;
     subject_performance: SubjectPerformance[];
   };
+  unread_announcement_count?: number;
 }
 
 interface DashboardOverviewResponse {

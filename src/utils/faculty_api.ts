@@ -126,6 +126,7 @@ interface DashboardOverviewResponse {
       room: string;
     }>;
     attendance_snapshot: number;
+    unread_announcement_count?: number;
     quick_actions: string[];
   };
 }
@@ -333,6 +334,7 @@ interface GetFacultyDashboardBootstrapResponse {
       room: string;
     }>;
     attendance_snapshot?: number;
+    unread_announcement_count?: number;
     quick_actions?: string[];
   };
 }

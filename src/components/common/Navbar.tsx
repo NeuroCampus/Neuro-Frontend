@@ -23,6 +23,7 @@ interface NavbarProps {
   setPage: (page: string) => void;
   showHamburger?: boolean;
   onHamburgerClick?: () => void;
+  unreadCount?: number;
 }
 
 interface NotificationBellProps {
@@ -30,7 +31,7 @@ interface NotificationBellProps {
   onClick?: () => void;
 }
 
-const Navbar = ({ role, user, onNotificationClick, setPage, showHamburger = false, onHamburgerClick }: NavbarProps) => {
+const Navbar = ({ role, user, onNotificationClick, setPage, showHamburger = false, onHamburgerClick, unreadCount = 0 }: NavbarProps) => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -153,6 +154,30 @@ const Navbar = ({ role, user, onNotificationClick, setPage, showHamburger = fals
           >
             {theme === 'dark' ? <FiSun size={18} /> : <FiMoon size={18} />}
           </Button>
+          
+          {['student', 'faculty', 'hod', 'admin'].includes(role || '') && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                const paths: Record<string, string> = {
+                  'student': '/announcements',
+                  'faculty': '/faculty/announcements',
+                  'hod': '/hod/announcements',
+                  'admin': '/admin/announcements'
+                };
+                navigate(paths[role || ''] || '/announcements');
+              }}
+              className="rounded-full w-9 h-9 relative"
+            >
+              <FiBell size={18} />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-background">
+                  {unreadCount}
+                </span>
+              )}
+            </Button>
+          )}
 
           {/* Profile Button */}
           <div

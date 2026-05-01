@@ -6,6 +6,10 @@ import Navbar from "./Navbar";
 import { useIsMobile } from "../../hooks/use-mobile";
 import { useTheme } from "../../context/ThemeContext";
 import { stopTokenRefresh, logoutUser } from "../../utils/authService";
+import { getDashboardOverview } from "../../utils/student_api";
+import { getFacultyDashboardBootstrap } from "../../utils/faculty_api";
+import { getHODStats } from "../../utils/hod_api";
+import { getAdminStats } from "../../utils/admin_api";
 
 interface User {
   username: string;
@@ -42,6 +46,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const { theme } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(window.innerWidth < 1024); // Start expanded on desktop, collapsed on mobile
   const [error, setError] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
   const navigate = useNavigate();
 
   // Lock sidebar open on desktop, collapsible only on mobile/tablet
@@ -61,6 +66,49 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Fetch unread announcement count based on role
+  useEffect(() => {
+    if (!role) return;
+
+    const fetchUnreadCount = async () => {
+      try {
+        let count = 0;
+        if (role === 'student') {
+          const res = await getDashboardOverview();
+          if (res.success && res.data) {
+            count = res.data.unread_announcement_count || 0;
+          }
+        } else if (role === 'faculty') {
+          const res = await getFacultyDashboardBootstrap();
+          if (res.success && res.data) {
+            count = res.data.unread_announcement_count || 0;
+          }
+        } else if (role === 'hod') {
+          const branchId = (user as any)?.extra?.branch_id || (user as any)?.branch_id;
+          if (branchId) {
+            const res = await getHODStats(branchId);
+            if (res.success && res.data) {
+              count = res.data.unread_announcement_count || 0;
+            }
+          }
+        } else if (role === 'admin') {
+          const res = await getAdminStats();
+          if (res.success && res.data) {
+            count = res.data.unread_announcement_count || 0;
+          }
+        }
+        setUnreadCount(count);
+      } catch (e) {
+        console.error("Error fetching unread count:", e);
+      }
+    };
+
+    fetchUnreadCount();
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchUnreadCount, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [role, user]);
 
   // Close sidebar when page changes on mobile/tablet only
   useEffect(() => {
@@ -148,6 +196,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             setPage={handlePageChange}
             showHamburger={sidebarCollapsed && window.innerWidth < 1024}
             onHamburgerClick={toggleSidebar}
+            unreadCount={unreadCount}
           />
         </div>
 

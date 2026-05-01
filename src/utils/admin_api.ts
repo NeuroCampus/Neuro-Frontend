@@ -26,6 +26,7 @@ interface AdminStatsResponse {
     total_branches: number;
     branch_distribution: BranchDistribution[];
     role_distribution: RoleDistribution;
+    unread_announcement_count?: number;
   };
 }
 
