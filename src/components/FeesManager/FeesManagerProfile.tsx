@@ -8,8 +8,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Eye, EyeOff } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import { showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
-import { fetchWithTokenRefresh } from "../../utils/authService";
-import { API_ENDPOINT } from "../../utils/config";
+import { 
+  getFeesManagerProfile, 
+  updateFeesManagerProfile, 
+  changeFeesManagerPassword 
+} from "../../utils/fees_manager_api";
 
 const FeesManagerProfile: React.FC = () => {
   const { theme } = useTheme();
@@ -31,10 +34,9 @@ const FeesManagerProfile: React.FC = () => {
   const fetchProfile = async () => {
     setLoading(true);
     try {
-      const res = await fetchWithTokenRefresh(`${API_ENDPOINT}/profile/`, { method: "GET" });
-      const result = await res.json();
-      if (result.success) {
-        const p = result.profile || result.data || result;
+      const res = await getFeesManagerProfile();
+      if (res.success) {
+        const p = res.profile || res.data || res;
         setProfile(p);
         setFormData({
           first_name: p.first_name || "",
@@ -45,7 +47,7 @@ const FeesManagerProfile: React.FC = () => {
           bio: p.bio || "",
         });
       } else {
-        showErrorAlert("Error", result.message || "Failed to load profile");
+        showErrorAlert("Error", res.message || "Failed to load profile");
       }
     } catch (err) {
       console.error("FeesManager fetch error", err);
@@ -58,18 +60,13 @@ const FeesManagerProfile: React.FC = () => {
   const handleSave = async () => {
     setLoading(true);
     try {
-      const res = await fetchWithTokenRefresh(`${API_ENDPOINT}/profile/update/`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      const result = await res.json();
-      if (result.success) {
+      const res = await updateFeesManagerProfile(formData);
+      if (res.success) {
         showSuccessAlert("Success", "Profile updated");
         setEditing(false);
         await fetchProfile();
       } else {
-        showErrorAlert("Error", result.message || "Failed to save profile");
+        showErrorAlert("Error", res.message || "Failed to save profile");
       }
     } catch (err) {
       console.error("Save error", err);
@@ -94,18 +91,13 @@ const FeesManagerProfile: React.FC = () => {
     }
 
     try {
-      const res = await fetchWithTokenRefresh(`${API_ENDPOINT}/profile/change-password/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(passwordData),
-      });
-      const result = await res.json();
-      if (result.success) {
+      const res = await changeFeesManagerPassword(passwordData);
+      if (res.success) {
         setShowPasswordDialog(false);
         setPasswordData({ current_password: "", new_password: "", confirm_password: "" });
         showSuccessAlert("Password changed", "Your password has been updated successfully.");
       } else {
-        showErrorAlert("Error", result.message || "Failed to change password");
+        showErrorAlert("Error", res.message || "Failed to change password");
       }
     } catch (err) {
       console.error("Change password error", err);

@@ -14,6 +14,10 @@ import { useTheme } from '@/context/ThemeContext';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { Circle, CalendarCheck2, CalendarX2 } from 'lucide-react';
+import { 
+  getFeesManagerLeaves, 
+  applyFeesManagerLeave 
+} from "../../utils/fees_manager_api";
 
 const MySwal = withReactContent(Swal);
 
@@ -50,21 +54,12 @@ const FeesManagerLeave = () => {
   const fetchLeaveRequests = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch('http://127.0.0.1:8000/api/fees-manager/leaves/', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const res = await getFeesManagerLeaves();
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.data) {
-          setLeaveList(data.data);
-        }
+      if (res.success && res.data) {
+        setLeaveList(res.data);
       } else {
-        setError('Failed to fetch leave requests');
+        setError(res.message || 'Failed to fetch leave requests');
       }
     } catch (err) {
       setError('Network error occurred');
@@ -97,65 +92,53 @@ const FeesManagerLeave = () => {
 
     setSubmitting(true);
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch('http://127.0.0.1:8000/api/fees-manager/leaves/apply/', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const res = await applyFeesManagerLeave({
+        title: title.trim(),
+        start_date: format(dateRange.from, 'yyyy-MM-dd'),
+        end_date: dateRange.to ? format(dateRange.to, 'yyyy-MM-dd') : format(dateRange.from, 'yyyy-MM-dd'),
+        reason: reason.trim(),
+      });
+
+      if (res.success) {
+        // Optimistic UI update - add the new leave to the list
+        const newLeave: LeaveRequestDisplay = {
+          id: res.leave_id || Date.now().toString(),
           title: title.trim(),
           start_date: format(dateRange.from, 'yyyy-MM-dd'),
           end_date: dateRange.to ? format(dateRange.to, 'yyyy-MM-dd') : format(dateRange.from, 'yyyy-MM-dd'),
           reason: reason.trim(),
-        }),
-      });
+          status: 'Pending',
+          applied_on: new Date().toISOString().split('T')[0],
+        };
+        setLeaveList(prev => [newLeave, ...prev]);
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          // Optimistic UI update - add the new leave to the list
-          const newLeave: LeaveRequestDisplay = {
-            id: data.leave_id || Date.now().toString(),
-            title: title.trim(),
-            start_date: format(dateRange.from, 'yyyy-MM-dd'),
-            end_date: dateRange.to ? format(dateRange.to, 'yyyy-MM-dd') : format(dateRange.from, 'yyyy-MM-dd'),
-            reason: reason.trim(),
-            status: 'Pending',
-            applied_on: new Date().toISOString().split('T')[0],
-          };
-          setLeaveList(prev => [newLeave, ...prev]);
+        // Reset form
+        setTitle('');
+        setDateRange(undefined);
+        setReason('');
+        setError('');
 
-          // Reset form
-          setTitle('');
-          setDateRange(undefined);
-          setReason('');
-          setError('');
+        // Show success alert
+        const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
 
-          // Show success alert
-          const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-
-          await MySwal.fire({
-            title: 'Leave Request Submitted!',
-            text: 'Your leave request has been successfully submitted.',
-            icon: 'success',
-            confirmButtonText: 'OK',
-            confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
-            background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
-            color: currentTheme === 'dark' ? '#ffffff' : '#000000',
-          });
-        }
+        await MySwal.fire({
+          title: 'Leave Request Submitted!',
+          text: 'Your leave request has been successfully submitted.',
+          icon: 'success',
+          confirmButtonText: 'OK',
+          confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',
+          background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
+          color: currentTheme === 'dark' ? '#ffffff' : '#000000',
+        });
       } else {
-        const errorData = await response.json();
-        setError(errorData.message || "Failed to submit leave");
+        setError(res.message || "Failed to submit leave");
 
         // Show error alert
         const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
 
         await MySwal.fire({
           title: 'Error!',
-          text: errorData.message || 'Failed to submit leave',
+          text: res.message || 'Failed to submit leave',
           icon: 'error',
           confirmButtonText: 'OK',
           confirmButtonColor: currentTheme === 'dark' ? 'hsl(var(--primary))' : '#3b82f6',

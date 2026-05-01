@@ -30,6 +30,16 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/context/ThemeContext";
 import DashboardCard from '@/components/common/DashboardCard';
+import { 
+  getFeesManagerFilters, 
+  getFeesManagerSemesters, 
+  getFeesManagerSections, 
+  getFeesManagerStats, 
+  getInvoices, 
+  recordPayment, 
+  downloadInvoice as downloadInvoiceApi,
+  getInvoiceDetails
+} from "../../utils/fees_manager_api";
 
 interface Invoice {
   id: number;
@@ -110,13 +120,9 @@ const InvoiceManagement: React.FC = () => {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const token = localStorage.getItem('access_token');
-        const filterRes = await fetch('http://127.0.0.1:8000/api/fees-manager/filters/', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (filterRes.ok) {
-          const data = await filterRes.json();
-          setFilterData(data.data);
+        const filterJson = await getFeesManagerFilters();
+        if (filterJson.success) {
+          setFilterData(filterJson.data);
         }
       } catch (err) {
         console.error("Error fetching filters:", err);
@@ -132,13 +138,9 @@ const InvoiceManagement: React.FC = () => {
       return;
     }
     const fetchSem = async () => {
-      const token = localStorage.getItem('access_token');
-      const res = await fetch(`http://127.0.0.1:8000/api/fees-manager/semesters/?branch_id=${selectedFilters.branchId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setSemesters(data.data || []);
+      const res = await getFeesManagerSemesters(selectedFilters.branchId);
+      if (res.success) {
+        setSemesters(res.data || []);
       }
     };
     fetchSem();
@@ -151,13 +153,9 @@ const InvoiceManagement: React.FC = () => {
       return;
     }
     const fetchSec = async () => {
-      const token = localStorage.getItem('access_token');
-      const res = await fetch(`http://127.0.0.1:8000/api/fees-manager/sections/?branch_id=${selectedFilters.branchId}&semester_id=${selectedFilters.semesterId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setSections(data.data || []);
+      const res = await getFeesManagerSections(selectedFilters.branchId, selectedFilters.semesterId);
+      if (res.success) {
+        setSections(res.data || []);
       }
     };
     fetchSec();
@@ -204,21 +202,17 @@ const InvoiceManagement: React.FC = () => {
 
   const fetchStats = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const params = new URLSearchParams({
+      const params = {
         ...(selectedFilters.batchId && { batch_id: selectedFilters.batchId }),
         ...(selectedFilters.branchId && { branch_id: selectedFilters.branchId }),
         ...(selectedFilters.semesterId && { semester_id: selectedFilters.semesterId }),
         ...(selectedFilters.sectionId && { section_id: selectedFilters.sectionId }),
         ...(selectedFilters.admissionMode && { admission_mode: selectedFilters.admissionMode }),
-      });
+      };
 
-      const res = await fetch(`http://127.0.0.1:8000/api/fees-manager/stats/?${params}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const d = await res.json();
-        setStatsData(d.data);
+      const res = await getFeesManagerStats(params);
+      if (res.success) {
+        setStatsData(res.data);
       }
     } catch (e) {
       console.error("Error fetching stats:", e);
@@ -228,8 +222,7 @@ const InvoiceManagement: React.FC = () => {
   const fetchInvoices = async (page: number = 1) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('access_token');
-      const params = new URLSearchParams({
+      const params = {
         page: page.toString(),
         page_size: '50',
         ...(selectedFilters.batchId && { batch_id: selectedFilters.batchId }),
@@ -239,15 +232,12 @@ const InvoiceManagement: React.FC = () => {
         ...(selectedFilters.admissionMode && { admission_mode: selectedFilters.admissionMode }),
         ...(selectedFilters.status !== 'all' && { status: selectedFilters.status }),
         ...(selectedFilters.search && { search: selectedFilters.search })
-      });
+      };
 
-      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/invoices/?${params}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
+      const json = await getInvoices(params);
 
-      if (!response.ok) throw new Error('Failed to fetch invoices');
+      if (!json.success) throw new Error(json.message || 'Failed to fetch invoices');
 
-      const json = await response.json();
       const list = json.data || [];
       const meta = json.meta || null;
 
@@ -270,15 +260,11 @@ const InvoiceManagement: React.FC = () => {
 
   const fetchInvoiceDetails = async (invoiceId: number) => {
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/invoices/${invoiceId}/`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
+      const res = await getInvoiceDetails(invoiceId);
 
-      if (!response.ok) throw new Error('Failed to fetch invoice details');
+      if (!res.success) throw new Error(res.message || 'Failed to fetch invoice details');
 
-      const json = await response.json();
-      const inv = json.data || {};
+      const inv = res.data || {};
       
       const normalizedInvoice = {
         ...inv,
@@ -313,24 +299,15 @@ const InvoiceManagement: React.FC = () => {
 
     try {
       setIsSubmittingPayment(true);
-      const token = localStorage.getItem('access_token');
-      const res = await fetch('http://127.0.0.1:8000/api/fees-manager/payments/record/', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          invoice_id: selectedInvoice.id,
-          amount: paymentForm.amount,
-          mode: paymentForm.mode,
-          transaction_id: paymentForm.transactionId
-        })
+      const res = await recordPayment({
+        invoice_id: selectedInvoice.id,
+        amount: paymentForm.amount,
+        mode: paymentForm.mode,
+        transaction_id: paymentForm.transactionId
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || 'Failed to record payment');
+      if (!res.success) {
+        throw new Error(res.message || 'Failed to record payment');
       }
 
       setIsPaymentDialogOpen(false);
@@ -356,15 +333,11 @@ const InvoiceManagement: React.FC = () => {
 
   const downloadInvoice = async (invoiceId: number) => {
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/invoices/${invoiceId}/download/`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error('Failed to download invoice');
+      const json = await downloadInvoiceApi(invoiceId);
+      if (!json.success) throw new Error(json.message || 'Failed to download invoice');
       
-      const json = await response.json();
       if (json.data?.download_url) {
-        window.open(`http://127.0.0.1:8000${json.data.download_url}`, '_blank');
+        window.open(`${window.location.origin}${json.data.download_url}`, '_blank');
       }
     } catch (err) {
       setError('Failed to initiate download');
@@ -416,7 +389,7 @@ const InvoiceManagement: React.FC = () => {
             />
             <DashboardCard
               title="Collection"
-              value={formatCurrency((statsData?.total_revenue_cents || 0) / 100)}
+              value={formatCurrency((statsData?.total_collections_cents || 0) / 100)}
               description="Total revenue collected"
               icon={<TrendingUp className="h-5 w-5" />}
             />
@@ -428,7 +401,7 @@ const InvoiceManagement: React.FC = () => {
             />
             <DashboardCard
               title="Active Templates"
-              value={statsData?.active_templates || 0}
+              value={statsData?.active_fee_structures || 0}
               description="Templates currently assigned"
               icon={<Users className="h-5 w-5" />}
             />

@@ -28,6 +28,13 @@ import {
   Calendar as CalendarIcon
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext'; // Added theme context import
+import { 
+  getFeeComponents, 
+  getFeeTemplates, 
+  createFeeTemplate, 
+  updateFeeTemplate, 
+  deleteFeeTemplate 
+} from "../../utils/fees_manager_api";
 
 interface FeeComponent {
   id: number;
@@ -108,19 +115,12 @@ const FeeTemplates: React.FC = () => {
 
   const fetchAvailableComponents = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch('http://127.0.0.1:8000/api/fees-manager/components/?page=1&page_size=200', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const data = await getFeeComponents(1, 200);
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch fee components');
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to fetch fee components');
       }
 
-      const data = await response.json();
       setAvailableComponents((data.data || []).map((it: any) => ({
         ...it,
         amount: (it.amount_cents != null ? Number(it.amount_cents) : (it.amount ? Math.round(it.amount * 100) : 0)) / 100,
@@ -133,19 +133,12 @@ const FeeTemplates: React.FC = () => {
   const fetchTemplates = async (page: number = 1) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/fee-templates/?page=${page}&page_size=${templatesPageSize}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const data = await getFeeTemplates(page, templatesPageSize);
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch fee templates');
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to fetch fee templates');
       }
 
-      const data = await response.json();
       const items = (data.data || []).map((t: any) => ({
         ...t,
         total_amount: (t.total_amount_cents != null ? Number(t.total_amount_cents) / 100 : (t.total_amount || 0)),
@@ -159,7 +152,7 @@ const FeeTemplates: React.FC = () => {
       setTemplates(items);
       const meta = data.meta || {};
       setTemplatesPage(meta.page || page);
-      setTemplatesTotalPages(meta.total_pages || Math.max(1, Math.ceil((meta.count || 0) / templatesPageSize)));
+      setTemplatesTotalPages(meta.totalPages || Math.max(1, Math.ceil((meta.count || 0) / templatesPageSize)));
       setTemplatesTotalCount(meta.count || (data.data || []).length);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -203,7 +196,6 @@ const FeeTemplates: React.FC = () => {
     if (!templateName.trim() || selectedComponents.length === 0) return;
 
     try {
-      const token = localStorage.getItem('access_token');
       const templateData = {
         name: templateName.trim(),
         description: templateDescription.trim() || null,
@@ -214,22 +206,11 @@ const FeeTemplates: React.FC = () => {
         component_overrides: componentOverrides,
       };
 
-      const response = await fetch('http://127.0.0.1:8000/api/fees-manager/fee-templates/', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(templateData),
-      });
+      const resp = await createFeeTemplate(templateData);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create fee template');
+      if (!resp.success) {
+        throw new Error(resp.message || 'Failed to create fee template');
       }
-
-      // Use response to update local state without refetching entire list
-      const resp = await response.json();
       const created = resp.data;
       const item = {
         ...created,
@@ -289,7 +270,6 @@ const FeeTemplates: React.FC = () => {
     if (!editingTemplate || !templateName.trim() || selectedComponents.length === 0) return;
 
     try {
-      const token = localStorage.getItem('access_token');
       const templateData = {
         name: templateName.trim(),
         description: templateDescription.trim() || null,
@@ -300,21 +280,11 @@ const FeeTemplates: React.FC = () => {
         component_overrides: componentOverrides,
       };
 
-      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/templates/${editingTemplate.id}/`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(templateData),
-      });
+      const resp = await updateFeeTemplate(editingTemplate.id, templateData);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update fee template');
+      if (!resp.success) {
+        throw new Error(resp.message || 'Failed to update fee template');
       }
-
-      const resp = await response.json();
       const updated = resp.data;
       const item = {
         ...updated,
@@ -354,16 +324,10 @@ const FeeTemplates: React.FC = () => {
     if (!result.isConfirmed) return;
 
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/templates/${templateId}/`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const response = await deleteFeeTemplate(templateId);
 
-      if (!response.ok) {
-        throw new Error('Failed to delete fee template');
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to delete fee template');
       }
       // Remove locally to avoid an extra GET
       setTemplates(prev => prev.filter(t => t.id !== templateId));
