@@ -22,8 +22,13 @@ import {
   AlertTriangle,
   RefreshCw,
   Eye,
-  Download
+  Download,
+  LayoutGrid,
+  FileText,
+  Users
 } from 'lucide-react';
+import DashboardCard from '@/components/common/DashboardCard';
+import { useTheme } from '@/context/ThemeContext';
 
 interface Payment {
   id: number;
@@ -82,6 +87,7 @@ const PaymentMonitoring: React.FC = () => {
   const [dateRange, setDateRange] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [meta, setMeta] = useState<any>(null);
+  const { theme } = useTheme();
 
   // Helper to normalize amounts (cents or direct amounts) to rupees
   const toRupees = (centsOrAmount: any) => {
@@ -333,403 +339,392 @@ const PaymentMonitoring: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto p-0">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Payment Monitoring</h1>
-          <p className="text-muted-foreground mt-2">Track and manage all fee payments and transactions</p>
-        </div>
-        <Button onClick={fetchData} className="bg-primary hover:bg-primary/90 text-white">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
-      </div>
+    <div >
+      <Card>
+        <CardHeader className="border-b bg-muted/20 pb-6 px-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <CardTitle>
+                Payment Monitoring
+              </CardTitle>
+              <p className="text-muted-foreground mt-1 text-sm">Track and manage all fee payments and transactions</p>
+            </div>
+          </div>
+        </CardHeader>
 
-      {error && (
-        <Alert className="mb-6">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {/* Stats Cards */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Payments</p>
-                  <p className="text-2xl font-bold text-foreground">{stats.total_payments}</p>
-                  <p className="text-sm text-green-600 font-semibold">{formatCurrency(stats.total_amount)}</p>
-                </div>
-                <DollarSign className="h-8 w-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Successful</p>
-                  <p className="text-2xl font-bold text-green-600">{stats.successful_payments}</p>
-                  <p className="text-sm text-muted-foreground">payments completed</p>
-                </div>
-                <CheckCircle className="h-8 w-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Today's Revenue</p>
-                  <p className="text-2xl font-bold text-foreground">{formatCurrency(stats.today_amount)}</p>
-                  <p className="text-sm text-muted-foreground">{stats.today_payments} payments</p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
-                  <p className="text-2xl font-bold text-foreground">{formatCurrency(stats.monthly_amount)}</p>
-                  <p className="text-sm text-muted-foreground">{stats.monthly_payments} payments</p>
-                </div>
-                <Calendar className="h-8 w-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Additional Stats */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card className="bg-yellow-50/50 dark:bg-yellow-900/10 border-yellow-200 dark:border-yellow-900/30">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-400">Outstanding Amount</p>
-                  <p className="text-2xl font-bold text-yellow-600">{formatCurrency(stats.outstanding_amount)}</p>
-                  <p className="text-xs text-yellow-700 dark:text-yellow-500 mt-1">{stats.pending_invoice_count} unpaid invoices</p>
-                </div>
-                <AlertTriangle className="h-8 w-8 text-yellow-500 opacity-20" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Pending Transactions</p>
-                  <p className="text-2xl font-bold text-yellow-600">{stats.pending_payments}</p>
-                </div>
-                <Clock className="h-8 w-8 text-yellow-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Failed Payments</p>
-                  <p className="text-2xl font-bold text-red-600">{stats.failed_payments}</p>
-                </div>
-                <AlertTriangle className="h-8 w-8 text-red-600" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Refunded Amount</p>
-                  <p className="text-2xl font-bold text-foreground">{formatCurrency(stats.refunded_amount)}</p>
-                </div>
-                <TrendingDown className="h-8 w-8 text-gray-600" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Filters */}
-      <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search by student, invoice, or transaction ID..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+        <CardContent className="p-6">
+          {/* Stats Overview */}
+          {stats && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <DashboardCard
+                title="Total Revenue"
+                value={formatCurrency(stats.total_amount)}
+                description={`${stats.total_payments} total transactions`}
+                icon={<DollarSign className="h-5 w-5" />}
+              />
+              <DashboardCard
+                title="Successful"
+                value={stats.successful_payments}
+                description="Completed payments"
+                icon={<CheckCircle className="h-5 w-5" />}
+              />
+              <DashboardCard
+                title="Today's Collection"
+                value={formatCurrency(stats.today_amount)}
+                description={`${stats.today_payments} payments today`}
+                icon={<TrendingUp className="h-5 w-5" />}
+              />
+              <DashboardCard
+                title="Outstanding"
+                value={formatCurrency(stats.outstanding_amount)}
+                description={`${stats.pending_invoice_count} unpaid invoices`}
+                icon={<AlertTriangle className="h-5 w-5 text-amber-500" />}
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
-                <SelectItem value="refunded">Refunded</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={methodFilter} onValueChange={setMethodFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by method" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Methods</SelectItem>
-                <SelectItem value="stripe">Stripe</SelectItem>
-                <SelectItem value="cash">Cash</SelectItem>
-                <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                <SelectItem value="cheque">Cheque</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by date" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Time</SelectItem>
-                <SelectItem value="today">Today</SelectItem>
-                <SelectItem value="week">This Week</SelectItem>
-                <SelectItem value="month">This Month</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+          )}
 
-      {/* Payments Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5" />
-            Payment Transactions ({meta?.total_count || 0})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {displayPayments.length === 0 ? (
-            <div className="text-center py-12">
-              <CreditCard className="h-16 w-16 mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-semibold mb-2 text-foreground">No Payments Found</h3>
-              <p className="text-muted-foreground">
-                {payments.length === 0
-                  ? "No payments have been recorded yet"
-                  : "No payments match your search criteria"
-                }
-              </p>
+          {/* Control Row */}
+          <div className="space-y-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label className="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">Payment Status</Label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="h-10 bg-background border-border/50">
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="failed">Failed</SelectItem>
+                    <SelectItem value="refunded">Refunded</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">Payment Mode</Label>
+                <Select value={methodFilter} onValueChange={setMethodFilter}>
+                  <SelectTrigger className="h-10 bg-background border-border/50">
+                    <SelectValue placeholder="All Methods" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Methods</SelectItem>
+                    <SelectItem value="stripe">Stripe</SelectItem>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                    <SelectItem value="cheque">Cheque</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground ml-1">Time Period</Label>
+                <Select value={dateRange} onValueChange={setDateRange}>
+                  <SelectTrigger className="h-10 bg-background border-border/50">
+                    <SelectValue placeholder="All Time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="week">This Week</SelectItem>
+                    <SelectItem value="month">This Month</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
+
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by student name, USN, invoice number, or transaction ID..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 h-11 bg-background border-border/50 shadow-sm transition-all focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+          </div>
+
+          {/* Payments Table */}
+          <div className="rounded-xl border border-border/50 overflow-x-auto bg-card/30 backdrop-blur-md custom-scrollbar">
+            <Table>
+              <TableHeader className="bg-muted/40">
+                <TableRow className="hover:bg-transparent border-b border-border/50">
+                  <TableHead className="w-[140px] px-6 py-4 text-[13px] font-semibold uppercase tracking-wider">Invoice #</TableHead>
+                  <TableHead className="px-6 py-4 text-[13px] font-semibold uppercase tracking-wider">Student Details</TableHead>
+                  <TableHead className="px-6 py-4 text-right text-[13px] font-semibold uppercase tracking-wider">Amount</TableHead>
+                  <TableHead className="px-6 py-4 text-center text-[13px] font-semibold uppercase tracking-wider">Mode</TableHead>
+                  <TableHead className="px-6 py-4 text-center text-[13px] font-semibold uppercase tracking-wider">Status</TableHead>
+                  <TableHead className="px-6 py-4 text-right pr-6 text-[13px] font-semibold uppercase tracking-wider">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {payments.length === 0 ? (
                   <TableRow>
-                    <TableHead>Invoice #</TableHead>
-                    <TableHead>Student</TableHead>
-                    <TableHead>USN</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Method</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Payment Date</TableHead>
-                    <TableHead>Transaction ID</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableCell colSpan={6} className="h-72 text-center">
+                      <div className="flex flex-col items-center justify-center space-y-3 opacity-60">
+                        <div className="bg-muted p-4 rounded-full">
+                          <CreditCard className="h-8 w-8 text-muted-foreground" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold uppercase tracking-widest">No Transactions Found</p>
+                          <p className="text-xs text-muted-foreground">Adjust your filters to see more results</p>
+                        </div>
+                      </div>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {displayPayments.map((payment) => (
-                    <TableRow key={payment.id}>
-                      <TableCell className="font-medium">
-                        {payment.invoice.invoice_number}
+                ) : (
+                  payments.map((p) => (
+                    <TableRow key={p.id} className="hover:bg-primary/5 transition-all duration-200 border-b border-border/50">
+                      <TableCell className="py-5 px-6 align-middle">
+                        <div className="font-mono font-semibold text-primary tracking-tighter text-sm uppercase">{p.invoice.invoice_number}</div>
+                        <div className="text-[13px] font-semibold text-muted-foreground uppercase tracking-widest mt-1">
+                          {new Date(p.payment_date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </div>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{payment.invoice.student.name}</TableCell>
-                      <TableCell className="text-muted-foreground">{payment.invoice.student.usn}</TableCell>
-                      <TableCell className="font-semibold text-green-600">
-                        {formatCurrency(payment.amount)}
+                      <TableCell className="px-6 align-middle">
+                        <div className="font-semibold text-foreground leading-tight">{p.invoice.student.name}</div>
+                        <div className="text-[13px] font-semibold text-muted-foreground font-mono uppercase tracking-tight mt-1">
+                          {p.invoice.student.usn} • Sem {p.invoice.student.semester}
+                        </div>
                       </TableCell>
-                      <TableCell>{getMethodBadge(payment.payment_method)}</TableCell>
-                      <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                      <TableCell>
-                        {new Date(payment.payment_date).toLocaleDateString()}
+                      <TableCell className="text-right align-middle">
+                        <div className="font-semibold text-green-600">{formatCurrency(p.amount)}</div>
+
                       </TableCell>
-                      <TableCell className="font-mono text-sm">
-                        {payment.transaction_id ? payment.transaction_id.substring(0, 8) + '...' : 'N/A'}
+                      <TableCell className="text-center align-middle">
+                        {getMethodBadge(p.payment_method)}
                       </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
+                      <TableCell className="text-center align-middle">
+                        {getStatusBadge(p.status)}
+                      </TableCell>
+                      <TableCell className="text-right pr-6 align-middle">
+                        <div className="flex justify-end gap-1">
                           <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => fetchPaymentDetails(payment.id)}
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9 text-blue-600 hover:bg-blue-50 rounded-full transition-all active:scale-95"
+                            onClick={() => fetchPaymentDetails(p.id)}
+                            title="View Details"
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-4.5 w-4.5" />
                           </Button>
-                          {(payment.status === 'completed' || payment.status === 'success') && (
+                          {(p.status === 'completed' || p.status === 'success') && (
                             <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => downloadReceipt(payment.id)}
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9 text-green-600 hover:bg-green-50 rounded-full transition-all active:scale-95"
+                              onClick={() => downloadReceipt(p.id)}
+                              title="Download Receipt"
                             >
-                              <Download className="h-4 w-4" />
+                              <Download className="h-4.5 w-4.5" />
                             </Button>
                           )}
-                          {payment.status === 'completed' && payment.payment_method === 'stripe' && (
+                          {p.status === 'completed' && p.payment_method === 'stripe' && (
                             <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => processRefund(payment.id)}
-                              className="text-red-600 hover:text-red-700"
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9 text-red-600 hover:bg-red-50 rounded-full transition-all active:scale-95"
+                              onClick={() => processRefund(p.id)}
+                              title="Process Refund"
                             >
-                              Refund
+                              <RefreshCw className="h-4.5 w-4.5" />
                             </Button>
                           )}
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                  ))
+                )}
+              </TableBody>
+            </Table>
 
-          {meta && meta.total_pages > 1 && (
-            <div className="flex items-center justify-between mt-6 pt-6 border-t">
-              <div className="text-sm text-muted-foreground">
-                Showing <span className="font-medium">{(currentPage - 1) * 25 + 1}</span> to <span className="font-medium">{Math.min(currentPage * 25, meta.total_count)}</span> of <span className="font-medium">{meta.total_count}</span> transactions
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-                <div className="flex items-center px-4 text-sm font-medium">
-                  Page {currentPage} of {meta.total_pages}
+            {/* Pagination Footer */}
+            {meta && meta.total_pages > 1 && (
+              <div className="p-5 border-t flex flex-col sm:flex-row items-center justify-between gap-4 bg-muted/10">
+                <p className="text-[13px] font-medium text-muted-foreground">
+                  Showing <span className="text-foreground font-semibold">{(meta.page - 1) * 25 + 1}</span> to <span className="text-foreground font-semibold">{Math.min(meta.page * 25, meta.total_count)}</span> of <span className="text-foreground font-semibold">{meta.total_count}</span> results
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="pagination-btn text-white bg-primary border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white px-4 h-9 rounded-lg transition-all active:scale-95 disabled:opacity-50"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Previous
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled
+                    className={cn(
+                      "h-9 w-10 font-bold rounded-lg border-border/50",
+                      theme === 'dark' ? "bg-card text-foreground" : "bg-white text-gray-900"
+                    )}
+                  >
+                    {currentPage}
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="pagination-btn text-white bg-primary border-primary hover:bg-primary/90 hover:border-primary/90 hover:text-white px-4 h-9 rounded-lg transition-all active:scale-95 disabled:opacity-50"
+                    disabled={currentPage === meta.total_pages}
+                    onClick={() => setCurrentPage(p => Math.min(meta.total_pages, p + 1))}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(p => Math.min(meta.total_pages, p + 1))}
-                  disabled={currentPage === meta.total_pages}
-                >
-                  Next
-                </Button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </CardContent>
       </Card>
 
       {/* Payment Details Dialog */}
       <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              Payment Details
-            </DialogTitle>
-                <DialogDescription className="sr-only">Details for the selected payment</DialogDescription>
+        <DialogContent className="max-w-lg h-[600px] w-[90vw] border-none shadow-2xl p-0 overflow-hidden bg-card rounded-3xl">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Payment Details</DialogTitle>
+            <DialogDescription>Detailed information about the selected payment transaction</DialogDescription>
           </DialogHeader>
-
-          {selectedPayment && (
-            <div className="space-y-6">
-              {/* Payment Header */}
-              <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <div>
-                  <h3 className="font-semibold mb-2 text-foreground">Student Information</h3>
-                  <p className="text-foreground"><strong>Name:</strong> {selectedPayment.invoice.student.name}</p>
-                  <p className="text-foreground"><strong>USN:</strong> {selectedPayment.invoice.student.usn}</p>
-                  <p className="text-foreground"><strong>Department:</strong> {selectedPayment.invoice.student.department}</p>
-                  <p className="text-foreground"><strong>Semester:</strong> {selectedPayment.invoice.student.semester}</p>
+          {/* Refined Header */}
+          <div className="px-6 py-5 border-b border-border/50 bg-muted/20">
+            <div className="flex items-center justify-between pr-10">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-primary opacity-80" />
+                  <span className="text-[13px] font-semibold uppercase tracking-[0.15em] text-muted-foreground/80">Transaction Statement</span>
                 </div>
-                <div>
-                  <h3 className="font-semibold mb-2 text-foreground">Payment Information</h3>
-                  <div className="text-foreground"><strong>Invoice:</strong> {selectedPayment.invoice?.invoice_number || 'N/A'}</div>
-                  <div className="text-foreground"><strong>Fee Type:</strong> {selectedPayment.invoice?.fee_assignment?.template?.name || 'N/A'}</div>
-                  <div className="text-foreground"><strong>Amount:</strong> {formatCurrency(selectedPayment.amount)}</div>
-                  <div className="text-foreground"><strong>Status:</strong> {getStatusBadge(selectedPayment.status)}</div>
-                </div>
+                <h2 className="text-xl font-semibold tracking-tight text-foreground truncate max-w-[200px] sm:max-w-none">
+                  #{selectedPayment?.transaction_id?.substring(0, 12) || 'REF-N/A'}
+                </h2>
               </div>
-
-              {/* Payment Details */}
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-foreground">Payment Method</Label>
-                    <div className="mt-1">{getMethodBadge(selectedPayment.payment_method)}</div>
-                  </div>
-                  <div>
-                    <Label className="text-foreground">Payment Date</Label>
-                    <p className="mt-1 text-foreground">{new Date(selectedPayment.payment_date).toLocaleString()}</p>
-                  </div>
+              <div className="flex flex-col items-end gap-1.5 shrink-0">
+                <div className="scale-90 origin-right">
+                  {selectedPayment && getStatusBadge(selectedPayment.status)}
                 </div>
-
-                {selectedPayment.transaction_id && (
-                  <div>
-                    <Label className="text-foreground">Transaction ID</Label>
-                    <p className="mt-1 font-mono text-sm text-foreground">{selectedPayment.transaction_id}</p>
-                  </div>
-                )}
-
-                {selectedPayment.stripe_payment_intent_id && (
-                  <div>
-                    <Label className="text-foreground">Stripe Payment Intent ID</Label>
-                    <p className="mt-1 font-mono text-sm text-foreground">{selectedPayment.stripe_payment_intent_id}</p>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-foreground">Created At</Label>
-                    <p className="mt-1 text-foreground">{new Date(selectedPayment.created_at).toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <Label className="text-foreground">Last Updated</Label>
-                    <p className="mt-1 text-foreground">{new Date(selectedPayment.updated_at).toLocaleString()}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button variant="outline" onClick={() => setIsDetailsDialogOpen(false)}>
-                  Close
-                </Button>
-                {(selectedPayment.status === 'completed' || selectedPayment.status === 'success') && (
-                  <Button onClick={() => downloadReceipt(selectedPayment.id)}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Download Receipt
-                  </Button>
-                )}
-                {selectedPayment.status === 'completed' && selectedPayment.payment_method === 'stripe' && (
-                  <Button
-                    variant="destructive"
-                    onClick={() => processRefund(selectedPayment.id)}
-                  >
-                    Process Refund
-                  </Button>
-                )}
+                <span className="text-[12px] text-muted-foreground font-semibold">
+                  {selectedPayment && new Date(selectedPayment.payment_date).toLocaleDateString()}
+                </span>
               </div>
             </div>
-          )}
+          </div>
+
+          <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
+            {isDetailLoading ? (
+              <div className="h-64 flex flex-col items-center justify-center space-y-4">
+                <RefreshCw className="h-8 w-8 text-primary animate-spin" />
+                <p className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground">Fetching Details...</p>
+              </div>
+            ) : selectedPayment && (
+              <>
+                {/* Info Grid - Responsive */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3 p-4 rounded-xl border border-border/50 bg-muted/5">
+                    <h4 className="text-[12px] font-semibold uppercase text-muted-foreground flex items-center gap-2 tracking-widest">
+                      <Users className="h-3.5 w-3.5 text-primary" /> Payer Information
+                    </h4>
+                    <div className="space-y-1">
+                      <p className="text-base font-semibold text-foreground leading-tight">{selectedPayment.invoice.student.name}</p>
+                      <div className="space-y-0.5">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{selectedPayment.invoice.student.usn}</p>
+                        <p className="text-xs text-muted-foreground/70">{selectedPayment.invoice.student.department}</p>
+                        <p className="text-xs font-semibold text-primary/80">Semester {selectedPayment.invoice.student.semester || 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 p-4 rounded-xl border border-border/50 bg-muted/5">
+                    <h4 className="text-[12px] font-semibold uppercase text-muted-foreground flex items-center gap-2 tracking-widest">
+                      <FileText className="h-3.5 w-3.5 text-primary" /> Associated Fee
+                    </h4>
+                    <div className="space-y-1">
+                      <p className="text-base font-semibold text-foreground leading-tight">
+                        {selectedPayment.invoice?.fee_assignment?.template?.name || 'Manual Assignment'}
+                      </p>
+                      <div className="flex flex-col gap-1.5 mt-1">
+                        <Badge variant="secondary" className="w-fit text-[10px] h-4.5 px-2 font-semibold uppercase border-none">
+                          {selectedPayment.invoice?.fee_assignment?.template?.fee_type || 'N/A'}
+                        </Badge>
+                        <div className="text-[12px] font-semibold text-muted-foreground">Invoice: <span className="text-primary font-mono">{selectedPayment.invoice?.invoice_number}</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Financial Summary */}
+                <div className="bg-primary/5 rounded-xl border border-primary/10 p-5 grid grid-cols-2 gap-4 text-center shadow-inner">
+                  <div className="border-r border-primary/10">
+                    <p className="text-[11px] text-muted-foreground uppercase font-semibold tracking-wider mb-1">Payment Amount</p>
+                    <p className="text-xl font-bold text-green-600 tracking-tight">{formatCurrency(selectedPayment.amount)}</p>
+                  </div>
+                  <div className="flex flex-col items-center justify-center">
+                    <p className="text-[11px] text-muted-foreground uppercase font-semibold tracking-wider mb-1">Method</p>
+                    <div className="scale-100">{getMethodBadge(selectedPayment.payment_method)}</div>
+                  </div>
+                </div>
+
+                {/* Technical Details */}
+                <div className="space-y-4">
+                  <h4 className="text-[12px] font-semibold uppercase text-muted-foreground flex items-center gap-2 tracking-widest px-1">
+                    <LayoutGrid className="h-3.5 w-3.5 text-primary" /> Technical Details
+                  </h4>
+                  <div className="border border-border/50 rounded-xl p-5 space-y-4 bg-muted/5 font-mono text-[11px]">
+                    <div className="space-y-1.5 pb-3 border-b border-border/30">
+                      <span className="text-muted-foreground uppercase text-[9px] font-bold tracking-widest">Transaction ID</span>
+                      <p className="font-bold text-foreground select-all break-all leading-relaxed bg-background/50 p-2 rounded-lg border border-border/20">
+                        {selectedPayment.transaction_id || 'N/A'}
+                      </p>
+                    </div>
+                    {selectedPayment.stripe_payment_intent_id && (
+                      <div className="space-y-1.5 pb-3 border-b border-border/30">
+                        <span className="text-muted-foreground uppercase text-[9px] font-bold tracking-widest">Stripe Payment Intent</span>
+                        <p className="font-bold text-foreground select-all break-all leading-relaxed bg-background/50 p-2 rounded-lg border border-border/20">
+                          {selectedPayment.stripe_payment_intent_id}
+                        </p>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center pt-1">
+                      <span className="text-muted-foreground uppercase text-[9px] font-bold tracking-widest">Logged At</span>
+                      <span className="text-foreground font-bold">{new Date(selectedPayment.created_at).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  {(selectedPayment.status === 'completed' || selectedPayment.status === 'success') && (
+                    <Button
+                      className="flex-1 h-11 text-xs font-semibold uppercase tracking-widest shadow-lg shadow-primary/20 rounded-xl"
+                      onClick={() => downloadReceipt(selectedPayment.id)}
+                    >
+                      <Download className="h-3.5 w-3.5 mr-2" /> Download Receipt
+                    </Button>
+                  )}
+                  {selectedPayment.status === 'completed' && selectedPayment.payment_method === 'stripe' && (
+                    <Button
+                      variant="destructive"
+                      className="flex-1 h-11 text-xs font-semibold uppercase tracking-widest rounded-xl"
+                      onClick={() => processRefund(selectedPayment.id)}
+                    >
+                      Process Refund
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    className="h-11 px-8 text-xs font-semibold uppercase tracking-widest rounded-xl border-border/50"
+                    onClick={() => setIsDetailsDialogOpen(false)}
+                  >
+                    Close Window
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

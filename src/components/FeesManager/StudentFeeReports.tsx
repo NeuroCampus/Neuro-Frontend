@@ -140,6 +140,22 @@ const StudentFeeReports: React.FC = () => {
     }
   };
 
+  // Automatic data loading when filters are selected
+  useEffect(() => {
+    const isAcademicHierarchySelected = 
+      selectedBatch !== 'all' && 
+      selectedBranch !== 'all' && 
+      selectedSemester !== 'all' && 
+      selectedSection !== 'all';
+
+    if (isAcademicHierarchySelected) {
+      handleBulkSearch(1);
+    } else {
+      setBulkReports([]);
+      setCohortStats(null);
+    }
+  }, [selectedBatch, selectedBranch, selectedSemester, selectedSection, selectedAdmissionMode]);
+
   const handleIndividualSearch = async (usn?: string) => {
     const termToSearch = usn || searchTerm.trim();
     
@@ -248,13 +264,20 @@ const StudentFeeReports: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Student Fee Reports</h1>
-          <p className="text-muted-foreground">Search individual students or view bulk reports by academic filters</p>
-        </div>
-      </div>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <Card className="border-none shadow-none bg-transparent">
+        <CardHeader className="px-0 pb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="text-3xl font-bold flex items-center gap-2 text-foreground">
+                <FileText className="h-8 w-8 text-primary" />
+                Student Fee Reports
+              </CardTitle>
+              <p className="text-muted-foreground mt-1 text-sm font-medium">Search individual students or view bulk reports by academic filters</p>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-2">
@@ -576,18 +599,17 @@ const StudentFeeReports: React.FC = () => {
                 Filter Students
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <CardContent className="p-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 <div className="space-y-2">
-                  <Label>Batch</Label>
+                  <Label className="text-[11px] font-bold uppercase tracking-[0.1em] text-primary/70 ml-1">Batch <span className="text-red-500">*</span></Label>
                   <Select value={selectedBatch} onValueChange={setSelectedBatch}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="All Batches" />
+                    <SelectTrigger className="bg-background rounded-xl border-border/50 h-11">
+                      <SelectValue placeholder="Select Batch" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Batches</SelectItem>
+                    <SelectContent className="rounded-xl shadow-xl">
                       {batches.map((batch) => (
-                        <SelectItem key={batch.id} value={batch.id.toString()}>
+                        <SelectItem key={batch.id} value={batch.id.toString()} className="rounded-lg">
                           {batch.name}
                         </SelectItem>
                       ))}
@@ -596,15 +618,14 @@ const StudentFeeReports: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Branch</Label>
+                  <Label className="text-[11px] font-bold uppercase tracking-[0.1em] text-primary/70 ml-1">Branch <span className="text-red-500">*</span></Label>
                   <Select value={selectedBranch} onValueChange={setSelectedBranch}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="All Branches" />
+                    <SelectTrigger className="bg-background rounded-xl border-border/50 h-11">
+                      <SelectValue placeholder="Select Branch" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Branches</SelectItem>
+                    <SelectContent className="rounded-xl shadow-xl">
                       {branches.map((branch) => (
-                        <SelectItem key={branch.id} value={branch.id.toString()}>
+                        <SelectItem key={branch.id} value={branch.id.toString()} className="rounded-lg">
                           {branch.name}
                         </SelectItem>
                       ))}
@@ -613,19 +634,18 @@ const StudentFeeReports: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Semester</Label>
+                  <Label className="text-[11px] font-bold uppercase tracking-[0.1em] text-primary/70 ml-1">Semester <span className="text-red-500">*</span></Label>
                   <Select
                     value={selectedSemester}
                     onValueChange={setSelectedSemester}
                     disabled={selectedBranch === 'all'}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="All Semesters" />
+                    <SelectTrigger className="bg-background rounded-xl border-border/50 h-11">
+                      <SelectValue placeholder="Select Semester" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Semesters</SelectItem>
+                    <SelectContent className="rounded-xl shadow-xl">
                       {semesters.map((semester) => (
-                        <SelectItem key={semester.id} value={semester.id.toString()}>
+                        <SelectItem key={semester.id} value={semester.id.toString()} className="rounded-lg">
                           Semester {semester.number}
                         </SelectItem>
                       ))}
@@ -634,19 +654,18 @@ const StudentFeeReports: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Section</Label>
+                  <Label className="text-[11px] font-bold uppercase tracking-[0.1em] text-primary/70 ml-1">Section <span className="text-red-500">*</span></Label>
                   <Select
                     value={selectedSection}
                     onValueChange={setSelectedSection}
                     disabled={selectedSemester === 'all'}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="All Sections" />
+                    <SelectTrigger className="bg-background rounded-xl border-border/50 h-11">
+                      <SelectValue placeholder="Select Section" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Sections</SelectItem>
+                    <SelectContent className="rounded-xl shadow-xl">
                       {sections.map((section) => (
-                        <SelectItem key={section.id} value={section.id.toString()}>
+                        <SelectItem key={section.id} value={section.id.toString()} className="rounded-lg">
                           {section.name}
                         </SelectItem>
                       ))}
@@ -655,38 +674,23 @@ const StudentFeeReports: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Admission Mode</Label>
+                  <Label className="text-[11px] font-bold uppercase tracking-[0.1em] text-primary/70 ml-1">Admission Mode</Label>
                   <Select
                     value={selectedAdmissionMode}
                     onValueChange={setSelectedAdmissionMode}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-background rounded-xl border-border/50 h-11">
                       <SelectValue placeholder="All Modes" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Modes</SelectItem>
+                    <SelectContent className="rounded-xl shadow-xl">
+                      <SelectItem value="all" className="rounded-lg">All Modes</SelectItem>
                       {admissionModes.map((mode) => (
-                        <SelectItem key={mode} value={mode}>
+                        <SelectItem key={mode} value={mode} className="rounded-lg">
                           {mode}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-
-                <div className="flex items-end">
-                  <Button
-                    onClick={handleFilterChange}
-                    disabled={bulkLoading}
-                    className="w-full bg-primary hover:bg-primary/90"
-                  >
-                    {bulkLoading ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    ) : (
-                      <Filter className="h-4 w-4 mr-2" />
-                    )}
-                    View Reports
-                  </Button>
                 </div>
               </div>
             </CardContent>

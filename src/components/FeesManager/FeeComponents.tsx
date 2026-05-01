@@ -354,11 +354,11 @@ const FeeComponents: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow className={theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Name</TableHead>
+                  <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Amount</TableHead>
+                  <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Description</TableHead>
+                  <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Status</TableHead>
+                  <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800 text-right pr-10'}>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

@@ -264,8 +264,23 @@ export const getStaffAttendanceAudit = async (role: string = 'all', startDate?: 
   }
 };
 
+export const getStaffDetailedAttendance = async (staffId: number, startDate?: string, endDate?: string) => {
+  try {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/staff-detailed-attendance/${staffId}/?${params}`, {
+      method: "GET",
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching detailed staff attendance:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
 export const STAFF_ROLES = [
-  { value: 'all', label: 'All Staff' },
   { value: 'principal', label: 'Principal' },
   { value: 'hod', label: 'HOD' },
   { value: 'dean', label: 'Dean' },

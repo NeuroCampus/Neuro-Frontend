@@ -532,7 +532,7 @@ const InvoiceManagement: React.FC = () => {
                 <SelectTrigger className="h-12 bg-background border-border/50 shadow-sm font-semibold">
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent >
                   <SelectItem value="all">All Invoices</SelectItem>
                   <SelectItem value="paid">Fully Paid</SelectItem>
                   <SelectItem value="unpaid">Unpaid Invoices</SelectItem>
