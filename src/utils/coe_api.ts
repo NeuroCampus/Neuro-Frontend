@@ -777,3 +777,67 @@ export const updateRevaluationRequestStatus = async (requestId: number, status: 
     return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
   }
 };
+
+/**
+ * Fetch exam schedule
+ */
+export const getExamSchedule = async (paramsObj: { page?: number; page_size?: number } = {}): Promise<{ success: boolean; message?: string; data?: any[]; pagination?: any }> => {
+  try {
+    const params = new URLSearchParams();
+    Object.entries(paramsObj).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) params.append(k, String(v));
+    });
+    
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/exam-schedule/?${params}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching exam schedule:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+/**
+ * Schedule a new exam
+ */
+export const scheduleExam = async (payload: any): Promise<{ success: boolean; message?: string; id?: number }> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/exam-schedule/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error scheduling exam:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
+/**
+ * Delete a scheduled exam
+ */
+export const deleteExam = async (examId: number): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/exam-schedule/`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ exam_id: examId })
+    });
+
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting exam:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};

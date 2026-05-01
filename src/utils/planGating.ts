@@ -45,6 +45,7 @@ export const PAGE_REQUIRED_TIERS: Record<string, number> = {
   'scan-student-info': 3,
   'ai-interview': 3,
   'student-hostel-details': 3,
+  'exam-scheduling': 1,
 };
 
 export const isPageAllowed = (page: string, orgPlan: string): boolean => {
