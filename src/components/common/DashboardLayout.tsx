@@ -85,12 +85,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             count = res.data.unread_announcement_count || 0;
           }
         } else if (role === 'hod') {
-          const branchId = (user as any)?.extra?.branch_id || (user as any)?.branch_id;
-          if (branchId) {
-            const res = await getHODStats(branchId);
-            if (res.success && res.data) {
-              count = res.data.unread_announcement_count || 0;
-            }
+          // branch_id is determined server-side — the query param is optional validation only
+          const branchId = (user as any)?.extra?.branch_id || (user as any)?.branch_id || '';
+          const res = await getHODStats(branchId);
+          if (res.success && res.data) {
+            count = res.data.unread_announcement_count || 0;
           }
         } else if (role === 'admin') {
           const res = await getAdminStats();

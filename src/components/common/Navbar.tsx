@@ -163,8 +163,9 @@ const Navbar = ({ role, user, onNotificationClick, setPage, showHamburger = fals
                 const paths: Record<string, string> = {
                   'student': '/announcements',
                   'faculty': '/faculty/announcements',
-                  'hod': '/hod/announcements',
-                  'admin': '/admin/announcements'
+                  'hod': '/hod/hod-announcement-management',
+                  'admin': '/admin/announcement-management',
+                  'principal': '/admin/announcement-management'
                 };
                 navigate(paths[role || ''] || '/announcements');
               }}
