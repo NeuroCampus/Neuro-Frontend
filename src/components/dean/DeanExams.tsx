@@ -77,8 +77,6 @@ const DeanExams: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [exams, setExams] = useState<ExamEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [branches, setBranches] = useState<any[]>([]);
-  const [branchId, setBranchId] = useState<string>('all');
   const [upcomingOnly, setUpcomingOnly] = useState<boolean>(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -94,7 +92,6 @@ const DeanExams: React.FC = () => {
       const qs: string[] = [];
       qs.push(`page=${page}`);
       qs.push(`page_size=10`);
-      if (branchId && branchId !== 'all') qs.push(`branch_id=${encodeURIComponent(branchId)}`);
       if (upcomingOnly) qs.push(`upcoming=1`);
       const url = `${API_ENDPOINT}/dean/reports/exams/${qs.length ? `?${qs.join('&')}` : ''}`;
       console.debug('Loading exams from', url);
@@ -124,24 +121,9 @@ const DeanExams: React.FC = () => {
     }
   };
 
-  useEffect(() => { load(); }, [branchId, upcomingOnly]);
+  useEffect(() => { load(); }, [upcomingOnly]);
 
-  // load branches for filter
-  useEffect(() => {
-    const boot = async () => {
-      try {
-        const res = await fetchWithTokenRefresh(`${API_ENDPOINT}/dean/reports/branches/`);
-        const json = await res.json();
-        if (json.success) {
-          const normalized = (json.data || []).map((b: any) => ({ id: (b.id || b.branch_id).toString(), name: b.name || b.branch }));
-          setBranches(normalized);
-        }
-      } catch (e) {
-        console.error('Failed to load branches', e);
-      }
-    };
-    boot();
-  }, []);
+
 
   const publishExam = async (id: string | number) => {
     if (!confirm('Publish exam results?')) return;

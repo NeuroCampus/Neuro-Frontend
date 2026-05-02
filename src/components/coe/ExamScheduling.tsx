@@ -78,10 +78,7 @@ const ExamScheduling = React.forwardRef<HTMLDivElement>((_, ref) => {
   const loadData = async (page = 1) => {
     setLoading(true);
     try {
-      const [examRes, filters] = await Promise.all([
-        getExamSchedule({ page, page_size: 10 }),
-        getFilterOptions()
-      ]);
+      const examRes = await getExamSchedule({ page, page_size: 10 });
       
       if (examRes.success) {
         setExams(examRes.data || []);
@@ -93,8 +90,6 @@ const ExamScheduling = React.forwardRef<HTMLDivElement>((_, ref) => {
           });
         }
       }
-      setBatches(filters.batches || []);
-      setBranches(filters.branches || []);
     } catch (e: any) {
       setError(e.message || "Failed to load data");
     } finally {
@@ -102,43 +97,31 @@ const ExamScheduling = React.forwardRef<HTMLDivElement>((_, ref) => {
     }
   };
 
+  const loadFilters = async () => {
+    if (batches.length > 0 && semesters.length > 0) return; // already loaded
+    try {
+      const [filters, semRes] = await Promise.all([
+        getFilterOptions(),
+        fetchWithTokenRefresh(`${API_ENDPOINT}/coe/semesters/`)
+      ]);
+      
+      setBatches(filters.batches || []);
+      setBranches(filters.branches || []);
+      
+      const semJson = await semRes.json();
+      if (semJson.success) {
+        setSemesters(semJson.data.semesters || []);
+      }
+    } catch (e) {
+      console.error("Failed to load filters", e);
+    }
+  };
+
   useEffect(() => {
     loadData();
   }, []);
 
-  useEffect(() => {
-    const fetchAllSems = async () => {
-      // Simplified: fetch all semesters or use filters if needed
-      // For now, let's assume we want to show all available semesters since branch is removed
-      try {
-        const res = await fetchWithTokenRefresh(`${API_ENDPOINT}/coe/semesters/`);
-        const json = await res.json();
-        if (json.success) setSemesters(json.data.semesters || []);
-      } catch (e) {
-        console.error("Failed to fetch semesters", e);
-      }
-    };
-    fetchAllSems();
-  }, []);
 
-  useEffect(() => {
-    if (formData.semester_id) {
-      const fetchSubs = async () => {
-        try {
-          const res = await fetchWithTokenRefresh(
-            `${API_ENDPOINT}/common/subjects/?semester_id=${formData.semester_id}`
-          );
-          const json = await res.json();
-          if (json.success) setSubjects(json.data || []);
-        } catch (e) {
-          console.error("Failed to fetch subjects", e);
-        }
-      };
-      fetchSubs();
-    } else {
-      setSubjects([]);
-    }
-  }, [formData.semester_id]);
 
   const handleSchedule = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -210,7 +193,14 @@ const ExamScheduling = React.forwardRef<HTMLDivElement>((_, ref) => {
           <h2 className="text-2xl font-bold tracking-tight">Exam Scheduling</h2>
           <p className="text-muted-foreground">Manage and schedule examinations across batches and branches.</p>
         </div>
-        <Button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2">
+        <Button 
+          onClick={() => {
+            const next = !showForm;
+            setShowForm(next);
+            if (next) loadFilters();
+          }} 
+          className="flex items-center gap-2"
+        >
           {showForm ? <RefreshCcw className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
           {showForm ? "Cancel" : "Schedule New Exam"}
         </Button>
