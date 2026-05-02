@@ -31,6 +31,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/context/ThemeContext";
 import DashboardCard from '@/components/common/DashboardCard';
 import { showSuccessAlert, showErrorAlert } from '../../utils/sweetalert';
+import { 
+  Skeleton, 
+  SkeletonStatsGrid, 
+  SkeletonTable, 
+  SkeletonList, 
+  SkeletonPageHeader,
+  SkeletonCard
+} from "@/components/ui/skeleton";
+
 import {
   getFeesManagerFilters,
   getFeesManagerSemesters,
@@ -533,14 +542,13 @@ const InvoiceManagement: React.FC = () => {
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      {Array.from({ length: 7 }).map((_, j) => (
-                        <TableCell key={j} className="py-5"><div className="h-4 bg-muted animate-pulse rounded mx-2"></div></TableCell>
-                      ))}
-                    </TableRow>
-                  ))
+                  <TableRow>
+                    <TableCell colSpan={7} className="p-0">
+                      <SkeletonTable rows={10} cols={7} />
+                    </TableCell>
+                  </TableRow>
                 ) : invoices.length === 0 ? (
+
                   <TableRow>
                     <TableCell colSpan={7} className="h-80 text-center">
                       {!(selectedFilters.batchId && selectedFilters.branchId && selectedFilters.semesterId && selectedFilters.sectionId && selectedFilters.admissionMode) && selectedFilters.search.length < 3 ? (

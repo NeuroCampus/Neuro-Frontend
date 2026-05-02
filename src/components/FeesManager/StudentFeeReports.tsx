@@ -42,6 +42,15 @@ import {
   sendFeeReminder
 } from '../../utils/fees_manager_api';
 import { showSuccessAlert, showErrorAlert } from '../../utils/sweetalert';
+import { 
+  Skeleton, 
+  SkeletonStatsGrid, 
+  SkeletonTable, 
+  SkeletonList, 
+  SkeletonPageHeader,
+  SkeletonCard
+} from "@/components/ui/skeleton";
+
 
 const StudentFeeReports: React.FC = () => {
   // State for individual student search
@@ -297,10 +306,25 @@ const StudentFeeReports: React.FC = () => {
                     disabled={searchLoading}
                     className="w-full"
                   >
-                    {searchLoading ? 'Searching...' : 'Search'}
+                    {searchLoading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        Searching...
+                      </div>
+                    ) : 'Search'}
                   </Button>
                 </div>
               </div>
+
+              {searchLoading && (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  <SkeletonCard className="h-32" />
+                  <SkeletonStatsGrid items={4} />
+                  <Skeleton className="h-24 w-full rounded-xl" />
+                  <SkeletonTable rows={5} cols={6} />
+                </div>
+              )}
+
 
               {/* Search Error Handled by SweetAlert */}
             </CardContent>
@@ -731,9 +755,20 @@ const StudentFeeReports: React.FC = () => {
             </div>
           )}
 
-          {/* Bulk Reports Table */}
-          {bulkReports.length > 0 && (
+          {bulkLoading && (
             <div className="space-y-4">
+              <SkeletonStatsGrid items={4} />
+              <div className="space-y-4">
+                <Skeleton className="h-12 w-full rounded-xl" />
+                <SkeletonTable rows={10} cols={10} />
+              </div>
+            </div>
+          )}
+
+          {/* Bulk Reports Table */}
+          {bulkReports.length > 0 && !bulkLoading && (
+            <div className="space-y-4">
+
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">

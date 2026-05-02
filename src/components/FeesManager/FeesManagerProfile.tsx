@@ -13,6 +13,16 @@ import {
   updateFeesManagerProfile, 
   changeFeesManagerPassword 
 } from "../../utils/fees_manager_api";
+import { 
+  Skeleton, 
+  SkeletonStatsGrid, 
+  SkeletonTable, 
+  SkeletonList, 
+  SkeletonPageHeader,
+  SkeletonCard,
+  SkeletonForm
+} from "@/components/ui/skeleton";
+
 
 const FeesManagerProfile: React.FC = () => {
   const { theme } = useTheme();
@@ -105,7 +115,35 @@ const FeesManagerProfile: React.FC = () => {
     }
   };
 
-  if (loading) return <div className={`text-center py-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-start">
+        <Card className="w-full">
+          <CardHeader className="px-6 py-4 border-b">
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+          </CardHeader>
+          <CardContent className="px-6 pb-6 pt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-8">
+              <div className="col-span-1 flex flex-col items-center space-y-4">
+                <Skeleton className="h-24 w-24 rounded-full" />
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-32 w-full rounded-lg" />
+              </div>
+              <div className="col-span-1 sm:col-span-2 lg:col-span-3 space-y-6">
+                <Skeleton className="h-10 w-24" />
+                <SkeletonForm fields={6} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
 
   return (
     <div className="flex justify-center items-start">

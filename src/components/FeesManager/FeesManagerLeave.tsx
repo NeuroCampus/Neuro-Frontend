@@ -11,6 +11,15 @@ import { format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { useTheme } from '@/context/ThemeContext';
+import { 
+  Skeleton, 
+  SkeletonStatsGrid, 
+  SkeletonTable, 
+  SkeletonList, 
+  SkeletonPageHeader,
+  SkeletonCard
+} from "@/components/ui/skeleton";
+
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { Circle, CalendarCheck2, CalendarX2 } from 'lucide-react';
@@ -279,8 +288,9 @@ const FeesManagerLeave = () => {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Loading leave requests...</div>
+              <SkeletonList count={5} />
             ) : leaveList.length === 0 ? (
+
               <div className={`text-sm ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>No leave requests found.</div>
             ) : (
               <div className="space-y-4">

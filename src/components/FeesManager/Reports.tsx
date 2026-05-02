@@ -31,6 +31,15 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getStaffAttendanceAudit, getStaffDetailedAttendance, STAFF_ROLES } from '../../utils/fees_manager_api';
 import { useTheme } from '@/context/ThemeContext';
+import { 
+  Skeleton, 
+  SkeletonStatsGrid, 
+  SkeletonTable, 
+  SkeletonList, 
+  SkeletonPageHeader,
+  SkeletonCard
+} from "@/components/ui/skeleton";
+
 
 interface AttendanceSummary {
   id: number;
@@ -301,18 +310,13 @@ const Reports: React.FC = () => {
               </TableHeader>
               <TableBody>
                 {loading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell colSpan={8} className="py-8 text-center">
-                        <div className="flex items-center justify-center gap-2 opacity-40">
-                          <div className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]"></div>
-                          <div className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]"></div>
-                          <div className="w-2 h-2 rounded-full bg-primary animate-bounce"></div>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  <TableRow>
+                    <TableCell colSpan={8} className="p-0">
+                      <SkeletonTable rows={10} cols={8} />
+                    </TableCell>
+                  </TableRow>
                 ) : attendanceData.length > 0 ? (
+
                   attendanceData.map((item) => (
                     <TableRow key={item.id} className="hover:bg-primary/5 transition-all duration-200 border-b border-border/50">
                       <TableCell className="py-5 px-6 font-semibold text-foreground">{item.name}</TableCell>
@@ -455,15 +459,15 @@ const Reports: React.FC = () => {
 
           <div className="p-6 space-y-6">
             {loadingDetails ? (
-              <div className="h-72 flex flex-col items-center justify-center gap-4 opacity-50">
-                <div className="flex gap-2">
-                  <div className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]"></div>
-                  <div className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]"></div>
-                  <div className="w-2 h-2 rounded-full bg-primary animate-bounce"></div>
+              <div className="space-y-6">
+                <Skeleton className="h-[350px] w-full rounded-2xl" />
+                <div className="grid grid-cols-2 gap-3">
+                  <Skeleton className="h-20 rounded-2xl" />
+                  <Skeleton className="h-20 rounded-2xl" />
                 </div>
-                <p className="text-[11px] font-semibold uppercase tracking-widest">Loading Records...</p>
               </div>
             ) : (
+
               <>
                 <div className="rounded-2xl border border-border/50 p-4 bg-muted/5 max-h-[350px] overflow-y-auto custom-scrollbar">
                   <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">

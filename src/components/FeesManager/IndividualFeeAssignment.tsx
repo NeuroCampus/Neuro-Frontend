@@ -28,6 +28,15 @@ import {
   deleteFeeAssignment
 } from "../../utils/fees_manager_api";
 import { showConfirmAlert, showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
+import { 
+  Skeleton, 
+  SkeletonStatsGrid, 
+  SkeletonTable, 
+  SkeletonList, 
+  SkeletonPageHeader,
+  SkeletonCard
+} from "@/components/ui/skeleton";
+
 
 interface Assignment {
   id: number;
@@ -326,7 +335,7 @@ const IndividualFeeAssignment: React.FC = () => {
                 <SelectTrigger className="bg-background">
                   <SelectValue placeholder="Section" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[200px]">
                   {sections.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -399,13 +408,18 @@ const IndividualFeeAssignment: React.FC = () => {
                   ))}
                 </div>
               </div>
-            ) : assignments.length === 0 && !loading ? (
+            ) : loading ? (
+              <div className="overflow-x-auto">
+                <SkeletonTable rows={10} cols={6} />
+              </div>
+            ) : assignments.length === 0 ? (
               <div className="h-[400px] flex flex-col items-center justify-center text-muted-foreground italic px-6 text-center bg-muted/5">
                 <Users className="h-12 w-12 mb-4 opacity-10" />
                 <h3 className="text-lg font-semibold text-foreground not-italic mb-1">No Assignments Found</h3>
                 <p className="text-sm text-muted-foreground">Try adjusting your filters to find what you're looking for.</p>
               </div>
             ) : (
+
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader className="bg-muted/30">

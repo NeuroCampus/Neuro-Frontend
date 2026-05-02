@@ -37,6 +37,15 @@ import {
   bulkAssignFees,
   getFeeTemplates
 } from "../../utils/fees_manager_api";
+import { 
+  Skeleton, 
+  SkeletonStatsGrid, 
+  SkeletonTable, 
+  SkeletonList, 
+  SkeletonPageHeader,
+  SkeletonCard
+} from "@/components/ui/skeleton";
+
 
 interface Student {
   id: number;
@@ -386,7 +395,7 @@ const FeeAssignments: React.FC = () => {
                 <SelectTrigger className="bg-background">
                   <SelectValue placeholder="Section" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[200px]">
                   {sections.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -459,13 +468,18 @@ const FeeAssignments: React.FC = () => {
                   ))}
                 </div>
               </div>
-            ) : students.length === 0 && !loading ? (
+            ) : loading ? (
+              <div className="overflow-x-auto">
+                <SkeletonTable rows={10} cols={6} />
+              </div>
+            ) : students.length === 0 ? (
               <div className="h-[450px] flex flex-col items-center justify-center text-muted-foreground italic px-6 text-center bg-muted/5">
                 <Users className="h-16 w-16 mb-4 opacity-10" />
                 <h3 className="text-lg font-semibold text-foreground not-italic mb-1">No Students Found</h3>
                 <p className="text-sm text-muted-foreground">Try adjusting your filters to find what you're looking for.</p>
               </div>
             ) : (
+
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader className="bg-muted/30">

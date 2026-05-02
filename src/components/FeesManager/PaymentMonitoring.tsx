@@ -39,6 +39,15 @@ import {
   downloadReceipt as downloadReceiptApi,
   bulkSendReminders
 } from "../../utils/fees_manager_api";
+import { 
+  Skeleton, 
+  SkeletonStatsGrid, 
+  SkeletonTable, 
+  SkeletonList, 
+  SkeletonPageHeader,
+  SkeletonCard
+} from "@/components/ui/skeleton";
+
 
 interface Payment {
   id: number;
@@ -350,12 +359,18 @@ const PaymentMonitoring: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2">Loading payment data...</span>
+      <div className="space-y-8 p-6">
+        <SkeletonPageHeader />
+        <SkeletonStatsGrid items={4} />
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-full rounded-xl" />
+          <SkeletonTable rows={10} cols={6} />
+        </div>
       </div>
     );
   }
+
+
 
   return (
     <div >
@@ -469,7 +484,7 @@ const PaymentMonitoring: React.FC = () => {
                   className={`h-11 px-6 shadow-lg rounded-xl transition-all active:scale-95 flex items-center gap-2 font-semibold ${
                     hasNotified 
                       ? "bg-green-600 hover:bg-green-700 text-white shadow-green-200/50" 
-                      : "bg-orange-600 hover:bg-orange-700 text-white shadow-orange-200/50"
+                      : "bg-primary hover:bg-primary/90 text-white shadow-primary/50"
                   }`}
                 >
                   {notifying ? (
@@ -666,11 +681,24 @@ const PaymentMonitoring: React.FC = () => {
 
           <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
             {isDetailLoading ? (
-              <div className="h-64 flex flex-col items-center justify-center space-y-4">
-                <RefreshCw className="h-8 w-8 text-primary animate-spin" />
-                <p className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground">Fetching Details...</p>
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <SkeletonCard className="h-32" />
+                  <SkeletonCard className="h-32" />
+                </div>
+                <Skeleton className="h-24 w-full rounded-xl" />
+                <div className="space-y-4">
+                  <Skeleton className="h-4 w-1/4" />
+                  <Skeleton className="h-32 w-full rounded-xl" />
+                </div>
+                <div className="flex gap-3">
+                  <Skeleton className="h-11 flex-1 rounded-xl" />
+                  <Skeleton className="h-11 flex-1 rounded-xl" />
+                  <Skeleton className="h-11 flex-1 rounded-xl" />
+                </div>
               </div>
             ) : selectedPayment && (
+
               <>
                 {/* Info Grid - Responsive */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

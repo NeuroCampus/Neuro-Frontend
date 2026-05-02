@@ -30,6 +30,16 @@ import {
 import {
   getFeesManagerDashboard
 } from "../../utils/fees_manager_api";
+import { 
+  Skeleton, 
+  SkeletonStatsGrid, 
+  SkeletonTable, 
+  SkeletonList, 
+  SkeletonPageHeader,
+  SkeletonCard,
+  SkeletonChart
+} from "@/components/ui/skeleton";
+
 
 // Sub-components
 import FeeTemplates from './FeeTemplates';
@@ -373,8 +383,30 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
       pageTitle="Fees Manager Dashboard"
     >
       <div key={activePage}>
-        {renderContent()}
+        {loading && activePage === 'dashboard' ? (
+          <div className="space-y-8 pb-10">
+            <SkeletonStatsGrid items={4} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <SkeletonChart className="h-[400px]" />
+              </div>
+              <div className="space-y-6">
+                <SkeletonCard className="h-[200px]" />
+                <SkeletonCard className="h-[200px]" />
+              </div>
+            </div>
+            <SkeletonTable rows={5} cols={5} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <SkeletonCard key={i} className="h-24" />
+              ))}
+            </div>
+          </div>
+        ) : (
+          renderContent()
+        )}
       </div>
+
     </DashboardLayout>
   );
 };

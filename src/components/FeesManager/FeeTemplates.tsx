@@ -35,6 +35,15 @@ import {
   updateFeeTemplate,
   deleteFeeTemplate
 } from "../../utils/fees_manager_api";
+import { 
+  Skeleton, 
+  SkeletonStatsGrid, 
+  SkeletonTable, 
+  SkeletonList, 
+  SkeletonPageHeader,
+  SkeletonCard
+} from "@/components/ui/skeleton";
+
 
 interface FeeComponent {
   id: number;
@@ -384,12 +393,23 @@ const FeeTemplates: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2">Loading fee templates...</span>
+      <div className="mx-auto space-y-6">
+        <Card>
+          <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+            <Skeleton className="h-10 w-32" />
+          </CardHeader>
+          <CardContent>
+            <SkeletonTable rows={10} cols={7} />
+          </CardContent>
+        </Card>
       </div>
     );
   }
+
 
   return (
     <div className="mx-auto">

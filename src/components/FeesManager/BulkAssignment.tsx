@@ -33,6 +33,15 @@ import {
   bulkAssignFees
 } from "../../utils/fees_manager_api";
 import { showConfirmAlert, showSuccessAlert, showErrorAlert, showInfoAlert } from "../../utils/sweetalert";
+import { 
+  Skeleton, 
+  SkeletonStatsGrid, 
+  SkeletonTable, 
+  SkeletonList, 
+  SkeletonPageHeader,
+  SkeletonCard
+} from "@/components/ui/skeleton";
+
 
 interface FilterData {
   batches: { id: number; name: string }[];
@@ -331,7 +340,7 @@ const BulkAssignment: React.FC = () => {
                 <SelectTrigger className="bg-background">
                   <SelectValue placeholder="Section" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[200px]">
                   {sections.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -395,11 +404,12 @@ const BulkAssignment: React.FC = () => {
               <div className="max-w-4xl mx-auto space-y-8">
                 <div className="flex flex-col items-center p-10 bg-primary/5 rounded-2xl border border-primary/10 text-center shadow-inner">
                   {fetchingStats ? (
-                    <div className="animate-pulse space-y-4">
-                      <div className="h-16 w-32 bg-primary/20 rounded-xl mx-auto"></div>
-                      <div className="h-4 w-64 bg-muted rounded mx-auto"></div>
+                    <div className="space-y-4">
+                      <Skeleton className="h-16 w-32 rounded-xl mx-auto" />
+                      <Skeleton className="h-4 w-64 rounded mx-auto" />
                     </div>
                   ) : (
+
                     <motion.div
                       initial={{ scale: 0.95, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
