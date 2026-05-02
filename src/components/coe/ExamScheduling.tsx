@@ -44,7 +44,7 @@ const EXAM_PERIODS = [
   { value: 'apr_may', label: 'April/May' },
 ];
 
-const ExamScheduling: React.FC = () => {
+const ExamScheduling = React.forwardRef<HTMLDivElement>((_, ref) => {
   const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [exams, setExams] = useState<any[]>([]);
@@ -204,7 +204,7 @@ const ExamScheduling: React.FC = () => {
   };
 
   return (
-    <div className={`space-y-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div ref={ref} className={`space-y-6 ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <div className="flex justify-between items-center px-1">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Exam Scheduling</h2>
@@ -430,6 +430,8 @@ const ExamScheduling: React.FC = () => {
       </Card>
     </div>
   );
-};
+});
+
+ExamScheduling.displayName = 'ExamScheduling';
 
 export default ExamScheduling;

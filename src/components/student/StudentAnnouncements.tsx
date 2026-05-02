@@ -105,6 +105,8 @@ const StudentAnnouncements = () => {
       setAnnouncements((prev) =>
         prev.map((a) => (a.id === announcementId ? { ...a, is_read: true } : a))
       );
+      // Trigger global unread count refresh
+      window.dispatchEvent(new CustomEvent('refresh-unread-count'));
     }
   };
 

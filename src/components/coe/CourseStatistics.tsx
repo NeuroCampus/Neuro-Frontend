@@ -10,7 +10,7 @@ import autoTable from 'jspdf-autotable';
 import { getCourseApplicationStats, getFilterOptions, getSemesters, FilterOptions } from "../../utils/coe_api";
 import "./CourseStatistics.css";
 
-const CourseStatistics = () => {
+const CourseStatistics = React.forwardRef<HTMLDivElement>((_, ref) => {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState<number>(1);
@@ -144,7 +144,7 @@ const CourseStatistics = () => {
   );
 
   return (
-    <div className="course-statistics-main space-y-6">
+    <div ref={ref} className="course-statistics-main space-y-6">
       <div className="course-statistics-header flex justify-between items-center">
         <h1 className="text-3xl font-bold">Course Statistics</h1>
       </div>
@@ -347,6 +347,8 @@ const CourseStatistics = () => {
       )}
     </div>
   );
-};
+});
+
+CourseStatistics.displayName = 'CourseStatistics';
 
 export default CourseStatistics;

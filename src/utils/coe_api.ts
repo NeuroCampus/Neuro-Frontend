@@ -283,12 +283,15 @@ export const getFilterOptions = async (): Promise<{
     }
 
     const result = await response.json();
-
     if (result.success) {
-      return result.data;
-    } else {
-      throw new Error(result.message || 'Failed to fetch filter options');
+      const data = result.data;
+      return {
+        batches: Array.isArray(data?.batches) ? data.batches : [],
+        branches: Array.isArray(data?.branches) ? data.branches : []
+      };
     }
+
+    throw new Error(result.message || 'Failed to fetch filter options');
   } catch (error) {
     console.error('Error fetching filter options:', error);
     return {
@@ -315,7 +318,7 @@ export const getSemesters = async (branchId: number): Promise<Semester[]> => {
     const result = await response.json();
 
     if (result.success) {
-      return result.data.semesters;
+      return Array.isArray(result.data?.semesters) ? result.data.semesters : [];
     } else {
       throw new Error(result.message || 'Failed to fetch semesters');
     }
