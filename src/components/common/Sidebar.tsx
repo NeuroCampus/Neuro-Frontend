@@ -413,8 +413,8 @@ const Sidebar = ({ role, setPage, activePage, logout, collapsed, toggleCollapse 
                 transition={{ duration: 0.2 }}
                 className="flex flex-col min-w-0"
               >
-                <h1 className={`font-bold text-lg whitespace-nowrap leading-tight ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>NEURO CAMPUS</h1>
-                <p className={`text-[10px] uppercase tracking-wider font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>by Stalight</p>
+                <h3 className={`font-bold text-lg whitespace-nowrap leading-tight ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Campus ERP</h3>
+                <p className={`text-[10px] uppercase tracking-wider font-medium ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>By Stalight</p>
               </motion.div>
             )}
           </AnimatePresence>

@@ -123,7 +123,7 @@ const Organizations = () => {
     if (!org.is_active) {
       return <Badge variant="destructive">Suspended</Badge>;
     }
-    
+
     if (org.plan_type === 'basic' && org.trial_ends_at) {
       const isExpired = new Date(org.trial_ends_at) < new Date();
       if (isExpired) {
@@ -161,7 +161,7 @@ const Organizations = () => {
   };
 
   const getPlanBadge = (plan: string) => {
-    switch(plan) {
+    switch (plan) {
       case 'advance': return <Badge variant="outline" className="border-purple-500 text-purple-600">Advance</Badge>;
       case 'pro': return <Badge variant="outline" className="border-blue-500 text-blue-600">Pro</Badge>;
       default: return <Badge variant="outline" className="border-gray-400 text-gray-600">Basic</Badge>;
@@ -175,7 +175,7 @@ const Organizations = () => {
           <h1 className={`text-3xl font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Organizations</h1>
           <p className="text-muted-foreground mt-1">Manage tenant institutions across the platform.</p>
         </div>
-        <Button className="bg-primary shadow-sm" onClick={() => navigate('/neurocampus')}>
+        <Button className="bg-primary shadow-sm" onClick={() => navigate('/stalightcampus')}>
           <Building2 className="w-4 h-4 mr-2" /> Add New Organization
         </Button>
       </div>
@@ -183,9 +183,9 @@ const Organizations = () => {
       <div className="flex items-center w-full max-w-sm space-x-2">
         <div className="relative w-full">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input 
-            type="search" 
-            placeholder="Search organizations..." 
+          <Input
+            type="search"
+            placeholder="Search organizations..."
             className="pl-8 bg-background shadow-sm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -245,7 +245,7 @@ const Organizations = () => {
                         }}>
                           <Edit className="w-4 h-4 mr-2 text-blue-500" /> Change Plan
                         </DropdownMenuItem>
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           className="text-red-600 focus:text-red-600"
                           onClick={() => setDeleteOrg(org)}
                         >
@@ -268,13 +268,13 @@ const Organizations = () => {
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the organization
-              <span className="font-bold text-foreground"> {deleteOrg?.name} </span> 
+              <span className="font-bold text-foreground"> {deleteOrg?.name} </span>
               and remove all of its associated data, users, and records from our servers.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={actionLoading}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault();
                 handleDelete();

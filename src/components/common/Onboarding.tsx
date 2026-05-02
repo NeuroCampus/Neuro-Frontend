@@ -33,7 +33,7 @@ const Onboarding = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Phone validation
     const trimmedPhone = formData.phone.trim();
     if (trimmedPhone && !/^\d{10}$/.test(trimmedPhone)) {
@@ -45,7 +45,7 @@ const Onboarding = () => {
       });
       return;
     }
-    
+
     setPhoneError("");
     setLoading(true);
 
@@ -131,7 +131,7 @@ const Onboarding = () => {
         transition={{ duration: 0.6 }}
       >
         <button
-          onClick={() => navigate("/neurocampus")}
+          onClick={() => navigate("/stalightcampus")}
           className="absolute top-8 left-8 text-gray-400 hover:text-primary transition-colors flex items-center gap-2 text-sm font-medium"
         >
           <ChevronLeft size={16} />

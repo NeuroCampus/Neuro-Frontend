@@ -21,9 +21,9 @@ const SuperAdminLogin = ({ setIsAuthenticated }: Props) => {
   const handleLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!username || !password) {
-        return;
+      return;
     }
-    
+
     setIsLoading(true);
 
     try {
@@ -39,9 +39,9 @@ const SuperAdminLogin = ({ setIsAuthenticated }: Props) => {
         localStorage.setItem("superadmin_token", data.access);
         localStorage.setItem("superadmin_refresh", data.refresh);
         localStorage.setItem("superadmin_role", data.role);
-        
+
         setIsAuthenticated(true);
-        navigate("/neurocampus/admin/dashboard");
+        navigate("/stalightcampus/admin/dashboard");
       } else {
         toast({
           variant: "destructive",
@@ -63,7 +63,7 @@ const SuperAdminLogin = ({ setIsAuthenticated }: Props) => {
   return (
     <div className="min-h-screen flex flex-col md:flex-row font-sans">
       {/* Right Section - Welcome & Illustration */}
-      <motion.div 
+      <motion.div
         className="flex-1 bg-gradient-to-br from-red-50 to-rose-100 flex items-center justify-center p-8 relative overflow-hidden"
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
@@ -121,14 +121,14 @@ const SuperAdminLogin = ({ setIsAuthenticated }: Props) => {
       </motion.div>
 
       {/* Left Section - Login Form */}
-      <motion.div 
+      <motion.div
         className="flex-1 bg-white flex items-center justify-center p-8"
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
       >
         <div className="w-full max-w-md">
-          <motion.div 
+          <motion.div
             className="text-center mb-8"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -138,7 +138,7 @@ const SuperAdminLogin = ({ setIsAuthenticated }: Props) => {
             <p className="text-gray-600 text-sm">Enter your system credentials</p>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             className="space-y-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

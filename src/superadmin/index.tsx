@@ -13,7 +13,7 @@ const SuperAdminIndex = () => {
     const checkAuth = () => {
       const token = localStorage.getItem("superadmin_token");
       const role = localStorage.getItem("superadmin_role");
-      
+
       if (token && role === "superadmin") {
         setIsAuthenticated(true);
         startTokenRefresh(); // We can use the same token refresh logic if it works for superadmin, otherwise maybe not needed
@@ -33,21 +33,21 @@ const SuperAdminIndex = () => {
 
   return (
     <Routes>
-      <Route 
-        path="/" 
+      <Route
+        path="/"
         element={
-          isAuthenticated ? 
-          <Navigate to="/neurocampus/admin/dashboard" replace /> : 
-          <SuperAdminLogin setIsAuthenticated={setIsAuthenticated} />
-        } 
+          isAuthenticated ?
+            <Navigate to="/stalightcampus/admin/dashboard" replace /> :
+            <SuperAdminLogin setIsAuthenticated={setIsAuthenticated} />
+        }
       />
-      <Route 
-        path="/*" 
+      <Route
+        path="/*"
         element={
-          isAuthenticated ? 
-          <SuperAdminDashboard setIsAuthenticated={setIsAuthenticated} /> : 
-          <Navigate to="/neurocampus/admin" replace />
-        } 
+          isAuthenticated ?
+            <SuperAdminDashboard setIsAuthenticated={setIsAuthenticated} /> :
+            <Navigate to="/stalightcampus/admin" replace />
+        }
       />
     </Routes>
   );
