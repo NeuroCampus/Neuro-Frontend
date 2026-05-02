@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -57,11 +56,11 @@ const StudentFeeReports: React.FC = () => {
   const [sections, setSections] = useState<Section[]>([]);
   const [batches, setBatches] = useState<{id: number, name: string}[]>([]);
   const [admissionModes, setAdmissionModes] = useState<string[]>([]);
-  const [selectedBatch, setSelectedBatch] = useState<string>('all');
-  const [selectedBranch, setSelectedBranch] = useState<string>('all');
-  const [selectedSemester, setSelectedSemester] = useState<string>('all');
-  const [selectedSection, setSelectedSection] = useState<string>('all');
-  const [selectedAdmissionMode, setSelectedAdmissionMode] = useState<string>('all');
+  const [selectedBatch, setSelectedBatch] = useState<string>('');
+  const [selectedBranch, setSelectedBranch] = useState<string>('');
+  const [selectedSemester, setSelectedSemester] = useState<string>('');
+  const [selectedSection, setSelectedSection] = useState<string>('');
+  const [selectedAdmissionMode, setSelectedAdmissionMode] = useState<string>('');
   const [bulkReports, setBulkReports] = useState<StudentFeeSummary[]>([]);
   const [cohortStats, setCohortStats] = useState<any>(null);
   const [bulkLoading, setBulkLoading] = useState(false);
@@ -76,7 +75,6 @@ const StudentFeeReports: React.FC = () => {
 
   // UI state
   const [activeTab, setActiveTab] = useState('individual');
-  const [showStudentDetails, setShowStudentDetails] = useState(false);
   const [sendingReminder, setSendingReminder] = useState(false);
   const [reminderMessage, setReminderMessage] = useState('');
 
@@ -98,15 +96,15 @@ const StudentFeeReports: React.FC = () => {
 
   // Load semesters when branch changes
   useEffect(() => {
-    if (selectedBranch && selectedBranch !== 'all') {
+    if (selectedBranch && selectedBranch !== '') {
       loadSemesters(selectedBranch);
-      setSelectedSemester('all');
-      setSelectedSection('all');
+      setSelectedSemester('');
+      setSelectedSection('');
       setSemesters([]);
       setSections([]);
-    } else if (selectedBranch === 'all') {
-      setSelectedSemester('all');
-      setSelectedSection('all');
+    } else if (selectedBranch === '') {
+      setSelectedSemester('');
+      setSelectedSection('');
       setSemesters([]);
       setSections([]);
     }
@@ -114,12 +112,12 @@ const StudentFeeReports: React.FC = () => {
 
   // Load sections when semester changes
   useEffect(() => {
-    if (selectedBranch && selectedBranch !== 'all' && selectedSemester && selectedSemester !== 'all') {
+    if (selectedBranch && selectedBranch !== '' && selectedSemester && selectedSemester !== '') {
       loadSections(selectedBranch, selectedSemester);
-      setSelectedSection('all');
+      setSelectedSection('');
       setSections([]);
-    } else if (selectedSemester === 'all') {
-      setSelectedSection('all');
+    } else if (selectedSemester === '') {
+      setSelectedSection('');
       setSections([]);
     }
   }, [selectedSemester]);
@@ -142,10 +140,11 @@ const StudentFeeReports: React.FC = () => {
   // Automatic data loading when filters are selected
   useEffect(() => {
     const isAcademicHierarchySelected = 
-      selectedBatch !== 'all' && 
-      selectedBranch !== 'all' && 
-      selectedSemester !== 'all' && 
-      selectedSection !== 'all';
+      selectedBatch !== '' && 
+      selectedBranch !== '' && 
+      selectedSemester !== '' && 
+      selectedSection !== '' &&
+      selectedAdmissionMode !== '';
 
     if (isAcademicHierarchySelected) {
       handleBulkSearch(1);
@@ -175,7 +174,6 @@ const StudentFeeReports: React.FC = () => {
 
     if (response.success) {
       setStudentReport(response.data);
-      setShowStudentDetails(true);
       if (!usn) {
         // Only update searchTerm if it wasn't passed as a parameter
         setSearchTerm(searchTermStr.trim());
@@ -200,11 +198,11 @@ const StudentFeeReports: React.FC = () => {
     setBulkLoading(true);
     setBulkReports([]);
 
-    const batchId = selectedBatch === 'all' ? undefined : selectedBatch;
-    const branchId = selectedBranch === 'all' ? undefined : selectedBranch;
-    const semesterId = selectedSemester === 'all' ? undefined : selectedSemester;
-    const sectionId = selectedSection === 'all' ? undefined : selectedSection;
-    const admissionMode = selectedAdmissionMode === 'all' ? undefined : selectedAdmissionMode;
+    const batchId = selectedBatch === '' || selectedBatch === 'all' ? undefined : selectedBatch;
+    const branchId = selectedBranch === '' || selectedBranch === 'all' ? undefined : selectedBranch;
+    const semesterId = selectedSemester === '' || selectedSemester === 'all' ? undefined : selectedSemester;
+    const sectionId = selectedSection === '' || selectedSection === 'all' ? undefined : selectedSection;
+    const admissionMode = selectedAdmissionMode === '' || selectedAdmissionMode === 'all' ? undefined : selectedAdmissionMode;
 
     const response = await getStudentsFeeReports(batchId, branchId, semesterId, sectionId, admissionMode, page);
 
@@ -316,264 +314,292 @@ const StudentFeeReports: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Student Details Dialog */}
-          <Dialog open={showStudentDetails} onOpenChange={setShowStudentDetails}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Student Fee Report</DialogTitle>
-              </DialogHeader>
+          {/* Student Details View */}
+          {studentReport && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500 pb-10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <FileText className="w-5 h-5 text-primary" />
+                  </div>
+                  <h2 className="text-xl font-bold tracking-tight">Student Fee Report</h2>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setStudentReport(null)}
+                  className="rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                >
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Clear Result
+                </Button>
+              </div>
 
-              {studentReport && (
-                <div className="space-y-6">
-                  {/* Student Info */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <User className="w-5 h-5" />
-                        Student Information
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div>
-                          <Label className="text-sm font-medium">Name</Label>
-                          <p className="text-sm">{studentReport.student.name}</p>
-                        </div>
-                        <div>
-                          <Label className="text-sm font-medium">USN</Label>
-                          <p className="text-sm">{studentReport.student.usn}</p>
-                        </div>
-                        <div>
-                          <Label className="text-sm font-medium">Branch</Label>
-                          <p className="text-sm">{studentReport.student.branch}</p>
-                        </div>
-                        <div>
-                          <Label className="text-sm font-medium">Semester</Label>
-                          <p className="text-sm">{studentReport.student.semester}</p>
+              <div className="grid grid-cols-1 gap-6">
+                {/* Student Info */}
+                <Card className="overflow-hidden border-none shadow-sm bg-gradient-to-br from-background to-muted/30">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      Student Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Full Name</Label>
+                        <p className="font-semibold text-lg">{studentReport.student.name}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">USN / ID</Label>
+                        <p className="font-mono font-bold text-primary">{studentReport.student.usn}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Branch</Label>
+                        <p className="font-medium">{studentReport.student.branch}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Current Semester</Label>
+                        <Badge variant="secondary" className="px-3 py-1">Semester {studentReport.student.semester}</Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Fee Summary Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <Card className="border-l-4 border-l-blue-500 shadow-sm overflow-hidden">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-medium text-muted-foreground">Total Fee</p>
+                        <div className="p-2 bg-blue-50 rounded-full">
+                          <IndianRupee className="w-4 h-4 text-blue-600" />
                         </div>
                       </div>
+                      <p className="text-2xl font-bold text-blue-600">{formatCurrency(studentReport.fee_summary.total_fee)}</p>
                     </CardContent>
                   </Card>
 
-                  {/* Fee Summary */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <IndianRupee className="w-5 h-5" />
-                        Fee Summary
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="text-center p-4 bg-blue-50 rounded-lg">
-                          <p className="text-2xl font-bold text-blue-600">{formatCurrency(studentReport.fee_summary.total_fee)}</p>
-                          <p className="text-sm text-muted-foreground">Total Fee</p>
-                        </div>
-                        <div className="text-center p-4 bg-green-50 rounded-lg">
-                          <p className="text-2xl font-bold text-green-600">{formatCurrency(studentReport.fee_summary.total_paid)}</p>
-                          <p className="text-sm text-muted-foreground">Total Paid</p>
-                        </div>
-                        <div className="text-center p-4 bg-red-50 rounded-lg">
-                          <p className="text-2xl font-bold text-red-600">{formatCurrency(studentReport.fee_summary.total_pending)}</p>
-                          <p className="text-sm text-muted-foreground">Pending Amount</p>
-                        </div>
-                        <div className="text-center p-4 bg-purple-50 rounded-lg">
-                          <p className="text-2xl font-bold text-purple-600">{formatCurrency(studentReport.fee_summary.custom_fee_amount)}</p>
-                          <p className="text-sm text-muted-foreground">Custom Fee</p>
+                  <Card className="border-l-4 border-l-green-500 shadow-sm overflow-hidden">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-medium text-muted-foreground">Total Paid</p>
+                        <div className="p-2 bg-green-50 rounded-full">
+                          <CheckCircle className="w-4 h-4 text-green-600" />
                         </div>
                       </div>
-
-                      {/* Send Notification Button - Only show if there's pending amount */}
-                      {studentReport.fee_summary.total_pending > 0 && (
-                        <div className="mt-4 flex justify-center">
-                          <Button
-                            onClick={() => handleSendReminder(studentReport.student.id, studentReport.student.name)}
-                            disabled={sendingReminder}
-                            className="bg-orange-600 hover:bg-orange-700"
-                          >
-                            {sendingReminder ? (
-                              <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                Sending...
-                              </>
-                            ) : (
-                              <>
-                                <AlertCircle className="w-4 h-4 mr-2" />
-                                Send Fee Reminder
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      )}
-
-                      {/* Reminder Message */}
-                      {reminderMessage && (
-                        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                          <p className="text-sm text-green-800">{reminderMessage}</p>
-                        </div>
-                      )}
+                      <p className="text-2xl font-bold text-green-600">{formatCurrency(studentReport.fee_summary.total_paid)}</p>
                     </CardContent>
                   </Card>
 
-                  {/* Semester-wise Breakdown */}
-                  {studentReport.semester_wise_breakdown && studentReport.semester_wise_breakdown.length > 0 && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Calendar className="w-5 h-5" />
-                          Semester-wise Fee Breakdown
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          {studentReport.semester_wise_breakdown.map((semester, index) => (
-                            <div key={index} className="border rounded-lg p-4">
-                              <div className="flex justify-between items-center mb-3">
-                                <h4 className="font-medium text-lg">{semester.semester_name}</h4>
-                                <div className="text-right">
-                                  <p className="text-sm text-muted-foreground">Total Fee: {formatCurrency(semester.total_fee)}</p>
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                                <div className="text-center p-3 bg-blue-50 rounded-lg">
-                                  <p className="text-lg font-bold text-blue-600">{formatCurrency(semester.total_fee)}</p>
-                                  <p className="text-xs text-muted-foreground">Total Fee</p>
-                                </div>
-                                <div className="text-center p-3 bg-green-50 rounded-lg">
-                                  <p className="text-lg font-bold text-green-600">{formatCurrency(semester.total_paid)}</p>
-                                  <p className="text-xs text-muted-foreground">Paid</p>
-                                </div>
-                                <div className="text-center p-3 bg-red-50 rounded-lg">
-                                  <p className="text-lg font-bold text-red-600">{formatCurrency(semester.total_pending)}</p>
-                                  <p className="text-xs text-muted-foreground">Pending</p>
-                                </div>
-                                <div className="text-center p-3 bg-gray-50 rounded-lg">
-                                  <p className="text-lg font-bold text-gray-600">{semester.invoices.length}</p>
-                                  <p className="text-xs text-muted-foreground">Invoices</p>
-                                </div>
-                              </div>
-                              
-                              {/* Invoices for this semester */}
-                              {semester.invoices.length > 0 && (
-                                <div className="mt-4">
-                                  <h5 className="font-medium mb-2">Invoices:</h5>
-                                  <div className="space-y-2">
-                                    {semester.invoices.map((invoice) => (
-                                      <div key={invoice.id} className="border-l-4 border-blue-200 pl-4 py-2 bg-gray-50 rounded">
-                                        <div className="flex justify-between items-start">
-                                          <div>
-                                            <p className="font-medium text-sm">{invoice.invoice_number}</p>
-                                            <p className="text-xs text-muted-foreground">{invoice.template_name}</p>
-                                          </div>
-                                          <div className="text-right">
-                                            <p className="text-sm font-medium">{formatCurrency(invoice.total_amount)}</p>
-                                            <p className="text-xs text-muted-foreground">Balance: {formatCurrency(invoice.balance_amount)}</p>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Payments for this semester */}
-                              {semester.payments.length > 0 && (
-                                <div className="mt-4">
-                                  <h5 className="font-medium mb-2">Recent Payments:</h5>
-                                  <div className="space-y-1">
-                                    {semester.payments.slice(0, 3).map((payment) => (
-                                      <div key={payment.id} className="flex justify-between text-sm">
-                                        <span>{new Date(payment.payment_date).toLocaleDateString()}</span>
-                                        <span className="font-medium">{formatCurrency(payment.amount)}</span>
-                                        <span className="text-muted-foreground">{payment.payment_method}</span>
-                                      </div>
-                                    ))}
-                                    {semester.payments.length > 3 && (
-                                      <p className="text-xs text-muted-foreground">+{semester.payments.length - 3} more payments</p>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          ))}
+                  <Card className="border-l-4 border-l-red-500 shadow-sm overflow-hidden">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-medium text-muted-foreground">Pending Amount</p>
+                        <div className="p-2 bg-red-50 rounded-full">
+                          <AlertCircle className="w-4 h-4 text-red-600" />
                         </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {/* Invoices */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <FileText className="w-5 h-5" />
-                        Invoices ({studentReport.invoices.length})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {studentReport.invoices.map((invoice) => (
-                          <div key={invoice.id} className="border rounded-lg p-4">
-                            <div className="flex justify-between items-start mb-2">
-                              <div>
-                                <h4 className="font-medium">{invoice.invoice_number}</h4>
-                                <p className="text-sm text-muted-foreground">{invoice.template_name}</p>
-                              </div>
-                              {getStatusBadge(invoice.status)}
-                            </div>
-                            <div className="grid grid-cols-3 gap-4 text-sm">
-                              <div>
-                                <span className="font-medium">Total:</span> {formatCurrency(invoice.total_amount)}
-                              </div>
-                              <div>
-                                <span className="font-medium">Paid:</span> {formatCurrency(invoice.paid_amount)}
-                              </div>
-                              <div>
-                                <span className="font-medium">Balance:</span> {formatCurrency(invoice.balance_amount)}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
                       </div>
+                      <p className="text-2xl font-bold text-red-600">{formatCurrency(studentReport.fee_summary.total_pending)}</p>
                     </CardContent>
                   </Card>
 
-                  {/* Payment History */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <CreditCard className="w-5 h-5" />
-                        Payment History ({studentReport.payment_history.length})
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Amount</TableHead>
-                            <TableHead>Method</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Invoice</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {studentReport.payment_history.map((payment) => (
-                            <TableRow key={payment.id}>
-                              <TableCell>{new Date(payment.payment_date).toLocaleDateString()}</TableCell>
-                              <TableCell>{formatCurrency(payment.amount)}</TableCell>
-                              <TableCell>{payment.payment_method}</TableCell>
-                              <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                              <TableCell>{payment.invoice_number}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                  <Card className="border-l-4 border-l-purple-500 shadow-sm overflow-hidden">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-medium text-muted-foreground">Custom Fee</p>
+                        <div className="p-2 bg-purple-50 rounded-full">
+                          <CreditCard className="w-4 h-4 text-purple-600" />
+                        </div>
+                      </div>
+                      <p className="text-2xl font-bold text-purple-600">{formatCurrency(studentReport.fee_summary.custom_fee_amount)}</p>
                     </CardContent>
                   </Card>
                 </div>
-              )}
-            </DialogContent>
-          </Dialog>
+
+                {/* Send Notification Section - Only show if there's pending amount */}
+                {studentReport.fee_summary.total_pending > 0 && (
+                  <Card className="bg-orange-50/50 border-orange-100 shadow-none">
+                    <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-orange-100 rounded-full">
+                          <AlertCircle className="w-5 h-5 text-orange-600" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-orange-900 text-sm">Fee Payment Overdue</p>
+                          <p className="text-xs text-orange-700">Send a quick reminder to the student regarding their outstanding balance.</p>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => handleSendReminder(studentReport.student.id, studentReport.student.name)}
+                        disabled={sendingReminder}
+                        className="bg-orange-600 hover:bg-orange-700 rounded-xl whitespace-nowrap"
+                      >
+                        {sendingReminder ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Sending Notification...
+                          </>
+                        ) : (
+                          <>
+                            <IndianRupee className="w-4 h-4 mr-2" />
+                            Send Fee Reminder
+                          </>
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Reminder Message */}
+                {reminderMessage && (
+                  <Alert className="bg-green-50 border-green-200">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800">{reminderMessage}</AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Semester-wise Breakdown */}
+                {studentReport.semester_wise_breakdown && studentReport.semester_wise_breakdown.length > 0 && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-bold flex items-center gap-2">
+                      <Calendar className="w-5 h-5 text-primary" />
+                      Semester-wise Breakdown
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {studentReport.semester_wise_breakdown.map((semester, index) => (
+                        <Card key={index} className="overflow-hidden border-muted/40 shadow-sm hover:shadow-md transition-shadow">
+                          <CardHeader className="bg-muted/30 py-3">
+                            <CardTitle className="text-md flex justify-between items-center">
+                              <span>{semester.semester_name}</span>
+                              <Badge variant="outline" className="bg-background">{semester.invoices.length} Invoices</Badge>
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="p-4 space-y-4">
+                            <div className="grid grid-cols-3 gap-2">
+                              <div className="text-center p-2 bg-blue-50/50 rounded-lg border border-blue-100">
+                                <p className="text-[10px] uppercase text-muted-foreground">Total</p>
+                                <p className="text-sm font-bold text-blue-600">{formatCurrency(semester.total_fee)}</p>
+                              </div>
+                              <div className="text-center p-2 bg-green-50/50 rounded-lg border border-green-100">
+                                <p className="text-[10px] uppercase text-muted-foreground">Paid</p>
+                                <p className="text-sm font-bold text-green-600">{formatCurrency(semester.total_paid)}</p>
+                              </div>
+                              <div className="text-center p-2 bg-red-50/50 rounded-lg border border-red-100">
+                                <p className="text-[10px] uppercase text-muted-foreground">Due</p>
+                                <p className="text-sm font-bold text-red-600">{formatCurrency(semester.total_pending)}</p>
+                              </div>
+                            </div>
+                            
+                            {/* Invoices List */}
+                            {semester.invoices.length > 0 && (
+                              <div className="space-y-2 pt-2">
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Invoices</p>
+                                {semester.invoices.map((invoice) => (
+                                  <div key={invoice.id} className="flex items-center justify-between p-2 rounded-lg bg-background border border-muted/50 text-xs">
+                                    <div className="flex items-center gap-2">
+                                      <FileText className="w-3 h-3 text-muted-foreground" />
+                                      <span className="font-medium">{invoice.invoice_number}</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      <span className="font-bold">{formatCurrency(invoice.total_amount)}</span>
+                                      {getStatusBadge(invoice.status)}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* All Invoices Table */}
+                <Card className="border-none shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-primary" />
+                      Complete Invoice History
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader className="bg-muted/50">
+                        <TableRow>
+                          <TableHead className="w-[180px]">Invoice No.</TableHead>
+                          <TableHead>Template</TableHead>
+                          <TableHead>Total Amount</TableHead>
+                          <TableHead>Paid</TableHead>
+                          <TableHead>Balance</TableHead>
+                          <TableHead className="text-right">Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {studentReport.invoices.map((invoice) => (
+                          <TableRow key={invoice.id} className="hover:bg-muted/20">
+                            <TableCell className="font-mono font-medium">{invoice.invoice_number}</TableCell>
+                            <TableCell className="text-muted-foreground">{invoice.template_name}</TableCell>
+                            <TableCell className="font-bold">{formatCurrency(invoice.total_amount)}</TableCell>
+                            <TableCell className="text-green-600 font-medium">{formatCurrency(invoice.paid_amount)}</TableCell>
+                            <TableCell className="text-red-600 font-medium">{formatCurrency(invoice.balance_amount)}</TableCell>
+                            <TableCell className="text-right">{getStatusBadge(invoice.status)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+
+                {/* Recent Payments */}
+                <Card className="border-none shadow-sm overflow-hidden">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <CreditCard className="w-5 h-5 text-primary" />
+                      Payment History
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader className="bg-muted/50">
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Method</TableHead>
+                          <TableHead>Invoice Reference</TableHead>
+                          <TableHead className="text-right">Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {studentReport.payment_history.length > 0 ? (
+                          studentReport.payment_history.map((payment) => (
+                            <TableRow key={payment.id} className="hover:bg-muted/20">
+                              <TableCell>{new Date(payment.payment_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}</TableCell>
+                              <TableCell className="font-bold text-green-600">{formatCurrency(payment.amount)}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="font-normal capitalize">{payment.payment_method}</Badge>
+                                </div>
+                              </TableCell>
+                              <TableCell className="font-mono text-xs text-muted-foreground">{payment.invoice_number}</TableCell>
+                              <TableCell className="text-right">{getStatusBadge(payment.status)}</TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                              No payment records found for this student.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="bulk" className="space-y-4">
@@ -587,10 +613,13 @@ const StudentFeeReports: React.FC = () => {
             <CardContent className="p-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[11px] font-bold uppercase tracking-[0.1em] text-primary/70 ml-1">Batch <span className="text-red-500">*</span></Label>
-                  <Select value={selectedBatch} onValueChange={setSelectedBatch}>
+                  <Label className="text-[11px] font-semibold uppercase tracking-[0.1em] ml-1">Batch <span className="text-red-500">*</span></Label>
+                  <Select 
+                    value={selectedBatch || undefined} 
+                    onValueChange={setSelectedBatch}
+                  >
                     <SelectTrigger className="bg-background rounded-xl border-border/50 h-11">
-                      <SelectValue placeholder="Select Batch" />
+                      <SelectValue placeholder="Choose Batch" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl shadow-xl">
                       {batches.map((batch) => (
@@ -603,10 +632,14 @@ const StudentFeeReports: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[11px] font-bold uppercase tracking-[0.1em] text-primary/70 ml-1">Branch <span className="text-red-500">*</span></Label>
-                  <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+                  <Label className="text-[11px] font-semibold uppercase tracking-[0.1em] ml-1">Branch <span className="text-red-500">*</span></Label>
+                  <Select 
+                    value={selectedBranch || undefined} 
+                    onValueChange={setSelectedBranch}
+                    disabled={selectedBatch === ''}
+                  >
                     <SelectTrigger className="bg-background rounded-xl border-border/50 h-11">
-                      <SelectValue placeholder="Select Branch" />
+                      <SelectValue placeholder="Choose Branch" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl shadow-xl">
                       {branches.map((branch) => (
@@ -619,14 +652,14 @@ const StudentFeeReports: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[11px] font-bold uppercase tracking-[0.1em] text-primary/70 ml-1">Semester <span className="text-red-500">*</span></Label>
+                  <Label className="text-[11px] font-semibold uppercase tracking-[0.1em] ml-1">Semester <span className="text-red-500">*</span></Label>
                   <Select
-                    value={selectedSemester}
+                    value={selectedSemester || undefined}
                     onValueChange={setSelectedSemester}
-                    disabled={selectedBranch === 'all'}
+                    disabled={selectedBranch === ''}
                   >
                     <SelectTrigger className="bg-background rounded-xl border-border/50 h-11">
-                      <SelectValue placeholder="Select Semester" />
+                      <SelectValue placeholder="Choose Semester" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl shadow-xl">
                       {semesters.map((semester) => (
@@ -639,14 +672,14 @@ const StudentFeeReports: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[11px] font-bold uppercase tracking-[0.1em] text-primary/70 ml-1">Section <span className="text-red-500">*</span></Label>
+                  <Label className="text-[11px] font-semibold uppercase tracking-[0.1em] ml-1">Section <span className="text-red-500">*</span></Label>
                   <Select
-                    value={selectedSection}
+                    value={selectedSection || undefined}
                     onValueChange={setSelectedSection}
-                    disabled={selectedSemester === 'all'}
+                    disabled={selectedSemester === ''}
                   >
                     <SelectTrigger className="bg-background rounded-xl border-border/50 h-11">
-                      <SelectValue placeholder="Select Section" />
+                      <SelectValue placeholder="Choose Section" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl shadow-xl">
                       {sections.map((section) => (
@@ -659,16 +692,17 @@ const StudentFeeReports: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[11px] font-bold uppercase tracking-[0.1em] text-primary/70 ml-1">Admission Mode</Label>
+                  <Label className="text-[11px] font-semibold uppercase tracking-[0.1em] ml-1">Admission Mode</Label>
                   <Select
-                    value={selectedAdmissionMode}
+                    value={selectedAdmissionMode || undefined}
                     onValueChange={setSelectedAdmissionMode}
+                    disabled={selectedSection === ''}
                   >
                     <SelectTrigger className="bg-background rounded-xl border-border/50 h-11">
-                      <SelectValue placeholder="All Modes" />
+                      <SelectValue placeholder="Choose Admission Mode" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl shadow-xl">
-                      <SelectItem value="all" className="rounded-lg">All Modes</SelectItem>
+                      <SelectItem value="all" className="rounded-lg font-medium text-primary">All Admission Modes</SelectItem>
                       {admissionModes.map((mode) => (
                         <SelectItem key={mode} value={mode} className="rounded-lg">
                           {mode}
