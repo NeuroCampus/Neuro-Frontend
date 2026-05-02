@@ -9,7 +9,7 @@ import { AlertTriangle, Copy, ExternalLink } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { getFilterOptions, getSemesters, createResultUploadBatch, getStudentsForRevalMakeupUpload, saveMarksForUpload, publishUploadBatch, unpublishUploadBatch, toggleWithholdResult } from '../../utils/coe_api';
 
-export default function PublishResultsRevalMakeup() {
+const PublishResultsRevalMakeup = React.forwardRef<HTMLDivElement>((_, ref) => {
   const { theme } = useTheme();
   const [filters, setFilters] = useState<any>({ batches: [], branches: [] });
   const [semesters, setSemesters] = useState<any[]>([]);
@@ -280,7 +280,7 @@ export default function PublishResultsRevalMakeup() {
   };
 
   return (
-    <div className={`p-2 sm:p-3 lg:p-4 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div ref={ref} className={`p-2 sm:p-3 lg:p-4 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <h2 className={`text-xl sm:text-2xl lg:text-3xl font-bold mb-4 sm:mb-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
         Publish Results (Reval/Makeup)
       </h2>
@@ -768,4 +768,8 @@ export default function PublishResultsRevalMakeup() {
       </Dialog>
     </div>
   );
-}
+});
+
+PublishResultsRevalMakeup.displayName = 'PublishResultsRevalMakeup';
+
+export default PublishResultsRevalMakeup;

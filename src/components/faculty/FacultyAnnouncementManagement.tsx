@@ -247,6 +247,8 @@ const FacultyAnnouncementManagement = () => {
         setReceivedAnnouncements((prev) =>
           prev.map((a) => (a.id === announcementId ? { ...a, is_read: true } : a))
         );
+        // Trigger global unread count refresh
+        window.dispatchEvent(new CustomEvent('refresh-unread-count'));
       }
     } catch (error: any) {
       console.error("Failed to mark as read:", error);

@@ -22,7 +22,7 @@ const EXAM_PERIODS = [
   { value: 'supplementary', label: 'Supplementary' },
 ];
 
-const MakeupRequests: React.FC = () => {
+const MakeupRequests = React.forwardRef<HTMLDivElement>((_, ref) => {
   const { theme } = useTheme();
   const [requests, setRequests] = useState<MakeupRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -205,7 +205,7 @@ const MakeupRequests: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div ref={ref} className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -580,6 +580,8 @@ const MakeupRequests: React.FC = () => {
       </Dialog>
     </div>
   );
-};
+});
+
+MakeupRequests.displayName = 'MakeupRequests';
 
 export default MakeupRequests;

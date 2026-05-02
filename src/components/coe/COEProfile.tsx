@@ -29,7 +29,7 @@ interface COEProfile {
   designation?: string;
 }
 
-const COEProfile = () => {
+const COEProfile = React.forwardRef<HTMLDivElement>((_, ref) => {
   const { theme } = useTheme();
   const [profile, setProfile] = useState<COEProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -196,7 +196,7 @@ const COEProfile = () => {
   }
 
   return (
-    <Card className={`w-full max-w-none mx-auto my-2 sm:my-4 px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6 ${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}`}>
+    <Card ref={ref} className={`w-full max-w-none mx-auto my-2 sm:my-4 px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6 ${theme === 'dark' ? 'bg-card text-foreground' : 'bg-white text-gray-900'}`}>
       <CardHeader className="px-2 sm:px-3 md:px-4 lg:px-6 py-3 sm:py-4 md:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 border-b">
         <div className="flex-1 min-w-0">
           <CardTitle className="text-lg sm:text-xl md:text-2xl font-bold line-clamp-2">COE Profile</CardTitle>
@@ -427,6 +427,8 @@ const COEProfile = () => {
       </CardContent>
     </Card>
   );
-};
+});
+
+COEProfile.displayName = 'COEProfile';
 
 export default COEProfile;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "./Sidebar";
@@ -68,46 +68,53 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   }, []);
 
   // Fetch unread announcement count based on role
-  useEffect(() => {
+  const fetchUnreadCount = useCallback(async () => {
     if (!role) return;
 
-    const fetchUnreadCount = async () => {
-      try {
-        let count = 0;
-        if (role === 'student') {
-          const res = await getDashboardOverview();
-          if (res.success && res.data) {
-            count = res.data.unread_announcement_count || 0;
-          }
-        } else if (role === 'faculty') {
-          const res = await getFacultyDashboardBootstrap();
-          if (res.success && res.data) {
-            count = res.data.unread_announcement_count || 0;
-          }
-        } else if (role === 'hod') {
-          // branch_id is determined server-side — the query param is optional validation only
-          const branchId = (user as any)?.extra?.branch_id || (user as any)?.branch_id || '';
-          const res = await getHODStats(branchId);
-          if (res.success && res.data) {
-            count = res.data.unread_announcement_count || 0;
-          }
-        } else if (role === 'admin') {
-          const res = await getAdminStats();
-          if (res.success && res.data) {
-            count = res.data.unread_announcement_count || 0;
-          }
+    try {
+      let count = 0;
+      if (role === 'student') {
+        const res = await getDashboardOverview();
+        if (res.success && res.data) {
+          count = res.data.unread_announcement_count || 0;
         }
-        setUnreadCount(count);
-      } catch (e) {
-        console.error("Error fetching unread count:", e);
+      } else if (role === 'faculty') {
+        const res = await getFacultyDashboardBootstrap();
+        if (res.success && res.data) {
+          count = res.data.unread_announcement_count || 0;
+        }
+      } else if (role === 'hod') {
+        // branch_id is determined server-side — the query param is optional validation only
+        const branchId = (user as any)?.extra?.branch_id || (user as any)?.branch_id || '';
+        const res = await getHODStats(branchId);
+        if (res.success && res.data) {
+          count = res.data.unread_announcement_count || 0;
+        }
+      } else if (role === 'admin' || role === 'principal') {
+        const res = await getAdminStats();
+        if (res.success && res.data) {
+          count = res.data.unread_announcement_count || 0;
+        }
       }
-    };
+      setUnreadCount(count);
+    } catch (e) {
+      console.error("Error fetching unread count:", e);
+    }
+  }, [role, user]);
 
+  useEffect(() => {
     fetchUnreadCount();
     // Refresh every 5 minutes
     const interval = setInterval(fetchUnreadCount, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [role, user]);
+    
+    // Add event listener for manual refreshes from child components
+    window.addEventListener('refresh-unread-count', fetchUnreadCount);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('refresh-unread-count', fetchUnreadCount);
+    };
+  }, [fetchUnreadCount]);
 
   // Close sidebar when page changes on mobile/tablet only
   useEffect(() => {

@@ -23,7 +23,7 @@ const EXAM_PERIODS = [
   { value: 'supplementary', label: 'Supplementary' },
 ];
 
-const RevaluationRequests: React.FC = () => {
+const RevaluationRequests = React.forwardRef<HTMLDivElement>((_, ref) => {
   const { theme } = useTheme();
   const [requests, setRequests] = useState<RevaluationRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -208,7 +208,7 @@ const RevaluationRequests: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div ref={ref} className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -647,6 +647,8 @@ const RevaluationRequests: React.FC = () => {
       </Dialog>
     </div>
   );
-};
+});
+
+RevaluationRequests.displayName = 'RevaluationRequests';
 
 export default RevaluationRequests;

@@ -9,7 +9,7 @@ import { AlertTriangle, Copy, ExternalLink } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { getFilterOptions, getSemesters, createResultUploadBatch, getStudentsForUpload, saveMarksForUpload, publishUploadBatch, unpublishUploadBatch, toggleWithholdResult } from '../../utils/coe_api';
 
-export default function PublishResults() {
+const PublishResults = React.forwardRef<HTMLDivElement>((_, ref) => {
   const { theme } = useTheme();
   const [filters, setFilters] = useState<any>({ batches: [], branches: [] });
   const [semesters, setSemesters] = useState<any[]>([]);
@@ -303,7 +303,7 @@ export default function PublishResults() {
   };
 
   return (
-    <div className={`p-3 sm:p-4 lg:p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div ref={ref} className={`p-3 sm:p-4 lg:p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <h2 className={`text-xl sm:text-2xl lg:text-3xl font-bold mb-4 sm:mb-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>
         Publish Exam Results
       </h2>
@@ -739,4 +739,8 @@ export default function PublishResults() {
       )}
     </div>
   );
-}
+});
+
+PublishResults.displayName = 'PublishResults';
+
+export default PublishResults;

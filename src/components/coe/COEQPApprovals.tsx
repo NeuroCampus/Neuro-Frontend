@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,7 +39,7 @@ interface PaginationInfo {
   page_size: number;
 }
 
-const COEQPApprovals = () => {
+const COEQPApprovals = React.forwardRef<HTMLDivElement>((_, ref) => {
   const [pendingQPs, setPendingQPs] = useState<QPPending[]>([]);
   const [finalizedQPs, setFinalizedQPs] = useState<QPPending[]>([]);
   const [loading, setLoading] = useState(true);
@@ -371,7 +371,7 @@ const COEQPApprovals = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div ref={ref} className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle>Question Paper Final Approvals</CardTitle>
@@ -736,6 +736,8 @@ const COEQPApprovals = () => {
       </Dialog>
     </div>
   );
-};
+});
+
+COEQPApprovals.displayName = 'COEQPApprovals';
 
 export default COEQPApprovals;

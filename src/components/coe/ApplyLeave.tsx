@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
@@ -37,7 +37,7 @@ interface LeaveRequestDisplay {
   applied_on: string;
 }
 
-const COEApplyLeave = () => {
+const COEApplyLeave = React.forwardRef<HTMLDivElement>((_, ref) => {
   const [title, setTitle] = useState<string>('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [reason, setReason] = useState('');
@@ -251,7 +251,7 @@ const COEApplyLeave = () => {
   };
 
   return (
-    <div className={`p-2 sm:p-4 lg:p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div ref={ref} className={`p-2 sm:p-4 lg:p-6 min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       <h2 className={`text-lg sm:text-2xl lg:text-3xl font-bold mb-3 sm:mb-4 lg:mb-6 ${theme === 'dark' ? 'text-foreground' : 'text-gray-900'}`}>Apply Leave</h2>
 
       {/* Main Container with Responsive Grid Layout */}
@@ -484,6 +484,8 @@ const COEApplyLeave = () => {
       </Dialog>
     </div>
   );
-};
+});
+
+COEApplyLeave.displayName = 'COEApplyLeave';
 
 export default COEApplyLeave;

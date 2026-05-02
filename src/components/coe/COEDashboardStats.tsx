@@ -17,7 +17,7 @@ import { getCOEDashboardStats, DashboardStats } from "../../utils/coe_api";
 import { useTheme } from "../../context/ThemeContext";
 import { SkeletonStatsGrid, SkeletonChart, SkeletonTable } from "../ui/skeleton";
 
-const COEDashboardStats: React.FC = () => {
+const COEDashboardStats = React.forwardRef<HTMLDivElement>((_, ref) => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const { theme } = useTheme();
@@ -113,7 +113,7 @@ const COEDashboardStats: React.FC = () => {
   };
 
   return (
-    <div className={`space-y-6 font-sans min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
+    <div ref={ref} className={`space-y-6 font-sans min-h-screen ${theme === 'dark' ? 'bg-background text-foreground' : 'bg-gray-50 text-gray-900'}`}>
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
@@ -299,6 +299,8 @@ const COEDashboardStats: React.FC = () => {
       </div>
     </div>
   );
-};
+});
+
+COEDashboardStats.displayName = 'COEDashboardStats';
 
 export default COEDashboardStats;
