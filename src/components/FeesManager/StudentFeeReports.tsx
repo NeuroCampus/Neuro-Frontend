@@ -265,20 +265,6 @@ const StudentFeeReports: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <Card className="border-none shadow-none bg-transparent">
-        <CardHeader className="px-0 pb-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <CardTitle className="text-3xl font-bold flex items-center gap-2 text-foreground">
-                <FileText className="h-8 w-8 text-primary" />
-                Student Fee Reports
-              </CardTitle>
-              <p className="text-muted-foreground mt-1 text-sm font-medium">Search individual students or view bulk reports by academic filters</p>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="individual" className="flex items-center gap-2">

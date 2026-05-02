@@ -204,7 +204,7 @@ const Reports: React.FC = () => {
           {/* Filters Section */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end bg-muted/10 p-5 rounded-2xl border border-border/50">
             <div className="space-y-2">
-              <Label className="text-[11px] font-bold uppercase tracking-[0.1em] text-primary/70 ml-1">Role Type <span className="text-red-500">*</span></Label>
+              <Label className="text-[11px] font-semibold uppercase tracking-[0.1em] ml-1">Role Type <span className="text-red-500">*</span></Label>
               <Select value={selectedRole} onValueChange={setSelectedRole}>
                 <SelectTrigger className="bg-background rounded-xl border-border/50 h-11">
                   <SelectValue placeholder="Select Role" />
@@ -220,7 +220,7 @@ const Reports: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[11px] font-bold uppercase tracking-[0.1em] text-primary/70 ml-1">Start Date <span className="text-red-500">*</span></Label>
+              <Label className="text-[11px] font-semibold uppercase tracking-[0.1em] ml-1">Start Date <span className="text-red-500">*</span></Label>
               <Popover open={isStartPopoverOpen} onOpenChange={setIsStartPopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -252,7 +252,7 @@ const Reports: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[11px] font-bold uppercase tracking-[0.1em] text-primary/70 ml-1">End Date <span className="text-red-500">*</span></Label>
+              <Label className="text-[11px] font-semibold uppercase tracking-[0.1em] ml-1">End Date <span className="text-red-500">*</span></Label>
               <Popover open={isEndPopoverOpen} onOpenChange={setIsEndPopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -416,7 +416,7 @@ const Reports: React.FC = () => {
                     size="sm"
                     disabled
                     className={cn(
-                      "h-9 w-10 font-bold rounded-lg border-border/50",
+                      "h-9 w-10 font-semibold rounded-lg border-border/50",
                       theme === 'dark' ? "bg-card text-foreground" : "bg-white text-gray-900"
                     )}
                   >
@@ -444,12 +444,12 @@ const Reports: React.FC = () => {
       <Dialog open={isCalendarDialogOpen} onOpenChange={setIsCalendarDialogOpen}>
         <DialogContent className="w-[90%] sm:max-w-md bg-card rounded-3xl border-none shadow-2xl p-0 overflow-hidden mx-auto">
           <DialogHeader className="p-6 bg-muted/20 border-b">
-            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+            <DialogTitle className="text-xl font-semibold flex items-center gap-2">
               <CalendarIcon className="h-5 w-5 text-primary" />
               Attendance History
             </DialogTitle>
             <DialogDescription className="text-sm font-medium mt-1">
-              Visual audit for <span className="text-foreground font-bold">{selectedStaff?.name}</span>
+              Visual audit for <span className="text-foreground font-semibold">{selectedStaff?.name}</span>
             </DialogDescription>
           </DialogHeader>
           
@@ -461,7 +461,7 @@ const Reports: React.FC = () => {
                   <div className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]"></div>
                   <div className="w-2 h-2 rounded-full bg-primary animate-bounce"></div>
                 </div>
-                <p className="text-[11px] font-bold uppercase tracking-widest">Loading Records...</p>
+                <p className="text-[11px] font-semibold uppercase tracking-widest">Loading Records...</p>
               </div>
             ) : (
               <>
@@ -489,12 +489,12 @@ const Reports: React.FC = () => {
                           )}
                         >
                           <span className={cn(
-                            "text-[10px] font-bold uppercase tracking-tighter opacity-70",
+                            "text-[10px] font-semibold uppercase tracking-tighter opacity-70",
                             (isPresent || isAbsent) && "opacity-100"
                           )}>
                             {format(date, "EEE")}
                           </span>
-                          <span className="text-sm font-bold leading-tight">
+                          <span className="text-sm font-semibold leading-tight">
                             {format(date, "d")}
                           </span>
                           <div className={cn(
@@ -511,15 +511,15 @@ const Reports: React.FC = () => {
                   <div className="flex items-center gap-3 p-4 rounded-2xl bg-green-500/10 border border-green-500/20">
                     <div className="w-3 h-3 rounded-full bg-green-500" />
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-green-700/70">Present Days</span>
-                      <span className="text-lg font-bold text-green-700">{selectedStaff?.present}</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-green-700/70">Present Days</span>
+                      <span className="text-lg font-semibold text-green-700">{selectedStaff?.present}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
                     <div className="w-3 h-3 rounded-full bg-red-500" />
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-red-700/70">Absent Days</span>
-                      <span className="text-lg font-bold text-red-700">{selectedStaff?.absent}</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-red-700/70">Absent Days</span>
+                      <span className="text-lg font-semibold text-red-700">{selectedStaff?.absent}</span>
                     </div>
                   </div>
                 </div>
@@ -527,7 +527,7 @@ const Reports: React.FC = () => {
             )}
             
             <Button 
-              className="w-full h-12 rounded-2xl bg-primary text-white hover:bg-primary/90 transition-all font-bold uppercase text-[12px] tracking-widest shadow-lg shadow-primary/20 active:scale-[0.98]"
+              className="w-full h-12 rounded-2xl bg-primary text-white hover:bg-primary/90 transition-all font-semibold uppercase text-[12px] tracking-widest shadow-lg shadow-primary/20 active:scale-[0.98]"
               onClick={() => setIsCalendarDialogOpen(false)}
             >
               Close History
