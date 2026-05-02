@@ -20,13 +20,14 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/context/ThemeContext";
-import { 
-  getFeesManagerFilters, 
-  getFeesManagerSemesters, 
-  getFeesManagerSections, 
-  getFeesManagerAssignments, 
-  deleteFeeAssignment 
+import {
+  getFeesManagerFilters,
+  getFeesManagerSemesters,
+  getFeesManagerSections,
+  getFeesManagerAssignments,
+  deleteFeeAssignment
 } from "../../utils/fees_manager_api";
+import { showConfirmAlert, showSuccessAlert, showErrorAlert } from "../../utils/sweetalert";
 
 interface Assignment {
   id: number;
@@ -61,13 +62,13 @@ const IndividualFeeAssignment: React.FC = () => {
   const { theme } = useTheme();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Data States
   const [filterData, setFilterData] = useState<FilterData>({ batches: [], branches: [], admission_modes: [] });
   const [semesters, setSemesters] = useState<{ id: number; number: number; name: string }[]>([]);
   const [sections, setSections] = useState<{ id: number; name: string }[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
-  
+
   // Selection States
   const [selectedFilters, setSelectedFilters] = useState({
     batchId: '',
@@ -77,7 +78,7 @@ const IndividualFeeAssignment: React.FC = () => {
     admissionMode: '',
     search: ''
   });
-  
+
   // UI States
   const [pagination, setPagination] = useState({
     page: 1,
@@ -178,11 +179,11 @@ const IndividualFeeAssignment: React.FC = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      const allFiltersSelected = 
-        selectedFilters.batchId && 
-        selectedFilters.branchId && 
-        selectedFilters.semesterId && 
-        selectedFilters.sectionId && 
+      const allFiltersSelected =
+        selectedFilters.batchId &&
+        selectedFilters.branchId &&
+        selectedFilters.semesterId &&
+        selectedFilters.sectionId &&
         selectedFilters.admissionMode;
 
       if (allFiltersSelected) {
@@ -196,16 +197,22 @@ const IndividualFeeAssignment: React.FC = () => {
     return () => clearTimeout(timer);
   }, [selectedFilters, fetchAssignments]);
 
-  const allFiltersSelected = 
-    selectedFilters.batchId && 
-    selectedFilters.branchId && 
-    selectedFilters.semesterId && 
-    selectedFilters.sectionId && 
+  const allFiltersSelected =
+    selectedFilters.batchId &&
+    selectedFilters.branchId &&
+    selectedFilters.semesterId &&
+    selectedFilters.sectionId &&
     selectedFilters.admissionMode;
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this fee assignment? This will also remove the associated unpaid invoice.')) return;
+    const confirmed = await showConfirmAlert(
+      'Delete Assignment?',
+      'Are you sure you want to delete this fee assignment? This will also remove the associated unpaid invoice.',
+      'Yes, delete it'
+    );
     
+    if (!confirmed.isConfirmed) return;
+
     try {
       const res = await deleteFeeAssignment(id);
 
@@ -215,14 +222,14 @@ const IndividualFeeAssignment: React.FC = () => {
 
       // Update local state instead of re-fetching
       setAssignments(prev => prev.filter(a => a.id !== id));
-      setPagination(prev => ({ 
-        ...prev, 
-        totalCount: Math.max(0, prev.totalCount - 1) 
+      setPagination(prev => ({
+        ...prev,
+        totalCount: Math.max(0, prev.totalCount - 1)
       }));
-      
-      alert('Assignment deleted successfully');
+
+      showSuccessAlert('Deleted!', 'Assignment deleted successfully');
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Deletion failed');
+      showErrorAlert('Error', err instanceof Error ? err.message : 'Deletion failed');
     }
   };
 
@@ -278,8 +285,8 @@ const IndividualFeeAssignment: React.FC = () => {
 
             <div className="space-y-2">
               <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Branch</Label>
-              <Select 
-                value={selectedFilters.branchId} 
+              <Select
+                value={selectedFilters.branchId}
                 onValueChange={(val) => setSelectedFilters(p => ({ ...p, branchId: val }))}
                 disabled={!selectedFilters.batchId}
               >
@@ -295,8 +302,8 @@ const IndividualFeeAssignment: React.FC = () => {
 
             <div className="space-y-2">
               <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Semester</Label>
-              <Select 
-                value={selectedFilters.semesterId} 
+              <Select
+                value={selectedFilters.semesterId}
                 onValueChange={(val) => setSelectedFilters(p => ({ ...p, semesterId: val }))}
                 disabled={!selectedFilters.branchId}
               >
@@ -311,8 +318,8 @@ const IndividualFeeAssignment: React.FC = () => {
 
             <div className="space-y-2">
               <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Section</Label>
-              <Select 
-                value={selectedFilters.sectionId} 
+              <Select
+                value={selectedFilters.sectionId}
                 onValueChange={(val) => setSelectedFilters(p => ({ ...p, sectionId: val }))}
                 disabled={!selectedFilters.semesterId}
               >
@@ -327,8 +334,8 @@ const IndividualFeeAssignment: React.FC = () => {
 
             <div className="space-y-2">
               <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Admission Mode</Label>
-              <Select 
-                value={selectedFilters.admissionMode} 
+              <Select
+                value={selectedFilters.admissionMode}
                 onValueChange={(val) => setSelectedFilters(p => ({ ...p, admissionMode: val }))}
                 disabled={!selectedFilters.sectionId}
               >
@@ -446,9 +453,9 @@ const IndividualFeeAssignment: React.FC = () => {
                           </div>
                         </TableCell>
                         <TableCell className="text-right pr-6 align-middle">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full transition-all active:scale-95"
                             onClick={() => handleDelete(assignment.id)}
                           >

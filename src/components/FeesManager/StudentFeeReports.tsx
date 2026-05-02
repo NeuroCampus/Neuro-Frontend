@@ -54,7 +54,7 @@ const StudentFeeReports: React.FC = () => {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [semesters, setSemesters] = useState<Semester[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
-  const [batches, setBatches] = useState<{id: number, name: string}[]>([]);
+  const [batches, setBatches] = useState<{ id: number, name: string }[]>([]);
   const [admissionModes, setAdmissionModes] = useState<string[]>([]);
   const [selectedBatch, setSelectedBatch] = useState<string>('');
   const [selectedBranch, setSelectedBranch] = useState<string>('');
@@ -139,10 +139,10 @@ const StudentFeeReports: React.FC = () => {
 
   // Automatic data loading when filters are selected
   useEffect(() => {
-    const isAcademicHierarchySelected = 
-      selectedBatch !== '' && 
-      selectedBranch !== '' && 
-      selectedSemester !== '' && 
+    const isAcademicHierarchySelected =
+      selectedBatch !== '' &&
+      selectedBranch !== '' &&
+      selectedSemester !== '' &&
       selectedSection !== '' &&
       selectedAdmissionMode !== '';
 
@@ -156,10 +156,10 @@ const StudentFeeReports: React.FC = () => {
 
   const handleIndividualSearch = async (usn?: string) => {
     const termToSearch = usn || searchTerm.trim();
-    
+
     // Ensure termToSearch is a string
     const searchTermStr = typeof termToSearch === 'string' ? termToSearch : String(termToSearch);
-    
+
     if (!searchTermStr.trim()) {
       setSearchError('Please enter a USN or student name');
       return;
@@ -324,9 +324,9 @@ const StudentFeeReports: React.FC = () => {
                   </div>
                   <h2 className="text-xl font-bold tracking-tight">Student Fee Report</h2>
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setStudentReport(null)}
                   className="rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
                 >
@@ -490,7 +490,7 @@ const StudentFeeReports: React.FC = () => {
                                 <p className="text-sm font-bold text-red-600">{formatCurrency(semester.total_pending)}</p>
                               </div>
                             </div>
-                            
+
                             {/* Invoices List */}
                             {semester.invoices.length > 0 && (
                               <div className="space-y-2 pt-2">
@@ -614,8 +614,8 @@ const StudentFeeReports: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 <div className="space-y-2">
                   <Label className="text-[11px] font-semibold uppercase tracking-[0.1em] ml-1">Batch <span className="text-red-500">*</span></Label>
-                  <Select 
-                    value={selectedBatch || undefined} 
+                  <Select
+                    value={selectedBatch || undefined}
                     onValueChange={setSelectedBatch}
                   >
                     <SelectTrigger className="bg-background rounded-xl border-border/50 h-11">
@@ -633,8 +633,8 @@ const StudentFeeReports: React.FC = () => {
 
                 <div className="space-y-2">
                   <Label className="text-[11px] font-semibold uppercase tracking-[0.1em] ml-1">Branch <span className="text-red-500">*</span></Label>
-                  <Select 
-                    value={selectedBranch || undefined} 
+                  <Select
+                    value={selectedBranch || undefined}
                     onValueChange={setSelectedBranch}
                     disabled={selectedBatch === ''}
                   >

@@ -6,10 +6,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  CheckCircle2, 
-  AlertTriangle, 
-  BarChart3, 
+import {
+  CheckCircle2,
+  AlertTriangle,
+  BarChart3,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -24,14 +24,15 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/context/ThemeContext";
-import { 
-  getFeesManagerFilters, 
-  getFeeTemplates, 
-  getFeesManagerSemesters, 
-  getFeesManagerSections, 
-  getFeesManagerStudents, 
-  bulkAssignFees 
+import {
+  getFeesManagerFilters,
+  getFeeTemplates,
+  getFeesManagerSemesters,
+  getFeesManagerSections,
+  getFeesManagerStudents,
+  bulkAssignFees
 } from "../../utils/fees_manager_api";
+import { showConfirmAlert, showSuccessAlert, showErrorAlert, showInfoAlert } from "../../utils/sweetalert";
 
 interface FilterData {
   batches: { id: number; name: string }[];
@@ -52,7 +53,7 @@ const BulkAssignment: React.FC = () => {
   const [fetchingStats, setFetchingStats] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ created: number; skipped: number } | null>(null);
-  
+
   // Selection States
   const [selectedFilters, setSelectedFilters] = useState({
     batchId: '',
@@ -61,10 +62,10 @@ const BulkAssignment: React.FC = () => {
     sectionId: '',
     admissionMode: ''
   });
-  
+
   const [selectedTemplate, setSelectedTemplate] = useState('');
   const [academicYear, setAcademicYear] = useState('2024-25');
-  
+
   // Data States
   const [filterData, setFilterData] = useState<FilterData>({ batches: [], branches: [], admission_modes: [] });
   const [semesters, setSemesters] = useState<{ id: number; number: number; name: string }[]>([]);
@@ -138,11 +139,11 @@ const BulkAssignment: React.FC = () => {
 
   // Fetch student count when all filters are selected
   useEffect(() => {
-    const allFiltersSelected = 
-      selectedFilters.batchId && 
-      selectedFilters.branchId && 
-      selectedFilters.semesterId && 
-      selectedFilters.sectionId && 
+    const allFiltersSelected =
+      selectedFilters.batchId &&
+      selectedFilters.branchId &&
+      selectedFilters.semesterId &&
+      selectedFilters.sectionId &&
       selectedFilters.admissionMode;
 
     if (!allFiltersSelected) {
@@ -180,17 +181,21 @@ const BulkAssignment: React.FC = () => {
 
   const handleBulkAssign = async () => {
     if (!selectedTemplate) return;
-    
+
     const templateName = templates.find(t => t.id.toString() === selectedTemplate)?.name;
-    if (!confirm(`Are you sure you want to assign "${templateName}" to ${studentCount} students? This will generate invoices for all of them.`)) {
-      return;
-    }
+    const confirmed = await showConfirmAlert(
+      'Mass Assignment Confirmation',
+      `Are you sure you want to assign "${templateName}" to ${studentCount} students? This will generate invoices for all of them.`,
+      'Yes, start assignment'
+    );
     
+    if (!confirmed.isConfirmed) return;
+
     try {
       setLoading(true);
       setError(null);
       setSuccess(null);
-      
+
       const result = await bulkAssignFees({
         filters: {
           batch_id: selectedFilters.batchId,
@@ -207,14 +212,21 @@ const BulkAssignment: React.FC = () => {
         throw new Error(result.message || 'Bulk assignment failed');
       }
 
-      setSuccess({
-        created: result.data.created_count,
-        skipped: result.data.skipped_count
-      });
-      
+      if (result.data.created_count > 0) {
+        showSuccessAlert(
+          'Mass Assignment Successful!',
+          `${result.data.created_count} students assigned successfully. ${result.data.skipped_count} duplicates were skipped.`
+        );
+      } else {
+        showInfoAlert(
+          'No Changes Made',
+          `${result.data.skipped_count} students already have this assignment. 0 new assignments created.`
+        );
+      }
+
       // Refresh count (might have changed if unassigned students filter was a thing, but here we just show total)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred during assignment');
+      showErrorAlert('Assignment Failed', err instanceof Error ? err.message : 'An error occurred during assignment');
     } finally {
       setLoading(false);
     }
@@ -227,11 +239,11 @@ const BulkAssignment: React.FC = () => {
     }).format(amount);
   };
 
-  const allFiltersSelected = 
-    selectedFilters.batchId && 
-    selectedFilters.branchId && 
-    selectedFilters.semesterId && 
-    selectedFilters.sectionId && 
+  const allFiltersSelected =
+    selectedFilters.batchId &&
+    selectedFilters.branchId &&
+    selectedFilters.semesterId &&
+    selectedFilters.sectionId &&
     selectedFilters.admissionMode;
 
   return (
@@ -255,8 +267,8 @@ const BulkAssignment: React.FC = () => {
               Note: Operational Safety
             </h4>
             <p className="text-[13px] text-muted-foreground leading-relaxed">
-              The bulk assignment engine validates each student against the target template and academic year. 
-              If an assignment already exists for a student, the system will automatically skip it to prevent 
+              The bulk assignment engine validates each student against the target template and academic year.
+              If an assignment already exists for a student, the system will automatically skip it to prevent
               duplicate invoices, ensuring your financial records remain consistent and error-free.
             </p>
           </div>
@@ -278,8 +290,8 @@ const BulkAssignment: React.FC = () => {
 
             <div className="space-y-2">
               <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Branch</Label>
-              <Select 
-                value={selectedFilters.branchId} 
+              <Select
+                value={selectedFilters.branchId}
                 onValueChange={(val) => setSelectedFilters(p => ({ ...p, branchId: val }))}
                 disabled={!selectedFilters.batchId}
               >
@@ -295,8 +307,8 @@ const BulkAssignment: React.FC = () => {
 
             <div className="space-y-2">
               <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Semester</Label>
-              <Select 
-                value={selectedFilters.semesterId} 
+              <Select
+                value={selectedFilters.semesterId}
                 onValueChange={(val) => setSelectedFilters(p => ({ ...p, semesterId: val }))}
                 disabled={!selectedFilters.branchId}
               >
@@ -311,8 +323,8 @@ const BulkAssignment: React.FC = () => {
 
             <div className="space-y-2">
               <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Section</Label>
-              <Select 
-                value={selectedFilters.sectionId} 
+              <Select
+                value={selectedFilters.sectionId}
                 onValueChange={(val) => setSelectedFilters(p => ({ ...p, sectionId: val }))}
                 disabled={!selectedFilters.semesterId}
               >
@@ -327,8 +339,8 @@ const BulkAssignment: React.FC = () => {
 
             <div className="space-y-2">
               <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Admission Mode</Label>
-              <Select 
-                value={selectedFilters.admissionMode} 
+              <Select
+                value={selectedFilters.admissionMode}
                 onValueChange={(val) => setSelectedFilters(p => ({ ...p, admissionMode: val }))}
                 disabled={!selectedFilters.sectionId}
               >
@@ -388,7 +400,7 @@ const BulkAssignment: React.FC = () => {
                       <div className="h-4 w-64 bg-muted rounded mx-auto"></div>
                     </div>
                   ) : (
-                    <motion.div 
+                    <motion.div
                       initial={{ scale: 0.95, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       className="space-y-3"
@@ -398,7 +410,7 @@ const BulkAssignment: React.FC = () => {
                       <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground bg-background/50 px-4 py-2 rounded-full border">
                         <Users className="h-4 w-4" />
                         <span>
-                          {filterData.branches.find(b => b.id.toString() === selectedFilters.branchId)?.name} • 
+                          {filterData.branches.find(b => b.id.toString() === selectedFilters.branchId)?.name} •
                           Sem {semesters.find(s => s.id.toString() === selectedFilters.semesterId)?.number}
                         </span>
                       </div>
@@ -436,8 +448,8 @@ const BulkAssignment: React.FC = () => {
                       <BarChart3 className="h-4 w-4 text-primary" />
                       Academic Year
                     </Label>
-                    <Input 
-                      value={academicYear} 
+                    <Input
+                      value={academicYear}
                       onChange={(e) => setAcademicYear(e.target.value)}
                       className="h-12 bg-background border-border/50 text-lg font-semibold"
                       placeholder="e.g., 2024-25"
@@ -448,7 +460,7 @@ const BulkAssignment: React.FC = () => {
 
                 {/* Action Section */}
                 <div className="space-y-4">
-                  <Button 
+                  <Button
                     className="w-full h-14 text-md font-semibold shadow-lg hover:shadow-primary/20 transition-all group relative overflow-hidden"
                     disabled={!selectedTemplate || loading || studentCount === 0}
                     onClick={handleBulkAssign}
@@ -472,33 +484,7 @@ const BulkAssignment: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Status Alerts */}
-                <AnimatePresence>
-                  {error && (
-                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
-                      <Alert variant="destructive" className="border-2 shadow-lg">
-                        <AlertTriangle className="h-5 w-5" />
-                        <AlertDescription className="font-semibold">{error}</AlertDescription>
-                      </Alert>
-                    </motion.div>
-                  )}
-                  {success && (
-                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
-                      <Alert className="border-green-500/50 bg-green-500/5 text-green-700 dark:text-green-400 border-2 shadow-lg py-6">
-                        <CheckCircle2 className="h-8 w-8" />
-                        <div className="ml-4 flex flex-col gap-1 w-full">
-                          <AlertDescription className="text-lg font-black uppercase tracking-tight">
-                            Mass Assignment Successful!
-                          </AlertDescription>
-                          <div className="flex items-center justify-between text-sm font-semibold opacity-80">
-                            <span>{success.created} students assigned successfully</span>
-                            <Badge variant="outline" className="border-green-500/30">{success.skipped} duplicates skipped</Badge>
-                          </div>
-                        </div>
-                      </Alert>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {/* Status Alerts Removed - Handled by SweetAlert */}
               </div>
             </div>
           )}

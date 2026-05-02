@@ -29,12 +29,13 @@ import {
 } from 'lucide-react';
 import DashboardCard from '@/components/common/DashboardCard';
 import { useTheme } from '@/context/ThemeContext';
-import { 
-  getPayments, 
-  getPaymentStats, 
-  getPaymentDetails as getPaymentDetailsApi, 
-  processRefund as processRefundApi, 
-  downloadReceipt as downloadReceiptApi 
+import { showConfirmAlert, showSuccessAlert } from '../../utils/sweetalert';
+import {
+  getPayments,
+  getPaymentStats,
+  getPaymentDetails as getPaymentDetailsApi,
+  processRefund as processRefundApi,
+  downloadReceipt as downloadReceiptApi
 } from "../../utils/fees_manager_api";
 
 interface Payment {
@@ -232,7 +233,13 @@ const PaymentMonitoring: React.FC = () => {
   }, [isDetailsDialogOpen, selectedPayment, isDetailLoading]);
 
   const processRefund = async (paymentId: number) => {
-    if (!confirm('Are you sure you want to process a refund for this payment?')) return;
+    const confirmed = await showConfirmAlert(
+      'Process Refund?',
+      'Are you sure you want to process a refund for this payment?',
+      'Yes, refund it'
+    );
+    
+    if (!confirmed.isConfirmed) return;
 
     try {
       const result = await processRefundApi(paymentId);
@@ -242,7 +249,7 @@ const PaymentMonitoring: React.FC = () => {
       }
 
       await fetchData();
-      alert('Refund processed successfully!');
+      showSuccessAlert('Success!', 'Refund processed successfully!');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to process refund');
     }

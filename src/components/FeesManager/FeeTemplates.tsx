@@ -28,12 +28,12 @@ import {
   Calendar as CalendarIcon
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext'; // Added theme context import
-import { 
-  getFeeComponents, 
-  getFeeTemplates, 
-  createFeeTemplate, 
-  updateFeeTemplate, 
-  deleteFeeTemplate 
+import {
+  getFeeComponents,
+  getFeeTemplates,
+  createFeeTemplate,
+  updateFeeTemplate,
+  deleteFeeTemplate
 } from "../../utils/fees_manager_api";
 
 interface FeeComponent {
@@ -145,7 +145,7 @@ const FeeTemplates: React.FC = () => {
         components: (t.components || []).map((c: any) => ({
           id: c.component,
           component_name: c.component_name,
-          amount: (c.component_amount_cents != null ? Number(c.component_amount_cents) / 100 : (c.component?.amount ? Math.round(c.component.amount * 100)/100 : 0)),
+          amount: (c.component_amount_cents != null ? Number(c.component_amount_cents) / 100 : (c.component?.amount ? Math.round(c.component.amount * 100) / 100 : 0)),
           amount_override: (c.amount_override_cents != null ? Number(c.amount_override_cents) / 100 : (c.amount_override != null ? Number(c.amount_override) : null)),
         })),
       }));
@@ -218,13 +218,13 @@ const FeeTemplates: React.FC = () => {
         components: (created.components || []).map((c: any) => ({
           id: c.component,
           component_name: c.component_name,
-          amount: (c.component_amount_cents != null ? Number(c.component_amount_cents) / 100 : (c.component?.amount ? Math.round(c.component.amount * 100)/100 : 0)),
+          amount: (c.component_amount_cents != null ? Number(c.component_amount_cents) / 100 : (c.component?.amount ? Math.round(c.component.amount * 100) / 100 : 0)),
           amount_override: (c.amount_override_cents != null ? Number(c.amount_override_cents) / 100 : (c.amount_override != null ? Number(c.amount_override) : null)),
         })),
       };
       setTemplates(prev => [item, ...prev]);
       setTemplatesTotalCount(c => c + 1);
-      try { window.dispatchEvent(new CustomEvent('feeTemplates:changed', { detail: { action: 'create', item } })); } catch (e) {}
+      try { window.dispatchEvent(new CustomEvent('feeTemplates:changed', { detail: { action: 'create', item } })); } catch (e) { }
       setIsCreateDialogOpen(false);
       resetForm();
     } catch (err) {
@@ -292,13 +292,13 @@ const FeeTemplates: React.FC = () => {
         components: (updated.components || []).map((c: any) => ({
           id: c.component,
           component_name: c.component_name,
-          amount: (c.component_amount_cents != null ? Number(c.component_amount_cents) / 100 : (c.component?.amount ? Math.round(c.component.amount * 100)/100 : 0)),
+          amount: (c.component_amount_cents != null ? Number(c.component_amount_cents) / 100 : (c.component?.amount ? Math.round(c.component.amount * 100) / 100 : 0)),
           amount_override: (c.amount_override_cents != null ? Number(c.amount_override_cents) / 100 : (c.amount_override != null ? Number(c.amount_override) : null)),
         })),
       };
 
       setTemplates(prev => prev.map(t => (t.id === item.id ? item : t)));
-      try { window.dispatchEvent(new CustomEvent('feeTemplates:changed', { detail: { action: 'update', item } })); } catch (e) {}
+      try { window.dispatchEvent(new CustomEvent('feeTemplates:changed', { detail: { action: 'update', item } })); } catch (e) { }
       setIsCreateDialogOpen(false);
       resetForm();
     } catch (err) {
@@ -341,7 +341,7 @@ const FeeTemplates: React.FC = () => {
         background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
         color: currentTheme === 'dark' ? '#ffffff' : '#000000',
       });
-      try { window.dispatchEvent(new CustomEvent('feeTemplates:changed', { detail: { action: 'delete', id: templateId } })); } catch (e) {}
+      try { window.dispatchEvent(new CustomEvent('feeTemplates:changed', { detail: { action: 'delete', id: templateId } })); } catch (e) { }
     } catch (err) {
       await MySwal.fire({
         title: 'Error!',
@@ -408,19 +408,19 @@ const FeeTemplates: React.FC = () => {
 
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-                <Button 
-                  onClick={async () => {
-                    resetForm();
-                    // fetch available components only when opening create dialog
-                    try {
-                      await fetchAvailableComponents();
-                    } catch (e) {
-                      // ignore - fetchAvailableComponents already logs errors
-                    }
-                    setIsCreateDialogOpen(true);
-                  }}
-                  className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 w-full sm:w-auto"
-                >
+              <Button
+                onClick={async () => {
+                  resetForm();
+                  // fetch available components only when opening create dialog
+                  try {
+                    await fetchAvailableComponents();
+                  } catch (e) {
+                    // ignore - fetchAvailableComponents already logs errors
+                  }
+                  setIsCreateDialogOpen(true);
+                }}
+                className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 w-full sm:w-auto"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Create Template
               </Button>
@@ -521,74 +521,74 @@ const FeeTemplates: React.FC = () => {
                   <Label className="mb-2 block">Fee Components</Label>
                   <div className="border rounded-lg overflow-hidden">
                     <div className="overflow-x-auto">
-                    <Table className="min-w-[640px] custom-scrollbar">
-                      <TableHeader>
-                        <TableRow className={theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}>
-                          <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Select</TableHead>
-                          <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Component</TableHead>
-                          <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Default Amount</TableHead>
-                          <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Override Amount</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {availableComponents.map((component) => (
-                          <TableRow 
-                            key={component.id} 
-                            className={theme === 'dark' ? 'border-border' : 'border-gray-200'}
-                          >
-                            <TableCell>
-                              <input
-                                type="checkbox"
-                                checked={selectedComponents.includes(component.id)}
-                                onChange={() => toggleComponentSelection(component.id)}
-                                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <div>
-                                <div className="font-medium">{component.name}</div>
-                                <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
-                                  {component.description || 'No description'}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>{formatCurrency(component.amount)}</TableCell>
-                            <TableCell>
-                              {selectedComponents.includes(component.id) && (
-                                <Input
-                                  type="number"
-                                  value={componentOverrides[component.id] || component.amount}
-                                  onChange={(e) => updateComponentOverride(component.id, parseFloat(e.target.value) || 0)}
-                                  placeholder="Override amount"
-                                  className={`w-24 ${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'} mt-1`}
+                      <Table className="min-w-[640px] custom-scrollbar">
+                        <TableHeader>
+                          <TableRow className={theme === 'dark' ? 'bg-muted' : 'bg-gray-100'}>
+                            <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Select</TableHead>
+                            <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Component</TableHead>
+                            <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Default Amount</TableHead>
+                            <TableHead className={theme === 'dark' ? 'font-semibold text-foreground' : 'font-semibold text-gray-800'}>Override Amount</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {availableComponents.map((component) => (
+                            <TableRow
+                              key={component.id}
+                              className={theme === 'dark' ? 'border-border' : 'border-gray-200'}
+                            >
+                              <TableCell>
+                                <input
+                                  type="checkbox"
+                                  checked={selectedComponents.includes(component.id)}
+                                  onChange={() => toggleComponentSelection(component.id)}
+                                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                 />
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                        {availableComponents.length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={4} className="text-center py-4">
-                              No fee components available. Create components first.
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
+                              </TableCell>
+                              <TableCell>
+                                <div>
+                                  <div className="font-medium">{component.name}</div>
+                                  <div className={`text-sm ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-500'}`}>
+                                    {component.description || 'No description'}
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>{formatCurrency(component.amount)}</TableCell>
+                              <TableCell>
+                                {selectedComponents.includes(component.id) && (
+                                  <Input
+                                    type="number"
+                                    value={componentOverrides[component.id] || component.amount}
+                                    onChange={(e) => updateComponentOverride(component.id, parseFloat(e.target.value) || 0)}
+                                    placeholder="Override amount"
+                                    className={`w-24 ${theme === 'dark' ? 'bg-background border-border' : 'bg-white border-gray-300'} mt-1`}
+                                  />
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                          {availableComponents.length === 0 && (
+                            <TableRow>
+                              <TableCell colSpan={4} className="text-center py-4">
+                                No fee components available. Create components first.
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex justify-end gap-3 pt-2">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => setIsCreateDialogOpen(false)}
                     className="border-gray-300 text-gray-700 hover:bg-gray-100"
                   >
                     <X className="h-4 w-4 mr-2" />
                     Cancel
                   </Button>
-                  <Button 
+                  <Button
                     onClick={editingTemplate ? handleUpdateTemplate : handleCreateTemplate}
                     className="bg-primary hover:bg-primary/90 text-white"
                   >
@@ -615,8 +615,8 @@ const FeeTemplates: React.FC = () => {
             </TableHeader>
             <TableBody>
               {templates.map((template) => (
-                <TableRow 
-                  key={template.id} 
+                <TableRow
+                  key={template.id}
                   className={theme === 'dark' ? 'border-border' : 'border-gray-200'}
                 >
                   <TableCell className="font-medium">{template.name}</TableCell>

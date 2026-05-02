@@ -7,21 +7,21 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription
 } from "@/components/ui/dialog";
-import { 
-  Download, 
-  Calendar as CalendarIcon, 
-  Users, 
-  Filter, 
-  Eye, 
-  ChevronLeft, 
-  ChevronRight, 
+import {
+  Download,
+  Calendar as CalendarIcon,
+  Users,
+  Filter,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
   AlertCircle,
   FileText
 } from 'lucide-react';
@@ -83,7 +83,7 @@ const Reports: React.FC = () => {
       setLoading(true);
       setError(null);
       const response = await getStaffAttendanceAudit(selectedRole, startDate, endDate, currentPage);
-      
+
       if (response.success) {
         setAttendanceData(response.results.attendance_summary || []);
         setTotalItems(response.count || 0);
@@ -107,7 +107,7 @@ const Reports: React.FC = () => {
     try {
       setLoading(true);
       const response = await getStaffAttendanceAudit(selectedRole, startDate, endDate, 1, format);
-      
+
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -178,8 +178,8 @@ const Reports: React.FC = () => {
               <p className="text-muted-foreground mt-1 text-sm">Monitor attendance across all institutional roles</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => downloadReport('pdf')}
                 className="h-9 px-4 font-semibold uppercase text-[12px] tracking-widest rounded-full bg-background border-primary/20 text-primary hover:bg-primary/5 transition-all"
@@ -187,8 +187,8 @@ const Reports: React.FC = () => {
                 <Download className="h-4 w-4 mr-2" />
                 Download PDF
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={() => downloadReport('excel')}
                 className="h-9 px-4 font-semibold uppercase text-[12px] tracking-widest rounded-full bg-background border-primary/20 text-primary hover:bg-primary/5 transition-all"
@@ -337,11 +337,11 @@ const Reports: React.FC = () => {
                         <div className="flex flex-col items-center gap-1">
                           <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest">{item.attendance_percentage}%</div>
                           <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-                            <div 
+                            <div
                               className={cn(
                                 "h-full rounded-full transition-all duration-1000",
                                 item.attendance_percentage >= 75 ? "bg-green-500" :
-                                item.attendance_percentage >= 50 ? "bg-yellow-500" : "bg-red-500"
+                                  item.attendance_percentage >= 50 ? "bg-yellow-500" : "bg-red-500"
                               )}
                               style={{ width: `${item.attendance_percentage}%` }}
                             />
@@ -349,9 +349,9 @@ const Reports: React.FC = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-right pr-6">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-9 w-9 rounded-full hover:bg-primary/10 hover:text-primary transition-all active:scale-95"
                           title="View Full Report"
                           onClick={() => handleViewAttendance(item)}
@@ -452,7 +452,7 @@ const Reports: React.FC = () => {
               Visual audit for <span className="text-foreground font-semibold">{selectedStaff?.name}</span>
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="p-6 space-y-6">
             {loadingDetails ? (
               <div className="h-72 flex flex-col items-center justify-center gap-4 opacity-50">
@@ -473,19 +473,19 @@ const Reports: React.FC = () => {
                         const rDate = typeof r.date === 'string' ? r.date : format(new Date(r.date), "yyyy-MM-dd");
                         return rDate === dateStr;
                       });
-                      
+
                       const isPresent = record?.status === 'present';
                       // If no record exists or status is explicitly 'absent', treat as absent to match summary logic
                       const isAbsent = record?.status === 'absent' || (!record && !isPresent);
-                      
+
                       return (
-                        <div 
+                        <div
                           key={idx}
                           className={cn(
                             "flex flex-col items-center justify-center p-2.5 rounded-xl border transition-all duration-300 shadow-sm",
                             isPresent ? "bg-green-500/10 border-green-500/30 text-green-700 shadow-green-500/5" :
-                            isAbsent ? "bg-red-500/10 border-red-500/30 text-red-700 shadow-red-500/5" :
-                            "bg-muted/30 border-border/50 text-muted-foreground opacity-30"
+                              isAbsent ? "bg-red-500/10 border-red-500/30 text-red-700 shadow-red-500/5" :
+                                "bg-muted/30 border-border/50 text-muted-foreground opacity-30"
                           )}
                         >
                           <span className={cn(
@@ -506,7 +506,7 @@ const Reports: React.FC = () => {
                     })}
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex items-center gap-3 p-4 rounded-2xl bg-green-500/10 border border-green-500/20">
                     <div className="w-3 h-3 rounded-full bg-green-500" />
@@ -525,8 +525,8 @@ const Reports: React.FC = () => {
                 </div>
               </>
             )}
-            
-            <Button 
+
+            <Button
               className="w-full h-12 rounded-2xl bg-primary text-white hover:bg-primary/90 transition-all font-semibold uppercase text-[12px] tracking-widest shadow-lg shadow-primary/20 active:scale-[0.98]"
               onClick={() => setIsCalendarDialogOpen(false)}
             >

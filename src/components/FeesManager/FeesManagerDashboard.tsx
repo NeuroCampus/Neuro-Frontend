@@ -27,8 +27,8 @@ import {
   AreaChart,
   Area
 } from "recharts";
-import { 
-  getFeesManagerDashboard 
+import {
+  getFeesManagerDashboard
 } from "../../utils/fees_manager_api";
 
 // Sub-components
@@ -84,7 +84,7 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
   const navigate = useNavigate();
   const location = useLocation();
   const { theme } = useTheme();
-  
+
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -184,14 +184,14 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
               <AreaChart data={dashboardData?.trends || []}>
                 <defs>
                   <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={theme === 'dark' ? '#1e293b' : '#f1f5f9'} />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} tickFormatter={(val) => `₹${val/1000}k`} />
-                <Tooltip 
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 12 }} tickFormatter={(val) => `₹${val / 1000}k`} />
+                <Tooltip
                   contentStyle={{ backgroundColor: theme === 'dark' ? '#0f172a' : '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                   itemStyle={{ color: '#3b82f6', fontWeight: 'bold' }}
                 />
@@ -203,18 +203,17 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
 
         {/* Info Card */}
         <div className="space-y-6">
-          <div className={`rounded-lg shadow p-6 overflow-hidden relative min-h-[200px] flex flex-col justify-center border transition-all ${
-            theme === 'dark' 
-              ? 'bg-blue-950/20 border-blue-800/30 text-blue-100' 
+          <div className={`rounded-lg shadow p-6 overflow-hidden relative min-h-[200px] flex flex-col justify-center border transition-all ${theme === 'dark'
+              ? 'bg-blue-950/20 border-blue-800/30 text-blue-100'
               : 'bg-blue-50 border-blue-100 text-blue-900'
-          }`}>
+            }`}>
             <div className={`absolute -right-4 -bottom-4 opacity-10 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-200'}`}>
               <IndianRupee className="w-32 h-32" />
             </div>
             <div className="relative z-10">
               <h4 className="text-lg font-bold mb-2">Need Financial Assistance?</h4>
               <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-blue-200/70' : 'text-blue-700/80'}`}>Generate automated recovery notices for students with overdue balances exceeding ₹10,000.</p>
-              <Button 
+              <Button
                 className="w-full font-bold bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
                 onClick={() => handlePageChange('invoices')}
               >

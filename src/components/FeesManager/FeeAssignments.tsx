@@ -28,11 +28,12 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/context/ThemeContext";
-import { 
-  getFeesManagerFilters, 
-  getFeesManagerSemesters, 
-  getFeesManagerSections, 
-  getFeesManagerStudents, 
+import { showSuccessAlert, showErrorAlert, showInfoAlert } from "../../utils/sweetalert";
+import {
+  getFeesManagerFilters,
+  getFeesManagerSemesters,
+  getFeesManagerSections,
+  getFeesManagerStudents,
   bulkAssignFees,
   getFeeTemplates
 } from "../../utils/fees_manager_api";
@@ -256,11 +257,13 @@ const FeeAssignments: React.FC = () => {
 
       setIsAssignDialogOpen(false);
 
-      // Optimistic Update: Add the template to the students' assigned_templates list locally
+      // Selective Optimistic Update: Only update students who weren't skipped by the backend
       const assignedTemplate = templates.find(t => t.id.toString() === selectedTemplateId);
+      const skippedIds = new Set(result.skipped_student_ids || []);
+
       if (assignedTemplate) {
         setStudents(prev => prev.map(student => {
-          if (selectedStudentIds.has(student.id)) {
+          if (selectedStudentIds.has(student.id) && !skippedIds.has(student.id)) {
             const currentTemplates = (student as any).assigned_templates || [];
             if (!currentTemplates.some((t: any) => t.id === assignedTemplate.id)) {
               return {
@@ -278,9 +281,14 @@ const FeeAssignments: React.FC = () => {
 
       setSelectedStudentIds(new Set());
       setSelectedTemplateId('');
-      alert(result.message || 'Fee templates assigned successfully!');
+      
+      if (result.created_count > 0) {
+        showSuccessAlert('Success!', result.message || 'Fee templates assigned successfully!');
+      } else {
+        showInfoAlert('No Changes Made', result.message || 'All selected students already have an assignment for this year.');
+      }
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Assignment failed');
+      showErrorAlert('Error', err instanceof Error ? err.message : 'Assignment failed');
     } finally {
       setIsConfirming(false);
     }

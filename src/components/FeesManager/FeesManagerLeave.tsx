@@ -14,9 +14,9 @@ import { useTheme } from '@/context/ThemeContext';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import { Circle, CalendarCheck2, CalendarX2 } from 'lucide-react';
-import { 
-  getFeesManagerLeaves, 
-  applyFeesManagerLeave 
+import {
+  getFeesManagerLeaves,
+  applyFeesManagerLeave
 } from "../../utils/fees_manager_api";
 
 const MySwal = withReactContent(Swal);
@@ -310,13 +310,12 @@ const FeesManagerLeave = () => {
                       </div>
                       <div className="flex flex-col items-end gap-2">
                         <span
-                          className={`text-xs font-medium px-2 py-0.5 rounded-full border-none ${
-                            leave.status === 'APPROVED'
+                          className={`text-xs font-medium px-2 py-0.5 rounded-full border-none ${leave.status === 'APPROVED'
                               ? 'text-green-700 bg-green-100'
                               : leave.status === 'REJECTED'
-                              ? 'text-red-700 bg-red-100'
-                              : 'text-yellow-700 bg-yellow-100'
-                          }`}
+                                ? 'text-red-700 bg-red-100'
+                                : 'text-yellow-700 bg-yellow-100'
+                            }`}
                         >
                           {leave.status.charAt(0) + leave.status.slice(1).toLowerCase()}
                         </span>

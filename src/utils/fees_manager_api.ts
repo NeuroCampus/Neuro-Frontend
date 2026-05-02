@@ -131,6 +131,7 @@ export const createFeeComponent = async (data: any) => {
   try {
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/components/`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
     return await response.json();
@@ -144,6 +145,7 @@ export const updateFeeComponent = async (id: number, data: any) => {
   try {
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/components/${id}/`, {
       method: "PUT",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
     return await response.json();
@@ -183,6 +185,7 @@ export const createFeeTemplate = async (data: any) => {
   try {
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/fee-templates/`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
     return await response.json();
@@ -196,6 +199,7 @@ export const updateFeeTemplate = async (id: number, data: any) => {
   try {
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/templates/${id}/`, {
       method: "PUT",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
     return await response.json();
@@ -249,6 +253,7 @@ export const bulkAssignFees = async (data: any) => {
   try {
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/bulk-assignments/`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
     return await response.json();
@@ -327,6 +332,7 @@ export const recordPayment = async (data: any) => {
   try {
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/payments/record/`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
     return await response.json();
@@ -353,6 +359,7 @@ export const refundPayment = async (id: number, data: any) => {
   try {
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/payments/${id}/refund/`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
     return await response.json();
@@ -447,6 +454,7 @@ export const applyFeesManagerLeave = async (data: any) => {
   try {
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/leaves/apply/`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
     return await response.json();
@@ -604,6 +612,7 @@ export const updateFeesManagerProfile = async (data: any) => {
   try {
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/profile/update/`, {
       method: "PUT",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
     return await response.json();
@@ -617,6 +626,7 @@ export const changeFeesManagerPassword = async (data: any) => {
   try {
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/profile/change-password/`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
     return await response.json();

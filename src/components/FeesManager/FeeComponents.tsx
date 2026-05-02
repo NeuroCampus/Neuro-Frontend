@@ -22,11 +22,11 @@ import {
 import { useTheme } from '@/context/ThemeContext'; // Added theme context import
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import { 
-  getFeeComponents, 
-  createFeeComponent, 
-  updateFeeComponent, 
-  deleteFeeComponent 
+import {
+  getFeeComponents,
+  createFeeComponent,
+  updateFeeComponent,
+  deleteFeeComponent
 } from "../../utils/fees_manager_api";
 
 interface FeeComponent {
@@ -116,7 +116,7 @@ const FeeComponents: React.FC = () => {
       };
       setComponents(prev => [item, ...prev]);
       setComponentsTotalCount(c => c + 1);
-      try { window.dispatchEvent(new CustomEvent('feeComponents:changed', { detail: { action: 'create', item } })); } catch (e) {}
+      try { window.dispatchEvent(new CustomEvent('feeComponents:changed', { detail: { action: 'create', item } })); } catch (e) { }
       setIsCreateDialogOpen(false);
       resetForm();
     } catch (err) {
@@ -154,7 +154,7 @@ const FeeComponents: React.FC = () => {
       };
       setComponents(prev => prev.map(c => (c.id === item.id ? item : c)));
       // no change in total count for updates
-      try { window.dispatchEvent(new CustomEvent('feeComponents:changed', { detail: { action: 'update', item } })); } catch (e) {}
+      try { window.dispatchEvent(new CustomEvent('feeComponents:changed', { detail: { action: 'update', item } })); } catch (e) { }
       setIsCreateDialogOpen(false);
       resetForm();
     } catch (err) {
@@ -198,7 +198,7 @@ const FeeComponents: React.FC = () => {
         background: currentTheme === 'dark' ? '#1c1c1e' : '#ffffff',
         color: currentTheme === 'dark' ? '#ffffff' : '#000000',
       });
-      try { window.dispatchEvent(new CustomEvent('feeComponents:changed', { detail: { action: 'delete', id: componentId } })); } catch (e) {}
+      try { window.dispatchEvent(new CustomEvent('feeComponents:changed', { detail: { action: 'delete', id: componentId } })); } catch (e) { }
     } catch (err) {
       await MySwal.fire({
         title: 'Error!',
@@ -249,7 +249,7 @@ const FeeComponents: React.FC = () => {
 
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button 
+              <Button
                 onClick={() => {
                   resetForm();
                   setIsCreateDialogOpen(true);
@@ -299,15 +299,15 @@ const FeeComponents: React.FC = () => {
                   />
                 </div>
                 <div className="flex justify-end gap-3 pt-4 max-[480px]:flex-col">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => setIsCreateDialogOpen(false)}
                     className="border-gray-300 text-gray-700 hover:bg-gray-100 max-[480px]:min-h-10 max-[480px]:w-full"
                   >
                     <X className="h-4 w-4 mr-2" />
                     Cancel
                   </Button>
-                  <Button 
+                  <Button
                     onClick={editingComponent ? handleUpdateComponent : handleCreateComponent}
                     className="bg-primary hover:bg-primary/90 text-white max-[480px]:min-h-10 max-[480px]:w-full"
                   >
@@ -333,8 +333,8 @@ const FeeComponents: React.FC = () => {
               </TableHeader>
               <TableBody>
                 {components.map((component) => (
-                  <TableRow 
-                    key={component.id} 
+                  <TableRow
+                    key={component.id}
                     className={theme === 'dark' ? 'border-border' : 'border-gray-200'}
                   >
                     <TableCell className="font-medium">{component.name}</TableCell>
