@@ -509,6 +509,18 @@ export const sendFeeReminder = async (studentId: number) => {
   }
 };
 
+export const bulkSendReminders = async () => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/bulk-reminders/`, {
+      method: "POST",
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Bulk Send Reminders Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
 // Staff Attendance Reports
 export const getStaffAttendanceAudit = async (role: string, startDate: string, endDate: string, page: number = 1, format?: string) => {
   try {

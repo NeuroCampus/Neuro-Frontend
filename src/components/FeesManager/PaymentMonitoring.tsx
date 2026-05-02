@@ -25,7 +25,8 @@ import {
   Download,
   LayoutGrid,
   FileText,
-  Users
+  Users,
+  Mail
 } from 'lucide-react';
 import DashboardCard from '@/components/common/DashboardCard';
 import { useTheme } from '@/context/ThemeContext';
@@ -35,7 +36,8 @@ import {
   getPaymentStats,
   getPaymentDetails as getPaymentDetailsApi,
   processRefund as processRefundApi,
-  downloadReceipt as downloadReceiptApi
+  downloadReceipt as downloadReceiptApi,
+  bulkSendReminders
 } from "../../utils/fees_manager_api";
 
 interface Payment {
@@ -87,6 +89,8 @@ const PaymentMonitoring: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [isDetailLoading, setIsDetailLoading] = useState(false);
+  const [notifying, setNotifying] = useState(false);
+  const [hasNotified, setHasNotified] = useState(false);
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -107,6 +111,7 @@ const PaymentMonitoring: React.FC = () => {
 
   useEffect(() => {
     fetchData();
+    setHasNotified(false); // Reset notified state when filters change
   }, [currentPage, statusFilter, methodFilter, dateRange]);
 
   // Debounced search
@@ -280,6 +285,34 @@ const PaymentMonitoring: React.FC = () => {
   // Server-side filtering is now used, so we just return the payments
   const displayPayments = payments;
 
+  const handleBulkNotify = async () => {
+    const confirmed = await showConfirmAlert(
+      'Send Bulk Reminders?',
+      'This will send fee reminder emails to all students with pending invoices. Continue?',
+      'Yes, send now'
+    );
+    
+    if (!confirmed.isConfirmed) return;
+    
+    setNotifying(true);
+    try {
+      const response = await bulkSendReminders();
+      if (response.success) {
+        showSuccessAlert(
+          'Notifications Sent!', 
+          `Successfully sent reminders to ${response.data.sent_count} students.`
+        );
+        setHasNotified(true);
+      } else {
+        setError(response.message || 'Failed to send bulk reminders');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send bulk reminders');
+    } finally {
+      setNotifying(false);
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -418,14 +451,45 @@ const PaymentMonitoring: React.FC = () => {
               </div>
             </div>
 
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by student name, USN, invoice number, or transaction ID..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-11 bg-background border-border/50 shadow-sm transition-all focus:ring-2 focus:ring-primary/20"
-              />
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by student name, USN, invoice number, or transaction ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 h-11 bg-background border-border/50 shadow-sm transition-all focus:ring-2 focus:ring-primary/20"
+                />
+              </div>
+              
+              {statusFilter === 'pending' && (
+                <Button 
+                  onClick={handleBulkNotify}
+                  disabled={notifying || hasNotified}
+                  className={`h-11 px-6 shadow-lg rounded-xl transition-all active:scale-95 flex items-center gap-2 font-semibold ${
+                    hasNotified 
+                      ? "bg-green-600 hover:bg-green-700 text-white shadow-green-200/50" 
+                      : "bg-orange-600 hover:bg-orange-700 text-white shadow-orange-200/50"
+                  }`}
+                >
+                  {notifying ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : hasNotified ? (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      Reminders Sent
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="w-4 h-4" />
+                      Notify All Pending
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
 

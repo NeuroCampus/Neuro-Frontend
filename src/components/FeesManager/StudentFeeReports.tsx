@@ -41,6 +41,7 @@ import {
   Section,
   sendFeeReminder
 } from '../../utils/fees_manager_api';
+import { showSuccessAlert, showErrorAlert } from '../../utils/sweetalert';
 
 const StudentFeeReports: React.FC = () => {
   // State for individual student search
@@ -48,7 +49,6 @@ const StudentFeeReports: React.FC = () => {
   const [usn, setUsn] = useState('');
   const [studentReport, setStudentReport] = useState<StudentFeeReport | null>(null);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [searchError, setSearchError] = useState('');
 
   // State for bulk filtering
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -76,7 +76,6 @@ const StudentFeeReports: React.FC = () => {
   // UI state
   const [activeTab, setActiveTab] = useState('individual');
   const [sendingReminder, setSendingReminder] = useState(false);
-  const [reminderMessage, setReminderMessage] = useState('');
 
   // Load filters when bulk tab is selected
   useEffect(() => {
@@ -161,12 +160,11 @@ const StudentFeeReports: React.FC = () => {
     const searchTermStr = typeof termToSearch === 'string' ? termToSearch : String(termToSearch);
 
     if (!searchTermStr.trim()) {
-      setSearchError('Please enter a USN or student name');
+      showErrorAlert('Input Required', 'Please enter a USN or student name');
       return;
     }
 
     setSearchLoading(true);
-    setSearchError('');
     setStudentReport(null);
 
     const response = await getStudentFeeReport(searchTermStr.trim());
@@ -179,7 +177,7 @@ const StudentFeeReports: React.FC = () => {
         setSearchTerm(searchTermStr.trim());
       }
     } else {
-      setSearchError(response.message || 'Student not found');
+      showErrorAlert('Search Failed', response.message || 'Student not found');
     }
   };
 
@@ -224,19 +222,18 @@ const StudentFeeReports: React.FC = () => {
 
   const handleSendReminder = async (studentId: number, studentName: string) => {
     setSendingReminder(true);
-    setReminderMessage('');
 
-    const response = await sendFeeReminder(studentId);
-
-    setSendingReminder(false);
-
-    if (response.success) {
-      setReminderMessage(`Fee reminder sent successfully to ${studentName}`);
-      // Clear message after 5 seconds
-      setTimeout(() => setReminderMessage(''), 5000);
-    } else {
-      setReminderMessage(`Failed to send reminder: ${response.message}`);
-      setTimeout(() => setReminderMessage(''), 5000);
+    try {
+      const response = await sendFeeReminder(studentId);
+      if (response.success) {
+        showSuccessAlert('Success', `Fee reminder sent successfully to ${studentName}`);
+      } else {
+        showErrorAlert('Failed', response.message || `Failed to send reminder to ${studentName}`);
+      }
+    } catch (error) {
+      showErrorAlert('Error', 'An unexpected error occurred while sending the reminder.');
+    } finally {
+      setSendingReminder(false);
     }
   };
 
@@ -305,12 +302,7 @@ const StudentFeeReports: React.FC = () => {
                 </div>
               </div>
 
-              {searchError && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{searchError}</AlertDescription>
-                </Alert>
-              )}
+              {/* Search Error Handled by SweetAlert */}
             </CardContent>
           </Card>
 
@@ -451,13 +443,7 @@ const StudentFeeReports: React.FC = () => {
                   </Card>
                 )}
 
-                {/* Reminder Message */}
-                {reminderMessage && (
-                  <Alert className="bg-green-50 border-green-200">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <AlertDescription className="text-green-800">{reminderMessage}</AlertDescription>
-                  </Alert>
-                )}
+
 
                 {/* Semester-wise Breakdown */}
                 {studentReport.semester_wise_breakdown && studentReport.semester_wise_breakdown.length > 0 && (
