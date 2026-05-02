@@ -33,7 +33,6 @@ import {
   getStudentFeeReport,
   getStudentsFeeReports,
   getFeesManagerFilters,
-  getFeesManagerBranches,
   getFeesManagerSemesters,
   getFeesManagerSections,
   StudentFeeReport,

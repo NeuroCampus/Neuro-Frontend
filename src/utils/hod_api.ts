@@ -16,6 +16,7 @@ interface HODStatsResponse {
       end_date: string;
       attendance_percentage: number;
     }>;
+    unread_announcement_count?: number;
   };
 }
 

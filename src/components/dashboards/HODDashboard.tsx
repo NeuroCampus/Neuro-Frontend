@@ -151,29 +151,6 @@ const HODDashboard = ({ user, setPage }: HODDashboardProps) => {
     setActivePage(getActivePageFromPath(location.pathname));
   }, [location.pathname]);
 
-  // Fetch combined profile + semesters + sections once
-  useEffect(() => {
-    const fetchBootstrap = async () => {
-      try {
-        const res = await getHODDashboardBootstrap(['profile', 'semesters', 'sections']);
-        if (res.success && res.data) {
-          setBootstrap({
-            branch_id: res.data.profile?.branch_id,
-            semesters: res.data.semesters || [],
-            sections: res.data.sections || [],
-          });
-        }
-      } catch (err) {
-        console.error("Failed to fetch bootstrap data:", err);
-      }
-    };
-    fetchBootstrap();
-  }, []);
-
-  const handleBootstrapData = (data: BootstrapData) => {
-    setBootstrap(data);
-  };
-
   useEffect(() => {
     if (error) {
       const timer = setTimeout(() => setError(null), 5000);

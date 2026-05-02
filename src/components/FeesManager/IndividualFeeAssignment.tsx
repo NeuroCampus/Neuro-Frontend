@@ -20,6 +20,13 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/context/ThemeContext";
+import { 
+  getFeesManagerFilters, 
+  getFeesManagerSemesters, 
+  getFeesManagerSections, 
+  getFeesManagerAssignments, 
+  deleteFeeAssignment 
+} from "../../utils/fees_manager_api";
 
 interface Assignment {
   id: number;
@@ -82,13 +89,8 @@ const IndividualFeeAssignment: React.FC = () => {
   // Fetch initial filters
   const fetchInitialFilters = useCallback(async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const filterRes = await fetch('http://127.0.0.1:8000/api/fees-manager/filters/', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (!filterRes.ok) throw new Error('Failed to fetch initial data');
-      const filterJson = await filterRes.json();
+      const filterJson = await getFeesManagerFilters();
+      if (!filterJson.success) throw new Error(filterJson.message || 'Failed to fetch initial data');
       setFilterData(filterJson.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -105,13 +107,9 @@ const IndividualFeeAssignment: React.FC = () => {
 
     const fetchSemesters = async () => {
       try {
-        const token = localStorage.getItem('access_token');
-        const res = await fetch(`http://127.0.0.1:8000/api/fees-manager/semesters/?branch_id=${selectedFilters.branchId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setSemesters(data.data || []);
+        const res = await getFeesManagerSemesters(selectedFilters.branchId);
+        if (res.success) {
+          setSemesters(res.data || []);
         }
       } catch (err) {
         console.error("Error fetching semesters:", err);
@@ -130,13 +128,9 @@ const IndividualFeeAssignment: React.FC = () => {
 
     const fetchSections = async () => {
       try {
-        const token = localStorage.getItem('access_token');
-        const res = await fetch(`http://127.0.0.1:8000/api/fees-manager/sections/?branch_id=${selectedFilters.branchId}&semester_id=${selectedFilters.semesterId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setSections(data.data || []);
+        const res = await getFeesManagerSections(selectedFilters.branchId, selectedFilters.semesterId);
+        if (res.success) {
+          setSections(res.data || []);
         }
       } catch (err) {
         console.error("Error fetching sections:", err);
@@ -149,8 +143,7 @@ const IndividualFeeAssignment: React.FC = () => {
   const fetchAssignments = useCallback(async (page: number = 1) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('access_token');
-      const params = new URLSearchParams({
+      const params = {
         page: page.toString(),
         page_size: pagination.pageSize.toString(),
         ...(selectedFilters.batchId && { batch_id: selectedFilters.batchId }),
@@ -159,15 +152,12 @@ const IndividualFeeAssignment: React.FC = () => {
         ...(selectedFilters.sectionId && { section_id: selectedFilters.sectionId }),
         ...(selectedFilters.admissionMode && { admission_mode: selectedFilters.admissionMode }),
         ...(selectedFilters.search && { search: selectedFilters.search })
-      });
+      };
 
-      const res = await fetch(`http://127.0.0.1:8000/api/fees-manager/assignments/?${params}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const json = await getFeesManagerAssignments(params);
 
-      if (!res.ok) throw new Error('Failed to fetch assignments');
+      if (!json.success) throw new Error(json.message || 'Failed to fetch assignments');
 
-      const json = await res.json();
       setAssignments(json.data.assignments || []);
       setPagination(prev => ({
         ...prev,
@@ -217,15 +207,10 @@ const IndividualFeeAssignment: React.FC = () => {
     if (!confirm('Are you sure you want to delete this fee assignment? This will also remove the associated unpaid invoice.')) return;
     
     try {
-      const token = localStorage.getItem('access_token');
-      const res = await fetch(`http://127.0.0.1:8000/api/fees-manager/assignments/${id}/`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await deleteFeeAssignment(id);
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || 'Failed to delete assignment');
+      if (!res.success) {
+        throw new Error(res.message || 'Failed to delete assignment');
       }
 
       // Update local state instead of re-fetching

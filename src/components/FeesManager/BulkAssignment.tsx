@@ -24,6 +24,14 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/context/ThemeContext";
+import { 
+  getFeesManagerFilters, 
+  getFeeTemplates, 
+  getFeesManagerSemesters, 
+  getFeesManagerSections, 
+  getFeesManagerStudents, 
+  bulkAssignFees 
+} from "../../utils/fees_manager_api";
 
 interface FilterData {
   batches: { id: number; name: string }[];
@@ -68,23 +76,16 @@ const BulkAssignment: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem('access_token');
-        const [filterRes, templateRes] = await Promise.all([
-          fetch('http://127.0.0.1:8000/api/fees-manager/filters/', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          }),
-          fetch('http://127.0.0.1:8000/api/fees-manager/fee-templates/?page=1&page_size=200', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          })
+        const [filterJson, templateJson] = await Promise.all([
+          getFeesManagerFilters(),
+          getFeeTemplates(1, 200)
         ]);
 
-        if (filterRes.ok) {
-          const data = await filterRes.json();
-          setFilterData(data.data);
+        if (filterJson.success) {
+          setFilterData(filterJson.data);
         }
-        if (templateRes.ok) {
-          const data = await templateRes.json();
-          setTemplates(data.data || []);
+        if (templateJson.success) {
+          setTemplates(templateJson.data || []);
         }
       } catch (err) {
         console.error("Error fetching initial data:", err);
@@ -103,13 +104,9 @@ const BulkAssignment: React.FC = () => {
 
     const fetchSemesters = async () => {
       try {
-        const token = localStorage.getItem('access_token');
-        const res = await fetch(`http://127.0.0.1:8000/api/fees-manager/semesters/?branch_id=${selectedFilters.branchId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setSemesters(data.data || []);
+        const res = await getFeesManagerSemesters(selectedFilters.branchId);
+        if (res.success) {
+          setSemesters(res.data || []);
         }
       } catch (err) {
         console.error("Error fetching semesters:", err);
@@ -128,13 +125,9 @@ const BulkAssignment: React.FC = () => {
 
     const fetchSections = async () => {
       try {
-        const token = localStorage.getItem('access_token');
-        const res = await fetch(`http://127.0.0.1:8000/api/fees-manager/sections/?branch_id=${selectedFilters.branchId}&semester_id=${selectedFilters.semesterId}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setSections(data.data || []);
+        const res = await getFeesManagerSections(selectedFilters.branchId, selectedFilters.semesterId);
+        if (res.success) {
+          setSections(res.data || []);
         }
       } catch (err) {
         console.error("Error fetching sections:", err);
@@ -160,8 +153,7 @@ const BulkAssignment: React.FC = () => {
     const fetchCount = async () => {
       try {
         setFetchingStats(true);
-        const token = localStorage.getItem('access_token');
-        const params = new URLSearchParams({
+        const params = {
           page: '1',
           page_size: '1',
           ...(selectedFilters.batchId && { batch_id: selectedFilters.batchId }),
@@ -169,14 +161,11 @@ const BulkAssignment: React.FC = () => {
           ...(selectedFilters.semesterId && { semester_id: selectedFilters.semesterId }),
           ...(selectedFilters.sectionId && { section_id: selectedFilters.sectionId }),
           ...(selectedFilters.admissionMode && { admission_mode: selectedFilters.admissionMode }),
-        });
+        };
 
-        const res = await fetch(`http://127.0.0.1:8000/api/fees-manager/students/?${params}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const json = await getFeesManagerStudents(params);
 
-        if (res.ok) {
-          const json = await res.json();
+        if (json.success) {
           setStudentCount(json.data.meta?.count || 0);
         }
       } catch (err) {
@@ -202,32 +191,22 @@ const BulkAssignment: React.FC = () => {
       setError(null);
       setSuccess(null);
       
-      const token = localStorage.getItem('access_token');
-      const response = await fetch('http://127.0.0.1:8000/api/fees-manager/bulk-assignments/', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+      const result = await bulkAssignFees({
+        filters: {
+          batch_id: selectedFilters.batchId,
+          branch_id: selectedFilters.branchId,
+          semester_id: selectedFilters.semesterId,
+          section_id: selectedFilters.sectionId,
+          admission_mode: selectedFilters.admissionMode
         },
-        body: JSON.stringify({
-          filters: {
-            batch_id: selectedFilters.batchId,
-            branch_id: selectedFilters.branchId,
-            semester_id: selectedFilters.semesterId,
-            section_id: selectedFilters.sectionId,
-            admission_mode: selectedFilters.admissionMode
-          },
-          template_id: parseInt(selectedTemplate),
-          academic_year: academicYear
-        }),
+        template_id: parseInt(selectedTemplate),
+        academic_year: academicYear
       });
 
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.message || 'Bulk assignment failed');
+      if (!result.success) {
+        throw new Error(result.message || 'Bulk assignment failed');
       }
 
-      const result = await response.json();
       setSuccess({
         created: result.data.created_count,
         skipped: result.data.skipped_count

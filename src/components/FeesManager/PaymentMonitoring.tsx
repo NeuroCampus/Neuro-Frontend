@@ -29,6 +29,13 @@ import {
 } from 'lucide-react';
 import DashboardCard from '@/components/common/DashboardCard';
 import { useTheme } from '@/context/ThemeContext';
+import { 
+  getPayments, 
+  getPaymentStats, 
+  getPaymentDetails as getPaymentDetailsApi, 
+  processRefund as processRefundApi, 
+  downloadReceipt as downloadReceiptApi 
+} from "../../utils/fees_manager_api";
 
 interface Payment {
   id: number;
@@ -103,11 +110,14 @@ const PaymentMonitoring: React.FC = () => {
 
   // Debounced search
   useEffect(() => {
+    // Skip the first render if searchTerm is empty to avoid duplicate calls on mount
     const timer = setTimeout(() => {
-      if (currentPage === 1) {
-        fetchData();
-      } else {
-        setCurrentPage(1); // This will trigger the above useEffect
+      if (searchTerm) {
+        if (currentPage === 1) {
+          fetchData();
+        } else {
+          setCurrentPage(1);
+        }
       }
     }, 500);
     return () => clearTimeout(timer);
@@ -116,34 +126,24 @@ const PaymentMonitoring: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('access_token');
 
-      const params = new URLSearchParams({
+      const params = {
         page: currentPage.toString(),
         ...(searchTerm && { search: searchTerm }),
         ...(statusFilter !== 'all' && { status: statusFilter }),
         ...(methodFilter !== 'all' && { mode: methodFilter }),
         ...(dateRange !== 'all' && { date_range: dateRange }),
-      });
+      };
 
       // Fetch payments and stats in parallel
-      const [paymentsRes, statsRes] = await Promise.all([
-        fetch(`http://127.0.0.1:8000/api/fees-manager/payments/?${params}`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }),
-        fetch(`http://127.0.0.1:8000/api/fees-manager/payment-stats/?${params}`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }),
+      const [paymentsJson, statsJson] = await Promise.all([
+        getPayments(params),
+        getPaymentStats(params)
       ]);
 
-      if (!paymentsRes.ok || !statsRes.ok) {
+      if (!paymentsJson.success || !statsJson.success) {
         throw new Error('Failed to fetch payment data');
       }
-
-      const [paymentsData, statsData] = await Promise.all([
-        paymentsRes.json(),
-        statsRes.json(),
-      ]);
 
       // Normalize monetary fields from cents when present
       const normalize = (p: any) => ({
@@ -155,10 +155,10 @@ const PaymentMonitoring: React.FC = () => {
         updated_at: p.updated_at ?? p.timestamp ?? null,
       });
 
-      const normalizedPayments = (paymentsData.data || []).map((p: any) => normalize(p));
-      setMeta(paymentsData.meta || null);
+      const normalizedPayments = (paymentsJson.data || []).map((p: any) => normalize(p));
+      setMeta(paymentsJson.meta || null);
 
-      const s = statsData.data || {};
+      const s = statsJson.data || {};
       const normalizedStats = {
         ...s,
         total_amount: toRupees(s.total_amount_cents ?? s.total_amount),
@@ -185,24 +185,13 @@ const PaymentMonitoring: React.FC = () => {
     setIsDetailsDialogOpen(true);
     try {
       console.debug('fetchPaymentDetails called for', paymentId);
-      const token = localStorage.getItem('access_token');
+      const json = await getPaymentDetailsApi(paymentId);
 
-      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/payments/${paymentId}/`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        const text = await response.text();
-        console.error('Failed to fetch payment details', response.status, text);
-        throw new Error(`Failed to fetch payment details: ${response.status}`);
+      if (!json.success) {
+        throw new Error(json.message || 'Failed to fetch payment details');
       }
 
-      const rawText = await response.text();
-      console.debug('payment detail raw response text:', rawText);
-      let data = null;
-      try { data = rawText ? JSON.parse(rawText) : null; } catch (e) { data = null; }
-      // Normalize detail response to match UI expectations
-      const p = (data && data.data) ? data.data : (data ?? {});
+      const p = json.data || {};
       const normalized = {
         ...p,
         amount: toRupees(p.amount_cents ?? p.amount),
@@ -246,16 +235,10 @@ const PaymentMonitoring: React.FC = () => {
     if (!confirm('Are you sure you want to process a refund for this payment?')) return;
 
     try {
-      const token = localStorage.getItem('access_token');
+      const result = await processRefundApi(paymentId);
 
-      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/payments/${paymentId}/refund/`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to process refund');
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to process refund');
       }
 
       await fetchData();
@@ -267,17 +250,13 @@ const PaymentMonitoring: React.FC = () => {
 
   const downloadReceipt = async (paymentId: number) => {
     try {
-      const token = localStorage.getItem('access_token');
+      const response = await downloadReceiptApi(paymentId);
 
-      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/payments/${paymentId}/receipt/`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to download receipt');
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to download receipt');
       }
 
-      const blob = await response.blob();
+      const blob = response.data;
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

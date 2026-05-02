@@ -178,8 +178,15 @@ const ExamScheduling: React.FC = () => {
     setLoading(true);
     try {
       const res = await deleteExam(id);
-      if (res.success) loadData();
-      else setError(res.message || "Failed to delete");
+      if (res.success) {
+        setExams(prev => prev.filter(ex => ex.id !== id));
+        setPagination(prev => ({
+          ...prev,
+          totalItems: prev.totalItems - 1
+        }));
+      } else {
+        setError(res.message || "Failed to delete");
+      }
     } catch (e: any) {
       setError(e.message || "Error occurred");
     } finally {

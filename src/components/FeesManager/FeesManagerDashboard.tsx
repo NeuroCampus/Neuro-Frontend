@@ -27,7 +27,9 @@ import {
   AreaChart,
   Area
 } from "recharts";
-import { API_ENDPOINT } from '../../utils/config';
+import { 
+  getFeesManagerDashboard 
+} from "../../utils/fees_manager_api";
 
 // Sub-components
 import FeeTemplates from './FeeTemplates';
@@ -103,24 +105,18 @@ const FeesManagerDashboard: React.FC<FeesManagerDashboardProps> = ({ user, setPa
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`${API_ENDPOINT}/fees-manager/dashboard/`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const res = await getFeesManagerDashboard();
 
-      if (response.status === 401) {
-        localStorage.clear();
-        setPage("login");
-        return;
+      if (!res.success) {
+        if (res.message?.includes('401') || res.status === 401) {
+          localStorage.clear();
+          setPage("login");
+          return;
+        }
+        throw new Error(res.message || 'Failed to fetch dashboard data');
       }
 
-      if (!response.ok) throw new Error('Failed to fetch dashboard data');
-
-      const data = await response.json();
-      setDashboardData(data.data);
+      setDashboardData(res.data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

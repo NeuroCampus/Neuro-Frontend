@@ -149,10 +149,9 @@ const DeanExams: React.FC = () => {
       const res = await fetchWithTokenRefresh(`${API_ENDPOINT}/dean/reports/exams/${id}/publish/`, { method: 'POST' });
       const json = await res.json();
       if (json.success) {
-        alert('Published');
-        load();
+        setExams(prev => prev.map(ex => ex.id === id ? { ...ex, is_published: true } : ex));
       } else {
-        alert(json.message || 'Failed');
+        alert(json.message || 'Failed to publish');
       }
     } catch (e: any) {
       alert(e?.message || 'Network error');

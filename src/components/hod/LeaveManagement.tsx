@@ -254,20 +254,6 @@ const LeaveManagement = () => {
     });
   };
 
-  // Fetch all data using combined endpoint
-  useEffect(() => {
-    const fetchData = async () => {
-      // Prevent duplicate API calls (handles React StrictMode double execution)
-      if (hasFetchedRef.current) {
-        return;
-      }
-      hasFetchedRef.current = true;
-
-      await fetchLeaveRequests(1);
-    };
-    fetchData();
-  }, []);
-
   // Handle search changes - real-time search (only after initial load)
   useEffect(() => {
     if (initialLoadRef.current) return; // Don't search on initial load
@@ -281,18 +267,23 @@ const LeaveManagement = () => {
     return () => clearTimeout(timeoutId);
   }, [search]);
 
-  // Mark initial load as complete after first render
+  // Combined effect for initial load and filter changes
   useEffect(() => {
-    initialLoadRef.current = false;
-  }, []);
+    const performFetch = async () => {
+      if (initialLoadRef.current) {
+        // Handle initial mount
+        if (hasFetchedRef.current) return;
+        hasFetchedRef.current = true;
+        await fetchLeaveRequests(1);
+        initialLoadRef.current = false;
+      } else {
+        // Handle subsequent filter changes
+        setCurrentPage(1);
+        fetchLeaveRequests(1);
+      }
+    };
 
-  // Handle filter changes
-  useEffect(() => {
-    if (initialLoadRef.current) return; // Don't filter on initial load
-    
-    isSilentOperationRef.current = true;
-    setCurrentPage(1);
-    fetchLeaveRequests(1);
+    performFetch();
   }, [filterStatus, dateFrom, dateTo]);
 
   const handlePageChange = (page: number) => {

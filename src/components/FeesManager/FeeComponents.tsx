@@ -22,6 +22,12 @@ import {
 import { useTheme } from '@/context/ThemeContext'; // Added theme context import
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { 
+  getFeeComponents, 
+  createFeeComponent, 
+  updateFeeComponent, 
+  deleteFeeComponent 
+} from "../../utils/fees_manager_api";
 
 interface FeeComponent {
   id: number;
@@ -59,19 +65,12 @@ const FeeComponents: React.FC = () => {
   const fetchComponents = async (page: number = componentsPage) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/components/?page=${page}&page_size=${componentsPageSize}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const data = await getFeeComponents(page, componentsPageSize);
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch fee components');
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to fetch fee components');
       }
 
-      const data = await response.json();
       const items = (data.data || []).map((it: any) => ({
         ...it,
         amount: (it.amount_cents != null ? Number(it.amount_cents) : (it.amount ? Math.round(it.amount * 100) : 0)) / 100,
@@ -79,7 +78,7 @@ const FeeComponents: React.FC = () => {
       setComponents(items);
       const meta = data.meta || {};
       setComponentsPage(meta.page || page);
-      setComponentsTotalPages(meta.total_pages || Math.max(1, Math.ceil((meta.count || 0) / componentsPageSize)));
+      setComponentsTotalPages(meta.totalPages || Math.max(1, Math.ceil((meta.count || 0) / componentsPageSize)));
       setComponentsTotalCount(meta.count || (data.data || []).length);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -99,29 +98,17 @@ const FeeComponents: React.FC = () => {
     if (!componentName.trim() || !componentAmount) return;
 
     try {
-      const token = localStorage.getItem('access_token');
       const componentData = {
         name: componentName.trim(),
         amount_cents_write: Math.round(parseFloat(componentAmount) * 100),
         description: componentDescription.trim() || undefined,
       };
 
-      const response = await fetch('http://127.0.0.1:8000/api/fees-manager/components/', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(componentData),
-      });
+      const resp = await createFeeComponent(componentData);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create fee component');
+      if (!resp.success) {
+        throw new Error(resp.message || 'Failed to create fee component');
       }
-
-      // Update local state from response to avoid extra GET
-      const resp = await response.json();
       const created = resp.data;
       const item = {
         ...created,
@@ -149,28 +136,17 @@ const FeeComponents: React.FC = () => {
     if (!editingComponent || !componentName.trim() || !componentAmount) return;
 
     try {
-      const token = localStorage.getItem('access_token');
       const componentData = {
         name: componentName.trim(),
         amount_cents_write: Math.round(parseFloat(componentAmount) * 100),
         description: componentDescription.trim() || undefined,
       };
 
-      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/components/${editingComponent.id}/`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(componentData),
-      });
+      const resp = await updateFeeComponent(editingComponent.id, componentData);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update fee component');
+      if (!resp.success) {
+        throw new Error(resp.message || 'Failed to update fee component');
       }
-
-      const resp = await response.json();
       const updated = resp.data;
       const item = {
         ...updated,
@@ -204,16 +180,10 @@ const FeeComponents: React.FC = () => {
     if (!result.isConfirmed) return;
 
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://127.0.0.1:8000/api/fees-manager/components/${componentId}/`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const response = await deleteFeeComponent(componentId);
 
-      if (!response.ok) {
-        throw new Error('Failed to delete fee component');
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to delete fee component');
       }
 
       // Remove locally without refetch

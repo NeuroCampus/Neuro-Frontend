@@ -114,15 +114,353 @@ export interface Section {
 }
 
 // API Functions
+// Fee Components
+export const getFeeComponents = async (page: number = 1, pageSize: number = 25) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/components/?page=${page}&page_size=${pageSize}`, {
+      method: "GET",
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Fee Components Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const createFeeComponent = async (data: any) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/components/`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Create Fee Component Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const updateFeeComponent = async (id: number, data: any) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/components/${id}/`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Update Fee Component Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const deleteFeeComponent = async (id: number) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/components/${id}/`, {
+      method: "DELETE",
+    });
+    if (response.ok) return { success: true };
+    return await response.json();
+  } catch (error) {
+    console.error("Delete Fee Component Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+// Fee Templates
+export const getFeeTemplates = async (page: number = 1, pageSize: number = 25) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/fee-templates/?page=${page}&page_size=${pageSize}`, {
+      method: "GET",
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Fee Templates Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const createFeeTemplate = async (data: any) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/fee-templates/`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Create Fee Template Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const updateFeeTemplate = async (id: number, data: any) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/templates/${id}/`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Update Fee Template Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const deleteFeeTemplate = async (id: number) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/templates/${id}/`, {
+      method: "DELETE",
+    });
+    if (response.ok) return { success: true };
+    return await response.json();
+  } catch (error) {
+    console.error("Delete Fee Template Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+// Fee Assignments
+export const getFeesManagerAssignments = async (params: any) => {
+  try {
+    const query = new URLSearchParams(params).toString();
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/assignments/?${query}`, {
+      method: "GET",
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Fee Assignments Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const deleteFeeAssignment = async (id: number) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/assignments/${id}/`, {
+      method: "DELETE",
+    });
+    if (response.ok) return { success: true };
+    return await response.json();
+  } catch (error) {
+    console.error("Delete Fee Assignment Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const bulkAssignFees = async (data: any) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/bulk-assignments/`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Bulk Assign Fees Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+// Invoices
+export const getInvoices = async (params: any) => {
+  try {
+    const query = new URLSearchParams(params).toString();
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/invoices/?${query}`, {
+      method: "GET",
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Invoices Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const deleteInvoice = async (id: number) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/invoices/${id}/`, {
+      method: "DELETE",
+    });
+    if (response.ok) return { success: true };
+    return await response.json();
+  } catch (error) {
+    console.error("Delete Invoice Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const getInvoiceDetails = async (id: number) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/invoices/${id}/`, {
+      method: "GET",
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Invoice Details Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const downloadInvoice = async (id: number) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/invoices/${id}/download/`, {
+      method: "GET",
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Download Invoice Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+// Payments
+export const getPayments = async (params: any) => {
+  try {
+    const query = new URLSearchParams(params).toString();
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/payments/?${query}`, {
+      method: "GET",
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Payments Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const recordPayment = async (data: any) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/payments/record/`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Record Payment Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const getPaymentStats = async (params: any) => {
+  try {
+    const query = new URLSearchParams(params).toString();
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/payment-stats/?${query}`, {
+      method: "GET",
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Payment Stats Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const refundPayment = async (id: number, data: any) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/payments/${id}/refund/`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Refund Payment Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const processRefund = refundPayment;
+
+export const getPaymentDetails = async (id: number) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/payments/${id}/`, {
+      method: "GET",
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Payment Details Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const getPaymentReceipt = async (id: number) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/payments/${id}/receipt/`, {
+      method: "GET",
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Payment Receipt Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const downloadReceipt = async (id: number) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/payments/${id}/receipt/`, {
+      method: "GET",
+    });
+    if (!response.ok) {
+      return { success: false, message: "Failed to download receipt" };
+    }
+    const blob = await response.blob();
+    return { success: true, data: blob };
+  } catch (error) {
+    console.error("Download Receipt Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+// Stats and Other
+export const getFeesManagerStats = async (params: any) => {
+  try {
+    const query = new URLSearchParams(params).toString();
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/stats/?${query}`, {
+      method: "GET",
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Fees Stats Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const getFeesManagerStudents = async (params: any) => {
+  try {
+    const query = new URLSearchParams(params).toString();
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/students/?${query}`, {
+      method: "GET",
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Fees Students Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const getFeesManagerLeaves = async () => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/leaves/`, {
+      method: "GET",
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Fees Leaves Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const applyFeesManagerLeave = async (data: any) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/leaves/apply/`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Apply Fees Leave Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+// Student Fee Reports
 export const getStudentFeeReport = async (searchTerm: string) => {
   try {
-    const params = new URLSearchParams({ search_term: searchTerm });
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/student-fee-report/?${params}`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/reports/student/?search=${searchTerm}`, {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        "Content-Type": "application/json",
-      },
     });
     return await response.json();
   } catch (error) {
@@ -131,30 +469,18 @@ export const getStudentFeeReport = async (searchTerm: string) => {
   }
 };
 
-export const getStudentsFeeReports = async (
-  batchId?: string,
-  branchId?: string,
-  semesterId?: string,
-  sectionId?: string,
-  admissionMode?: string,
-  page: number = 1
-) => {
+export const getStudentsFeeReports = async (batchId?: string, branchId?: string, semesterId?: string, sectionId?: string, admissionMode?: string, page: number = 1) => {
   try {
-    const params = new URLSearchParams();
-    if (batchId) params.append('batch_id', batchId);
-    if (branchId) params.append('branch_id', branchId);
-    if (semesterId) params.append('semester_id', semesterId);
-    if (sectionId) params.append('section_id', sectionId);
-    if (admissionMode) params.append('admission_mode', admissionMode);
-    params.append('page', page.toString());
-    params.append('page_size', '10');
-
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/students-fee-reports/?${params}`, {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      ...(batchId && { batch_id: batchId }),
+      ...(branchId && { branch_id: branchId }),
+      ...(semesterId && { semester_id: semesterId }),
+      ...(sectionId && { section_id: sectionId }),
+      ...(admissionMode && { admission_mode: admissionMode }),
+    });
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/reports/bulk/?${params.toString()}`, {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        "Content-Type": "application/json",
-      },
     });
     return await response.json();
   } catch (error) {
@@ -163,18 +489,64 @@ export const getStudentsFeeReports = async (
   }
 };
 
+export const sendFeeReminder = async (studentId: number) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/students/${studentId}/send-reminder/`, {
+      method: "POST",
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Send Fee Reminder Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+// Staff Attendance Reports
+export const getStaffAttendanceAudit = async (role: string, startDate: string, endDate: string, page: number = 1, format?: string) => {
+  try {
+    const params = new URLSearchParams({
+      role,
+      start_date: startDate,
+      end_date: endDate,
+      page: page.toString(),
+      ...(format && { format }),
+    });
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/reports/attendance/?${params.toString()}`, {
+      method: "GET",
+    });
+    
+    if (format) return response; // Return raw response for downloads
+    return await response.json();
+  } catch (error) {
+    console.error("Get Staff Attendance Audit Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const getStaffDetailedAttendance = async (staffId: number, startDate: string, endDate: string) => {
+  try {
+    const params = new URLSearchParams({
+      start_date: startDate,
+      end_date: endDate,
+    });
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/reports/attendance/${staffId}/?${params.toString()}`, {
+      method: "GET",
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Staff Detailed Attendance Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
 export const getFeesManagerFilters = async () => {
   try {
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/filters/`, {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        "Content-Type": "application/json",
-      },
     });
     return await response.json();
   } catch (error) {
-    console.error("Get Filters Error:", error);
+    console.error("Get Fees Filters Error:", error);
     return { success: false, message: "Network error" };
   }
 };
@@ -183,14 +555,10 @@ export const getFeesManagerBranches = async () => {
   try {
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/branches/`, {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        "Content-Type": "application/json",
-      },
     });
     return await response.json();
   } catch (error) {
-    console.error("Get Branches Error:", error);
+    console.error("Get Fees Branches Error:", error);
     return { success: false, message: "Network error" };
   }
 };
@@ -199,14 +567,10 @@ export const getFeesManagerSemesters = async (branchId: string) => {
   try {
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/semesters/?branch_id=${branchId}`, {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        "Content-Type": "application/json",
-      },
     });
     return await response.json();
   } catch (error) {
-    console.error("Get Semesters Error:", error);
+    console.error("Get Fees Semesters Error:", error);
     return { success: false, message: "Network error" };
   }
 };
@@ -215,67 +579,61 @@ export const getFeesManagerSections = async (branchId: string, semesterId: strin
   try {
     const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/sections/?branch_id=${branchId}&semester_id=${semesterId}`, {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        "Content-Type": "application/json",
-      },
     });
     return await response.json();
   } catch (error) {
-    console.error("Get Sections Error:", error);
+    console.error("Get Fees Sections Error:", error);
     return { success: false, message: "Network error" };
   }
 };
 
-export const sendFeeReminder = async (studentId: number) => {
+// Profile and Dashboard
+export const getFeesManagerProfile = async () => {
   try {
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/students/${studentId}/send-reminder/`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/profile/`, {
+      method: "GET",
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Get Profile Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const updateFeesManagerProfile = async (data: any) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/profile/update/`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Update Profile Error:", error);
+    return { success: false, message: "Network error" };
+  }
+};
+
+export const changeFeesManagerPassword = async (data: any) => {
+  try {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/profile/change-password/`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        "Content-Type": "application/json",
-      },
+      body: JSON.stringify(data),
     });
     return await response.json();
   } catch (error) {
-    console.error("Send Fee Reminder Error:", error);
-    return { success: false, message: "Network error" };
-  }
-};
-export const getStaffAttendanceAudit = async (role: string = 'all', startDate?: string, endDate?: string, page: number = 1, format?: string) => {
-  try {
-    const params = new URLSearchParams({
-      role,
-      page: page.toString(),
-    });
-    if (startDate) params.append('start_date', startDate);
-    if (endDate) params.append('end_date', endDate);
-    if (format) params.append('format', format);
-
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/staff-attendance-audit/?${params}`, {
-      method: "GET",
-    });
-    
-    if (format) return response; // Return raw response for downloads
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching staff attendance audit:", error);
+    console.error("Change Password Error:", error);
     return { success: false, message: "Network error" };
   }
 };
 
-export const getStaffDetailedAttendance = async (staffId: number, startDate?: string, endDate?: string) => {
+export const getFeesManagerDashboard = async () => {
   try {
-    const params = new URLSearchParams();
-    if (startDate) params.append('start_date', startDate);
-    if (endDate) params.append('end_date', endDate);
-
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/staff-detailed-attendance/${staffId}/?${params}`, {
+    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/fees-manager/dashboard/`, {
       method: "GET",
     });
     return await response.json();
   } catch (error) {
-    console.error("Error fetching detailed staff attendance:", error);
+    console.error("Get Dashboard Error:", error);
     return { success: false, message: "Network error" };
   }
 };
