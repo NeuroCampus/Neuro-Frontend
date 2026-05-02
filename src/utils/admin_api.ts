@@ -203,25 +203,38 @@ interface ManageAdminProfileResponse {
   };
 }
 
+let adminStatsPromise: Promise<AdminStatsResponse> | null = null;
+let adminStatsTimestamp = 0;
+
 export const getAdminStats = async (): Promise<AdminStatsResponse> => {
-  try {
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/stats-overview/`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        "Content-Type": "application/json",
-      },
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      console.error("Get Admin Stats Failed:", { status: response.status, result });
-      return { success: false, message: result.message || `HTTP ${response.status}` };
-    }
-    return result;
-  } catch (error) {
-    console.error("Get Admin Stats Error:", error);
-    return { success: false, message: "Network error" };
+  const now = Date.now();
+  if (adminStatsPromise && now - adminStatsTimestamp < 5000) {
+    return adminStatsPromise;
   }
+
+  adminStatsPromise = (async () => {
+    try {
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/admin/stats-overview/`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          "Content-Type": "application/json",
+        },
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        console.error("Get Admin Stats Failed:", { status: response.status, result });
+        return { success: false, message: result.message || `HTTP ${response.status}` };
+      }
+      return result;
+    } catch (error) {
+      console.error("Get Admin Stats Error:", error);
+      return { success: false, message: "Network error" };
+    }
+  })();
+  
+  adminStatsTimestamp = now;
+  return adminStatsPromise;
 };
 
 export const enrollUser = async (data: EnrollUserRequest): Promise<EnrollUserResponse> => {

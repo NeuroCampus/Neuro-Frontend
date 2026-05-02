@@ -292,26 +292,39 @@ interface UploadFaceEncodingsResponse {
 }
 
 // Student-specific API functions
+let dashboardOverviewPromise: Promise<DashboardOverviewResponse> | null = null;
+let dashboardOverviewTimestamp = 0;
+
 export const getDashboardOverview = async (): Promise<DashboardOverviewResponse> => {
-  try {
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/dashboard/`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        "Content-Type": "application/json",
-      },
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error("Get Dashboard Overview Error:", error);
-    const errorMessage = error instanceof Error ? error.message : "Network error";
-    return { success: false, message: errorMessage };
+  const now = Date.now();
+  if (dashboardOverviewPromise && now - dashboardOverviewTimestamp < 5000) {
+    return dashboardOverviewPromise;
   }
+
+  dashboardOverviewPromise = (async () => {
+    try {
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/student/dashboard/`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error("Get Dashboard Overview Error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Network error";
+      return { success: false, message: errorMessage };
+    }
+  })();
+
+  dashboardOverviewTimestamp = now;
+  return dashboardOverviewPromise;
 };
 
 export const getTimetable = async (): Promise<GetTimetableResponse> => {

@@ -1020,18 +1020,30 @@ export const getElectiveEnrollmentBootstrap = async (): Promise<{
   }
 };
 
-export const getHODStats = async (branch_id: string): Promise<HODStatsResponse> => {
-  try {
-    if (!branch_id) throw new Error("Branch ID is required");
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/dashboard-stats/?branch_id=${branch_id}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
+const hodStatsPromises: Record<string, { promise: Promise<HODStatsResponse>, timestamp: number }> = {};
 
-    });
-    return await response.json();
-  } catch (error: unknown) {
-    return handleApiError(error, (error as any).response);
+export const getHODStats = async (branch_id: string = ''): Promise<HODStatsResponse> => {
+  
+  const now = Date.now();
+  const cached = hodStatsPromises[branch_id];
+  if (cached && now - cached.timestamp < 5000) {
+    return cached.promise;
   }
+
+  const promise = (async () => {
+    try {
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/hod/dashboard-stats/?branch_id=${branch_id}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      return await response.json();
+    } catch (error: unknown) {
+      return handleApiError(error, (error as any).response);
+    }
+  })();
+
+  hodStatsPromises[branch_id] = { promise, timestamp: now };
+  return promise;
 };
 
 // Combined HOD dashboard (stats + leaves in one call)

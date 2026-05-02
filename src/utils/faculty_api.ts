@@ -811,20 +811,33 @@ export const getFacultyAssignments = async (): Promise<GetFacultyAssignmentsResp
   }
 };
 
+let facultyDashboardPromise: Promise<GetFacultyDashboardBootstrapResponse> | null = null;
+let facultyDashboardTimestamp = 0;
+
 export const getFacultyDashboardBootstrap = async (): Promise<GetFacultyDashboardBootstrapResponse> => {
-  try {
-    const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/dashboard/bootstrap/`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        "Content-Type": "application/json",
-      },
-    });
-    return await response.json();
-  } catch (error) {
-    console.error("Get Faculty Dashboard Bootstrap Error:", error);
-    return { success: false, message: "Network error" };
+  const now = Date.now();
+  if (facultyDashboardPromise && now - facultyDashboardTimestamp < 5000) {
+    return facultyDashboardPromise;
   }
+
+  facultyDashboardPromise = (async () => {
+    try {
+      const response = await fetchWithTokenRefresh(`${API_ENDPOINT}/faculty/dashboard/bootstrap/`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          "Content-Type": "application/json",
+        },
+      });
+      return await response.json();
+    } catch (error) {
+      console.error("Get Faculty Dashboard Bootstrap Error:", error);
+      return { success: false, message: "Network error" };
+    }
+  })();
+
+  facultyDashboardTimestamp = now;
+  return facultyDashboardPromise;
 };
 
 export const getAttendanceRecordsWithSummary = async (params?: {
